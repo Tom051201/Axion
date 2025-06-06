@@ -1,0 +1,27 @@
+cbuffer CameraBuffer : register(b0) {
+	float4x4 u_viewProjection;
+};
+
+cbuffer TransformBuffer : register(b1) {
+	float4x4 u_transform;
+}
+
+struct VSInput {
+	float3 pos : POSITION;
+	float4 col : COLOR;
+};
+
+struct PSInput {
+	float4 pos : SV_POSITION;
+	float4 col : COLOR;
+};
+
+
+
+PSInput main(VSInput input) {
+	PSInput output;
+	float4 worldPos = mul(u_transform, float4(input.pos, 1.0f));
+	output.pos = mul(worldPos, u_viewProjection);
+	output.col = input.col;
+	return output;
+}

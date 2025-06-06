@@ -3,3 +3,9 @@ AxionEngineWorkspace.sln
 AxionEngine/vendor/imgui/ImGui.vcxproj
 AxionEngine/vendor/imgui/ImGui.vcxproj.filters
 AxionEngine/AxionEngine.vcxproj
+bin/
+bin-int/
+.vs/
+AxionEngine/AxionEngine.vcxproj.filters
+AxionEngine/AxionEngine.vcxproj.user
+Sandbox/Sandbox.vcxproj.user
