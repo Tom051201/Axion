@@ -13,15 +13,15 @@ namespace Axion {
 	public:
 
 		D12Shader();
-		D12Shader(const std::string& name, const std::string& vertexSrc, const std::string& pixelSrc);
+		D12Shader(const std::string& name);
 
 		void bind() const override;
 		void unbind() const override;
 
 		inline const std::string& getName() const override { return m_name; }
 
-		void compileFromFile(const std::string& name, const std::string& vertexPath, const std::string& pixelPath) override;
-		void compileFromString(const std::string& name, const std::string& vertexSrc, const std::string& pixelSrc) override;
+		void compileFromFile(const std::string& vertexPath, const std::string& pixelPath) override;
+		void compileFromString(const std::string& vertexSrc, const std::string& pixelSrc) override;
 
 		inline const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 		inline const Microsoft::WRL::ComPtr<ID3DBlob>& getPixelBlob() const { return m_pixelShaderBlob; }

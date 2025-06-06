@@ -15,14 +15,14 @@ namespace Axion {
 
 
 
-	D12Shader::D12Shader(const std::string& name, const std::string& vertexSrc, const std::string& pixelSrc) : m_name(name) {
-		compileFromString(name, vertexSrc, pixelSrc);
+	D12Shader::D12Shader(const std::string& name) : m_name(name) {
+		m_vertexShaderBlob = nullptr;
+		m_pixelShaderBlob = nullptr;
 	}
 
 
 
-	void D12Shader::compileFromString(const std::string& name, const std::string& vertexSrc, const std::string& pixelSrc) {
-		m_name = name;
+	void D12Shader::compileFromString(const std::string& vertexSrc, const std::string& pixelSrc) {
 
 		compileStage(vertexSrc, "main", SHADER_MODEL_VS, m_vertexShaderBlob);
 		compileStage(pixelSrc, "main", SHADER_MODEL_PS, m_pixelShaderBlob);
@@ -36,9 +36,7 @@ namespace Axion {
 
 
 
-	void D12Shader::compileFromFile(const std::string& name, const std::string& vertexPath, const std::string& pixelPath) {
-		m_name = name;
-
+	void D12Shader::compileFromFile(const std::string& vertexPath, const std::string& pixelPath) {
 		compileStage(Shader::readShaderFile(vertexPath), "main", SHADER_MODEL_VS, m_vertexShaderBlob);
 		compileStage(Shader::readShaderFile(pixelPath), "main", SHADER_MODEL_PS, m_pixelShaderBlob);
 

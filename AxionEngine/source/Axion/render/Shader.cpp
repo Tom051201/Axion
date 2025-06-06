@@ -7,12 +7,12 @@
 
 namespace Axion {
 
-	Shader* Shader::create(const std::string& name, const std::string& vertexSrc, const std::string& pixelSrc) {
+	Shader* Shader::create(const std::string& name) {
 		
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::API::None : { AX_ASSERT(false, "None is not supported yet"); }
-			case RendererAPI::API::Direct3D12: { return new D12Shader(); }
+			case RendererAPI::API::Direct3D12: { return new D12Shader(name); }
 
 		}
 		return nullptr;

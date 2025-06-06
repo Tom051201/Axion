@@ -7,8 +7,8 @@ class ExampleLayer : public Axion::Layer {
 public:
 
 	ExampleLayer() : Layer("Example"), m_camera(-1.6f, 1.6f, -0.9f, 0.9f), m_camPos(0.0f, 0.0f, 0.0f), m_camRot(0.0f) {
-		m_shader.reset(Axion::Shader::create("basic", "assets/VertexShader.hlsl", "assets/PixelShader.hlsl"));				// ???? fix this shit
-		m_shader->compileFromFile("basic", "assets/VertexShader.hlsl", "assets/PixelShader.hlsl");
+		m_shader.reset(Axion::Shader::create("basic"));
+		m_shader->compileFromFile("assets/VertexShader.hlsl", "assets/PixelShader.hlsl");
 
 		m_quadVB.reset(Axion::VertexBuffer::create(m_quadVertices));
 		m_quadIB.reset(Axion::IndexBuffer::create(m_quadIndices));
