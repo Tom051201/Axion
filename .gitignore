@@ -1,0 +1,5 @@
+Sandbox/Sandbox.vcxproj
+AxionEngineWorkspace.sln
+AxionEngine/vendor/imgui/ImGui.vcxproj
+AxionEngine/vendor/imgui/ImGui.vcxproj.filters
+AxionEngine/AxionEngine.vcxproj
