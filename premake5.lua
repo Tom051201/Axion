@@ -27,7 +27,9 @@ project "AxionEngine"
 	pchsource "AxionEngine/source/axpch.cpp"
 	files {
 		"%{prj.name}/source/**.h",
-		"%{prj.name}/source/**.cpp"
+		"%{prj.name}/source/**.cpp",
+		"%{prj.name}/vendor/stb_image/stb_image.h",
+		"%{prj.name}/vendor/stb_image/stb_image.cpp"
 	}
 	includedirs {
 		"%{prj.name}/vendor/spdlog/include",

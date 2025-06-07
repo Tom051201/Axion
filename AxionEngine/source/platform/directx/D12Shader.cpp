@@ -92,24 +92,47 @@ namespace Axion {
 	void D12Shader::createRootSignature() {
 		auto* device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 
-		D3D12_ROOT_PARAMETER rootParameters[2] = {};
-		// slot index 0
+		D3D12_DESCRIPTOR_RANGE srvRange = {};
+		srvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		srvRange.NumDescriptors = 1;
+		srvRange.BaseShaderRegister = 0; // t0
+		srvRange.RegisterSpace = 0;
+		srvRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+		D3D12_ROOT_PARAMETER rootParameters[3] = {};
+		// b0 - slot index 0
 		rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		rootParameters[0].Descriptor.ShaderRegister = 0;
 		rootParameters[0].Descriptor.RegisterSpace = 0;
 		rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-		// slot index 1
+		// b1 - slot index 1
 		rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		rootParameters[1].Descriptor.ShaderRegister = 1;
 		rootParameters[1].Descriptor.RegisterSpace = 0;
 		rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
+		// t0 - Texture2D descriptor table
+		rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+		rootParameters[2].DescriptorTable.pDescriptorRanges = &srvRange;
+		rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		// s0 - static sampler
+		D3D12_STATIC_SAMPLER_DESC sampler = {};
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.ShaderRegister = 0; // s0
+		sampler.RegisterSpace = 0;
+		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
 		// rootsignature description
 		D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 		rootSignatureDesc.NumParameters = _countof(rootParameters);
 		rootSignatureDesc.pParameters = rootParameters;
-		rootSignatureDesc.NumStaticSamplers = 0;
-		rootSignatureDesc.pStaticSamplers = nullptr;
+		rootSignatureDesc.NumStaticSamplers = 1;
+		rootSignatureDesc.pStaticSamplers = &sampler;
 		rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 		Microsoft::WRL::ComPtr<ID3DBlob> signature;
@@ -131,10 +154,9 @@ namespace Axion {
 
 		// Input layout
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
-				offsetof(Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,
-				offsetof(Vertex, color), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vertex, color), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texCoords), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 		};
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};

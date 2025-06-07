@@ -15,3 +15,4 @@
 #include "Axion/input/Input.h"
 #include "Axion/core/Timestep.h"
 #include "Axion/render/Shader.h"
+#include "Axion/render/Texture.h"

@@ -30,7 +30,8 @@ namespace Axion {
 			AX_CORE_LOG_ERROR("hwnd");
 		}
 
-		AX_THROW_IF_FAILED_HR(factory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapDesc, nullptr, nullptr, &m_tempsc1), "Failed to create temp swap chain");
+		HRESULT hr = factory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapDesc, nullptr, nullptr, &m_tempsc1);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create temp swap chain");
 		AX_THROW_IF_FAILED_HR(m_tempsc1.As(&m_swapChain), "Failed to transfer swap chain");
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 		AX_CORE_LOG_INFO("Successfully created swap chain");

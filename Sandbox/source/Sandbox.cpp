@@ -9,6 +9,9 @@ public:
 	ExampleLayer() : Layer("Example"), m_camera(-1.6f, 1.6f, -0.9f, 0.9f), m_camPos(0.0f, 0.0f, 0.0f), m_camRot(0.0f) {
 		m_shader.reset(Axion::Shader::create("basic"));
 		m_shader->compileFromFile("assets/VertexShader.hlsl", "assets/PixelShader.hlsl");
+		
+		m_shader2.reset(Axion::Shader::create("basic2"));
+		m_shader2->compileFromFile("assets/VertexShader2.hlsl", "assets/PixelShader2.hlsl");
 
 		m_quadVB.reset(Axion::VertexBuffer::create(m_quadVertices));
 		m_quadIB.reset(Axion::IndexBuffer::create(m_quadIndices));
@@ -46,21 +49,19 @@ public:
 		sceneBuffer.viewProjection = DirectX::XMMatrixTranspose(m_camera.getViewProjectionMatrix().toXM());
 		m_cameraCB->update(&sceneBuffer, sizeof(Axion::SceneBuffer));
 
-		// bind shader for all calls
-		m_shader->bind();
-
 		// quad
+		m_shader->bind();
 		Axion::ObjectBuffer quadData;
 		quadData.modelMatrix = DirectX::XMMatrixTranspose(m_quadTransform.toXM());
 		m_quadCB->update(&quadData, sizeof(Axion::ObjectBuffer));
 		Axion::Renderer::submit(m_quadVB, m_quadIB, m_cameraCB, 0, m_quadCB, 1);
 
 		// triangle
+		m_shader2->bind();
 		Axion::ObjectBuffer triangleData;
 		triangleData.modelMatrix = DirectX::XMMatrixTranspose(m_triangleTransform.toXM());
 		m_triangleCB->update(&triangleData, sizeof(Axion::ObjectBuffer));
 		Axion::Renderer::submit(m_triangleVB, m_triangleIB, m_cameraCB, 0, m_triangleCB, 1);
-
 	}
 
 	void onEvent(Axion::Event& e) override {
@@ -79,8 +80,8 @@ private:
 	// triangle
 	std::vector<Axion::Vertex> m_triangleVertices = {
 		Axion::Vertex(-0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f),
-		Axion::Vertex(0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f),
-		Axion::Vertex(0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f)
+		Axion::Vertex( 0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f),
+		Axion::Vertex( 0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f)
 	};
 
 	std::vector<uint32_t> m_triangleInices = {
@@ -97,10 +98,10 @@ private:
 
 	// quad
 	std::vector<Axion::Vertex> m_quadVertices = {
-		Axion::Vertex(-0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 0.0f, 1.0f),
-		Axion::Vertex(0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f, 1.0f),
-		Axion::Vertex(0.5f,  0.5f, 0.0f,   0.0f, 1.0f, 0.0f, 1.0f),
-		Axion::Vertex(-0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f)
+		Axion::Vertex(-0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 1.0f,		0.0f, 0.0f),
+		Axion::Vertex( 0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f,		1.0f, 0.0f),
+		Axion::Vertex( 0.5f,  0.5f, 0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		1.0f, 1.0f),
+		Axion::Vertex(-0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f, 1.0f,		0.0f, 1.0f)
 	};
 
 	std::vector<uint32_t> m_quadIndices = {
@@ -115,8 +116,8 @@ private:
 	Axion::Vec3 m_quadPosition;
 
 
-
 	Axion::Ref<Axion::Shader> m_shader;
+	Axion::Ref<Axion::Shader> m_shader2;
 };
 
 class Sandbox : public Axion::Application {

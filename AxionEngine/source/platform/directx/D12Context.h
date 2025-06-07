@@ -10,6 +10,7 @@
 #include "D12RenderTarget.h"
 #include "D12CommandList.h"
 #include "D12Fence.h"
+#include "D12srvHeap.h"
 
 namespace Axion {
 
@@ -34,6 +35,8 @@ namespace Axion {
 		inline ID3D12GraphicsCommandList* getCommandList() const { return m_commandList.getCommandList(); }
 		inline const D12RenderTarget* getRenderTarget() const { return &m_rtv; }
 		inline ID3D12CommandQueue* getCommandQueue() const { return m_commandQueue.getCommandQueue(); }
+
+		D12srvHeap m_srvHeap;		// move this to private and create proper accessor!
 
 	private:
 

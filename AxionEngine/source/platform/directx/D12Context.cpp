@@ -11,9 +11,31 @@ namespace Axion {
 		m_width = width;
 		m_height = height;
 
+#if defined(_DEBUG)
+		Microsoft::WRL::ComPtr<ID3D12Debug> debugController;
+		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
+			debugController->EnableDebugLayer();
+			AX_CORE_LOG_INFO("D3D12 Debug Layer enabled");
+		}
+		else {
+			AX_CORE_LOG_WARN("D3D12 Debug Layer not available");
+		}
+#endif
+#if defined(_DEBUG)
+		Microsoft::WRL::ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue)))) {
+			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
+			AX_CORE_LOG_INFO("DXGI Debug Layer enabled");
+		}
+		else {
+			AX_CORE_LOG_WARN("DXGI Debug Layer not available");
+		}
+#endif
+
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
 		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), width, height);
+		m_srvHeap.initialize(m_device.getDevice(), 1024);
 		m_rtv.initialize(m_device.getDevice(), m_swapChain.getSwapChain());
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
