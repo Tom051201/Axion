@@ -35,7 +35,8 @@ project "AxionEngine"
 		"%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.ImGui}",
 		"%{prj.name}/vendor",
-		"%{prj.name}/source"
+		"%{prj.name}/source",
+		"%{prj.name}/vendor/d3d12"
 	}
 	libdirs {}
 	links {
@@ -81,7 +82,8 @@ project "Sandbox"
 	}
 	includedirs {
 		"AxionEngine/vendor/spdlog/include",
-		"AxionEngine/source"
+		"AxionEngine/source",
+		"AxionEngine/vendor/d3d12"
 	}
 	links {
 		"AxionEngine"

@@ -8,17 +8,9 @@
 
 namespace Axion {
 
-	D12Shader::D12Shader() {
-		m_vertexShaderBlob = nullptr;
-		m_pixelShaderBlob = nullptr;
-	}
+	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_name("UNSET") {}
 
-
-
-	D12Shader::D12Shader(const std::string& name) : m_name(name) {
-		m_vertexShaderBlob = nullptr;
-		m_pixelShaderBlob = nullptr;
-	}
+	D12Shader::D12Shader(const std::string& name) : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_name(name) {}
 
 
 
@@ -92,51 +84,32 @@ namespace Axion {
 	void D12Shader::createRootSignature() {
 		auto* device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 
-		D3D12_DESCRIPTOR_RANGE srvRange = {};
-		srvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		srvRange.NumDescriptors = 1;
-		srvRange.BaseShaderRegister = 0; // t0
-		srvRange.RegisterSpace = 0;
-		srvRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		CD3DX12_DESCRIPTOR_RANGE srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
 
-		D3D12_ROOT_PARAMETER rootParameters[3] = {};
-		// b0 - slot index 0
-		rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		rootParameters[0].Descriptor.ShaderRegister = 0;
-		rootParameters[0].Descriptor.RegisterSpace = 0;
-		rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-		// b1 - slot index 1
-		rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		rootParameters[1].Descriptor.ShaderRegister = 1;
-		rootParameters[1].Descriptor.RegisterSpace = 0;
-		rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-
-		// t0 - Texture2D descriptor table
-		rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
-		rootParameters[2].DescriptorTable.pDescriptorRanges = &srvRange;
-		rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		CD3DX12_ROOT_PARAMETER rootParameters[3];
+		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);		// b0 - slot 0, vertex shader CBV
+		rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);		// b1 - slot 1, vertex shader CBV
+		rootParameters[2].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);	// t0 - texture descriptor table for pixel shader
 
 		// s0 - static sampler
-		D3D12_STATIC_SAMPLER_DESC sampler = {};
-		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.ShaderRegister = 0; // s0
-		sampler.RegisterSpace = 0;
-		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		CD3DX12_STATIC_SAMPLER_DESC sampler(
+			0,
+			D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+			D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+			D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+			D3D12_TEXTURE_ADDRESS_MODE_WRAP
+		);
 
 		// rootsignature description
-		D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-		rootSignatureDesc.NumParameters = _countof(rootParameters);
-		rootSignatureDesc.pParameters = rootParameters;
-		rootSignatureDesc.NumStaticSamplers = 1;
-		rootSignatureDesc.pStaticSamplers = &sampler;
-		rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
+			_countof(rootParameters), rootParameters,
+			1, &sampler,
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+		);
 
 		Microsoft::WRL::ComPtr<ID3DBlob> signature;
 		Microsoft::WRL::ComPtr<ID3DBlob> error;
+
 		HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
 		if (error) { AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature: {0}", (char*)error->GetBufferPointer()); }
 		else { AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature: unkown error", (char*)error->GetBufferPointer()); }
@@ -165,40 +138,14 @@ namespace Axion {
 		psoDesc.VS = { m_vertexShaderBlob->GetBufferPointer(), m_vertexShaderBlob->GetBufferSize() };
 		psoDesc.PS = { m_pixelShaderBlob->GetBufferPointer(), m_pixelShaderBlob->GetBufferSize() };
 
-		// Rasterizer state
-		D3D12_RASTERIZER_DESC rasterDesc = {};
-		rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
-		rasterDesc.CullMode = D3D12_CULL_MODE_BACK; //  D3D12_CULL_MODE_NONE
-		rasterDesc.FrontCounterClockwise = FALSE;
-		rasterDesc.DepthClipEnable = TRUE;
-		rasterDesc.MultisampleEnable = FALSE;
-		rasterDesc.AntialiasedLineEnable = FALSE;
+		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // D3D12_CULL_MODE_NONE
 
-		psoDesc.RasterizerState = rasterDesc;
+		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
-		// Blend state
-		D3D12_BLEND_DESC blendDesc = {};
-		blendDesc.AlphaToCoverageEnable = FALSE;
-		blendDesc.IndependentBlendEnable = FALSE;
-		const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc = {
-			FALSE,FALSE,
-			D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-			D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-			D3D12_LOGIC_OP_NOOP,
-			D3D12_COLOR_WRITE_ENABLE_ALL,
-		};
-
-		for (int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-			blendDesc.RenderTarget[i] = defaultRenderTargetBlendDesc;
-
-		psoDesc.BlendState = blendDesc;
-
-		// Depth stencil state
-		D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
-		depthStencilDesc.DepthEnable = FALSE;
-		depthStencilDesc.StencilEnable = FALSE;
-
-		psoDesc.DepthStencilState = depthStencilDesc;
+		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		psoDesc.DepthStencilState.DepthEnable = FALSE;
+		psoDesc.DepthStencilState.StencilEnable = FALSE;
 
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -207,7 +154,6 @@ namespace Axion {
 		psoDesc.SampleDesc.Count = 1;
 
 		HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
-
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create graphics pipeline state");
 		AX_CORE_LOG_INFO("Successfully created graphics pipeline state");
 

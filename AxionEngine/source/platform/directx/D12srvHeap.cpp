@@ -23,27 +23,20 @@ namespace Axion {
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12srvHeap::allocateO() {
-		AX_CORE_LOG_WARN("Allocating SRV descriptor...");
-
 		AX_CORE_ASSERT(m_currentIndex < m_maxDescriptors, "SRV Heap overflow!");
 
-		D3D12_CPU_DESCRIPTOR_HANDLE handle = m_srvHeap->GetCPUDescriptorHandleForHeapStart();
-		handle.ptr += static_cast<SIZE_T>(m_currentIndex) * m_descriptorSize;
+		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), m_currentIndex, m_descriptorSize);
 		m_currentIndex++;
 
 		return handle;
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12srvHeap::getCPUHandle(UINT index) const {
-		D3D12_CPU_DESCRIPTOR_HANDLE handle = m_srvHeap->GetCPUDescriptorHandleForHeapStart();
-		handle.ptr += static_cast<SIZE_T>(index) * m_descriptorSize;
-		return handle;
+		return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), index, m_descriptorSize);
 	}
 
 	D3D12_GPU_DESCRIPTOR_HANDLE D12srvHeap::getGPUHandle(UINT index) const {
-		D3D12_GPU_DESCRIPTOR_HANDLE handle = m_srvHeap->GetGPUDescriptorHandleForHeapStart();
-		handle.ptr += static_cast<SIZE_T>(index) * m_descriptorSize;
-		return handle;
+		return CD3DX12_GPU_DESCRIPTOR_HANDLE(m_srvHeap->GetGPUDescriptorHandleForHeapStart(), index, m_descriptorSize);
 	}
 
 	UINT D12srvHeap::allocate() {

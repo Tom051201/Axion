@@ -81,8 +81,7 @@ namespace Axion {
 				return;
 			}
 
-			D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeapStart;
-			handle.ptr += i * rtvDescriptorSize;
+			CD3DX12_CPU_DESCRIPTOR_HANDLE handle(rtvHeapStart, i, rtvDescriptorSize);
 
 			device->CreateRenderTargetView(backBuffer.Get(), nullptr, handle);
 			renderTargets[i] = backBuffer;

@@ -3,6 +3,8 @@
 
 #include "Axion/render/Renderer.h"
 
+//#include "platform/directx/D12Texture2D.h"
+
 namespace Axion {
 
 	Ref<Texture2D> Texture2D::create(const std::string& path) {
