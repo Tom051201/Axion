@@ -10,7 +10,6 @@
 #include "D12RenderTarget.h"
 #include "D12CommandList.h"
 #include "D12Fence.h"
-#include "D12srvHeap.h"
 
 namespace Axion {
 
@@ -36,8 +35,6 @@ namespace Axion {
 		inline const D12RenderTarget* getRenderTarget() const { return &m_rtv; }
 		inline ID3D12CommandQueue* getCommandQueue() const { return m_commandQueue.getCommandQueue(); }
 
-		D12srvHeap m_srvHeap;		// move this to private and create proper accessor!
-
 	private:
 
 		void waitForPreviousFrame();
@@ -50,8 +47,6 @@ namespace Axion {
 		D12RenderTarget m_rtv;
 		D12CommandList m_commandList;
 		D12Fence m_fence;
-		Microsoft::WRL::ComPtr<ID3D12DebugDevice> m_debugDevice;
-		Microsoft::WRL::ComPtr<IDXGIDebug1> m_dxgiDebug;
 
 	};
 

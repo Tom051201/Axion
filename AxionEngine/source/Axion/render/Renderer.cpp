@@ -13,7 +13,7 @@ namespace Axion {
 
 	void Renderer::release() {
 		s_rendererAPI->release();
-		AX_CORE_LOG_WARN("Renderer released");
+		AX_CORE_LOG_INFO("Renderer shutdown");
 	}
 
 	void Renderer::beginScene(OrthographicCamera& camera) {

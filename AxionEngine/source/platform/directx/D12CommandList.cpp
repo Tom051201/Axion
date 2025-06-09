@@ -13,12 +13,12 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_cmdAllocator)), "Failed to create command allocator");
 		AX_THROW_IF_FAILED_HR(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_cmdAllocator.Get(), nullptr, IID_PPV_ARGS(&m_cmdList)), "Failed to create command list");
 		AX_THROW_IF_FAILED_HR(m_cmdList->Close(), "Failed to close command list");
-		AX_CORE_LOG_INFO("Successfully created command list");
+		AX_CORE_LOG_TRACE("Successfully created command list");
 	}
 
 	void D12CommandList::release() {
-		if (m_cmdAllocator.Get()) { m_cmdAllocator.Reset(); }
 		if (m_cmdList.Get()) { m_cmdList.Reset(); }
+		if (m_cmdAllocator.Get()) { m_cmdAllocator.Reset(); }
 	}
 
 }

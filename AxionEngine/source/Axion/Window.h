@@ -26,6 +26,8 @@ namespace Axion {
 
 		virtual ~Window() {}
 
+		virtual void shutdown() = 0;
+
 		virtual void onUpdate() = 0;
 
 		virtual uint32_t getWidth() const = 0;

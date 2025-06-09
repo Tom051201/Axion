@@ -22,8 +22,6 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<ID3D12Device> m_device;
 		Microsoft::WRL::ComPtr<IDXGIFactory6> m_factory;
 		Microsoft::WRL::ComPtr<IDXGIAdapter1> m_adapter;
-		Microsoft::WRL::ComPtr<ID3D12Debug> m_debugController;
-		Microsoft::WRL::ComPtr<IDXGIInfoQueue> m_dxgiInfoQueue;
 
 	};
 

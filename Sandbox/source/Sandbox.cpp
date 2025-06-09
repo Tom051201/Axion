@@ -24,6 +24,22 @@ public:
 		m_triangleTransform = Axion::Mat4::identity();
 
 		m_cameraCB.reset(Axion::ConstantBuffer::create(sizeof(Axion::SceneBuffer)));
+	}
+
+	void onDetach() override {
+
+		m_shader->release();
+		m_shader2->release();
+
+		m_quadVB->release();
+		m_quadIB->release();
+		m_quadCB->release();
+
+		m_triangleVB->release();
+		m_triangleIB->release();
+		m_triangleCB->release();
+
+		m_cameraCB->release();
 
 	}
 
@@ -127,7 +143,9 @@ public:
 		pushLayer(new ExampleLayer());
 		pushLayer(new Axion::ImGuiLayer());
 	}
-	~Sandbox() override {}
+	~Sandbox() override {
+
+	}
 
 };
 

@@ -16,7 +16,7 @@ namespace Axion {
 		heapDesc.NumDescriptors = m_frameCount;
 		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		AX_THROW_IF_FAILED_HR(device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_rtvHeap)), "Failed to create RTV heap");
-		AX_CORE_LOG_INFO("Successfully created RTV heap");
+		AX_CORE_LOG_TRACE("Successfully created RTV heap");
 
 		m_rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		
@@ -26,21 +26,21 @@ namespace Axion {
 			CD3DX12_CPU_DESCRIPTOR_HANDLE handle( m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), i, m_rtvDescriptorSize );
 
 			device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, handle);
-			AX_CORE_LOG_INFO("Successfully created render target {0}", i);
+			AX_CORE_LOG_TRACE("Successfully created render target {0}", i);
 		}
 	}
 
 	void D12RenderTarget::release() {
-		if (m_rtvHeap.Get()) { m_rtvHeap.Reset(); }
 		for (UINT i = 0; i < m_frameCount; ++i) {
-			if (m_renderTargets[i].Get()) { m_renderTargets[i].Reset(); }
+			m_renderTargets[i].Reset();
 		}
-		
+
+		m_rtvHeap.Reset();
 	}
 
 	void D12RenderTarget::resetRTVs() {
 		for (UINT i = 0; i < m_frameCount; ++i) {
-			if (m_renderTargets[i].Get()) { m_renderTargets[i].Reset(); }
+			m_renderTargets[i].Reset();
 		}
 	}
 

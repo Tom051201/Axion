@@ -61,7 +61,7 @@ namespace Axion {
 			m_srvDescHeap->GetGPUDescriptorHandleForHeapStart()
 		);
 
-		AX_CORE_LOG_INFO("ImGui layer attached");
+		AX_CORE_LOG_TRACE("ImGui layer attached");
 	}
 
 	void ImGuiLayer::onDetach() {
@@ -71,7 +71,7 @@ namespace Axion {
 		ImGui::DestroyContext();
 		m_srvDescHeap.Reset();
 
-		AX_CORE_LOG_WARN("ImGuiLayer detatched");
+		AX_CORE_LOG_TRACE("ImGuiLayer detatched");
 	}
 
 	void ImGuiLayer::onUpdate(Timestep ts) {

@@ -51,7 +51,11 @@ namespace Axion {
 	}
 
 	D12VertexBuffer::~D12VertexBuffer() {
-		
+		release();
+	}
+
+	void D12VertexBuffer::release() {
+		m_buffer.Reset();
 	}
 
 	void D12VertexBuffer::bind() const {
@@ -60,9 +64,7 @@ namespace Axion {
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 
-	void D12VertexBuffer::unbind() const {
-
-	}
+	void D12VertexBuffer::unbind() const {} // unrequired
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// D12IndexBuffer ///////////////////////////////////////////////////////////
@@ -100,7 +102,11 @@ namespace Axion {
 	}
 
 	D12IndexBuffer::~D12IndexBuffer() {
+		release();
+	}
 
+	void D12IndexBuffer::release() {
+		m_buffer.Reset();
 	}
 
 	void D12IndexBuffer::bind() const {
@@ -138,7 +144,11 @@ namespace Axion {
 	}
 
 	D12ConstantBuffer::~D12ConstantBuffer() {
+		release();
+	}
 
+	void D12ConstantBuffer::release() {
+		m_buffer.Reset();
 	}
 
 	void D12ConstantBuffer::update(const void* data, size_t size) {

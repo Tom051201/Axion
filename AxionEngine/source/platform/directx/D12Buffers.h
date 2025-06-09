@@ -18,6 +18,8 @@ namespace Axion {
 		D12VertexBuffer(const std::vector<Vertex>& vertices);
 		~D12VertexBuffer() override;
 
+		void release() override;
+
 		void bind() const override;
 		void unbind() const override;
 
@@ -50,6 +52,8 @@ namespace Axion {
 		D12IndexBuffer(const std::vector<uint32_t>& indices);
 		~D12IndexBuffer();
 
+		void release() override;
+
 		void bind() const override;
 		void unbind() const override;
 
@@ -75,6 +79,8 @@ namespace Axion {
 
 		D12ConstantBuffer(size_t size);
 		~D12ConstantBuffer() override;
+
+		void release() override;
 
 		void bind(uint32_t slot) const override;
 		void unbind() const override;

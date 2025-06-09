@@ -28,8 +28,6 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<IDXGISwapChain1> m_tempsc1;
 
 		HWND m_hwnd = nullptr;
-
-		void ThrowIfFailed(HRESULT hr);
 	};
 
 }

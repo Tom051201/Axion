@@ -9,6 +9,9 @@
 
 #include "imgui/backends/imgui_impl_win32.h"
 
+#include "Axion/render/GraphicsContext.h"
+#include "platform/directx/D12Context.h"
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Axion {
@@ -62,7 +65,8 @@ namespace Axion {
 	}
 
 	void WindowsWindow::shutdown() {
-		AX_CORE_LOG_WARN("Window shutdown");
+		GraphicsContext::get()->shutdown();
+		AX_CORE_LOG_INFO("Window shutdown");
 		
 	}
 

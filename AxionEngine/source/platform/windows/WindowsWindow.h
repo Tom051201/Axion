@@ -12,6 +12,8 @@ namespace Axion {
 		WindowsWindow(const WindowProperties& wp);
 		virtual ~WindowsWindow();
 
+		void shutdown() override;
+
 		void onUpdate() override;
 
 		inline uint32_t getWidth() const override { return m_data.width; }
@@ -35,7 +37,6 @@ namespace Axion {
 		HWND m_hwnd = nullptr;
 
 		void initialize(const WindowProperties& wp);
-		void shutdown();
 
 		static LRESULT CALLBACK staticWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

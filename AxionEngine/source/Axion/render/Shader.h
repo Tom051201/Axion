@@ -11,6 +11,9 @@ namespace Axion {
 
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;
+
+		virtual void release() = 0;
+
 		virtual const std::string& getName() const = 0;
 
 		virtual void compileFromFile(const std::string& vertexPath, const std::string& pixelPath) = 0;

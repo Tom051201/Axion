@@ -12,6 +12,16 @@ namespace Axion {
 
 	D12Shader::D12Shader(const std::string& name) : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_name(name) {}
 
+	D12Shader::~D12Shader() {
+		release();
+	}
+
+	void D12Shader::release() {
+		m_pipelineState.Reset();
+		m_rootSignature.Reset();
+		m_pixelShaderBlob.Reset();
+		m_vertexShaderBlob.Reset();
+	}
 
 
 	void D12Shader::compileFromString(const std::string& vertexSrc, const std::string& pixelSrc) {
@@ -22,8 +32,8 @@ namespace Axion {
 		createRootSignature();
 		createPipelineState();
 
-		AX_CORE_LOG_INFO("Compiled Vertex shader from string input");
-		AX_CORE_LOG_INFO("Compiled Pixel shader from string input");
+		AX_CORE_LOG_TRACE("Shader '{0}' setup successful (root signature / pipeline state)", m_name);
+		AX_CORE_LOG_TRACE("Shader '{0}' compiled (from string input)", m_name);
 	}
 
 
@@ -35,8 +45,8 @@ namespace Axion {
 		createRootSignature();
 		createPipelineState();
 
-		AX_CORE_LOG_INFO("Compiled Vertex shader from file: {0}", vertexPath);
-		AX_CORE_LOG_INFO("Compiled Pixel shader from file: {0}", pixelPath);
+		AX_CORE_LOG_TRACE("Shader '{0}' setup successful (root signature / pipeline state)", m_name);
+		AX_CORE_LOG_TRACE("Shader '{0}' compiled ({1} / {2})", m_name, vertexPath, pixelPath);
 	}
 
 
@@ -116,8 +126,6 @@ namespace Axion {
 		
 		hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create root signature");
-		
-		AX_CORE_LOG_INFO("Successfully created root signature");
 	}
 
 
@@ -135,8 +143,8 @@ namespace Axion {
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 		psoDesc.pRootSignature = m_rootSignature.Get();
-		psoDesc.VS = { m_vertexShaderBlob->GetBufferPointer(), m_vertexShaderBlob->GetBufferSize() };
-		psoDesc.PS = { m_pixelShaderBlob->GetBufferPointer(), m_pixelShaderBlob->GetBufferSize() };
+		psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShaderBlob.Get());
+		psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShaderBlob.Get());
 
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // D3D12_CULL_MODE_NONE
@@ -155,7 +163,6 @@ namespace Axion {
 
 		HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create graphics pipeline state");
-		AX_CORE_LOG_INFO("Successfully created graphics pipeline state");
 
 	}
 

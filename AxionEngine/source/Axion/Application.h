@@ -24,6 +24,7 @@ namespace Axion {
 
 		void pushLayer(Layer* layer);
 		void pushOverlay(Layer* layer);
+		void removeLayer(Layer* layer);
 
 		static Application& get() { return *s_instance; }
 

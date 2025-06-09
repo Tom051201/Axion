@@ -78,6 +78,8 @@ namespace Axion {
 
 		virtual ~VertexBuffer() = default;
 
+		virtual void release() = 0;
+
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;
 
@@ -100,8 +102,11 @@ namespace Axion {
 
 		virtual ~IndexBuffer() = default;
 
+		virtual void release() = 0;
+
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;
+
 		virtual uint32_t getIndexCount() const = 0;
 
 		static IndexBuffer* create(const std::vector<uint32_t>& indices);
@@ -115,6 +120,8 @@ namespace Axion {
 	public:
 
 		virtual ~ConstantBuffer() = default;
+
+		virtual void release() = 0;
 
 		virtual void bind(uint32_t slot) const = 0;
 		virtual void unbind() const = 0;

@@ -15,8 +15,12 @@ namespace Axion {
 		D12Shader();
 		D12Shader(const std::string& name);
 
+		~D12Shader();
+
 		void bind() const override;
 		void unbind() const override;
+
+		void release() override;
 
 		inline const std::string& getName() const override { return m_name; }
 

@@ -1,60 +1,53 @@
 #include "axpch.h"
 #include "D12Context.h"
 
+#ifdef AX_DEBUG
+	#include "D12DebugLayer.h"
+#endif
+
 namespace Axion {
 
 	D12Context::~D12Context() {
-		shutdown();
+		//shutdown();
 	}
 
 	void D12Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
 		m_width = width;
 		m_height = height;
 
-#if defined(_DEBUG)
-		Microsoft::WRL::ComPtr<ID3D12Debug> debugController;
-		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
-			debugController->EnableDebugLayer();
-			AX_CORE_LOG_INFO("D3D12 Debug Layer enabled");
-		}
-		else {
-			AX_CORE_LOG_WARN("D3D12 Debug Layer not available");
-		}
-#endif
-#if defined(_DEBUG)
-		Microsoft::WRL::ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
-		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue)))) {
-			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
-			AX_CORE_LOG_INFO("DXGI Debug Layer enabled");
-		}
-		else {
-			AX_CORE_LOG_WARN("DXGI Debug Layer not available");
-		}
-#endif
-
+		#ifdef AX_DEBUG
+		D12DebugLayer::initialize();
+		#endif
+		
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
 		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), width, height);
-		m_srvHeap.initialize(m_device.getDevice(), 1024);
 		m_rtv.initialize(m_device.getDevice(), m_swapChain.getSwapChain());
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
+
+		AX_CORE_LOG_INFO("DirectX12 backend initialized successfully");
 	}
 
 
 
 	void D12Context::shutdown() {
-		#ifdef AX_DEBUG
-		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&m_dxgiDebug)))) {
-			m_dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, (DXGI_DEBUG_RLO_FLAGS)(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
-		}
-		#endif
 
 		waitForPreviousFrame();
 		m_commandQueue.getCommandQueue()->Signal(m_fence.getFence(), m_fence.getFenceValue());
-		CloseHandle(m_fence.getFenceEvent());
 
-		AX_CORE_LOG_INFO("D12Context shutdown");
+		m_fence.release();
+		m_commandList.release();
+		m_rtv.release();
+		m_swapChain.release();
+		m_commandQueue.release();
+		m_device.release();
+
+		#ifdef AX_DEBUG
+		D12DebugLayer::reportLiveObjects();
+		#endif
+
+		AX_CORE_LOG_INFO("DirectX12 backend shutdown");
 	}
 
 

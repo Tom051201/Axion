@@ -11,7 +11,7 @@ namespace Axion {
 	}
 
 	void D12RendererAPI::release() {
-		m_context->shutdown();
+		//m_context->shutdown();
 	}
 
 	void D12RendererAPI::beginScene() {

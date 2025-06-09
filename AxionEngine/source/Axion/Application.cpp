@@ -94,5 +94,10 @@ namespace Axion {
 		m_layerStack.pushOverlay(layer);
 		layer->onAttach();
 	}
+
+	void Application::removeLayer(Layer* layer) {
+		m_layerStack.removeLayer(layer);
+		layer->onDetach();
+	}
 }
 

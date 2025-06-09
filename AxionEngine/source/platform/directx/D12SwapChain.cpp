@@ -34,11 +34,12 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create temp swap chain");
 		AX_THROW_IF_FAILED_HR(m_tempsc1.As(&m_swapChain), "Failed to transfer swap chain");
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-		AX_CORE_LOG_INFO("Successfully created swap chain");
+		AX_CORE_LOG_TRACE("Successfully created swap chain");
 	}
 
 	void D12SwapChain::release() {
-		if (m_swapChain.Get()) { m_swapChain.Reset(); }
+		m_swapChain.Reset();
+		m_tempsc1.Reset();
 	}
 
 	void D12SwapChain::resize(UINT width, UINT height, ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, UINT rtvDescriptorSize,
