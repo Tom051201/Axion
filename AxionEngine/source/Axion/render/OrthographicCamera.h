@@ -9,13 +9,16 @@ namespace Axion {
 	class OrthographicCamera {
 	public:
 
-		OrthographicCamera(float left, float right, float botton, float top, float nearZ = -1.0f, float farZ = 1.0f);
+		OrthographicCamera(float left, float right, float bottom, float top, float nearZ = -1.0f, float farZ = 1.0f);
+
+		void setProjection(float left, float right, float bottom, float top, float nearZ = -1.0f, float farZ = 1.0f);
 
 		void setPosition(const Vec3& pos);
 		void setRotationZ(float rot);
 
 		const Vec3& getPosition() const { return m_position; };
 		float getRotationZ() const { return m_rotationZ; }
+
 
 		const Mat4& getProjectionMatrix() const { return m_projectionMatrix; }
 		const Mat4& getViewMatrix() const { return m_viewMatrix; }

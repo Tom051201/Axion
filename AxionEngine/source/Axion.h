@@ -9,6 +9,7 @@
 #include "Axion/imgui/ImGuiLayer.h"
 #include "Axion/render/Renderer.h"
 #include "Axion/render/OrthographicCamera.h"
+#include "Axion/OrthographicCameraController.h"
 #include "Axion/render/DataTypes.h"
 #include "Axion/render/Buffers.h"
 #include "Axion/Core.h"

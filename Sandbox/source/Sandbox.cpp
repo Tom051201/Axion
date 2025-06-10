@@ -3,7 +3,7 @@
 class ExampleLayer : public Axion::Layer {
 public:
 
-	ExampleLayer() : Layer("Example"), m_camera(-1.6f, 1.6f, -0.9f, 0.9f), m_camPos(0.0f, 0.0f, 0.0f), m_camRot(0.0f) {
+	ExampleLayer() : Layer("Example"), m_cameraController(1280.0f / 720.0f, true) {
 
 		m_shaderLibrary.load("quad", "assets/Shader1.hlsl");
 		m_shaderLibrary.load("triangle", "assets/Shader2.hlsl");
@@ -34,24 +34,17 @@ public:
 
 	void onUpdate(Axion::Timestep ts) override {
 
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::Left)) m_camPos.x -= m_camMoveSpeed * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::Right)) m_camPos.x += m_camMoveSpeed * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::Up)) m_camPos.y += m_camMoveSpeed * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::Down)) m_camPos.y -= m_camMoveSpeed * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::A)) m_camRot += m_camRotSpeed * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::D)) m_camRot -= m_camRotSpeed * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::W)) m_quadTransform.m[0][3] += 1 * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::S)) m_quadTransform.m[0][3] -= 1 * ts;
+		m_cameraController.onUpdate(ts);
 
-		m_camera.setPosition(m_camPos);
-		m_camera.setRotationZ(m_camRot);
+		if (Axion::Input::isKeyPressed(Axion::KeyCode::Up)) m_quadTransform.m[0][3] += 1 * ts;
+		if (Axion::Input::isKeyPressed(Axion::KeyCode::Down)) m_quadTransform.m[0][3] -= 1 * ts;
 
-		Axion::Renderer::beginScene(m_camera);
+		Axion::Renderer::beginScene(m_cameraController.getCamera());
 		Axion::Renderer::clear(0.0f, 0.1f, 0.2f, 1.0f);
 
 		// camera
 		Axion::SceneBuffer sceneBuffer;
-		sceneBuffer.viewProjection = DirectX::XMMatrixTranspose(m_camera.getViewProjectionMatrix().toXM());
+		sceneBuffer.viewProjection = DirectX::XMMatrixTranspose(m_cameraController.getCamera().getViewProjectionMatrix().toXM());
 		m_cameraCB->update(&sceneBuffer, sizeof(Axion::SceneBuffer));
 
 		// quad
@@ -71,18 +64,15 @@ public:
 
 	void onEvent(Axion::Event& e) override {
 		Axion::EventDispatcher dispatcher(e);
+		m_cameraController.onEvent(e);
 	}
 
 private:
 
 	Axion::ShaderLibrary m_shaderLibrary;
 
-	Axion::OrthographicCamera m_camera;
-	Axion::Vec3 m_camPos;
+	Axion::OrthographicCameraController m_cameraController;
 	Axion::Ref<Axion::ConstantBuffer> m_cameraCB;
-	float m_camRot;
-	float m_camMoveSpeed = 1.0f;
-	float m_camRotSpeed = 2.0f;
 
 	// triangle
 	std::vector<Axion::Vertex> m_triangleVertices = {
@@ -114,8 +104,6 @@ private:
 	Axion::Ref<Axion::ConstantBuffer> m_quadCB;
 	Axion::Mat4 m_quadTransform;
 	Axion::Vec3 m_quadPosition;
-
-
 };
 
 class Sandbox : public Axion::Application {

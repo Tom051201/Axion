@@ -11,6 +11,11 @@ namespace Axion {
 
 	}
 
+	void OrthographicCamera::setProjection(float left, float right, float bottom, float top, float nearZ, float farZ) {
+		m_projectionMatrix = Mat4::orthographic(right - left, top - bottom, nearZ, farZ);
+		recalculateViewMatrix();
+	}
+
 	void OrthographicCamera::setPosition(const Vec3& pos) {
 		m_position = pos;
 		recalculateViewMatrix();
