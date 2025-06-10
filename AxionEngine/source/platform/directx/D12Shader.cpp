@@ -67,11 +67,16 @@ namespace Axion {
 			&errorBlob
 		);
 
-		if (errorBlob) {
-			std::string errorMsg = (char*)errorBlob->GetBufferPointer();
-			AX_CORE_LOG_ERROR("Shader Compilation Error: {0}", errorMsg);
+		if (FAILED(hr)) {
+			if (errorBlob) {
+				std::string errorMsg = (char*)errorBlob->GetBufferPointer();
+				AX_CORE_LOG_ERROR("Shader Compilation Error: {0}", errorMsg);
+			}
+			else {
+				AX_CORE_LOG_ERROR("Shader Compilation failed with no error message.");
+			}
+			AX_THROW_IF_FAILED_HR(hr, "Shader compilation failed");
 		}
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create Shader");
 
 	}
 
@@ -85,9 +90,8 @@ namespace Axion {
 
 
 
-	void D12Shader::unbind() const {
-		// not required
-	}
+	// not required
+	void D12Shader::unbind() const {}
 
 
 
@@ -121,11 +125,18 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<ID3DBlob> error;
 
 		HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-		if (error) { AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature: {0}", (char*)error->GetBufferPointer()); }
-		else { AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature: unkown error", (char*)error->GetBufferPointer()); }
+		if (error) {
+			AX_CORE_LOG_ERROR("Root signature error: {0}", (char*)error->GetBufferPointer());
+		}
+		AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature");
+		
 		
 		hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create root signature");
+
+		#ifdef AX_DEBUG
+		m_rootSignature->SetName(L"RootSignature");
+		#endif
 	}
 
 
@@ -164,6 +175,9 @@ namespace Axion {
 		HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create graphics pipeline state");
 
+		#ifdef AX_DEBUG
+		m_pipelineState->SetName(L"PipelineState");
+		#endif
 	}
 
 }

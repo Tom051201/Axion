@@ -15,8 +15,11 @@ namespace Axion {
 
 		void resize(UINT width, UINT height, ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, UINT rtvDescriptorSize,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& renderTargets);
+		void present(UINT syncInterval = 1, UINT flags = 0);
+		void advanceFrame();
 
 		inline IDXGISwapChain3* getSwapChain() const { return m_swapChain.Get(); }
+
 		inline UINT getFrameIndex() const { return m_frameIndex; }
 		inline void setFrameIndex(UINT frameIndex) { m_frameIndex = frameIndex; }
 
@@ -25,7 +28,6 @@ namespace Axion {
 		const UINT m_frameCount = AX_MAX_SWAPCHAIN_BUFFERS;
 		UINT m_frameIndex = 0;
 		Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swapChain;
-		Microsoft::WRL::ComPtr<IDXGISwapChain1> m_tempsc1;
 
 		HWND m_hwnd = nullptr;
 	};

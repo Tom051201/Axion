@@ -7,9 +7,7 @@
 
 namespace Axion {
 
-	D12Context::~D12Context() {
-		//shutdown();
-	}
+	D12Context::~D12Context() {}
 
 	void D12Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
 		m_width = width;
@@ -26,6 +24,7 @@ namespace Axion {
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
 
+		AX_CORE_LOG_INFO("Using gpu adapter: {0}", m_device.getAdapterName());
 		AX_CORE_LOG_INFO("DirectX12 backend initialized successfully");
 	}
 
@@ -54,10 +53,9 @@ namespace Axion {
 
 	void D12Context::present() {
 
-		ID3D12CommandList* lists[] = { m_commandList.getCommandList() };
-		m_commandQueue.getCommandQueue()->ExecuteCommandLists(1, lists);
+		m_commandQueue.executeCommandList(m_commandList.getCommandList());
 
-		AX_THROW_IF_FAILED_HR(m_swapChain.getSwapChain()->Present(1, 0), "Failed to present swap chain");
+		m_swapChain.present(m_vsyncInterval, 0);
 
 		waitForPreviousFrame();
 	}
@@ -70,65 +68,53 @@ namespace Axion {
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtv.getRTVHeap()->GetCPUDescriptorHandleForHeapStart();
 		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtv.getRTVDescriptorSize();
 
-		m_commandList.getCommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-		m_commandList.getCommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		getCommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+		getCommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	}
 
 
 
 	void D12Context::beginFrame() {
+		auto* cmd = m_commandList.getCommandList();
+
 		AX_THROW_IF_FAILED_HR(m_commandList.getCommandAllocator()->Reset(), "Failed to reset command allocator");
-		AX_THROW_IF_FAILED_HR(m_commandList.getCommandList()->Reset(m_commandList.getCommandAllocator(), nullptr), "Failed to reset command list");
+		AX_THROW_IF_FAILED_HR(cmd->Reset(m_commandList.getCommandAllocator(), nullptr), "Failed to reset command list");
 
-		D3D12_RESOURCE_BARRIER barrier = {};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.pResource = m_rtv.getRenderTarget(m_swapChain.getFrameIndex());
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		m_commandList.getCommandList()->ResourceBarrier(1, &barrier);
+		cmd->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+			m_rtv.getRenderTarget(m_swapChain.getFrameIndex()),
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_STATE_RENDER_TARGET
+		));
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtv.getRTVHeap()->GetCPUDescriptorHandleForHeapStart();
-		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtv.getRTVDescriptorSize();
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
+			m_rtv.getRTVHeap()->GetCPUDescriptorHandleForHeapStart(),
+			static_cast<INT>(m_swapChain.getFrameIndex()),
+			m_rtv.getRTVDescriptorSize()
+		);
 
-		m_commandList.getCommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+		cmd->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 		const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-		m_commandList.getCommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		cmd->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 		// Set viewport and scissor
-		D3D12_VIEWPORT viewport = {};
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = 0;
-		viewport.Width = static_cast<float>(m_width);
-		viewport.Height = static_cast<float>(m_height);
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		m_commandList.getCommandList()->RSSetViewports(1, &viewport);
-
-		D3D12_RECT scissorRect = {};
-		scissorRect.left = 0;
-		scissorRect.top = 0;
-		scissorRect.right = m_width;
-		scissorRect.bottom = m_height;
-		m_commandList.getCommandList()->RSSetScissorRects(1, &scissorRect);
+		CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
+		getCommandList()->RSSetViewports(1, &viewport);
+		CD3DX12_RECT scissor(0, 0, m_width, m_height);
+		getCommandList()->RSSetScissorRects(1, &scissor);
 	}
 
 
 
 	void D12Context::endFrame() {
 
-		// Reverse barrier
-		D3D12_RESOURCE_BARRIER barrier = {};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.pResource = m_rtv.getRenderTarget(m_swapChain.getFrameIndex());
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		m_commandList.getCommandList()->ResourceBarrier(1, &barrier);
+		// reverse barrier
+		m_commandList.getCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+			m_rtv.getRenderTarget(m_swapChain.getFrameIndex()),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT
+		));
 
-		AX_THROW_IF_FAILED_HR(m_commandList.getCommandList()->Close(), "Failed to close the command list");
+		m_commandList.close();
 	}
 
 
@@ -149,7 +135,7 @@ namespace Axion {
 
 
 	void D12Context::resize(uint32_t width, uint32_t height) {
-		if (width == 0 || height == 0)return;
+		if (width <= 0 || height <= 0)return;
 
 		waitForPreviousFrame();
 

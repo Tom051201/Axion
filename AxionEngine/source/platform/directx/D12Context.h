@@ -28,18 +28,28 @@ namespace Axion {
 
 		void resize(uint32_t width, uint32_t height);
 
+		void activateVsync() { m_vsyncInterval = 1; };
+		void deactivateVsync() { m_vsyncInterval = 0; };
+
 		inline void* getNativeContext() const override { return (void*)this; }
 
 		inline ID3D12Device* getDevice() const { return m_device.getDevice(); }
-		inline ID3D12GraphicsCommandList* getCommandList() const { return m_commandList.getCommandList(); }
-		inline const D12RenderTarget* getRenderTarget() const { return &m_rtv; }
+		inline IDXGIFactory6* getFactory() const { return m_device.getFactory(); }
+		inline IDXGIAdapter1* getAdapter() const { return m_device.getAdapter(); }
 		inline ID3D12CommandQueue* getCommandQueue() const { return m_commandQueue.getCommandQueue(); }
+		inline IDXGISwapChain3* getSwapChain() const { return m_swapChain.getSwapChain(); }
+		inline ID3D12DescriptorHeap* getRTVHeap() const { return m_rtv.getRTVHeap(); }
+		inline ID3D12Resource* getRTV(UINT index) const { return m_rtv.getRenderTarget(index); }
+		inline ID3D12GraphicsCommandList* getCommandList() const { return m_commandList.getCommandList(); }
+		inline ID3D12CommandAllocator* getCommandAllocator() const { return m_commandList.getCommandAllocator(); }
+		inline ID3D12Fence* getFence() const { return m_fence.getFence(); }
 
 	private:
 
 		void waitForPreviousFrame();
 
 		uint32_t m_width = 0, m_height = 0;
+		int m_vsyncInterval = 0;
 
 		D12Device m_device;
 		D12CommandQueue m_commandQueue;

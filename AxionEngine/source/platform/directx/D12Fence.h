@@ -11,6 +11,10 @@ namespace Axion {
 		void initialize(ID3D12Device* device);
 		void release();
 
+		void waitForGPU();
+		void signalAndWait();
+		bool hasCompleted() const;
+
 		inline ID3D12Fence* getFence() const { return m_fence.Get(); }
 		inline UINT64 getFenceValue() const { return m_fenceValue; }
 		inline HANDLE getFenceEvent() const { return m_fenceEvent; }

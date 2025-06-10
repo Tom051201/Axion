@@ -11,6 +11,9 @@ namespace Axion {
 		void initialize(ID3D12Device* device);
 		void release();
 
+		void reset();
+		void close();
+
 		inline ID3D12GraphicsCommandList* getCommandList() const { return m_cmdList.Get(); }
 		inline ID3D12CommandAllocator* getCommandAllocator() const { return m_cmdAllocator.Get(); }
 

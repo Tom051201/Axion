@@ -48,6 +48,10 @@ namespace Axion {
 		m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
 		m_view.StrideInBytes = m_stride;
 		m_view.SizeInBytes = m_size;
+
+		#ifdef AX_DEBUG
+		m_buffer->SetName(L"VertexBuffer");
+		#endif
 	}
 
 	D12VertexBuffer::~D12VertexBuffer() {
@@ -64,7 +68,8 @@ namespace Axion {
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 
-	void D12VertexBuffer::unbind() const {} // unrequired
+	// not required
+	void D12VertexBuffer::unbind() const {}
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// D12IndexBuffer ///////////////////////////////////////////////////////////
@@ -99,6 +104,10 @@ namespace Axion {
 		m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
 		m_view.Format = DXGI_FORMAT_R32_UINT;
 		m_view.SizeInBytes = bufferSize;
+
+		#ifdef AX_DEBUG
+		m_buffer->SetName(L"IndexBuffer");
+		#endif
 	}
 
 	D12IndexBuffer::~D12IndexBuffer() {
@@ -114,9 +123,8 @@ namespace Axion {
 		cmdList->IASetIndexBuffer(&m_view);
 	}
 
-	void D12IndexBuffer::unbind() const {
-
-	}
+	// not required
+	void D12IndexBuffer::unbind() const {}
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// D12ConstantBuffer ////////////////////////////////////////////////////////
@@ -141,6 +149,10 @@ namespace Axion {
 		D3D12_RANGE readRange = { 0, 0 };
 		hr = m_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedPtr));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to map constant buffer");
+
+		#ifdef AX_DEBUG
+		m_buffer->SetName(L"ConstantBuffer");
+		#endif
 	}
 
 	D12ConstantBuffer::~D12ConstantBuffer() {
@@ -161,8 +173,7 @@ namespace Axion {
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress());
 	}
 
-	void D12ConstantBuffer::unbind() const {
-
-	}
+	// not required
+	void D12ConstantBuffer::unbind() const {}
 
 }

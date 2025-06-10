@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AxionSettings.h"
+
 namespace Axion {
 
 	class D12RenderTarget {
@@ -12,6 +14,7 @@ namespace Axion {
 		void release();
 
 		void resetRTVs();
+		void resize(ID3D12Device* device, IDXGISwapChain3* swapChain);
 
 		inline ID3D12DescriptorHeap* getRTVHeap() const { return m_rtvHeap.Get(); }
 		inline ID3D12Resource* getRenderTarget(UINT index) const { return m_renderTargets[index].Get(); }
@@ -19,10 +22,10 @@ namespace Axion {
 
 	private:
 	
-		const UINT m_frameCount = 2;
+		const UINT m_frameCount = AX_MAX_SWAPCHAIN_BUFFERS;
 		UINT m_rtvDescriptorSize = 0;
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_renderTargets[2];
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_renderTargets[AX_MAX_SWAPCHAIN_BUFFERS];
 	
 	};
 

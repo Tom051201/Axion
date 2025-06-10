@@ -9,7 +9,10 @@ namespace Axion {
 
 	void D12SwapChain::initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, UINT width, UINT height) {
 
-		if (!m_hwnd) m_hwnd = hwnd;
+		AX_ASSERT(hwnd, "HWMD is null");
+		AX_ASSERT(factory, "IDXGIFactory6 is null");
+		AX_ASSERT(cmdQueue, "Command queue is null");
+		m_hwnd = hwnd;
 
 		DXGI_SWAP_CHAIN_DESC1 swapDesc = {};
 		swapDesc.BufferCount = m_frameCount;
@@ -20,26 +23,16 @@ namespace Axion {
 		swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapDesc.SampleDesc.Count = 1;
 
-		if (factory == nullptr) {
-			AX_CORE_LOG_ERROR("factory");
-		}
-		if (cmdQueue == nullptr) {
-			AX_CORE_LOG_ERROR("cmdqueue");
-		}
-		if (hwnd == nullptr) {
-			AX_CORE_LOG_ERROR("hwnd");
-		}
-
-		HRESULT hr = factory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapDesc, nullptr, nullptr, &m_tempsc1);
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create temp swap chain");
-		AX_THROW_IF_FAILED_HR(m_tempsc1.As(&m_swapChain), "Failed to transfer swap chain");
+		Microsoft::WRL::ComPtr<IDXGISwapChain1> tempSwapChain;
+		AX_THROW_IF_FAILED_HR(factory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapDesc, nullptr, nullptr, &tempSwapChain), "Failed to create temp swap chain");
+		AX_THROW_IF_FAILED_HR(tempSwapChain.As(&m_swapChain), "Failed to transfer swap chain");
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 		AX_CORE_LOG_TRACE("Successfully created swap chain");
+
 	}
 
 	void D12SwapChain::release() {
 		m_swapChain.Reset();
-		m_tempsc1.Reset();
 	}
 
 	void D12SwapChain::resize(UINT width, UINT height, ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, UINT rtvDescriptorSize,
@@ -88,6 +81,14 @@ namespace Axion {
 			renderTargets[i] = backBuffer;
 		}
 
+	}
+
+	void D12SwapChain::present(UINT syncInterval, UINT flags) {
+		AX_THROW_IF_FAILED_HR(m_swapChain->Present(syncInterval, flags), "Failed to present swap chain");
+	}
+	
+	void D12SwapChain::advanceFrame() {
+		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	}
 
 }
