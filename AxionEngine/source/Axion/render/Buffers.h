@@ -2,6 +2,7 @@
 
 #include "axpch.h"
 
+#include "Axion/Core.h"
 #include "DataTypes.h"
 
 namespace Axion {
@@ -89,7 +90,7 @@ namespace Axion {
 		virtual uint32_t getVertexCount() const = 0; // in vertices
 		virtual uint32_t getSize() const = 0; // in bytes
 
-		static VertexBuffer* create(const std::vector<Vertex>& vertices);
+		static Ref<VertexBuffer> create(const std::vector<Vertex>& vertices);
 
 	};
 
@@ -109,7 +110,7 @@ namespace Axion {
 
 		virtual uint32_t getIndexCount() const = 0;
 
-		static IndexBuffer* create(const std::vector<uint32_t>& indices);
+		static Ref<IndexBuffer> create(const std::vector<uint32_t>& indices);
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +131,7 @@ namespace Axion {
 
 		virtual uint32_t getSize() const = 0;
 
-		static ConstantBuffer* create(size_t size);
+		static Ref<ConstantBuffer> create(size_t size);
 
 	};
 

@@ -24,29 +24,18 @@ namespace Axion {
 	}
 
 
-	void D12Shader::compileFromString(const std::string& vertexSrc, const std::string& pixelSrc) {
 
-		compileStage(vertexSrc, "main", SHADER_MODEL_VS, m_vertexShaderBlob);
-		compileStage(pixelSrc, "main", SHADER_MODEL_PS, m_pixelShaderBlob);
+	void D12Shader::compileFromFile(const std::string& filePath) {
+		std::string source = Shader::readShaderFile(filePath);
 
-		createRootSignature();
-		createPipelineState();
-
-		AX_CORE_LOG_TRACE("Shader '{0}' setup successful (root signature / pipeline state)", m_name);
-		AX_CORE_LOG_TRACE("Shader '{0}' compiled (from string input)", m_name);
-	}
-
-
-
-	void D12Shader::compileFromFile(const std::string& vertexPath, const std::string& pixelPath) {
-		compileStage(Shader::readShaderFile(vertexPath), "main", SHADER_MODEL_VS, m_vertexShaderBlob);
-		compileStage(Shader::readShaderFile(pixelPath), "main", SHADER_MODEL_PS, m_pixelShaderBlob);
+		compileStage(source, "VSMain", SHADER_MODEL_VS, m_vertexShaderBlob);
+		compileStage(source, "PSMain", SHADER_MODEL_PS, m_pixelShaderBlob);
 
 		createRootSignature();
 		createPipelineState();
 
 		AX_CORE_LOG_TRACE("Shader '{0}' setup successful (root signature / pipeline state)", m_name);
-		AX_CORE_LOG_TRACE("Shader '{0}' compiled ({1} / {2})", m_name, vertexPath, pixelPath);
+		AX_CORE_LOG_TRACE("Shader '{0}' compiled ({1})", m_name, filePath);
 	}
 
 

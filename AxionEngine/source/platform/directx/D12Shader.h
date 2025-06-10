@@ -24,8 +24,7 @@ namespace Axion {
 
 		inline const std::string& getName() const override { return m_name; }
 
-		void compileFromFile(const std::string& vertexPath, const std::string& pixelPath) override;
-		void compileFromString(const std::string& vertexSrc, const std::string& pixelSrc) override;
+		void compileFromFile(const std::string& filePath) override;
 
 		inline const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 		inline const Microsoft::WRL::ComPtr<ID3DBlob>& getPixelBlob() const { return m_pixelShaderBlob; }

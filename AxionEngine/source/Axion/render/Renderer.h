@@ -5,6 +5,7 @@
 #include "Axion/Window.h"
 
 #include "OrthographicCamera.h"
+#include "Mesh.h"
 
 namespace Axion {
 
@@ -21,6 +22,7 @@ namespace Axion {
 		static void present();
 
 		static void submit(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, const Ref<ConstantBuffer>& cb, uint32_t slot, const Ref<ConstantBuffer>& transform, uint32_t slotTransform);
+		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& cb, uint32_t slot, const Ref<ConstantBuffer>& transform, uint32_t slotTransform);
 
 		inline static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
 

@@ -40,5 +40,12 @@ namespace Axion {
 		s_rendererAPI->drawIndexed(vb, ib);
 	}
 
+	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& cb, uint32_t slot, const Ref<ConstantBuffer>& transform, uint32_t slotTransform) {
+		cb->bind(slot);
+		transform->bind(slotTransform);
+		mesh->render();
+		s_rendererAPI->drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
+	}
+
 }
 

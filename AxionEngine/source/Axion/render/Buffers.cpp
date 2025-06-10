@@ -32,12 +32,12 @@ namespace Axion {
 	///// VertexBuffer /////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	VertexBuffer* VertexBuffer::create(const std::vector<Vertex>& vertices) {
+	Ref<VertexBuffer> VertexBuffer::create(const std::vector<Vertex>& vertices) {
 
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::API::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::API::Direct3D12: { return new D12VertexBuffer(vertices); }
+			case RendererAPI::API::Direct3D12: { return std::make_shared<D12VertexBuffer>(vertices); }
 
 		}
 		return nullptr;
@@ -47,12 +47,12 @@ namespace Axion {
 	///// IndexBuffer //////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	IndexBuffer* IndexBuffer::create(const std::vector<uint32_t>& indices) {
+	Ref<IndexBuffer> IndexBuffer::create(const std::vector<uint32_t>& indices) {
 	
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::API::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::API::Direct3D12: { return new D12IndexBuffer(indices); }
+			case RendererAPI::API::Direct3D12: { return std::make_shared<D12IndexBuffer>(indices); }
 			
 		}
 		return nullptr;
@@ -63,11 +63,11 @@ namespace Axion {
 	///// ConstatBuffer ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	ConstantBuffer* ConstantBuffer::create(size_t size) {
+	Ref<ConstantBuffer> ConstantBuffer::create(size_t size) {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::API::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::API::Direct3D12: { return new D12ConstantBuffer(size); }
+			case RendererAPI::API::Direct3D12: { return std::make_shared<D12ConstantBuffer>(size); }
 
 		}
 		return nullptr;

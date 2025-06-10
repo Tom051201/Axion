@@ -1,46 +1,35 @@
 #include <Axion.h>
 
-// TEMP
-#include "platform/directx/D12Shader.h"
-
 class ExampleLayer : public Axion::Layer {
 public:
 
 	ExampleLayer() : Layer("Example"), m_camera(-1.6f, 1.6f, -0.9f, 0.9f), m_camPos(0.0f, 0.0f, 0.0f), m_camRot(0.0f) {
-		m_shader.reset(Axion::Shader::create("basic"));
-		m_shader->compileFromFile("assets/VertexShader.hlsl", "assets/PixelShader.hlsl");
-		
-		m_shader2.reset(Axion::Shader::create("basic2"));
-		m_shader2->compileFromFile("assets/VertexShader2.hlsl", "assets/PixelShader2.hlsl");
 
-		m_quadVB.reset(Axion::VertexBuffer::create(m_quadVertices));
-		m_quadIB.reset(Axion::IndexBuffer::create(m_quadIndices));
-		m_quadCB.reset(Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer)));
+		m_shaderLibrary.load("quad", "assets/Shader1.hlsl");
+		m_shaderLibrary.load("triangle", "assets/Shader2.hlsl");
+
+		m_quadMesh = Axion::Mesh::create(m_quadVertices, m_quadIndices);
+		m_quadCB = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 		m_quadTransform = Axion::Mat4::identity();
 
-		m_triangleVB.reset(Axion::VertexBuffer::create(m_triangleVertices));
-		m_triangleIB.reset(Axion::IndexBuffer::create(m_triangleInices));
-		m_triangleCB.reset(Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer)));
+		m_triangleMesh = Axion::Mesh::create(m_triangleVertices, m_triangleInices);
+		m_triangleCB = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 		m_triangleTransform = Axion::Mat4::identity();
 
-		m_cameraCB.reset(Axion::ConstantBuffer::create(sizeof(Axion::SceneBuffer)));
+		m_cameraCB = Axion::ConstantBuffer::create(sizeof(Axion::SceneBuffer));
 	}
 
 	void onDetach() override {
 
-		m_shader->release();
-		m_shader2->release();
+		m_shaderLibrary.release();
 
-		m_quadVB->release();
-		m_quadIB->release();
+		m_quadMesh->release();
 		m_quadCB->release();
 
-		m_triangleVB->release();
-		m_triangleIB->release();
+		m_triangleMesh->release();
 		m_triangleCB->release();
 
 		m_cameraCB->release();
-
 	}
 
 	void onUpdate(Axion::Timestep ts) override {
@@ -66,18 +55,18 @@ public:
 		m_cameraCB->update(&sceneBuffer, sizeof(Axion::SceneBuffer));
 
 		// quad
-		m_shader->bind();
+		m_shaderLibrary.get("quad")->bind();
 		Axion::ObjectBuffer quadData;
 		quadData.modelMatrix = DirectX::XMMatrixTranspose(m_quadTransform.toXM());
 		m_quadCB->update(&quadData, sizeof(Axion::ObjectBuffer));
-		Axion::Renderer::submit(m_quadVB, m_quadIB, m_cameraCB, 0, m_quadCB, 1);
+		Axion::Renderer::submit(m_quadMesh, m_cameraCB, 0, m_quadCB, 1);
 
 		// triangle
-		m_shader2->bind();
+		m_shaderLibrary.get("triangle")->bind();
 		Axion::ObjectBuffer triangleData;
 		triangleData.modelMatrix = DirectX::XMMatrixTranspose(m_triangleTransform.toXM());
 		m_triangleCB->update(&triangleData, sizeof(Axion::ObjectBuffer));
-		Axion::Renderer::submit(m_triangleVB, m_triangleIB, m_cameraCB, 0, m_triangleCB, 1);
+		Axion::Renderer::submit(m_triangleMesh, m_cameraCB, 0, m_triangleCB, 1);
 	}
 
 	void onEvent(Axion::Event& e) override {
@@ -85,6 +74,8 @@ public:
 	}
 
 private:
+
+	Axion::ShaderLibrary m_shaderLibrary;
 
 	Axion::OrthographicCamera m_camera;
 	Axion::Vec3 m_camPos;
@@ -100,12 +91,9 @@ private:
 		Axion::Vertex( 0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f)
 	};
 
-	std::vector<uint32_t> m_triangleInices = {
-		0, 2, 1
-	};
+	std::vector<uint32_t> m_triangleInices = { 0, 2, 1 };
 
-	Axion::Ref<Axion::VertexBuffer> m_triangleVB;
-	Axion::Ref<Axion::IndexBuffer> m_triangleIB;
+	Axion::Ref<Axion::Mesh> m_triangleMesh;
 	Axion::Ref<Axion::ConstantBuffer> m_triangleCB;
 	Axion::Mat4 m_triangleTransform;
 	Axion::Vec3 m_trianglePosition;
@@ -120,20 +108,14 @@ private:
 		Axion::Vertex(-0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f, 1.0f,		0.0f, 1.0f)
 	};
 
-	std::vector<uint32_t> m_quadIndices = {
-		0, 2, 1,
-		2, 0, 3
-	};
+	std::vector<uint32_t> m_quadIndices = { 0, 2, 1,	2, 0, 3 };
 
-	Axion::Ref<Axion::VertexBuffer> m_quadVB;
-	Axion::Ref<Axion::IndexBuffer> m_quadIB;
+	Axion::Ref<Axion::Mesh> m_quadMesh;
 	Axion::Ref<Axion::ConstantBuffer> m_quadCB;
 	Axion::Mat4 m_quadTransform;
 	Axion::Vec3 m_quadPosition;
 
 
-	Axion::Ref<Axion::Shader> m_shader;
-	Axion::Ref<Axion::Shader> m_shader2;
 };
 
 class Sandbox : public Axion::Application {
@@ -143,9 +125,7 @@ public:
 		pushLayer(new ExampleLayer());
 		pushLayer(new Axion::ImGuiLayer());
 	}
-	~Sandbox() override {
-
-	}
+	~Sandbox() override {}
 
 };
 
