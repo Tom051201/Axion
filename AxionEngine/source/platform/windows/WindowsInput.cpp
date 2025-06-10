@@ -1,9 +1,9 @@
 #include "axpch.h"
 #include "WindowsInput.h"
 
-#include "Axion/Application.h"
+#include "Axion/core/Application.h"
 
-#include "WindowsInputMapper.h"
+#include "platform/windows/WindowsInputMapper.h"
 
 namespace Axion {
 

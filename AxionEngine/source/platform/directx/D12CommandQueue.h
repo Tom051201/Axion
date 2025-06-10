@@ -1,7 +1,5 @@
 #pragma once
 
-#include <axpch.h>
-
 namespace Axion {
 	
 	class D12CommandQueue {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Axion/Core.h"
-#include "Axion/events/Event.h"
+#include "Axion/core/Core.h"
 #include "Axion/core/Timestep.h"
+#include "Axion/events/Event.h"
 
 namespace Axion {
 

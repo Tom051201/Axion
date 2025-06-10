@@ -1,8 +1,7 @@
 #pragma once
-
 #include "axpch.h"
 
-#include "Event.h"
+#include "Axion/events/Event.h"
 
 #include "Axion/input/InputCodes.h"
 

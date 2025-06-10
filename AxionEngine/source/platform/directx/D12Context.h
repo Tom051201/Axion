@@ -4,12 +4,12 @@
 
 #include "Axion/render/GraphicsContext.h"
 
-#include "D12Device.h"
-#include "D12CommandQueue.h"
-#include "D12SwapChain.h"
-#include "D12RenderTarget.h"
-#include "D12CommandList.h"
-#include "D12Fence.h"
+#include "platform/directx/D12Device.h"
+#include "platform/directx/D12CommandQueue.h"
+#include "platform/directx/D12SwapChain.h"
+#include "platform/directx/D12RenderTarget.h"
+#include "platform/directx/D12CommandList.h"
+#include "platform/directx/D12Fence.h"
 
 namespace Axion {
 

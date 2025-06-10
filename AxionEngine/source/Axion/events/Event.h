@@ -1,6 +1,7 @@
 #pragma once
 #include "axpch.h"
-#include "Axion/Core.h"
+
+#include "Axion/core/Core.h"
 
 namespace Axion {
 

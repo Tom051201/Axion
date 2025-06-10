@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Axion/layers/Layer.h"
-#include "Axion/Window.h"
+#include "Axion/core/Window.h"
 
 #include "Axion/events/MouseEvent.h"
 #include "Axion/events/KeyEvent.h"

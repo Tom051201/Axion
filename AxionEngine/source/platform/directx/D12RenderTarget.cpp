@@ -1,8 +1,7 @@
 #include "axpch.h"
 #include "D12RenderTarget.h"
 
-#include "Axion/Core.h"
-#include "AxionSettings.h"
+#include "Axion/core/Core.h"
 
 namespace Axion {
 

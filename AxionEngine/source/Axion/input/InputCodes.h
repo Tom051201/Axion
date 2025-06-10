@@ -1,5 +1,4 @@
 #pragma once
-
 #include "axpch.h"
 
 #include "spdlog/fmt/fmt.h"

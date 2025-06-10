@@ -1,7 +1,7 @@
 #pragma once
-
 #include "axpch.h"
-#include "Axion/Window.h"
+
+#include "Axion/core/Window.h"
 #include "Axion/render/Buffers.h"
 
 namespace Axion {

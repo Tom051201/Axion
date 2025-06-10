@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Axion/Core.h"
+#include "Axion/core/Core.h"
 
-#include "Buffers.h"
-#include "DataTypes.h"
+#include "Axion/render/Buffers.h"
+#include "Axion/render/DataTypes.h"
 
 namespace Axion {
 

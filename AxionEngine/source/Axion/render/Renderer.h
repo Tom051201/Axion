@@ -1,11 +1,10 @@
 #pragma once
-
 #include "axpch.h"
-#include "RendererAPI.h"
-#include "Axion/Window.h"
 
-#include "OrthographicCamera.h"
-#include "Mesh.h"
+#include "Axion/core/Window.h"
+#include "Axion/render/RendererAPI.h"
+#include "Axion/render/OrthographicCamera.h"
+#include "Axion/render/Mesh.h"
 
 namespace Axion {
 

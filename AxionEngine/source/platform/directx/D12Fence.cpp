@@ -1,10 +1,10 @@
 #include "axpch.h"
 #include "D12Fence.h"
 
-#include "Axion/Core.h"
+#include "Axion/core/Core.h"
 #include "Axion/render/GraphicsContext.h"
 
-#include "D12CommandQueue.h"
+#include "platform/directx/D12CommandQueue.h"
 
 namespace Axion {
 

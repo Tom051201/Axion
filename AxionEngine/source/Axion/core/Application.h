@@ -1,14 +1,16 @@
 #pragma once
 
-#include "Core.h"
-#include "core/Timestep.h"
-#include "events/Event.h"
-#include "events/ApplicationEvent.h"
-#include "events/KeyEvent.h"
-#include "Window.h"
-#include "layers/LayerStack.h"
+#include "Axion/core/Core.h"
+#include "Axion/core/Timestep.h"
+#include "Axion/core/Window.h"
 
-#include "render/OrthographicCamera.h"
+#include "Axion/events/Event.h"
+#include "Axion/events/ApplicationEvent.h"
+#include "Axion/events/KeyEvent.h"
+
+#include "Axion/layers/LayerStack.h"
+
+#include "Axion/render/OrthographicCamera.h"
 
 namespace Axion {
 

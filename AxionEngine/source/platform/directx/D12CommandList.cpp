@@ -1,7 +1,7 @@
 #include "axpch.h"
 #include "D12CommandList.h"
 
-#include "Axion/Core.h"
+#include "Axion/core/Core.h"
 
 namespace Axion {
 

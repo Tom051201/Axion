@@ -4,13 +4,13 @@
 #include "Axion/events/ApplicationEvent.h"
 #include "Axion/events/KeyEvent.h"
 #include "Axion/events/MouseEvent.h"
+#include "Axion/render/GraphicsContext.h"
 
-#include "WindowsInputMapper.h"
+#include "platform/windows/WindowsInputMapper.h"
+#include "platform/directx/D12Context.h"
 
 #include "imgui/backends/imgui_impl_win32.h"
 
-#include "Axion/render/GraphicsContext.h"
-#include "platform/directx/D12Context.h"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

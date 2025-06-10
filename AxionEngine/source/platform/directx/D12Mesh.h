@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Axion/Core.h"
+#include "Axion/core/Core.h"
 #include "Axion/render/Mesh.h"
 
-#include "D12Buffers.h"
+#include "platform/directx/D12Buffers.h"
 
 namespace Axion {
 

@@ -1,9 +1,8 @@
 #pragma once
-
 #include "axpch.h"
 
-#include "Core.h"
-#include "events/Event.h"
+#include "Axion/core/Core.h"
+#include "Axion/events/Event.h"
 
 namespace Axion {
 

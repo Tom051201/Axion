@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Axion/Core.h"
-#include "InputCodes.h"
+#include "Axion/core/Core.h"
+#include "Axion/input/InputCodes.h"
 
 namespace Axion {
 

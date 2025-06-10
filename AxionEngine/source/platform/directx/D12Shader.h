@@ -1,5 +1,4 @@
 #pragma once
-
 #include "axpch.h"
 
 #include "Axion/render/Shader.h"

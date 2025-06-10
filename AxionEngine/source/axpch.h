@@ -17,7 +17,7 @@
 
 
 // Axion
-#include "Axion/Logging.h"
+#include "Axion/core/Logging.h"
 
 
 // Windows specifics

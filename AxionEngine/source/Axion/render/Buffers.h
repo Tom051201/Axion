@@ -1,9 +1,8 @@
 #pragma once
-
 #include "axpch.h"
 
-#include "Axion/Core.h"
-#include "DataTypes.h"
+#include "Axion/core/Core.h"
+#include "Axion/render/DataTypes.h"
 
 namespace Axion {
 

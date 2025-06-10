@@ -1,5 +1,6 @@
 #pragma once
-#include "Logging.h"
+
+#include "Axion/core/Logging.h"
 
 #ifdef AX_PLATFORM_WINDOWS
 

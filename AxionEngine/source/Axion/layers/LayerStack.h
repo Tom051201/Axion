@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Layer.h"
 
 #include <vector>
@@ -25,7 +24,6 @@ namespace Axion {
 	private:
 
 		LayerList m_layers;
-		//LayerList::iterator m_layerInsert;
 		uint32_t m_layerInsertIndex = 0;
 
 	};

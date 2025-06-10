@@ -1,16 +1,15 @@
 #include "axpch.h"
 #include "ImGuiLayer.h"
 
-#include "Axion/Core.h"
+#include "Axion/core/Core.h"
 
-#include "Axion/Application.h"
+#include "Axion/core/Application.h"
 #include "Axion/render/GraphicsContext.h"
+#include "Axion/imgui/ImGuiInputMapper.h"
 
 #include "imgui/imgui.h"
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
-
-#include "ImGuiInputMapper.h"
 
 #include "platform/directx/D12Context.h"
 

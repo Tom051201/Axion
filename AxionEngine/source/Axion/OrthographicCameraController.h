@@ -2,9 +2,9 @@
 
 #include "Axion/render/OrthographicCamera.h"
 #include "Axion/core/Timestep.h"
+#include "Axion/core/Math.h"
 #include "Axion/events/ApplicationEvent.h"
 #include "Axion/events/MouseEvent.h"
-#include "Axion/Math.h"
 
 namespace Axion {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Axion/Core.h"
+#include "Axion/core/Core.h"
 #include <string>
 
 namespace Axion {
