@@ -4,7 +4,6 @@
 
 #include "Axion/core/Core.h"
 #include "Axion/core/Application.h"
-#include "Axion/core/EntryPoint.h"
 #include "Axion/core/Logging.h"
 #include "Axion/core/Timestep.h"
 

@@ -136,11 +136,6 @@ namespace Axion {
 
 
 
-
-	struct alignas(16) SceneBuffer {
-		DirectX::XMMATRIX viewProjection;
-	};
-
 	struct alignas(16) ObjectBuffer {
 		DirectX::XMMATRIX modelMatrix;
 	};

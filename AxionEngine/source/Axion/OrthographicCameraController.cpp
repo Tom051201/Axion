@@ -35,7 +35,7 @@ namespace Axion {
 
 	bool OrthographicCameraController::onMouseScrolled(MouseScrolledEvent& e) {
 
-		m_zoomLevel -= e.getYOffset() * 0.2;
+		m_zoomLevel -= e.getYOffset() * 0.2f;
 		m_zoomLevel = std::max(m_zoomLevel, 0.25f);
 		m_camera.setProjection(-m_aspectRatio * m_zoomLevel, m_aspectRatio * m_zoomLevel, -m_zoomLevel, m_zoomLevel);
 

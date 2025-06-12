@@ -5,19 +5,37 @@
 
 namespace Axion {
 
+	struct alignas(16) SceneData {
+		DirectX::XMMATRIX viewProjection;
+	};
+
+	static SceneData* s_sceneData;
+	static Ref<ConstantBuffer> s_uploadBuffer;
+
 	RendererAPI* Renderer::s_rendererAPI = new D12RendererAPI();
 
 	void Renderer::initialize(Window* window) {
 		s_rendererAPI->initialize(window);
+
+		s_sceneData = new SceneData();
+		s_uploadBuffer = ConstantBuffer::create(sizeof(SceneData));
+
+		AX_CORE_LOG_INFO("Renderer initialized");
 	}
 
 	void Renderer::release() {
+		delete s_sceneData;
+		s_uploadBuffer->release();
+
 		s_rendererAPI->release();
 		AX_CORE_LOG_INFO("Renderer shutdown");
 	}
 
 	void Renderer::beginScene(OrthographicCamera& camera) {
 		s_rendererAPI->beginScene();
+		
+		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
+		s_uploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
 
 	void Renderer::endScene() {
@@ -32,17 +50,10 @@ namespace Axion {
 		s_rendererAPI->present();
 	}
 
-	void Renderer::submit(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, const Ref<ConstantBuffer>& cb, uint32_t slot, const Ref<ConstantBuffer>& transform, uint32_t slotTransform) {
-		cb->bind(slot);
-		transform->bind(slotTransform);
-		vb->bind();
-		ib->bind();
-		s_rendererAPI->drawIndexed(vb, ib);
-	}
-
-	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& cb, uint32_t slot, const Ref<ConstantBuffer>& transform, uint32_t slotTransform) {
-		cb->bind(slot);
-		transform->bind(slotTransform);
+	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader) {
+		shader->bind();
+		s_uploadBuffer->bind(0);
+		objectData->bind(1);
 		mesh->render();
 		s_rendererAPI->drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
 	}

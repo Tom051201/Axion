@@ -16,10 +16,6 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 
 namespace Axion {
 
-	void ThrowIfFailed(HRESULT hr) {
-		if (FAILED(hr)) { throw::std::runtime_error("HRESULT failed"); }
-	}
-
 	Window* Window::create(const WindowProperties& wp) { return new WindowsWindow(wp); }
 
 	WindowsWindow::WindowsWindow(const WindowProperties& wp) {
@@ -162,18 +158,18 @@ namespace Axion {
 					window->m_data.eventCallback(ev);
 					break;
 				}
-			case WM_RBUTTONUP: {
-				MouseButtonReleasedEvent ev(VK_RBUTTON);
-				window->m_data.eventCallback(ev);
-				break;
-			}
-			case WM_MOUSEWHEEL: {
-				float dt = GET_WHEEL_DELTA_WPARAM(wparam) / static_cast<float>(WHEEL_DELTA);
-				MouseScrolledEvent ev(0.0f, dt);
-				window->m_data.eventCallback(ev);
-				break;
-			}
-			default: { break; }
+				case WM_RBUTTONUP: {
+					MouseButtonReleasedEvent ev(VK_RBUTTON);
+					window->m_data.eventCallback(ev);
+					break;
+				}
+				case WM_MOUSEWHEEL: {
+					float dt = GET_WHEEL_DELTA_WPARAM(wparam) / static_cast<float>(WHEEL_DELTA);
+					MouseScrolledEvent ev(0.0f, dt);
+					window->m_data.eventCallback(ev);
+					break;
+				}
+				default: { break; }
 			}
 
 		}

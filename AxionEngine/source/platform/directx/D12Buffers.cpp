@@ -159,7 +159,7 @@ namespace Axion {
 	D12ConstantBuffer::~D12ConstantBuffer() {
 		release();
 	}
-
+	
 	void D12ConstantBuffer::release() {
 		m_buffer.Reset();
 	}
