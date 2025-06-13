@@ -62,8 +62,14 @@ namespace Axion {
 
 
 
-	void D12Context::clear(float r, float g, float b, float a) {
-		const float clearColor[] = { r, g, b, a };
+	void D12Context::setClearColor(const Vec4& color) {
+		m_clearColor = color;
+	}
+
+
+
+	void D12Context::clear() {
+		const float clearColor[] = { m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w };
 
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtv.getRTVHeap()->GetCPUDescriptorHandleForHeapStart();
 		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtv.getRTVDescriptorSize();

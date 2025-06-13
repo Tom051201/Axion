@@ -22,8 +22,12 @@ namespace Axion {
 		m_context->endFrame();
 	}
 
-	void D12RendererAPI::clear(float r, float g, float b, float a) {
-		m_context->clear(r, g, b, a);
+	void D12RendererAPI::setClearColor(const Vec4& color) {
+		m_context->setClearColor(color);
+	}
+
+	void D12RendererAPI::clear() {
+		m_context->clear();
 	}
 
 	void D12RendererAPI::present() {

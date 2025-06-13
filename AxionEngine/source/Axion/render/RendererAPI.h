@@ -2,6 +2,7 @@
 #include "axpch.h"
 
 #include "Axion/core/Window.h"
+#include "Axion/core/Math.h"
 #include "Axion/render/Buffers.h"
 
 namespace Axion {
@@ -19,7 +20,9 @@ namespace Axion {
 
 		virtual void beginScene() = 0;
 		virtual void endScene() = 0;
-		virtual void clear(float r, float g, float b, float a) = 0;
+
+		virtual void setClearColor(const Vec4& color) = 0;
+		virtual void clear() = 0;
 		virtual void present() = 0;
 
 		virtual void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) = 0;

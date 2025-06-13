@@ -2,6 +2,7 @@
 
 #include "axpch.h"
 
+#include "Axion/core/Math.h"
 #include "Axion/render/GraphicsContext.h"
 
 #include "platform/directx/D12Device.h"
@@ -22,7 +23,8 @@ namespace Axion {
 		void shutdown() override;
 
 		void present();
-		void clear(float r, float g, float b, float a);
+		void setClearColor(const Vec4& color);
+		void clear();
 		void beginFrame();
 		void endFrame();
 
@@ -50,6 +52,8 @@ namespace Axion {
 
 		uint32_t m_width = 0, m_height = 0;
 		int m_vsyncInterval = 0;
+
+		Vec4 m_clearColor = Vec4::zero();
 
 		D12Device m_device;
 		D12CommandQueue m_commandQueue;

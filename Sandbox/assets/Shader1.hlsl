@@ -1,26 +1,30 @@
-cbuffer CameraBuffer : register(b0) {
+cbuffer SceneBuffer : register(b0) {
 	float4x4 u_viewProjection;
 };
 
-cbuffer TransformBuffer : register(b1) {
-	float4x4 u_transform;
-}
+cbuffer ObjectBuffer : register(b1) {
+	float4 u_color;
+	column_major float4x4 u_modelMatrix;
+};
 
 struct VSInput {
 	float3 pos : POSITION;
 	float4 col : COLOR;
+	float2 uv  : TEXCOORD;
 };
 
 struct PSInput {
 	float4 pos : SV_POSITION;
 	float4 col : COLOR;
+	float2 uv  : TEXCOORD;
 };
 
 PSInput VSMain(VSInput input) {
 	PSInput output;
-	float4 worldPos = mul(u_transform, float4(input.pos, 1.0f));
+	float4 worldPos = mul(float4(input.pos, 1.0f), u_modelMatrix);
 	output.pos = mul(worldPos, u_viewProjection);
-	output.col = input.col;
+	output.col = u_color;
+	output.uv = input.uv;
 	return output;
 }
 

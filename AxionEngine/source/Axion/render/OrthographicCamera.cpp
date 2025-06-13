@@ -27,8 +27,8 @@ namespace Axion {
 	}
 
 	void OrthographicCamera::recalculateViewMatrix() {
-		Mat4 transform = Mat4::rotationZ(m_rotationZ) * Mat4::translation(m_position);
-		m_viewMatrix = Mat4::fromXM(DirectX::XMMatrixInverse(nullptr, transform.toXM()));
+		Mat4 transform = Mat4::translation(m_position) * Mat4::rotationZ(m_rotationZ);
+		m_viewMatrix = transform.inverse();
 		m_viewProjectionMatrix = m_viewMatrix * m_projectionMatrix;
 	}
 

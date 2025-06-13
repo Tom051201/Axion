@@ -3,6 +3,7 @@ cbuffer CameraBuffer : register(b0) {
 };
 
 cbuffer TransformBuffer : register(b1) {
+	float4 u_color;
 	float4x4 u_transform;
 }
 

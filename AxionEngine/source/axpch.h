@@ -16,6 +16,11 @@
 #include <filesystem>
 
 
+// Math includes
+#include <cmath>
+#include <DirectXMath.h>
+
+
 // Axion
 #include "Axion/core/Logging.h"
 
@@ -25,12 +30,10 @@
 
 #include <Windowsx.h>
 #include <wrl.h>
-
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
 #include <d3dcompiler.h>
-#include <DirectXMath.h>
 #include <d3dx12/d3dx12.h>
 
 #pragma comment(lib, "d3d12.lib")

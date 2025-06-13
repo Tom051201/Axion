@@ -1,6 +1,9 @@
 #include "axpch.h"
 #include "Renderer.h"
 
+#include "Axion/render/RenderCommand.h"
+#include "Axion/render/Renderer2D.h"
+
 #include "platform/directx/D12RendererAPI.h"
 
 namespace Axion {
@@ -16,6 +19,8 @@ namespace Axion {
 
 	void Renderer::initialize(Window* window) {
 		s_rendererAPI->initialize(window);
+	
+		Renderer2D::initialize();
 
 		s_sceneData = new SceneData();
 		s_uploadBuffer = ConstantBuffer::create(sizeof(SceneData));
@@ -26,6 +31,8 @@ namespace Axion {
 	void Renderer::release() {
 		delete s_sceneData;
 		s_uploadBuffer->release();
+
+		Renderer2D::shutdown();
 
 		s_rendererAPI->release();
 		AX_CORE_LOG_INFO("Renderer shutdown");
@@ -42,8 +49,12 @@ namespace Axion {
 		s_rendererAPI->endScene();
 	}
 
-	void Renderer::clear(float r, float g, float b, float a) {
-		s_rendererAPI->clear(r, g, b, a);
+	void Renderer::setClearColor(const Vec4& color) {
+		RenderCommand::setClearColor(color);
+	}
+
+	void Renderer::clear() {
+		RenderCommand::clear();
 	}
 
 	void Renderer::present() {
@@ -55,7 +66,7 @@ namespace Axion {
 		s_uploadBuffer->bind(0);
 		objectData->bind(1);
 		mesh->render();
-		s_rendererAPI->drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
+		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
 	}
 
 }

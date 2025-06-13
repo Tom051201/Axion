@@ -17,11 +17,5 @@ public:
 private:
 
 	Axion::OrthographicCameraController m_cameraController;
-	Axion::Ref<Axion::ConstantBuffer> m_cameraCB;
-
-	Axion::Ref<Axion::Shader> m_shader;
-	Axion::Ref<Axion::Mesh> m_quad;
-	Axion::Ref<Axion::ConstantBuffer> m_quadCB;
-	Axion::Mat4 m_quadTransform;
 
 };

@@ -13,6 +13,7 @@ public:
 		m_quadMesh = Axion::Mesh::create(m_quadVertices, m_quadIndices);
 		m_quadCB = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 		m_quadTransform = Axion::Mat4::identity();
+		m_quadColor = Axion::Vec4::zero();
 	}
 
 	void onDetach() override {
@@ -27,15 +28,14 @@ public:
 
 		m_cameraController.onUpdate(ts);
 
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::Up)) m_quadTransform.m[0][3] += 1 * ts;
-		if (Axion::Input::isKeyPressed(Axion::KeyCode::Down)) m_quadTransform.m[0][3] -= 1 * ts;
-
 		Axion::Renderer::beginScene(m_cameraController.getCamera());
-		Axion::Renderer::clear(0.0f, 0.1f, 0.2f, 1.0f);
+		Axion::Renderer::setClearColor({ 0.0f, 0.1f, 0.2f, 1.0f });
+		Axion::Renderer::clear();
 
 		// quad
 		Axion::ObjectBuffer quadData;
 		quadData.modelMatrix = DirectX::XMMatrixTranspose(m_quadTransform.toXM());
+		quadData.color = m_quadColor.toFloat4();
 		m_quadCB->update(&quadData, sizeof(Axion::ObjectBuffer));
 		Axion::Renderer::submit(m_quadMesh, m_quadCB, m_shaderLibrary.get("quad"));
 	}
@@ -63,14 +63,16 @@ private:
 	Axion::Ref<Axion::Mesh> m_quadMesh;
 	Axion::Ref<Axion::ConstantBuffer> m_quadCB;
 	Axion::Mat4 m_quadTransform;
+	Axion::Vec4 m_quadColor;
+	
 };
 
 class Sandbox : public Axion::Application {
 public:
 
 	Sandbox() {
-		pushLayer(new ExampleLayer());
-		//pushLayer(new Sandbox2D());
+		//pushLayer(new ExampleLayer());
+		pushLayer(new Sandbox2D());
 		//pushLayer(new Axion::ImGuiLayer());
 	}
 	~Sandbox() override {}
