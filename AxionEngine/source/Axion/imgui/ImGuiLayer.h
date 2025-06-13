@@ -19,8 +19,11 @@ namespace Axion {
 
 		void onAttach() override;
 		void onDetach() override;
-		void onUpdate(Timestep ts) override;
+		//void onUpdate(Timestep ts) override;
 		void onEvent(Event& ev) override;
+
+		void beginRender();
+		void endRender();
 
 	private:
 

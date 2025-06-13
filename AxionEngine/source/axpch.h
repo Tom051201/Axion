@@ -1,19 +1,20 @@
 #pragma once
 
 // Defaults
+#include <algorithm>
+#include <cstdint>
+#include <filesystem>
+#include <functional>
 #include <iostream>
 #include <memory>
-#include <utility>
-#include <algorithm>
-#include <functional>
-#include <string>
 #include <sstream>
-#include <vector>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <cstdint>
-#include <stdexcept>
-#include <filesystem>
+#include <utility>
+#include <vector>
+
 
 
 // Math includes
@@ -23,6 +24,7 @@
 
 // Axion
 #include "Axion/core/Logging.h"
+#include "Axion/core/Timer.h"
 
 
 // Windows specifics
@@ -30,16 +32,17 @@
 
 #include <Windowsx.h>
 #include <wrl.h>
+
 #include <d3d12.h>
-#include <dxgi1_6.h>
-#include <dxgidebug.h>
 #include <d3dcompiler.h>
 #include <d3dx12/d3dx12.h>
+#include <dxgi1_6.h>
+#include <dxgidebug.h>
 
 #pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxcompiler.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
 
 #endif

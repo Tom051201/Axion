@@ -13,9 +13,17 @@ public:
 
 	void onUpdate(Axion::Timestep ts) override;
 	void onEvent(Axion::Event& e) override;
+	void onGuiRender() override;
 
 private:
 
 	Axion::OrthographicCameraController m_cameraController;
+
+	struct ProfileResult {
+		const char* name;
+		float time;
+	};
+
+	std::vector<ProfileResult> m_profileResults;
 
 };

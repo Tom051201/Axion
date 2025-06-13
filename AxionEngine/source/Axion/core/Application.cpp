@@ -18,9 +18,13 @@ namespace Axion {
 		GraphicsContext::set(new D12Context());
 
 		Renderer::initialize(m_window.get());
+		
+		m_imGuiLayer = new ImGuiLayer();
+		pushOverlay(m_imGuiLayer);
 	}
 
 	Application::~Application() {
+		removeOverlay(m_imGuiLayer);
 		Renderer::release();
 	}
 
@@ -68,6 +72,12 @@ namespace Axion {
 				layer->onUpdate(ts);
 			}
 
+			m_imGuiLayer->beginRender();
+			for (Layer* layer : m_layerStack) {
+				if (layer->m_active) layer->onGuiRender();
+			}
+			m_imGuiLayer->endRender();
+
 			Axion::Renderer::endScene();
 			Axion::Renderer::present();
 		}
@@ -95,6 +105,11 @@ namespace Axion {
 
 	void Application::removeLayer(Layer* layer) {
 		m_layerStack.removeLayer(layer);
+		layer->onDetach();
+	}
+
+	void Application::removeOverlay(Layer* layer) {
+		m_layerStack.removeOverlay(layer);
 		layer->onDetach();
 	}
 }

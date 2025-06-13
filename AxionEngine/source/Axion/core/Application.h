@@ -9,6 +9,7 @@
 #include "Axion/events/KeyEvent.h"
 
 #include "Axion/layers/LayerStack.h"
+#include "Axion/imgui/ImGuiLayer.h"
 
 #include "Axion/render/OrthographicCamera.h"
 
@@ -27,6 +28,7 @@ namespace Axion {
 		void pushLayer(Layer* layer);
 		void pushOverlay(Layer* layer);
 		void removeLayer(Layer* layer);
+		void removeOverlay(Layer* layer);
 
 		static Application& get() { return *s_instance; }
 
@@ -41,6 +43,7 @@ namespace Axion {
 		Scope<Window> m_window;
 		bool m_running = true;
 		LayerStack m_layerStack;
+		ImGuiLayer* m_imGuiLayer;
 
 		bool onWindowClose(Event& e);
 		bool onKeyPressed(Event& e);

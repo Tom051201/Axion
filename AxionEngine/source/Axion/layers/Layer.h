@@ -16,6 +16,7 @@ namespace Axion {
 		virtual void onDetach() {}
 		virtual void onUpdate(Timestep ts) {}
 		virtual void onEvent(Event& e) {}
+		virtual void onGuiRender() {}
 
 		inline const std::string& getName() const { return m_debugname; }
 
