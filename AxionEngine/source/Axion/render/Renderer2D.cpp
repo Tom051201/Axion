@@ -92,4 +92,20 @@ namespace Axion {
 		RenderCommand::drawIndexed(s_rendererData->quadMesh->getVertexBuffer(), s_rendererData->quadMesh->getIndexBuffer());
 	}
 
+	void Renderer2D::drawQuad(const Vec3& position, const Vec2& dim, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer) {
+		s_rendererData->quadShader->bind();
+
+		ObjectBuffer buffer;
+		buffer.color = color.toFloat4();
+
+		Mat4 model = Mat4::translation(position) * Mat4::scale(Vec3(dim.x, dim.y, 1.0f));
+		buffer.modelMatrix = model.transposed().toXM();
+
+		uploadBuffer->update(&buffer, sizeof(ObjectBuffer));
+		uploadBuffer->bind(1);
+
+		s_rendererData->quadMesh->render();
+		RenderCommand::drawIndexed(s_rendererData->quadMesh->getVertexBuffer(), s_rendererData->quadMesh->getIndexBuffer());
+	}
+
 }

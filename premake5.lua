@@ -83,8 +83,7 @@ project "Sandbox"
 	includedirs {
 		"AxionEngine/vendor/spdlog/include",
 		"AxionEngine/source",
-		"AxionEngine/vendor/d3d12",
-		"AxionEngine/vendor/imgui"
+		"AxionEngine/vendor/d3d12"
 	}
 	links {
 		"AxionEngine"

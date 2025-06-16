@@ -13,7 +13,6 @@
 #include "Axion/render/Buffers.h"
 #include "Axion/render/Shader.h"
 #include "Axion/render/Mesh.h"
-#include "Axion/render/Texture.h"
 #include "Axion/render/DataTypes.h"
 #include "Axion/render/OrthographicCamera.h"
 #include "Axion/render/OrthographicCameraController.h"

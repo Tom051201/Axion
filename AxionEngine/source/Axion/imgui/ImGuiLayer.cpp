@@ -133,10 +133,8 @@ namespace Axion {
 				ImGui::RenderPlatformWindowsDefault(nullptr, m_context->getCommandQueue());
 			}
 		}
-		
+
 	}
-
-
 
 	bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& e) {
 		ImGuiIO& io = ImGui::GetIO();

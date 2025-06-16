@@ -4,7 +4,7 @@ cbuffer SceneBuffer : register(b0) {
 
 cbuffer ObjectBuffer : register(b1) {
 	float4 u_color;
-	column_major float4x4 u_modelMatrix;
+	float4x4 u_modelMatrix;
 };
 
 struct VSInput {
@@ -19,6 +19,9 @@ struct PSInput {
 	float2 uv  : TEXCOORD;
 };
 
+Texture2D tex : register(t0);
+SamplerState samp : register(s0);
+
 PSInput VSMain(VSInput input) {
 	PSInput output;
 	float4 worldPos = mul(float4(input.pos, 1.0f), u_modelMatrix);
@@ -28,6 +31,11 @@ PSInput VSMain(VSInput input) {
 	return output;
 }
 
-float4 PSMain(float4 pos : SV_POSITION, float4 col : COLOR) : SV_TARGET{
-  return col;
+float4 PSMain(PSInput input) : SV_TARGET {
+	float4 color = tex.Sample(samp, input.uv);
+	if (color.r + color.g + color.b == 0.0f) {
+		return float4(1, 0, 1, 1);
+	}
+
+	return color;
 }
