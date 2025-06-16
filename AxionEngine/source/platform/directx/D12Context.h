@@ -11,6 +11,7 @@
 #include "platform/directx/D12RenderTarget.h"
 #include "platform/directx/D12CommandList.h"
 #include "platform/directx/D12Fence.h"
+#include "platform/directx/D12srvHeap.h"
 
 namespace Axion {
 
@@ -34,21 +35,29 @@ namespace Axion {
 		void deactivateVsync() { m_vsyncInterval = 0; };
 
 		inline void* getNativeContext() const override { return (void*)this; }
+		
+		void waitForPreviousFrame();
 
-		inline ID3D12Device* getDevice() const { return m_device.getDevice(); }
-		inline IDXGIFactory6* getFactory() const { return m_device.getFactory(); }
-		inline IDXGIAdapter1* getAdapter() const { return m_device.getAdapter(); }
-		inline ID3D12CommandQueue* getCommandQueue() const { return m_commandQueue.getCommandQueue(); }
-		inline IDXGISwapChain3* getSwapChain() const { return m_swapChain.getSwapChain(); }
-		inline ID3D12DescriptorHeap* getRTVHeap() const { return m_rtv.getRTVHeap(); }
-		inline ID3D12Resource* getRTV(UINT index) const { return m_rtv.getRenderTarget(index); }
-		inline ID3D12GraphicsCommandList* getCommandList() const { return m_commandList.getCommandList(); }
-		inline ID3D12CommandAllocator* getCommandAllocator() const { return m_commandList.getCommandAllocator(); }
-		inline ID3D12Fence* getFence() const { return m_fence.getFence(); }
+		D12Device& getDeviceWrapper() { return m_device; }
+		D12CommandQueue& getCommandQueueWrapper() { return m_commandQueue; }
+		D12SwapChain& getSwapChainWrapper() { return m_swapChain; }
+		D12RenderTarget& getRtvWrapper() { return m_rtv; }
+		D12CommandList& getCommandListWrapper() { return m_commandList; }
+		D12Fence& getFenceWrapper() { return m_fence; }
+		D12srvHeap& getSrvHeapWrapper() { return m_srvHeap; }
+
+		ID3D12Device* getDevice() const { return m_device.getDevice(); }
+		IDXGIFactory6* getFactory() const { return m_device.getFactory(); }
+		IDXGIAdapter1* getAdapter() const { return m_device.getAdapter(); }
+		ID3D12CommandQueue* getCommandQueue() const { return m_commandQueue.getCommandQueue(); }
+		IDXGISwapChain3* getSwapChain() const { return m_swapChain.getSwapChain(); }
+		ID3D12DescriptorHeap* getRTVHeap() const { return m_rtv.getRTVHeap(); }
+		ID3D12Resource* getRTV(UINT index) const { return m_rtv.getRenderTarget(index); }
+		ID3D12GraphicsCommandList* getCommandList() const { return m_commandList.getCommandList(); }
+		ID3D12CommandAllocator* getCommandAllocator() const { return m_commandList.getCommandAllocator(); }
+		ID3D12Fence* getFence() const { return m_fence.getFence(); }
 
 	private:
-
-		void waitForPreviousFrame();
 
 		uint32_t m_width = 0, m_height = 0;
 		int m_vsyncInterval = 0;
@@ -61,6 +70,7 @@ namespace Axion {
 		D12RenderTarget m_rtv;
 		D12CommandList m_commandList;
 		D12Fence m_fence;
+		D12srvHeap m_srvHeap;
 
 	};
 

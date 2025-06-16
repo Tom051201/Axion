@@ -4,12 +4,15 @@ Sandbox2D::Sandbox2D() : Layer("Sandbox2D"), m_cameraController(1280.0f / 720.0f
 
 void Sandbox2D::onAttach() {
 	m_buffer1 = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
+
 	m_buffer2 = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
+	m_texture = Axion::Texture2D::create("assets/logo.png");
 }
 
 void Sandbox2D::onDetach() {
 	m_buffer1->release();
 	m_buffer2->release();
+	m_texture->release();
 }
 
 void Sandbox2D::onUpdate(Axion::Timestep ts) {
@@ -23,7 +26,7 @@ void Sandbox2D::onUpdate(Axion::Timestep ts) {
 
 	Axion::Renderer2D::drawQuad({ -0.55f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, m_buffer1);
 
-	Axion::Renderer2D::drawQuad({ 0.55f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, m_buffer2);
+	Axion::Renderer2D::drawTexture({ 0.55f, 0.0f, 0.0f }, { 1.0f, 1.0f }, m_texture, m_buffer2);
 
 }
 

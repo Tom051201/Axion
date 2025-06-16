@@ -33,9 +33,5 @@ PSInput VSMain(VSInput input) {
 
 float4 PSMain(PSInput input) : SV_TARGET {
 	float4 color = tex.Sample(samp, input.uv);
-	if (color.r + color.g + color.b == 0.0f) {
-		return float4(1, 0, 1, 1);
-	}
-
 	return color;
 }

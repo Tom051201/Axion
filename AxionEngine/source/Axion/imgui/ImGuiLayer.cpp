@@ -72,31 +72,6 @@ namespace Axion {
 
 		AX_CORE_LOG_TRACE("ImGuiLayer detatched");
 	}
-
-//	void ImGuiLayer::onUpdate(Timestep ts) {
-//		if (m_active) {					// TODO: find workaround to prevent crash when viewport is inside actual window
-//			ImGui_ImplDX12_NewFrame();
-//			ImGui_ImplWin32_NewFrame();
-//			ImGui::NewFrame();
-//
-//			static bool show = true;
-//			ImGui::ShowDemoWindow(&show);
-//
-//			ImGui::Render();
-//
-//			ID3D12DescriptorHeap* heaps[] = { m_srvDescHeap.Get() };
-//			m_context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
-//			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_context->getCommandList());
-//
-//			// for multiple viewports
-//			ImGuiIO& io = ImGui::GetIO();
-//			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable && !ImGui::GetIO().WantSaveIniSettings) {
-//				ImGui::UpdatePlatformWindows();
-//				ImGui::RenderPlatformWindowsDefault(nullptr, m_context->getCommandQueue());
-//			}
-//		}
-//		
-//	}
 	
 	void ImGuiLayer::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);

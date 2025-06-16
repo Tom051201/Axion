@@ -18,6 +18,7 @@ private:
 
 	Axion::OrthographicCameraController m_cameraController;
 
+	Axion::Ref<Axion::Texture2D> m_texture;
 
 	// TEMP
 	Axion::Ref<Axion::ConstantBuffer> m_buffer1;
