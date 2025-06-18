@@ -84,6 +84,8 @@ namespace Axion {
 		if (m_active) { // TODO: find workaround to prevent crash when viewport is inside actual window
 			ImGui::Render();
 
+			ID3D12DescriptorHeap* heaps[] = { m_context->getSrvHeapWrapper().getHeap() };
+			m_context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_context->getCommandList());
 
 			// for multiple viewports
@@ -93,7 +95,6 @@ namespace Axion {
 				ImGui::RenderPlatformWindowsDefault(nullptr, m_context->getCommandQueue());
 			}
 		}
-
 	}
 
 	bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& e) {

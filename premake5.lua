@@ -68,6 +68,48 @@ project "AxionEngine"
 
 
 
+project "AxionStudio"
+	location "AxionStudio"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+	files {
+		"%{prj.name}/source/**.h",
+		"%{prj.name}/source/**.cpp"
+	}
+	includedirs {
+		"AxionEngine/vendor/spdlog/include",
+		"AxionEngine/source",
+		"AxionEngine/vendor/imgui",
+		"AxionEngine/vendor/d3d12"
+	}
+	links {
+		"AxionEngine"
+	}
+	filter "system:windows"
+		systemversion "latest"
+		buildoptions { "/utf-8" }
+		defines {
+			"AX_PLATFORM_WINDOWS"
+		}
+	filter "configurations:Debug"
+		defines "AX_DEBUG"
+		runtime "Debug"
+		symbols "on"
+	filter "configurations:Release"
+		defines "AX_RELEASE"
+		runtime "Release"
+		optimize "on"
+	filter "configurations:Distribution"
+		defines "AX_DISTRIBUTION"
+		runtime "Release"
+		optimize "on"
+
+
+
 project "Sandbox"
 	location "Sandbox"
 	kind "ConsoleApp"
@@ -83,6 +125,7 @@ project "Sandbox"
 	includedirs {
 		"AxionEngine/vendor/spdlog/include",
 		"AxionEngine/source",
+		"AxionEngine/vendor/imgui",
 		"AxionEngine/vendor/d3d12"
 	}
 	links {

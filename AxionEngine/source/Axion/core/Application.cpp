@@ -67,7 +67,7 @@ namespace Axion {
 			QueryPerformanceCounter(&currentTime);
 			Timestep ts = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
 			lastTime = currentTime;
-
+			
 			for (Layer* layer : m_layerStack) {
 				layer->onUpdate(ts);
 			}

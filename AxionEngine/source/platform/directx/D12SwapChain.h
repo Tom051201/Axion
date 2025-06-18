@@ -19,6 +19,7 @@ namespace Axion {
 		void resize(UINT width, UINT height);
 		void present(UINT syncInterval = 1, UINT flags = 0);
 		void advanceFrame();
+		void setAsRenderTarget();
 
 		inline IDXGISwapChain3* getSwapChain() const { return m_swapChain.Get(); }
 

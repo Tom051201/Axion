@@ -88,8 +88,7 @@ namespace Axion {
 			Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
 			hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
 			AX_THROW_IF_FAILED_HR(hr, "Failed to get buffer from swap chain");
-			
-			//CD3DX12_CPU_DESCRIPTOR_HANDLE handle(rtvHeap.getHeap()->GetCPUDescriptorHandleForHeapStart(), i, rtvHeap.getDescriptorSize());
+
 			D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeap.getCpuHandle(m_rtvHeapIndices[i]);
 
 			device->CreateRenderTargetView(backBuffer.Get(), nullptr, handle);
@@ -108,6 +107,12 @@ namespace Axion {
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12SwapChain::getBackBufferRtv(uint32_t index) const {
 		return m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndices[index]);
+	}
+
+	void D12SwapChain::setAsRenderTarget() {
+		auto* cmdList = m_context->getCommandList();
+		auto handle =  m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndices[m_frameIndex]);
+		cmdList->OMSetRenderTargets(1, &handle, FALSE, nullptr);
 	}
 
 }
