@@ -15,27 +15,15 @@
 
 namespace Axion {
 
-	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {
-		
-	}
+	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {}
 
-	ImGuiLayer::~ImGuiLayer() {
-
-	}
+	ImGuiLayer::~ImGuiLayer() {}
 
 	void ImGuiLayer::onAttach() {
 
 		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-
-		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		desc.NumDescriptors = 1;  // Typically 1 for font texture
-		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		desc.NodeMask = 0;
-
-		HRESULT hr = m_context->getDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_srvDescHeap));
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create ImGui descriptor heap");
-
+		auto& srvHeap = m_context->getSrvHeapWrapper();
+		m_srvHeapIndex = srvHeap.allocate();
 
 		IMGUI_CHECKVERSION();
 		ImGui_ImplWin32_EnableDpiAwareness();
@@ -55,9 +43,9 @@ namespace Axion {
 			m_context->getDevice(),
 			2,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
-			m_srvDescHeap.Get(),
-			m_srvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-			m_srvDescHeap->GetGPUDescriptorHandleForHeapStart()
+			srvHeap.getHeap(),
+			srvHeap.getCpuHandle(m_srvHeapIndex),
+			srvHeap.getGpuHandle(m_srvHeapIndex)
 		);
 
 		AX_CORE_LOG_TRACE("ImGui layer attached");
@@ -68,7 +56,6 @@ namespace Axion {
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyPlatformWindows();
 		ImGui::DestroyContext();
-		m_srvDescHeap.Reset();
 
 		AX_CORE_LOG_TRACE("ImGuiLayer detatched");
 	}
@@ -97,8 +84,6 @@ namespace Axion {
 		if (m_active) { // TODO: find workaround to prevent crash when viewport is inside actual window
 			ImGui::Render();
 
-			ID3D12DescriptorHeap* heaps[] = { m_srvDescHeap.Get() };
-			m_context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_context->getCommandList());
 
 			// for multiple viewports

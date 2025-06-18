@@ -10,6 +10,7 @@ namespace Axion {
 	D12Context::~D12Context() {}
 
 	void D12Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
+		AX_ASSERT(hwnd, "HWND cannot be null");
 		m_width = width;
 		m_height = height;
 
@@ -19,17 +20,15 @@ namespace Axion {
 		
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
+		m_rtvHeap.initialize(m_device.getDevice(), AX_D12_MAX_RTV_DESCRIPTORS);
 		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), width, height);
-		m_rtv.initialize(m_device.getDevice(), m_swapChain.getSwapChain());
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
-		m_srvHeap.initialize(m_device.getDevice(), 1024);
+		m_srvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS);
 
 		AX_CORE_LOG_INFO("Using gpu adapter: {0}", m_device.getAdapterName());
 		AX_CORE_LOG_INFO("DirectX12 backend initialized successfully");
 	}
-
-
 
 	void D12Context::shutdown() {
 
@@ -39,8 +38,8 @@ namespace Axion {
 		m_srvHeap.release();
 		m_fence.release();
 		m_commandList.release();
-		m_rtv.release();
 		m_swapChain.release();
+		m_rtvHeap.release();
 		m_commandQueue.release();
 		m_device.release();
 
@@ -51,36 +50,27 @@ namespace Axion {
 		AX_CORE_LOG_INFO("DirectX12 backend shutdown");
 	}
 
-
-
 	void D12Context::present() {
 
 		m_commandQueue.executeCommandList(m_commandList.getCommandList());
-
 		m_swapChain.present(m_vsyncInterval, 0);
-
 		waitForPreviousFrame();
+
 	}
-
-
 
 	void D12Context::setClearColor(const Vec4& color) {
 		m_clearColor = color;
 	}
 
-
-
 	void D12Context::clear() {
 		const float clearColor[] = { m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w };
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtv.getRTVHeap()->GetCPUDescriptorHandleForHeapStart();
-		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtv.getRTVDescriptorSize();
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap.getHeap()->GetCPUDescriptorHandleForHeapStart();
+		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtvHeap.getDescriptorSize();
 
 		getCommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 		getCommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	}
-
-
 
 	void D12Context::beginFrame() {
 		auto* cmd = m_commandList.getCommandList();
@@ -89,43 +79,31 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(cmd->Reset(m_commandList.getCommandAllocator(), nullptr), "Failed to reset command list");
 
 		cmd->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-			m_rtv.getRenderTarget(m_swapChain.getFrameIndex()),
+			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_STATE_RENDER_TARGET
 		));
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-			m_rtv.getRTVHeap()->GetCPUDescriptorHandleForHeapStart(),
-			static_cast<INT>(m_swapChain.getFrameIndex()),
-			m_rtv.getRTVDescriptorSize()
-		);
-
-		cmd->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-		const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-		cmd->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		clear();
 
 		// Set viewport and scissor
 		CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
-		getCommandList()->RSSetViewports(1, &viewport);
 		CD3DX12_RECT scissor(0, 0, m_width, m_height);
+		getCommandList()->RSSetViewports(1, &viewport);
 		getCommandList()->RSSetScissorRects(1, &scissor);
 	}
-
-
 
 	void D12Context::endFrame() {
 
 		// reverse barrier
 		m_commandList.getCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-			m_rtv.getRenderTarget(m_swapChain.getFrameIndex()),
+			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PRESENT
 		));
 
 		m_commandList.close();
 	}
-
-
 
 	void D12Context::waitForPreviousFrame() {
 		const UINT64 currentFence = m_fence.getFenceValue();
@@ -140,8 +118,6 @@ namespace Axion {
 		m_swapChain.setFrameIndex(m_swapChain.getSwapChain()->GetCurrentBackBufferIndex());
 	}
 
-
-
 	void D12Context::resize(uint32_t width, uint32_t height) {
 		if (width <= 0 || height <= 0)return;
 
@@ -150,24 +126,8 @@ namespace Axion {
 		m_width = width;
 		m_height = height;
 
-		m_rtv.resetRTVs();
-
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> targets;
-		for (int i = 0; i < AX_MAX_SWAPCHAIN_BUFFERS; i++) {
-			targets.push_back(m_rtv.getRenderTarget(i));
-		}
-
-		m_swapChain.resize(
-			width,
-			height,
-			m_device.getDevice(),
-			m_rtv.getRTVHeap()->GetCPUDescriptorHandleForHeapStart(),
-			m_rtv.getRTVDescriptorSize(),
-			targets
-		);
-		
-		m_rtv.initialize(m_device.getDevice(), m_swapChain.getSwapChain());
-
+		m_swapChain.resize(width, height);
+	
 	}
 
 }

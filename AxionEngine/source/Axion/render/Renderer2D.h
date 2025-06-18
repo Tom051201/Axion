@@ -19,6 +19,7 @@ namespace Axion {
 		static void endScene();
 
 		static void setClearColor(const Vec4& color);
+		static const Vec4& getClearColor();
 		static void clear();
 		static void present();
 

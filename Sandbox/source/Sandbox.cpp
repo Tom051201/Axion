@@ -20,6 +20,8 @@ public:
 		m_quadTransform2 = Axion::Mat4::identity();
 		m_quadTransform2.translation({ 1.0f, 1.0f, 1.0f });
 		m_quadColor2 = { 1.0f, 0.0f, 0.0f, 1.0f };
+
+		Axion::Renderer::setClearColor({ 0.0f, 0.1f, 0.2f, 1.0f });
 	}
 
 	void onDetach() override {
@@ -38,8 +40,6 @@ public:
 		m_cameraController.onUpdate(ts);
 
 		Axion::Renderer::beginScene(m_cameraController.getCamera());
-		Axion::Renderer::setClearColor({ 0.0f, 0.1f, 0.2f, 1.0f });
-		Axion::Renderer::clear();
 
 		// quad
 		Axion::ObjectBuffer quadData;

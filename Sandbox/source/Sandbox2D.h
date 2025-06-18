@@ -2,6 +2,9 @@
 
 #include "Axion.h"
 
+// TEMP
+#include "platform/directx/D12Context.h"
+
 class Sandbox2D : public Axion::Layer {
 public:
 
@@ -13,6 +16,7 @@ public:
 
 	void onUpdate(Axion::Timestep ts) override;
 	void onEvent(Axion::Event& e) override;
+	void onGuiRender() override;
 
 private:
 
@@ -20,7 +24,11 @@ private:
 
 	Axion::Ref<Axion::Texture2D> m_texture;
 
+	Axion::Ref<Axion::FrameBuffer> m_frameBuffer;
+
 	// TEMP
 	Axion::Ref<Axion::ConstantBuffer> m_buffer1;
 	Axion::Ref<Axion::ConstantBuffer> m_buffer2;
+	Axion::D12Context* m_context = nullptr;
+
 };

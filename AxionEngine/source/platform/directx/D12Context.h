@@ -8,10 +8,10 @@
 #include "platform/directx/D12Device.h"
 #include "platform/directx/D12CommandQueue.h"
 #include "platform/directx/D12SwapChain.h"
-#include "platform/directx/D12RenderTarget.h"
 #include "platform/directx/D12CommandList.h"
 #include "platform/directx/D12Fence.h"
 #include "platform/directx/D12srvHeap.h"
+#include "platform/directx/D12rtvHeap.h"
 
 namespace Axion {
 
@@ -40,8 +40,8 @@ namespace Axion {
 
 		D12Device& getDeviceWrapper() { return m_device; }
 		D12CommandQueue& getCommandQueueWrapper() { return m_commandQueue; }
+		D12rtvHeap& getRtvHeapWrapper() { return m_rtvHeap; }
 		D12SwapChain& getSwapChainWrapper() { return m_swapChain; }
-		D12RenderTarget& getRtvWrapper() { return m_rtv; }
 		D12CommandList& getCommandListWrapper() { return m_commandList; }
 		D12Fence& getFenceWrapper() { return m_fence; }
 		D12srvHeap& getSrvHeapWrapper() { return m_srvHeap; }
@@ -51,8 +51,6 @@ namespace Axion {
 		IDXGIAdapter1* getAdapter() const { return m_device.getAdapter(); }
 		ID3D12CommandQueue* getCommandQueue() const { return m_commandQueue.getCommandQueue(); }
 		IDXGISwapChain3* getSwapChain() const { return m_swapChain.getSwapChain(); }
-		ID3D12DescriptorHeap* getRTVHeap() const { return m_rtv.getRTVHeap(); }
-		ID3D12Resource* getRTV(UINT index) const { return m_rtv.getRenderTarget(index); }
 		ID3D12GraphicsCommandList* getCommandList() const { return m_commandList.getCommandList(); }
 		ID3D12CommandAllocator* getCommandAllocator() const { return m_commandList.getCommandAllocator(); }
 		ID3D12Fence* getFence() const { return m_fence.getFence(); }
@@ -60,14 +58,14 @@ namespace Axion {
 	private:
 
 		uint32_t m_width = 0, m_height = 0;
-		int m_vsyncInterval = 0;
+		uint32_t m_vsyncInterval = 0;
 
 		Vec4 m_clearColor = Vec4::zero();
 
 		D12Device m_device;
 		D12CommandQueue m_commandQueue;
+		D12rtvHeap m_rtvHeap;
 		D12SwapChain m_swapChain;
-		D12RenderTarget m_rtv;
 		D12CommandList m_commandList;
 		D12Fence m_fence;
 		D12srvHeap m_srvHeap;

@@ -19,7 +19,6 @@ namespace Axion {
 
 		void onAttach() override;
 		void onDetach() override;
-		//void onUpdate(Timestep ts) override;
 		void onEvent(Event& ev) override;
 
 		void beginRender();
@@ -27,8 +26,8 @@ namespace Axion {
 
 	private:
 
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
-		D12Context* m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		D12Context* m_context = nullptr;
+		uint32_t m_srvHeapIndex = 0;
 
 		bool onMouseButtonPressedEvent(MouseButtonPressedEvent& e);
 		bool onMouseButtonReleasedEvent(MouseButtonReleasedEvent& e);

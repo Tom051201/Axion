@@ -11,6 +11,7 @@
 #include "Axion/render/Renderer.h"
 #include "Axion/render/Renderer2D.h"
 #include "Axion/render/Buffers.h"
+#include "Axion/render/FrameBuffer.h"
 #include "Axion/render/Shader.h"
 #include "Axion/render/Texture.h"
 #include "Axion/render/Mesh.h"
