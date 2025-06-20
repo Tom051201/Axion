@@ -126,6 +126,7 @@ namespace Axion {
 
 		Vec4() : x(0), y(0), z(0), w(0) {}
 		Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+		Vec4(float xyzw[4]) : x(xyzw[0]), y(xyzw[1]), z(xyzw[2]), w(xyzw[3]) {}
 
 		static Vec4 zero() { return Vec4(0.0f, 0.0f, 0.0f, 0.0f); }
 		static Vec4 one() { return Vec4(1.0f, 1.0f, 1.0f, 1.0f); }

@@ -55,6 +55,14 @@ namespace Axion {
 		if (!m_hwnd) { AX_CORE_LOG_ERROR("Failed to create window"); throw::std::runtime_error("Failed to create window"); }
 
 		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, (LONG_PTR)this);
+		
+		// activates the custom title bar for windows
+		#if AX_WIN_USING_CUSTOM_TITLE_BAR
+		SetWindowLongPtr(m_hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+		int screenPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - (m_data.width / 2);
+		int screenPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - (m_data.height / 2);
+		SetWindowPos(m_hwnd, nullptr, screenPosX, screenPosY, m_data.width, m_data.height, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+		#endif
 
 		ShowWindow(m_hwnd, SW_SHOW);
 		AX_CORE_LOG_INFO("Created window '{0}' ({1}, {2})", wp.title, wp.width, wp.height);
@@ -72,6 +80,10 @@ namespace Axion {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
+
+	void WindowsWindow::setPosition(uint32_t x, uint32_t y) {
+		
 	}
 
 	LRESULT CALLBACK WindowsWindow::staticWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {

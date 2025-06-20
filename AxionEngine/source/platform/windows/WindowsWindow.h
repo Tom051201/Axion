@@ -16,6 +16,7 @@ namespace Axion {
 
 		void onUpdate() override;
 
+		void setPosition(uint32_t x, uint32_t y) override;
 		inline uint32_t getWidth() const override { return m_data.width; }
 		inline uint32_t getHeight() const override { return m_data.height; }
 

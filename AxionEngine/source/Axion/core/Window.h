@@ -29,6 +29,7 @@ namespace Axion {
 
 		virtual void onUpdate() = 0;
 
+		virtual void setPosition(uint32_t x, uint32_t y) = 0;
 		virtual uint32_t getWidth() const = 0;
 		virtual uint32_t getHeight() const = 0;
 
@@ -37,6 +38,7 @@ namespace Axion {
 		virtual bool isVSync() const = 0;
 
 		virtual void* getNativeHandle() const = 0;
+
 
 		static Window* create(const WindowProperties& wp = WindowProperties());
 	};

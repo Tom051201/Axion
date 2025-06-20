@@ -1,11 +1,10 @@
-Sandbox/Sandbox.vcxproj
-AxionEngineWorkspace.sln
-AxionEngine/vendor/imgui/ImGui.vcxproj
-AxionEngine/vendor/imgui/ImGui.vcxproj.filters
-AxionEngine/AxionEngine.vcxproj
-bin/
+# Binaries
+**/bin/
 bin-int/
+
+# Visual Studio
 .vs/
-AxionEngine/AxionEngine.vcxproj.filters
-AxionEngine/AxionEngine.vcxproj.user
-Sandbox/Sandbox.vcxproj.user
+**.sln
+**.vcxproj
+**.vcxproj.user
+**.vcxproj.filters

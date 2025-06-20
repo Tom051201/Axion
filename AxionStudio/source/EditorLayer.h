@@ -2,6 +2,8 @@
 
 #include "Axion.h"
 
+#include "imgui.h"
+
 // TEMP
 #include "platform/directx/D12Context.h"
 
@@ -27,11 +29,20 @@ namespace Axion {
 		Ref<Texture2D> m_texture;
 
 		Ref<FrameBuffer> m_frameBuffer;
+		Vec2 m_viewportDim = { 0.0f, 0.0f };
+
+		// ImGui
+		ImGuiDockNodeFlags m_dockspaceFlags;
+		ImGuiWindowFlags m_windowFlags;
 
 		// TEMP
 		Ref<ConstantBuffer> m_buffer1;
-		Ref<ConstantBuffer> m_buffer2;
 		D12Context* m_context = nullptr;
+		float m_testColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+
+
+		bool onWindowResize(WindowResizeEvent& e);
 
 	};
 

@@ -8,7 +8,13 @@
 namespace Axion {
 
 	D12FrameBuffer::D12FrameBuffer(const FrameBufferSpecification& spec) : m_specification(spec) {
-		resize();
+		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+
+		// allocate rtv and srv once
+		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
+		m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
+
+		resize(spec.width, spec.height);
 	}
 
 	D12FrameBuffer::~D12FrameBuffer() {
@@ -19,11 +25,13 @@ namespace Axion {
 		m_colorResource.Reset();
 	}
 
-	void D12FrameBuffer::resize() {
+	void D12FrameBuffer::resize(uint32_t width, uint32_t height) {
 		release();
-
-		if (!m_context) m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = m_context->getDevice();
+		auto* cmdList = m_context->getCommandList();
+
+		m_specification.width = width;
+		m_specification.height = height;
 
 		D3D12_RESOURCE_DESC texDesc = {};
 		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -55,18 +63,16 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer resource");
 
 		// RTV
-		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
 		device->CreateRenderTargetView(m_colorResource.Get(), nullptr, m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex));
 
 		// SRV
-		m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
-		device->CreateShaderResourceView(m_colorResource.Get(), &srvDesc, m_context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex));
-		
+		m_context->getDevice()->CreateShaderResourceView(m_colorResource.Get(), &srvDesc, m_context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex));
+
 		#ifdef AX_DEBUG
 		m_colorResource->SetName(L"FrameBuffer");
 		#endif
@@ -103,6 +109,8 @@ namespace Axion {
 		}
 	}
 
+	// using different values here than specified
+	// in the resource description causes warning!
 	void D12FrameBuffer::clear(const Vec4& clearColor) {
 		auto* cmdList = m_context->getCommandList();
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);

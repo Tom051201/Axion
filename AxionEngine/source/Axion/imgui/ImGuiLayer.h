@@ -39,6 +39,7 @@ namespace Axion {
 		bool onWindowResizeEvent(WindowResizeEvent& e);
 		bool onWindowCloseEvent(WindowCloseEvent& e);
 
+		void setStyle();
 	};
 
 }

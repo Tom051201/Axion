@@ -9,6 +9,7 @@ namespace Axion {
 		uint32_t width;
 		uint32_t height;
 		uint32_t samples = 1;
+		Vec4 clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	};
 
 	class FrameBuffer {
@@ -17,7 +18,7 @@ namespace Axion {
 		virtual ~FrameBuffer() = default;
 
 		virtual void release() = 0;
-		virtual void resize() = 0;
+		virtual void resize(uint32_t width, uint32_t height) = 0;
 
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;

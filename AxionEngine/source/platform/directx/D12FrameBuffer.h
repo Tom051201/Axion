@@ -15,7 +15,7 @@ namespace Axion {
 		~D12FrameBuffer() override;
 
 		void release() override;
-		void resize();
+		void resize(uint32_t width, uint32_t height) override;
 
 		void bind() const override;
 		void unbind() const override;

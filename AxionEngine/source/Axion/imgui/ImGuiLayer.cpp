@@ -36,7 +36,9 @@ namespace Axion {
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-		ImGui::StyleColorsDark();
+		//ImGui::StyleColorsDark();
+		
+		setStyle();
 	
 		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
 		ImGui_ImplDX12_Init(
@@ -161,6 +163,54 @@ namespace Axion {
 	bool ImGuiLayer::onWindowCloseEvent(WindowCloseEvent& e) {
 		m_active = false;
 		return false;
+	}
+
+	void ImGuiLayer::setStyle() {
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		// sets layout
+		style.FrameRounding = 2.0f;
+		style.PopupRounding = 2.0f;
+		style.ScrollbarRounding = 2.0f;
+		style.GrabRounding = 2.0f;
+
+		style.FramePadding = ImVec2(3.0f, 3.0f);
+		style.ItemSpacing = ImVec2(3.0f, 3.0f);
+		
+
+		// sets colors
+		ImVec4* colors = style.Colors;
+		colors[ImGuiCol_WindowBg]		= ImVec4(0.176f, 0.176f, 0.188f, 1.0f);
+		colors[ImGuiCol_Text]			= ImVec4(0.91f, 0.91f, 0.91f, 1.0f);
+		colors[ImGuiCol_Header]			= ImVec4(1.00f, 0.25f, 0.25f, 1.0f);
+		colors[ImGuiCol_HeaderHovered]	= ImVec4(0.35f, 1.00f, 0.35f, 1.0f);
+		colors[ImGuiCol_HeaderActive]	= ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+		colors[ImGuiCol_TitleBg]			= ImVec4(0.08f, 0.08f, 0.08f, 1.0f);
+		colors[ImGuiCol_TitleBgActive]		= ImVec4(0.08f, 0.08f, 0.08f, 1.0f);
+		colors[ImGuiCol_TitleBgCollapsed]	= ImVec4(0.08f, 0.08f, 0.08f, 1.0f);
+
+		ImVec4 myAccent = ImVec4(0.30f, 0.60f, 0.90f, 1.00f);
+		ImVec4 myTitleColor = ImVec4(0.18f, 0.22f, 0.25f, 1.00f); // Change to your preferred color
+
+		style.Colors[ImGuiCol_Tab] = myTitleColor;
+		style.Colors[ImGuiCol_TabHovered] = ImVec4(0.25f, 0.30f, 0.35f, 1.00f);
+		style.Colors[ImGuiCol_TabActive] = myTitleColor;
+		style.Colors[ImGuiCol_TabUnfocused] = myTitleColor;
+		style.Colors[ImGuiCol_TabUnfocusedActive] = myTitleColor;
+		
+
+		// sets fonts
+		ImGuiIO& io = ImGui::GetIO();
+		io.Fonts->Clear();
+		
+		io.Fonts->AddFontFromFileTTF("assets/fonts/OpenSans-Bold.ttf", 18.0f);
+		
+		io.FontDefault = io.Fonts->Fonts[0];
+		
+		ImGui_ImplDX12_InvalidateDeviceObjects();
+		ImGui_ImplDX12_CreateDeviceObjects();
+	
 	}
 
 }

@@ -26,6 +26,8 @@ namespace Axion {
 
 		std::string m_debugname;
 
+		using EventCallbackFn = std::function<void(Event&)>;
+
 	};
 
 }

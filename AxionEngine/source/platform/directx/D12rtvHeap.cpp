@@ -39,6 +39,7 @@ namespace Axion {
 	uint32_t D12rtvHeap::allocate() {
 		uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
 		AX_ASSERT(idx < m_numDescriptors, "Out of RTV heap descriptors");
+		AX_CORE_LOG_TRACE("RTV Heap: allocated index {0}", idx);
 		return idx;
 	}
 
