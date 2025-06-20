@@ -42,27 +42,35 @@ namespace Axion {
 		if (!resultCEX) { AX_CORE_LOG_ERROR("Failed to register window class"); throw::std::runtime_error("Failed to register window class"); }
 
 		RECT wRect = { 0, 0, (LONG)m_data.width, (LONG)m_data.height };
-		AdjustWindowRect(&wRect, WS_OVERLAPPEDWINDOW, FALSE);
+		DWORD style;
+		// activates the custom title bar for windows
+		#if AX_WIN_USING_CUSTOM_TITLE_BAR
+			style = WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+		#else
+			style = WS_OVERLAPPEDWINDOW;
+		#endif
+		AdjustWindowRect(&wRect, style, FALSE);
+
+		int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+		int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+		int posX = (screenWidth / 2)  - (m_data.width / 2);
+		int posY = (screenHeight / 2)  - (m_data.height / 2);
+
+		AX_CORE_LOG_TRACE("Window: {0} {1}", m_data.width, m_data.height);
+		AX_CORE_LOG_TRACE("Screen: {0} {1}", screenWidth, screenHeight);
+		AX_CORE_LOG_TRACE("Pos   : {0} {1}", posX, posY);
 
 		m_hwnd = CreateWindowEx(
 			0, windowClassName,
 			std::wstring(m_data.title.begin(), m_data.title.end()).c_str(),
-			WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, CW_USEDEFAULT,
+			style,
+			posX, posY,
 			wRect.right - wRect.left, wRect.bottom - wRect.top,
 			nullptr, nullptr, wcex.hInstance, this
 		);
 		if (!m_hwnd) { AX_CORE_LOG_ERROR("Failed to create window"); throw::std::runtime_error("Failed to create window"); }
 
 		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, (LONG_PTR)this);
-		
-		// activates the custom title bar for windows
-		#if AX_WIN_USING_CUSTOM_TITLE_BAR
-		SetWindowLongPtr(m_hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
-		int screenPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - (m_data.width / 2);
-		int screenPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - (m_data.height / 2);
-		SetWindowPos(m_hwnd, nullptr, screenPosX, screenPosY, m_data.width, m_data.height, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-		#endif
 
 		ShowWindow(m_hwnd, SW_SHOW);
 		AX_CORE_LOG_INFO("Created window '{0}' ({1}, {2})", wp.title, wp.width, wp.height);
@@ -180,6 +188,43 @@ namespace Axion {
 					MouseScrolledEvent ev(0.0f, dt);
 					window->m_data.eventCallback(ev);
 					break;
+				}
+				case WM_NCCALCSIZE: {
+					#if AX_WIN_USING_CUSTOM_TITLE_BAR
+					if (wparam == TRUE) {
+						return 0;
+					}
+					#endif
+					break;
+				}
+				case WM_NCHITTEST: {
+					#if AX_WIN_USING_CUSTOM_TITLE_BAR
+					POINT pt = { GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
+					ScreenToClient(hwnd, &pt);
+
+					RECT rect;
+					GetClientRect(hwnd, &rect);
+
+					const int border = 6;
+
+					bool left = pt.x < border;
+					bool right = pt.x >= rect.right - border;
+					bool top = pt.y < border;
+					bool bottom = pt.y >= rect.bottom - border;
+
+					if (top && left) return HTTOPLEFT;
+					if (top && right) return HTTOPRIGHT;
+					if (bottom && left) return HTBOTTOMLEFT;
+					if (bottom && right) return HTBOTTOMRIGHT;
+					if (left) return HTLEFT;
+					if (right) return HTRIGHT;
+					if (top) return HTTOP;
+					if (bottom) return HTBOTTOM;
+
+					return HTCLIENT;
+					#else
+					break;
+					#endif
 				}
 				default: { break; }
 			}

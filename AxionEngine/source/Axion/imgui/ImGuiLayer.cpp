@@ -35,8 +35,6 @@ namespace Axion {
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-		//ImGui::StyleColorsDark();
 		
 		setStyle();
 	
@@ -176,36 +174,59 @@ namespace Axion {
 
 		style.FramePadding = ImVec2(3.0f, 3.0f);
 		style.ItemSpacing = ImVec2(3.0f, 3.0f);
-		
 
 		// sets colors
 		ImVec4* colors = style.Colors;
-		colors[ImGuiCol_WindowBg]		= ImVec4(0.176f, 0.176f, 0.188f, 1.0f);
-		colors[ImGuiCol_Text]			= ImVec4(0.91f, 0.91f, 0.91f, 1.0f);
-		colors[ImGuiCol_Header]			= ImVec4(1.00f, 0.25f, 0.25f, 1.0f);
-		colors[ImGuiCol_HeaderHovered]	= ImVec4(0.35f, 1.00f, 0.35f, 1.0f);
-		colors[ImGuiCol_HeaderActive]	= ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
+		colors[ImGuiCol_WindowBg] = ImVec4(0.176f, 0.176f, 0.188f, 1.0f);		// final
+		colors[ImGuiCol_Text] = ImVec4(0.91f, 0.91f, 0.91f, 1.0f);				// final
 
-		colors[ImGuiCol_TitleBg]			= ImVec4(0.08f, 0.08f, 0.08f, 1.0f);
-		colors[ImGuiCol_TitleBgActive]		= ImVec4(0.08f, 0.08f, 0.08f, 1.0f);
-		colors[ImGuiCol_TitleBgCollapsed]	= ImVec4(0.08f, 0.08f, 0.08f, 1.0f);
-
-		ImVec4 myAccent = ImVec4(0.30f, 0.60f, 0.90f, 1.00f);
-		ImVec4 myTitleColor = ImVec4(0.18f, 0.22f, 0.25f, 1.00f); // Change to your preferred color
-
-		style.Colors[ImGuiCol_Tab] = myTitleColor;
-		style.Colors[ImGuiCol_TabHovered] = ImVec4(0.25f, 0.30f, 0.35f, 1.00f);
-		style.Colors[ImGuiCol_TabActive] = myTitleColor;
-		style.Colors[ImGuiCol_TabUnfocused] = myTitleColor;
-		style.Colors[ImGuiCol_TabUnfocusedActive] = myTitleColor;
+		colors[ImGuiCol_Header] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);				// TODO what does it do?
+		colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);		// final
+		colors[ImGuiCol_HeaderActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);		// final
 		
+		colors[ImGuiCol_Button] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);				// final
+		colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);		// final
+		colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);		// final
+
+		colors[ImGuiCol_MenuBarBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);		// final
+		
+		colors[ImGuiCol_Border] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);				// final
+		colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);			// TODO what does it do?
+
+		colors[ImGuiCol_TitleBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);		// final
+		colors[ImGuiCol_TitleBgActive] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);	// final
+		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);		// TODO what does it do?
+
+		colors[ImGuiCol_CheckMark] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);			// final
+
+		colors[ImGuiCol_FrameBg] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);				// final
+		colors[ImGuiCol_FrameBgActive] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);		// final
+		colors[ImGuiCol_FrameBgHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);		// final
+
+		colors[ImGuiCol_ResizeGrip] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);			// TODO what does it do?
+		colors[ImGuiCol_ResizeGripHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);	// final
+		colors[ImGuiCol_ResizeGripActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);	// final
+
+		colors[ImGuiCol_Tab] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_TabActive] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_TabHovered] = ImVec4(0.42f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_TabDimmed] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_TabDimmedSelectedOverline] = ImVec4(0.62f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_TabSelected] = ImVec4(0.52f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_TabSelectedOverline] = ImVec4(0.62f, 0.0f, 0.0f, 1.0f);
 
 		// sets fonts
 		ImGuiIO& io = ImGui::GetIO();
 		io.Fonts->Clear();
 		
-		io.Fonts->AddFontFromFileTTF("assets/fonts/OpenSans-Bold.ttf", 18.0f);
-		
+		io.Fonts->AddFontFromFileTTF("assets/fonts/openSans/OpenSans-Bold.ttf", 18.0f);
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.PixelSnapH = true;
+		static const ImWchar icon_ranges[] = { 0xE000, 0xF8FF, 0 };
+		io.Fonts->AddFontFromFileTTF("assets/fonts/icons/MaterialSymbolsOutlined-Regular.ttf", 20.0f, &icons_config, icon_ranges);
+
 		io.FontDefault = io.Fonts->Fonts[0];
 		
 		ImGui_ImplDX12_InvalidateDeviceObjects();

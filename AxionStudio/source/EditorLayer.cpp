@@ -7,6 +7,9 @@
 
 namespace Axion {
 
+	bool EditorLayer::s_isDragging = false;
+	POINT EditorLayer::s_dragOffset = { 0, 0 };
+
 	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_cameraController(1280.0f / 720.0f, true) {}
 
 	void EditorLayer::onAttach() {
@@ -68,8 +71,8 @@ namespace Axion {
 		ImGui::SetNextWindowSize(viewport->WorkSize);
 		ImGui::SetNextWindowViewport(viewport->ID);
 		
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f)); // TODO: Maybe remove
 		
 		ImGui::Begin("DockSpaceFrame", nullptr, m_windowFlags);
@@ -79,11 +82,11 @@ namespace Axion {
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
 			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
 			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), m_dockspaceFlags);
+			
 		}
 
 		// renders framebuffer
 		ImGui::Begin("Editor Viewport");
-
 		D12FrameBuffer* framebuffer = static_cast<D12FrameBuffer*>(m_frameBuffer.get());
 		D12Context* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 
@@ -97,23 +100,62 @@ namespace Axion {
 		ImGui::Begin("Scene View");
 		ImGui::ColorEdit4("Color", m_testColor);
 		ImGui::Text(m_context->getDeviceWrapper().getAdapterName().c_str());
+		static bool checked = true;
+		ImGui::Checkbox("Check", &checked);
+		ImGui::Button("Button");
 		ImGui::End();
-		
 		
 		// menu bar
 		if (ImGui::BeginMenuBar()) {
-			if (ImGui::BeginMenu("File")) {
-				ImGui::MenuItem("Exit", NULL);
-			
+			ImGui::Text("      Axion Studio           ");
+
+			// file menu
+			if (ImGui::BeginMenu("  File  ")) {
+				if (ImGui::MenuItem("Exit", NULL)) { Application::get().close(); }
 				ImGui::EndMenu();
 			}
 
-			ImGui::SameLine(ImGui::GetWindowWidth() - 20);
-			if (ImGui::Button("X")) {}
-		
+			// edit menu
+			if (ImGui::BeginMenu("  Edit  ")) {
+				ImGui::EndMenu();
+			}
+
+			// view menu
+			if (ImGui::BeginMenu("  View  ")) {
+				ImGui::EndMenu();
+			}
+
+
+			#if AX_WIN_USING_CUSTOM_TITLE_BAR
+
+			// Detect dragging on empty space in the menu bar
+			float dragZoneStartX = 285.0f;
+			float dragZoneEndX = ImGui::GetWindowWidth() - 134.0f;
+			
+			ImVec2 winPos = ImGui::GetWindowPos();
+			ImVec2 cursor = ImGui::GetMousePos();
+			ImVec2 local = ImVec2(cursor.x - winPos.x, cursor.y - winPos.y);
+
+			float menuBarHeight = ImGui::GetFrameHeight();
+
+			if (local.y >= 0 && local.y <= menuBarHeight && local.x >= dragZoneStartX && local.x <= dragZoneEndX && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+				HWND hwnd = static_cast<HWND>(Application::get().getWindow().getNativeHandle());
+				ReleaseCapture();
+				SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+			}
+
+			ImGui::SameLine(ImGui::GetWindowWidth() - 134);
+			if (ImGui::Button(u8"\uE15B", {42, 24})) {}
+			ImGui::SameLine();
+			if (ImGui::Button(u8"\uE5D1", {42, 24})) {}
+			ImGui::SameLine();
+			if (ImGui::Button(u8"\uE5CD", {42, 24})) { Application::get().close(); }
+			#endif
+
 			ImGui::EndMenuBar();
+			
 		}
-		
+
 		ImGui::End();
 	}
 

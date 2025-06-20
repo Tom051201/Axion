@@ -22,8 +22,10 @@ namespace Axion {
 		virtual ~Application();
 
 		void run();
+		void close();
 
 		void onEvent(Event& e);
+		
 
 		void pushLayer(Layer* layer);
 		void pushOverlay(Layer* layer);

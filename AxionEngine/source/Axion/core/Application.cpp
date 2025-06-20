@@ -84,6 +84,13 @@ namespace Axion {
 
 	}
 
+	void Application::close() {
+		onEvent(WindowCloseEvent());
+		#ifdef AX_PLATFORM_WINDOWS
+		PostQuitMessage(0);
+		#endif
+	}
+
 	bool Application::onWindowClose(Event& e) {
 		m_running = false;
 		return true;

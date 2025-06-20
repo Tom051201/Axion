@@ -31,6 +31,9 @@ namespace Axion {
 		Ref<FrameBuffer> m_frameBuffer;
 		Vec2 m_viewportDim = { 0.0f, 0.0f };
 
+		static bool s_isDragging;
+		static POINT s_dragOffset;
+
 		// ImGui
 		ImGuiDockNodeFlags m_dockspaceFlags;
 		ImGuiWindowFlags m_windowFlags;
