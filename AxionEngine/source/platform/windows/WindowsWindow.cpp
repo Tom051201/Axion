@@ -56,10 +56,6 @@ namespace Axion {
 		int posX = (screenWidth / 2)  - (m_data.width / 2);
 		int posY = (screenHeight / 2)  - (m_data.height / 2);
 
-		AX_CORE_LOG_TRACE("Window: {0} {1}", m_data.width, m_data.height);
-		AX_CORE_LOG_TRACE("Screen: {0} {1}", screenWidth, screenHeight);
-		AX_CORE_LOG_TRACE("Pos   : {0} {1}", posX, posY);
-
 		m_hwnd = CreateWindowEx(
 			0, windowClassName,
 			std::wstring(m_data.title.begin(), m_data.title.end()).c_str(),

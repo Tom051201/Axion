@@ -15,6 +15,18 @@
 
 namespace Axion {
 
+	struct SystemInfo {
+		std::string gpuName = "?";
+		std::string gpuDriverVersion = "?";
+		uint64_t vramMB= 0;
+
+		std::string cpuName = "?";
+		uint32_t cores = 0;
+
+		uint64_t totalRamMB = 0;
+		std::string os = "?";
+	};
+
 	class Application {
 	public:
 
@@ -26,11 +38,13 @@ namespace Axion {
 
 		void onEvent(Event& e);
 		
-
 		void pushLayer(Layer* layer);
 		void pushOverlay(Layer* layer);
 		void removeLayer(Layer* layer);
 		void removeOverlay(Layer* layer);
+
+		SystemInfo& getSystemInfo() { return m_systemInfo; }
+		const SystemInfo& getSystemInfo() const { return m_systemInfo; }
 
 		static Application& get() { return *s_instance; }
 
@@ -47,8 +61,12 @@ namespace Axion {
 		LayerStack m_layerStack;
 		ImGuiLayer* m_imGuiLayer;
 
+		SystemInfo m_systemInfo;
+
 		bool onWindowClose(Event& e);
 		bool onKeyPressed(Event& e);
+
+		void setupSystemInfo();
 
 	};
 

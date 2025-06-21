@@ -2,6 +2,7 @@
 #include "D12Device.h"
 
 #include "Axion/core/Core.h"
+#include "Axion/core/Application.h"
 
 namespace Axion {
 
@@ -25,6 +26,23 @@ namespace Axion {
 			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) continue;
 			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_device)))) {
 				m_adapter = adapter;
+				
+				LARGE_INTEGER driverVersion;
+				if (SUCCEEDED(adapter->CheckInterfaceSupport(__uuidof(IDXGIDevice), &driverVersion))) {
+					WORD product = HIWORD(driverVersion.HighPart);
+					WORD version = LOWORD(driverVersion.HighPart);
+					WORD subVersion = HIWORD(driverVersion.LowPart);
+					WORD build = LOWORD(driverVersion.LowPart);
+					
+					Application::get().getSystemInfo().gpuDriverVersion =
+						std::to_string(product) + "." +
+						std::to_string(version) + "." +
+						std::to_string(subVersion) + "." +
+						std::to_string(build);
+				}
+
+				Application::get().getSystemInfo().gpuName = std::string(ws.begin(), ws.end());
+				Application::get().getSystemInfo().vramMB = desc.DedicatedVideoMemory / (1024 * 1024);
 				AX_CORE_LOG_TRACE("Successfully created device for adapter");
 				return;
 			}
@@ -32,6 +50,8 @@ namespace Axion {
 
 		AX_CORE_LOG_WARN("Falling back to WARP adapter");
 		AX_THROW_IF_FAILED_HR(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_device)), "Failed to create device");
+		Application::get().getSystemInfo().gpuName = "Unknown";
+		Application::get().getSystemInfo().gpuDriverVersion = "Unknown";
 		AX_CORE_LOG_TRACE("WARP device created successfully");
 	}
 
@@ -49,5 +69,7 @@ namespace Axion {
 		std::wstring wdesc(desc.Description);
 		return std::string(wdesc.begin(), wdesc.end());
 	}
+
+	
 
 }

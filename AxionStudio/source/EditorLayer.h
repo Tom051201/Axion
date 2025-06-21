@@ -33,6 +33,7 @@ namespace Axion {
 
 		static bool s_isDragging;
 		static POINT s_dragOffset;
+		bool m_showSystemInfoWindow = false;
 
 		// ImGui
 		ImGuiDockNodeFlags m_dockspaceFlags;
