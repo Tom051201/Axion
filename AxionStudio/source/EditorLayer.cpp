@@ -1,6 +1,7 @@
 #include "EditorLayer.h"
 
 #include "Axion/events/Event.h"
+#include "Axion/core/PlatformInfo.h"
 
 // TEMP
 #include "platform/directx/D12FrameBuffer.h"
@@ -27,12 +28,14 @@ namespace Axion {
 
 		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 
-		m_dockspaceFlags = ImGuiDockNodeFlags_None;
+		m_dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None;
 		m_windowFlags = ImGuiWindowFlags_MenuBar |
 			ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
+
+		setupSystemInfo();
 	}
 
 	void EditorLayer::onDetach() {
@@ -104,34 +107,34 @@ namespace Axion {
 		ImGui::Checkbox("Check", &checked);
 		ImGui::Button("Button");
 		ImGui::End();
-		
-		if (m_showSystemInfoWindow && ImGui::Begin("System Info")) {
-			const auto& info = Application::get().getSystemInfo();
+	
+		// system info panel
+		if (m_showSystemInfoWindow) {
+			if (ImGui::Begin("System Info"), &m_showSystemInfoWindow) {
+				const auto& info = m_systemInfo;
 
-			ImGui::Columns(2, nullptr, false);
-			
-			ImGui::Text("GPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuName.c_str());			ImGui::NextColumn();
-			ImGui::Text("VRAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.vramMB);				ImGui::NextColumn();
-			ImGui::Text("Driver:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuDriverVersion.c_str());	ImGui::NextColumn();
+				ImGui::Columns(2, nullptr, false);
 
-			ImGui::Separator();			ImGui::Columns(2, nullptr, false);
+				ImGui::Text("GPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuName.c_str());			ImGui::NextColumn();
+				ImGui::Text("VRAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.vramMB);				ImGui::NextColumn();
+				ImGui::Text("Driver:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuDriverVersion.c_str());	ImGui::NextColumn();
 
-			ImGui::Text("CPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.cpuName.c_str());			ImGui::NextColumn();
-			ImGui::Text("Cores:");		ImGui::NextColumn();	ImGui::Text("%u", info.cores);						ImGui::NextColumn();
-			ImGui::Text("RAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.totalRamMB);			ImGui::NextColumn();
+				ImGui::Separator();			ImGui::Columns(2, nullptr, false);
 
-			ImGui::Separator();			ImGui::Columns(2, nullptr, false);
+				ImGui::Text("CPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.cpuName.c_str());			ImGui::NextColumn();
+				ImGui::Text("Cores:");		ImGui::NextColumn();	ImGui::Text("%u", info.cores);						ImGui::NextColumn();
+				ImGui::Text("RAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.totalRamMB);			ImGui::NextColumn();
 
-			ImGui::Text("OS:");			ImGui::NextColumn();	ImGui::TextWrapped("%s", info.os.c_str());			ImGui::NextColumn();
+				ImGui::Separator();			ImGui::Columns(2, nullptr, false);
 
-			ImGui::Columns(1);
+				ImGui::Text("OS:");			ImGui::NextColumn();	ImGui::TextWrapped("%s", info.os.c_str());			ImGui::NextColumn();
 
-			
+				ImGui::Columns(1);
+			}
 			ImGui::End();
 		}
 		
-
-
+	
 		// menu bar
 		if (ImGui::BeginMenuBar()) {
 			ImGui::Text("      Axion Studio           ");
@@ -153,8 +156,8 @@ namespace Axion {
 			}
 
 			if (ImGui::BeginMenu("Help")) {
-				if (ImGui::MenuItem("System Info")) {
-					m_showSystemInfoWindow = true;
+				if (ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoWindow)) {
+					m_showSystemInfoWindow != m_showSystemInfoWindow;
 				}
 				ImGui::EndMenu();
 			}
@@ -196,6 +199,18 @@ namespace Axion {
 	bool EditorLayer::onWindowResize(WindowResizeEvent& e) {
 		m_frameBuffer->resize(e.getWidth(), e.getHeight()); // TODO: calculate correctly
 		return false;
+	}
+
+	void EditorLayer::setupSystemInfo() {
+		m_systemInfo.gpuName = GraphicsContext::get()->getGpuName();
+		m_systemInfo.gpuDriverVersion = GraphicsContext::get()->getGpuDriverVersion();
+		m_systemInfo.vramMB = GraphicsContext::get()->getVramMB();
+
+		m_systemInfo.cpuName = PlatformInfo::getCpuName();
+		m_systemInfo.cores = PlatformInfo::getCpuCores();
+
+		m_systemInfo.totalRamMB = PlatformInfo::getRamMB();
+		m_systemInfo.os = PlatformInfo::getOsVersion();
 	}
 
 }

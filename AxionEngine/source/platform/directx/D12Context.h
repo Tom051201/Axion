@@ -36,6 +36,10 @@ namespace Axion {
 
 		inline void* getNativeContext() const override { return (void*)this; }
 		
+		std::string getGpuName() const override;
+		std::string getGpuDriverVersion() const override;
+		uint64_t getVramMB() const override;
+
 		void waitForPreviousFrame();
 
 		D12Device& getDeviceWrapper() { return m_device; }

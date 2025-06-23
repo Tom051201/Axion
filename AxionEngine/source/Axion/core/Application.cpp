@@ -5,11 +5,6 @@
 
 #include "platform/directx/D12Context.h"
 
-// TEMP
-#include <intrin.h>
-#include <Windows.h>
-#include <winternl.h>
-
 namespace Axion {
 
 	Application* Application::s_instance = nullptr;
@@ -26,9 +21,6 @@ namespace Axion {
 		
 		m_imGuiLayer = new ImGuiLayer();
 		pushOverlay(m_imGuiLayer);
-
-		// setup system info
-		setupSystemInfo();
 
 	}
 
@@ -127,50 +119,6 @@ namespace Axion {
 	void Application::removeOverlay(Layer* layer) {
 		m_layerStack.removeOverlay(layer);
 		layer->onDetach();
-	}
-	
-	void Application::setupSystemInfo() {	// TODO: do not make this here os specific!
-		// cpu
-		char cpuBrand[0x40] = {};
-		int cpuInfo[4] = {};
-		__cpuid(cpuInfo, 0x80000000);
-		unsigned int maxExtended = cpuInfo[0];
-
-		if (maxExtended >= 0x80000004) {
-			__cpuid((int*)cpuBrand, 0x80000002);
-			__cpuid((int*)(cpuBrand + 16), 0x80000003);
-			__cpuid((int*)(cpuBrand + 32), 0x80000004);
-			m_systemInfo.cpuName = cpuBrand;
-		}
-
-		// cores
-		SYSTEM_INFO sysInfo;
-		GetSystemInfo(&sysInfo);
-		m_systemInfo.cores = sysInfo.dwNumberOfProcessors;
-
-		// ram
-		MEMORYSTATUSEX memInfo = {};
-		memInfo.dwLength = sizeof(memInfo);
-		if (GlobalMemoryStatusEx(&memInfo)) {
-			m_systemInfo.totalRamMB = static_cast<uint64_t>(memInfo.ullTotalPhys / (1024 * 1024));
-		}
-
-		// os
-		typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
-		HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
-		if (hMod) {
-			RtlGetVersionPtr fxPtr = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
-			if (fxPtr != nullptr) {
-				RTL_OSVERSIONINFOW rovi = { 0 };
-				rovi.dwOSVersionInfoSize = sizeof(rovi);
-				if (fxPtr(&rovi) == 0) {
-					wchar_t buf[128];
-					swprintf_s(buf, 128, L"Windows %d.%d (Build %d)", rovi.dwMajorVersion, rovi.dwMinorVersion, rovi.dwBuildNumber);
-					std::wstring wstr(buf);
-					m_systemInfo.os = std::string(wstr.begin(), wstr.end());
-				}
-			}
-		}
 	}
 
 }

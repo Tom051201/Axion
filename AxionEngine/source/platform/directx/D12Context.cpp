@@ -130,4 +130,33 @@ namespace Axion {
 	
 	}
 
+	std::string D12Context::getGpuName() const {
+		DXGI_ADAPTER_DESC1 desc;
+		m_device.getAdapter()->GetDesc1(&desc);
+		std::wstring ws(desc.Description);
+		return std::string(ws.begin(), ws.end());
+	}
+
+	std::string D12Context::getGpuDriverVersion() const {
+		LARGE_INTEGER driverVersion;
+		if (SUCCEEDED(m_device.getAdapter()->CheckInterfaceSupport(__uuidof(IDXGIDevice), &driverVersion))) {
+			WORD product = HIWORD(driverVersion.HighPart);
+			WORD version = LOWORD(driverVersion.HighPart);
+			WORD subVersion = HIWORD(driverVersion.LowPart);
+			WORD build = LOWORD(driverVersion.LowPart);
+
+			return
+				std::to_string(product) + "." +
+				std::to_string(version) + "." +
+				std::to_string(subVersion) + "." +
+				std::to_string(build);
+		}
+	}
+
+	uint64_t D12Context::getVramMB() const {
+		DXGI_ADAPTER_DESC1 desc;
+		m_device.getAdapter()->GetDesc1(&desc);
+		return desc.DedicatedVideoMemory / (1024 * 1024);
+	}
+
 }
