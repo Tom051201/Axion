@@ -32,7 +32,7 @@ namespace Axion {
 		s_rendererData = new RendererData();
 
 		s_rendererData->quadShader = Axion::Shader::create("quadShader2D");
-		s_rendererData->quadShader->compileFromFile("assets/Shader1.hlsl");
+		s_rendererData->quadShader->compileFromFile("assets/shaders/ColorShader.hlsl");
 
 		std::vector<Axion::Vertex> vertices = {
 			Axion::Vertex(-0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 1.0f,		0.0f, 0.0f),
@@ -100,6 +100,21 @@ namespace Axion {
 
 		Mat4 model = Mat4::translation(position) * Mat4::scale(Vec3(dim.x, dim.y, 1.0f));
 		buffer.modelMatrix = model.transposed().toXM();
+
+		uploadBuffer->update(&buffer, sizeof(ObjectBuffer));
+		uploadBuffer->bind(1);
+
+		s_rendererData->quadMesh->render();
+		RenderCommand::drawIndexed(s_rendererData->quadMesh->getVertexBuffer(), s_rendererData->quadMesh->getIndexBuffer());
+	}
+
+	void Renderer2D::drawQuad(const Mat4& transform, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer) {
+		s_rendererData->quadShader->bind();
+
+		ObjectBuffer buffer;
+		buffer.color = color.toFloat4();
+
+		buffer.modelMatrix = transform.transposed().toXM();
 
 		uploadBuffer->update(&buffer, sizeof(ObjectBuffer));
 		uploadBuffer->bind(1);

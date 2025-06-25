@@ -25,6 +25,7 @@ namespace Axion {
 
 		static void drawQuad(const Vec3& position, const Vec2& dim, const Vec4& color);
 		static void drawQuad(const Vec3& position, const Vec2& dim, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer);
+		static void drawQuad(const Mat4& transform, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer);
 
 		static void drawTexture(const Vec3& position, const Vec2& dim, Ref<Texture2D>& texture, Ref<ConstantBuffer>& uploadBuffer);
 

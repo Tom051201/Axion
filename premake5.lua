@@ -36,7 +36,8 @@ project "AxionEngine"
 		"%{IncludeDir.ImGui}",
 		"%{prj.name}/vendor",
 		"%{prj.name}/source",
-		"%{prj.name}/vendor/d3d12"
+		"%{prj.name}/vendor/d3d12",
+		"%{prj.name}/vendor/entt"
 	}
 	libdirs {}
 	links {
@@ -84,7 +85,8 @@ project "AxionStudio"
 		"AxionEngine/vendor/spdlog/include",
 		"AxionEngine/source",
 		"AxionEngine/vendor/imgui",
-		"AxionEngine/vendor/d3d12"
+		"AxionEngine/vendor/d3d12",
+		"AxionEngine/vendor/entt"
 	}
 	links {
 		"AxionEngine"
@@ -126,7 +128,8 @@ project "Sandbox"
 		"AxionEngine/vendor/spdlog/include",
 		"AxionEngine/source",
 		"AxionEngine/vendor/imgui",
-		"AxionEngine/vendor/d3d12"
+		"AxionEngine/vendor/d3d12",
+		"AxionEngine/vendor/entt"
 	}
 	links {
 		"AxionEngine"

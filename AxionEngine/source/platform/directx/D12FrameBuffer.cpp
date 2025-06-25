@@ -133,4 +133,8 @@ namespace Axion {
 		cmdList->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
 	}
 
+	void D12FrameBuffer::clear() {
+		clear(m_specification.clearColor);
+	}
+
 }

@@ -3,6 +3,7 @@
 #include "Axion.h"
 
 #include "imgui.h"
+#include "entt.hpp"
 
 // TEMP
 #include "platform/directx/D12Context.h"
@@ -40,30 +41,29 @@ namespace Axion {
 	private:
 
 		OrthographicCameraController m_cameraController;
+		SystemInfo m_systemInfo;
 
 		Ref<Texture2D> m_texture;
 
+		// scene viewport
 		Ref<FrameBuffer> m_frameBuffer;
 		Vec2 m_viewportDim = { 0.0f, 0.0f };
 
-		static bool s_isDragging;
-		static POINT s_dragOffset;
-		bool m_showSystemInfoWindow = false;
+		// ECS
+		Ref<Scene> m_activeScene;
+		Entity m_squareEntity;
 
 		// ImGui
 		ImGuiDockNodeFlags m_dockspaceFlags;
 		ImGuiWindowFlags m_windowFlags;
+		bool m_showSystemInfoWindow = false;
 
 		// TEMP
 		Ref<ConstantBuffer> m_buffer1;
 		D12Context* m_context = nullptr;
-		float m_testColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		ImTextureID m_imGuiTexID = 0;
 
-		SystemInfo m_systemInfo;
 
 		bool onWindowResize(WindowResizeEvent& e);
-
 		void setupSystemInfo();
 
 	};

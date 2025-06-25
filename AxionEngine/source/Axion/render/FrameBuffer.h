@@ -22,6 +22,8 @@ namespace Axion {
 
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;
+
+		virtual void clear() = 0;
 		virtual void clear(const Vec4& clearColor) = 0;
 
 		virtual const FrameBufferSpecification& getSpecification() const = 0;

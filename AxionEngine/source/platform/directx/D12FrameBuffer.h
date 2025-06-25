@@ -19,6 +19,8 @@ namespace Axion {
 
 		void bind() const override;
 		void unbind() const override;
+
+		void clear() override;
 		void clear(const Vec4& clearColor) override;
 
 		const FrameBufferSpecification& getSpecification() const override { return m_specification; }

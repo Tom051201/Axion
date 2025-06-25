@@ -59,6 +59,9 @@ namespace Axion {
 			return (len != 0) ? (*this / len) : Vec2::zero();
 		}
 
+		float* data() { return &x; }
+		const float* data() const { return &x; }
+
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +121,9 @@ namespace Axion {
 			return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(toXM(), other.toXM())));
 		}
 
+		float* data() { return &x; }
+		const float* data() const { return &x; }
+
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -174,6 +180,9 @@ namespace Axion {
 		DirectX::XMFLOAT4 toFloat4() const {
 			return DirectX::XMFLOAT4(x, y, z, w);
 		}
+
+		float* data() { return &x; }
+		const float* data() const { return &x; }
 
 	};
 
@@ -269,7 +278,6 @@ namespace Axion {
 		}
 
 		Mat4 operator*(const Mat4& other) const { return Mat4(DirectX::XMMatrixMultiply(matrix, other.matrix)); }
-
 		Mat4& operator*=(const Mat4& other) { matrix = DirectX::XMMatrixMultiply(matrix, other.matrix); return *this; }
 
 	};

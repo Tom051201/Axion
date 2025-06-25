@@ -26,3 +26,7 @@
 
 #include "Axion/input/Input.h"
 #include "Axion/input/InputCodes.h"
+
+#include "Axion/scene/Scene.h"
+#include "Axion/scene/Entity.h"
+#include "Axion/scene/Components.h"

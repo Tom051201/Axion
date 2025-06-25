@@ -8,9 +8,6 @@
 
 namespace Axion {
 
-	bool EditorLayer::s_isDragging = false;
-	POINT EditorLayer::s_dragOffset = { 0, 0 };
-
 	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_cameraController(1280.0f / 720.0f, true) {}
 
 	void EditorLayer::onAttach() {
@@ -27,6 +24,12 @@ namespace Axion {
 		m_viewportDim = { (float)fbs.width, (float)fbs.height };
 
 		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+
+		m_activeScene = std::make_shared<Scene>();
+
+		auto square = m_activeScene->createEntity("Square");
+		square.addComponent<SpriteRendererComponent>(Vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
+		m_squareEntity = square;
 
 		m_dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None;
 		m_windowFlags = ImGuiWindowFlags_MenuBar |
@@ -56,9 +59,10 @@ namespace Axion {
 			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed
 
 			m_frameBuffer->bind();
-			m_frameBuffer->clear(m_testColor);
+			m_frameBuffer->clear();
 
-			Renderer2D::drawTexture({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, m_texture, m_buffer1);
+			m_activeScene->onUpdate(ts);
+			//Renderer2D::drawTexture({ 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f }, m_texture, m_buffer1);
 
 			m_frameBuffer->unbind();
 		}
@@ -110,11 +114,9 @@ namespace Axion {
 
 		// scene view
 		ImGui::Begin("Scene View");
-		ImGui::ColorEdit4("Color", m_testColor);
-		ImGui::Text(m_context->getDeviceWrapper().getAdapterName().c_str());
-		static bool checked = true;
-		ImGui::Checkbox("Check", &checked);
-		ImGui::Button("Button");
+		ImGui::Text("%s", m_squareEntity.getComponent<TagComponent>().tag.c_str());
+		auto& color = m_squareEntity.getComponent<SpriteRendererComponent>().color;
+		ImGui::ColorEdit4("Color", color.data());
 		ImGui::End();
 	
 		// system info panel
