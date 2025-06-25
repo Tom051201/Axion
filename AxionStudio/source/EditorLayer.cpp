@@ -49,22 +49,25 @@ namespace Axion {
 		m_cameraController.onUpdate(ts);
 
 		Renderer2D::beginScene(m_cameraController.getCamera());
-		m_frameBuffer->bind();
-		m_frameBuffer->clear(m_testColor);
 		
-		Renderer2D::drawTexture({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, m_texture, m_buffer1);
+		m_cameraController.resize(m_viewportDim.x, m_viewportDim.y);
 
-		m_frameBuffer->unbind();
+		if (m_viewportDim.x > 0 && m_viewportDim.y > 0) {
+			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed
+
+			m_frameBuffer->bind();
+			m_frameBuffer->clear(m_testColor);
+
+			Renderer2D::drawTexture({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, m_texture, m_buffer1);
+
+			m_frameBuffer->unbind();
+		}
 
 		m_context->getSwapChainWrapper().setAsRenderTarget();
 	}
 
 	void EditorLayer::onEvent(Event& e) {
 		m_cameraController.onEvent(e);
-
-		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<WindowResizeEvent>(BIND_EVENT_FN(EditorLayer::onWindowResize));
-
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -89,15 +92,21 @@ namespace Axion {
 		}
 
 		// renders framebuffer
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
 		ImGui::Begin("Editor Viewport");
-		D12FrameBuffer* framebuffer = static_cast<D12FrameBuffer*>(m_frameBuffer.get());
-		D12Context* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+		if (viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
+			m_viewportDim = { viewportPanelSize.x, viewportPanelSize.y };
+			D12FrameBuffer* framebuffer = static_cast<D12FrameBuffer*>(m_frameBuffer.get());
+			D12Context* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 
-		ImGui::Image(
-			(ImTextureID)context->getSrvHeapWrapper().getGpuHandle(framebuffer->getSrvHeapIndex()).ptr,
-			ImVec2((float)framebuffer->getSpecification().width, (float)framebuffer->getSpecification().height)
-		);
+			ImGui::Image(
+				(ImTextureID)context->getSrvHeapWrapper().getGpuHandle(framebuffer->getSrvHeapIndex()).ptr,
+				ImVec2((float)framebuffer->getSpecification().width, (float)framebuffer->getSpecification().height)
+			);
+		}
 		ImGui::End();
+		ImGui::PopStyleVar();
 
 		// scene view
 		ImGui::Begin("Scene View");
@@ -197,7 +206,6 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onWindowResize(WindowResizeEvent& e) {
-		m_frameBuffer->resize(e.getWidth(), e.getHeight()); // TODO: calculate correctly
 		return false;
 	}
 

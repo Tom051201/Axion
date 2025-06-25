@@ -13,6 +13,8 @@ namespace Axion {
 
 		OrthographicCameraController(float aspectRatio, bool rotation = false);
 
+		void resize(float width, float height);
+
 		void onUpdate(Timestep ts);
 		void onEvent(Event& e);
 

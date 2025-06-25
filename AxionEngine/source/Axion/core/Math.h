@@ -42,6 +42,8 @@ namespace Axion {
 		Vec2& operator-=(const Vec2& other) { x -= other.x; y -= other.y; return *this; }
 		Vec2& operator*=(float scalar) { x *= scalar; y *= scalar; return *this; }
 		Vec2& operator/=(float scalar) { x /= scalar; y /= scalar; return *this; }
+		bool operator==(const Vec2& other) const { return x == other.x && y == other.y; }
+		bool operator!=(const Vec2& other) const { return x != other.x || y != other.y; }
 
 		// Math operations
 		float dot(const Vec2& other) const {
@@ -92,6 +94,8 @@ namespace Axion {
 		Vec3& operator-=(const Vec3& other) { *this = *this - other; return *this; }
 		Vec3& operator*=(float scalar) { *this = *this * scalar; return *this; }
 		Vec3& operator/=(float scalar) { *this = *this / scalar; return *this; }
+		bool operator==(const Vec3& other) { return x == other.x && y == other.y && z == other.z; }
+		bool operator!=(const Vec3& other) { return x != other.x || y != other.y || z != other.z; }
 
 		// Math operations
 		float dot(const Vec3& other) const {
@@ -151,6 +155,8 @@ namespace Axion {
 		Vec4& operator-=(const Vec4& other) { *this = *this - other; return *this; }
 		Vec4& operator*=(float scalar) { *this = *this * scalar; return *this; }
 		Vec4& operator/=(float scalar) { *this = *this / scalar; return *this; }
+		bool operator==(const Vec4& other) const { return x == other.x && y == other.y && z == other.z && w == other.w; }
+		bool operator!=(const Vec4& other) const { return x != other.x || y != other.y || z != other.z || w != other.w; }
 
 		// Math operations
 		float dot(const Vec4& other) const {

@@ -58,6 +58,7 @@ namespace Axion {
 		Ref<ConstantBuffer> m_buffer1;
 		D12Context* m_context = nullptr;
 		float m_testColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		ImTextureID m_imGuiTexID = 0;
 
 		SystemInfo m_systemInfo;
 

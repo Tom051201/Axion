@@ -11,6 +11,11 @@ namespace Axion {
 		  m_camera(-m_aspectRatio * m_zoomLevel, m_aspectRatio * m_zoomLevel, -m_zoomLevel, m_zoomLevel), m_rotationOn(rotationOn) {
 	}
 
+	void OrthographicCameraController::resize(float width, float height) {
+		m_aspectRatio = width / height;
+		m_camera.setProjection(-m_aspectRatio * m_zoomLevel, m_aspectRatio * m_zoomLevel, -m_zoomLevel, m_zoomLevel);
+	}
+
 	void OrthographicCameraController::onUpdate(Timestep ts) {
 
 		if (Input::isKeyPressed(KeyCode::A)) m_position.x -= m_translationSpeed * ts;
@@ -44,8 +49,7 @@ namespace Axion {
 
 	bool OrthographicCameraController::onWindowResized(WindowResizeEvent& e) {
 
-		m_aspectRatio = (float)e.getWidth() / (float)e.getHeight();
-		m_camera.setProjection(-m_aspectRatio * m_zoomLevel, m_aspectRatio * m_zoomLevel, -m_zoomLevel, m_zoomLevel);
+		resize((float)e.getWidth(), (float)e.getHeight());
 
 		return false;
 	}

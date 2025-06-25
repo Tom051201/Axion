@@ -7,6 +7,7 @@
 #include "Axion/core/Logging.h"
 #include "Axion/core/Timer.h"
 #include "Axion/core/Timestep.h"
+#include "Axion/core/Math.h"
 
 #include "Axion/render/Renderer.h"
 #include "Axion/render/Renderer2D.h"

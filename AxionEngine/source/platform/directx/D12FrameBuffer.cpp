@@ -26,6 +26,12 @@ namespace Axion {
 	}
 
 	void D12FrameBuffer::resize(uint32_t width, uint32_t height) {
+
+		// secures that the width and height are at
+		// least 1px otherwise this failes
+		width = std::max(1u, width);
+		height = std::max(1u, height);
+
 		release();
 		auto* device = m_context->getDevice();
 		auto* cmdList = m_context->getCommandList();
@@ -46,17 +52,17 @@ namespace Axion {
 
 		D3D12_CLEAR_VALUE clearValue = {};
 		clearValue.Format = texDesc.Format;
-		clearValue.Color[0] = 0.0f;
-		clearValue.Color[1] = 0.0f;
-		clearValue.Color[2] = 0.0f;
-		clearValue.Color[3] = 1.0f;
+		clearValue.Color[0] = m_specification.clearColor.x;
+		clearValue.Color[1] = m_specification.clearColor.y;
+		clearValue.Color[2] = m_specification.clearColor.z;
+		clearValue.Color[3] = m_specification.clearColor.w;
 
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&texDesc,
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			m_currentState,
 			&clearValue,
 			IID_PPV_ARGS(&m_colorResource)
 		);
@@ -111,9 +117,17 @@ namespace Axion {
 
 	// using different values here than specified
 	// in the resource description causes warning!
+	// Also does setting colors here not change the
+	// specification!
 	void D12FrameBuffer::clear(const Vec4& clearColor) {
 		auto* cmdList = m_context->getCommandList();
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
+
+		#ifdef AX_DEBUG
+		if (clearColor != m_specification.clearColor) {
+			AX_CORE_LOG_WARN("Clearing the D12Framebuffer with not optimized color!");
+		}
+		#endif
 
 		float color[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
 		cmdList->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
