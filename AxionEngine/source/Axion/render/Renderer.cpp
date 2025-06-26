@@ -38,15 +38,21 @@ namespace Axion {
 		AX_CORE_LOG_INFO("Renderer shutdown");
 	}
 
+	void Renderer::prepareRendering() {
+		s_rendererAPI->prepareRendering();
+	}
+
+	void Renderer::finishRendering() {
+		s_rendererAPI->finishRendering();
+	}
+
 	void Renderer::beginScene(OrthographicCamera& camera) {
-		s_rendererAPI->beginScene();
-		
 		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
 		s_uploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
 
 	void Renderer::endScene() {
-		s_rendererAPI->endScene();
+		// Does nothing for now
 	}
 
 	void Renderer::setClearColor(const Vec4& color) {
@@ -55,10 +61,6 @@ namespace Axion {
 
 	void Renderer::clear() {
 		RenderCommand::clear();
-	}
-
-	void Renderer::present() {
-		s_rendererAPI->present();
 	}
 
 	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader) {

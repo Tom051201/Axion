@@ -34,6 +34,10 @@ namespace Axion {
 		square.addComponent<SpriteRendererComponent>(Vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
 		m_squareEntity = square;
 
+		m_cameraEntity = m_activeScene->createEntity("Camera Entity");
+		m_cameraEntity.addComponent<CameraComponent>(Mat4::orthographic(-16.0f, 16.0f, -9.0f, 9.0f, -1.0f, 1.0f));
+		m_cameraEntity.getComponent<CameraComponent>().isPrimary = true;
+
 		m_dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None;
 		m_windowFlags = ImGuiWindowFlags_MenuBar |
 			ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
@@ -55,7 +59,7 @@ namespace Axion {
 		m_cameraController.resize(m_viewportDim.x, m_viewportDim.y);
 		m_cameraController.onUpdate(ts);
 
-		Renderer2D::beginScene(m_cameraController.getCamera());
+		//Renderer2D::beginScene(m_cameraController.getCamera());
 
 		if (m_viewportDim.x > 0 && m_viewportDim.y > 0) {
 			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed

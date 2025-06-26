@@ -42,6 +42,7 @@ namespace Axion {
 		// ECS
 		Ref<Scene> m_activeScene;
 		Entity m_squareEntity;
+		Entity m_cameraEntity;
 
 		// ImGui
 		ImGuiDockNodeFlags m_dockspaceFlags = 0;

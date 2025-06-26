@@ -8,15 +8,14 @@ namespace Axion {
 	class D12RendererAPI : public RendererAPI {
 	public:
 
-		void initialize(Window* window);
-		void release();
+		void initialize(Window* window) override;
+		void release() override;
 
-		void beginScene() override;
-		void endScene() override;
+		void prepareRendering() override;
+		void finishRendering() override;
 
 		void setClearColor(const Vec4& color);
 		void clear() override;
-		void present() override;
 
 		void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) override;
 

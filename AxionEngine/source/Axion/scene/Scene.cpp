@@ -28,12 +28,34 @@ namespace Axion {
 	}
 
 	void Scene::onUpdate(Timestep ts) {
-		auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+		Camera* primaryCamera = nullptr;
+		Mat4* cameraTransform = nullptr;
 
-		for (auto entity : group) {
-			auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+		{
+			auto group = m_registry.group<CameraComponent>(entt::get<TransformComponent>);
+			for (auto entity : group) {
+				auto& [transform, camera] = group.get<TransformComponent, CameraComponent>(entity);
 
-			Renderer2D::drawQuad(transform, sprite.color, m_uploadBuffer);
+				if (camera.isPrimary) {
+					primaryCamera = &camera.camera;
+					cameraTransform = &transform.transform;
+					break;
+				}
+
+			}
+		}
+
+		if (primaryCamera) {
+			Renderer2D::beginScene(primaryCamera->getProjection(), *cameraTransform);
+
+			auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+			for (auto entity : group) {
+				auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+
+				Renderer2D::drawQuad(transform, sprite.color, m_uploadBuffer);
+			}
+
+			//Renderer2D::endScene();
 		}
 
 	}

@@ -51,9 +51,15 @@ namespace Axion {
 		delete s_rendererData;
 	}
 
-	void Renderer2D::beginScene(const OrthographicCamera& camera) {
-		Renderer::getAPIInstance()->beginScene();
+	void Renderer2D::beginScene(const Camera& camera, const Mat4& transform) {
+		Mat4 viewProj = camera.getProjection() * (transform.inverse());
+		s_rendererData->quadShader->bind();
+		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(viewProj.toXM());
+		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
+		s_sceneUploadBuffer->bind(0);
+	}
 
+	void Renderer2D::beginScene(const OrthographicCamera& camera) {
 		s_rendererData->quadShader->bind();
 		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
@@ -61,7 +67,7 @@ namespace Axion {
 	}
 
 	void Renderer2D::endScene() {
-		Renderer::getAPIInstance()->endScene();
+		// Does nothing for now
 	}
 
 	void Renderer2D::setClearColor(const Vec4& color) {
@@ -70,10 +76,6 @@ namespace Axion {
 
 	void Renderer2D::clear() {
 		RenderCommand::clear();
-	}
-
-	void Renderer2D::present() {
-		Renderer::getAPIInstance()->present();
 	}
 
 	void Renderer2D::drawQuad(const Vec3& position, const Vec2& dim, const Vec4& color) {

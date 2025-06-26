@@ -13,7 +13,7 @@ namespace Axion {
 		s_instance = this;
 
 		m_window = Scope<Window>(Window::create());
-		m_window->setEventCallback(BIND_EVENT_FN(Application::onEvent));
+		m_window->setEventCallback(AX_BIND_EVENT_FN(Application::onEvent));
 
 		GraphicsContext::set(new D12Context());
 
@@ -42,8 +42,8 @@ namespace Axion {
 		}
 
 		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::onWindowClose));
-		dispatcher.dispatch<KeyPressedEvent>(BIND_EVENT_FN(Application::onKeyPressed));
+		dispatcher.dispatch<WindowCloseEvent>(AX_BIND_EVENT_FN(Application::onWindowClose));
+		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(Application::onKeyPressed));
 
 		for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
 			(*--it)->onEvent(e);
@@ -61,6 +61,7 @@ namespace Axion {
 		QueryPerformanceCounter(&lastTime);
 
 		while (m_running) {
+			Renderer::prepareRendering();	// TODO: think about doing this via the selected GraphicsContext
 
 			m_window->onUpdate();
 
@@ -79,8 +80,7 @@ namespace Axion {
 			}
 			m_imGuiLayer->endRender();
 
-			Axion::Renderer::endScene();
-			Axion::Renderer::present();
+			Renderer::finishRendering();	// TODO: think about doing this via the selected GraphicsContext
 		}
 
 	}

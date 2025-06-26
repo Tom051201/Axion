@@ -34,8 +34,8 @@ namespace Axion {
 
 	void OrthographicCameraController::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<MouseScrolledEvent>(BIND_EVENT_FN(OrthographicCameraController::onMouseScrolled));
-		dispatcher.dispatch<WindowResizeEvent>(BIND_EVENT_FN(OrthographicCameraController::onWindowResized));
+		dispatcher.dispatch<MouseScrolledEvent>(AX_BIND_EVENT_FN(OrthographicCameraController::onMouseScrolled));
+		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(OrthographicCameraController::onWindowResized));
 	}
 
 	bool OrthographicCameraController::onMouseScrolled(MouseScrolledEvent& e) {

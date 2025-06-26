@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Axion/core/Math.h"
+#include "Axion/render/Camera.h"
 
 namespace Axion {
 
@@ -33,6 +34,17 @@ namespace Axion {
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;
 		SpriteRendererComponent(const Vec4& color) : color(color) {}
+	};
+
+
+
+	struct CameraComponent {
+		Camera camera;
+		bool isPrimary = false;
+
+		CameraComponent() = default;
+		CameraComponent(const CameraComponent&) = default;
+		CameraComponent(const Mat4& projection) : camera(projection) {}
 	};
 
 }

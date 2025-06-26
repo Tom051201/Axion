@@ -50,29 +50,7 @@ namespace Axion {
 		AX_CORE_LOG_INFO("DirectX12 backend shutdown");
 	}
 
-	void D12Context::present() {
-
-		m_commandQueue.executeCommandList(m_commandList.getCommandList());
-		m_swapChain.present(m_vsyncInterval, 0);
-		waitForPreviousFrame();
-
-	}
-
-	void D12Context::setClearColor(const Vec4& color) {
-		m_clearColor = color;
-	}
-
-	void D12Context::clear() {
-		const float clearColor[] = { m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w };
-
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap.getHeap()->GetCPUDescriptorHandleForHeapStart();
-		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtvHeap.getDescriptorSize();
-
-		getCommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-		getCommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-	}
-
-	void D12Context::beginFrame() {
+	void D12Context::prepareRendering() {
 		auto* cmd = m_commandList.getCommandList();
 
 		AX_THROW_IF_FAILED_HR(m_commandList.getCommandAllocator()->Reset(), "Failed to reset command allocator");
@@ -93,8 +71,7 @@ namespace Axion {
 		getCommandList()->RSSetScissorRects(1, &scissor);
 	}
 
-	void D12Context::endFrame() {
-
+	void D12Context::finishRendering() {
 		// reverse barrier
 		m_commandList.getCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
 			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
@@ -103,6 +80,24 @@ namespace Axion {
 		));
 
 		m_commandList.close();
+
+		m_commandQueue.executeCommandList(m_commandList.getCommandList());
+		m_swapChain.present(m_vsyncInterval, 0);
+		waitForPreviousFrame();
+	}
+
+	void D12Context::setClearColor(const Vec4& color) {
+		m_clearColor = color;
+	}
+
+	void D12Context::clear() {
+		const float clearColor[] = { m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w };
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap.getHeap()->GetCPUDescriptorHandleForHeapStart();
+		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtvHeap.getDescriptorSize();
+
+		getCommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+		getCommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	}
 
 	void D12Context::waitForPreviousFrame() {

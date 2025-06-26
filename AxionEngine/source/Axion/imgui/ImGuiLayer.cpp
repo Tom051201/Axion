@@ -62,16 +62,15 @@ namespace Axion {
 	
 	void ImGuiLayer::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);
-		dispatcher.dispatch<MouseButtonPressedEvent>(BIND_EVENT_FN(ImGuiLayer::onMouseButtonPressedEvent));
-		dispatcher.dispatch<MouseButtonReleasedEvent>(BIND_EVENT_FN(ImGuiLayer::onMouseButtonReleasedEvent));
-		dispatcher.dispatch<MouseMovedEvent>(BIND_EVENT_FN(ImGuiLayer::onMouseMovedEvent));
-		dispatcher.dispatch<MouseScrolledEvent>(BIND_EVENT_FN(ImGuiLayer::onMouseScrolledEvent));
-		dispatcher.dispatch<KeyPressedEvent>(BIND_EVENT_FN(ImGuiLayer::onKeyPressedEvent));
-		dispatcher.dispatch<KeyReleasedEvent>(BIND_EVENT_FN(ImGuiLayer::onKeyReleasedEvent));
-		//dispatcher.dispatch<KeyTypedEvent>(BIND_EVENT_FN(ImGuiLayer::onKeyTypedEvent));
-		dispatcher.dispatch<WindowResizeEvent>(BIND_EVENT_FN(ImGuiLayer::onWindowResizeEvent));
-
-		dispatcher.dispatch<WindowCloseEvent>(BIND_EVENT_FN(ImGuiLayer::onWindowCloseEvent));
+		dispatcher.dispatch<MouseButtonPressedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onMouseButtonPressedEvent));
+		dispatcher.dispatch<MouseButtonReleasedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onMouseButtonReleasedEvent));
+		dispatcher.dispatch<MouseMovedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onMouseMovedEvent));
+		dispatcher.dispatch<MouseScrolledEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onMouseScrolledEvent));
+		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onKeyPressedEvent));
+		dispatcher.dispatch<KeyReleasedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onKeyReleasedEvent));
+		//dispatcher.dispatch<KeyTypedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onKeyTypedEvent));
+		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onWindowResizeEvent));
+		dispatcher.dispatch<WindowCloseEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onWindowCloseEvent));
 	}
 
 	void ImGuiLayer::beginRender() {

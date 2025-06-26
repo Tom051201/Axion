@@ -18,12 +18,11 @@ namespace Axion {
 		virtual void initialize(Window* window) = 0;
 		virtual void release() = 0;
 
-		virtual void beginScene() = 0;
-		virtual void endScene() = 0;
+		virtual void prepareRendering() = 0;
+		virtual void finishRendering() = 0;
 
 		virtual void setClearColor(const Vec4& color) = 0;
 		virtual void clear() = 0;
-		virtual void present() = 0;
 
 		virtual void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) = 0;
 

@@ -13,9 +13,13 @@ namespace Axion {
 
 		virtual void* getNativeContext() const = 0;
 
+		virtual void prepareRendering() = 0;
+		virtual void finishRendering() = 0;
+
 		virtual std::string getGpuName() const = 0;
 		virtual std::string getGpuDriverVersion() const = 0;
 		virtual uint64_t getVramMB() const = 0;
+
 
 		static GraphicsContext* get();
 		static void set(GraphicsContext* context);

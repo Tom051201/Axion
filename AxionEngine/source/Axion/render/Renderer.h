@@ -15,12 +15,14 @@ namespace Axion {
 		static void initialize(Window* window);
 		static void release();
 
+		static void prepareRendering();
+		static void finishRendering();
+
 		static void beginScene(OrthographicCamera& camera);
 		static void endScene();
 		
 		static void setClearColor(const Vec4& color);
 		static void clear();
-		static void present();
 
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader);
 
