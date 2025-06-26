@@ -5,22 +5,12 @@
 #include "imgui.h"
 #include "entt.hpp"
 
+#include "panels/SystemInfoPanel.h"
+
 // TEMP
 #include "platform/directx/D12Context.h"
 
 namespace Axion {
-
-	struct SystemInfo {
-		std::string gpuName = "?";
-		std::string gpuDriverVersion = "?";
-		uint64_t vramMB = 0;
-
-		std::string cpuName = "?";
-		uint32_t cores = 0;
-
-		uint64_t totalRamMB = 0;
-		std::string os = "?";
-	};
 
 	class EditorLayer : public Layer {
 	public:
@@ -35,15 +25,15 @@ namespace Axion {
 		void onEvent(Axion::Event& e) override;
 		void onGuiRender() override;
 
-		SystemInfo& getSystemInfo() { return m_systemInfo; }
-		const SystemInfo& getSystemInfo() const { return m_systemInfo; }
-
 	private:
 
 		OrthographicCameraController m_cameraController;
-		SystemInfo m_systemInfo;
 
 		Ref<Texture2D> m_texture;
+
+		// panels
+		Scope<SystemInfoPanel> m_systemInfoPanel;
+		bool m_showSystemInfoPanel = false;
 
 		// scene viewport
 		Ref<FrameBuffer> m_frameBuffer;
@@ -54,9 +44,8 @@ namespace Axion {
 		Entity m_squareEntity;
 
 		// ImGui
-		ImGuiDockNodeFlags m_dockspaceFlags;
-		ImGuiWindowFlags m_windowFlags;
-		bool m_showSystemInfoWindow = false;
+		ImGuiDockNodeFlags m_dockspaceFlags = 0;
+		ImGuiWindowFlags m_windowFlags = 0;
 
 		// TEMP
 		Ref<ConstantBuffer> m_buffer1;
@@ -64,7 +53,6 @@ namespace Axion {
 
 
 		bool onWindowResize(WindowResizeEvent& e);
-		void setupSystemInfo();
 
 	};
 

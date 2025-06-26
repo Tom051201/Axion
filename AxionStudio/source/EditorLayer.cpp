@@ -17,6 +17,9 @@ namespace Axion {
 
 		Renderer2D::setClearColor({ 0.3f, 0.3f, 0.3f, 1.0f });
 
+		m_systemInfoPanel = std::make_unique<SystemInfoPanel>();
+		m_systemInfoPanel->setup();
+
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
 		fbs.height = 720;
@@ -37,23 +40,22 @@ namespace Axion {
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
-
-		setupSystemInfo();
 	}
 
 	void EditorLayer::onDetach() {
 		m_buffer1->release();
 		m_texture->release();
 		m_frameBuffer->release();
+
+		m_systemInfoPanel->shutdown();
 	}
 
 	void EditorLayer::onUpdate(Timestep ts) {
 
+		m_cameraController.resize(m_viewportDim.x, m_viewportDim.y);
 		m_cameraController.onUpdate(ts);
 
 		Renderer2D::beginScene(m_cameraController.getCamera());
-		
-		m_cameraController.resize(m_viewportDim.x, m_viewportDim.y);
 
 		if (m_viewportDim.x > 0 && m_viewportDim.y > 0) {
 			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed
@@ -62,7 +64,6 @@ namespace Axion {
 			m_frameBuffer->clear();
 
 			m_activeScene->onUpdate(ts);
-			//Renderer2D::drawTexture({ 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f }, m_texture, m_buffer1);
 
 			m_frameBuffer->unbind();
 		}
@@ -83,7 +84,7 @@ namespace Axion {
 		
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f)); // TODO: Maybe remove
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		
 		ImGui::Begin("DockSpaceFrame", nullptr, m_windowFlags);
 		ImGui::PopStyleVar(3);
@@ -92,7 +93,6 @@ namespace Axion {
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
 			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
 			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), m_dockspaceFlags);
-			
 		}
 
 		// renders framebuffer
@@ -120,30 +120,7 @@ namespace Axion {
 		ImGui::End();
 	
 		// system info panel
-		if (m_showSystemInfoWindow) {
-			if (ImGui::Begin("System Info"), &m_showSystemInfoWindow) {
-				const auto& info = m_systemInfo;
-
-				ImGui::Columns(2, nullptr, false);
-
-				ImGui::Text("GPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuName.c_str());			ImGui::NextColumn();
-				ImGui::Text("VRAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.vramMB);				ImGui::NextColumn();
-				ImGui::Text("Driver:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuDriverVersion.c_str());	ImGui::NextColumn();
-
-				ImGui::Separator();			ImGui::Columns(2, nullptr, false);
-
-				ImGui::Text("CPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.cpuName.c_str());			ImGui::NextColumn();
-				ImGui::Text("Cores:");		ImGui::NextColumn();	ImGui::Text("%u", info.cores);						ImGui::NextColumn();
-				ImGui::Text("RAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.totalRamMB);			ImGui::NextColumn();
-
-				ImGui::Separator();			ImGui::Columns(2, nullptr, false);
-
-				ImGui::Text("OS:");			ImGui::NextColumn();	ImGui::TextWrapped("%s", info.os.c_str());			ImGui::NextColumn();
-
-				ImGui::Columns(1);
-			}
-			ImGui::End();
-		}
+		if (m_showSystemInfoPanel) { m_systemInfoPanel->onGuiRender(); }
 		
 	
 		// menu bar
@@ -152,7 +129,13 @@ namespace Axion {
 
 			// file menu
 			if (ImGui::BeginMenu("  File  ")) {
-				if (ImGui::MenuItem("Exit", NULL)) { Application::get().close(); }
+				if (ImGui::MenuItem("New Scene", "Ctrl+N")) { AX_LOG_WARN("Creating a new scene is not supported yet!"); }
+				if (ImGui::MenuItem("Open Project", "Ctrl+O")) { AX_LOG_WARN("Opening a project is not supported yet!"); }
+				ImGui::Separator();
+				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) { AX_LOG_WARN("Saving a scene is not supported yet!"); }
+				if (ImGui::MenuItem("Save Scene As", "Ctrl+Shift+S")) { AX_LOG_WARN("Saving a scene is not supported yet!"); }
+				ImGui::Separator();
+				if (ImGui::MenuItem("Exit")) { Application::get().close(); }
 				ImGui::EndMenu();
 			}
 
@@ -166,13 +149,11 @@ namespace Axion {
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Help")) {
-				if (ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoWindow)) {
-					m_showSystemInfoWindow != m_showSystemInfoWindow;
-				}
+			// help menu
+			if (ImGui::BeginMenu("  Help  ")) {
+				if (ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoPanel)) { m_showSystemInfoPanel != m_showSystemInfoPanel; }
 				ImGui::EndMenu();
 			}
-
 
 			#if AX_WIN_USING_CUSTOM_TITLE_BAR
 
@@ -209,18 +190,6 @@ namespace Axion {
 
 	bool EditorLayer::onWindowResize(WindowResizeEvent& e) {
 		return false;
-	}
-
-	void EditorLayer::setupSystemInfo() {
-		m_systemInfo.gpuName = GraphicsContext::get()->getGpuName();
-		m_systemInfo.gpuDriverVersion = GraphicsContext::get()->getGpuDriverVersion();
-		m_systemInfo.vramMB = GraphicsContext::get()->getVramMB();
-
-		m_systemInfo.cpuName = PlatformInfo::getCpuName();
-		m_systemInfo.cores = PlatformInfo::getCpuCores();
-
-		m_systemInfo.totalRamMB = PlatformInfo::getRamMB();
-		m_systemInfo.os = PlatformInfo::getOsVersion();
 	}
 
 }
