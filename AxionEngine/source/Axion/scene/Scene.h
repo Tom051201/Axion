@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Axion/core/Timestep.h"
+#include "Axion/render/Camera.h"
 
 #include "entt.hpp"
 
@@ -19,6 +20,7 @@ namespace Axion {
 		~Scene();
 
 		void onUpdate(Timestep ts);
+		void onUpdate(Timestep ts, const Camera& cam, const Mat4& transform);
 
 		Entity createEntity();
 		Entity createEntity(const std::string& tag);

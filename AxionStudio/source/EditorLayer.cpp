@@ -8,7 +8,7 @@
 
 namespace Axion {
 
-	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_cameraController(1280.0f / 720.0f, true) {}
+	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_editorCamera(1280.0f / 720.0f) {}
 
 	void EditorLayer::onAttach() {
 
@@ -29,6 +29,7 @@ namespace Axion {
 		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 
 		m_activeScene = std::make_shared<Scene>();
+		m_sceneState = SceneState::Editing;
 
 		auto square = m_activeScene->createEntity("Square");
 		square.addComponent<SpriteRendererComponent>(Vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
@@ -56,10 +57,8 @@ namespace Axion {
 
 	void EditorLayer::onUpdate(Timestep ts) {
 
-		m_cameraController.resize(m_viewportDim.x, m_viewportDim.y);
-		m_cameraController.onUpdate(ts);
-
-		//Renderer2D::beginScene(m_cameraController.getCamera());
+		m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
+		m_editorCamera.onUpdate(ts);
 
 		if (m_viewportDim.x > 0 && m_viewportDim.y > 0) {
 			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed
@@ -67,7 +66,17 @@ namespace Axion {
 			m_frameBuffer->bind();
 			m_frameBuffer->clear();
 
-			m_activeScene->onUpdate(ts);
+			switch (m_sceneState) {
+				case Axion::SceneState::Editing: {
+					m_activeScene->onUpdate(ts, m_editorCamera, m_editorCamera.getViewProjectionMatrix());
+					break;
+				}
+				case Axion::SceneState::Playing: {
+					m_activeScene->onUpdate(ts);
+					break;
+				}
+				default: { break; }
+			}
 
 			m_frameBuffer->unbind();
 		}
@@ -76,7 +85,7 @@ namespace Axion {
 	}
 
 	void EditorLayer::onEvent(Event& e) {
-		m_cameraController.onEvent(e);
+		m_editorCamera.onEvent(e);
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -186,7 +195,7 @@ namespace Axion {
 			#endif
 
 			ImGui::EndMenuBar();
-			
+
 		}
 
 		ImGui::End();

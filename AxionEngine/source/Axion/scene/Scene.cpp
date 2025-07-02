@@ -55,9 +55,23 @@ namespace Axion {
 				Renderer2D::drawQuad(transform, sprite.color, m_uploadBuffer);
 			}
 
-			//Renderer2D::endScene();
 		}
 
+	}
+
+	void Scene::onUpdate(Timestep ts, const Camera& cam, const Mat4& transform) {
+
+		if (&cam) {
+			Renderer2D::beginScene(cam.getProjection(), transform);
+
+			auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+			for (auto entity : group) {
+				auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+
+				Renderer2D::drawQuad(transform, sprite.color, m_uploadBuffer);
+			}
+
+		}
 	}
 
 }

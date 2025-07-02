@@ -5,12 +5,19 @@
 #include "imgui.h"
 #include "entt.hpp"
 
+#include "core/EditorCamera.h"
 #include "panels/SystemInfoPanel.h"
+
 
 // TEMP
 #include "platform/directx/D12Context.h"
 
 namespace Axion {
+
+	enum class SceneState {
+		Editing,
+		Playing
+	};
 
 	class EditorLayer : public Layer {
 	public:
@@ -27,7 +34,7 @@ namespace Axion {
 
 	private:
 
-		OrthographicCameraController m_cameraController;
+		EditorCamera m_editorCamera;
 
 		Ref<Texture2D> m_texture;
 
@@ -38,9 +45,10 @@ namespace Axion {
 		// scene viewport
 		Ref<FrameBuffer> m_frameBuffer;
 		Vec2 m_viewportDim = { 0.0f, 0.0f };
+		Ref<Scene> m_activeScene;
+		SceneState m_sceneState;
 
 		// ECS
-		Ref<Scene> m_activeScene;
 		Entity m_squareEntity;
 		Entity m_cameraEntity;
 
