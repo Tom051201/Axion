@@ -28,7 +28,7 @@ namespace Axion {
 	void SystemInfoPanel::shutdown() {}
 
 	void SystemInfoPanel::onGuiRender() {
-		if (ImGui::Begin("System Info")/*, &m_showSystemInfoWindow*/) {
+		if (ImGui::Begin("System Info")) {
 			const auto& info = m_systemInfo;
 
 			ImGui::Columns(2, nullptr, false);
@@ -51,6 +51,5 @@ namespace Axion {
 		}
 		ImGui::End();
 	}
-
 
 }

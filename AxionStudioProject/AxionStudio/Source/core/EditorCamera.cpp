@@ -75,4 +75,5 @@ namespace Axion {
 		m_projectionMatrix = projection;
 		recalculateViewMatrix();
 	}
+
 }

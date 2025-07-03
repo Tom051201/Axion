@@ -8,7 +8,6 @@ namespace Axion {
 	std::shared_ptr<spdlog::logger> Log::s_coreLogger;
 	std::shared_ptr<spdlog::logger> Log::s_clientLogger;
 
-
 	void Log::init() {
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 
@@ -18,6 +17,5 @@ namespace Axion {
 		s_clientLogger = spdlog::stdout_color_mt("APP");
 		s_clientLogger->set_level(spdlog::level::trace);
 	}
-
 
 }

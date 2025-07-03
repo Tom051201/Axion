@@ -122,15 +122,13 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<ID3DBlob> signature;
 		Microsoft::WRL::ComPtr<ID3DBlob> error;
 
-		//HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
 		HRESULT hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error);	
 		if (error) {
 			AX_CORE_LOG_ERROR("Root signature error: {0}", (char*)error->GetBufferPointer());
 		}
 		AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature");
 		
-		
-		//hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
+
 		hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create root signature");
 

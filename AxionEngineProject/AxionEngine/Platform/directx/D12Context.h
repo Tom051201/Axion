@@ -27,17 +27,13 @@ namespace Axion {
 
 		inline void* getNativeContext() const override { return (void*)this; }
 		
-		//void present();
 		void setClearColor(const Vec4& color);
 		void clear();
-		//void beginFrame();
-		//void endFrame();
 
 		void resize(uint32_t width, uint32_t height);
 
 		void activateVsync() { m_vsyncInterval = 1; };
 		void deactivateVsync() { m_vsyncInterval = 0; };
-
 		
 		std::string getGpuName() const override;
 		std::string getGpuDriverVersion() const override;

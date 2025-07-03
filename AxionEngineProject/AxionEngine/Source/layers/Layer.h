@@ -9,8 +9,8 @@ namespace Axion {
 	class Layer {
 	public:
 
-		Layer(const std::string& name = "Layer");
-		virtual ~Layer();
+		Layer(const std::string& name = "Layer") : m_debugname(name) {}
+		virtual ~Layer() {}
 
 		virtual void onAttach() {}
 		virtual void onDetach() {}

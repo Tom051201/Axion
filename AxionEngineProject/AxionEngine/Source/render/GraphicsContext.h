@@ -25,6 +25,4 @@ namespace Axion {
 		static void set(GraphicsContext* context);
 	};
 
-	
-
 }

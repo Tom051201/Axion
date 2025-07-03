@@ -29,7 +29,6 @@ namespace Axion {
 		Renderer::release();
 	}
 
-
 	void Application::onEvent(Event& e) {
 
 		if (e.getEventType() == EventType::WindowResize) {

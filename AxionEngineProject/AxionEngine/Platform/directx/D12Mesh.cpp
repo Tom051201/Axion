@@ -24,6 +24,4 @@ namespace Axion {
 		m_indexBuffer->bind();
 	}
 
-		
-
 }
