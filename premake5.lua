@@ -11,12 +11,12 @@ workspace "AxionEngineWorkspace"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
-IncludeDir["ImGui"] = "AxionEngine/vendor/imgui"
+IncludeDir["ImGui"] = "AxionEngineProject/AxionEngine/Vendor/imgui"
 
 
 
 project "AxionEngine"
-	location "AxionEngine"
+	location "AxionEngineProject"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
@@ -24,20 +24,21 @@ project "AxionEngine"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	pchheader "axpch.h"
-	pchsource "AxionEngine/source/axpch.cpp"
+	pchsource "AxionEngineProject/AxionEngine/Source/axpch.cpp"
 	files {
-		"%{prj.name}/source/**.h",
-		"%{prj.name}/source/**.cpp",
-		"%{prj.name}/vendor/stb_image/stb_image.h",
-		"%{prj.name}/vendor/stb_image/stb_image.cpp"
+		"AxionEngineProject/AxionEngine/Source/**.h",
+		"AxionEngineProject/AxionEngine/Source/**.cpp",
+		"AxionEngineProject/AxionEngine/Platform/**.h",
+		"AxionEngineProject/AxionEngine/Platform/**.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/stb_image/stb_image.h",
+		"AxionEngineProject/AxionEngine/Vendor/stb_image/stb_image.cpp"
 	}
 	includedirs {
-		"%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.ImGui}",
-		"%{prj.name}/vendor",
-		"%{prj.name}/source",
-		"%{prj.name}/vendor/d3d12",
-		"%{prj.name}/vendor/entt"
+		"AxionEngineProject",
+		"AxionEngineProject/AxionEngine/Source",
+		"AxionEngineProject/AxionEngine/Vendor/spdlog/include",
+		"AxionEngineProject/AxionEngine/Vendor/d3d12"
 	}
 	libdirs {}
 	links {
@@ -70,7 +71,7 @@ project "AxionEngine"
 
 
 project "AxionStudio"
-	location "AxionStudio"
+	location "AxionStudioProject"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
@@ -78,15 +79,17 @@ project "AxionStudio"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	files {
-		"%{prj.name}/source/**.h",
-		"%{prj.name}/source/**.cpp"
+		"AxionStudioProject/AxionStudio/Source/**.h",
+		"AxionStudioProject/AxionStudio/Source/**.cpp"
 	}
 	includedirs {
-		"AxionEngine/vendor/spdlog/include",
-		"AxionEngine/source",
-		"AxionEngine/vendor/imgui",
-		"AxionEngine/vendor/d3d12",
-		"AxionEngine/vendor/entt"
+		"AxionStudioProject",
+		"AxionEngineProject",
+		"AxionEngineProject/AxionEngine/Vendor/spdlog/include",
+		"AxionEngineProject/AxionEngine/Source",
+		"AxionEngineProject/AxionEngine/Vendor/imgui",
+		"AxionEngineProject/AxionEngine/Vendor/d3d12",
+		"AxionEngineProject/AxionEngine/Vendor/entt"
 	}
 	links {
 		"AxionEngine"
@@ -113,7 +116,7 @@ project "AxionStudio"
 
 
 project "Sandbox"
-	location "Sandbox"
+	location "SandboxProject"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
@@ -121,15 +124,17 @@ project "Sandbox"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	files {
-		"%{prj.name}/source/**.h",
-		"%{prj.name}/source/**.cpp"
+		"SandboxProject/Sandbox/Source/**.h",
+		"SandboxProject/Sandbox/Source/**.cpp"
 	}
 	includedirs {
-		"AxionEngine/vendor/spdlog/include",
-		"AxionEngine/source",
-		"AxionEngine/vendor/imgui",
-		"AxionEngine/vendor/d3d12",
-		"AxionEngine/vendor/entt"
+		"SandboxProject",
+		"AxionEngineProject",
+		"AxionEngineProject/AxionEngine/Vendor/spdlog/include",
+		"AxionEngineProject/AxionEngine/Source",
+		"AxionEngineProject/AxionEngine/Vendor/imgui",
+		"AxionEngineProject/AxionEngine/Vendor/d3d12",
+		"AxionEngineProject/AxionEngine/Vendor/entt"
 	}
 	links {
 		"AxionEngine"
@@ -156,7 +161,7 @@ project "Sandbox"
 
 
 project "ImGui"
-	location "AxionEngine/vendor/imgui"
+	location "AxionEngineProject/AxionEngine/Vendor/imgui"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
@@ -164,24 +169,24 @@ project "ImGui"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	files {
-		"AxionEngine/vendor/imgui/imconfig.h",
-		"AxionEngine/vendor/imgui/imgui.h",
-		"AxionEngine/vendor/imgui/imgui.cpp",
-		"AxionEngine/vendor/imgui/imgui_draw.cpp",
-		"AxionEngine/vendor/imgui/imgui_internal.h",
-		"AxionEngine/vendor/imgui/imgui_widgets.cpp",
-		"AxionEngine/vendor/imgui/imstb_rectpack.h",
-		"AxionEngine/vendor/imgui/imstb_textedit.h",
-		"AxionEngine/vendor/imgui/imstb_truetype.h",
-		"AxionEngine/vendor/imgui/imgui_demo.cpp",
-		"AxionEngine/vendor/imgui/imgui_tables.cpp",
-		"AxionEngine/vendor/imgui/backends/imgui_impl_win32.h",
-		"AxionEngine/vendor/imgui/backends/imgui_impl_dx12.h",
-		"AxionEngine/vendor/imgui/backends/imgui_impl_win32.cpp",
-		"AxionEngine/vendor/imgui/backends/imgui_impl_dx12.cpp"
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imconfig.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui_draw.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui_internal.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui_widgets.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imstb_rectpack.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imstb_textedit.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imstb_truetype.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui_demo.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui_tables.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_win32.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.cpp"
 	}
 	includedirs {
-		"AxionEngine/vendor/imgui"
+		"AxionEngineProject/AxionEngine/Vendor/imgui"
 	}
 	filter "system:windows"
 		systemversion "latest"
