@@ -146,6 +146,9 @@ namespace Axion {
 				std::to_string(subVersion) + "." +
 				std::to_string(build);
 		}
+		else {
+			return "Unknown";
+		}
 	}
 
 	uint64_t D12Context::getVramMB() const {

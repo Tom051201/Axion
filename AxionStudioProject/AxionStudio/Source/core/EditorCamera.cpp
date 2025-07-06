@@ -25,8 +25,8 @@ namespace Axion {
 		if (Input::isKeyPressed(KeyCode::W)) m_position.y += m_translationSpeed * ts;
 		if (Input::isKeyPressed(KeyCode::S)) m_position.y -= m_translationSpeed * ts;
 
-		if (Input::isKeyPressed(KeyCode::Q)) m_rotation.z += m_translationSpeed * ts;
-		if (Input::isKeyPressed(KeyCode::E)) m_position.z -= m_translationSpeed * ts;
+		if (Input::isKeyPressed(KeyCode::Q)) m_rotation.z += m_rotationSpeed * ts;
+		if (Input::isKeyPressed(KeyCode::E)) m_rotation.z -= m_rotationSpeed * ts;
 
 		setRotation(m_rotation);
 		setPosition(m_position);
@@ -61,7 +61,7 @@ namespace Axion {
 	}
 
 	void EditorCamera::recalculateViewMatrix() {
-		Mat4 transform = Mat4::rotationZ(m_rotation.z) * Mat4::translation(m_position);
+		Mat4 transform = Mat4::translation(m_position) * Mat4::rotationZ(m_rotation.z);
 		m_viewMatrix = transform.inverse();
 		m_viewProjectionMatrix = m_viewMatrix * m_projectionMatrix;
 	}

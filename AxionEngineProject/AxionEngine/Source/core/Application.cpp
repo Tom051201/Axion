@@ -60,7 +60,6 @@ namespace Axion {
 		QueryPerformanceCounter(&lastTime);
 
 		while (m_running) {
-			Renderer::prepareRendering();	// TODO: think about doing this via the selected GraphicsContext
 
 			m_window->onUpdate();
 
@@ -69,6 +68,8 @@ namespace Axion {
 			Timestep ts = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
 			lastTime = currentTime;
 			
+			Renderer::prepareRendering();
+
 			for (Layer* layer : m_layerStack) {
 				layer->onUpdate(ts);
 			}
@@ -79,7 +80,7 @@ namespace Axion {
 			}
 			m_imGuiLayer->endRender();
 
-			Renderer::finishRendering();	// TODO: think about doing this via the selected GraphicsContext
+			Renderer::finishRendering();
 		}
 
 	}

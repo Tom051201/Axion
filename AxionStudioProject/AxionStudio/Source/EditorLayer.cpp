@@ -57,13 +57,13 @@ namespace Axion {
 
 	void EditorLayer::onUpdate(Timestep ts) {
 
-		m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
 		m_editorCamera.onUpdate(ts);
+		m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
 
 		if (m_viewportDim.x > 0 && m_viewportDim.y > 0) {
-			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed
 
 			m_frameBuffer->bind();
+			//m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed
 			m_frameBuffer->clear();
 
 			switch (m_sceneState) {
