@@ -25,6 +25,7 @@ namespace Axion {
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
 		m_srvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS);
+		m_dsvHeap.initialize(m_device.getDevice(), AX_D12_MAX_DSV_DESCRIPTORS);
 
 		AX_CORE_LOG_INFO("Using gpu adapter: {0}", m_device.getAdapterName());
 		AX_CORE_LOG_INFO("DirectX12 backend initialized successfully");
@@ -35,6 +36,7 @@ namespace Axion {
 		waitForPreviousFrame();
 		m_commandQueue.getCommandQueue()->Signal(m_fence.getFence(), m_fence.getFenceValue());
 
+		m_dsvHeap.release();
 		m_srvHeap.release();
 		m_fence.release();
 		m_commandList.release();

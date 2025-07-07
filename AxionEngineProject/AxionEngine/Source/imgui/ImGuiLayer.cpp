@@ -25,13 +25,14 @@ namespace Axion {
 		m_srvHeapIndex = srvHeap.allocate();
 
 		IMGUI_CHECKVERSION();
-		ImGui_ImplWin32_EnableDpiAwareness();
+		//ImGui_ImplWin32_EnableDpiAwareness();	// TODO: review and maybe add back in
 		ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		
@@ -84,11 +85,11 @@ namespace Axion {
 
 			ID3D12DescriptorHeap* heaps[] = { m_context->getSrvHeapWrapper().getHeap() };
 			m_context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
-			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_context->getCommandList());		
-		
+			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_context->getCommandList());
+
 			// for multiple viewports
 			ImGuiIO& io = ImGui::GetIO();
-			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable && !ImGui::GetIO().WantSaveIniSettings) {
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable/* && !ImGui::GetIO().WantSaveIniSettings*/) {
 				ImGui::UpdatePlatformWindows();
 				ImGui::RenderPlatformWindowsDefault(nullptr, m_context->getCommandQueue());
 			}

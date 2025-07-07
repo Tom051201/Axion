@@ -58,12 +58,16 @@ namespace Axion {
 	void EditorLayer::onUpdate(Timestep ts) {
 
 		m_editorCamera.onUpdate(ts);
-		m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
+
+		if (m_viewportResized) {
+			m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
+			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);
+			m_viewportResized = false;
+		}
 
 		if (m_viewportDim.x > 0 && m_viewportDim.y > 0) {
 
 			m_frameBuffer->bind();
-			//m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);	//TODO: make it update only when values changed
 			m_frameBuffer->clear();
 
 			switch (m_sceneState) {
@@ -113,7 +117,10 @@ namespace Axion {
 		ImGui::Begin("Editor Viewport");
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 		if (viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
-			m_viewportDim = { viewportPanelSize.x, viewportPanelSize.y };
+			if (m_viewportDim.x != viewportPanelSize.x || m_viewportDim.y != viewportPanelSize.y) {
+				m_viewportDim = { viewportPanelSize.x, viewportPanelSize.y };
+				m_viewportResized = true;
+			}
 			D12FrameBuffer* framebuffer = static_cast<D12FrameBuffer*>(m_frameBuffer.get());
 			D12Context* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 

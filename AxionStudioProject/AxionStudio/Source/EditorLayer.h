@@ -45,6 +45,7 @@ namespace Axion {
 		// scene viewport
 		Ref<FrameBuffer> m_frameBuffer;
 		Vec2 m_viewportDim = { 0.0f, 0.0f };
+		bool m_viewportResized = false;
 		Ref<Scene> m_activeScene;
 		SceneState m_sceneState;
 

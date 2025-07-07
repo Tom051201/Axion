@@ -11,6 +11,7 @@
 #include "AxionEngine/Platform/directx/D12Fence.h"
 #include "AxionEngine/Platform/directx/D12srvHeap.h"
 #include "AxionEngine/Platform/directx/D12rtvHeap.h"
+#include "AxionEngine/Platform/directx/D12dsvHeap.h"
 
 namespace Axion {
 
@@ -48,6 +49,7 @@ namespace Axion {
 		D12CommandList& getCommandListWrapper() { return m_commandList; }
 		D12Fence& getFenceWrapper() { return m_fence; }
 		D12srvHeap& getSrvHeapWrapper() { return m_srvHeap; }
+		D12dsvHeap& getDsvHeapWrapper() { return m_dsvHeap; }
 
 		ID3D12Device* getDevice() const { return m_device.getDevice(); }
 		IDXGIFactory6* getFactory() const { return m_device.getFactory(); }
@@ -72,6 +74,7 @@ namespace Axion {
 		D12CommandList m_commandList;
 		D12Fence m_fence;
 		D12srvHeap m_srvHeap;
+		D12dsvHeap m_dsvHeap;
 
 	};
 
