@@ -41,16 +41,15 @@ namespace Axion {
 
 		// Math operations
 		float dot(const Vec2& other) const {
-			return x * other.x + y * other.y;
+			return DirectX::XMVectorGetX(DirectX::XMVector2Dot(toXM(), other.toXM()));
 		}
 
 		float length() const {
-			return std::sqrt(x * x + y * y);
+			return DirectX::XMVectorGetX(DirectX::XMVector2Length(toXM()));
 		}
 
 		Vec2 normalized() const {
-			float len = length();
-			return (len != 0) ? (*this / len) : Vec2::zero();
+			return fromXM(DirectX::XMVector2Normalize(toXM()));
 		}
 
 		float* data() { return &x; }
@@ -58,11 +57,13 @@ namespace Axion {
 
 	};
 
+
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// Vec3 /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	struct Vec3 {
+	struct alignas(16) Vec3 {
 		float x, y, z;
 
 		Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
@@ -91,8 +92,8 @@ namespace Axion {
 		Vec3& operator-=(const Vec3& other) { *this = *this - other; return *this; }
 		Vec3& operator*=(float scalar) { *this = *this * scalar; return *this; }
 		Vec3& operator/=(float scalar) { *this = *this / scalar; return *this; }
-		bool operator==(const Vec3& other) { return x == other.x && y == other.y && z == other.z; }
-		bool operator!=(const Vec3& other) { return x != other.x || y != other.y || z != other.z; }
+		bool operator==(const Vec3& other) const { return x == other.x && y == other.y && z == other.z; }
+		bool operator!=(const Vec3& other) const { return x != other.x || y != other.y || z != other.z; }
 
 		// Math operations
 		float dot(const Vec3& other) const {
@@ -103,6 +104,10 @@ namespace Axion {
 			return fromXM(DirectX::XMVector3Cross(toXM(), other.toXM()));
 		}
 
+		static Vec3 cross(const Vec3& a, const Vec3& b) {
+			return a.cross(b);
+		}
+
 		float length() const {
 			return DirectX::XMVectorGetX(DirectX::XMVector3Length(toXM()));
 		}
@@ -111,8 +116,24 @@ namespace Axion {
 			return fromXM(DirectX::XMVector3Normalize(toXM()));
 		}
 
+		static Vec3 normalize(const Vec3& v) {
+			return v.normalized();
+		}
+
 		float distance(const Vec3& other) const {
 			return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(toXM(), other.toXM())));
+		}
+
+		static Vec3 reflect(const Vec3& incident, const Vec3& normal) {
+			return fromXM(DirectX::XMVector3Reflect(incident.toXM(), normal.toXM()));
+		}
+
+		Vec3 reflected(const Vec3& normal) const {
+			return fromXM(DirectX::XMVector3Reflect(toXM(), normal.toXM()));
+		}
+
+		static Vec3 lerp(const Vec3& a, const Vec3& b, float t) {
+			return fromXM(DirectX::XMVectorLerp(a.toXM(), b.toXM(), t));
 		}
 
 		float* data() { return &x; }
@@ -120,11 +141,13 @@ namespace Axion {
 
 	};
 
+
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// Vec4 /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	struct Vec4 {
+	struct alignas(16) Vec4 {
 		
 		float x, y, z, w;
 
@@ -180,11 +203,13 @@ namespace Axion {
 
 	};
 
+
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// Mat4 /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	struct Mat4 {
+	struct alignas(16) Mat4 {
 
 		DirectX::XMMATRIX matrix;
 
@@ -218,6 +243,10 @@ namespace Axion {
 
 		static Mat4 rotationZ(float radians) {
 			return Mat4(DirectX::XMMatrixRotationZ(radians));
+		}
+
+		static Mat4 rotation(const Vec3& rotationEuler) {
+			return Mat4(DirectX::XMMatrixRotationRollPitchYaw(rotationEuler.x, rotationEuler.y, rotationEuler.z));
 		}
 
 		static Mat4 scale(const Vec3& scale) {
@@ -264,15 +293,109 @@ namespace Axion {
 
 		static Mat4 TRS(const Vec3& translation, const Vec3& rotationEuler, const Vec3& scale) {
 			Mat4 t = Mat4::translation(translation);
-			Mat4 r = Mat4::rotationZ(rotationEuler.z) *
-					 Mat4::rotationY(rotationEuler.y) *
-					 Mat4::rotationX(rotationEuler.x);
+			Mat4 r = Mat4::rotation(rotationEuler);
 			Mat4 s = Mat4::scale(scale);
 			return t * r * s;
 		}
 
 		Mat4 operator*(const Mat4& other) const { return Mat4(DirectX::XMMatrixMultiply(matrix, other.matrix)); }
 		Mat4& operator*=(const Mat4& other) { matrix = DirectX::XMMatrixMultiply(matrix, other.matrix); return *this; }
+
+	};
+
+
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// Quat /////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	struct alignas(16) Quat {
+		float x, y, z, w;
+
+		Quat() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+		Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+
+		static Quat identity() { return Quat(0.0f, 0.0f, 0.0f, 1.0f); }
+
+		// Converting to and from XMVECTOR
+		DirectX::XMVECTOR toXM() const {
+			return DirectX::XMVectorSet(x, y, z, w);
+		}
+
+		static Quat fromXM(DirectX::XMVECTOR q) {
+			DirectX::XMFLOAT4 result;
+			DirectX::XMStoreFloat4(&result, q);
+			return Quat(result.x, result.y, result.z, result.w);
+		}
+
+		static Quat fromAxisAngle(const Vec3& axis, float angleRadians) {
+			DirectX::XMVECTOR xmAxis = axis.toXM();
+			DirectX::XMVECTOR q = DirectX::XMQuaternionRotationAxis(xmAxis, angleRadians);
+			return fromXM(q);
+		}
+
+		Quat operator*(const Quat& other) const { return fromXM(DirectX::XMQuaternionMultiply(toXM(), other.toXM())); }
+		Quat& operator*=(const Quat& other) { *this = *this * other; return *this; }
+
+		Quat normalized() const {
+			return fromXM(DirectX::XMQuaternionNormalize(toXM()));
+		}
+
+		Quat inversed() const {
+			return fromXM(DirectX::XMQuaternionInverse(toXM()));
+		}
+
+		static Quat slerp(const Quat& a, const Quat& b, float t) {
+			return fromXM(DirectX::XMQuaternionSlerp(a.toXM(), b.toXM(), t));
+		}
+
+		Vec3 rotate(const Vec3& v) const {
+			DirectX::XMVECTOR rotated = DirectX::XMVector3Rotate(v.toXM(), toXM());
+			return Vec3::fromXM(rotated);
+		}
+
+		Mat4 toMat4() const {
+			return Mat4::fromXM(DirectX::XMMatrixRotationQuaternion(toXM()));
+		}
+
+		float* data() { return &x; }
+		const float* data() const { return &x; }
+
+	};
+
+
+
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// Util functions ///////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	struct Math {
+
+		constexpr static float toRadians(float degrees) {
+			return degrees * (DirectX::XM_PI / 180.0f);
+		}
+
+		static float lerp(float a, float b, float t) {
+			return a + (b - a) * t;
+		}
+
+		static float clamp(float value, float minVal, float maxVal) {
+			return std::max(minVal, std::min(maxVal, value));
+		}
+
+		static float smoothstep(float edge0, float edge1, float x) {
+			x = clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+			return x * x * (3 - 2 * x);
+		}
+
+		static bool epsilonEquals(float a, float b, float epsilon = 1e-6f) {
+			return std::abs(a - b) < epsilon;
+		}
+
+		static bool epsilonEquals(const Vec3& a, const Vec3& b, float epsilon = 1e-6f) {
+			return epsilonEquals(a.x, b.x, epsilon) && epsilonEquals(a.y, b.y, epsilon) && epsilonEquals(a.z, b.z, epsilon);
+		}
 
 	};
 

@@ -1,7 +1,9 @@
  #pragma once
 
+#include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/render/Camera.h"
+#include "AxionEngine/Source/render/Mesh.h"
 
 namespace Axion {
 
@@ -16,14 +18,49 @@ namespace Axion {
 
 
 	struct TransformComponent {
-		Mat4 transform = Mat4::identity();
+		Vec3 position = Vec3(0.0f, 0.0f, 0.0f);
+		Vec3 rotation = Vec3(0.0f, 0.0f, 0.0f); // euler in degrees
+		Vec3 scale = Vec3(1.0f, 1.0f, 1.0f);
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
-		TransformComponent(const Mat4& transform) : transform(transform) {}
+		TransformComponent(const Vec3& pos, Vec3& rot, Vec3& sca) : position(pos), rotation(rot), scale(sca) {}
 
-		operator Mat4& () { return transform; }
-		operator const Mat4& () const { return transform; }
+		Mat4 getTransform() const {
+			return Mat4::TRS(position, rotation, scale);
+		}
+
+	};
+
+
+
+	struct MeshComponent {
+		Ref<Mesh> mesh;
+
+		MeshComponent() = default;
+		MeshComponent(const MeshComponent&) = default;
+		MeshComponent(const Ref<Mesh>& mesh) : mesh(mesh) {}
+	};
+
+
+
+	struct MaterialComponent {
+		Vec4 color = Vec4::one();
+
+		MaterialComponent() = default;
+		MaterialComponent(const MaterialComponent&) = default;
+		MaterialComponent(const Vec4& color) : color(color) {}
+	};
+
+
+
+	struct DirectionalLightComponent {
+		Vec3 direction = { 0.0f, 1.0f, 0.0f };
+		Vec4 color = Vec4::one();
+
+		DirectionalLightComponent() = default;
+		DirectionalLightComponent(const DirectionalLightComponent&) = default;
+		DirectionalLightComponent(const Vec3& dir, const Vec4& col) : direction(dir), color(col) {}
 	};
 
 

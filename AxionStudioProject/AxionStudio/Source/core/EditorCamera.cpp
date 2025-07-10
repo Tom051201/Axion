@@ -71,9 +71,4 @@ namespace Axion {
 		recalculateViewMatrix();
 	}
 
-	void EditorCamera::setProjection(const Mat4& projection) {
-		m_projectionMatrix = projection;
-		recalculateViewMatrix();
-	}
-
 }

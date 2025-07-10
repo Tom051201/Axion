@@ -16,6 +16,7 @@ namespace Axion {
 		static void initialize();
 		static void shutdown();
 
+		static void beginScene(const Camera& cam);
 		static void beginScene(const Camera& cam, const Mat4& transform);
 		static void beginScene(const OrthographicCamera& cam);	 // TODO: remove this
 		static void endScene();
@@ -23,7 +24,6 @@ namespace Axion {
 		static void setClearColor(const Vec4& color);
 		static void clear();
 
-		static void drawQuad(const Vec3& position, const Vec2& dim, const Vec4& color);
 		static void drawQuad(const Vec3& position, const Vec2& dim, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer);
 		static void drawQuad(const Mat4& transform, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer);
 

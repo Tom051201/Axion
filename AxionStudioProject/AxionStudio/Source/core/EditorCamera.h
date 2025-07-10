@@ -26,8 +26,6 @@ namespace Axion {
 		float m_aspectRatio;
 		float m_zoomLevel = 1.0f;
 
-		Mat4 m_viewMatrix;
-		Mat4 m_viewProjectionMatrix;
 		Vec3 m_position = { 0.0f, 0.0f, 0.0f };
 		Vec3 m_rotation = { 0.0f, 0.0f, 0.0f };
 		float m_translationSpeed = 1.0f;
@@ -40,7 +38,6 @@ namespace Axion {
 		void setRotation(const Vec3& rot);
 		void recalculateViewMatrix();
 
-		void setProjection(const Mat4& projection) override;
 		void setProjection(float width, float height, float nearZ = -1.0f, float farZ = 1.0f);
 	};
 

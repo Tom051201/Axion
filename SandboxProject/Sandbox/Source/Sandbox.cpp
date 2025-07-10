@@ -97,8 +97,8 @@ class Sandbox : public Axion::Application {
 public:
 
 	Sandbox() {
-		//pushLayer(new ExampleLayer());
-		pushLayer(new Sandbox2D());
+		pushLayer(new ExampleLayer());
+		//pushLayer(new Sandbox2D());
 	}
 	~Sandbox() override {}
 

@@ -45,6 +45,8 @@ namespace Axion {
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
+
+
 	}
 
 	void EditorLayer::onDetach() {
@@ -70,17 +72,21 @@ namespace Axion {
 			m_frameBuffer->bind();
 			m_frameBuffer->clear();
 
-			switch (m_sceneState) {
-				case Axion::SceneState::Editing: {
-					m_activeScene->onUpdate(ts, m_editorCamera, m_editorCamera.getViewProjectionMatrix());
-					break;
-				}
-				case Axion::SceneState::Playing: {
-					m_activeScene->onUpdate(ts);
-					break;
-				}
-				default: { break; }
-			}
+			//switch (m_sceneState) {
+			//	case Axion::SceneState::Editing: {
+			//		m_activeScene->onUpdate(ts, m_editorCamera, m_editorCamera.getViewProjectionMatrix());
+			//		break;
+			//	}
+			//	case Axion::SceneState::Playing: {
+			//		m_activeScene->onUpdate(ts);
+			//		break;
+			//	}
+			//	default: { break; }
+			//}
+
+			Renderer2D::beginScene(m_editorCamera, m_editorCamera.getViewProjectionMatrix());
+			Renderer2D::drawQuad({ -0.55f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, m_buffer1);
+			Renderer2D::endScene();
 
 			m_frameBuffer->unbind();
 		}
@@ -137,6 +143,7 @@ namespace Axion {
 		ImGui::Text("%s", m_squareEntity.getComponent<TagComponent>().tag.c_str());
 		auto& color = m_squareEntity.getComponent<SpriteRendererComponent>().color;
 		ImGui::ColorEdit4("Color", color.data());
+
 		ImGui::End();
 	
 		// system info panel

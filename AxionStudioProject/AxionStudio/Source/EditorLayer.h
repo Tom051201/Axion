@@ -61,7 +61,6 @@ namespace Axion {
 		Ref<ConstantBuffer> m_buffer1;
 		D12Context* m_context = nullptr;
 
-
 		bool onWindowResize(WindowResizeEvent& e);
 
 	};

@@ -13,7 +13,7 @@ namespace Axion {
 	};
 
 	static SceneData* s_sceneData;
-	static Ref<ConstantBuffer> s_uploadBuffer;
+	static Ref<ConstantBuffer> s_sceneUploadBuffer;
 
 	RendererAPI* Renderer::s_rendererAPI = new D12RendererAPI();
 
@@ -23,14 +23,14 @@ namespace Axion {
 		Renderer2D::initialize();
 
 		s_sceneData = new SceneData();
-		s_uploadBuffer = ConstantBuffer::create(sizeof(SceneData));
+		s_sceneUploadBuffer = ConstantBuffer::create(sizeof(SceneData));
 
 		AX_CORE_LOG_INFO("Renderer initialized");
 	}
 
 	void Renderer::release() {
 		delete s_sceneData;
-		s_uploadBuffer->release();
+		s_sceneUploadBuffer->release();
 
 		Renderer2D::shutdown();
 
@@ -48,7 +48,7 @@ namespace Axion {
 
 	void Renderer::beginScene(OrthographicCamera& camera) {
 		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
-		s_uploadBuffer->update(s_sceneData, sizeof(SceneData));
+		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
 
 	void Renderer::endScene() {
@@ -65,7 +65,7 @@ namespace Axion {
 
 	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader) {
 		shader->bind();
-		s_uploadBuffer->bind(0);
+		s_sceneUploadBuffer->bind(0);
 		objectData->bind(1);
 		mesh->render();
 		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
