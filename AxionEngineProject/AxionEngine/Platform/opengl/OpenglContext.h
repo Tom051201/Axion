@@ -1,0 +1,50 @@
+#pragma once
+
+#include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/render/GraphicsContext.h"
+
+namespace Axion {
+
+	class OpenglContext : public GraphicsContext {
+	public:
+
+		~OpenglContext() override;
+
+		void initialize(void* hwnd, uint32_t width, uint32_t height) override;
+		void shutdown() override;
+		void* getNativeContext() const override { return (void*)this; }
+
+		void prepareRendering() override;
+		void finishRendering() override;
+
+		void setClearColor(const Vec4& color) override;
+		void clear() override;
+
+		void resize(uint32_t width, uint32_t height) override;
+		
+		void activateVsync() override;
+		void deactivateVsync() override;
+
+		void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) override;
+
+		std::string getGpuName() const override;
+		std::string getGpuDriverVersion() const override;
+		uint64_t getVramMB() const override;
+
+	private:
+
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+
+		#ifdef AX_PLATFORM_WINDOWS
+		
+		HWND m_hwnd = nullptr;
+		HDC m_hdc = nullptr;
+		HGLRC m_glContext = nullptr;
+
+		#endif
+
+	};
+
+
+}

@@ -53,8 +53,8 @@ namespace Axion {
 
 		int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 		int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-		int posX = (screenWidth / 2)  - (m_data.width / 2);
-		int posY = (screenHeight / 2)  - (m_data.height / 2);
+		int posX = (screenWidth / 2) - (m_data.width / 2);
+		int posY = (screenHeight / 2) - (m_data.height / 2);
 
 		m_hwnd = CreateWindowEx(
 			0, windowClassName,

@@ -11,8 +11,8 @@ namespace Axion {
 
 		switch (Renderer::getAPI()) {
 
-			case RendererAPI::API::None: { AX_ASSERT(false, "None is not supported yet"); }
-			case RendererAPI::API::Direct3D12: { return std::make_shared<D12Mesh>(vertices, indices); }
+			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); }
+			case RendererAPI::Direct3D12: { return std::make_shared<D12Mesh>(vertices, indices); }
 
 		}
 		return nullptr;

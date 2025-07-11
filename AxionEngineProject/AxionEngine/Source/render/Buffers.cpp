@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/render/Renderer.h"
 
 #include "AxionEngine/Platform/directx/D12Buffers.h"
+#include "AxionEngine/Platform/opengl/OpenglBuffers.h"
 
 namespace Axion {
 
@@ -30,8 +31,9 @@ namespace Axion {
 
 		switch (Renderer::getAPI()) {
 			
-			case RendererAPI::API::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::API::Direct3D12: { return std::make_shared<D12VertexBuffer>(vertices); }
+			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
+			case RendererAPI::Direct3D12: { return std::make_shared<D12VertexBuffer>(vertices); }
+			case RendererAPI::OpenGL: { return std::make_shared<OpenglVertexBuffer>(vertices); }
 
 		}
 		return nullptr;
@@ -45,8 +47,9 @@ namespace Axion {
 	
 		switch (Renderer::getAPI()) {
 			
-			case RendererAPI::API::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::API::Direct3D12: { return std::make_shared<D12IndexBuffer>(indices); }
+			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
+			case RendererAPI::Direct3D12: { return std::make_shared<D12IndexBuffer>(indices); }
+			case RendererAPI::OpenGL: { return std::make_shared<OpenglIndexBuffer>(indices); }
 			
 		}
 		return nullptr;
@@ -60,8 +63,9 @@ namespace Axion {
 	Ref<ConstantBuffer> ConstantBuffer::create(size_t size) {
 		switch (Renderer::getAPI()) {
 			
-			case RendererAPI::API::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::API::Direct3D12: { return std::make_shared<D12ConstantBuffer>(size); }
+			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
+			case RendererAPI::Direct3D12: { return std::make_shared<D12ConstantBuffer>(size); }
+			case RendererAPI::OpenGL: { return std::make_shared<OpenglConstantBuffer>(size); }
 
 		}
 		return nullptr;

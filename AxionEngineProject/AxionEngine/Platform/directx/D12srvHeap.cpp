@@ -30,7 +30,7 @@ namespace Axion {
 
 	uint32_t D12srvHeap::allocate() {
 		uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
-		AX_ASSERT(idx < m_numDescriptors, "Out of srv heap descriptors");
+		AX_CORE_ASSERT(idx < m_numDescriptors, "Out of srv heap descriptors");
 		return idx;
 	}
 

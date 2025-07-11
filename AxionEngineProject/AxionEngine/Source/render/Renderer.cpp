@@ -1,10 +1,9 @@
 #include "axpch.h"
 #include "Renderer.h"
 
+#include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
-
-#include "AxionEngine/Platform/directx/D12RendererAPI.h"
 
 namespace Axion {
 
@@ -15,11 +14,12 @@ namespace Axion {
 	static SceneData* s_sceneData;
 	static Ref<ConstantBuffer> s_sceneUploadBuffer;
 
-	RendererAPI* Renderer::s_rendererAPI = new D12RendererAPI();
+	RendererAPI Renderer::s_api = RendererAPI::Direct3D12;
 
 	void Renderer::initialize(Window* window) {
-		s_rendererAPI->initialize(window);
-	
+		GraphicsContext::get()->initialize(window->getNativeHandle(), window->getWidth(), window->getHeight());
+
+
 		Renderer2D::initialize();
 
 		s_sceneData = new SceneData();
@@ -34,16 +34,16 @@ namespace Axion {
 
 		Renderer2D::shutdown();
 
-		s_rendererAPI->release();
+		//GraphicsContext::get()->shutdown();	calling this here causes a crash on app termination!!!
 		AX_CORE_LOG_INFO("Renderer shutdown");
 	}
 
 	void Renderer::prepareRendering() {
-		s_rendererAPI->prepareRendering();
+		GraphicsContext::get()->prepareRendering();
 	}
 
 	void Renderer::finishRendering() {
-		s_rendererAPI->finishRendering();
+		GraphicsContext::get()->finishRendering();
 	}
 
 	void Renderer::beginScene(OrthographicCamera& camera) {

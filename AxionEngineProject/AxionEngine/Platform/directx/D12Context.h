@@ -22,20 +22,21 @@ namespace Axion {
 
 		void initialize(void* hwnd, uint32_t width, uint32_t height) override;
 		void shutdown() override;
+		void* getNativeContext() const override { return (void*)this; }
 
 		void prepareRendering() override;
 		void finishRendering() override;
 
-		inline void* getNativeContext() const override { return (void*)this; }
-		
-		void setClearColor(const Vec4& color);
-		void clear();
+		void setClearColor(const Vec4& color) override;
+		void clear() override;
 
-		void resize(uint32_t width, uint32_t height);
+		void resize(uint32_t width, uint32_t height) override;
 
-		void activateVsync() { m_vsyncInterval = 1; };
-		void deactivateVsync() { m_vsyncInterval = 0; };
+		void activateVsync() override { m_vsyncInterval = 1; };
+		void deactivateVsync() override { m_vsyncInterval = 0; };
 		
+		void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) override;
+
 		std::string getGpuName() const override;
 		std::string getGpuDriverVersion() const override;
 		uint64_t getVramMB() const override;

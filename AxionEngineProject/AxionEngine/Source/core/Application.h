@@ -12,6 +12,7 @@
 #include "AxionEngine/Source/imgui/ImGuiLayer.h"
 
 #include "AxionEngine/Source/render/OrthographicCamera.h"
+#include "AxionEngine/Source/render/Renderer.h"
 
 namespace Axion {
 
@@ -23,6 +24,7 @@ namespace Axion {
 
 		void run();
 		void close();
+		void closeOnError(const char* msg);
 
 		void onEvent(Event& e);
 		
@@ -30,6 +32,8 @@ namespace Axion {
 		void pushOverlay(Layer* layer);
 		void removeLayer(Layer* layer);
 		void removeOverlay(Layer* layer);
+		
+		void setGraphicsBackend(RendererAPI api);
 
 		static Application& get() { return *s_instance; }
 
@@ -38,6 +42,7 @@ namespace Axion {
 	private:
 
 		static Application* s_instance;
+		bool m_firstStart = false;
 
 		float m_lastFrameTime = 0.0f;
 

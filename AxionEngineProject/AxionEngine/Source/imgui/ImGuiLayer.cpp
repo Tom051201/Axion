@@ -9,23 +9,19 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.h"
-
-#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Vendor/imgui/backends/imgui_impl_opengl3.h"
 
 namespace Axion {
 
-	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {}
+	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer"), m_activeAPI(RendererAPI::None) {}
 
 	ImGuiLayer::~ImGuiLayer() {}
 
 	void ImGuiLayer::onAttach() {
 
-		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-		auto& srvHeap = m_context->getSrvHeapWrapper();
-		m_srvHeapIndex = srvHeap.allocate();
+		m_activeAPI = Renderer::getAPI();
 
 		IMGUI_CHECKVERSION();
-		//ImGui_ImplWin32_EnableDpiAwareness();	// TODO: review and maybe add back in
 		ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -37,22 +33,25 @@ namespace Axion {
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		
 		setStyle();
-	
+
 		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
-		ImGui_ImplDX12_Init(
-			m_context->getDevice(),
-			2,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			srvHeap.getHeap(),
-			srvHeap.getCpuHandle(m_srvHeapIndex),
-			srvHeap.getGpuHandle(m_srvHeapIndex)
-		);
+		switch (m_activeAPI) {
+			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }
+			case Axion::RendererAPI::Direct3D12: { setupD12(); break; }
+			case Axion::RendererAPI::OpenGL: { setupOpenGL(); break; }
+		}
 
 		AX_CORE_LOG_TRACE("ImGui layer attached");
 	}
 
 	void ImGuiLayer::onDetach() {
-		ImGui_ImplDX12_Shutdown();
+
+		switch (m_activeAPI) {
+			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
+			case Axion::RendererAPI::Direct3D12: { ImGui_ImplDX12_Shutdown(); break; }
+			case Axion::RendererAPI::OpenGL: { ImGui_ImplOpenGL3_Shutdown(); break; }
+		}
+
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyPlatformWindows();
 		ImGui::DestroyContext();
@@ -74,26 +73,70 @@ namespace Axion {
 	}
 
 	void ImGuiLayer::beginRender() {
-		ImGui_ImplDX12_NewFrame();
+		switch (m_activeAPI) {
+			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet!"); return; }
+			case Axion::RendererAPI::Direct3D12: { ImGui_ImplDX12_NewFrame(); break; }
+			case Axion::RendererAPI::OpenGL: { ImGui_ImplOpenGL3_NewFrame(); break; }
+		}
+
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 	}
 
 	void ImGuiLayer::endRender() {
 		ImGui::Render();
+
 		if (m_active) { // TODO: find workaround to prevent crash when viewport is inside actual window
 
-			ID3D12DescriptorHeap* heaps[] = { m_context->getSrvHeapWrapper().getHeap() };
-			m_context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
-			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_context->getCommandList());
+			switch (m_activeAPI) {
+				case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
+
+				case Axion::RendererAPI::Direct3D12: {
+					ID3D12DescriptorHeap* heaps[] = { m_d12Context->getSrvHeapWrapper().getHeap() };
+					m_d12Context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
+					ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_d12Context->getCommandList());
+					break;
+				}
+
+				case Axion::RendererAPI::OpenGL: {
+					ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+					break;
+				}
+			}
 
 			// for multiple viewports
 			ImGuiIO& io = ImGui::GetIO();
 			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable/* && !ImGui::GetIO().WantSaveIniSettings*/) {
 				ImGui::UpdatePlatformWindows();
-				ImGui::RenderPlatformWindowsDefault(nullptr, m_context->getCommandQueue());
+				if (m_activeAPI == RendererAPI::Direct3D12) {
+					ImGui::RenderPlatformWindowsDefault(nullptr, m_d12Context->getCommandQueue());
+				}
+				else if (m_activeAPI == RendererAPI::OpenGL) {
+					ImGui::RenderPlatformWindowsDefault();
+				}
 			}
+
 		}
+	}
+
+	void ImGuiLayer::setupD12() {
+		m_d12Context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto& srvHeap = m_d12Context->getSrvHeapWrapper();
+		m_srvHeapIndex = srvHeap.allocate();
+
+		ImGui_ImplDX12_Init(
+			m_d12Context->getDevice(),
+			2,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			srvHeap.getHeap(),
+			srvHeap.getCpuHandle(m_srvHeapIndex),
+			srvHeap.getGpuHandle(m_srvHeapIndex)
+		);
+	}
+
+	void ImGuiLayer::setupOpenGL() {
+		const char* glsl_version = "#version 130";
+		ImGui_ImplOpenGL3_Init(glsl_version);
 	}
 
 	bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& e) {
@@ -176,35 +219,35 @@ namespace Axion {
 
 		// sets colors
 		ImVec4* colors = style.Colors;
-		colors[ImGuiCol_WindowBg] = ImVec4(0.176f, 0.176f, 0.188f, 1.0f);		// final
-		colors[ImGuiCol_Text] = ImVec4(0.91f, 0.91f, 0.91f, 1.0f);				// final
+		colors[ImGuiCol_WindowBg] = ImVec4(0.176f, 0.176f, 0.188f, 1.0f);
+		colors[ImGuiCol_Text] = ImVec4(0.91f, 0.91f, 0.91f, 1.0f);
 
-		colors[ImGuiCol_Header] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);				// TODO what does it do?
-		colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);		// final
-		colors[ImGuiCol_HeaderActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);		// final
+		colors[ImGuiCol_Header] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+		colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
+		colors[ImGuiCol_HeaderActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);
 		
-		colors[ImGuiCol_Button] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);				// final
-		colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);		// final
-		colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);		// final
+		colors[ImGuiCol_Button] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
+		colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
+		colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);
 
-		colors[ImGuiCol_MenuBarBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);		// final
+		colors[ImGuiCol_MenuBarBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);
 		
-		colors[ImGuiCol_Border] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);				// final
-		colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);			// TODO what does it do?
+		colors[ImGuiCol_Border] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 
-		colors[ImGuiCol_TitleBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);		// final
-		colors[ImGuiCol_TitleBgActive] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);	// final
-		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);		// TODO what does it do?
+		colors[ImGuiCol_TitleBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);
+		colors[ImGuiCol_TitleBgActive] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);
+		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 
-		colors[ImGuiCol_CheckMark] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);			// final
+		colors[ImGuiCol_CheckMark] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
 
-		colors[ImGuiCol_FrameBg] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);				// final
-		colors[ImGuiCol_FrameBgActive] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);		// final
-		colors[ImGuiCol_FrameBgHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);		// final
+		colors[ImGuiCol_FrameBg] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
+		colors[ImGuiCol_FrameBgActive] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_FrameBgHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);
 
-		colors[ImGuiCol_ResizeGrip] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);			// TODO what does it do?
-		colors[ImGuiCol_ResizeGripHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);	// final
-		colors[ImGuiCol_ResizeGripActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);	// final
+		colors[ImGuiCol_ResizeGrip] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+		colors[ImGuiCol_ResizeGripHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
+		colors[ImGuiCol_ResizeGripActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);
 
 		colors[ImGuiCol_Tab] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
 		colors[ImGuiCol_TabActive] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
@@ -228,9 +271,22 @@ namespace Axion {
 
 		io.FontDefault = io.Fonts->Fonts[0];
 		
-		ImGui_ImplDX12_InvalidateDeviceObjects();
-		ImGui_ImplDX12_CreateDeviceObjects();
-	
+		switch (m_activeAPI) {
+			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
+			
+			case Axion::RendererAPI::Direct3D12: {
+				ImGui_ImplDX12_InvalidateDeviceObjects();
+				ImGui_ImplDX12_CreateDeviceObjects();
+				break;
+			}
+			
+			case Axion::RendererAPI::OpenGL: {
+				ImGui_ImplOpenGL3_DestroyDeviceObjects();
+				ImGui_ImplOpenGL3_CreateDeviceObjects();
+				break;
+			}
+		}
+
 	}
 
 }

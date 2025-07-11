@@ -2,12 +2,17 @@
 #include "axpch.h"
 
 #include "AxionEngine/Source/core/Window.h"
-#include "AxionEngine/Source/render/RendererAPI.h"
 #include "AxionEngine/Source/render/OrthographicCamera.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 
 namespace Axion {
+
+	enum class RendererAPI {
+		None = 0,
+		Direct3D12 = 1,
+		OpenGL = 2
+	};
 
 	class Renderer {
 	public:
@@ -26,12 +31,12 @@ namespace Axion {
 
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader);
 
-		inline static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
-		inline static RendererAPI* getAPIInstance() { return s_rendererAPI; }
+		inline static void setAPI(RendererAPI api) { s_api = api; }
+		inline static RendererAPI getAPI() { return s_api; }
 
 	private:
-
-		static RendererAPI* s_rendererAPI;
+		
+		static RendererAPI s_api;
 
 	};
 

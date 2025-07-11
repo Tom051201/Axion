@@ -3,6 +3,8 @@
 #include "AxionEngine/Source/layers/Layer.h"
 #include "AxionEngine/Source/core/Window.h"
 
+#include "AxionEngine/Source/render/Renderer.h"
+
 #include "AxionEngine/Source/events/MouseEvent.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
@@ -26,8 +28,15 @@ namespace Axion {
 
 	private:
 
-		D12Context* m_context = nullptr;
+		RendererAPI m_activeAPI;
+
+		// directx12 specifics
+		D12Context* m_d12Context = nullptr;
 		uint32_t m_srvHeapIndex = 0;
+
+
+		void setupD12();
+		void setupOpenGL();
 
 		bool onMouseButtonPressedEvent(MouseButtonPressedEvent& e);
 		bool onMouseButtonReleasedEvent(MouseButtonReleasedEvent& e);

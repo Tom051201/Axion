@@ -12,6 +12,9 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
 IncludeDir["ImGui"] = "AxionEngineProject/AxionEngine/Vendor/imgui"
+IncludeDir["GLAD"] = "AxionEngineProject/AxionEngine/Vendor/glad"
+
+include "AxionEngineProject/AxionEngine/Vendor/glad"
 
 
 
@@ -35,6 +38,7 @@ project "AxionEngine"
 	}
 	includedirs {
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.GLAD}",
 		"AxionEngineProject",
 		"AxionEngineProject/AxionEngine/Source",
 		"AxionEngineProject/AxionEngine/Vendor/spdlog/include",
@@ -42,7 +46,8 @@ project "AxionEngine"
 	}
 	libdirs {}
 	links {
-		"ImGui"
+		"ImGui",
+		"GLAD"
 	}
 	filter "system:windows"
 		systemversion "latest"
@@ -182,8 +187,11 @@ project "ImGui"
 		"AxionEngineProject/AxionEngine/Vendor/imgui/imgui_tables.cpp",
 		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h",
 		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_opengl3.h",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_opengl3_loader.h",
 		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_win32.cpp",
-		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.cpp"
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.cpp",
+		"AxionEngineProject/AxionEngine/Vendor/imgui/backends/imgui_impl_opengl3.cpp"
 	}
 	includedirs {
 		"AxionEngineProject/AxionEngine/Vendor/imgui"

@@ -45,4 +45,6 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
 
+#pragma comment(lib, "opengl32.lib")
+
 #endif
