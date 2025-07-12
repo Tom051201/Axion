@@ -14,7 +14,7 @@ namespace Axion {
 	static SceneData* s_sceneData;
 	static Ref<ConstantBuffer> s_sceneUploadBuffer;
 
-	RendererAPI Renderer::s_api = RendererAPI::Direct3D12;
+	RendererAPI Renderer::s_api = RendererAPI::DirectX12;
 
 	void Renderer::initialize(Window* window) {
 		GraphicsContext::get()->initialize(window->getNativeHandle(), window->getWidth(), window->getHeight());

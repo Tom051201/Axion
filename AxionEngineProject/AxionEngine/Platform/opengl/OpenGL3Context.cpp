@@ -1,5 +1,5 @@
 #include "axpch.h"
-#include "OpenglContext.h"
+#include "OpenGL3Context.h"
 
 #include "AxionEngine/Source/core/Application.h"
 
@@ -8,9 +8,9 @@
 
 namespace Axion {
 
-	OpenglContext::~OpenglContext() {}
+	OpenGL3Context::~OpenGL3Context() {}
 
-	void OpenglContext::initialize(void* hwnd, uint32_t width, uint32_t height) {
+	void OpenGL3Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
 		AX_ASSERT(hwnd, "HWND cannot be null");
 		m_width = width;
 		m_height = height;
@@ -39,8 +39,6 @@ namespace Axion {
 		HGLRC tempCtx = wglCreateContext(m_hdc);
 		wglMakeCurrent(m_hdc, tempCtx);
 		
-		
-
 		// Load wgl extensions
 		auto wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
 
@@ -67,50 +65,50 @@ namespace Axion {
 		AX_CORE_LOG_INFO("OpenGL backend initialized successfully");
 	}
 
-	void OpenglContext::shutdown() {
+	void OpenGL3Context::shutdown() {
 		wglDeleteContext(m_glContext);
 		ReleaseDC(m_hwnd, m_hdc);
 
 		AX_CORE_LOG_INFO("OpenGL backend shutdown");
 	}
 
-	void OpenglContext::prepareRendering() {
+	void OpenGL3Context::prepareRendering() {
 	
 	}
 
-	void OpenglContext::finishRendering() {
+	void OpenGL3Context::finishRendering() {
 	
 	}
 
-	void OpenglContext::setClearColor(const Vec4& color) {
+	void OpenGL3Context::setClearColor(const Vec4& color) {
 		glClearColor(color.x / 255, color.y / 255, color.z / 255, color.w / 255);
 	}
 
-	void OpenglContext::clear() {
+	void OpenGL3Context::clear() {
 		glClear(GL_COLOR_BUFFER_BIT/* | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT*/);
 	}
 
-	void OpenglContext::resize(uint32_t width, uint32_t height) {
+	void OpenGL3Context::resize(uint32_t width, uint32_t height) {
 		
 	}
 
-	void OpenglContext::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {
+	void OpenGL3Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {
 
 	}
 
-	void OpenglContext::activateVsync() {
+	void OpenGL3Context::activateVsync() {
 		if (wglSwapIntervalEXT) {
 			wglSwapIntervalEXT(1);
 		}
 	}
 
-	void OpenglContext::deactivateVsync() {
+	void OpenGL3Context::deactivateVsync() {
 		if (wglSwapIntervalEXT) {
 			wglSwapIntervalEXT(0);
 		}
 	}
 
-	std::string OpenglContext::getGpuName() const {
+	std::string OpenGL3Context::getGpuName() const {
 		const GLubyte* renderer = glGetString(GL_RENDERER);
 		if (renderer) {
 			return reinterpret_cast<const char*>(renderer);
@@ -120,7 +118,7 @@ namespace Axion {
 		}
 	}
 
-	std::string OpenglContext::getGpuDriverVersion() const {
+	std::string OpenGL3Context::getGpuDriverVersion() const {
 		const GLubyte* version = glGetString(GL_VERSION);
 		if (version) {
 			return reinterpret_cast<const char*>(version);
@@ -130,7 +128,7 @@ namespace Axion {
 		}
 	}
 
-	uint64_t OpenglContext::getVramMB() const {
+	uint64_t OpenGL3Context::getVramMB() const {
 		GLint memKB = 0;
 
 		if (GLAD_GL_NVX_gpu_memory_info) {

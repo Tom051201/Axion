@@ -1,15 +1,15 @@
 #include "axpch.h"
-#include "OpenglBuffers.h"
+#include "OpenGL3Buffers.h"
 
 #include "AxionEngine/Vendor/glad/include/glad/glad.h"
 
 namespace Axion {
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// OpenglVertexBuffer ///////////////////////////////////////////////////////
+	///// OpenGL3VertexBuffer //////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	OpenglVertexBuffer::OpenglVertexBuffer(const std::vector<Vertex>& vertices) {
+	OpenGL3VertexBuffer::OpenGL3VertexBuffer(const std::vector<Vertex>& vertices) {
 		m_vertexCount = static_cast<uint32_t>(vertices.size());
 		m_size = sizeof(Vertex) * m_vertexCount;
 
@@ -18,30 +18,30 @@ namespace Axion {
 		glBufferData(GL_ARRAY_BUFFER, m_size, vertices.data(), GL_STATIC_DRAW);
 	}
 
-	OpenglVertexBuffer::~OpenglVertexBuffer() {
+	OpenGL3VertexBuffer::~OpenGL3VertexBuffer() {
 		release();
 	}
 
-	void OpenglVertexBuffer::release() {
+	void OpenGL3VertexBuffer::release() {
 		glDeleteBuffers(1, &m_rendererID);
 		m_rendererID = 0;
 	}
 
-	void OpenglVertexBuffer::bind() const {
+	void OpenGL3VertexBuffer::bind() const {
 		glBindBuffer(GL_ARRAY_BUFFER, m_rendererID);
 	}
 
-	void OpenglVertexBuffer::unbind() const {
+	void OpenGL3VertexBuffer::unbind() const {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// OpenglIndexbuffer ////////////////////////////////////////////////////////
+	///// OpenGL3IndexBuffer ///////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	OpenglIndexBuffer::OpenglIndexBuffer(const std::vector<uint32_t>& indices) {
+	OpenGL3IndexBuffer::OpenGL3IndexBuffer(const std::vector<uint32_t>& indices) {
 		m_indexCount = static_cast<uint32_t>(indices.size());
 
 		glGenBuffers(1, &m_rendererID);
@@ -49,30 +49,30 @@ namespace Axion {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * m_indexCount, indices.data(), GL_STATIC_DRAW);
 	}
 
-	OpenglIndexBuffer::~OpenglIndexBuffer() {
+	OpenGL3IndexBuffer::~OpenGL3IndexBuffer() {
 		release();
 	}
 
-	void OpenglIndexBuffer::release() {
+	void OpenGL3IndexBuffer::release() {
 		glDeleteBuffers(1, &m_rendererID);
 		m_rendererID = 0;
 	}
 
-	void OpenglIndexBuffer::bind() const {
+	void OpenGL3IndexBuffer::bind() const {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
 	}
 
-	void OpenglIndexBuffer::unbind() const {
+	void OpenGL3IndexBuffer::unbind() const {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// OpenglConstantBuffer /////////////////////////////////////////////////////
+	///// OpenGL3ConstantBuffer ////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	OpenglConstantBuffer::OpenglConstantBuffer(size_t size)
+	OpenGL3ConstantBuffer::OpenGL3ConstantBuffer(size_t size)
 		: m_size(static_cast<uint32_t>(size)) {
 
 		glGenBuffers(1, &m_rendererID);
@@ -80,27 +80,26 @@ namespace Axion {
 		glBufferData(GL_UNIFORM_BUFFER, m_size, nullptr, GL_DYNAMIC_DRAW);
 	}
 
-	OpenglConstantBuffer::~OpenglConstantBuffer() {
+	OpenGL3ConstantBuffer::~OpenGL3ConstantBuffer() {
 		release();
 	}
 
-	void OpenglConstantBuffer::release() {
+	void OpenGL3ConstantBuffer::release() {
 		glDeleteBuffers(1, &m_rendererID);
 		m_rendererID = 0;
 	}
 
-	void OpenglConstantBuffer::update(const void* data, size_t size) {
+	void OpenGL3ConstantBuffer::update(const void* data, size_t size) {
 		glBindBuffer(GL_UNIFORM_BUFFER, m_rendererID);
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
 	}
 
-	void OpenglConstantBuffer::bind(uint32_t slot) const {
+	void OpenGL3ConstantBuffer::bind(uint32_t slot) const {
 		glBindBufferBase(GL_UNIFORM_BUFFER, slot, m_rendererID);
 	}
 
-	void OpenglConstantBuffer::unbind() const {
+	void OpenGL3ConstantBuffer::unbind() const {
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
-
 
 }

@@ -10,8 +10,8 @@ namespace Axion {
 
 	enum class RendererAPI {
 		None = 0,
-		Direct3D12 = 1,
-		OpenGL = 2
+		DirectX12 = 1,
+		OpenGL3 = 2
 	};
 
 	class Renderer {

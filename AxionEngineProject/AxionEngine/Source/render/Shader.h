@@ -12,14 +12,15 @@ namespace Axion {
 
 		virtual ~Shader() = default;
 
+		virtual void release() = 0;
+
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;
-
-		virtual void release() = 0;
 
 		virtual const std::string& getName() const = 0;
 
 		virtual void compileFromFile(const std::string& filePath) = 0;
+
 
 		static Ref<Shader> create(const std::string& name);
 		static std::string readShaderFile(const std::string& filePath);

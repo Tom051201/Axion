@@ -37,8 +37,8 @@ namespace Axion {
 		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }
-			case Axion::RendererAPI::Direct3D12: { setupD12(); break; }
-			case Axion::RendererAPI::OpenGL: { setupOpenGL(); break; }
+			case Axion::RendererAPI::DirectX12: { setupD12(); break; }
+			case Axion::RendererAPI::OpenGL3: { setupOpenGL(); break; }
 		}
 
 		AX_CORE_LOG_TRACE("ImGui layer attached");
@@ -48,8 +48,8 @@ namespace Axion {
 
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
-			case Axion::RendererAPI::Direct3D12: { ImGui_ImplDX12_Shutdown(); break; }
-			case Axion::RendererAPI::OpenGL: { ImGui_ImplOpenGL3_Shutdown(); break; }
+			case Axion::RendererAPI::DirectX12: { ImGui_ImplDX12_Shutdown(); break; }
+			case Axion::RendererAPI::OpenGL3: { ImGui_ImplOpenGL3_Shutdown(); break; }
 		}
 
 		ImGui_ImplWin32_Shutdown();
@@ -75,8 +75,8 @@ namespace Axion {
 	void ImGuiLayer::beginRender() {
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet!"); return; }
-			case Axion::RendererAPI::Direct3D12: { ImGui_ImplDX12_NewFrame(); break; }
-			case Axion::RendererAPI::OpenGL: { ImGui_ImplOpenGL3_NewFrame(); break; }
+			case Axion::RendererAPI::DirectX12: { ImGui_ImplDX12_NewFrame(); break; }
+			case Axion::RendererAPI::OpenGL3: { ImGui_ImplOpenGL3_NewFrame(); break; }
 		}
 
 		ImGui_ImplWin32_NewFrame();
@@ -91,14 +91,14 @@ namespace Axion {
 			switch (m_activeAPI) {
 				case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
 
-				case Axion::RendererAPI::Direct3D12: {
+				case Axion::RendererAPI::DirectX12: {
 					ID3D12DescriptorHeap* heaps[] = { m_d12Context->getSrvHeapWrapper().getHeap() };
 					m_d12Context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
 					ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_d12Context->getCommandList());
 					break;
 				}
 
-				case Axion::RendererAPI::OpenGL: {
+				case Axion::RendererAPI::OpenGL3: {
 					ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 					break;
 				}
@@ -108,10 +108,10 @@ namespace Axion {
 			ImGuiIO& io = ImGui::GetIO();
 			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable/* && !ImGui::GetIO().WantSaveIniSettings*/) {
 				ImGui::UpdatePlatformWindows();
-				if (m_activeAPI == RendererAPI::Direct3D12) {
+				if (m_activeAPI == RendererAPI::DirectX12) {
 					ImGui::RenderPlatformWindowsDefault(nullptr, m_d12Context->getCommandQueue());
 				}
-				else if (m_activeAPI == RendererAPI::OpenGL) {
+				else if (m_activeAPI == RendererAPI::OpenGL3) {
 					ImGui::RenderPlatformWindowsDefault();
 				}
 			}
@@ -274,13 +274,13 @@ namespace Axion {
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
 			
-			case Axion::RendererAPI::Direct3D12: {
+			case Axion::RendererAPI::DirectX12: {
 				ImGui_ImplDX12_InvalidateDeviceObjects();
 				ImGui_ImplDX12_CreateDeviceObjects();
 				break;
 			}
 			
-			case Axion::RendererAPI::OpenGL: {
+			case Axion::RendererAPI::OpenGL3: {
 				ImGui_ImplOpenGL3_DestroyDeviceObjects();
 				ImGui_ImplOpenGL3_CreateDeviceObjects();
 				break;

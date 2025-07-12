@@ -5,14 +5,14 @@
 namespace Axion {
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// OpenglVertexBuffer ///////////////////////////////////////////////////////
+	///// OpenGL3VertexBuffer //////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class OpenglVertexBuffer : public VertexBuffer {
+	class OpenGL3VertexBuffer : public VertexBuffer {
 	public:
 
-		OpenglVertexBuffer(const std::vector<Vertex>& vertices);
-		~OpenglVertexBuffer() override;
+		OpenGL3VertexBuffer(const std::vector<Vertex>& vertices);
+		~OpenGL3VertexBuffer() override;
 
 		void release() override;
 
@@ -38,14 +38,14 @@ namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// OpenglIndexbuffer ////////////////////////////////////////////////////////
+	///// OpenGL3IndexBuffer ///////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class OpenglIndexBuffer : public IndexBuffer {
+	class OpenGL3IndexBuffer : public IndexBuffer {
 	public:
 
-		OpenglIndexBuffer(const std::vector<uint32_t>& indices);
-		~OpenglIndexBuffer() override;
+		OpenGL3IndexBuffer(const std::vector<uint32_t>& indices);
+		~OpenGL3IndexBuffer() override;
 
 		void release() override;
 
@@ -65,14 +65,14 @@ namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// OpenglConstantBuffer /////////////////////////////////////////////////////
+	///// OpenGL3ConstantBuffer ////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class OpenglConstantBuffer : public ConstantBuffer {
+	class OpenGL3ConstantBuffer : public ConstantBuffer {
 	public:
 
-		OpenglConstantBuffer(size_t size);
-		~OpenglConstantBuffer();
+		OpenGL3ConstantBuffer(size_t size);
+		~OpenGL3ConstantBuffer();
 
 		void release() override;
 

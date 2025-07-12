@@ -4,7 +4,7 @@
 #include "AxionEngine/Source/render/Renderer.h"
 
 #include "AxionEngine/Platform/directx/D12Buffers.h"
-#include "AxionEngine/Platform/opengl/OpenglBuffers.h"
+#include "AxionEngine/Platform/opengl/OpenGL3Buffers.h"
 
 namespace Axion {
 
@@ -32,8 +32,8 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::Direct3D12: { return std::make_shared<D12VertexBuffer>(vertices); }
-			case RendererAPI::OpenGL: { return std::make_shared<OpenglVertexBuffer>(vertices); }
+			case RendererAPI::DirectX12: { return std::make_shared<D12VertexBuffer>(vertices); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3VertexBuffer>(vertices); }
 
 		}
 		return nullptr;
@@ -48,8 +48,8 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::Direct3D12: { return std::make_shared<D12IndexBuffer>(indices); }
-			case RendererAPI::OpenGL: { return std::make_shared<OpenglIndexBuffer>(indices); }
+			case RendererAPI::DirectX12: { return std::make_shared<D12IndexBuffer>(indices); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3IndexBuffer>(indices); }
 			
 		}
 		return nullptr;
@@ -64,8 +64,8 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::Direct3D12: { return std::make_shared<D12ConstantBuffer>(size); }
-			case RendererAPI::OpenGL: { return std::make_shared<OpenglConstantBuffer>(size); }
+			case RendererAPI::DirectX12: { return std::make_shared<D12ConstantBuffer>(size); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3ConstantBuffer>(size); }
 
 		}
 		return nullptr;

@@ -5,10 +5,10 @@
 
 namespace Axion {
 
-	class OpenglContext : public GraphicsContext {
+	class OpenGL3Context : public GraphicsContext {
 	public:
 
-		~OpenglContext() override;
+		~OpenGL3Context() override;
 
 		void initialize(void* hwnd, uint32_t width, uint32_t height) override;
 		void shutdown() override;
@@ -45,6 +45,5 @@ namespace Axion {
 		#endif
 
 	};
-
 
 }

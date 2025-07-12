@@ -9,9 +9,7 @@
 #include "AxionEngine/Platform/directx/D12SwapChain.h"
 #include "AxionEngine/Platform/directx/D12CommandList.h"
 #include "AxionEngine/Platform/directx/D12Fence.h"
-#include "AxionEngine/Platform/directx/D12srvHeap.h"
-#include "AxionEngine/Platform/directx/D12rtvHeap.h"
-#include "AxionEngine/Platform/directx/D12dsvHeap.h"
+#include "AxionEngine/Platform/directx/D12DescriptorHeaps.h"
 
 namespace Axion {
 

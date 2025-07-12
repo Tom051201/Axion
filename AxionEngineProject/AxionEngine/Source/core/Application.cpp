@@ -4,7 +4,7 @@
 #include "AxionEngine/Source/render/Renderer.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"
-#include "AxionEngine/Platform/opengl/OpenglContext.h"
+#include "AxionEngine/Platform/opengl/OpenGL3Context.h"
 
 namespace Axion {
 
@@ -16,7 +16,7 @@ namespace Axion {
 		m_window = Scope<Window>(Window::create());
 		m_window->setEventCallback(AX_BIND_EVENT_FN(Application::onEvent));
 
-		Renderer::setAPI(RendererAPI::Direct3D12);
+		Renderer::setAPI(RendererAPI::DirectX12);
 		GraphicsContext::set(new D12Context());
 		Renderer::initialize(m_window.get());
 		
@@ -131,8 +131,8 @@ namespace Axion {
 
 		switch (api) {
 			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }
-			case Axion::RendererAPI::Direct3D12: { GraphicsContext::set(new D12Context()); break; }
-			case Axion::RendererAPI::OpenGL: { GraphicsContext::set(new OpenglContext()); break; }
+			case Axion::RendererAPI::DirectX12: { GraphicsContext::set(new D12Context()); break; }
+			case Axion::RendererAPI::OpenGL3: { GraphicsContext::set(new OpenGL3Context()); break; }
 		}
 
 		if (m_firstStart) {
