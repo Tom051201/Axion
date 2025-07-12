@@ -3,8 +3,10 @@ project "ImGui"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "On"
-	targetdir (ROOT_DIR .. "bin/" .. outputdir .. "/%{prj.name}")
-	objdir (ROOT_DIR .. "bin-int/" .. outputdir .. "/%{prj.name}")
+
+	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
+
 	files {
 		"imconfig.h",
 		"imgui.h",
@@ -25,14 +27,18 @@ project "ImGui"
 		"backends/imgui_impl_dx12.cpp",
 		"backends/imgui_impl_opengl3.cpp"
 	}
+
 	includedirs {
 		"."
 	}
+
 	filter "system:windows"
 		systemversion "latest"
+
 	filter "configurations:Debug"
 		runtime "Debug"
 		symbols "on"
+
 	filter "configurations:Release"
 		runtime "Release"
 		optimize "on"
