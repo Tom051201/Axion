@@ -4,6 +4,7 @@ bin-int/
 
 # Visual Studio
 .vs/
+...
 **.sln
 **.vcxproj
 **.vcxproj.user
