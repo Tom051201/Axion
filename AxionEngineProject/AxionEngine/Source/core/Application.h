@@ -34,6 +34,7 @@ namespace Axion {
 		void removeOverlay(Layer* layer);
 		
 		void setGraphicsBackend(RendererAPI api);
+		void setWindowTitle(const std::string& title);
 
 		static Application& get() { return *s_instance; }
 
@@ -52,7 +53,7 @@ namespace Axion {
 		ImGuiLayer* m_imGuiLayer;
 
 		bool onWindowClose(Event& e);
-		bool onKeyPressed(Event& e);
+		bool onKeyPressed(KeyPressedEvent& e);
 
 	};
 

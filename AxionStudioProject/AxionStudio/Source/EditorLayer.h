@@ -62,6 +62,7 @@ namespace Axion {
 		D12Context* m_context = nullptr;
 
 		bool onWindowResize(WindowResizeEvent& e);
+		bool onKeyPressed(KeyPressedEvent& e);
 
 	};
 

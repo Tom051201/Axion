@@ -18,7 +18,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(name); }
-			//case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(name); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(name); }
 
 		}
 		return nullptr;

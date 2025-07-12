@@ -281,8 +281,8 @@ namespace Axion {
 			}
 			
 			case Axion::RendererAPI::OpenGL3: {
-				ImGui_ImplOpenGL3_DestroyDeviceObjects();
-				ImGui_ImplOpenGL3_CreateDeviceObjects();
+				//ImGui_ImplOpenGL3_DestroyDeviceObjects();
+				//ImGui_ImplOpenGL3_CreateDeviceObjects();
 				break;
 			}
 		}

@@ -19,11 +19,13 @@ namespace Axion {
 		void bind() const override;
 		void unbind() const override;
 
-		inline void setLayout(const BufferLayout& layout) override { m_layout = layout; }
-		inline const BufferLayout& getLayout() const override { return m_layout; }
+		void setLayout(const BufferLayout& layout) override { m_layout = layout; }
+		const BufferLayout& getLayout() const override { return m_layout; }
 
-		inline uint32_t getVertexCount() const override { return m_vertexCount; }
-		inline uint32_t getSize() const override { return m_size; }
+		uint32_t getVertexCount() const override { return m_vertexCount; }
+		uint32_t getSize() const override { return m_size; }
+
+		uint32_t getRendererID() const { return m_rendererID; }
 
 	private:
 
@@ -54,6 +56,8 @@ namespace Axion {
 
 		uint32_t getIndexCount() const override { return m_indexCount; }
 
+		uint32_t getRendererID() const { return m_rendererID; }
+
 	private:
 
 		uint32_t m_rendererID = 0;
@@ -81,6 +85,8 @@ namespace Axion {
 
 		void update(const void* data, size_t size) override;
 		uint32_t getSize() const override { return m_size; }
+
+		uint32_t getRendererID() const { return m_rendererID; }
 
 	private:
 

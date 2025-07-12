@@ -180,4 +180,8 @@ namespace Axion {
 		clear(m_specification.clearColor);
 	}
 
+	void* D12FrameBuffer::getColorAttachmentHandle() const {
+		return reinterpret_cast<void*>(m_context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
+	}
+
 }

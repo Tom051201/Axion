@@ -46,7 +46,7 @@ namespace Axion {
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
 
-
+		Application::get().setWindowTitle("Axion Studio - OpenGL");
 	}
 
 	void EditorLayer::onDetach() {
@@ -91,11 +91,18 @@ namespace Axion {
 			m_frameBuffer->unbind();
 		}
 
-		m_context->getSwapChainWrapper().setAsRenderTarget();
+		// DirectX12 specific call to go back to the swap chain
+		// and set its backbuffers as render target
+		if (Renderer::getAPI() == RendererAPI::DirectX12) {
+			m_context->getSwapChainWrapper().setAsRenderTarget();
+		}
 	}
 
 	void EditorLayer::onEvent(Event& e) {
 		m_editorCamera.onEvent(e);
+
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -127,12 +134,10 @@ namespace Axion {
 				m_viewportDim = { viewportPanelSize.x, viewportPanelSize.y };
 				m_viewportResized = true;
 			}
-			D12FrameBuffer* framebuffer = static_cast<D12FrameBuffer*>(m_frameBuffer.get());
-			D12Context* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 
 			ImGui::Image(
-				(ImTextureID)context->getSrvHeapWrapper().getGpuHandle(framebuffer->getSrvHeapIndex()).ptr,
-				ImVec2((float)framebuffer->getSpecification().width, (float)framebuffer->getSpecification().height)
+				reinterpret_cast<ImTextureID>(m_frameBuffer->getColorAttachmentHandle()),
+				ImVec2((float)m_frameBuffer->getSpecification().width, (float)m_frameBuffer->getSpecification().height)
 			);
 		}
 		ImGui::End();
@@ -216,6 +221,15 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onWindowResize(WindowResizeEvent& e) {
+		return false;
+	}
+
+	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
+		if (e.getKeyCode() == KeyCode::T) {
+			Application::get().setGraphicsBackend(RendererAPI::OpenGL3);
+			Application::get().setWindowTitle("Axion Studio - OpenGL");
+		}
+
 		return false;
 	}
 

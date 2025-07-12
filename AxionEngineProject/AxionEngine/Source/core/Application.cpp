@@ -3,9 +3,6 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
-#include "AxionEngine/Platform/opengl/OpenGL3Context.h"
-
 namespace Axion {
 
 	Application* Application::s_instance = nullptr;
@@ -16,10 +13,9 @@ namespace Axion {
 		m_window = Scope<Window>(Window::create());
 		m_window->setEventCallback(AX_BIND_EVENT_FN(Application::onEvent));
 
-		Renderer::setAPI(RendererAPI::DirectX12);
-		GraphicsContext::set(new D12Context());
+		Renderer::setAPI(RendererAPI::OpenGL3);
 		Renderer::initialize(m_window.get());
-		
+
 		m_imGuiLayer = new ImGuiLayer();
 		pushOverlay(m_imGuiLayer);
 	}
@@ -67,7 +63,7 @@ namespace Axion {
 			QueryPerformanceCounter(&currentTime);
 			Timestep ts = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
 			lastTime = currentTime;
-			
+
 			Renderer::prepareRendering();
 
 			for (Layer* layer : m_layerStack) {
@@ -102,7 +98,7 @@ namespace Axion {
 		return true;
 	}
 
-	bool Application::onKeyPressed(Event& e) {
+	bool Application::onKeyPressed(KeyPressedEvent& e) {
 		return true;
 	}
 
@@ -127,26 +123,33 @@ namespace Axion {
 	}
 
 	void Application::setGraphicsBackend(RendererAPI api) {
+		
+		// shutting down and releasing
+		Renderer::release();
+
+		for (Layer* layer : m_layerStack) {
+			layer->onDetach();
+		}
+
+
+		// reinitializing everything
 		Renderer::setAPI(api);
-
-		switch (api) {
-			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }
-			case Axion::RendererAPI::DirectX12: { GraphicsContext::set(new D12Context()); break; }
-			case Axion::RendererAPI::OpenGL3: { GraphicsContext::set(new OpenGL3Context()); break; }
-		}
-
-		if (m_firstStart) {
-			m_imGuiLayer = new ImGuiLayer();
-			pushOverlay(m_imGuiLayer);
-			m_firstStart = false;
-		}
-		else {
-			Renderer::release();
-			m_imGuiLayer->onDetach();
-		}
-
 		Renderer::initialize(m_window.get());
-		m_imGuiLayer->onAttach();
+
+		m_layerStack.removeOverlay(m_imGuiLayer);
+
+		for (Layer* layer : m_layerStack) {
+			layer->onAttach();
+		}
+
+		m_imGuiLayer = new ImGuiLayer();
+		pushOverlay(m_imGuiLayer);
+
 	}
+
+	void Application::setWindowTitle(const std::string& title) {
+		m_window->setTitle(title);
+	}
+
 
 }

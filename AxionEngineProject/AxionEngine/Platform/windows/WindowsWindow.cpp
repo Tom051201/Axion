@@ -90,6 +90,11 @@ namespace Axion {
 		// TODO: add function
 	}
 
+	void WindowsWindow::setTitle(const std::string& title) {
+		m_data.title = title;
+		SetWindowTextA(m_hwnd, title.c_str());
+	}
+
 	LRESULT CALLBACK WindowsWindow::staticWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		
 		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {

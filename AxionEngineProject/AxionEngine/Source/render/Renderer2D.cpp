@@ -29,8 +29,21 @@ namespace Axion {
 
 		s_rendererData = new RendererData();
 
-		s_rendererData->quadShader = Axion::Shader::create("quadShader2D");
-		s_rendererData->quadShader->compileFromFile("AxionStudio/Assets/shaders/ColorShader.hlsl");
+		s_rendererData->quadShader = Shader::create("quadShader2D");
+		
+		switch (Renderer::getAPI()) {
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
+			
+			case RendererAPI::DirectX12: {
+				s_rendererData->quadShader->compileFromFile("AxionStudio/Assets/shaders/ColorShader.hlsl");
+				break;
+			}
+
+			case RendererAPI::OpenGL3: {
+				s_rendererData->quadShader->compileFromFile("AxionStudio/Assets/shaders/ShaderOpenGL.glsl");
+				break;
+			}
+		}
 
 		std::vector<Axion::Vertex> vertices = {
 			Axion::Vertex(-0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 1.0f,		0.0f, 0.0f),

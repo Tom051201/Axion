@@ -19,6 +19,7 @@ namespace Axion {
 		void clear() override;
 		void clear(const Vec4& clearColor) override;
 
+		void* getColorAttachmentHandle() const override;
 		const FrameBufferSpecification& getSpecification() const override { return m_specification; }
 
 		uint32_t getColorAttachmentRendererID() const { return m_colorAttachment; }

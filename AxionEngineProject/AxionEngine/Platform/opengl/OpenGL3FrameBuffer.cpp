@@ -72,4 +72,8 @@ namespace Axion {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
+	void* OpenGL3FrameBuffer::getColorAttachmentHandle() const {
+		return reinterpret_cast<void*>(static_cast<uintptr_t>(m_colorAttachment));
+	}
+
 }

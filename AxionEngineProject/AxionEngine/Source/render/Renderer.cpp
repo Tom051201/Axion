@@ -5,6 +5,9 @@
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
 
+#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/opengl/OpenGL3Context.h"
+
 namespace Axion {
 
 	struct alignas(16) SceneData {
@@ -17,9 +20,17 @@ namespace Axion {
 	RendererAPI Renderer::s_api = RendererAPI::DirectX12;
 
 	void Renderer::initialize(Window* window) {
+
+		// setup backend specific graphics context
+		switch (s_api) {
+			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
+			case Axion::RendererAPI::DirectX12: { GraphicsContext::set(new D12Context()); break; }
+			case Axion::RendererAPI::OpenGL3: { GraphicsContext::set(new OpenGL3Context()); break; }
+		}
+
 		GraphicsContext::get()->initialize(window->getNativeHandle(), window->getWidth(), window->getHeight());
 
-
+		// setup renderer
 		Renderer2D::initialize();
 
 		s_sceneData = new SceneData();

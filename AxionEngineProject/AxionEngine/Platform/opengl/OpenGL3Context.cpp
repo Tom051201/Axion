@@ -6,12 +6,14 @@
 #include "AxionEngine/Vendor/glad/include/glad/glad.h"
 #include "AxionEngine/Vendor/glad/include/glad/glad_wgl.h"
 
+#include "AxionEngine/Platform/opengl/OpenGL3Buffers.h"
+
 namespace Axion {
 
 	OpenGL3Context::~OpenGL3Context() {}
 
 	void OpenGL3Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
-		AX_ASSERT(hwnd, "HWND cannot be null");
+		AX_CORE_ASSERT(hwnd, "HWND cannot be null");
 		m_width = width;
 		m_height = height;
 
@@ -62,10 +64,16 @@ namespace Axion {
 			Application::get().closeOnError("Failed to load WGL! Application had to shutdown!");
 		}
 
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CCW);
+
 		AX_CORE_LOG_INFO("OpenGL backend initialized successfully");
 	}
 
 	void OpenGL3Context::shutdown() {
+		wglMakeCurrent(nullptr, nullptr);
 		wglDeleteContext(m_glContext);
 		ReleaseDC(m_hwnd, m_hdc);
 
@@ -73,11 +81,12 @@ namespace Axion {
 	}
 
 	void OpenGL3Context::prepareRendering() {
-	
+		glViewport(0, 0, m_width, m_height);
+		clear(); // TODO: maybe remove
 	}
 
 	void OpenGL3Context::finishRendering() {
-	
+		SwapBuffers(m_hdc);
 	}
 
 	void OpenGL3Context::setClearColor(const Vec4& color) {
@@ -85,27 +94,30 @@ namespace Axion {
 	}
 
 	void OpenGL3Context::clear() {
-		glClear(GL_COLOR_BUFFER_BIT/* | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT*/);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT/* | GL_STENCIL_BUFFER_BIT */ );
 	}
 
 	void OpenGL3Context::resize(uint32_t width, uint32_t height) {
-		
+		if (width == 0 || height == 0) return;
+
+		m_width = width;
+		m_height = height;
+
+		glViewport(0, 0, width, height);
 	}
 
 	void OpenGL3Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {
-
+		auto glVB = static_cast<OpenGL3VertexBuffer*>(vb.get());
+		glBindVertexArray(glVB->getRendererID());
+		glDrawElements(GL_TRIANGLES, ib->getIndexCount(), GL_UNSIGNED_INT, nullptr);
 	}
 
 	void OpenGL3Context::activateVsync() {
-		if (wglSwapIntervalEXT) {
-			wglSwapIntervalEXT(1);
-		}
+		if (wglSwapIntervalEXT) wglSwapIntervalEXT(1);
 	}
 
 	void OpenGL3Context::deactivateVsync() {
-		if (wglSwapIntervalEXT) {
-			wglSwapIntervalEXT(0);
-		}
+		if (wglSwapIntervalEXT) wglSwapIntervalEXT(0);
 	}
 
 	std::string OpenGL3Context::getGpuName() const {
