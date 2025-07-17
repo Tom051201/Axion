@@ -108,7 +108,10 @@ namespace Axion {
 
 	void OpenGL3Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {
 		auto glVB = static_cast<OpenGL3VertexBuffer*>(vb.get());
-		glBindVertexArray(glVB->getRendererID());
+
+		vb->bind();
+		ib->bind();
+
 		glDrawElements(GL_TRIANGLES, ib->getIndexCount(), GL_UNSIGNED_INT, nullptr);
 	}
 

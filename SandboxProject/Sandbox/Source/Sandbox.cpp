@@ -21,6 +21,7 @@ public:
 		m_quadColor2 = { 1.0f, 0.0f, 0.0f, 1.0f };
 
 		Axion::Renderer::setClearColor({ 0.0f, 0.1f, 0.2f, 1.0f });
+		Axion::Renderer2D::loadShader("Sandbox/Assets/shaders/ColorShader.hlsl");
 	}
 
 	void onDetach() override {

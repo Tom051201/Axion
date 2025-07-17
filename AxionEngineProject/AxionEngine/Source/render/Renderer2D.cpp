@@ -38,7 +38,7 @@ namespace Axion {
 				s_rendererData->quadShader->compileFromFile("AxionStudio/Assets/shaders/ColorShader.hlsl");
 				break;
 			}
-
+		
 			case RendererAPI::OpenGL3: {
 				s_rendererData->quadShader->compileFromFile("AxionStudio/Assets/shaders/ShaderOpenGL.glsl");
 				break;
@@ -142,6 +142,10 @@ namespace Axion {
 		texture->bind();
 		
 		RenderCommand::drawIndexed(s_rendererData->quadMesh->getVertexBuffer(), s_rendererData->quadMesh->getIndexBuffer());
+	}
+
+	void Renderer2D::loadShader(const char* path) {
+		s_rendererData->quadShader->compileFromFile(path);
 	}
 
 }

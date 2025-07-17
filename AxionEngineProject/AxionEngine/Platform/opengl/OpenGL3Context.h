@@ -31,6 +31,15 @@ namespace Axion {
 		std::string getGpuDriverVersion() const override;
 		uint64_t getVramMB() const override;
 
+
+		// Win32 specific
+		#ifdef AX_PLATFORM_WINDOWS
+		void setHDC(const HDC& hdc) { m_hdc = hdc; }
+		const HDC& getHDC() const { return m_hdc; }
+		void setHGLRC(const HGLRC& hglrc) { m_glContext = hglrc; }
+		const HGLRC& getHGLRC() const { return m_glContext; }
+		#endif
+
 	private:
 
 		uint32_t m_width = 0;

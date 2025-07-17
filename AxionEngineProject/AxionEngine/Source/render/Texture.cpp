@@ -14,7 +14,7 @@ namespace Axion {
 		
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Texture2D>(path); }
-			//case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Texture2D>(path); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Texture2D>(path); }
 
 		}
 

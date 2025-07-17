@@ -6,7 +6,7 @@
 
 namespace Axion {
 
-	OpenGL3Texture2D::OpenGL3Texture2D(std::string& path) {
+	OpenGL3Texture2D::OpenGL3Texture2D(const std::string& path) {
 		stbi_set_flip_vertically_on_load(true);
 
 		int texWidth, texHeight, texChannels;

@@ -63,11 +63,16 @@ namespace Axion {
 	void EditorCamera::recalculateViewMatrix() {
 		Mat4 transform = Mat4::translation(m_position) * Mat4::rotationZ(m_rotation.z);
 		m_viewMatrix = transform.inverse();
-		m_viewProjectionMatrix = m_viewMatrix * m_projectionMatrix;
+		m_viewProjectionMatrix = m_projectionMatrix * m_viewMatrix;
 	}
 
 	void EditorCamera::setProjection(float width, float height, float nearZ, float farZ) {
-		m_projectionMatrix = Mat4::orthographic(width, height, nearZ, farZ);
+		float left = -width / 2.0f;
+		float right = width / 2.0f;
+		float bottom = -height / 2.0f;
+		float top = height / 2.0f;
+
+		m_projectionMatrix = Mat4::orthographic(left, right, bottom, top, nearZ, farZ);
 		recalculateViewMatrix();
 	}
 

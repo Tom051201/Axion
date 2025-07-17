@@ -7,7 +7,7 @@ namespace Axion {
 	class OpenGL3Texture2D : public Texture2D {
 	public:
 
-		OpenGL3Texture2D(std::string& path);
+		OpenGL3Texture2D(const std::string& path);
 		~OpenGL3Texture2D() override;
 
 		void release() override;

@@ -13,7 +13,8 @@ namespace Axion {
 		m_window = Scope<Window>(Window::create());
 		m_window->setEventCallback(AX_BIND_EVENT_FN(Application::onEvent));
 
-		Renderer::setAPI(RendererAPI::OpenGL3);
+		// Sets startup backend
+		Renderer::setAPI(RendererAPI::DirectX12);
 		Renderer::initialize(m_window.get());
 
 		m_imGuiLayer = new ImGuiLayer();

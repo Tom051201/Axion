@@ -35,6 +35,7 @@ namespace Axion {
 	private:
 
 		EditorCamera m_editorCamera;
+		OrthographicCameraController m_orthCamController;
 
 		Ref<Texture2D> m_texture;
 

@@ -13,18 +13,33 @@
 
 namespace Axion {
 
+	struct OpenGL3WindowData {
+		HDC hdc;
+		HWND hwnd;
+		OpenGL3Context* ctx;
+	};
+
 	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer"), m_activeAPI(RendererAPI::None) {}
 
 	ImGuiLayer::~ImGuiLayer() {}
 
 	void ImGuiLayer::onAttach() {
 
+
 		m_activeAPI = Renderer::getAPI();
 
 		IMGUI_CHECKVERSION();
+		ImGui_ImplWin32_EnableDpiAwareness();
 		ImGui::CreateContext();
-
+		//ImGuiContext* imguiContext = ImGui::CreateContext();
+		//ImGui::SetCurrentContext(imguiContext);
+		
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+		//#ifdef AX_DEBUG
+		//io.ConfigDebugBeginReturnValueOnce = true;
+		//#endif
+
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -34,7 +49,6 @@ namespace Axion {
 		
 		setStyle();
 
-		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }
 			case Axion::RendererAPI::DirectX12: { setupD12(); break; }
@@ -124,6 +138,7 @@ namespace Axion {
 		auto& srvHeap = m_d12Context->getSrvHeapWrapper();
 		m_srvHeapIndex = srvHeap.allocate();
 
+		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
 		ImGui_ImplDX12_Init(
 			m_d12Context->getDevice(),
 			2,
@@ -136,7 +151,53 @@ namespace Axion {
 
 	void ImGuiLayer::setupOpenGL() {
 		const char* glsl_version = "#version 130";
+		ImGui_ImplWin32_InitForOpenGL(Application::get().getWindow().getNativeHandle());
 		ImGui_ImplOpenGL3_Init(glsl_version);
+
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+			ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+			IM_ASSERT(platform_io.Renderer_CreateWindow == NULL);
+			IM_ASSERT(platform_io.Renderer_DestroyWindow == NULL);
+			IM_ASSERT(platform_io.Renderer_SwapBuffers == NULL);
+			IM_ASSERT(platform_io.Platform_RenderWindow == NULL);
+
+			platform_io.Renderer_CreateWindow = [](ImGuiViewport* viewport) {
+				auto* context = static_cast<OpenGL3Context*>(GraphicsContext::get()->getNativeContext());
+				
+				OpenGL3WindowData* data = IM_NEW(OpenGL3WindowData);
+				data->hwnd = (HWND)viewport->PlatformHandle;
+				data->hdc = GetDC(data->hwnd);
+				data->ctx = context;
+
+				viewport->RendererUserData = data;
+				wglMakeCurrent(data->hdc, context->getHGLRC());
+			};
+
+			platform_io.Renderer_DestroyWindow = [](ImGuiViewport* viewport) {
+				auto* data = static_cast<OpenGL3WindowData*>(viewport->RendererUserData);
+				if (data) {
+					wglMakeCurrent(nullptr, nullptr);
+					ReleaseDC(data->hwnd, data->hdc);
+					IM_DELETE(data);
+					viewport->RendererUserData = nullptr;
+				}
+			};
+
+			platform_io.Renderer_SwapBuffers = [](ImGuiViewport* viewport, void*) {
+				auto* data = static_cast<OpenGL3WindowData*>(viewport->RendererUserData);
+				if (data) {
+					SwapBuffers(data->hdc);
+				}
+			};
+			
+			platform_io.Platform_RenderWindow = [](ImGuiViewport* viewport, void*) {
+				auto* data = static_cast<OpenGL3WindowData*>(viewport->RendererUserData);
+				if (data) {
+					wglMakeCurrent(data->hdc, data->ctx->getHGLRC());
+				}
+			};
+		}
 	}
 
 	bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& e) {
@@ -282,7 +343,7 @@ namespace Axion {
 			
 			case Axion::RendererAPI::OpenGL3: {
 				//ImGui_ImplOpenGL3_DestroyDeviceObjects();
-				//ImGui_ImplOpenGL3_CreateDeviceObjects();
+				//ImGui_ImplOpenGL3_CreateDeviceObjects();	
 				break;
 			}
 		}

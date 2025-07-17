@@ -10,6 +10,7 @@
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/opengl/OpenGL3Context.h"
 
 namespace Axion {
 
@@ -34,6 +35,8 @@ namespace Axion {
 		D12Context* m_d12Context = nullptr;
 		uint32_t m_srvHeapIndex = 0;
 
+		// opengl3 specifics
+		OpenGL3Context* m_gl3Context = nullptr;
 
 		void setupD12();
 		void setupOpenGL();
@@ -49,6 +52,7 @@ namespace Axion {
 		bool onWindowCloseEvent(WindowCloseEvent& e);
 
 		void setStyle();
+
 	};
 
 }

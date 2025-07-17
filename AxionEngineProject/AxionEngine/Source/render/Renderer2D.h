@@ -29,6 +29,8 @@ namespace Axion {
 
 		static void drawTexture(const Vec3& position, const Vec2& dim, Ref<Texture2D>& texture, Ref<ConstantBuffer>& uploadBuffer);
 
+		static void loadShader(const char* path);
+
 	};
 
 }
