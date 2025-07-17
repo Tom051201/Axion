@@ -45,14 +45,14 @@ namespace Axion {
 			}
 		}
 
-		std::vector<Axion::Vertex> vertices = {
-			Axion::Vertex(-0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 1.0f,		0.0f, 0.0f),
-			Axion::Vertex(0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f,		1.0f, 0.0f),
-			Axion::Vertex(0.5f,  0.5f, 0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		1.0f, 1.0f),
-			Axion::Vertex(-0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f, 1.0f,		0.0f, 1.0f)
+		std::vector<Vertex> vertices = {
+			Vertex(-0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 1.0f,		0.0f, 0.0f),
+			Vertex(0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f,		1.0f, 0.0f),
+			Vertex(0.5f,  0.5f, 0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		1.0f, 1.0f),
+			Vertex(-0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f, 1.0f,		0.0f, 1.0f)
 		};
 		std::vector<uint32_t> indices = { 0, 2, 1,	2, 0, 3 };
-		s_rendererData->quadMesh = Axion::Mesh::create(vertices, indices);
+		s_rendererData->quadMesh = Mesh::create(vertices, indices);
 	}
 
 	void Renderer2D::shutdown() {
@@ -64,14 +64,14 @@ namespace Axion {
 	void Renderer2D::beginScene(const Mat4& projection, const Mat4& transform) {
 		Mat4 viewProj = projection * (transform.inverse());
 		s_rendererData->quadShader->bind();
-		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(viewProj.toXM());
+		s_sceneData->viewProjection = viewProj.transposed().toXM();
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 		s_sceneUploadBuffer->bind(0);
 	}
 
 	void Renderer2D::beginScene(const Camera& camera) {
 		s_rendererData->quadShader->bind();
-		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
+		s_sceneData->viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 		s_sceneUploadBuffer->bind(0);
 	}

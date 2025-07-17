@@ -73,7 +73,7 @@ namespace Axion {
 
 			m_imGuiLayer->beginRender();
 			for (Layer* layer : m_layerStack) {
-				if (layer->m_active) layer->onGuiRender();
+				layer->onGuiRender();
 			}
 			m_imGuiLayer->endRender();
 

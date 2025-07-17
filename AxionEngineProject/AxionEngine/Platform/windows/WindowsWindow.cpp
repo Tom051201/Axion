@@ -87,7 +87,21 @@ namespace Axion {
 	}
 
 	void WindowsWindow::setPosition(uint32_t x, uint32_t y) {
-		// TODO: add function
+		RECT rect = { 0, 0, (LONG)m_data.width, (LONG)m_data.height };
+
+		DWORD style =
+			#if AX_WIN_USING_CUSTOM_TITLE_BAR
+				WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+			#else
+				WS_OVERLAPPEDWINDOW;
+			#endif
+
+		AdjustWindowRect(&rect, style, FALSE);
+
+		int totalWidth = rect.right - rect.left;
+		int totalHeight = rect.bottom - rect.top;
+
+		SetWindowPos(m_hwnd, nullptr, x, y, totalWidth, totalHeight, SWP_NOZORDER | SWP_NOACTIVATE);
 	}
 
 	void WindowsWindow::setTitle(const std::string& title) {

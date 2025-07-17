@@ -165,7 +165,7 @@ namespace Axion {
 		psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 		psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-		psoDesc.DepthStencilState.StencilEnable = FALSE;	// TODO: maybe make TRUE as well
+		psoDesc.DepthStencilState.StencilEnable = FALSE;
 
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;

@@ -20,8 +20,6 @@ namespace Axion {
 
 		inline const std::string& getName() const { return m_debugname; }
 
-		bool m_active = true;
-
 	protected:
 
 		std::string m_debugname;

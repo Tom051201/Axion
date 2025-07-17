@@ -23,9 +23,9 @@ namespace Axion {
 
 		// setup backend specific graphics context
 		switch (s_api) {
-			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
-			case Axion::RendererAPI::DirectX12: { GraphicsContext::set(new D12Context()); break; }
-			case Axion::RendererAPI::OpenGL3: { GraphicsContext::set(new OpenGL3Context()); break; }
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
+			case RendererAPI::DirectX12: { GraphicsContext::set(new D12Context()); break; }
+			case RendererAPI::OpenGL3: { GraphicsContext::set(new OpenGL3Context()); break; }
 		}
 
 		GraphicsContext::get()->initialize(window->getNativeHandle(), window->getWidth(), window->getHeight());
@@ -58,7 +58,7 @@ namespace Axion {
 	}
 
 	void Renderer::beginScene(OrthographicCamera& camera) {
-		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
+		s_sceneData->viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
 

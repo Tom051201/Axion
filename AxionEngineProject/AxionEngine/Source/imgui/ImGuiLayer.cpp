@@ -31,14 +31,8 @@ namespace Axion {
 		IMGUI_CHECKVERSION();
 		ImGui_ImplWin32_EnableDpiAwareness();
 		ImGui::CreateContext();
-		//ImGuiContext* imguiContext = ImGui::CreateContext();
-		//ImGui::SetCurrentContext(imguiContext);
 		
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
-
-		//#ifdef AX_DEBUG
-		//io.ConfigDebugBeginReturnValueOnce = true;
-		//#endif
 
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
@@ -83,7 +77,6 @@ namespace Axion {
 		dispatcher.dispatch<KeyReleasedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onKeyReleasedEvent));
 		dispatcher.dispatch<KeyTypedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onKeyTypedEvent));
 		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onWindowResizeEvent));
-		dispatcher.dispatch<WindowCloseEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onWindowCloseEvent));
 	}
 
 	void ImGuiLayer::beginRender() {
@@ -100,37 +93,34 @@ namespace Axion {
 	void ImGuiLayer::endRender() {
 		ImGui::Render();
 
-		if (m_active) { // TODO: find workaround to prevent crash when viewport is inside actual window
+		switch (m_activeAPI) {
+			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
 
-			switch (m_activeAPI) {
-				case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
-
-				case Axion::RendererAPI::DirectX12: {
-					ID3D12DescriptorHeap* heaps[] = { m_d12Context->getSrvHeapWrapper().getHeap() };
-					m_d12Context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
-					ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_d12Context->getCommandList());
-					break;
-				}
-
-				case Axion::RendererAPI::OpenGL3: {
-					ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-					break;
-				}
+			case Axion::RendererAPI::DirectX12: {
+				ID3D12DescriptorHeap* heaps[] = { m_d12Context->getSrvHeapWrapper().getHeap() };
+				m_d12Context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
+				ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_d12Context->getCommandList());
+				break;
 			}
 
-			// for multiple viewports
-			ImGuiIO& io = ImGui::GetIO();
-			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable/* && !ImGui::GetIO().WantSaveIniSettings*/) {
-				ImGui::UpdatePlatformWindows();
-				if (m_activeAPI == RendererAPI::DirectX12) {
-					ImGui::RenderPlatformWindowsDefault(nullptr, m_d12Context->getCommandQueue());
-				}
-				else if (m_activeAPI == RendererAPI::OpenGL3) {
-					ImGui::RenderPlatformWindowsDefault();
-				}
+			case Axion::RendererAPI::OpenGL3: {
+				ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+				break;
 			}
-
 		}
+
+		// for multiple viewports
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable/* && !ImGui::GetIO().WantSaveIniSettings*/) {
+			ImGui::UpdatePlatformWindows();
+			if (m_activeAPI == RendererAPI::DirectX12) {
+				ImGui::RenderPlatformWindowsDefault(nullptr, m_d12Context->getCommandQueue());
+			}
+			else if (m_activeAPI == RendererAPI::OpenGL3) {
+				ImGui::RenderPlatformWindowsDefault();
+			}
+		}
+
 	}
 
 	void ImGuiLayer::setupD12() {
@@ -258,11 +248,6 @@ namespace Axion {
 	bool ImGuiLayer::onWindowResizeEvent(WindowResizeEvent& e) {
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(static_cast<float>(e.getWidth()), static_cast<float>(e.getHeight()));
-		return false;
-	}
-
-	bool ImGuiLayer::onWindowCloseEvent(WindowCloseEvent& e) {
-		m_active = false;
 		return false;
 	}
 

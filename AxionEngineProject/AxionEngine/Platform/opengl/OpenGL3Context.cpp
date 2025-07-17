@@ -82,7 +82,7 @@ namespace Axion {
 
 	void OpenGL3Context::prepareRendering() {
 		glViewport(0, 0, m_width, m_height);
-		clear(); // TODO: maybe remove
+		clear();
 	}
 
 	void OpenGL3Context::finishRendering() {
@@ -94,7 +94,7 @@ namespace Axion {
 	}
 
 	void OpenGL3Context::clear() {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT/* | GL_STENCIL_BUFFER_BIT */ );
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT/* | GL_STENCIL_BUFFER_BIT */);
 	}
 
 	void OpenGL3Context::bindSwapChainRenderTarget() {
