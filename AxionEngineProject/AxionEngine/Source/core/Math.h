@@ -261,7 +261,7 @@ namespace Axion {
 			return Mat4(DirectX::XMMatrixOrthographicLH(width, height, nearZ, farZ));
 		}
 
-		static Mat4 orthographic(float left, float right, float bottom, float top, float nearZ, float farZ) {
+		static Mat4 orthographicOffCenter(float left, float right, float bottom, float top, float nearZ, float farZ) {
 			return Mat4(DirectX::XMMatrixOrthographicOffCenterLH(left, right, bottom, top, nearZ, farZ));
 		}
 

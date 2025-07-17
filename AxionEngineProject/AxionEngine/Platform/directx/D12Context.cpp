@@ -115,6 +115,10 @@ namespace Axion {
 		m_swapChain.setFrameIndex(m_swapChain.getSwapChain()->GetCurrentBackBufferIndex());
 	}
 
+	void D12Context::bindSwapChainRenderTarget() {
+		m_swapChain.setAsRenderTarget();
+	}
+
 	void D12Context::resize(uint32_t width, uint32_t height) {
 		if (width <= 0 || height <= 0)return;
 

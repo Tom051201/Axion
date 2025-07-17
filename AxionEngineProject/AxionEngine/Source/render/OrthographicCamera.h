@@ -2,10 +2,11 @@
 #include "axpch.h"
 
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/render/Camera.h"
 
 namespace Axion {
 
-	class OrthographicCamera {
+	class OrthographicCamera : public Camera {
 	public:
 
 		OrthographicCamera(float left, float right, float bottom, float top, float nearZ = -1.0f, float farZ = 1.0f);
@@ -20,16 +21,7 @@ namespace Axion {
 		const Vec3& getPosition() const { return m_position; };
 		float getRotationZ() const { return m_rotationZ; }
 
-
-		const Mat4& getProjectionMatrix() const { return m_projectionMatrix; }
-		const Mat4& getViewMatrix() const { return m_viewMatrix; }
-		const Mat4& getViewProjectionMatrix() const { return m_viewProjectionMatrix; }
-
 	private:
-
-		Mat4 m_projectionMatrix;
-		Mat4 m_viewMatrix;
-		Mat4 m_viewProjectionMatrix;
 
 		Vec3 m_position;
 		float m_rotationX = 0;

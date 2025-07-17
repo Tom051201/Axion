@@ -5,9 +5,9 @@
 namespace Axion {
 
 	EditorCamera::EditorCamera(float aspectRatio)
-		: Camera(Mat4::orthographic(-m_aspectRatio * m_zoomLevel, m_aspectRatio* m_zoomLevel, -m_zoomLevel, m_zoomLevel)),
-		m_aspectRatio(aspectRatio) {
+		: m_aspectRatio(aspectRatio) {
 
+		setProjection(-m_aspectRatio * m_zoomLevel, m_aspectRatio * m_zoomLevel, -m_zoomLevel, m_zoomLevel);
 		recalculateViewMatrix();
 	}
 
@@ -28,8 +28,7 @@ namespace Axion {
 		if (Input::isKeyPressed(KeyCode::Q)) m_rotation.z += m_rotationSpeed * ts;
 		if (Input::isKeyPressed(KeyCode::E)) m_rotation.z -= m_rotationSpeed * ts;
 
-		setRotation(m_rotation);
-		setPosition(m_position);
+		recalculateViewMatrix();
 	}
 
 	void EditorCamera::onEvent(Event& e) {
@@ -61,18 +60,13 @@ namespace Axion {
 	}
 
 	void EditorCamera::recalculateViewMatrix() {
-		Mat4 transform = Mat4::translation(m_position) * Mat4::rotationZ(m_rotation.z);
+		Mat4 transform = Mat4::rotationZ(m_rotation.z) * Mat4::translation(m_position);
 		m_viewMatrix = transform.inverse();
-		m_viewProjectionMatrix = m_projectionMatrix * m_viewMatrix;
+		m_viewProjectionMatrix = m_viewMatrix * m_projectionMatrix;
 	}
 
-	void EditorCamera::setProjection(float width, float height, float nearZ, float farZ) {
-		float left = -width / 2.0f;
-		float right = width / 2.0f;
-		float bottom = -height / 2.0f;
-		float top = height / 2.0f;
-
-		m_projectionMatrix = Mat4::orthographic(left, right, bottom, top, nearZ, farZ);
+	void EditorCamera::setProjection(float left, float right, float bottom, float top, float nearZ, float farZ) {
+		m_projectionMatrix = Mat4::orthographic(right - left, top - bottom, nearZ, farZ);
 		recalculateViewMatrix();
 	}
 

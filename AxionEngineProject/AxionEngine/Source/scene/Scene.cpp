@@ -59,10 +59,10 @@ namespace Axion {
 
 	}
 
-	void Scene::onUpdate(Timestep ts, const Camera& cam, const Mat4& transform) {
+	void Scene::onUpdate(Timestep ts, const Camera& cam) {
 
 		if (&cam) {
-			Renderer2D::beginScene(cam, transform);
+			Renderer2D::beginScene(cam);
 
 			auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {

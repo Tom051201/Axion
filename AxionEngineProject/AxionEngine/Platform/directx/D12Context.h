@@ -28,6 +28,8 @@ namespace Axion {
 		void setClearColor(const Vec4& color) override;
 		void clear() override;
 
+		void bindSwapChainRenderTarget() override;
+
 		void resize(uint32_t width, uint32_t height) override;
 
 		void activateVsync() override { m_vsyncInterval = 1; };

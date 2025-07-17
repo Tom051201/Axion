@@ -97,6 +97,10 @@ namespace Axion {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT/* | GL_STENCIL_BUFFER_BIT */ );
 	}
 
+	void OpenGL3Context::bindSwapChainRenderTarget() {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
 	void OpenGL3Context::resize(uint32_t width, uint32_t height) {
 		if (width == 0 || height == 0) return;
 

@@ -11,7 +11,6 @@
 #include "AxionEngine/Source/layers/LayerStack.h"
 #include "AxionEngine/Source/imgui/ImGuiLayer.h"
 
-#include "AxionEngine/Source/render/OrthographicCamera.h"
 #include "AxionEngine/Source/render/Renderer.h"
 
 namespace Axion {

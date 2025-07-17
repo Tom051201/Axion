@@ -61,8 +61,8 @@ namespace Axion {
 		delete s_rendererData;
 	}
 
-	void Renderer2D::beginScene(const Camera& camera, const Mat4& transform) {
-		Mat4 viewProj = camera.getProjectionMatrix() * (transform.inverse());
+	void Renderer2D::beginScene(const Mat4& projection, const Mat4& transform) {
+		Mat4 viewProj = projection * (transform.inverse());
 		s_rendererData->quadShader->bind();
 		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(viewProj.toXM());
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
@@ -70,13 +70,6 @@ namespace Axion {
 	}
 
 	void Renderer2D::beginScene(const Camera& camera) {
-		s_rendererData->quadShader->bind();
-		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
-		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
-		s_sceneUploadBuffer->bind(0);
-	}
-
-	void Renderer2D::beginScene(const OrthographicCamera& camera) {
 		s_rendererData->quadShader->bind();
 		s_sceneData->viewProjection = DirectX::XMMatrixTranspose(camera.getViewProjectionMatrix().toXM());
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));

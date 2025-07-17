@@ -74,6 +74,10 @@ namespace Axion {
 		RenderCommand::clear();
 	}
 
+	void Renderer::renderToSwapChain() {
+		GraphicsContext::get()->bindSwapChainRenderTarget();
+	}
+
 	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader) {
 		shader->bind();
 		s_sceneUploadBuffer->bind(0);

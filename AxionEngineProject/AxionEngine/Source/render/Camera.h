@@ -7,7 +7,9 @@ namespace Axion {
 	class Camera {
 	public:
 
+		Camera() = default;
 		Camera(const Mat4& projection) : m_projectionMatrix(projection) {}
+		virtual ~Camera() = default;
 
 		const Mat4& getProjectionMatrix() const { return m_projectionMatrix; }
 		const Mat4& getViewMatrix() const { return m_viewMatrix; }

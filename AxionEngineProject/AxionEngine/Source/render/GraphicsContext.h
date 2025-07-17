@@ -21,6 +21,8 @@ namespace Axion {
 		virtual void setClearColor(const Vec4& color) = 0;
 		virtual void clear() = 0;
 
+		virtual void bindSwapChainRenderTarget() = 0;
+
 		virtual void resize(uint32_t width, uint32_t height) = 0;
 
 		virtual void activateVsync() = 0;

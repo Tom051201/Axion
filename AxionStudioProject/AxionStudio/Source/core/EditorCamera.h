@@ -19,26 +19,28 @@ namespace Axion {
 		void onUpdate(Timestep ts);
 		void onEvent(Event& e);
 
-		const Mat4& getViewProjectionMatrix() const { return m_viewProjectionMatrix; }
+		void setPosition(const Vec3& pos);
+		const Vec3& getPosition() const { return m_position; }
+
+		void setRotation(const Vec3& rot);
+		const Vec3& getRotation() const { return m_rotation; }
 
 	private:
 
 		float m_aspectRatio;
 		float m_zoomLevel = 1.0f;
 
-		Vec3 m_position = { 0.0f, 0.0f, 0.0f };
-		Vec3 m_rotation = { 0.0f, 0.0f, 0.0f };
+		Vec3 m_position = Vec3::zero();
+		Vec3 m_rotation = Vec3::zero();
 		float m_translationSpeed = 1.0f;
 		float m_rotationSpeed = 1.0f;
 
 		bool onMouseScrolled(MouseScrolledEvent& e);
 		bool onWindowResize(WindowResizeEvent& e);
 
-		void setPosition(const Vec3& pos);
-		void setRotation(const Vec3& rot);
 		void recalculateViewMatrix();
 
-		void setProjection(float width, float height, float nearZ = -1.0f, float farZ = 1.0f);
+		void setProjection(float left, float right, float bottom, float top, float nearZ = -1.0f, float farZ = 1.0f);
 	};
 
 }

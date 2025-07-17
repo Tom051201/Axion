@@ -35,9 +35,6 @@ namespace Axion {
 	private:
 
 		EditorCamera m_editorCamera;
-		OrthographicCameraController m_orthCamController;
-
-		Ref<Texture2D> m_texture;
 
 		// panels
 		Scope<SystemInfoPanel> m_systemInfoPanel;
@@ -59,8 +56,7 @@ namespace Axion {
 		ImGuiWindowFlags m_windowFlags = 0;
 
 		// TEMP
-		Ref<ConstantBuffer> m_buffer1;
-		D12Context* m_context = nullptr;
+		Ref<ConstantBuffer> m_tempConstantBuffer;
 
 		bool onWindowResize(WindowResizeEvent& e);
 		bool onKeyPressed(KeyPressedEvent& e);

@@ -29,6 +29,8 @@ namespace Axion {
 		static void setClearColor(const Vec4& color);
 		static void clear();
 
+		static void renderToSwapChain();
+
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader);
 
 		inline static void setAPI(RendererAPI api) { s_api = api; }

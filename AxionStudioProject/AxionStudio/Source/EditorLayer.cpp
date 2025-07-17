@@ -5,12 +5,11 @@
 
 namespace Axion {
 
-	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_editorCamera(1280.0f / 720.0f), m_orthCamController(1280 / 720, true) {}
+	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_editorCamera(1280.0f / 720.0f) {}
 
 	void EditorLayer::onAttach() {
 
-		m_buffer1 = ConstantBuffer::create(sizeof(ObjectBuffer));
-		m_texture = Texture2D::create("AxionStudio/Assets/logo.png");
+		m_tempConstantBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 
 		Renderer2D::setClearColor({ 0.3f, 0.3f, 0.3f, 1.0f });
 
@@ -23,9 +22,6 @@ namespace Axion {
 		m_frameBuffer = FrameBuffer::create(fbs);
 		m_viewportDim = { (float)fbs.width, (float)fbs.height };
 
-		// TODO: make removable
-		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-
 		m_activeScene = std::make_shared<Scene>();
 		m_sceneState = SceneState::Editing;
 
@@ -34,7 +30,7 @@ namespace Axion {
 		m_squareEntity = square;
 
 		m_cameraEntity = m_activeScene->createEntity("Camera Entity");
-		m_cameraEntity.addComponent<CameraComponent>(Mat4::orthographic(-16.0f, 16.0f, -9.0f, 9.0f, -1.0f, 1.0f));
+		m_cameraEntity.addComponent<CameraComponent>(Mat4::orthographicOffCenter(-16.0f, 16.0f, -9.0f, 9.0f, -1.0f, 1.0f));
 		m_cameraEntity.getComponent<CameraComponent>().isPrimary = true;
 
 		m_dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None;
@@ -48,8 +44,7 @@ namespace Axion {
 	}
 
 	void EditorLayer::onDetach() {
-		m_buffer1->release();
-		m_texture->release();
+		m_tempConstantBuffer->release();
 		m_frameBuffer->release();
 
 		m_systemInfoPanel->shutdown();
@@ -57,13 +52,11 @@ namespace Axion {
 
 	void EditorLayer::onUpdate(Timestep ts) {
 
-		//m_editorCamera.onUpdate(ts);
-		m_orthCamController.onUpdate(ts);
+		m_editorCamera.onUpdate(ts);
 
 		if (m_viewportResized) {
 			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);
-			//m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
-			m_orthCamController.resize(m_viewportDim.x, m_viewportDim.y);
+			m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
 			m_viewportResized = false;
 		}
 
@@ -72,41 +65,33 @@ namespace Axion {
 			m_frameBuffer->bind();
 			m_frameBuffer->clear();
 
-			//switch (m_sceneState) {
-			//	case Axion::SceneState::Editing: {
-			//		m_activeScene->onUpdate(ts, m_editorCamera, m_editorCamera.getViewProjectionMatrix());
-			//		break;
-			//	}
-			//	case Axion::SceneState::Playing: {
-			//		m_activeScene->onUpdate(ts);
-			//		break;
-			//	}
-			//	default: { break; }
-			//}
+			switch (m_sceneState) {
+				case Axion::SceneState::Editing: {
+					m_activeScene->onUpdate(ts, m_editorCamera);
+					break;
+				}
+				case Axion::SceneState::Playing: {
+					m_activeScene->onUpdate(ts);
+					break;
+				}
+				default: { break; }
+			}
 
-			Renderer2D::beginScene(m_orthCamController.getCamera());
-			//Renderer2D::beginScene(m_editorCamera, m_editorCamera.getViewProjectionMatrix());
-			Renderer2D::drawQuad({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, m_buffer1);
-			//Renderer2D::drawQuad(Mat4::TRS(Vec3::zero(), Vec3::zero(), Vec3::one()), { 1.0f, 0.0f, 0.0f, 1.0f }, m_buffer1);
-			Renderer2D::endScene();
+			//Renderer2D::beginScene(m_editorCamera);
+			//Renderer2D::drawQuad({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, m_tempConstantBuffer);
+			//Renderer2D::endScene();
 
 			m_frameBuffer->unbind();
 
 			// TODO: check transpose for opengl when rendering when nothing is rendered!
 		}
 
-		// DirectX12 specific call to go back to the swap chain
-		// and set its backbuffers as render target
-		// TODO: maybe move this to an engine internal function
-		if (Renderer::getAPI() == RendererAPI::DirectX12) {
-			m_context->getSwapChainWrapper().setAsRenderTarget();
-		}
+		Renderer::renderToSwapChain();
 	}
 
 	void EditorLayer::onEvent(Event& e) {
-		//m_editorCamera.onEvent(e);
-		m_orthCamController.onEvent(e);
-
+		m_editorCamera.onEvent(e);
+		
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(EditorLayer::onWindowResize));
@@ -155,6 +140,15 @@ namespace Axion {
 		ImGui::Text("%s", m_squareEntity.getComponent<TagComponent>().tag.c_str());
 		auto& color = m_squareEntity.getComponent<SpriteRendererComponent>().color;
 		ImGui::ColorEdit4("Color", color.data());
+		
+		if (ImGui::Button("Play / Edit")) {
+			if (m_sceneState == SceneState::Editing) {
+				m_sceneState = SceneState::Playing;
+			}
+			else {
+				m_sceneState = SceneState::Editing;
+			}
+		}
 
 		ImGui::End();
 	

@@ -19,8 +19,11 @@ namespace Axion {
 		Scene();
 		~Scene();
 
+		// for rendering through a camera entity
 		void onUpdate(Timestep ts);
-		void onUpdate(Timestep ts, const Camera& cam, const Mat4& transform);
+
+		// for rendering through a custom camera
+		void onUpdate(Timestep ts, const Camera& cam);
 
 		Entity createEntity();
 		Entity createEntity(const std::string& tag);
