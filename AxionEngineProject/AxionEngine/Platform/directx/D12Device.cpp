@@ -4,6 +4,8 @@
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Application.h"
 
+#include "AxionEngine/Platform/windows/WindowsHelper.h"
+
 namespace Axion {
 
 	D12Device::~D12Device() {
@@ -20,7 +22,7 @@ namespace Axion {
 			adapter->GetDesc1(&desc);
 			
 			std::wstring ws(desc.Description);
-			AX_CORE_LOG_TRACE("Attempting device creation on adapter : {0}", std::string(ws.begin(), ws.end()));
+			AX_CORE_LOG_TRACE("Attempting device creation on adapter : {0}", WindowsHelper::WStringToString(ws));
 			AX_CORE_LOG_TRACE("VRAM: {0} MB", desc.DedicatedVideoMemory / (1024 * 1024));
 
 			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) continue;
@@ -48,7 +50,7 @@ namespace Axion {
 		DXGI_ADAPTER_DESC1 desc;
 		m_adapter->GetDesc1(&desc);
 		std::wstring wdesc(desc.Description);
-		return std::string(wdesc.begin(), wdesc.end());
+		return WindowsHelper::WStringToString(wdesc);
 	}
 
 	

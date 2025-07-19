@@ -15,8 +15,8 @@ void Sandbox2D::onAttach() {
 	Axion::Renderer2D::setClearColor({ 0.4f, 0.1f, 0.2f, 1.0f });
 
 	Axion::FrameBufferSpecification fbs;
-	fbs.width = 1280.0f;
-	fbs.height = 720.0f;
+	fbs.width = static_cast<uint32_t>(1280.0f);
+	fbs.height = static_cast<uint32_t>(720.0f);
 	m_frameBuffer = Axion::FrameBuffer::create(fbs);
 
 	m_context = static_cast<Axion::D12Context*>(Axion::GraphicsContext::get()->getNativeContext());

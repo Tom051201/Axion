@@ -1,6 +1,8 @@
 #include "axpch.h"
 #include "D12Context.h"
 
+#include "AxionEngine/Platform/windows/WindowsHelper.h"
+
 #ifdef AX_DEBUG
 	#include "AxionEngine/Platform/directx/D12DebugLayer.h"
 #endif
@@ -139,7 +141,8 @@ namespace Axion {
 		DXGI_ADAPTER_DESC1 desc;
 		m_device.getAdapter()->GetDesc1(&desc);
 		std::wstring ws(desc.Description);
-		return std::string(ws.begin(), ws.end());
+		//return std::string(ws.begin(), ws.end());
+		return WindowsHelper::WStringToString(ws);
 	}
 
 	std::string D12Context::getGpuDriverVersion() const {

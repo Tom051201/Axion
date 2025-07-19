@@ -5,6 +5,8 @@
 #include <Windows.h>
 #include <winternl.h>
 
+#include "AxionEngine/Platform/windows/WindowsHelper.h"
+
 namespace Axion {
 
 	std::string PlatformInfo::getOsVersion() {
@@ -19,7 +21,7 @@ namespace Axion {
 					wchar_t buf[128];
 					swprintf_s(buf, 128, L"Windows %d.%d (Build %d)", rovi.dwMajorVersion, rovi.dwMinorVersion, rovi.dwBuildNumber);
 					std::wstring wstr(buf);
-					return std::string(wstr.begin(), wstr.end());
+					return WindowsHelper::WStringToString(wstr);
 				}
 			}
 		}

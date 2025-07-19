@@ -32,7 +32,7 @@ namespace Axion {
 		if (GetCursorPos(&cursorPos)) {
 			ScreenToClient(static_cast<HWND>(Application::get().getWindow().getNativeHandle()), &cursorPos);
 		}
-		return { cursorPos.x, cursorPos.y };
+		return { static_cast<float>(cursorPos.x), static_cast<float>(cursorPos.y) };
 	}
 
 }

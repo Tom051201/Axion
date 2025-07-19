@@ -184,7 +184,7 @@ namespace Axion {
 
 			// help menu
 			if (ImGui::BeginMenu("  Help  ")) {
-				if (ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoPanel)) { m_showSystemInfoPanel != m_showSystemInfoPanel; }
+				if (ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoPanel)) { m_showSystemInfoPanel = !m_showSystemInfoPanel; }
 				ImGui::EndMenu();
 			}
 
