@@ -31,6 +31,7 @@ namespace Axion {
 		Camera* primaryCamera = nullptr;
 		Mat4* cameraTransform = nullptr;
 
+		// camera setup
 		{
 			auto group = m_registry.group<CameraComponent>(entt::get<TransformComponent>);
 			for (auto entity : group) {
@@ -48,11 +49,21 @@ namespace Axion {
 		if (primaryCamera) {
 			Renderer2D::beginScene(primaryCamera->getProjectionMatrix(), *cameraTransform);
 
-			auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-			for (auto entity : group) {
-				auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+			// 2D sprites
+			//auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+			//for (auto entity : group) {
+			//	auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+			//
+			//	Renderer2D::drawQuad(transform.getTransform(), sprite.color, m_uploadBuffer);
+			//}
 
-				Renderer2D::drawQuad(transform.getTransform(), sprite.color, m_uploadBuffer);
+			// material
+			auto meshGroup = m_registry.group<TransformComponent>(entt::get<MaterialComponent>);
+			for (auto entity : meshGroup) {
+				auto& [transform, material] = meshGroup.get<TransformComponent, MaterialComponent>(entity);
+			
+				material.material->use();
+				Renderer2D::drawQuad(transform.getTransform(), material.material, m_uploadBuffer);
 			}
 
 		}
@@ -64,11 +75,20 @@ namespace Axion {
 		if (&cam) {
 			Renderer2D::beginScene(cam);
 
-			auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-			for (auto entity : group) {
-				auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+			//auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+			//for (auto entity : group) {
+			//	auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+			//
+			//	Renderer2D::drawQuad(transform.getTransform(), sprite.color, m_uploadBuffer);
+			//}
 
-				Renderer2D::drawQuad(transform.getTransform(), sprite.color, m_uploadBuffer);
+			// material
+			auto meshGroup = m_registry.group<TransformComponent>(entt::get<MaterialComponent>);
+			for (auto entity : meshGroup) {
+				auto& [transform, material] = meshGroup.get<TransformComponent, MaterialComponent>(entity);
+			
+				material.material->use();
+				Renderer2D::drawQuad(transform.getTransform(), material.material, m_uploadBuffer);
 			}
 
 		}

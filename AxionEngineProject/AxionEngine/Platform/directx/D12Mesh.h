@@ -15,7 +15,7 @@ namespace Axion {
 
 		void release() override;
 
-		void render() override;
+		void render() const override;
 
 		Ref<VertexBuffer> getVertexBuffer() const override { return m_vertexBuffer; }
 		Ref<IndexBuffer> getIndexBuffer() const override { return m_indexBuffer; }

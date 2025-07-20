@@ -14,7 +14,7 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void render() = 0;
+		virtual void render() const = 0;
 
 		virtual Ref<VertexBuffer> getVertexBuffer() const = 0;
 		virtual Ref<IndexBuffer> getIndexBuffer() const = 0;

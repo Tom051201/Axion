@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/render/Mesh.h"
+#include "AxionEngine/Source/render/Material.h"
 
 namespace Axion {
 
@@ -45,11 +46,14 @@ namespace Axion {
 
 
 	struct MaterialComponent {
-		Vec4 color = Vec4::one();
+		Ref<Material> material;
 
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
-		MaterialComponent(const Vec4& color) : color(color) {}
+		MaterialComponent(const Ref<Material>& mat) : material(mat) {}
+
+		const std::string& getName() const { return material->getName(); }
+		const Vec4& getColor() const { return material->getColor(); }
 	};
 
 

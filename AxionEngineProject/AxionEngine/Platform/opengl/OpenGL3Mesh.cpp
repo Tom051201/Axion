@@ -17,7 +17,7 @@ namespace Axion {
 		m_indexBuffer->release();
 	}
 
-	void OpenGL3Mesh::render() {
+	void OpenGL3Mesh::render() const {
 		m_vertexBuffer->bind();
 		m_indexBuffer->bind();
 	}

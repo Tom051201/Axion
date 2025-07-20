@@ -16,6 +16,7 @@
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/render/Mesh.h"
+#include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/DataTypes.h"
 #include "AxionEngine/Source/render/OrthographicCamera.h"
 #include "AxionEngine/Source/render/OrthographicCameraController.h"

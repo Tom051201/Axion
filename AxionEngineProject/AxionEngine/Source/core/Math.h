@@ -12,6 +12,7 @@ namespace Axion {
 
 		Vec2() : x(0.0f), y(0.0f) {}
 		Vec2(float x, float y) : x(x), y(y) {}
+		Vec2(std::pair<float, float> xy) : x(xy.first), y(xy.second) {}
 
 		static Vec2 zero() { return Vec2(0.0f, 0.0f); }
 		static Vec2 one() { return Vec2(1.0f, 1.0f); }
@@ -94,6 +95,7 @@ namespace Axion {
 		Vec3& operator/=(float scalar) { *this = *this / scalar; return *this; }
 		bool operator==(const Vec3& other) const { return x == other.x && y == other.y && z == other.z; }
 		bool operator!=(const Vec3& other) const { return x != other.x || y != other.y || z != other.z; }
+		Vec3 operator-() const { return Vec3(-x, -y, -z); }
 
 		// Math operations
 		float dot(const Vec3& other) const {
@@ -135,6 +137,10 @@ namespace Axion {
 		static Vec3 lerp(const Vec3& a, const Vec3& b, float t) {
 			return fromXM(DirectX::XMVectorLerp(a.toXM(), b.toXM(), t));
 		}
+
+		static Vec3 forward() { return Vec3(0.0f, 0.0f, -1.0f); }
+		static Vec3 right() { return Vec3(1.0f, 0.0f, 0.0f); }
+		static Vec3 up() { return Vec3(0.0f, 1.0f, 0.0f); }
 
 		float* data() { return &x; }
 		const float* data() const { return &x; }

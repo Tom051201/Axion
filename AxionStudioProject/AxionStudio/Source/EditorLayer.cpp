@@ -11,6 +11,10 @@ namespace Axion {
 
 		m_tempConstantBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 
+		Ref<Shader> shader = Shader::create("MaterialShader");
+		shader->compileFromFile("AxionStudio/Assets/shaders/ColorShader.hlsl");
+		m_tempMaterial = Material::create("Material", Vec4(0.0f, 1.0f, 0.0f, 1.0f), shader);
+
 		Renderer2D::setClearColor({ 0.3f, 0.3f, 0.3f, 1.0f });
 
 		m_systemInfoPanel = std::make_unique<SystemInfoPanel>();
@@ -27,6 +31,7 @@ namespace Axion {
 
 		auto square = m_activeScene->createEntity("Square");
 		square.addComponent<SpriteRendererComponent>(Vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
+		square.addComponent<MaterialComponent>(Material::create("Material", Vec4(0.0f, 1.0f, 0.0f, 1.0f), shader));
 		m_squareEntity = square;
 
 		m_cameraEntity = m_activeScene->createEntity("Camera Entity");
@@ -40,7 +45,8 @@ namespace Axion {
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
 
-		Application::get().setWindowTitle("Axion Studio - OpenGL");
+		Application::get().setWindowTitle("Axion Studio - DirectX");
+
 	}
 
 	void EditorLayer::onDetach() {
@@ -79,6 +85,7 @@ namespace Axion {
 
 			//Renderer2D::beginScene(m_editorCamera);
 			//Renderer2D::drawQuad({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, m_tempConstantBuffer);
+			//Renderer2D::drawQuad(Mat4::TRS(Vec3::zero(), Vec3::zero(), Vec3::one()), m_tempMaterial, m_tempConstantBuffer);
 			//Renderer2D::endScene();
 
 			m_frameBuffer->unbind();
@@ -184,7 +191,7 @@ namespace Axion {
 
 			// help menu
 			if (ImGui::BeginMenu("  Help  ")) {
-				if (ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoPanel)) { m_showSystemInfoPanel = !m_showSystemInfoPanel; }
+				ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoPanel);
 				ImGui::EndMenu();
 			}
 

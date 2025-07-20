@@ -12,9 +12,9 @@ namespace Axion {
 		OpenGL3Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 		~OpenGL3Mesh();
 
-		void release();
+		void release() override;
 
-		void render();
+		void render() const override;
 
 		Ref<VertexBuffer> getVertexBuffer() const override { return m_vertexBuffer; }
 		Ref<IndexBuffer> getIndexBuffer() const override { return m_indexBuffer; }

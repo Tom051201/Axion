@@ -6,11 +6,8 @@
 #include "AxionEngine/Vendor/entt/entt.hpp"
 
 #include "AxionStudio/Source/core/EditorCamera.h"
+#include "AxionStudio/Source/core/EditorCamera3D.h"
 #include "AxionStudio/Source/panels/SystemInfoPanel.h"
-
-
-// TEMP
-#include "AxionEngine/Platform/directx/D12Context.h"
 
 namespace Axion {
 
@@ -45,7 +42,7 @@ namespace Axion {
 		Vec2 m_viewportDim = { 0.0f, 0.0f };
 		bool m_viewportResized = false;
 		Ref<Scene> m_activeScene;
-		SceneState m_sceneState;
+		SceneState m_sceneState = SceneState::Editing;
 
 		// ECS
 		Entity m_squareEntity;
@@ -57,6 +54,7 @@ namespace Axion {
 
 		// TEMP
 		Ref<ConstantBuffer> m_tempConstantBuffer;
+		Ref<Material> m_tempMaterial;
 
 		bool onWindowResize(WindowResizeEvent& e);
 		bool onKeyPressed(KeyPressedEvent& e);

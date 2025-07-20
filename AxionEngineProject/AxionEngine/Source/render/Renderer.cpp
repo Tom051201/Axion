@@ -27,14 +27,14 @@ namespace Axion {
 			case RendererAPI::DirectX12: { GraphicsContext::set(new D12Context()); break; }
 			case RendererAPI::OpenGL3: { GraphicsContext::set(new OpenGL3Context()); break; }
 		}
-
 		GraphicsContext::get()->initialize(window->getNativeHandle(), window->getWidth(), window->getHeight());
 
-		// setup renderer
-		Renderer2D::initialize();
-
+		// setup scene data
 		s_sceneData = new SceneData();
 		s_sceneUploadBuffer = ConstantBuffer::create(sizeof(SceneData));
+		
+		// setup renderer
+		Renderer2D::initialize();
 
 		AX_CORE_LOG_INFO("Renderer initialized");
 	}
@@ -57,8 +57,14 @@ namespace Axion {
 		GraphicsContext::get()->finishRendering();
 	}
 
-	void Renderer::beginScene(OrthographicCamera& camera) {
+	void Renderer::beginScene(const Camera& camera) {
 		s_sceneData->viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
+		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
+	}
+
+	void Renderer::beginScene(const Mat4& projection, const Mat4& transform) {
+		Mat4 viewProj = projection * (transform.inverse());
+		s_sceneData->viewProjection = viewProj.transposed().toXM();
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
 
@@ -78,9 +84,13 @@ namespace Axion {
 		GraphicsContext::get()->bindSwapChainRenderTarget();
 	}
 
-	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader) {
+	const Ref<ConstantBuffer>& Renderer::getSceneDataBuffer() {
+		return s_sceneUploadBuffer;
+	}
+
+	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer) {
 		shader->bind();
-		s_sceneUploadBuffer->bind(0);
+		uploadBuffer->bind(0);
 		objectData->bind(1);
 		mesh->render();
 		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());

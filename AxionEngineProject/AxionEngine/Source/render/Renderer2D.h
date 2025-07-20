@@ -5,8 +5,7 @@
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/render/Camera.h"
-#include "AxionEngine/Source/render/OrthographicCamera.h"
-
+#include "AxionEngine/Source/render/Material.h"
 
 namespace Axion {
 
@@ -23,12 +22,8 @@ namespace Axion {
 		static void setClearColor(const Vec4& color);
 		static void clear();
 
-		static void drawQuad(const Vec3& position, const Vec2& dim, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer);
-		static void drawQuad(const Mat4& transform, const Vec4& color, Ref<ConstantBuffer>& uploadBuffer);
-
+		static void drawQuad(const Mat4& transform, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer);
 		static void drawTexture(const Vec3& position, const Vec2& dim, Ref<Texture2D>& texture, Ref<ConstantBuffer>& uploadBuffer);
-
-		static void loadShader(const char* path);
 
 	};
 

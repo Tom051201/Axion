@@ -17,7 +17,7 @@ namespace Axion {
 		m_indexBuffer->release();
 	}
 
-	void D12Mesh::render() {
+	void D12Mesh::render() const {
 		m_vertexBuffer->bind();
 		m_indexBuffer->bind();
 	}
