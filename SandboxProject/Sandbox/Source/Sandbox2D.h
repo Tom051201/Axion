@@ -2,8 +2,7 @@
 
 #include "Axion.h"
 
-// TEMP
-#include "AxionEngine/Platform/directx/D12Context.h"
+#include "SandboxCamera.h"
 
 class Sandbox2D : public Axion::Layer {
 public:
@@ -20,15 +19,14 @@ public:
 
 private:
 
+	Axion::SandboxCamera m_camera;
 	Axion::OrthographicCameraController m_cameraController;
 
 	Axion::Ref<Axion::Texture2D> m_texture;
 
 	Axion::Ref<Axion::FrameBuffer> m_frameBuffer;
 
-	// TEMP
-	Axion::Ref<Axion::ConstantBuffer> m_buffer1;
-	Axion::Ref<Axion::ConstantBuffer> m_buffer2;
-	Axion::D12Context* m_context = nullptr;
+	Axion::Ref<Axion::Material> m_material;
+	Axion::Ref<Axion::ConstantBuffer> m_uploadBuffer;
 
 };

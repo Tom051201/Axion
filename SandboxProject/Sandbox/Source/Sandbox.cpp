@@ -5,9 +5,10 @@
 class ExampleLayer : public Axion::Layer {
 public:
 
-	ExampleLayer() : Layer("Example"), m_cameraController(1280.0f / 720.0f, true) {
+	ExampleLayer() : Layer("Example"), m_cameraController(1280.0f / 720.0f, true) {}
 
-		m_shaderLibrary.load("quad", "Sandbox/Assets/Shader1.hlsl");
+	void onAttach() override {
+		m_shaderLibrary.load("shader1", "Sandbox/Assets/Shader1.hlsl");
 
 		m_quadMesh = Axion::Mesh::create(m_quadVertices, m_quadIndices);
 		m_quadCB = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
@@ -21,7 +22,6 @@ public:
 		m_quadColor2 = { 1.0f, 0.0f, 0.0f, 1.0f };
 
 		Axion::Renderer::setClearColor({ 0.0f, 0.1f, 0.2f, 1.0f });
-		Axion::Renderer2D::loadShader("Sandbox/Assets/shaders/ColorShader.hlsl");
 	}
 
 	void onDetach() override {
@@ -46,7 +46,7 @@ public:
 		quadData.modelMatrix = DirectX::XMMatrixTranspose(m_quadTransform.toXM());
 		quadData.color = m_quadColor.toFloat4();
 		m_quadCB->update(&quadData, sizeof(Axion::ObjectBuffer));
-		Axion::Renderer::submit(m_quadMesh, m_quadCB, m_shaderLibrary.get("quad"));
+		//Axion::Renderer::submit(m_quadMesh, m_quadCB, m_shaderLibrary.get("quad"));
 	
 	
 		// quad
@@ -54,7 +54,7 @@ public:
 		quadData2.modelMatrix = DirectX::XMMatrixTranspose(m_quadTransform2.toXM());
 		quadData2.color = m_quadColor2.toFloat4();
 		m_quadCB->update(&quadData2, sizeof(Axion::ObjectBuffer));
-		Axion::Renderer::submit(m_quadMesh2, m_quadCB2, m_shaderLibrary.get("quad"));
+		//Axion::Renderer::submit(m_quadMesh2, m_quadCB2, m_shaderLibrary.get("quad"));
 	}
 
 	void onEvent(Axion::Event& e) override {
@@ -98,8 +98,8 @@ class Sandbox : public Axion::Application {
 public:
 
 	Sandbox() {
-		pushLayer(new ExampleLayer());
-		//pushLayer(new Sandbox2D());
+		//pushLayer(new ExampleLayer());
+		pushLayer(new Sandbox2D());
 	}
 	~Sandbox() override {}
 

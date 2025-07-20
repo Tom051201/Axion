@@ -23,11 +23,11 @@ namespace Axion {
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
 		m_rtvHeap.initialize(m_device.getDevice(), AX_D12_MAX_RTV_DESCRIPTORS);
+		m_srvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS);
+		m_dsvHeap.initialize(m_device.getDevice(), AX_D12_MAX_DSV_DESCRIPTORS);
 		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), width, height);
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
-		m_srvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS);
-		m_dsvHeap.initialize(m_device.getDevice(), AX_D12_MAX_DSV_DESCRIPTORS);
 
 		AX_CORE_LOG_INFO("Using gpu adapter: {0}", m_device.getAdapterName());
 		AX_CORE_LOG_INFO("DirectX12 backend initialized successfully");
@@ -96,12 +96,17 @@ namespace Axion {
 
 	void D12Context::clear() {
 		const float clearColor[] = { m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w };
+		uint32_t frameIndex = m_swapChain.getFrameIndex();
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap.getHeap()->GetCPUDescriptorHandleForHeapStart();
-		rtvHandle.ptr += m_swapChain.getFrameIndex() * m_rtvHeap.getDescriptorSize();
+		// TODO: move clearing to swap chain where it makes more sense
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap.getCpuHandle(m_swapChain.getRtvHeapIndex(frameIndex));
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_dsvHeap.getCpuHandle(m_swapChain.getDsvHeapIndex(frameIndex));
 
-		getCommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-		getCommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		auto* cmdList = getCommandList();
+
+		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+		cmdList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	}
 
 	void D12Context::waitForPreviousFrame() {

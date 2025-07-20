@@ -30,6 +30,10 @@ namespace Axion {
 		D3D12_CPU_DESCRIPTOR_HANDLE getBackBufferRtv(uint32_t index) const;
 		uint32_t getRtvHeapIndex(uint32_t framecount) const { return m_rtvHeapIndices[framecount]; }
 
+		ID3D12Resource* getDepthBuffer(uint32_t index) const { AX_ASSERT(index < m_frameCount, "Invalid depth buffer index"); return m_depthBuffers[index].Get(); }
+		D3D12_CPU_DESCRIPTOR_HANDLE getDepthBufferDsv(uint32_t index) const;
+		uint32_t getDsvHeapIndex(uint32_t framecount) const { return m_rtvHeapIndices[framecount]; }
+
 	private:
 
 		D12Context* m_context = nullptr;
@@ -40,6 +44,9 @@ namespace Axion {
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[AX_MAX_SWAPCHAIN_BUFFERS];
 		uint32_t m_rtvHeapIndices[AX_MAX_SWAPCHAIN_BUFFERS];
+
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthBuffers[AX_MAX_SWAPCHAIN_BUFFERS];
+		uint32_t m_dsvHeapIndices[AX_MAX_SWAPCHAIN_BUFFERS];
 	};
 
 }

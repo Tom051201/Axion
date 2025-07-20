@@ -49,6 +49,7 @@ namespace Axion {
 		bool onKeyReleasedEvent(KeyReleasedEvent& e);
 		bool onKeyTypedEvent(KeyTypedEvent& e);
 		bool onWindowResizeEvent(WindowResizeEvent& e);
+		bool onWindowCloseEvent(WindowCloseEvent& e);
 
 		void setStyle();
 

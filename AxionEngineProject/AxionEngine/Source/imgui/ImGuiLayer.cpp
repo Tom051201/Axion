@@ -41,7 +41,9 @@ namespace Axion {
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		
-		setStyle();
+		// TODO: enable custom styles!
+		//setStyle();
+		ImGui::StyleColorsDark();
 
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }
@@ -77,6 +79,7 @@ namespace Axion {
 		dispatcher.dispatch<KeyReleasedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onKeyReleasedEvent));
 		dispatcher.dispatch<KeyTypedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onKeyTypedEvent));
 		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onWindowResizeEvent));
+		dispatcher.dispatch<WindowCloseEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onWindowCloseEvent));
 	}
 
 	void ImGuiLayer::beginRender() {
@@ -92,6 +95,8 @@ namespace Axion {
 
 	void ImGuiLayer::endRender() {
 		ImGui::Render();
+
+		if (!m_active) return;
 
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
@@ -251,6 +256,11 @@ namespace Axion {
 		return false;
 	}
 
+	bool ImGuiLayer::onWindowCloseEvent(WindowCloseEvent& e) {
+		m_active = false;
+		return false;
+	}
+
 	void ImGuiLayer::setStyle() {
 		ImGuiStyle& style = ImGui::GetStyle();
 
@@ -308,6 +318,7 @@ namespace Axion {
 		ImGuiIO& io = ImGui::GetIO();
 		io.Fonts->Clear();
 		
+		// TODO: figure a fucking way out to make this fucking project independen!!!
 		io.Fonts->AddFontFromFileTTF("AxionStudio/Assets/fonts/openSans/OpenSans-Bold.ttf", 18.0f);
 		ImFontConfig icons_config;
 		icons_config.MergeMode = true;
