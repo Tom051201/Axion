@@ -1,21 +1,34 @@
 #include "axpch.h"
 #include "D12FrameBuffer.h"
 
-#include "AxionEngine/Source/render/GraphicsContext.h"
-
 #include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/D12Helpers.h"
 
 namespace Axion {
 
 	D12FrameBuffer::D12FrameBuffer(const FrameBufferSpecification& spec) : m_specification(spec) {
 		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
-		// allocate rtv, srv and dsv once
-		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
-		m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
-		m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
+		bool allocatedRTV = false, allocatedSRV = false, allocatedDSV = false;
+		try {
+			m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
+			allocatedRTV = true;
+			m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
+			allocatedSRV = true;
+			m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
+			allocatedDSV = true;
 
-		resize(spec.width, spec.height);
+			resize(spec.width, spec.height);
+			m_allocated = true;
+		}
+		catch (...) {
+			if (allocatedRTV) m_context->getRtvHeapWrapper().free(m_rtvHeapIndex);
+			if (allocatedSRV) m_context->getSrvHeapWrapper().free(m_srvHeapIndex);
+			if (allocatedDSV) m_context->getDsvHeapWrapper().free(m_dsvHeapIndex);
+			AX_CORE_LOG_ERROR("Error creating buffers");
+			throw;
+		}
 	}
 
 	D12FrameBuffer::~D12FrameBuffer() {
@@ -23,8 +36,18 @@ namespace Axion {
 	}
 
 	void D12FrameBuffer::release() {
-		m_colorResource.Reset();
-		m_depthResource.Reset();
+		if (!m_allocated) return;
+
+		if (m_colorResource) {
+			m_colorResource.Reset();
+			m_context->getRtvHeapWrapper().free(m_rtvHeapIndex);
+			m_context->getSrvHeapWrapper().free(m_srvHeapIndex);
+		}
+
+		if (m_depthResource) {
+			m_depthResource.Reset();
+			m_context->getDsvHeapWrapper().free(m_dsvHeapIndex);
+		}
 	}
 
 	void D12FrameBuffer::resize(uint32_t width, uint32_t height) {
@@ -35,6 +58,12 @@ namespace Axion {
 		height = std::max(1u, height);
 
 		release();
+
+		// Reallocate descriptor heap indices (critical!)
+		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
+		m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
+		m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
+
 		auto* device = m_context->getDevice();
 		auto* cmdList = m_context->getCommandList();
 
@@ -48,7 +77,7 @@ namespace Axion {
 		texDesc.Height = m_specification.height;
 		texDesc.DepthOrArraySize = 1;
 		texDesc.MipLevels = 1;
-		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.Format = D12Helpers::getD12ColorFormat(m_specification.textureFormat);
 		texDesc.SampleDesc.Count = 1;
 		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -72,8 +101,10 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer texture resource");
 
 		// depth
+		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthFormat(m_specification.depthFormat);
+
 		CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			DXGI_FORMAT_D32_FLOAT,
+			depthFormat,
 			m_specification.width,
 			m_specification.height,
 			1, 1
@@ -81,7 +112,7 @@ namespace Axion {
 		depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 		D3D12_CLEAR_VALUE depthClearValue = {};
-		depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+		depthClearValue.Format = depthFormat;
 		depthClearValue.DepthStencil.Depth = 1.0f;
 		depthClearValue.DepthStencil.Stencil = 0;
 
@@ -97,7 +128,7 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer depth resource");
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		dsvDesc.Format = depthFormat;
 		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
@@ -113,7 +144,7 @@ namespace Axion {
 		// SRV
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.Format = texDesc.Format;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 		m_context->getDevice()->CreateShaderResourceView(m_colorResource.Get(), &srvDesc, m_context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex));

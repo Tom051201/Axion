@@ -37,13 +37,28 @@ namespace Axion {
 
 	void D12rtvHeap::release() {
 		m_rtvHeap.Reset();
+		m_nextIndex.store(0);
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		std::queue<uint32_t>().swap(m_freeList);
 	}
 
 	uint32_t D12rtvHeap::allocate() {
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		if (!m_freeList.empty()) {
+			uint32_t index = m_freeList.front();
+			m_freeList.pop();
+			return index;
+		}
+
 		uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
 		AX_ASSERT(idx < m_numDescriptors, "Out of RTV heap descriptors");
-		AX_CORE_LOG_TRACE("RTV Heap: allocated index {0}", idx);
 		return idx;
+	}
+
+	void D12rtvHeap::free(uint32_t index) {
+		AX_ASSERT(index < m_numDescriptors, "Trying to free invalid RTV descriptor index");
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		m_freeList.push(index);
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12rtvHeap::getCpuHandle(uint32_t index) const {
@@ -80,12 +95,28 @@ namespace Axion {
 
 	void D12srvHeap::release() {
 		m_srvHeap.Reset();
+		m_nextIndex.store(0);
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		std::queue<uint32_t>().swap(m_freeList);
 	}
 
 	uint32_t D12srvHeap::allocate() {
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		if (!m_freeList.empty()) {
+			uint32_t index = m_freeList.front();
+			m_freeList.pop();
+			return index;
+		}
+
 		uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
 		AX_CORE_ASSERT(idx < m_numDescriptors, "Out of srv heap descriptors");
 		return idx;
+	}
+
+	void D12srvHeap::free(uint32_t index) {
+		AX_ASSERT(index < m_numDescriptors, "Trying to free invalid SRV descriptor index");
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		m_freeList.push(index);
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12srvHeap::getCpuHandle(uint32_t index) const {
@@ -129,12 +160,28 @@ namespace Axion {
 
 	void D12dsvHeap::release() {
 		m_dsvHeap.Reset();
+		m_nextIndex.store(0);
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		std::queue<uint32_t>().swap(m_freeList);
 	}
 
 	uint32_t D12dsvHeap::allocate() {
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		if (!m_freeList.empty()) {
+			uint32_t index = m_freeList.front();
+			m_freeList.pop();
+			return index;
+		}
+
 		uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
 		AX_ASSERT(idx < m_numDescriptors, "Out of dsv heap descriptors");
 		return idx;
+	}
+
+	void D12dsvHeap::free(uint32_t index) {
+		AX_ASSERT(index < m_numDescriptors, "Trying to free invalid DSV descriptor index");
+		std::lock_guard<std::mutex> lock(m_freeListMutex);
+		m_freeList.push(index);
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12dsvHeap::getCpuHandle(uint32_t index) const {

@@ -96,17 +96,7 @@ namespace Axion {
 
 	void D12Context::clear() {
 		const float clearColor[] = { m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w };
-		uint32_t frameIndex = m_swapChain.getFrameIndex();
-
-		// TODO: move clearing to swap chain where it makes more sense
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap.getCpuHandle(m_swapChain.getRtvHeapIndex(frameIndex));
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_dsvHeap.getCpuHandle(m_swapChain.getDsvHeapIndex(frameIndex));
-
-		auto* cmdList = getCommandList();
-
-		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-		cmdList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		m_swapChain.clear(clearColor);
 	}
 
 	void D12Context::waitForPreviousFrame() {
@@ -146,7 +136,6 @@ namespace Axion {
 		DXGI_ADAPTER_DESC1 desc;
 		m_device.getAdapter()->GetDesc1(&desc);
 		std::wstring ws(desc.Description);
-		//return std::string(ws.begin(), ws.end());
 		return WindowsHelper::WStringToString(ws);
 	}
 

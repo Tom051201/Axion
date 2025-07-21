@@ -27,6 +27,8 @@ private:
 	Axion::Ref<Axion::FrameBuffer> m_frameBuffer;
 
 	Axion::Ref<Axion::Material> m_material;
+	Axion::Ref<Axion::Material> m_material2;
 	Axion::Ref<Axion::ConstantBuffer> m_uploadBuffer;
+	Axion::Ref<Axion::ConstantBuffer> m_uploadBuffer2;
 
 };

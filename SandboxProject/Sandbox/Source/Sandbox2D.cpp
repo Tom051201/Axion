@@ -13,6 +13,8 @@ void Sandbox2D::onAttach() {
 	Axion::FrameBufferSpecification fbs;
 	fbs.width = 1280;
 	fbs.height = 720;
+	fbs.textureFormat = Axion::FrameBufferTextureFormat::RGBA8;
+	fbs.depthFormat = Axion::FrameBufferDepthFormat::DEPTH32F;
 	m_frameBuffer = Axion::FrameBuffer::create(fbs);
 
 	// sets up the material
@@ -20,8 +22,11 @@ void Sandbox2D::onAttach() {
 	shader->compileFromFile("Sandbox/Assets/shaders/ColorShader.hlsl");
 	m_material = Axion::Material::create("Material2D", Axion::Vec4(0.0f, 0.0f, 1.0f, 1.0f), shader);
 
+	m_material2 = Axion::Material::create("Material", Axion::Vec4(1.0f, 0.0f, 0.0f, 1.0f), shader);
+
 	// creates a constant buffer for uploading to the shader
 	m_uploadBuffer = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
+	m_uploadBuffer2 = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 
 }
 
@@ -35,11 +40,12 @@ void Sandbox2D::onUpdate(Axion::Timestep ts) {
 	m_cameraController.onUpdate(ts);
 	m_camera.onUpdate(ts);
 
-	Axion::Renderer2D::beginScene(m_camera);
+	Axion::Renderer2D::beginScene(m_cameraController.getCamera());
 	m_frameBuffer->bind();
 	m_frameBuffer->clear();
 
 	Axion::Renderer2D::drawQuad(Axion::Mat4::TRS(Axion::Vec3::zero(), Axion::Vec3::zero(), Axion::Vec3::one()), m_material, m_uploadBuffer);
+	Axion::Renderer2D::drawQuad(Axion::Mat4::TRS({-0.3f, 0.3f, 0.3f}, Axion::Vec3::zero(), Axion::Vec3::one()), m_material2, m_uploadBuffer2);
 
 	Axion::Renderer2D::endScene();
 	m_frameBuffer->unbind();

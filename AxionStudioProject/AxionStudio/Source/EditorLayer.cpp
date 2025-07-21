@@ -23,7 +23,10 @@ namespace Axion {
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
 		fbs.height = 720;
+		fbs.textureFormat = FrameBufferTextureFormat::RGBA8;
+		fbs.depthFormat = FrameBufferDepthFormat::DEPTH32F;
 		m_frameBuffer = FrameBuffer::create(fbs);
+
 		m_viewportDim = { (float)fbs.width, (float)fbs.height };
 
 		m_activeScene = std::make_shared<Scene>();

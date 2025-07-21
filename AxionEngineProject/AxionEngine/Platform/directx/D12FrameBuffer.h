@@ -37,13 +37,16 @@ namespace Axion {
 		D12Context* m_context = nullptr;
 
 		FrameBufferSpecification m_specification;
+		bool m_allocated = false;
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_colorResource;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthResource;
+		
 		uint32_t m_rtvHeapIndex = 0;
 		uint32_t m_srvHeapIndex = 0;
 		uint32_t m_dsvHeapIndex = 0;
-		mutable D3D12_RESOURCE_STATES m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		
+		mutable D3D12_RESOURCE_STATES m_currentState;
 
 	};
 
