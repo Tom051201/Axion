@@ -51,12 +51,12 @@ namespace Axion {
 		}
 
 		uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
-		AX_ASSERT(idx < m_numDescriptors, "Out of RTV heap descriptors");
+		AX_CORE_ASSERT(idx < m_numDescriptors, "Out of RTV heap descriptors");
 		return idx;
 	}
 
 	void D12rtvHeap::free(uint32_t index) {
-		AX_ASSERT(index < m_numDescriptors, "Trying to free invalid RTV descriptor index");
+		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid RTV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
 	}
@@ -114,7 +114,7 @@ namespace Axion {
 	}
 
 	void D12srvHeap::free(uint32_t index) {
-		AX_ASSERT(index < m_numDescriptors, "Trying to free invalid SRV descriptor index");
+		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid SRV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
 	}
@@ -174,12 +174,12 @@ namespace Axion {
 		}
 
 		uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
-		AX_ASSERT(idx < m_numDescriptors, "Out of dsv heap descriptors");
+		AX_CORE_ASSERT(idx < m_numDescriptors, "Out of dsv heap descriptors");
 		return idx;
 	}
 
 	void D12dsvHeap::free(uint32_t index) {
-		AX_ASSERT(index < m_numDescriptors, "Trying to free invalid DSV descriptor index");
+		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid DSV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
 	}

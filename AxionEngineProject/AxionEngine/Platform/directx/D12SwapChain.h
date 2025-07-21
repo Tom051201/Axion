@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/AxionSettings.h"
+#include "AxionEngine/Source/render/SwapChainSpecification.h"
 
 namespace Axion {
 
@@ -12,7 +13,7 @@ namespace Axion {
 		D12SwapChain() = default;
 		~D12SwapChain();
 
-		void initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, UINT width, UINT height);
+		void initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, const SwapChainSpecification& spec);
 		void release();
 
 		void resize(UINT width, UINT height);
@@ -25,8 +26,8 @@ namespace Axion {
 		UINT getFrameIndex() const { return m_frameIndex; }
 		void setFrameIndex(UINT frameIndex) { m_frameIndex = frameIndex; }
 
-		ID3D12Resource* getBackBuffer(uint32_t index) const { AX_ASSERT(index < m_frameCount, "Invalid back buffer index"); return m_backBuffers[index].Get(); }
-		ID3D12Resource* getDepthBuffer(uint32_t index) const { AX_ASSERT(index < m_frameCount, "Invalid depth buffer index"); return m_depthBuffers[index].Get(); }
+		ID3D12Resource* getBackBuffer(uint32_t index) const { AX_CORE_ASSERT(index < m_specification.bufferCount, "Invalid back buffer index"); return m_backBuffers[index].Get(); }
+		ID3D12Resource* getDepthBuffer(uint32_t index) const { AX_CORE_ASSERT(index < m_specification.bufferCount, "Invalid depth buffer index"); return m_depthBuffers[index].Get(); }
 
 		D3D12_CPU_DESCRIPTOR_HANDLE getBackBufferRtv(uint32_t index) const;
 		D3D12_CPU_DESCRIPTOR_HANDLE getDepthBufferDsv(uint32_t index) const;
@@ -38,8 +39,8 @@ namespace Axion {
 
 		D12Context* m_context = nullptr;
 		Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swapChain;
+		SwapChainSpecification m_specification;
 
-		const UINT m_frameCount = AX_MAX_SWAPCHAIN_BUFFERS;
 		UINT m_frameIndex = 0;
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[AX_MAX_SWAPCHAIN_BUFFERS];

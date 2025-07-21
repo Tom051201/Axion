@@ -57,7 +57,7 @@ namespace Axion {
 	void ImGuiLayer::onDetach() {
 
 		switch (m_activeAPI) {
-			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
+			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
 			case Axion::RendererAPI::DirectX12: { ImGui_ImplDX12_Shutdown(); break; }
 			case Axion::RendererAPI::OpenGL3: { ImGui_ImplOpenGL3_Shutdown(); break; }
 		}
@@ -84,7 +84,7 @@ namespace Axion {
 
 	void ImGuiLayer::beginRender() {
 		switch (m_activeAPI) {
-			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet!"); return; }
+			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); return; }
 			case Axion::RendererAPI::DirectX12: { ImGui_ImplDX12_NewFrame(); break; }
 			case Axion::RendererAPI::OpenGL3: { ImGui_ImplOpenGL3_NewFrame(); break; }
 		}
@@ -99,7 +99,7 @@ namespace Axion {
 		if (!m_active) return;
 
 		switch (m_activeAPI) {
-			case Axion::RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); return; }
+			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
 
 			case Axion::RendererAPI::DirectX12: {
 				ID3D12DescriptorHeap* heaps[] = { m_d12Context->getSrvHeapWrapper().getHeap() };

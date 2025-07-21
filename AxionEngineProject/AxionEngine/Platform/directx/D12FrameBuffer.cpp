@@ -8,24 +8,14 @@ namespace Axion {
 
 	D12FrameBuffer::D12FrameBuffer(const FrameBufferSpecification& spec) : m_specification(spec) {
 		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		AX_CORE_ASSERT(m_context, "Failed to acquire D12 context");
 		m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
-		bool allocatedRTV = false, allocatedSRV = false, allocatedDSV = false;
 		try {
-			m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
-			allocatedRTV = true;
-			m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
-			allocatedSRV = true;
-			m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
-			allocatedDSV = true;
-
 			resize(spec.width, spec.height);
 			m_allocated = true;
 		}
 		catch (...) {
-			if (allocatedRTV) m_context->getRtvHeapWrapper().free(m_rtvHeapIndex);
-			if (allocatedSRV) m_context->getSrvHeapWrapper().free(m_srvHeapIndex);
-			if (allocatedDSV) m_context->getDsvHeapWrapper().free(m_dsvHeapIndex);
 			AX_CORE_LOG_ERROR("Error creating buffers");
 			throw;
 		}
@@ -59,13 +49,12 @@ namespace Axion {
 
 		release();
 
-		// Reallocate descriptor heap indices (critical!)
+		// reallocate descriptor heap indices
 		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
 		m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
 		m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
 
 		auto* device = m_context->getDevice();
-		auto* cmdList = m_context->getCommandList();
 
 		m_specification.width = width;
 		m_specification.height = height;
@@ -77,7 +66,7 @@ namespace Axion {
 		texDesc.Height = m_specification.height;
 		texDesc.DepthOrArraySize = 1;
 		texDesc.MipLevels = 1;
-		texDesc.Format = D12Helpers::getD12ColorFormat(m_specification.textureFormat);
+		texDesc.Format = D12Helpers::getD12TextureFormat(m_specification.textureFormat);
 		texDesc.SampleDesc.Count = 1;
 		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -101,7 +90,10 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer texture resource");
 
 		// depth
-		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthFormat(m_specification.depthFormat);
+		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthStencilFormat(m_specification.depthStencilFormat);
+		if (depthFormat == DXGI_FORMAT_UNKNOWN) {
+			AX_CORE_LOG_WARN("Attempting to create framebuffer with unknown depth format");
+		}
 
 		CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 			depthFormat,

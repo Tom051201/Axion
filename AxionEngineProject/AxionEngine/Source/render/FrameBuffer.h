@@ -4,33 +4,17 @@
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/render/Formats.h"
 
 namespace Axion {
 
-	enum class FrameBufferTextureFormat {
-		None = 0,
-		RGBA8,
-		RED_INTEGER,
-		RGBA16F,
-		BGRA8,
-		RGB10A2
-	};
-
-	enum class FrameBufferDepthFormat {
-		None = 0,
-		DEPTH24_STENCIL8,
-		DEPTH32F,
-		DEPTH32F_STENCIL8,
-		DEPTH16
-	};
-
 	struct FrameBufferSpecification {
-		uint32_t width = 0;
-		uint32_t height = 0;
+		uint32_t width = 1280;
+		uint32_t height = 720;
 		uint32_t samples = 1;
 		Vec4 clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		FrameBufferTextureFormat textureFormat = FrameBufferTextureFormat::None;
-		FrameBufferDepthFormat depthFormat = FrameBufferDepthFormat::None;
+		TextureFormat textureFormat = TextureFormat::RGBA8;
+		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
 	};
 
 	class FrameBuffer {

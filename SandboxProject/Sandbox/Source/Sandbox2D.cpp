@@ -13,8 +13,8 @@ void Sandbox2D::onAttach() {
 	Axion::FrameBufferSpecification fbs;
 	fbs.width = 1280;
 	fbs.height = 720;
-	fbs.textureFormat = Axion::FrameBufferTextureFormat::RGBA8;
-	fbs.depthFormat = Axion::FrameBufferDepthFormat::DEPTH32F;
+	fbs.textureFormat = Axion::TextureFormat::RGBA8;
+	fbs.depthStencilFormat = Axion::DepthStencilFormat::DEPTH32F;
 	m_frameBuffer = Axion::FrameBuffer::create(fbs);
 
 	// sets up the material

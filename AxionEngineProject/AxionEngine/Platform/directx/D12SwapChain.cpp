@@ -2,6 +2,7 @@
 #include "D12SwapChain.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/D12Helpers.h"
 
 namespace Axion {
 
@@ -9,12 +10,13 @@ namespace Axion {
 		release();
 	}
 
-	void D12SwapChain::initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, UINT width, UINT height) {
+	void D12SwapChain::initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, const SwapChainSpecification& spec) {
 
-		AX_ASSERT(hwnd, "HWMD is null");
-		AX_ASSERT(factory, "IDXGIFactory6 is null");
-		AX_ASSERT(cmdQueue, "Command queue is null");
+		AX_CORE_ASSERT(hwnd, "HWMD is null");
+		AX_CORE_ASSERT(factory, "IDXGIFactory6 is null");
+		AX_CORE_ASSERT(cmdQueue, "Command queue is null");
 
+		m_specification = spec;
 		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = m_context->getDevice();
 		auto& rtvHeap = m_context->getRtvHeapWrapper();
@@ -22,10 +24,10 @@ namespace Axion {
 
 		// create swap chain
 		DXGI_SWAP_CHAIN_DESC1 swapDesc = {};
-		swapDesc.BufferCount = m_frameCount;
-		swapDesc.Width = width;
-		swapDesc.Height = height;
-		swapDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		swapDesc.BufferCount = spec.bufferCount;
+		swapDesc.Width = spec.width;
+		swapDesc.Height = spec.height;
+		swapDesc.Format = D12Helpers::getD12TextureFormat(spec.backBufferFormat);
 		swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapDesc.SampleDesc.Count = 1;
@@ -38,7 +40,7 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Successfully created swap chain");
 
 		// create RTVs
-		for (UINT i = 0; i < m_frameCount; ++i) {
+		for (UINT i = 0; i < spec.bufferCount; ++i) {
 			AX_THROW_IF_FAILED_HR(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_backBuffers[i])), "Failed to get back buffer");
 
 			m_rtvHeapIndices[i] = rtvHeap.allocate();
@@ -52,20 +54,21 @@ namespace Axion {
 			m_backBuffers[i]->SetName(name);
 			#endif
 		}
-		AX_CORE_LOG_TRACE("Successfully created {0} RTVs for the swap chain", m_frameCount);
+		AX_CORE_LOG_TRACE("Successfully created {0} RTVs for the swap chain", spec.bufferCount);
 
 		// create DSVs
-		for (UINT i = 0; i < m_frameCount; ++i) {
+		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthStencilFormat(spec.depthBufferFormat);
+		for (UINT i = 0; i < spec.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				DXGI_FORMAT_D32_FLOAT,
-				width,
-				height,
+				depthFormat,
+				spec.width,
+				spec.height,
 				1, 1
 			);
 			depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 			D3D12_CLEAR_VALUE depthClearValue = {};
-			depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+			depthClearValue.Format = depthFormat;
 			depthClearValue.DepthStencil.Depth = 1.0f;
 			depthClearValue.DepthStencil.Stencil = 0;
 
@@ -84,7 +87,7 @@ namespace Axion {
 			D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap.getCpuHandle(m_dsvHeapIndices[i]);
 
 			D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-			dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+			dsvDesc.Format = depthFormat;
 			dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
@@ -100,18 +103,28 @@ namespace Axion {
 			m_depthBuffers[i]->SetName(name);
 			#endif
 		}
-		AX_CORE_LOG_TRACE("Successfully created {0} DSVs for the swap chain", m_frameCount);
+		AX_CORE_LOG_TRACE("Successfully created {0} DSVs for the swap chain", spec.bufferCount);
 
 	}
 
 	void D12SwapChain::release() {
 		for (auto& buffer : m_backBuffers) { buffer.Reset(); }
 		for (auto& buffer : m_depthBuffers) { buffer.Reset(); }
+
+		auto& rtvHeap = m_context->getRtvHeapWrapper();
+		auto& dsvHeap = m_context->getDsvHeapWrapper();
+		for (UINT i = 0; i < m_specification.bufferCount; ++i) {
+			rtvHeap.free(m_rtvHeapIndices[i]);
+			dsvHeap.free(m_dsvHeapIndices[i]);
+		}
+
 		m_swapChain.Reset();
 	}
 
 	void D12SwapChain::resize(UINT width, UINT height) {
 		if (width == 0 || height == 0) return;
+		m_specification.width = width;
+		m_specification.height = height;
 
 		auto* device = m_context->getDevice();
 		auto& rtvHeap = m_context->getRtvHeapWrapper();
@@ -129,13 +142,13 @@ namespace Axion {
 		}
 
 		// resize swap chain buffers
-		HRESULT hr = m_swapChain->ResizeBuffers(m_frameCount, width, height, desc.Format, desc.Flags);
+		HRESULT hr = m_swapChain->ResizeBuffers(m_specification.bufferCount, width, height, desc.Format, desc.Flags);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to resize swap chain buffers");
 
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
 		// recreate RTVs
-		for (UINT i = 0; i < m_frameCount; ++i) {
+		for (UINT i = 0; i < m_specification.bufferCount; ++i) {
 			Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
 			hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
 			AX_THROW_IF_FAILED_HR(hr, "Failed to get buffer from swap chain");
@@ -146,9 +159,10 @@ namespace Axion {
 		}
 
 		// Recreate DSVs
-		for (UINT i = 0; i < m_frameCount; ++i) {
+		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthStencilFormat(m_specification.depthBufferFormat);
+		for (UINT i = 0; i < m_specification.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				DXGI_FORMAT_D32_FLOAT,
+				depthFormat,
 				width,
 				height,
 				1, 1
@@ -156,7 +170,7 @@ namespace Axion {
 			depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 			D3D12_CLEAR_VALUE depthClearValue = {};
-			depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+			depthClearValue.Format = depthFormat;
 			depthClearValue.DepthStencil.Depth = 1.0f;
 			depthClearValue.DepthStencil.Stencil = 0;
 
@@ -174,7 +188,7 @@ namespace Axion {
 			D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap.getCpuHandle(m_dsvHeapIndices[i]);
 
 			D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-			dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+			dsvDesc.Format = depthFormat;
 			dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 

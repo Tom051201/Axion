@@ -12,7 +12,7 @@ namespace Axion {
 
 		switch (Renderer::getAPI()) {
 
-			case RendererAPI::None: { AX_ASSERT(false, "None is not supported yet"); break; }
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Material>(name, color, shader); }
 			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Material>(name, color, shader); }
 

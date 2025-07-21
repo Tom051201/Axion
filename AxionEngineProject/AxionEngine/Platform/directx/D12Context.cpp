@@ -1,6 +1,8 @@
 #include "axpch.h"
 #include "D12Context.h"
 
+#include "AxionEngine/Source/render/SwapChainSpecification.h"
+
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
 
 #ifdef AX_DEBUG
@@ -12,20 +14,26 @@ namespace Axion {
 	D12Context::~D12Context() {}
 
 	void D12Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
-		AX_ASSERT(hwnd, "HWND cannot be null");
+		AX_CORE_ASSERT(hwnd, "HWND cannot be null");
 		m_width = width;
 		m_height = height;
 
 		#ifdef AX_DEBUG
 		D12DebugLayer::initialize();
 		#endif
-		
+
+		SwapChainSpecification swapSpec;
+		swapSpec.width = width;
+		swapSpec.height = height;
+		swapSpec.backBufferFormat = TextureFormat::RGBA8;
+		swapSpec.depthBufferFormat = DepthStencilFormat::DEPTH32F;
+
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
 		m_rtvHeap.initialize(m_device.getDevice(), AX_D12_MAX_RTV_DESCRIPTORS);
 		m_srvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS);
 		m_dsvHeap.initialize(m_device.getDevice(), AX_D12_MAX_DSV_DESCRIPTORS);
-		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), width, height);
+		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), swapSpec);
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
 

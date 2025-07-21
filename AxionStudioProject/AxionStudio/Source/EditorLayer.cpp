@@ -23,8 +23,8 @@ namespace Axion {
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
 		fbs.height = 720;
-		fbs.textureFormat = FrameBufferTextureFormat::RGBA8;
-		fbs.depthFormat = FrameBufferDepthFormat::DEPTH32F;
+		fbs.textureFormat = TextureFormat::RGBA8;
+		fbs.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		m_frameBuffer = FrameBuffer::create(fbs);
 
 		m_viewportDim = { (float)fbs.width, (float)fbs.height };
