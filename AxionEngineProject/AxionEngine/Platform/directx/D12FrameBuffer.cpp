@@ -66,7 +66,7 @@ namespace Axion {
 		texDesc.Height = m_specification.height;
 		texDesc.DepthOrArraySize = 1;
 		texDesc.MipLevels = 1;
-		texDesc.Format = D12Helpers::getD12TextureFormat(m_specification.textureFormat);
+		texDesc.Format = D12Helpers::toD12ColorFormat(m_specification.textureFormat);
 		texDesc.SampleDesc.Count = 1;
 		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -90,7 +90,7 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer texture resource");
 
 		// depth
-		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthStencilFormat(m_specification.depthStencilFormat);
+		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(m_specification.depthStencilFormat);
 		if (depthFormat == DXGI_FORMAT_UNKNOWN) {
 			AX_CORE_LOG_WARN("Attempting to create framebuffer with unknown depth format");
 		}

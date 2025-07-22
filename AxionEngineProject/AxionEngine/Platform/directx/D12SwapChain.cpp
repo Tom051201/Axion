@@ -27,7 +27,7 @@ namespace Axion {
 		swapDesc.BufferCount = spec.bufferCount;
 		swapDesc.Width = spec.width;
 		swapDesc.Height = spec.height;
-		swapDesc.Format = D12Helpers::getD12TextureFormat(spec.backBufferFormat);
+		swapDesc.Format = D12Helpers::toD12ColorFormat(spec.backBufferFormat);
 		swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapDesc.SampleDesc.Count = 1;
@@ -57,7 +57,7 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Successfully created {0} RTVs for the swap chain", spec.bufferCount);
 
 		// create DSVs
-		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthStencilFormat(spec.depthBufferFormat);
+		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(spec.depthBufferFormat);
 		for (UINT i = 0; i < spec.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 				depthFormat,
@@ -159,7 +159,7 @@ namespace Axion {
 		}
 
 		// Recreate DSVs
-		DXGI_FORMAT depthFormat = D12Helpers::getD12DepthStencilFormat(m_specification.depthBufferFormat);
+		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(m_specification.depthBufferFormat);
 		for (UINT i = 0; i < m_specification.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 				depthFormat,

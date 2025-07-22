@@ -2,7 +2,7 @@
 
 namespace Axion {
 
-	enum class TextureFormat {
+	enum class ColorFormat {
 		None = 0,
 		RGBA8,
 		RED_INTEGER,

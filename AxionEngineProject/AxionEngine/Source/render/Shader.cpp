@@ -12,13 +12,13 @@ namespace Axion {
 	///// Shader ///////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	Ref<Shader> Shader::create(const std::string& name) {
+	Ref<Shader> Shader::create(const ShaderSpecification& spec) {
 		
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(name); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(name); }
+			case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(spec); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(spec); }
 
 		}
 		return nullptr;
@@ -56,21 +56,21 @@ namespace Axion {
 
 	}
 
-	Ref<Shader> ShaderLibrary::load(const std::string& filePath) {
-		auto shader = Shader::create(getNameFromFile(filePath));
-		shader->compileFromFile(filePath);
-		add(shader);
-
-		return shader;
-	}
-
-	Ref<Shader> ShaderLibrary::load(const std::string& name, const std::string& filePath) {
-		auto shader = Shader::create(name);
-		shader->compileFromFile(filePath);
-		add(shader);
-
-		return shader;
-	}
+	//Ref<Shader> ShaderLibrary::load(const std::string& filePath) {
+	//	auto shader = Shader::create(getNameFromFile(filePath));
+	//	shader->compileFromFile(filePath);
+	//	add(shader);
+	//
+	//	return shader;
+	//}
+	//
+	//Ref<Shader> ShaderLibrary::load(const std::string& name, const std::string& filePath) {
+	//	auto shader = Shader::create(name);
+	//	shader->compileFromFile(filePath);
+	//	add(shader);
+	//
+	//	return shader;
+	//}
 
 	Ref<Shader> ShaderLibrary::get(const std::string& name) {
 		AX_CORE_ASSERT(m_shaders.find(name) != m_shaders.end(), "Shader not found");

@@ -5,12 +5,15 @@
 #include "AxionEngine/Source/render/GraphicsContext.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/D12Helpers.h"
 
 namespace Axion {
 
-	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_name("UNSET") {}
+	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {
+		m_specification.name = "Unset";
+	}
 
-	D12Shader::D12Shader(const std::string& name) : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_name(name) {}
+	D12Shader::D12Shader(const ShaderSpecification& spec) : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec) {}
 
 	D12Shader::~D12Shader() {
 		release();
@@ -34,8 +37,8 @@ namespace Axion {
 		createRootSignature();
 		createPipelineState();
 
-		AX_CORE_LOG_TRACE("Shader '{0}' setup successful (root signature / pipeline state)", m_name);
-		AX_CORE_LOG_TRACE("Shader '{0}' compiled ({1})", m_name, filePath);
+		AX_CORE_LOG_TRACE("Shader '{0}' setup successful (root signature / pipeline state)", m_specification.name);
+		AX_CORE_LOG_TRACE("Shader '{0}' compiled ({1})", m_specification.name, filePath);
 	}
 
 
@@ -156,22 +159,22 @@ namespace Axion {
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShaderBlob.Get());
 
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // D3D12_CULL_MODE_NONE
+		psoDesc.RasterizerState.CullMode = D12Helpers::toD12CullMode(m_specification.cullMode);
 
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-		psoDesc.DepthStencilState.DepthEnable = TRUE;
-		psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-		psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-		psoDesc.DepthStencilState.StencilEnable = FALSE;
+		psoDesc.DepthStencilState.DepthEnable = m_specification.depthTest ? TRUE : FALSE;
+		psoDesc.DepthStencilState.DepthWriteMask = m_specification.depthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+		psoDesc.DepthStencilState.DepthFunc = D12Helpers::toD12DepthComparisonFunction(m_specification.depthFunction);
+		psoDesc.DSVFormat = D12Helpers::toD12DepthStencilFormat(m_specification.depthStencilFormat);
+		psoDesc.DepthStencilState.StencilEnable = m_specification.stencilEnabled ? TRUE : FALSE;
 
 		psoDesc.SampleMask = UINT_MAX;
-		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.PrimitiveTopologyType = D12Helpers::toD12ToplogyType(m_specification.topology);
 		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-		psoDesc.SampleDesc.Count = 1;
+		psoDesc.RTVFormats[0] = D12Helpers::toD12ColorFormat(m_specification.colorFormat);
+		psoDesc.SampleDesc.Count = m_specification.sampleCount;
 
 		HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create graphics pipeline state");

@@ -25,7 +25,7 @@ namespace Axion {
 		SwapChainSpecification swapSpec;
 		swapSpec.width = width;
 		swapSpec.height = height;
-		swapSpec.backBufferFormat = TextureFormat::RGBA8;
+		swapSpec.backBufferFormat = ColorFormat::RGBA8;
 		swapSpec.depthBufferFormat = DepthStencilFormat::DEPTH32F;
 
 		m_device.initialize();

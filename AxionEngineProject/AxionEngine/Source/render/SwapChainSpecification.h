@@ -11,7 +11,7 @@ namespace Axion {
 		uint32_t width = 1280;
 		uint32_t height = 720;
 		uint32_t bufferCount = AX_MAX_SWAPCHAIN_BUFFERS;
-		TextureFormat backBufferFormat = TextureFormat::RGBA8;
+		ColorFormat backBufferFormat = ColorFormat::RGBA8;
 		DepthStencilFormat depthBufferFormat = DepthStencilFormat::DEPTH32F;
 	};
 

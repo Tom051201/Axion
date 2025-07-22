@@ -1,7 +1,51 @@
 #pragma once
 #include "axpch.h"
 
+#include "AxionEngine/Source/render/Formats.h"
+
 namespace Axion {
+
+	enum class CullMode {
+		None = 0,
+		Front,
+		Back
+	};
+
+	enum class DepthCompare {
+		Never = 0,
+		Less,
+		Equal,
+		LessEqual,
+		Greater,
+		NotEqual,
+		GreaterEqual,
+		Always
+	};
+
+	enum class PrimitiveTopology {
+		PointList = 0,
+		LineList,
+		LineStrip,
+		TriangleList,
+		TriangleStrip
+	};
+
+	struct ShaderSpecification {
+		std::string name;
+
+		ColorFormat colorFormat = ColorFormat::RGBA8;
+		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
+
+		bool depthTest = true;
+		bool depthWrite = true;
+		DepthCompare depthFunction = DepthCompare::Less;
+
+		bool stencilEnabled = false;
+		uint32_t sampleCount = 1;
+
+		CullMode cullMode = CullMode::Back;
+		PrimitiveTopology topology = PrimitiveTopology::TriangleList;
+	};
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// Shader ///////////////////////////////////////////////////////////////////
@@ -22,7 +66,7 @@ namespace Axion {
 		virtual void compileFromFile(const std::string& filePath) = 0;
 
 
-		static Ref<Shader> create(const std::string& name);
+		static Ref<Shader> create(const ShaderSpecification& spec);
 		static std::string readShaderFile(const std::string& filePath);
 	};
 

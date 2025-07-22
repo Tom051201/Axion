@@ -7,7 +7,7 @@ namespace Axion {
 
 	OpenGL3Shader::OpenGL3Shader() : m_programID(0), m_name("UNSET") {}
 
-	OpenGL3Shader::OpenGL3Shader(const std::string& name) : m_programID(0), m_name(name) {}
+	OpenGL3Shader::OpenGL3Shader(const ShaderSpecification& spec) : m_programID(0), m_name(spec.name) {}
 
 	OpenGL3Shader::~OpenGL3Shader() {
 		release();

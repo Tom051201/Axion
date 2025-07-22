@@ -13,7 +13,7 @@ namespace Axion {
 		uint32_t height = 720;
 		uint32_t samples = 1;
 		Vec4 clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		TextureFormat textureFormat = TextureFormat::RGBA8;
+		ColorFormat textureFormat = ColorFormat::RGBA8;
 		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
 	};
 

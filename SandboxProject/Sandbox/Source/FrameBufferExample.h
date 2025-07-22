@@ -2,13 +2,11 @@
 
 #include "Axion.h"
 
-#include "SandboxCamera.h"
-
-class Sandbox2D : public Axion::Layer {
+class FrameBufferExample : public Axion::Layer {
 public:
 
-	Sandbox2D();
-	~Sandbox2D() = default;
+	FrameBufferExample();
+	~FrameBufferExample() = default;
 
 	void onAttach() override;
 	void onDetach() override;
@@ -21,6 +19,7 @@ private:
 
 	Axion::OrthographicCameraController m_cameraController;
 
+	Axion::Ref<Axion::FrameBuffer> m_frameBuffer;
 	Axion::Ref<Axion::Material> m_material;
 	Axion::Ref<Axion::Material> m_material2;
 	Axion::Ref<Axion::ConstantBuffer> m_uploadBuffer;

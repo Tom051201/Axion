@@ -8,7 +8,7 @@ namespace Axion {
 	public:
 
 		OpenGL3Shader();
-		OpenGL3Shader(const std::string& name);
+		OpenGL3Shader(const ShaderSpecification& spec);
 		~OpenGL3Shader() override;
 
 		void release();

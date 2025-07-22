@@ -11,7 +11,9 @@ namespace Axion {
 
 		m_tempConstantBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 
-		Ref<Shader> shader = Shader::create("MaterialShader");
+		ShaderSpecification shaderSpec;
+		shaderSpec.name = "MaterialShader";
+		Ref<Shader> shader = Shader::create(shaderSpec);
 		shader->compileFromFile("AxionStudio/Assets/shaders/ColorShader.hlsl");
 		m_tempMaterial = Material::create("Material", Vec4(0.0f, 1.0f, 0.0f, 1.0f), shader);
 
@@ -23,7 +25,7 @@ namespace Axion {
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
 		fbs.height = 720;
-		fbs.textureFormat = TextureFormat::RGBA8;
+		fbs.textureFormat = ColorFormat::RGBA8;
 		fbs.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		m_frameBuffer = FrameBuffer::create(fbs);
 
