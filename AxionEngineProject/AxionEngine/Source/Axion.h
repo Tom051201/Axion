@@ -11,6 +11,7 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
+#include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/render/FrameBuffer.h"
 #include "AxionEngine/Source/render/Shader.h"

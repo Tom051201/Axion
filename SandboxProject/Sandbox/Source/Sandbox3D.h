@@ -2,6 +2,8 @@
 
 #include "Axion.h"
 
+#include "SandboxCamera.h"
+
 class Sandbox3D : public Axion::Layer {
 public:
 
@@ -17,8 +19,11 @@ public:
 
 private:
 
-	Axion::OrthographicCameraController m_camController;
+	SandboxCamera m_camera;
 
+	Axion::Mat4 m_transform;
+	Axion::Ref<Axion::Mesh> m_mesh;
+	Axion::Ref<Axion::Material> m_material;
 	Axion::Ref<Axion::ConstantBuffer> m_buffer;
 
 };
