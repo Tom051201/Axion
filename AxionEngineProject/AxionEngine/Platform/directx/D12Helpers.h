@@ -4,6 +4,7 @@
 
 #include "AxionEngine/Source/render/SwapChainSpecification.h"
 #include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Buffers.h"
 
 
 namespace Axion {
@@ -18,6 +19,8 @@ namespace Axion {
 		static D3D12_COMPARISON_FUNC toD12DepthComparisonFunction(DepthCompare function);
 		static D3D12_PRIMITIVE_TOPOLOGY_TYPE toD12ToplogyType(PrimitiveTopology topology);
 		static D3D12_PRIMITIVE_TOPOLOGY toD12Topology(PrimitiveTopology topology);
+
+		static DXGI_FORMAT ShaderDataTypeToDXGIFormat(ShaderDataType type);
 
 	};
 

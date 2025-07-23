@@ -11,8 +11,14 @@ namespace Axion {
 
 		m_tempConstantBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 
+		BufferLayout vertexLayout = {
+			{ "POSITION", Axion::ShaderDataType::Float3 },
+			{ "COLOR", Axion::ShaderDataType::Float4 },
+			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
+		};
 		ShaderSpecification shaderSpec;
 		shaderSpec.name = "MaterialShader";
+		shaderSpec.vertexLayout = vertexLayout;
 		Ref<Shader> shader = Shader::create(shaderSpec);
 		shader->compileFromFile("AxionStudio/Assets/shaders/ColorShader.hlsl");
 		m_tempMaterial = Material::create("Material", Vec4(0.0f, 1.0f, 0.0f, 1.0f), shader);

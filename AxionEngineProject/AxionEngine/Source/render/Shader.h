@@ -2,6 +2,7 @@
 #include "axpch.h"
 
 #include "AxionEngine/Source/render/Formats.h"
+#include "AxionEngine/Source/render/Buffers.h"
 
 namespace Axion {
 
@@ -45,6 +46,8 @@ namespace Axion {
 
 		CullMode cullMode = CullMode::Back;
 		PrimitiveTopology topology = PrimitiveTopology::TriangleList;
+
+		BufferLayout vertexLayout;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////

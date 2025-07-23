@@ -145,15 +145,27 @@ namespace Axion {
 	void D12Shader::createPipelineState() {
 		auto* device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 
-		// Input layout
-		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vertex, color), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-		};
+		std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
+		const auto& layout = m_specification.vertexLayout.getElements();
+		std::unordered_map<std::string, uint32_t> semanticCounts;
+
+		AX_CORE_ASSERT(layout.size() > 0, "No buffer layout specified");
+
+		for (const auto& element : layout) {
+			D3D12_INPUT_ELEMENT_DESC desc = {};
+			desc.SemanticName = element.name.c_str();
+			desc.SemanticIndex = semanticCounts[element.name]++;
+			desc.Format = D12Helpers::ShaderDataTypeToDXGIFormat(element.type);
+			desc.InputSlot = 0;
+			desc.AlignedByteOffset = element.offset;
+			desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+			desc.InstanceDataStepRate = 0;
+
+			inputElements.push_back(desc);
+		}
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+		psoDesc.InputLayout = { inputElements.data(), (UINT)inputElements.size() };
 		psoDesc.pRootSignature = m_rootSignature.Get();
 		psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShaderBlob.Get());
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShaderBlob.Get());

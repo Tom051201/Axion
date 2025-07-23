@@ -9,8 +9,14 @@ void Sandbox2D::onAttach() {
 	Axion::Renderer2D::setClearColor({ 0.3f, 0.3f, 0.3f, 1.0f });
 
 	// sets up the material
+	Axion::BufferLayout vertexLayout = {
+		{ "POSITION", Axion::ShaderDataType::Float3 },
+		{ "COLOR", Axion::ShaderDataType::Float4 },
+		{ "TEXCOORD", Axion::ShaderDataType::Float2 }
+	};
 	Axion::ShaderSpecification shaderSpec;
 	shaderSpec.name = "materialShader";
+	shaderSpec.vertexLayout = vertexLayout;
 	Axion::Ref<Axion::Shader> shader = Axion::Shader::create(shaderSpec);
 	shader->compileFromFile("Sandbox/Assets/shaders/ColorShader.hlsl");
 	m_material = Axion::Material::create("Material2D", Axion::Vec4(0.0f, 0.0f, 1.0f, 1.0f), shader);

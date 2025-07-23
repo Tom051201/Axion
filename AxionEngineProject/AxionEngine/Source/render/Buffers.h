@@ -13,7 +13,6 @@ namespace Axion {
 	enum class ShaderDataType {
 		None = 0,
 		Float, Float2, Float3, Float4,
-		Mat3, Mat4,
 		Int, Int2, Int3, Int4,
 		Bool
 	};
@@ -25,8 +24,6 @@ namespace Axion {
 			case Axion::ShaderDataType::Float2:		return sizeof(float) * 2;
 			case Axion::ShaderDataType::Float3:		return sizeof(float) * 3;
 			case Axion::ShaderDataType::Float4:		return sizeof(float) * 4;
-			case Axion::ShaderDataType::Mat3:		return sizeof(float) * 3 * 3;
-			case Axion::ShaderDataType::Mat4:		return sizeof(float) * 4 * 4;
 			case Axion::ShaderDataType::Int:		return sizeof(int);
 			case Axion::ShaderDataType::Int2:		return sizeof(int) * 2;
 			case Axion::ShaderDataType::Int3:		return sizeof(int) * 3;
