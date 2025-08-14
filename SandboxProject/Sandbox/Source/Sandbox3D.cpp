@@ -56,11 +56,28 @@ void Sandbox3D::onAttach() {
 		{ "TEXCOORD", Axion::ShaderDataType::Float2 }
 	};
 	Axion::Ref<Axion::Shader> shader = Axion::Shader::create(shaderSpec);
-	shader->compileFromFile("Sandbox/Assets/shaders/ColorShader.hlsl");
-	m_material = Axion::Material::create("BasicMaterial", { 0.0f, 0.0f, 1.0f, 1.0f }, shader);
+	//shader->compileFromFile("Sandbox/Assets/shaders/ColorShader.hlsl");
+	shader->compileFromFile("Sandbox/Assets/shaders/PositionShader.hlsl");
+	m_material = Axion::Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
 
 	m_buffer = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 
+
+
+	m_transform = Axion::Mat4::TRS({1.0f, 0.0f, 2.0f}, Axion::Vec3::zero(), Axion::Vec3::one());
+
+	Axion::ShaderSpecification shaderSpec1;
+	shaderSpec1.name = "Shader3D";
+	shaderSpec1.vertexLayout = {
+		{ "POSITION", Axion::ShaderDataType::Float3 },
+		{ "COLOR", Axion::ShaderDataType::Float4 },
+		{ "TEXCOORD", Axion::ShaderDataType::Float2 }
+	};
+	Axion::Ref<Axion::Shader> shader1 = Axion::Shader::create(shaderSpec1);
+	shader1->compileFromFile("Sandbox/Assets/shaders/ColorShader.hlsl");
+	m_material1 = Axion::Material::create("BasicMaterial1", { 0.0f, 1.0f, 0.0f, 1.0f }, shader1);
+
+	m_buffer1 = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 }
 
 void Sandbox3D::onDetach() {
@@ -73,6 +90,7 @@ void Sandbox3D::onUpdate(Axion::Timestep ts) {
 	Axion::Renderer3D::beginScene(m_camera);
 
 	Axion::Renderer3D::drawMesh(m_transform, m_mesh, m_material, m_buffer);
+	Axion::Renderer3D::drawMesh(m_transform1, m_mesh, m_material1, m_buffer1);
 
 	Axion::Renderer3D::endScene();
 }

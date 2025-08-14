@@ -2,6 +2,7 @@
 #include "Scene.h"
 
 #include "AxionEngine/Source/render/Renderer2D.h"
+#include "AxionEngine/Source/render/Renderer3D.h"
 
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
@@ -47,23 +48,16 @@ namespace Axion {
 		}
 
 		if (primaryCamera) {
-			Renderer2D::beginScene(primaryCamera->getProjectionMatrix(), *cameraTransform);
+			Renderer3D::beginScene(primaryCamera->getProjectionMatrix(), *cameraTransform);
 
-			// 2D sprites
-			//auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-			//for (auto entity : group) {
-			//	auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
-			//
-			//	Renderer2D::drawQuad(transform.getTransform(), sprite.color, m_uploadBuffer);
-			//}
+			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
+			for (auto entity : group) {
+				auto& transform = group.get<TransformComponent>(entity);
+				auto& mesh = group.get<MeshComponent>(entity);
+				auto& material = group.get<MaterialComponent>(entity);
+				auto& cb = group.get<ConstantBufferComponent>(entity);
 
-			// material
-			auto meshGroup = m_registry.group<TransformComponent>(entt::get<MaterialComponent>);
-			for (auto entity : meshGroup) {
-				auto& [transform, material] = meshGroup.get<TransformComponent, MaterialComponent>(entity);
-			
-				material.material->use();
-				Renderer2D::drawQuad(transform.getTransform(), material.material, m_uploadBuffer);
+				Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
 			}
 
 		}
@@ -73,22 +67,16 @@ namespace Axion {
 	void Scene::onUpdate(Timestep ts, const Camera& cam) {
 
 		if (&cam) {
-			Renderer2D::beginScene(cam);
+			Renderer3D::beginScene(cam);
 
-			//auto group = m_registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-			//for (auto entity : group) {
-			//	auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
-			//
-			//	Renderer2D::drawQuad(transform.getTransform(), sprite.color, m_uploadBuffer);
-			//}
-
-			// material
-			auto meshGroup = m_registry.group<TransformComponent>(entt::get<MaterialComponent>);
-			for (auto entity : meshGroup) {
-				auto& [transform, material] = meshGroup.get<TransformComponent, MaterialComponent>(entity);
+			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
+			for (auto entity : group) {
+				auto& transform = group.get<TransformComponent>(entity);
+				auto& mesh = group.get<MeshComponent>(entity);
+				auto& material = group.get<MaterialComponent>(entity);
+				auto& cb = group.get<ConstantBufferComponent>(entity);
 			
-				material.material->use();
-				Renderer2D::drawQuad(transform.getTransform(), material.material, m_uploadBuffer);
+				Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
 			}
 
 		}

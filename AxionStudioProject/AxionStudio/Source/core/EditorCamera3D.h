@@ -19,34 +19,38 @@ namespace Axion {
 		void onUpdate(Timestep ts);
 		void onEvent(Event& e);
 
+		void setPosition(const Vec3& pos);
 		const Vec3& getPosition() const { return m_position; }
+
+		void setRotation(const Vec3& rot);
+		const Vec3& getRotation() const { return m_rotation; }
 
 	private:
 
-		Vec3 m_position = { 0.0f, 0.0f, 3.0f };
-		Vec3 m_forward = { 0.0f, 0.0f, -1.0f };
-		Vec3 m_up = { 0.0f, 1.0f, 0.0f };
-		Vec3 m_right = { 1.0f, 0.0f, 0.0f };
-		Vec3 m_worldUp = { 0.0f, 1.0f, 0.0f };
-
-		float m_yaw = -90.0f;
-		float m_pitch = 0.0f;
-
-		float m_fov = 45.0f;
 		float m_aspectRatio;
+		float m_zoomLevel = 1.0f;
 
+		Vec3 m_position = Vec3(0.0f, 0.0f, -3.0f);
+		Vec3 m_rotation = Vec3::zero();
 		float m_translationSpeed = 1.0f;
 		float m_rotationSpeed = 1.0f;
 
-		float m_lastMouseX = 0.0f;
-		float m_lastMouseY = 0.0f;
-		bool m_firstMouse = true;
+		float m_nearClip;
+		float m_farClip;
+		float m_fov;
+		float m_yaw = 0.0f;
+		float m_pitch = 0.0f;
 
 		bool onMouseScrolled(MouseScrolledEvent& e);
 		bool onMouseMoved(MouseMovedEvent& e);
 		bool onWindowResize(WindowResizeEvent& e);
 
 		void recalculateViewMatrix();
+		void setProjection(float fovDegrees, float aspect, float nearZ, float farZ);
+
+		Vec3 getForward() const;
+		Vec3 getRight() const;
+		Vec3 getUp() const;
 
 	};
 

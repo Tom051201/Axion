@@ -5,7 +5,6 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/entt/entt.hpp"
 
-#include "AxionStudio/Source/core/EditorCamera.h"
 #include "AxionStudio/Source/core/EditorCamera3D.h"
 #include "AxionStudio/Source/panels/SystemInfoPanel.h"
 
@@ -31,7 +30,7 @@ namespace Axion {
 
 	private:
 
-		EditorCamera m_editorCamera;
+		EditorCamera3D m_editorCamera;
 
 		// panels
 		Scope<SystemInfoPanel> m_systemInfoPanel;
@@ -44,17 +43,11 @@ namespace Axion {
 		Ref<Scene> m_activeScene;
 		SceneState m_sceneState = SceneState::Editing;
 
-		// ECS
-		Entity m_squareEntity;
-		Entity m_cameraEntity;
-
 		// ImGui
 		ImGuiDockNodeFlags m_dockspaceFlags = 0;
 		ImGuiWindowFlags m_windowFlags = 0;
 
-		// TEMP
-		Ref<ConstantBuffer> m_tempConstantBuffer;
-		Ref<Material> m_tempMaterial;
+		Entity m_camEntity;
 
 		bool onWindowResize(WindowResizeEvent& e);
 		bool onKeyPressed(KeyPressedEvent& e);

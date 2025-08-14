@@ -88,4 +88,14 @@ namespace Axion {
 		CameraComponent(const Mat4& projection) : camera(projection) {}
 	};
 
+
+
+	struct ConstantBufferComponent {
+		Ref<ConstantBuffer> uploadBuffer;
+
+		ConstantBufferComponent() = default;
+		ConstantBufferComponent(const ConstantBufferComponent&) = default;
+		ConstantBufferComponent(const Ref<ConstantBuffer>& uploadBuffer) : uploadBuffer(uploadBuffer) {}
+	};
+
 }

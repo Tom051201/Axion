@@ -9,22 +9,6 @@ namespace Axion {
 
 	void EditorLayer::onAttach() {
 
-		m_tempConstantBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
-
-		BufferLayout vertexLayout = {
-			{ "POSITION", Axion::ShaderDataType::Float3 },
-			{ "COLOR", Axion::ShaderDataType::Float4 },
-			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
-		};
-		ShaderSpecification shaderSpec;
-		shaderSpec.name = "MaterialShader";
-		shaderSpec.vertexLayout = vertexLayout;
-		Ref<Shader> shader = Shader::create(shaderSpec);
-		shader->compileFromFile("AxionStudio/Assets/shaders/ColorShader.hlsl");
-		m_tempMaterial = Material::create("Material", Vec4(0.0f, 1.0f, 0.0f, 1.0f), shader);
-
-		Renderer2D::setClearColor({ 0.3f, 0.3f, 0.3f, 1.0f });
-
 		m_systemInfoPanel = std::make_unique<SystemInfoPanel>();
 		m_systemInfoPanel->setup();
 
@@ -40,15 +24,6 @@ namespace Axion {
 		m_activeScene = std::make_shared<Scene>();
 		m_sceneState = SceneState::Editing;
 
-		auto square = m_activeScene->createEntity("Square");
-		square.addComponent<SpriteRendererComponent>(Vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
-		square.addComponent<MaterialComponent>(Material::create("Material", Vec4(0.0f, 1.0f, 0.0f, 1.0f), shader));
-		m_squareEntity = square;
-
-		m_cameraEntity = m_activeScene->createEntity("Camera Entity");
-		m_cameraEntity.addComponent<CameraComponent>(Mat4::orthographicOffCenter(-16.0f, 16.0f, -9.0f, 9.0f, -1.0f, 1.0f));
-		m_cameraEntity.getComponent<CameraComponent>().isPrimary = true;
-
 		m_dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None;
 		m_windowFlags = ImGuiWindowFlags_MenuBar |
 			ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
@@ -56,12 +31,76 @@ namespace Axion {
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
 
-		Application::get().setWindowTitle("Axion Studio - DirectX");
 
+		std::vector<Axion::Vertex> vertices = {
+			// Front face
+			Axion::Vertex(-0.5f, -0.5f,  0.5f,   1, 0, 0, 1,   0.0f, 0.0f),
+			Axion::Vertex(0.5f, -0.5f,  0.5f,   0, 1, 0, 1,   1.0f, 0.0f),
+			Axion::Vertex(0.5f,  0.5f,  0.5f,   0, 0, 1, 1,   1.0f, 1.0f),
+			Axion::Vertex(-0.5f,  0.5f,  0.5f,   1, 1, 0, 1,   0.0f, 1.0f),
+
+			// Back face
+			Axion::Vertex(-0.5f, -0.5f, -0.5f,   1, 0, 1, 1,   1.0f, 0.0f),
+			Axion::Vertex(0.5f, -0.5f, -0.5f,   0, 1, 1, 1,   0.0f, 0.0f),
+			Axion::Vertex(0.5f,  0.5f, -0.5f,   1, 1, 1, 1,   0.0f, 1.0f),
+			Axion::Vertex(-0.5f,  0.5f, -0.5f,   0, 0, 0, 1,   1.0f, 1.0f)
+		};
+		std::vector<uint32_t> indices = {
+			// Front face
+			0, 1, 2,
+			2, 3, 0,
+
+			// Right face
+			1, 5, 6,
+			6, 2, 1,
+
+			// Back face
+			5, 4, 7,
+			7, 6, 5,
+
+			// Left face
+			4, 0, 3,
+			3, 7, 4,
+
+			// Top face
+			3, 2, 6,
+			6, 7, 3,
+
+			// Bottom face
+			4, 5, 1,
+			1, 0, 4
+		};
+		auto cubeMesh = Axion::Mesh::create(vertices, indices);
+
+		Axion::ShaderSpecification shaderSpec;
+		shaderSpec.name = "Shader3D";
+		shaderSpec.vertexLayout = {
+			{ "POSITION", Axion::ShaderDataType::Float3 },
+			{ "COLOR", Axion::ShaderDataType::Float4 },
+			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
+		};
+		Axion::Ref<Axion::Shader> shader = Axion::Shader::create(shaderSpec);
+		shader->compileFromFile("AxionStudio/Assets/shaders/PositionShader.hlsl");
+		auto cubeMaterial = Axion::Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
+
+		auto cubeCB = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
+
+		auto cube = m_activeScene->createEntity("Cube");
+		cube.getComponent<TransformComponent>().position = Vec3::zero();
+		cube.getComponent<TransformComponent>().rotation = Vec3::zero();
+		cube.getComponent<TransformComponent>().scale = Vec3::one();
+		cube.addComponent<MeshComponent>(cubeMesh);
+		cube.addComponent<MaterialComponent>(cubeMaterial);
+		cube.addComponent<ConstantBufferComponent>(cubeCB);
+
+		m_camEntity = m_activeScene->createEntity("Camera");
+		m_camEntity.addComponent<CameraComponent>(Mat4::orthographic(1080, 720, 0.1f, 100.0f));
+		m_camEntity.getComponent<CameraComponent>().isPrimary = true;
+
+		Application::get().setWindowTitle("Axion Studio - DirectX");
 	}
 
 	void EditorLayer::onDetach() {
-		m_tempConstantBuffer->release();
 		m_frameBuffer->release();
 
 		m_systemInfoPanel->shutdown();
@@ -93,11 +132,6 @@ namespace Axion {
 				}
 				default: { break; }
 			}
-
-			//Renderer2D::beginScene(m_editorCamera);
-			//Renderer2D::drawQuad({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, m_tempConstantBuffer);
-			//Renderer2D::drawQuad(Mat4::TRS(Vec3::zero(), Vec3::zero(), Vec3::one()), m_tempMaterial, m_tempConstantBuffer);
-			//Renderer2D::endScene();
 
 			m_frameBuffer->unbind();
 
@@ -155,9 +189,6 @@ namespace Axion {
 
 		// scene view
 		ImGui::Begin("Scene View");
-		ImGui::Text("%s", m_squareEntity.getComponent<TagComponent>().tag.c_str());
-		auto& color = m_squareEntity.getComponent<SpriteRendererComponent>().color;
-		ImGui::ColorEdit4("Color", color.data());
 		
 		if (ImGui::Button("Play / Edit")) {
 			if (m_sceneState == SceneState::Editing) {

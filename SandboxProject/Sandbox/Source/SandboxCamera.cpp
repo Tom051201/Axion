@@ -95,6 +95,9 @@ bool SandboxCamera::onMouseMoved(Axion::MouseMovedEvent& e) {
 	m_pitch += deltaY * sensitivity;
 
 	m_pitch = Axion::Math::clamp(m_pitch, -DirectX::XM_PIDIV2 + 0.01f, DirectX::XM_PIDIV2 - 0.01f);
+
+	AX_LOG_TRACE(m_yaw);
+
 	return false;
 }
 
