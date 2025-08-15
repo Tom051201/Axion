@@ -42,8 +42,8 @@ namespace Axion {
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		
 		// TODO: enable custom styles!
-		//setStyle();
-		ImGui::StyleColorsDark();
+		setStyle();
+		//ImGui::StyleColorsDark();
 
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }

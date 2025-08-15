@@ -17,6 +17,7 @@ namespace Axion {
 		void use() const override;
 
 		const Vec4& getColor() const override { return m_color; }
+		Vec4& getColor() override { return m_color; }
 		Ref<Shader> getShader() const override { return m_shader; }
 
 		const std::string& getName() const override { return m_name; }

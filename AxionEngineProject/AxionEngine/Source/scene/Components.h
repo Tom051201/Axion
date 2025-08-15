@@ -54,6 +54,7 @@ namespace Axion {
 
 		const std::string& getName() const { return material->getName(); }
 		const Vec4& getColor() const { return material->getColor(); }
+		Vec4& getColor() { return material->getColor(); }
 	};
 
 
