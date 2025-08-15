@@ -7,6 +7,8 @@
 
 #include "AxionStudio/Source/core/EditorCamera3D.h"
 #include "AxionStudio/Source/panels/SystemInfoPanel.h"
+#include "AxionStudio/Source/panels/SceneHierarchyPanel.h"
+#include "AxionStudio/Source/panels/EditorCameraPanel.h"
 
 namespace Axion {
 
@@ -35,6 +37,10 @@ namespace Axion {
 		// panels
 		Scope<SystemInfoPanel> m_systemInfoPanel;
 		bool m_showSystemInfoPanel = false;
+		Scope<SceneHierarchyPanel> m_sceneHierarchyPanel;
+		bool m_showSceneHierarchyPanel = true;
+		Scope<EditorCameraPanel> m_editorCameraPanel;
+		bool m_showEditorCameraPanel = true;
 
 		// scene viewport
 		Ref<FrameBuffer> m_frameBuffer;

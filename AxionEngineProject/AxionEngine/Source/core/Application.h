@@ -3,6 +3,7 @@
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/core/Window.h"
+#include "AxionEngine/Source/core/Cursor.h"
 
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
@@ -38,6 +39,7 @@ namespace Axion {
 		static Application& get() { return *s_instance; }
 
 		Window& getWindow() { return *m_window; }
+		Cursor& getCursor() { return *m_cursor; }
 
 	private:
 
@@ -47,6 +49,7 @@ namespace Axion {
 		float m_lastFrameTime = 0.0f;
 
 		Scope<Window> m_window;
+		Scope<Cursor> m_cursor;
 		bool m_running = true;
 		LayerStack m_layerStack;
 		ImGuiLayer* m_imGuiLayer;

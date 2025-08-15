@@ -197,13 +197,13 @@ namespace Axion {
 
 	bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& e) {
 		ImGuiIO& io = ImGui::GetIO();
-		io.MouseDown[e.getMouseButton()] = true;
+		io.MouseDown[ImGuiInputMapper::toImGuiMouseCode(e.getMouseButton())] = true;
 		return false;
 	}
 
 	bool ImGuiLayer::onMouseButtonReleasedEvent(MouseButtonReleasedEvent& e) {
 		ImGuiIO& io = ImGui::GetIO();
-		io.MouseDown[e.getMouseButton()] = false;
+		io.MouseDown[ImGuiInputMapper::toImGuiMouseCode(e.getMouseButton())] = false;
 		return false;
 	}
 

@@ -12,6 +12,14 @@ namespace Axion {
 		return ImGuiKey_None;
 	}
 
+	int ImGuiInputMapper::toImGuiMouseCode(MouseButton button) {
+		auto it = s_imGuiMouseCodeMap.find(button);
+		if (it != s_imGuiMouseCodeMap.end()) {
+			return it->second;
+		}
+		return -1;
+	}
+
 
 	const std::unordered_map<KeyCode, ImGuiKey> ImGuiInputMapper::s_imGuiKeyCodeMap = {
 
@@ -90,5 +98,11 @@ namespace Axion {
 		{ KeyCode::F11, ImGuiKey_F11 },
 		{ KeyCode::F12, ImGuiKey_F12 },
 
+	};
+
+	const std::unordered_map<MouseButton, int> ImGuiInputMapper::s_imGuiMouseCodeMap = {
+		{ MouseButton::Left, 0 },
+		{ MouseButton::Right, 1 },
+		{ MouseButton::Middle, 2 },
 	};
 }

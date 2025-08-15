@@ -132,6 +132,8 @@ namespace Axion {
 
 					WindowResizeEvent ev(width, height);
 					window->m_data.eventCallback(ev);
+					window->m_data.width = width;
+					window->m_data.height = height;
 					break;
 				}
 				case WM_SETFOCUS: {
@@ -179,22 +181,22 @@ namespace Axion {
 					break;
 				}
 				case WM_LBUTTONDOWN: {
-					MouseButtonPressedEvent ev(VK_LBUTTON);
+					MouseButtonPressedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_LBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
 				case WM_LBUTTONUP: {
-					MouseButtonReleasedEvent ev(VK_LBUTTON);
+					MouseButtonReleasedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_LBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
 				case WM_RBUTTONDOWN: {
-					MouseButtonPressedEvent ev(VK_RBUTTON);
+					MouseButtonPressedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_RBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
 				case WM_RBUTTONUP: {
-					MouseButtonReleasedEvent ev(VK_RBUTTON);
+					MouseButtonReleasedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_RBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
@@ -248,4 +250,5 @@ namespace Axion {
 
 		return DefWindowProc(hwnd, msg, wparam, lparam);
 	}
+
 }

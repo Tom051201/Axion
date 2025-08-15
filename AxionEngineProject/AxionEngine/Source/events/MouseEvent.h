@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/events/Event.h"
+#include "AxionEngine/Source/input/InputCodes.h"
 
 namespace Axion {
 
@@ -57,15 +58,15 @@ namespace Axion {
 	class MouseButtonEvent : public Event {
 	public:
 
-		inline int getMouseButton() const { return m_button; }
+		inline MouseButton getMouseButton() const { return m_button; }
 		
 		EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
 
 	protected:
 
-		MouseButtonEvent(int button) : m_button(button) {}
+		MouseButtonEvent(MouseButton button) : m_button(button) {}
 
-		int m_button;
+		MouseButton m_button;
 
 	};
 
@@ -74,11 +75,11 @@ namespace Axion {
 	class MouseButtonPressedEvent : public MouseButtonEvent {
 	public:
 
-		MouseButtonPressedEvent(int button) : MouseButtonEvent(button) {}
+		MouseButtonPressedEvent(MouseButton button) : MouseButtonEvent(button) {}
 
 		std::string toString() const override {
 			std::stringstream ss;
-			ss << "MouseButtonPressedEvent: " << m_button;
+			//ss << "MouseButtonPressedEvent: " << m_button;
 			return ss.str();
 		}
 
@@ -91,11 +92,11 @@ namespace Axion {
 	class MouseButtonReleasedEvent : public MouseButtonEvent {
 	public:
 
-		MouseButtonReleasedEvent(int button) : MouseButtonEvent(button) {}
+		MouseButtonReleasedEvent(MouseButton button) : MouseButtonEvent(button) {}
 
 		std::string toString() const override {
 			std::stringstream ss;
-			ss << "MouseButtonReleasedEvent: " << m_button;
+			//ss << "MouseButtonReleasedEvent: " << m_button;
 			return ss.str();
 		}
 

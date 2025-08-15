@@ -28,6 +28,8 @@ namespace Axion {
 		Entity createEntity();
 		Entity createEntity(const std::string& tag);
 
+		entt::registry& getRegistry() { return m_registry; }
+
 	private:
 
 		entt::registry m_registry;

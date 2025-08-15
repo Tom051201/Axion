@@ -9,8 +9,15 @@ namespace Axion {
 
 	void EditorLayer::onAttach() {
 
+		m_activeScene = std::make_shared<Scene>();
+		m_sceneState = SceneState::Editing;
+
 		m_systemInfoPanel = std::make_unique<SystemInfoPanel>();
 		m_systemInfoPanel->setup();
+		m_sceneHierarchyPanel = std::make_unique<SceneHierarchyPanel>();
+		m_sceneHierarchyPanel->setup(m_activeScene);
+		m_editorCameraPanel = std::make_unique<EditorCameraPanel>();
+		m_editorCameraPanel->setup(&m_editorCamera);
 
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
@@ -20,9 +27,6 @@ namespace Axion {
 		m_frameBuffer = FrameBuffer::create(fbs);
 
 		m_viewportDim = { (float)fbs.width, (float)fbs.height };
-
-		m_activeScene = std::make_shared<Scene>();
-		m_sceneState = SceneState::Editing;
 
 		m_dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None;
 		m_windowFlags = ImGuiWindowFlags_MenuBar |
@@ -104,6 +108,8 @@ namespace Axion {
 		m_frameBuffer->release();
 
 		m_systemInfoPanel->shutdown();
+		m_sceneHierarchyPanel->shutdown();
+		m_editorCameraPanel->shutdown();
 	}
 
 	void EditorLayer::onUpdate(Timestep ts) {
@@ -186,23 +192,11 @@ namespace Axion {
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();
-
-		// scene view
-		ImGui::Begin("Scene View");
-		
-		if (ImGui::Button("Play / Edit")) {
-			if (m_sceneState == SceneState::Editing) {
-				m_sceneState = SceneState::Playing;
-			}
-			else {
-				m_sceneState = SceneState::Editing;
-			}
-		}
-
-		ImGui::End();
 	
-		// system info panel
+		// panels
 		if (m_showSystemInfoPanel) { m_systemInfoPanel->onGuiRender(); }
+		if (m_showSceneHierarchyPanel) { m_sceneHierarchyPanel->onGuiRender(); }
+		if (m_showEditorCameraPanel) { m_editorCameraPanel->onGuiRender(); }
 		
 	
 		// menu bar
@@ -228,6 +222,8 @@ namespace Axion {
 
 			// view menu
 			if (ImGui::BeginMenu("  View  ")) {
+				ImGui::MenuItem("Scene Hierarchy", nullptr, &m_showSceneHierarchyPanel);
+				ImGui::MenuItem("Editor Camera Properties", nullptr, &m_showEditorCameraPanel);
 				ImGui::EndMenu();
 			}
 

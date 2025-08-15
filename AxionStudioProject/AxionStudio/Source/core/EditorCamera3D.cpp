@@ -1,6 +1,7 @@
 #include "axpch.h"
 #include "EditorCamera3D.h"
 
+#include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/input/Input.h"
 
 namespace Axion {
@@ -28,29 +29,17 @@ namespace Axion {
 		Vec3 right = getRight();
 		Vec3 up = getUp();
 
-		if (Input::isKeyPressed(KeyCode::W)) m_position += forward * m_translationSpeed * ts;
-		if (Input::isKeyPressed(KeyCode::S)) m_position -= forward * m_translationSpeed * ts;
-		if (Input::isKeyPressed(KeyCode::D)) m_position -= right * m_translationSpeed * ts;
-		if (Input::isKeyPressed(KeyCode::A)) m_position += right * m_translationSpeed * ts;
-		if (Input::isKeyPressed(KeyCode::E)) m_rotation -= up * m_rotationSpeed * ts;
-		if (Input::isKeyPressed(KeyCode::Q)) m_rotation += up * m_rotationSpeed * ts;
+		float speed = m_translationSpeed;
+		if (Input::isKeyPressed(KeyCode::LeftShift)) {
+			speed *= 3.0f;
+		}
 
-		if (Input::isKeyPressed(KeyCode::R)) {
-			if (Input::isKeyPressed(KeyCode::LeftShift)) {
-				m_rotation.x -= m_rotationSpeed * ts;
-			}
-			else {
-				m_rotation.x += m_rotationSpeed * ts;
-			}
-		}
-		if (Input::isKeyPressed(KeyCode::F)) {
-			if (Input::isKeyPressed(KeyCode::LeftShift)) {
-				m_rotation.y -= m_rotationSpeed * ts;
-			}
-			else {
-				m_rotation.y += m_rotationSpeed * ts;
-			}
-		}
+		if (Input::isKeyPressed(KeyCode::W)) m_position += forward * speed * ts;
+		if (Input::isKeyPressed(KeyCode::S)) m_position -= forward * speed * ts;
+		if (Input::isKeyPressed(KeyCode::D)) m_position -= right * speed * ts;
+		if (Input::isKeyPressed(KeyCode::A)) m_position += right * speed * ts;
+		if (Input::isKeyPressed(KeyCode::E)) m_position += up * speed * ts;
+		if (Input::isKeyPressed(KeyCode::Q)) m_position -= up * speed * ts;
 
 		recalculateViewMatrix();
 	}
@@ -59,57 +48,73 @@ namespace Axion {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<MouseScrolledEvent>(AX_BIND_EVENT_FN(EditorCamera3D::onMouseScrolled));
 		dispatcher.dispatch<MouseMovedEvent>(AX_BIND_EVENT_FN(EditorCamera3D::onMouseMoved));
+		dispatcher.dispatch<MouseButtonPressedEvent>(AX_BIND_EVENT_FN(EditorCamera3D::onMouseButtonPressed));
+		dispatcher.dispatch<MouseButtonReleasedEvent>(AX_BIND_EVENT_FN(EditorCamera3D::onMouseButtonReleased));
 		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(EditorCamera3D::onWindowResize));
 	}
 
 	bool EditorCamera3D::onMouseScrolled(MouseScrolledEvent& e) {
-		m_zoomLevel -= e.getYOffset() * 0.2f;
-		m_zoomLevel = std::max(m_zoomLevel, 0.25f);
-		m_fov += m_zoomLevel;
+		m_fov -= e.getYOffset();
+		m_fov = Math::clamp(m_fov, 1.0f, 90.0f);
+		setProjection(m_fov, m_aspectRatio, m_nearClip, m_farClip);
 		return false;
 	}
 
 	bool EditorCamera3D::onMouseMoved(MouseMovedEvent& e) {
-		static bool firstMouse = true;
-		static float lastX = 0.0f;
-		static float lastY = 0.0f;
+		if (!m_lookModeActive) return false;
 
-		float x = e.getX();
-		float y = e.getY();
+		auto& window = Application::get().getWindow();
+		int winCenterX = window.getWidth() / 2;
+		int winCenterY = window.getHeight() / 2;
 
-		if (firstMouse) {
-			lastX = x;
-			lastY = y;
-			firstMouse = false;
-			return false;
+		float deltaX = e.getX() - winCenterX;
+		float deltaY = winCenterY - e.getY();
+
+		if (deltaX != 0.0f || deltaY != 0.0f) {
+			m_yaw += deltaX * m_mouseSensitivity;
+			m_pitch += deltaY * m_mouseSensitivity;
+			m_pitch = Math::clamp(m_pitch, -DirectX::XM_PIDIV2 + 0.01f, DirectX::XM_PIDIV2 - 0.01f);
+
+			auto& cursor = Application::get().getCursor();
+			cursor.centerInWindow();
 		}
 
-		float deltaX = x - lastX;
-		float deltaY = lastY - y;
+		return false;
+	}
 
-		lastX = x;
-		lastY = y;
+	bool EditorCamera3D::onMouseButtonPressed(MouseButtonPressedEvent& e) {
+		if (e.getMouseButton() == MouseButton::Right && !m_lookModeActive) {
+			m_savedCursorPosition = Input::getMousePosition();
+			auto& cursor = Application::get().getCursor();
+			cursor.hide();
+			cursor.centerInWindow();
+			m_lookModeActive = true;
+		}
+		return false;
+	}
 
-		float sensitivity = 0.003f;
-		m_yaw += deltaX * sensitivity;
-		m_pitch += deltaY * sensitivity;
-
-		m_pitch = Math::clamp(m_pitch, -DirectX::XM_PIDIV2 + 0.01f, DirectX::XM_PIDIV2 - 0.01f);
+	bool EditorCamera3D::onMouseButtonReleased(MouseButtonReleasedEvent& e) {
+		if (e.getMouseButton() == MouseButton::Right && m_lookModeActive) {
+			auto& cursor = Application::get().getCursor();
+			cursor.show();
+			cursor.setPositionInWindow((uint32_t)m_savedCursorPosition.x, (uint32_t)m_savedCursorPosition.y);
+			m_lookModeActive = false;
+		}
 		return false;
 	}
 
 	bool EditorCamera3D::onWindowResize(WindowResizeEvent& e) {
 		resize((float)e.getWidth(), (float)e.getHeight());
+
+		if (m_lookModeActive) {
+			auto& cursor = Application::get().getCursor();
+			cursor.centerInWindow();
+		}
 		return false;
 	}
 
 	void EditorCamera3D::setPosition(const Vec3& pos) {
 		m_position = pos;
-		recalculateViewMatrix();
-	}
-
-	void EditorCamera3D::setRotation(const Vec3& rot) {
-		m_rotation = rot;
 		recalculateViewMatrix();
 	}
 

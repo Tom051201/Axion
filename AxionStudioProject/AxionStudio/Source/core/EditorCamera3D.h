@@ -21,19 +21,23 @@ namespace Axion {
 
 		void setPosition(const Vec3& pos);
 		const Vec3& getPosition() const { return m_position; }
+		Vec3& getPosition() { return m_position; }
 
-		void setRotation(const Vec3& rot);
-		const Vec3& getRotation() const { return m_rotation; }
+		void setTranslationSpeed(float speed) { m_translationSpeed = speed; }
+		float getTranslationSpeed() { return m_translationSpeed; }
+		float* getTranslationSpeedData() { return &m_translationSpeed; }
+
+		void setFov(float fov) { m_fov = fov; }
+		float getFov() { return m_fov; }
+		float* getFovData() { return &m_fov; }
 
 	private:
 
 		float m_aspectRatio;
-		float m_zoomLevel = 1.0f;
 
 		Vec3 m_position = Vec3(0.0f, 0.0f, -3.0f);
-		Vec3 m_rotation = Vec3::zero();
 		float m_translationSpeed = 1.0f;
-		float m_rotationSpeed = 1.0f;
+		float m_mouseSensitivity = 0.003f;
 
 		float m_nearClip;
 		float m_farClip;
@@ -41,8 +45,13 @@ namespace Axion {
 		float m_yaw = 0.0f;
 		float m_pitch = 0.0f;
 
+		bool m_lookModeActive = false;
+		Vec2 m_savedCursorPosition{ 0.0f, 0.0f };
+
 		bool onMouseScrolled(MouseScrolledEvent& e);
 		bool onMouseMoved(MouseMovedEvent& e);
+		bool onMouseButtonPressed(MouseButtonPressedEvent& e);
+		bool onMouseButtonReleased(MouseButtonReleasedEvent& e);
 		bool onWindowResize(WindowResizeEvent& e);
 
 		void recalculateViewMatrix();
