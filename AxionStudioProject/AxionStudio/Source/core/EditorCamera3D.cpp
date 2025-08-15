@@ -125,6 +125,7 @@ namespace Axion {
 		Vec3 target = m_position + forward;
 		m_viewMatrix = Mat4::lookAt(m_position, target, Vec3::up());
 		m_viewProjectionMatrix = m_viewMatrix * m_projectionMatrix;
+		//m_viewProjectionMatrix = m_projectionMatrix * m_viewMatrix;
 	}
 
 	void EditorCamera3D::setProjection(float fovDegrees, float aspect, float nearZ, float farZ) {

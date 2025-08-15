@@ -24,6 +24,7 @@ namespace Axion {
 		Entity m_selectedEntity;
 
 		void displayEntity(Entity entity);
+		void displayComponents(Entity entity);
 
 	};
 

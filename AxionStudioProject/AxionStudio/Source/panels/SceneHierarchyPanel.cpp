@@ -36,6 +36,13 @@ namespace Axion {
 
 		}
 		ImGui::End();
+
+		if (ImGui::Begin("Properties")) {
+			if (m_selectedEntity) {
+				displayComponents(m_selectedEntity);
+			}
+		}
+		ImGui::End();
 	}
 
 	void SceneHierarchyPanel::displayEntity(Entity entity) {
@@ -52,6 +59,31 @@ namespace Axion {
 			ImGui::TreePop();
 		}
 
+	}
+
+	void SceneHierarchyPanel::displayComponents(Entity entity) {
+		if (entity.hasComponent<TagComponent>()) {
+			auto& tag = entity.getComponent<TagComponent>().tag;
+
+			char buffer[256];
+			memset(buffer, 0, sizeof(buffer));
+			strcpy_s(buffer, sizeof(buffer), tag.c_str());
+
+			if (ImGui::InputText("Tag", buffer, sizeof(buffer))) {
+				tag = std::string(buffer);
+			}
+		}
+
+		if (entity.hasComponent<TransformComponent>()) {
+			auto& component = entity.getComponent<TransformComponent>();
+			auto& position = component.position;
+			auto& rotation = component.rotation;
+			auto& scale = component.scale;
+
+			ImGui::DragFloat3("Position", position.data(), 0.05f);
+			ImGui::DragFloat3("Rotation", rotation.data(), 0.05f);
+			ImGui::DragFloat3("Scale", scale.data(), 0.05f, 0.0f, 100.0f);
+		}
 	}
 
 }
