@@ -11,18 +11,19 @@ namespace Axion {
 		SceneHierarchyPanel();
 		~SceneHierarchyPanel();
 
-		void setup(Ref<Scene> activeScene);
+		void setup(const Ref<Scene>& activeScene);
 		void shutdown();
+
+		void setContext(const Ref<Scene>& context);
 
 		void onGuiRender();
 
 	private:
 
-		Ref<Scene> m_activeScene;
+		Ref<Scene> m_context = nullptr;
 		Entity m_selectedEntity;
 
 		void displayEntity(Entity entity);
-
 
 	};
 

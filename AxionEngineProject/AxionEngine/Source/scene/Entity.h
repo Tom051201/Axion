@@ -38,6 +38,9 @@ namespace Axion {
 		}
 
 		operator bool() const { return m_handle != (entt::entity)0; }
+		operator uint32_t() const { return (uint32_t)m_handle; }
+		bool operator ==(const Entity& other) const { return m_handle == other.m_handle && m_scene == other.m_scene; }
+		bool operator !=(const Entity& other) const { return !(*this == other); }
 
 	private:
 

@@ -84,6 +84,8 @@ namespace Axion {
 
 	bool EditorCamera3D::onMouseButtonPressed(MouseButtonPressedEvent& e) {
 		if (e.getMouseButton() == MouseButton::Right && !m_lookModeActive) {
+			if (!m_hoveringSceneViewport) return false;
+
 			m_savedCursorPosition = Input::getMousePosition();
 			auto& cursor = Application::get().getCursor();
 			cursor.hide();

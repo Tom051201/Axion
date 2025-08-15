@@ -12,19 +12,23 @@ namespace Axion {
 		shutdown();
 	}
 
-	void SceneHierarchyPanel::setup(Ref<Scene> activeScene) {
-		m_activeScene = activeScene;
+	void SceneHierarchyPanel::setup(const Ref<Scene>& activeScene) {
+		setContext(activeScene);
 	}
 
 	void SceneHierarchyPanel::shutdown() {
 	
 	}
 
+	void SceneHierarchyPanel::setContext(const Ref<Scene>& context) {
+		m_context = context;
+	}
+
 	void SceneHierarchyPanel::onGuiRender() {
 		if (ImGui::Begin("Scene Hierarchy")) {
 
-			for (auto e : m_activeScene->getRegistry().view<entt::entity>()) {
-				Entity entity{ e, m_activeScene.get() };
+			for (auto e : m_context->getRegistry().view<entt::entity>()) {
+				Entity entity{ e, m_context.get() };
 
 				displayEntity(entity);
 			
@@ -35,8 +39,19 @@ namespace Axion {
 	}
 
 	void SceneHierarchyPanel::displayEntity(Entity entity) {
-		std::string name = entity.getComponent<TagComponent>().tag;
-		ImGui::Text(name.c_str());
+		auto& name = entity.getComponent<TagComponent>().tag;
+
+		ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, name.c_str());
+
+		if (ImGui::IsItemClicked()) {
+			m_selectedEntity = entity;
+		}
+
+		if (opened) {
+			ImGui::TreePop();
+		}
+
 	}
 
 }

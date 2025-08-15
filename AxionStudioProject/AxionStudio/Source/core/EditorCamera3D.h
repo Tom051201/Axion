@@ -31,6 +31,9 @@ namespace Axion {
 		float getFov() { return m_fov; }
 		float* getFovData() { return &m_fov; }
 
+		void setIsHoveringSceneViewport(bool hovering) { m_hoveringSceneViewport = hovering; }
+		bool isHoveringSceneViewport() const { return m_hoveringSceneViewport; }
+
 	private:
 
 		float m_aspectRatio;
@@ -47,6 +50,8 @@ namespace Axion {
 
 		bool m_lookModeActive = false;
 		Vec2 m_savedCursorPosition{ 0.0f, 0.0f };
+
+		bool m_hoveringSceneViewport = false;
 
 		bool onMouseScrolled(MouseScrolledEvent& e);
 		bool onMouseMoved(MouseMovedEvent& e);
