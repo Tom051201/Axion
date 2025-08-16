@@ -6,6 +6,8 @@
 
 namespace Axion {
 
+	uint32_t RenderCommand::s_drawCallCount = 0;
+
 	void RenderCommand::setClearColor(const Vec4& color) {
 		GraphicsContext::get()->setClearColor(color);
 	}
@@ -15,7 +17,12 @@ namespace Axion {
 	}
 
 	void RenderCommand::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {
+		s_drawCallCount++;
 		GraphicsContext::get()->drawIndexed(vb, ib);
+	}
+
+	void RenderCommand::resetRenderStats() {
+		s_drawCallCount = 0;
 	}
 
 }

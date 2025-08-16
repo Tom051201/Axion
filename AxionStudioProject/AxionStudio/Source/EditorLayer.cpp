@@ -74,20 +74,20 @@ namespace Axion {
 			4, 5, 1,
 			1, 0, 4
 		};
-		auto cubeMesh = Axion::Mesh::create(vertices, indices);
+		auto cubeMesh = Mesh::create(vertices, indices);
 
-		Axion::ShaderSpecification shaderSpec;
+		ShaderSpecification shaderSpec;
 		shaderSpec.name = "Shader3D";
 		shaderSpec.vertexLayout = {
 			{ "POSITION", Axion::ShaderDataType::Float3 },
 			{ "COLOR", Axion::ShaderDataType::Float4 },
 			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
 		};
-		Axion::Ref<Axion::Shader> shader = Axion::Shader::create(shaderSpec);
+		Ref<Shader> shader = Shader::create(shaderSpec);
 		shader->compileFromFile("AxionStudio/Assets/shaders/PositionShader.hlsl");
-		auto cubeMaterial = Axion::Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
+		auto cubeMaterial = Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
 
-		auto cubeCB = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
+		auto cubeCB = ConstantBuffer::create(sizeof(ObjectBuffer));
 
 		auto cube = m_activeScene->createEntity("Cube");
 		cube.getComponent<TransformComponent>().position = Vec3::zero();
@@ -96,6 +96,39 @@ namespace Axion {
 		cube.addComponent<MeshComponent>(cubeMesh);
 		cube.addComponent<MaterialComponent>(cubeMaterial);
 		cube.addComponent<ConstantBufferComponent>(cubeCB);
+
+
+		auto cubeMesh2 = Mesh::create(vertices, indices);
+		auto cubeMesh3 = Mesh::create(vertices, indices);
+		auto cubeMesh4 = Mesh::create(vertices, indices);
+
+		auto cubeCB2 = ConstantBuffer::create(sizeof(ObjectBuffer));
+		auto cubeCB3 = ConstantBuffer::create(sizeof(ObjectBuffer));
+		auto cubeCB4 = ConstantBuffer::create(sizeof(ObjectBuffer));
+
+		auto cube2 = m_activeScene->createEntity("Cube2");
+		cube2.getComponent<TransformComponent>().position = Vec3::zero();
+		cube2.getComponent<TransformComponent>().rotation = Vec3::zero();
+		cube2.getComponent<TransformComponent>().scale = Vec3::one();
+		cube2.addComponent<MeshComponent>(cubeMesh2);
+		cube2.addComponent<MaterialComponent>(cubeMaterial);
+		cube2.addComponent<ConstantBufferComponent>(cubeCB2);
+
+		auto cube3 = m_activeScene->createEntity("Cube3");
+		cube3.getComponent<TransformComponent>().position = Vec3::zero();
+		cube3.getComponent<TransformComponent>().rotation = Vec3::zero();
+		cube3.getComponent<TransformComponent>().scale = Vec3::one();
+		cube3.addComponent<MeshComponent>(cubeMesh3);
+		cube3.addComponent<MaterialComponent>(cubeMaterial);
+		cube3.addComponent<ConstantBufferComponent>(cubeCB3);
+
+		auto cube4 = m_activeScene->createEntity("Cube4");
+		cube4.getComponent<TransformComponent>().position = Vec3::zero();
+		cube4.getComponent<TransformComponent>().rotation = Vec3::zero();
+		cube4.getComponent<TransformComponent>().scale = Vec3::one();
+		cube4.addComponent<MeshComponent>(cubeMesh4);
+		cube4.addComponent<MaterialComponent>(cubeMaterial);
+		cube4.addComponent<ConstantBufferComponent>(cubeCB4);
 
 		m_camEntity = m_activeScene->createEntity("Camera");
 		m_camEntity.addComponent<CameraComponent>(Mat4::orthographic(1080, 720, 0.1f, 100.0f));

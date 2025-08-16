@@ -14,9 +14,13 @@ namespace Axion {
 
 		static void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib);
 
+		static void resetRenderStats();
+		static uint32_t getDrawCallCount() { return s_drawCallCount; }
+
 	private:
 
-		static Vec4 s_clearColor;
+		// render stats
+		static uint32_t s_drawCallCount;
 
 	};
 

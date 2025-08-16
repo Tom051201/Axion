@@ -58,6 +58,7 @@ namespace Axion {
 	}
 
 	void Renderer::beginScene(const Camera& camera) {
+		RenderCommand::resetRenderStats();
 		s_sceneData->viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
