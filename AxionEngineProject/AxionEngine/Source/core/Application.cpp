@@ -16,7 +16,7 @@ namespace Axion {
 
 		// Sets startup backend
 		Renderer::setAPI(RendererAPI::DirectX12);
-		Renderer::initialize(m_window.get());
+		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
 		m_imGuiLayer = new ImGuiLayer();
 		pushOverlay(m_imGuiLayer);
@@ -136,7 +136,7 @@ namespace Axion {
 
 		// reinitializing everything
 		Renderer::setAPI(api);
-		Renderer::initialize(m_window.get());
+		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
 		m_layerStack.removeOverlay(m_imGuiLayer);
 

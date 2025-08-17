@@ -387,6 +387,10 @@ namespace Axion {
 			return degrees * (DirectX::XM_PI / 180.0f);
 		}
 
+		constexpr static float toDegrees(float radians) {
+			return radians * (180.0f / DirectX::XM_PI);
+		}
+
 		static float lerp(float a, float b, float t) {
 			return a + (b - a) * t;
 		}

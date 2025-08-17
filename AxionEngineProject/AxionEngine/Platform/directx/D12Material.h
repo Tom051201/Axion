@@ -24,9 +24,9 @@ namespace Axion {
 
 	private:
 
-		std::string m_name;
-		Vec4 m_color;
-		Ref<D12Shader> m_shader;
+		std::string m_name = "Unknown Material";
+		Vec4 m_color = { 1.0f, 1.0f, 1.0f, 1.0f };
+		Ref<D12Shader> m_shader = nullptr;
 
 
 	};

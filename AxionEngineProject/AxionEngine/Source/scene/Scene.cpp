@@ -9,13 +9,9 @@
 
 namespace Axion {
 
-	Scene::Scene() {
-		m_uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
-	}
+	Scene::Scene() {}
 
-	Scene::~Scene() {
-		m_uploadBuffer->release();
-	}
+	Scene::~Scene() {}
 
 	Entity Scene::createEntity() {
 		return createEntity("Unnamed Entity");
@@ -26,6 +22,25 @@ namespace Axion {
 		entity.addComponent<TransformComponent>();
 		entity.addComponent<TagComponent>(tag);
 		return entity;
+	}
+
+	void Scene::destroyEntity(Entity entity) {
+		m_entitiesPendingDestroy.push_back(entity);
+	}
+
+	void Scene::flushDestroyedEntities() {
+		// destroy entities
+		for (auto& e : m_entitiesPendingDestroy) {
+			m_registry.destroy(e);
+		}
+		m_entitiesPendingDestroy.clear();
+
+		// remove components
+		for (auto& fn : m_componentsPendingRemove) {
+			fn();
+		}
+		m_componentsPendingRemove.clear();
+
 	}
 
 	void Scene::onUpdate(Timestep ts) {
@@ -57,7 +72,9 @@ namespace Axion {
 				auto& material = group.get<MaterialComponent>(entity);
 				auto& cb = group.get<ConstantBufferComponent>(entity);
 
-				Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
+				if (mesh.mesh != nullptr && material.material != nullptr && cb.uploadBuffer != nullptr) {
+					Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
+				}
 			}
 
 		}
@@ -76,10 +93,24 @@ namespace Axion {
 				auto& material = group.get<MaterialComponent>(entity);
 				auto& cb = group.get<ConstantBufferComponent>(entity);
 			
-				Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
+				if (mesh.mesh != nullptr && material.material != nullptr && cb.uploadBuffer != nullptr) {
+					Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
+				}
 			}
 
 		}
+	}
+
+	void Scene::onEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<RenderingFinishedEvent>(AX_BIND_EVENT_FN(onRenderingFinished));
+	}
+
+	bool Scene::onRenderingFinished(RenderingFinishedEvent& e) {
+
+		flushDestroyedEntities();
+
+		return false;
 	}
 
 }

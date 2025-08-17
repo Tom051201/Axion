@@ -3,6 +3,7 @@
 #include "AxionEngine/Source/scene/Components.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/imgui_internal.h"
 
 namespace Axion {
 
@@ -16,15 +17,36 @@ namespace Axion {
 		setContext(activeScene);
 	}
 
-	void SceneHierarchyPanel::shutdown() {
-	
-	}
+	void SceneHierarchyPanel::shutdown() {}
 
 	void SceneHierarchyPanel::setContext(const Ref<Scene>& context) {
 		m_context = context;
 	}
 
 	void SceneHierarchyPanel::onGuiRender() {
+
+		// -- Properties Panel --
+		if (ImGui::Begin("Properties")) {
+			if (m_selectedEntity) {
+				displayComponents(m_selectedEntity);
+
+				if (ImGui::Button("Add Component")) ImGui::OpenPopup("AddComponent");
+				if (ImGui::BeginPopup("AddComponent")) {
+
+					drawAddComponent<TransformComponent>("Transform");
+					drawAddComponent<MeshComponent>("Mesh");
+					drawAddComponent<MaterialComponent>("Material");
+					drawAddComponent<CameraComponent>("Camera");
+					drawAddComponent<ConstantBufferComponent>("Upload Buffer");
+
+					ImGui::EndPopup();
+				}
+
+			}
+		}
+		ImGui::End();
+
+		// -- Scene Hierarchy Panel --
 		if (ImGui::Begin("Scene Hierarchy")) {
 
 			for (auto e : m_context->getRegistry().view<entt::entity>()) {
@@ -36,14 +58,62 @@ namespace Axion {
 			}
 
 		}
-		ImGui::End();
 
-		if (ImGui::Begin("Properties")) {
-			if (m_selectedEntity) {
-				displayComponents(m_selectedEntity);
-			}
+		// right click on blank space
+		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
+			if (ImGui::MenuItem("Create Entity")) { m_context->createEntity("Empty Entity"); }
+			ImGui::EndPopup();
 		}
 		ImGui::End();
+
+	}
+
+	void SceneHierarchyPanel::drawVec3Control(const std::string& label, Vec3& values, float resetValue, float columnWidth) {
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.c_str());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y + 2.0f;
+		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+		if (ImGui::Button("X", buttonSize)) { values.x = resetValue; }
+		ImGui::PopStyleColor(3);
+		ImGui::SameLine();
+		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		if (ImGui::Button("Y", buttonSize)) { values.y = resetValue; }
+		ImGui::PopStyleColor(3);
+		ImGui::SameLine();
+		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		if (ImGui::Button("Z", buttonSize)) { values.z = resetValue; }
+		ImGui::PopStyleColor(3);
+		ImGui::SameLine();
+		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleVar();
+		ImGui::Columns(1);
+		ImGui::PopID();
 	}
 
 	void SceneHierarchyPanel::displayEntity(Entity entity) {
@@ -52,12 +122,24 @@ namespace Axion {
 		ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, name.c_str());
 
-		if (ImGui::IsItemClicked()) {
-			m_selectedEntity = entity;
+		if (ImGui::IsItemClicked()) { m_selectedEntity = entity; }
+
+		bool entityDeleted = false;
+		if (ImGui::BeginPopupContextItem()) {
+			if (ImGui::MenuItem("Delete Entity")) { entityDeleted = true; }
+			ImGui::EndPopup();
 		}
 
 		if (opened) {
 			ImGui::TreePop();
+		}
+
+		// delete entity at the end if it was deleted to allow child entities to work
+		if (entityDeleted) {
+			m_context->destroyEntity(entity);
+			if (m_selectedEntity == entity) {
+				m_selectedEntity = {};
+			}
 		}
 
 	}
@@ -75,44 +157,52 @@ namespace Axion {
 			}
 		}
 
-		if (entity.hasComponent<TransformComponent>()) {
-			if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform")) {
-				auto& component = entity.getComponent<TransformComponent>();
-				auto& position = component.position;
-				auto& rotation = component.rotation;
-				auto& scale = component.scale;
+		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
 
-				ImGui::DragFloat3("Position", position.data(), 0.05f);
-				ImGui::DragFloat3("Rotation", rotation.data(), 0.05f);
-				ImGui::DragFloat3("Scale", scale.data(), 0.05f, 0.0f, 100.0f);
+		// TransformComponent
+		drawComponentInfo<TransformComponent>("Transform", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<TransformComponent>();
+			auto& position = component.position;
+			auto& rotation = component.rotation;
+			auto& scale = component.scale;
+			
+			drawVec3Control("Position", position);
+			drawVec3Control("Rotation", rotation);
+			drawVec3Control("Scale", scale, 1.0f);
+		});
 
-				ImGui::TreePop();
-			}
-		}
 
-		if (entity.hasComponent<MeshComponent>()) {
-			if (ImGui::TreeNodeEx((void*)typeid(MeshComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Mesh")) {
-				ImGui::TreePop();
-			}
-		}
+		// MeshComponent
+		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, []() {
+		});
 
-		if (entity.hasComponent<MaterialComponent>()) {
-			if (ImGui::TreeNodeEx((void*)typeid(MaterialComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Material")) {
-				auto& component = entity.getComponent<MaterialComponent>();
+
+		// MaterialComponent
+		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<MaterialComponent>();
+			if (component.material) {
+				// Material is not a nullptr
 				ImGui::Text(component.getName().c_str());
 				ImGui::Text(component.material->getShader()->getName().c_str());
 				ImGui::ColorPicker4("Color", component.getColor().data());
-
-				ImGui::TreePop();
 			}
-		}
-
-		if (entity.hasComponent<CameraComponent>()) {
-			if (ImGui::TreeNodeEx((void*)typeid(CameraComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Camera")) {
-				ImGui::TreePop();
+			else {
+				// Material is a nullptr
+				ImGui::Text("Unknown Material");
+				ImGui::Text("Unknown Shader");
+				ImGui::Text("Unknown Color");
 			}
-		}
+		});
 
+
+		// CameraComponent
+		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, []() {
+		});
+
+
+		// ConstantBufferComponent
+		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, []() {
+		});
 	}
 
 }

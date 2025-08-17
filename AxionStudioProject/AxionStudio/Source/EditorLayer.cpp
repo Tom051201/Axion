@@ -107,7 +107,7 @@ namespace Axion {
 		auto cubeCB4 = ConstantBuffer::create(sizeof(ObjectBuffer));
 
 		auto cube2 = m_activeScene->createEntity("Cube2");
-		cube2.getComponent<TransformComponent>().position = Vec3::zero();
+		cube2.getComponent<TransformComponent>().position = { 1.5f, 0.0f, 0.0f };
 		cube2.getComponent<TransformComponent>().rotation = Vec3::zero();
 		cube2.getComponent<TransformComponent>().scale = Vec3::one();
 		cube2.addComponent<MeshComponent>(cubeMesh2);
@@ -115,7 +115,7 @@ namespace Axion {
 		cube2.addComponent<ConstantBufferComponent>(cubeCB2);
 
 		auto cube3 = m_activeScene->createEntity("Cube3");
-		cube3.getComponent<TransformComponent>().position = Vec3::zero();
+		cube3.getComponent<TransformComponent>().position = { 3.0f, 0.0f, 0.0f };
 		cube3.getComponent<TransformComponent>().rotation = Vec3::zero();
 		cube3.getComponent<TransformComponent>().scale = Vec3::one();
 		cube3.addComponent<MeshComponent>(cubeMesh3);
@@ -123,7 +123,7 @@ namespace Axion {
 		cube3.addComponent<ConstantBufferComponent>(cubeCB3);
 
 		auto cube4 = m_activeScene->createEntity("Cube4");
-		cube4.getComponent<TransformComponent>().position = Vec3::zero();
+		cube4.getComponent<TransformComponent>().position = { 4.5f, 0.0f, 0.0f };
 		cube4.getComponent<TransformComponent>().rotation = Vec3::zero();
 		cube4.getComponent<TransformComponent>().scale = Vec3::one();
 		cube4.addComponent<MeshComponent>(cubeMesh4);
@@ -182,6 +182,7 @@ namespace Axion {
 
 	void EditorLayer::onEvent(Event& e) {
 		m_editorCamera.onEvent(e);
+		m_activeScene->onEvent(e);
 		
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
@@ -305,11 +306,6 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
-		if (e.getKeyCode() == KeyCode::T) {
-			Application::get().setGraphicsBackend(RendererAPI::DirectX12);
-			Application::get().setWindowTitle("Axion Studio - DirectX");
-		}
-
 		return false;
 	}
 

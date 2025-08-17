@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
+#include "AxionEngine/Source/events/RenderingEvents.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"
 #include "AxionEngine/Platform/opengl/OpenGL3Context.h"
@@ -14,12 +15,19 @@ namespace Axion {
 		DirectX::XMMATRIX viewProjection;
 	};
 
+
 	static SceneData* s_sceneData;
 	static Ref<ConstantBuffer> s_sceneUploadBuffer;
 
+	struct RendererData {
+		std::function<void(Event&)> eventCallback;
+	};
+
+	static RendererData* s_rendererData;
+
 	RendererAPI Renderer::s_api = RendererAPI::DirectX12;
 
-	void Renderer::initialize(Window* window) {
+	void Renderer::initialize(Window* window, std::function<void(Event&)> eventCallback) {
 
 		// setup backend specific graphics context
 		switch (s_api) {
@@ -32,7 +40,11 @@ namespace Axion {
 		// setup scene data
 		s_sceneData = new SceneData();
 		s_sceneUploadBuffer = ConstantBuffer::create(sizeof(SceneData));
-		
+
+		// setup renderer data
+		s_rendererData = new RendererData();
+		s_rendererData->eventCallback = eventCallback;
+
 		// setup renderer
 		Renderer2D::initialize();
 
@@ -51,10 +63,18 @@ namespace Axion {
 
 	void Renderer::prepareRendering() {
 		GraphicsContext::get()->prepareRendering();
+
+		// create RenderingPreparedEvent
+		RenderingPreparedEvent ev;
+		s_rendererData->eventCallback(ev);
 	}
 
 	void Renderer::finishRendering() {
 		GraphicsContext::get()->finishRendering();
+		
+		// create RenderingFinishedEvent
+		RenderingFinishedEvent ev;
+		s_rendererData->eventCallback(ev);
 	}
 
 	void Renderer::beginScene(const Camera& camera) {

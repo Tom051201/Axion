@@ -10,7 +10,8 @@ namespace Axion {
 		WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
 		ApplicationTick, ApplicationUpdate, ApplicationRender,
 		KeyPressed, KeyReleased, KeyTyped,
-		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
+		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
+		RenderingPrepared, RenderingFinished
 	};
 
 	enum EventCategory {

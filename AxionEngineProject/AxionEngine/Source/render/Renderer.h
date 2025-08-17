@@ -17,7 +17,7 @@ namespace Axion {
 	class Renderer {
 	public:
 
-		static void initialize(Window* window);
+		static void initialize(Window* window, std::function<void(Event&)> eventCallback);
 		static void release();
 
 		static void prepareRendering();
