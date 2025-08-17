@@ -23,6 +23,7 @@ project "AxionEngine"
 		".",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.GLAD}",
+		"%{IncludeDir.yaml_cpp}",
 		"AxionEngine/Source",
 		"AxionEngine/Vendor/spdlog/include",
 		"AxionEngine/Vendor/d3d12"
@@ -32,7 +33,8 @@ project "AxionEngine"
 	
 	links {
 		"ImGui",
-		"GLAD"
+		"GLAD",
+		"yaml-cpp"
 	}
 	
 	filter "system:windows"
