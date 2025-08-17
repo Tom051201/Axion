@@ -12,7 +12,8 @@ project "yaml-cpp"
 	}
 
 	includedirs {
-		"include"
+		"include",
+		"src"
 	}
 
 	filter "system:windows"

@@ -70,16 +70,6 @@ namespace Axion {
 
 
 
-	struct SpriteRendererComponent {
-		Vec4 color = Vec4::one();
-
-		SpriteRendererComponent() = default;
-		SpriteRendererComponent(const SpriteRendererComponent&) = default;
-		SpriteRendererComponent(const Vec4& color) : color(color) {}
-	};
-
-
-
 	struct CameraComponent {
 		Camera camera;
 		bool isPrimary = false;

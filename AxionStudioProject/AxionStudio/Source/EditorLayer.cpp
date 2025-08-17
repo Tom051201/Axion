@@ -2,6 +2,7 @@
 
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/core/PlatformInfo.h"
+#include "AxionEngine/Source/scene/SceneSerializer.h"
 
 namespace Axion {
 
@@ -135,6 +136,10 @@ namespace Axion {
 		m_camEntity.getComponent<CameraComponent>().isPrimary = true;
 
 		Application::get().setWindowTitle("Axion Studio - DirectX");
+
+
+		SceneSerializer serializer(m_activeScene);
+		serializer.serializeText("AxionStudio/Assets/scenes/Example.axion");
 	}
 
 	void EditorLayer::onDetach() {

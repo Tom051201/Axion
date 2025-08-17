@@ -51,6 +51,7 @@ namespace Axion {
 		void flushDestroyedEntities();
 
 		friend class Entity;
+		friend class SceneSerializer;
 
 	};
 

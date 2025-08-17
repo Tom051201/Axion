@@ -26,7 +26,8 @@ project "AxionEngine"
 		"%{IncludeDir.yaml_cpp}",
 		"AxionEngine/Source",
 		"AxionEngine/Vendor/spdlog/include",
-		"AxionEngine/Vendor/d3d12"
+		"AxionEngine/Vendor/d3d12",
+		"AxionEngine/Vendor/yaml-cpp/include"
 	}
 	
 	libdirs {}
@@ -43,7 +44,8 @@ project "AxionEngine"
 		defines {
 			"AX_PLATFORM_WINDOWS",
 			"_CRT_SECURE_NO_WARNINGS",
-			"FMT_UNICODE"
+			"FMT_UNICODE",
+			"YAML_CPP_STATIC_DEFINE"
 		}
 	
 	filter "configurations:Debug"
