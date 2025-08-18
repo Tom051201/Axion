@@ -1,7 +1,7 @@
 #include "axpch.h"
 #include "D12Shader.h"
 
-#include "AxionEngine/Source/render/DataTypes.h"
+#include "AxionEngine/Source/render/Vertex.h"
 #include "AxionEngine/Source/render/GraphicsContext.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"

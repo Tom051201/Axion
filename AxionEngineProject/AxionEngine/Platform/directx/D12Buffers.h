@@ -2,8 +2,6 @@
 
 #include "AxionEngine/Source/render/Buffers.h"
 
-#include "AxionEngine/Platform/directx/D12DataTypes.h"
-
 namespace Axion {
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -36,7 +34,7 @@ namespace Axion {
 
 		uint32_t m_vertexCount = 0;
 		uint32_t m_size = 0;
-		uint32_t m_stride = sizeof(D12Vertex);
+		uint32_t m_stride = sizeof(Vertex);
 		BufferLayout m_layout;
 	};
 

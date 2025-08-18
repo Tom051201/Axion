@@ -1,9 +1,8 @@
 #pragma once
 
 #include "AxionEngine/Source/core/Core.h"
-
 #include "AxionEngine/Source/render/Buffers.h"
-#include "AxionEngine/Source/render/DataTypes.h"
+#include "AxionEngine/Source/render/Vertex.h"
 
 namespace Axion {
 

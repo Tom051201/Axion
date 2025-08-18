@@ -36,60 +36,22 @@ namespace Axion {
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
 
-
-		std::vector<Axion::Vertex> vertices = {
-			// Front face
-			Axion::Vertex(-0.5f, -0.5f,  0.5f,   1, 0, 0, 1,   0.0f, 0.0f),
-			Axion::Vertex(0.5f, -0.5f,  0.5f,   0, 1, 0, 1,   1.0f, 0.0f),
-			Axion::Vertex(0.5f,  0.5f,  0.5f,   0, 0, 1, 1,   1.0f, 1.0f),
-			Axion::Vertex(-0.5f,  0.5f,  0.5f,   1, 1, 0, 1,   0.0f, 1.0f),
-
-			// Back face
-			Axion::Vertex(-0.5f, -0.5f, -0.5f,   1, 0, 1, 1,   1.0f, 0.0f),
-			Axion::Vertex(0.5f, -0.5f, -0.5f,   0, 1, 1, 1,   0.0f, 0.0f),
-			Axion::Vertex(0.5f,  0.5f, -0.5f,   1, 1, 1, 1,   0.0f, 1.0f),
-			Axion::Vertex(-0.5f,  0.5f, -0.5f,   0, 0, 0, 1,   1.0f, 1.0f)
-		};
-		std::vector<uint32_t> indices = {
-			// Front face
-			0, 1, 2,
-			2, 3, 0,
-
-			// Right face
-			1, 5, 6,
-			6, 2, 1,
-
-			// Back face
-			5, 4, 7,
-			7, 6, 5,
-
-			// Left face
-			4, 0, 3,
-			3, 7, 4,
-
-			// Top face
-			3, 2, 6,
-			6, 7, 3,
-
-			// Bottom face
-			4, 5, 1,
-			1, 0, 4
-		};
-		auto cubeMesh = Mesh::create(vertices, indices);
+		AssetHandle<Mesh> meshHandle = AssetManager::loadMesh("AxionStudio/Assets/meshes/cubeBase.obj");
+		Ref<Mesh> cubeMesh = AssetManager::get(meshHandle);
 
 		ShaderSpecification shaderSpec;
 		shaderSpec.name = "Shader3D";
 		shaderSpec.vertexLayout = {
 			{ "POSITION", Axion::ShaderDataType::Float3 },
-			{ "COLOR", Axion::ShaderDataType::Float4 },
+			{ "NORMAL", Axion::ShaderDataType::Float3 },
 			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
 		};
 		Ref<Shader> shader = Shader::create(shaderSpec);
 		shader->compileFromFile("AxionStudio/Assets/shaders/PositionShader.hlsl");
 		auto cubeMaterial = Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
-
+		
 		auto cubeCB = ConstantBuffer::create(sizeof(ObjectBuffer));
-
+		
 		auto cube = m_activeScene->createEntity("Cube");
 		cube.getComponent<TransformComponent>().position = Vec3::zero();
 		cube.getComponent<TransformComponent>().rotation = Vec3::zero();
@@ -97,16 +59,16 @@ namespace Axion {
 		cube.addComponent<MeshComponent>(cubeMesh);
 		cube.addComponent<MaterialComponent>(cubeMaterial);
 		cube.addComponent<ConstantBufferComponent>(cubeCB);
-
-
-		auto cubeMesh2 = Mesh::create(vertices, indices);
-		auto cubeMesh3 = Mesh::create(vertices, indices);
-		auto cubeMesh4 = Mesh::create(vertices, indices);
-
+		
+		
+		auto cubeMesh2 = AssetManager::get(meshHandle);
+		auto cubeMesh3 = AssetManager::get(meshHandle);
+		auto cubeMesh4 = AssetManager::get(meshHandle);
+		
 		auto cubeCB2 = ConstantBuffer::create(sizeof(ObjectBuffer));
 		auto cubeCB3 = ConstantBuffer::create(sizeof(ObjectBuffer));
 		auto cubeCB4 = ConstantBuffer::create(sizeof(ObjectBuffer));
-
+		
 		auto cube2 = m_activeScene->createEntity("Cube2");
 		cube2.getComponent<TransformComponent>().position = { 1.5f, 0.0f, 0.0f };
 		cube2.getComponent<TransformComponent>().rotation = Vec3::zero();
@@ -114,7 +76,7 @@ namespace Axion {
 		cube2.addComponent<MeshComponent>(cubeMesh2);
 		cube2.addComponent<MaterialComponent>(cubeMaterial);
 		cube2.addComponent<ConstantBufferComponent>(cubeCB2);
-
+		
 		auto cube3 = m_activeScene->createEntity("Cube3");
 		cube3.getComponent<TransformComponent>().position = { 3.0f, 0.0f, 0.0f };
 		cube3.getComponent<TransformComponent>().rotation = Vec3::zero();
@@ -122,7 +84,7 @@ namespace Axion {
 		cube3.addComponent<MeshComponent>(cubeMesh3);
 		cube3.addComponent<MaterialComponent>(cubeMaterial);
 		cube3.addComponent<ConstantBufferComponent>(cubeCB3);
-
+		
 		auto cube4 = m_activeScene->createEntity("Cube4");
 		cube4.getComponent<TransformComponent>().position = { 4.5f, 0.0f, 0.0f };
 		cube4.getComponent<TransformComponent>().rotation = Vec3::zero();

@@ -152,7 +152,7 @@ namespace Axion {
 		YAML::Node entities = data["Entities"];
 		if (entities) {
 			for (auto entity : entities) {
-				uint64_t uuid = entity["Entity"].as<uint64_t>(); // TODO :
+				uint64_t uuid = entity["Entity"].as<uint64_t>(); // TODO
 
 				// -- TagComponent --
 				std::string name;

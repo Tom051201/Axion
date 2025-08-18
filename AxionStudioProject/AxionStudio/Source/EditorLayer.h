@@ -57,7 +57,6 @@ namespace Axion {
 
 		bool onWindowResize(WindowResizeEvent& e);
 		bool onKeyPressed(KeyPressedEvent& e);
-
 	};
 
 }

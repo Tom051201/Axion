@@ -15,12 +15,6 @@ namespace Axion {
 		m_vertexCount = static_cast<uint32_t>(vertices.size());
 		m_size = m_stride * m_vertexCount;
 
-		std::vector<D12Vertex> d12vertices;
-		d12vertices.reserve(m_vertexCount);
-		for (const auto& v : vertices) {
-			d12vertices.emplace_back(v);
-		}
-
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_size);
 
@@ -42,7 +36,7 @@ namespace Axion {
 		hr = m_buffer->Map(0, &readRange, &mappedData);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to map vertex buffer");
 
-		memcpy(mappedData, d12vertices.data(), m_size);
+		memcpy(mappedData, vertices.data(), m_size);
 		m_buffer->Unmap(0, nullptr);
 
 		// Fill buffer view

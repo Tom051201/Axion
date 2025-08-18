@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/core/Timer.h"
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
@@ -18,7 +19,7 @@
 #include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Material.h"
-#include "AxionEngine/Source/render/DataTypes.h"
+#include "AxionEngine/Source/render/Vertex.h"
 #include "AxionEngine/Source/render/OrthographicCamera.h"
 #include "AxionEngine/Source/render/OrthographicCameraController.h"
 

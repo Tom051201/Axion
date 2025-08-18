@@ -2,7 +2,7 @@
 #include "axpch.h"
 
 #include "AxionEngine/Source/core/Core.h"
-#include "AxionEngine/Source/render/DataTypes.h"
+#include "AxionEngine/Source/render/Vertex.h"
 
 namespace Axion {
 

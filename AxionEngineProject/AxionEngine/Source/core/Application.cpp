@@ -2,6 +2,7 @@
 #include "Application.h"
 
 #include "AxionEngine/Source/render/Renderer.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 namespace Axion {
 
@@ -18,6 +19,8 @@ namespace Axion {
 		Renderer::setAPI(RendererAPI::DirectX12);
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
+		AssetManager::initialize();
+
 		m_imGuiLayer = new ImGuiLayer();
 		pushOverlay(m_imGuiLayer);
 	}
@@ -25,6 +28,8 @@ namespace Axion {
 	Application::~Application() {
 		removeOverlay(m_imGuiLayer);
 		Renderer::release();
+
+		AssetManager::release();
 	}
 
 	void Application::onEvent(Event& e) {

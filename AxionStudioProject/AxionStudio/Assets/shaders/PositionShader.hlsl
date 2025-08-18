@@ -3,13 +3,13 @@ cbuffer SceneBuffer : register(b0) {
 };
 
 cbuffer ObjectBuffer : register(b1) {
-	float4 u_color;	// not needed
+	float4 u_color;
 	float4x4 u_modelMatrix;
 };
 
 struct VSInput {
 	float3 pos : POSITION;
-	float4 col : COLOR;
+	float3 normal : NORMAL;
 	float2 uv  : TEXCOORD;
 };
 

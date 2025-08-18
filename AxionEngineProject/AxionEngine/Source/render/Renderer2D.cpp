@@ -19,10 +19,10 @@ namespace Axion {
 		s_rendererData = new RendererData();
 
 		std::vector<Vertex> vertices = {
-			Vertex(-0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 1.0f,		0.0f, 0.0f),
-			Vertex(0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f,		1.0f, 0.0f),
-			Vertex(0.5f,  0.5f, 0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		1.0f, 1.0f),
-			Vertex(-0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f, 1.0f,		0.0f, 1.0f)
+			Vertex(-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		0.0f, 0.0f),
+			Vertex( 0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		1.0f, 0.0f),
+			Vertex( 0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		1.0f, 1.0f),
+			Vertex(-0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		0.0f, 1.0f)
 		};
 		std::vector<uint32_t> indices = { 0, 2, 1,	2, 0, 3 };
 		s_rendererData->quadMesh = Mesh::create(vertices, indices);
