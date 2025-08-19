@@ -73,8 +73,8 @@ namespace Axion {
 
 		Vertex::normalizeVertices(vertices);
 
-		Ref<Mesh> mesh = Mesh::create(vertices, indices);
 		AssetHandle<Mesh> handle(path);
+		Ref<Mesh> mesh = Mesh::create(handle, vertices, indices);
 		s_meshes[handle] = mesh;
 
 		return handle;

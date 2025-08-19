@@ -10,6 +10,12 @@
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 
+#include "AxionEngine/Source/events/Event.h"
+#include "AxionEngine/Source/events/KeyEvent.h"
+#include "AxionEngine/Source/events/MouseEvent.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
+#include "AxionEngine/Source/events/RenderingEvent.h"
+
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
 #include "AxionEngine/Source/render/Renderer3D.h"

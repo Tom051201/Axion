@@ -9,45 +9,23 @@ Entities:
       Scale: [1, 1, 1]
   - Entity: 111111
     TagComponent:
-      Tag: Cube4
+      Tag: Homer
     TransformComponent:
-      Translation: [4.5, 0, 0]
+      Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      {}
-    MaterialComponent:
-      {}
-  - Entity: 111111
-    TagComponent:
-      Tag: Cube3
-    TransformComponent:
-      Translation: [3, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    MeshComponent:
-      {}
-    MaterialComponent:
-      {}
-  - Entity: 111111
-    TagComponent:
-      Tag: Cube2
-    TransformComponent:
-      Translation: [1.5, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    MeshComponent:
-      {}
+      Path: AxionStudio/Assets/meshes/homer.obj
     MaterialComponent:
       {}
   - Entity: 111111
     TagComponent:
       Tag: Cube
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [1, 1, 1]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      {}
+      Path: AxionStudio/Assets/meshes/cubeBase.obj
     MaterialComponent:
       {}

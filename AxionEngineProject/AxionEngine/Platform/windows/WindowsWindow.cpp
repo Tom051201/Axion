@@ -156,8 +156,9 @@ namespace Axion {
 				}
 				case WM_KEYDOWN: case WM_SYSKEYDOWN: {
 					int keycode = static_cast<int>(wparam);
-					int repeatCount = (lparam & 0xFFFF);
-					KeyPressedEvent ev(WindowsInputMapper::toAxionKeyCode(keycode), repeatCount);
+					bool wasPreviouslyDown = (lparam & (1 << 30)) != 0;
+					bool isRepeat = wasPreviouslyDown;
+					KeyPressedEvent ev(WindowsInputMapper::toAxionKeyCode(keycode), isRepeat ? 1 : 0);
 					window->m_data.eventCallback(ev);
 					break;
 				}

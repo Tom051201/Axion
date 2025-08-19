@@ -3,7 +3,8 @@
 
 namespace Axion {
 
-	OpenGL3Mesh::OpenGL3Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
+	OpenGL3Mesh::OpenGL3Mesh(const AssetHandle<Mesh>& handle, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
+		: m_handle(handle) {
 		m_vertexBuffer = std::dynamic_pointer_cast<OpenGL3VertexBuffer>(VertexBuffer::create(vertices));
 		m_indexBuffer = std::dynamic_pointer_cast<OpenGL3IndexBuffer>(IndexBuffer::create(indices));
 	}

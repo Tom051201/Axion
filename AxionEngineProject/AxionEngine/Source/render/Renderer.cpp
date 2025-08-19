@@ -4,7 +4,7 @@
 #include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
-#include "AxionEngine/Source/events/RenderingEvents.h"
+#include "AxionEngine/Source/events/RenderingEvent.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"
 #include "AxionEngine/Platform/opengl/OpenGL3Context.h"

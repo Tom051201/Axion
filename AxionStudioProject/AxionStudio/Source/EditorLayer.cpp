@@ -3,6 +3,7 @@
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/core/PlatformInfo.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
+#include "AxionEngine/Source/utils/PlatformUtils.h"
 
 namespace Axion {
 
@@ -19,6 +20,8 @@ namespace Axion {
 		m_sceneHierarchyPanel->setup(m_activeScene);
 		m_editorCameraPanel = std::make_unique<EditorCameraPanel>();
 		m_editorCameraPanel->setup(&m_editorCamera);
+		m_contentBrowserPanel = std::make_unique<ContentBrowserPanel>();
+		m_contentBrowserPanel->setup();
 
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
@@ -39,6 +42,9 @@ namespace Axion {
 		AssetHandle<Mesh> meshHandle = AssetManager::loadMesh("AxionStudio/Assets/meshes/cubeBase.obj");
 		Ref<Mesh> cubeMesh = AssetManager::get(meshHandle);
 
+		AssetHandle<Mesh> homerHandle = AssetManager::loadMesh("AxionStudio/Assets/meshes/homer.obj");
+		Ref<Mesh> homerMesh = AssetManager::get(homerHandle);
+
 		ShaderSpecification shaderSpec;
 		shaderSpec.name = "Shader3D";
 		shaderSpec.vertexLayout = {
@@ -53,45 +59,21 @@ namespace Axion {
 		auto cubeCB = ConstantBuffer::create(sizeof(ObjectBuffer));
 		
 		auto cube = m_activeScene->createEntity("Cube");
-		cube.getComponent<TransformComponent>().position = Vec3::zero();
+		cube.getComponent<TransformComponent>().position = Vec3::one();
 		cube.getComponent<TransformComponent>().rotation = Vec3::zero();
 		cube.getComponent<TransformComponent>().scale = Vec3::one();
 		cube.addComponent<MeshComponent>(cubeMesh);
 		cube.addComponent<MaterialComponent>(cubeMaterial);
 		cube.addComponent<ConstantBufferComponent>(cubeCB);
-		
-		
-		auto cubeMesh2 = AssetManager::get(meshHandle);
-		auto cubeMesh3 = AssetManager::get(meshHandle);
-		auto cubeMesh4 = AssetManager::get(meshHandle);
-		
-		auto cubeCB2 = ConstantBuffer::create(sizeof(ObjectBuffer));
-		auto cubeCB3 = ConstantBuffer::create(sizeof(ObjectBuffer));
-		auto cubeCB4 = ConstantBuffer::create(sizeof(ObjectBuffer));
-		
-		auto cube2 = m_activeScene->createEntity("Cube2");
-		cube2.getComponent<TransformComponent>().position = { 1.5f, 0.0f, 0.0f };
-		cube2.getComponent<TransformComponent>().rotation = Vec3::zero();
-		cube2.getComponent<TransformComponent>().scale = Vec3::one();
-		cube2.addComponent<MeshComponent>(cubeMesh2);
-		cube2.addComponent<MaterialComponent>(cubeMaterial);
-		cube2.addComponent<ConstantBufferComponent>(cubeCB2);
-		
-		auto cube3 = m_activeScene->createEntity("Cube3");
-		cube3.getComponent<TransformComponent>().position = { 3.0f, 0.0f, 0.0f };
-		cube3.getComponent<TransformComponent>().rotation = Vec3::zero();
-		cube3.getComponent<TransformComponent>().scale = Vec3::one();
-		cube3.addComponent<MeshComponent>(cubeMesh3);
-		cube3.addComponent<MaterialComponent>(cubeMaterial);
-		cube3.addComponent<ConstantBufferComponent>(cubeCB3);
-		
-		auto cube4 = m_activeScene->createEntity("Cube4");
-		cube4.getComponent<TransformComponent>().position = { 4.5f, 0.0f, 0.0f };
-		cube4.getComponent<TransformComponent>().rotation = Vec3::zero();
-		cube4.getComponent<TransformComponent>().scale = Vec3::one();
-		cube4.addComponent<MeshComponent>(cubeMesh4);
-		cube4.addComponent<MaterialComponent>(cubeMaterial);
-		cube4.addComponent<ConstantBufferComponent>(cubeCB4);
+
+		auto homerCB = ConstantBuffer::create(sizeof(ObjectBuffer));
+		auto homer = m_activeScene->createEntity("Homer");
+		homer.getComponent<TransformComponent>().position = Vec3::zero();
+		homer.getComponent<TransformComponent>().rotation = Vec3::zero();
+		homer.getComponent<TransformComponent>().scale = Vec3::one();
+		homer.addComponent<MeshComponent>(homerMesh);
+		homer.addComponent<MaterialComponent>(cubeMaterial);
+		homer.addComponent<ConstantBufferComponent>(homerCB);
 
 		m_camEntity = m_activeScene->createEntity("Camera");
 		m_camEntity.addComponent<CameraComponent>(Mat4::orthographic(1080, 720, 0.1f, 100.0f));
@@ -110,6 +92,7 @@ namespace Axion {
 		m_systemInfoPanel->shutdown();
 		m_sceneHierarchyPanel->shutdown();
 		m_editorCameraPanel->shutdown();
+		m_contentBrowserPanel->shutdown();
 	}
 
 	void EditorLayer::onUpdate(Timestep ts) {
@@ -140,8 +123,6 @@ namespace Axion {
 			}
 
 			m_frameBuffer->unbind();
-
-			// TODO: check transpose for opengl when rendering when nothing is rendered!
 		}
 
 		Renderer::renderToSwapChain();
@@ -154,6 +135,7 @@ namespace Axion {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(EditorLayer::onWindowResize));
+		dispatcher.dispatch<RenderingFinishedEvent>(AX_BIND_EVENT_FN(EditorLayer::onRenderingFinished));
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -199,6 +181,7 @@ namespace Axion {
 		if (m_showSystemInfoPanel) { m_systemInfoPanel->onGuiRender(); }
 		if (m_showSceneHierarchyPanel) { m_sceneHierarchyPanel->onGuiRender(); }
 		if (m_showEditorCameraPanel) { m_editorCameraPanel->onGuiRender(); }
+		if (m_showContentBrowserPanel) { m_contentBrowserPanel->onGuiRender(); }
 		
 	
 		// menu bar
@@ -207,11 +190,22 @@ namespace Axion {
 
 			// file menu
 			if (ImGui::BeginMenu("  File  ")) {
-				if (ImGui::MenuItem("New Scene", "Ctrl+N")) { AX_LOG_WARN("Creating a new scene is not supported yet!"); }
-				if (ImGui::MenuItem("Open Project", "Ctrl+O")) { AX_LOG_WARN("Opening a project is not supported yet!"); }
+				if (ImGui::MenuItem("New Scene", "Ctrl+N")) {
+					m_newSceneRequested = true;
+				}
+				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
+
+					m_loadSceneRequested = true;
+				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) { AX_LOG_WARN("Saving a scene is not supported yet!"); }
-				if (ImGui::MenuItem("Save Scene As", "Ctrl+Shift+S")) { AX_LOG_WARN("Saving a scene is not supported yet!"); }
+				if (ImGui::MenuItem("Save Scene As", "Ctrl+Shift+S")) {
+					std::string filePath = FileDialogs::saveFile("Axion Scene (*.axion)\0*.axion\0");
+					if (!filePath.empty()) {
+						SceneSerializer serializer(m_activeScene);
+						serializer.serializeText(filePath);
+					}
+				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Exit")) { Application::get().close(); }
 				ImGui::EndMenu();
@@ -225,6 +219,7 @@ namespace Axion {
 			// view menu
 			if (ImGui::BeginMenu("  View  ")) {
 				ImGui::MenuItem("Scene Hierarchy", nullptr, &m_showSceneHierarchyPanel);
+				ImGui::MenuItem("Content Browser", nullptr, &m_showContentBrowserPanel);
 				ImGui::MenuItem("Editor Camera Properties", nullptr, &m_showEditorCameraPanel);
 				ImGui::EndMenu();
 			}
@@ -273,6 +268,48 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
+		// shortcuts only from here on
+		if (e.getRepeatCount() > 0) return false;
+		bool controlPressed = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
+		bool shiftPressed = Input::isKeyPressed(KeyCode::LeftShift) || Input::isKeyPressed(KeyCode::RightShift);
+		switch (e.getKeyCode()) {
+			case KeyCode::N: {
+				AX_CORE_LOG_WARN("YEA");
+				if (controlPressed) { m_newSceneRequested = true; }
+				break;
+			}
+			case KeyCode::O: {
+				if (controlPressed) { m_loadSceneRequested = true; }
+				break;
+			}
+			case KeyCode::S: {
+				if (controlPressed && shiftPressed) { /*TODO: Save as*/ }
+				break;
+			}
+			default: break;
+		}
+
+		return false;
+	}
+
+	bool EditorLayer::onRenderingFinished(RenderingFinishedEvent& e) {
+		if (m_newSceneRequested) {
+			m_activeScene = std::make_shared<Scene>();
+			m_sceneHierarchyPanel->setContext(m_activeScene);
+			m_newSceneRequested = false;
+		}
+
+		if (m_loadSceneRequested) {
+			std::string path = FileDialogs::openFile("Axion Scene (*.axion)\0*.axion\0");
+			if (!path.empty()) {
+				m_activeScene = std::make_shared<Scene>();
+				m_sceneHierarchyPanel->setContext(m_activeScene);
+				SceneSerializer serializer(m_activeScene);
+				serializer.deserializeText(path);
+			}
+			m_loadSceneRequested = false;
+		}
+
 		return false;
 	}
 

@@ -21,10 +21,10 @@ namespace Axion {
 
 	void SceneHierarchyPanel::setContext(const Ref<Scene>& context) {
 		m_context = context;
+		m_selectedEntity = {};
 	}
 
 	void SceneHierarchyPanel::onGuiRender() {
-
 		// -- Properties Panel --
 		if (ImGui::Begin("Properties")) {
 			if (m_selectedEntity) {
@@ -173,7 +173,11 @@ namespace Axion {
 
 
 		// MeshComponent
-		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, []() {
+		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<MeshComponent>();
+			if (component.mesh) {
+				ImGui::Text(component.mesh->getHandle().path.c_str());
+			}
 		});
 
 

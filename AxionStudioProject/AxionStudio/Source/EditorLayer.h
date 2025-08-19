@@ -9,6 +9,7 @@
 #include "AxionStudio/Source/panels/SystemInfoPanel.h"
 #include "AxionStudio/Source/panels/SceneHierarchyPanel.h"
 #include "AxionStudio/Source/panels/EditorCameraPanel.h"
+#include "AxionStudio/Source/panels/ContentBrowserPanel.h"
 
 namespace Axion {
 
@@ -36,11 +37,13 @@ namespace Axion {
 
 		// panels
 		Scope<SystemInfoPanel> m_systemInfoPanel;
-		bool m_showSystemInfoPanel = false;
 		Scope<SceneHierarchyPanel> m_sceneHierarchyPanel;
-		bool m_showSceneHierarchyPanel = true;
 		Scope<EditorCameraPanel> m_editorCameraPanel;
+		Scope<ContentBrowserPanel> m_contentBrowserPanel;
+		bool m_showSystemInfoPanel = false;
+		bool m_showSceneHierarchyPanel = true;
 		bool m_showEditorCameraPanel = true;
+		bool m_showContentBrowserPanel = true;
 
 		// scene viewport
 		Ref<FrameBuffer> m_frameBuffer;
@@ -55,8 +58,12 @@ namespace Axion {
 
 		Entity m_camEntity;
 
+		bool m_newSceneRequested = false;
+		bool m_loadSceneRequested = false;
+
 		bool onWindowResize(WindowResizeEvent& e);
 		bool onKeyPressed(KeyPressedEvent& e);
+		bool onRenderingFinished(RenderingFinishedEvent& e);
 	};
 
 }

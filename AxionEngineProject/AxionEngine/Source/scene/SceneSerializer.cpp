@@ -101,6 +101,8 @@ namespace Axion {
 			out << YAML::Key << "MeshComponent";
 			out << YAML::BeginMap; // MeshComponent
 			// TODO : add mesh
+			auto& mesh = entity.getComponent<MeshComponent>();
+			out << YAML::Key << "Path" << YAML::Value << mesh.mesh->getHandle().path;
 			out << YAML::EndMap; // MeshComponent
 		}
 

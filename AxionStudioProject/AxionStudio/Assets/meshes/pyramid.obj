@@ -1,0 +1,17 @@
+# Simple pyramid mesh (square base)
+
+o Pyramid
+
+# Vertices
+v  0.0  1.0  0.0    # top vertex
+v -1.0  0.0 -1.0    # base corner 1
+v  1.0  0.0 -1.0    # base corner 2
+v  1.0  0.0  1.0    # base corner 3
+v -1.0  0.0  1.0    # base corner 4
+
+# Faces (using vertex indices)
+f 2 3 4 5    # base
+f 1 2 3      # side 1
+f 1 3 4      # side 2
+f 1 4 5      # side 3
+f 1 5 2      # side 4

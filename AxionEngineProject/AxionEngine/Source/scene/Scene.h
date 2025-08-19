@@ -2,7 +2,7 @@
 
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/render/Camera.h"
-#include "AxionEngine/Source/events/RenderingEvents.h"
+#include "AxionEngine/Source/events/RenderingEvent.h"
 
 #include "AxionEngine/Vendor/entt/entt.hpp"
 

@@ -2,7 +2,7 @@
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/render/Buffers.h"
-#include "AxionEngine/Source/render/Vertex.h"
+#include "AxionEngine/Source/core/AssetHandle.h"
 
 namespace Axion {
 
@@ -20,7 +20,10 @@ namespace Axion {
 
 		virtual uint32_t getIndexCount() const = 0;
 
-		static Ref<Mesh> create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+		virtual const AssetHandle<Mesh>& getHandle() const = 0;
+
+
+		static Ref<Mesh> create(const AssetHandle<Mesh>& handle, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 
 
 	};
