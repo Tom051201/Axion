@@ -1,6 +1,5 @@
 #pragma once
 #include "axpch.h"
-#include "AxionEngine/Vendor/glm/glm.hpp"
 
 namespace Axion {
 
@@ -17,7 +16,7 @@ namespace Axion {
 
 		static Vec2 zero() { return Vec2(0.0f, 0.0f); }
 		static Vec2 one() { return Vec2(1.0f, 1.0f); }
-
+		
 		// Converting to and from XMVECTOR
 		DirectX::XMVECTOR toXM() const {
 			return DirectX::XMVectorSet(x, y, 0.0f, 0.0f);
@@ -43,8 +42,7 @@ namespace Axion {
 
 		// Math operations
 		float dot(const Vec2& other) const {
-			//return DirectX::XMVectorGetX(DirectX::XMVector2Dot(toXM(), other.toXM()));
-			glm::dot(glm::vec2(), glm::vec2());
+			return DirectX::XMVectorGetX(DirectX::XMVector2Dot(toXM(), other.toXM()));
 		}
 
 		float length() const {
@@ -79,7 +77,7 @@ namespace Axion {
 		DirectX::XMVECTOR toXM() const {
 			return DirectX::XMVectorSet(x, y, z, 0.0f);
 		}
-
+		
 		static Vec3 fromXM(DirectX::XMVECTOR vector) {
 			DirectX::XMFLOAT3 result;
 			DirectX::XMStoreFloat3(&result, vector);
@@ -90,7 +88,7 @@ namespace Axion {
 		Vec3 operator+(const Vec3& other) const { return fromXM(DirectX::XMVectorAdd(toXM(), other.toXM())); }
 		Vec3 operator-(const Vec3& other) const { return fromXM(DirectX::XMVectorSubtract(toXM(), other.toXM())); }
 		Vec3 operator*(float scalar) const { return fromXM(DirectX::XMVectorScale(toXM(), scalar)); }
-		Vec3 operator/(float scalar) const { return fromXM(DirectX::XMVectorScale(toXM(), 1.0f / scalar)); }
+		Vec3 operator/(float scalar) const { return fromXM(DirectX::XMVectorScale(toXM(), 1.0f / scalar));}
 		Vec3& operator+=(const Vec3& other) { *this = *this + other; return *this; }
 		Vec3& operator-=(const Vec3& other) { *this = *this - other; return *this; }
 		Vec3& operator*=(float scalar) { *this = *this * scalar; return *this; }
@@ -156,7 +154,7 @@ namespace Axion {
 	////////////////////////////////////////////////////////////////////////////////
 
 	struct alignas(16) Vec4 {
-
+		
 		float x, y, z, w;
 
 		Vec4() : x(0), y(0), z(0), w(0) {}
@@ -178,9 +176,9 @@ namespace Axion {
 		}
 
 		// Operator overloads
-		Vec4 operator+(const Vec4& other) const { return fromXM(DirectX::XMVectorAdd(toXM(), other.toXM())); }
+		Vec4 operator+(const Vec4& other) const {return fromXM(DirectX::XMVectorAdd(toXM(), other.toXM())); }
 		Vec4 operator-(const Vec4& other) const { return fromXM(DirectX::XMVectorSubtract(toXM(), other.toXM())); }
-		Vec4 operator*(float scalar) const { return fromXM(DirectX::XMVectorScale(toXM(), scalar)); }
+		Vec4 operator*(float scalar) const {return fromXM(DirectX::XMVectorScale(toXM(), scalar)); }
 		Vec4 operator/(float scalar) const { return fromXM(DirectX::XMVectorScale(toXM(), 1.0f / scalar)); }
 		Vec4& operator+=(const Vec4& other) { *this = *this + other; return *this; }
 		Vec4& operator-=(const Vec4& other) { *this = *this - other; return *this; }
@@ -239,7 +237,7 @@ namespace Axion {
 		explicit Mat4(const DirectX::XMMATRIX& m) : matrix(m) {}
 
 		DirectX::XMMATRIX toXM() const {
-			return matrix;
+			return matrix; 
 		}
 
 		static Mat4 fromXM(const DirectX::XMMATRIX& m) {
@@ -331,7 +329,7 @@ namespace Axion {
 				TRSData result;
 				result.translation = Vec3::fromXM(translation);
 				result.scale = Vec3::fromXM(scale);
-
+				
 				DirectX::XMFLOAT3 euler;
 				DirectX::XMStoreFloat3(&euler, DirectX::XMQuaternionRotationMatrix(DirectX::XMMatrixRotationQuaternion(rotationQuat)));
 				result.rotationEuler = Vec3(euler.x, euler.y, euler.z);
