@@ -10,16 +10,16 @@ void Sandbox3D::onAttach() {
 
 	std::vector<Axion::Vertex> vertices = {
 		// Front face
-		Axion::Vertex(-0.5f, -0.5f,  0.5f,   1, 0, 0, 1,   0.0f, 0.0f),
-		Axion::Vertex( 0.5f, -0.5f,  0.5f,   0, 1, 0, 1,   1.0f, 0.0f),
-		Axion::Vertex( 0.5f,  0.5f,  0.5f,   0, 0, 1, 1,   1.0f, 1.0f),
-		Axion::Vertex(-0.5f,  0.5f,  0.5f,   1, 1, 0, 1,   0.0f, 1.0f),
-
-		// Back face
-		Axion::Vertex(-0.5f, -0.5f, -0.5f,   1, 0, 1, 1,   1.0f, 0.0f),
-		Axion::Vertex( 0.5f, -0.5f, -0.5f,   0, 1, 1, 1,   0.0f, 0.0f),
-		Axion::Vertex( 0.5f,  0.5f, -0.5f,   1, 1, 1, 1,   0.0f, 1.0f),
-		Axion::Vertex(-0.5f,  0.5f, -0.5f,   0, 0, 0, 1,   1.0f, 1.0f)
+		//Axion::Vertex(-0.5f, -0.5f,  0.5f,   1, 0, 0, 1,   0.0f, 0.0f),
+		//Axion::Vertex( 0.5f, -0.5f,  0.5f,   0, 1, 0, 1,   1.0f, 0.0f),
+		//Axion::Vertex( 0.5f,  0.5f,  0.5f,   0, 0, 1, 1,   1.0f, 1.0f),
+		//Axion::Vertex(-0.5f,  0.5f,  0.5f,   1, 1, 0, 1,   0.0f, 1.0f),
+		//
+		//// Back face
+		//Axion::Vertex(-0.5f, -0.5f, -0.5f,   1, 0, 1, 1,   1.0f, 0.0f),
+		//Axion::Vertex( 0.5f, -0.5f, -0.5f,   0, 1, 1, 1,   0.0f, 0.0f),
+		//Axion::Vertex( 0.5f,  0.5f, -0.5f,   1, 1, 1, 1,   0.0f, 1.0f),
+		//Axion::Vertex(-0.5f,  0.5f, -0.5f,   0, 0, 0, 1,   1.0f, 1.0f)
 	};
 	std::vector<uint32_t> indices = {
 		// Front face
@@ -46,7 +46,7 @@ void Sandbox3D::onAttach() {
 		4, 5, 1,
 		1, 0, 4
 	};
-	m_mesh = Axion::Mesh::create(vertices, indices);
+	//m_mesh = Axion::Mesh::create(vertices, indices);
 
 	Axion::ShaderSpecification shaderSpec;
 	shaderSpec.name = "Shader3D";

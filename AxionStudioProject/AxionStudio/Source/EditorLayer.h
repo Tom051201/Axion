@@ -42,7 +42,7 @@ namespace Axion {
 		Scope<ContentBrowserPanel> m_contentBrowserPanel;
 		bool m_showSystemInfoPanel = false;
 		bool m_showSceneHierarchyPanel = true;
-		bool m_showEditorCameraPanel = true;
+		bool m_showEditorCameraPanel = false;
 		bool m_showContentBrowserPanel = true;
 
 		// scene viewport

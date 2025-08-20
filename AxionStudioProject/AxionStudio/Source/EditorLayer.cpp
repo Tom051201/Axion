@@ -1,5 +1,7 @@
 #include "EditorLayer.h"
 
+#include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
+
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/core/PlatformInfo.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
@@ -99,12 +101,6 @@ namespace Axion {
 
 		m_editorCamera.onUpdate(ts);
 
-		if (m_viewportResized) {
-			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);
-			m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
-			m_viewportResized = false;
-		}
-
 		if (m_viewportDim.x > 0 && m_viewportDim.y > 0) {
 
 			m_frameBuffer->bind();
@@ -163,6 +159,7 @@ namespace Axion {
 		ImGui::Begin("Editor Viewport");
 		m_editorCamera.setIsHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+		
 		if (viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
 			if (m_viewportDim.x != viewportPanelSize.x || m_viewportDim.y != viewportPanelSize.y) {
 				m_viewportDim = { viewportPanelSize.x, viewportPanelSize.y };
@@ -173,6 +170,57 @@ namespace Axion {
 				reinterpret_cast<ImTextureID>(m_frameBuffer->getColorAttachmentHandle()),
 				ImVec2((float)m_frameBuffer->getSpecification().width, (float)m_frameBuffer->getSpecification().height)
 			);
+
+			// Gizmos begin
+			Entity selectedEntity = m_sceneHierarchyPanel->getSelectedEntity();
+			if (selectedEntity) {
+				ImGuizmo::SetOrthographic(false); // TODO: review, maybe not every frame needed
+				ImGuizmo::SetDrawlist();
+				float windowWidth = (float)ImGui::GetWindowWidth();
+				float windowHeight = (float)ImGui::GetWindowHeight();
+				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+
+				// camera
+				const Mat4& cameraView = m_editorCamera.getViewMatrix();
+				const Mat4& cameraProjection = m_editorCamera.getProjectionMatrix();
+
+				// entity transform
+				auto& tc = selectedEntity.getComponent<TransformComponent>();
+				Mat4 worldM = tc.getTransform();
+
+				// to float[16] for ImGuizmo
+				DirectX::XMFLOAT4X4 objF4;
+				DirectX::XMStoreFloat4x4(&objF4, worldM.toXM());
+				float object[16];
+				memcpy(object, &objF4, sizeof(objF4));
+
+				static ImGuizmo::OPERATION currentOp = ImGuizmo::TRANSLATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) currentOp = ImGuizmo::TRANSLATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) currentOp = ImGuizmo::ROTATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) currentOp = ImGuizmo::SCALE;
+
+				ImGuizmo::Manipulate(
+					cameraView.data(),
+					cameraProjection.data(),
+					ImGuizmo::OPERATION::ROTATE,
+					ImGuizmo::LOCAL, // TODO: maybe set to world
+					object
+				);
+
+				if (ImGuizmo::IsUsing()) {
+					DirectX::XMMATRIX newM = DirectX::XMLoadFloat4x4(reinterpret_cast<DirectX::XMFLOAT4X4*>(object));
+					Mat4 updated = Mat4::fromXM(newM);
+					TRSData trs = updated.decompose();
+				
+					tc.position = trs.translation;
+					tc.rotation = trs.rotationEuler;
+					tc.scale = trs.scale;
+				
+					worldM = Mat4::TRS(tc.position, tc.rotation, tc.scale);
+				}
+
+			}
+			// Gizmos end
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -308,6 +356,12 @@ namespace Axion {
 				serializer.deserializeText(path);
 			}
 			m_loadSceneRequested = false;
+		}
+
+		if (m_viewportResized) {
+			m_frameBuffer->resize((uint32_t)m_viewportDim.x, (uint32_t)m_viewportDim.y);
+			m_editorCamera.resize(m_viewportDim.x, m_viewportDim.y);
+			m_viewportResized = false;
 		}
 
 		return false;

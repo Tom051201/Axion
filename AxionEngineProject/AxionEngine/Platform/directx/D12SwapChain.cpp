@@ -219,6 +219,16 @@ namespace Axion {
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndices[m_frameIndex]);
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndices[m_frameIndex]);
 		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+		D3D12_VIEWPORT vp{
+			0.0f, 0.0f,
+			static_cast<float>(m_specification.width),
+			static_cast<float>(m_specification.height),
+			0.0f, 1.0f
+		};
+		D3D12_RECT sc{ 0, 0, (LONG)m_specification.width, (LONG)m_specification.height };
+		cmdList->RSSetViewports(1, &vp);
+		cmdList->RSSetScissorRects(1, &sc);
 	}
 
 	void D12SwapChain::clear(const float clearColor[4]) {

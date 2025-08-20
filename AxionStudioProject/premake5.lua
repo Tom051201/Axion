@@ -25,7 +25,7 @@ project "AxionStudio"
 	links {
 		"AxionEngine"
 	}
-	
+
 	filter "system:windows"
 		systemversion "latest"
 		buildoptions { "/utf-8" }

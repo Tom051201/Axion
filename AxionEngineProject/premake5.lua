@@ -17,7 +17,9 @@ project "AxionEngine"
 		"AxionEngine/Platform/**.cpp",
 		"AxionEngine/Vendor/stb_image/stb_image.h",
 		"AxionEngine/Vendor/stb_image/stb_image.cpp",
-		"AxionEngine/Vendor/tinyobjloader/tiny_obj_loader.h"
+		"AxionEngine/Vendor/tinyobjloader/tiny_obj_loader.h",
+		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.h",
+		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.cpp"
 	}
 	
 	includedirs {
@@ -28,7 +30,8 @@ project "AxionEngine"
 		"AxionEngine/Source",
 		"AxionEngine/Vendor/spdlog/include",
 		"AxionEngine/Vendor/d3d12",
-		"AxionEngine/Vendor/yaml-cpp/include"
+		"AxionEngine/Vendor/yaml-cpp/include",
+		"AxionEngine/Vendor/ImGuizmo"
 	}
 	
 	libdirs {}
@@ -38,6 +41,9 @@ project "AxionEngine"
 		"GLAD",
 		"yaml-cpp"
 	}
+
+	filter "files:AxionEngine/Vendor/ImGuizmo/**.cpp"
+		flags { "NoPCH" }
 	
 	filter "system:windows"
 		systemversion "latest"

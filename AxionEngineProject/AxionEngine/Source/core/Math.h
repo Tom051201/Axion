@@ -212,6 +212,19 @@ namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
+	///// TRS //////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	struct TRSData {
+		// Helper struct for returning values
+		Vec3 translation;
+		Vec3 rotationEuler; // in radians
+		Vec3 scale;
+	};
+
+
+
+	////////////////////////////////////////////////////////////////////////////////
 	///// Mat4 /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
@@ -229,6 +242,12 @@ namespace Axion {
 
 		static Mat4 fromXM(const DirectX::XMMATRIX& m) {
 			return Mat4(m);
+		}
+
+		void setFromFloatArray(const float* arr) {
+			DirectX::XMFLOAT4X4 m;
+			memcpy(&m, arr, sizeof(DirectX::XMFLOAT4X4));
+			matrix = DirectX::XMLoadFloat4x4(&m);
 		}
 
 		static Mat4 identity() {
@@ -301,6 +320,26 @@ namespace Axion {
 			return result;
 		}
 
+		TRSData decompose() const {
+			DirectX::XMVECTOR scale;
+			DirectX::XMVECTOR rotationQuat;
+			DirectX::XMVECTOR translation;
+
+			if (DirectX::XMMatrixDecompose(&scale, &rotationQuat, &translation, matrix)) {
+				TRSData result;
+				result.translation = Vec3::fromXM(translation);
+				result.scale = Vec3::fromXM(scale);
+				
+				DirectX::XMFLOAT3 euler;
+				DirectX::XMStoreFloat3(&euler, DirectX::XMQuaternionRotationMatrix(DirectX::XMMatrixRotationQuaternion(rotationQuat)));
+				result.rotationEuler = Vec3(euler.x, euler.y, euler.z);
+
+				return result;
+			}
+
+			return { Vec3(0,0,0), Vec3(0,0,0), Vec3(1,1,1) };
+		}
+
 		static Mat4 TRS(const Vec3& translation, const Vec3& rotationEuler, const Vec3& scale) {
 			Mat4 t = Mat4::translation(translation);
 			Mat4 r = Mat4::rotation(rotationEuler);
@@ -309,8 +348,38 @@ namespace Axion {
 			return s * r * t;
 		}
 
+		Vec3 getTranslation() const {
+			DirectX::XMFLOAT4X4 m;
+			DirectX::XMStoreFloat4x4(&m, matrix);
+			return Vec3(m._41, m._42, m._43);
+		}
+
+		Vec3 getScale() const {
+			DirectX::XMFLOAT4X4 m;
+			DirectX::XMStoreFloat4x4(&m, matrix);
+
+			Vec3 x(m._11, m._12, m._13);
+			Vec3 y(m._21, m._22, m._23);
+			Vec3 z(m._31, m._32, m._33);
+
+			return Vec3(x.length(), y.length(), z.length());
+		}
+
+		float* data() {
+			DirectX::XMStoreFloat4x4(&cachedF4x4, matrix);
+			return reinterpret_cast<float*>(&cachedF4x4);
+		}
+
+		const float* data() const {
+			DirectX::XMStoreFloat4x4(&cachedF4x4, matrix);
+			return reinterpret_cast<const float*>(&cachedF4x4);
+		}
+
 		Mat4 operator*(const Mat4& other) const { return Mat4(DirectX::XMMatrixMultiply(matrix, other.matrix)); }
 		Mat4& operator*=(const Mat4& other) { matrix = DirectX::XMMatrixMultiply(matrix, other.matrix); return *this; }
+
+	private:
+		mutable DirectX::XMFLOAT4X4 cachedF4x4;
 
 	};
 
@@ -373,7 +442,6 @@ namespace Axion {
 		const float* data() const { return &x; }
 
 	};
-
 
 
 

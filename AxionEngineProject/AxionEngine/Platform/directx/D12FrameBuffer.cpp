@@ -163,6 +163,24 @@ namespace Axion {
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+		// set viewport and scissorRect
+		D3D12_VIEWPORT vp{};
+		vp.TopLeftX = 0.0f;
+		vp.TopLeftY = 0.0f;
+		vp.Width = static_cast<float>(m_specification.width);
+		vp.Height = static_cast<float>(m_specification.height);
+		vp.MinDepth = 0.0f;
+		vp.MaxDepth = 1.0f;
+		cmdList->RSSetViewports(1, &vp);
+
+		D3D12_RECT sc{};
+		sc.left = 0;
+		sc.top = 0;
+		sc.right = static_cast<LONG>(m_specification.width);
+		sc.bottom = static_cast<LONG>(m_specification.height);
+		cmdList->RSSetScissorRects(1, &sc);
+
 	}
 
 	void D12FrameBuffer::unbind() const {

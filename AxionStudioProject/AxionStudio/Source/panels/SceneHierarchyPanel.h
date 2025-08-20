@@ -18,6 +18,8 @@ namespace Axion {
 
 		void onGuiRender();
 
+		Entity getSelectedEntity() const { return m_selectedEntity; }
+
 	private:
 
 		Ref<Scene> m_context = nullptr;

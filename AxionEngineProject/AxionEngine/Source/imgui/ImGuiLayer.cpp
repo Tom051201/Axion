@@ -10,6 +10,7 @@
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.h"
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_opengl3.h"
+#include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
 
 namespace Axion {
 
@@ -91,6 +92,7 @@ namespace Axion {
 
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
 	}
 
 	void ImGuiLayer::endRender() {
