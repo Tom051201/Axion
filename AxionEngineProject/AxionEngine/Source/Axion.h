@@ -26,8 +26,6 @@
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Vertex.h"
-#include "AxionEngine/Source/render/OrthographicCamera.h"
-#include "AxionEngine/Source/render/OrthographicCameraController.h"
 
 #include "AxionEngine/Source/layers/Layer.h"
 
