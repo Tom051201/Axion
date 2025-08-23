@@ -50,20 +50,22 @@ namespace Axion {
 		Vec2 m_viewportDim = { 0.0f, 0.0f };
 		bool m_viewportResized = false;
 		Ref<Scene> m_activeScene;
+		std::string m_activeSceneFilePath;
 		SceneState m_sceneState = SceneState::Editing;
 
 		// ImGui
 		ImGuiDockNodeFlags m_dockspaceFlags = 0;
 		ImGuiWindowFlags m_windowFlags = 0;
 
-		Entity m_camEntity;
-
 		bool m_newSceneRequested = false;
-		bool m_loadSceneRequested = false;
+		bool m_openSceneRequested = false;
+		bool m_saveSceneRequested = false;
+		bool m_saveSceneAsRequested = false;
 
 		bool onWindowResize(WindowResizeEvent& e);
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onRenderingFinished(RenderingFinishedEvent& e);
+
 	};
 
 }

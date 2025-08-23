@@ -23,6 +23,7 @@ namespace Axion {
 		static AssetHandle<Mesh> loadMesh(const std::string& path);
 		static Ref<Mesh> get(const AssetHandle<Mesh>& handle);
 		static const AssetMap<Mesh>& getMeshMap() { return s_meshes; }
+		static bool hasMesh(const AssetHandle<Mesh>& handle);
 
 	private:
 

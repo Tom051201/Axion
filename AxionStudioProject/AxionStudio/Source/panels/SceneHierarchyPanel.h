@@ -3,6 +3,9 @@
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Entity.h"
 
+// TODO : TEMP
+#include "AxionEngine/Source/render/Material.h"
+
 namespace Axion {
 
 	class SceneHierarchyPanel {
@@ -19,6 +22,9 @@ namespace Axion {
 		void onGuiRender();
 
 		Entity getSelectedEntity() const { return m_selectedEntity; }
+
+		// TODO: TEMP
+		Ref<Material> m_basicMaterial;
 
 	private:
 

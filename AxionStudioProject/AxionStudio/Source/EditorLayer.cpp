@@ -41,47 +41,7 @@ namespace Axion {
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
 
-		AssetHandle<Mesh> meshHandle = AssetManager::loadMesh("AxionStudio/Assets/meshes/cubeBase.obj");
-		Ref<Mesh> cubeMesh = AssetManager::get(meshHandle);
-
-		AssetHandle<Mesh> homerHandle = AssetManager::loadMesh("AxionStudio/Assets/meshes/homer.obj");
-		Ref<Mesh> homerMesh = AssetManager::get(homerHandle);
-
-		ShaderSpecification shaderSpec;
-		shaderSpec.name = "Shader3D";
-		shaderSpec.vertexLayout = {
-			{ "POSITION", Axion::ShaderDataType::Float3 },
-			{ "NORMAL", Axion::ShaderDataType::Float3 },
-			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
-		};
-		Ref<Shader> shader = Shader::create(shaderSpec);
-		shader->compileFromFile("AxionStudio/Assets/shaders/PositionShader.hlsl");
-		auto cubeMaterial = Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
-		
-		auto cubeCB = ConstantBuffer::create(sizeof(ObjectBuffer));
-		
-		auto cube = m_activeScene->createEntity("Cube");
-		cube.getComponent<TransformComponent>().position = Vec3::one();
-		cube.getComponent<TransformComponent>().rotation = Vec3::zero();
-		cube.getComponent<TransformComponent>().scale = Vec3::one();
-		cube.addComponent<MeshComponent>(cubeMesh);
-		cube.addComponent<MaterialComponent>(cubeMaterial);
-		cube.addComponent<ConstantBufferComponent>(cubeCB);
-
-		auto homerCB = ConstantBuffer::create(sizeof(ObjectBuffer));
-		auto homer = m_activeScene->createEntity("Homer");
-		homer.getComponent<TransformComponent>().position = Vec3::zero();
-		homer.getComponent<TransformComponent>().rotation = Vec3::zero();
-		homer.getComponent<TransformComponent>().scale = Vec3::one();
-		homer.addComponent<MeshComponent>(homerMesh);
-		homer.addComponent<MaterialComponent>(cubeMaterial);
-		homer.addComponent<ConstantBufferComponent>(homerCB);
-
-		m_camEntity = m_activeScene->createEntity("Camera");
-		m_camEntity.addComponent<CameraComponent>(Mat4::orthographic(1080, 720, 0.1f, 100.0f));
-		m_camEntity.getComponent<CameraComponent>().isPrimary = true;
-
-		Application::get().setWindowTitle("Axion Studio - DirectX");
+		Application::get().setWindowTitle("Axion Studio");
 
 
 		SceneSerializer serializer(m_activeScene);
@@ -202,7 +162,7 @@ namespace Axion {
 				ImGuizmo::Manipulate(
 					cameraView.data(),
 					cameraProjection.data(),
-					ImGuizmo::OPERATION::ROTATE,
+					currentOp,
 					ImGuizmo::LOCAL, // TODO: maybe set to world
 					object
 				);
@@ -213,7 +173,7 @@ namespace Axion {
 					TRSData trs = updated.decompose();
 				
 					tc.position = trs.translation;
-					tc.rotation = trs.rotationEuler;
+					tc.rotation = trs.rotationEuler;	// TODO: rotation from the gizmo does not work
 					tc.scale = trs.scale;
 				
 					worldM = Mat4::TRS(tc.position, tc.rotation, tc.scale);
@@ -238,22 +198,11 @@ namespace Axion {
 
 			// file menu
 			if (ImGui::BeginMenu("  File  ")) {
-				if (ImGui::MenuItem("New Scene", "Ctrl+N")) {
-					m_newSceneRequested = true;
-				}
-				if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {
-
-					m_loadSceneRequested = true;
-				}
+				if (ImGui::MenuItem("New Scene", "Ctrl+N")) { m_newSceneRequested = true; }
+				if (ImGui::MenuItem("Open Scene...", "Ctrl+O")) { m_openSceneRequested = true; }
 				ImGui::Separator();
-				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) { AX_LOG_WARN("Saving a scene is not supported yet!"); }
-				if (ImGui::MenuItem("Save Scene As", "Ctrl+Shift+S")) {
-					std::string filePath = FileDialogs::saveFile("Axion Scene (*.axion)\0*.axion\0");
-					if (!filePath.empty()) {
-						SceneSerializer serializer(m_activeScene);
-						serializer.serializeText(filePath);
-					}
-				}
+				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) { m_saveSceneRequested = true; }
+				if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) { m_saveSceneAsRequested = true; }
 				ImGui::Separator();
 				if (ImGui::MenuItem("Exit")) { Application::get().close(); }
 				ImGui::EndMenu();
@@ -322,16 +271,16 @@ namespace Axion {
 		bool shiftPressed = Input::isKeyPressed(KeyCode::LeftShift) || Input::isKeyPressed(KeyCode::RightShift);
 		switch (e.getKeyCode()) {
 			case KeyCode::N: {
-				AX_CORE_LOG_WARN("YEA");
 				if (controlPressed) { m_newSceneRequested = true; }
 				break;
 			}
 			case KeyCode::O: {
-				if (controlPressed) { m_loadSceneRequested = true; }
+				if (controlPressed) { m_openSceneRequested = true; }
 				break;
 			}
 			case KeyCode::S: {
-				if (controlPressed && shiftPressed) { /*TODO: Save as*/ }
+				if (controlPressed && shiftPressed) { m_saveSceneAsRequested = true; }
+				else if (controlPressed && (!shiftPressed)) { m_saveSceneRequested = true; }
 				break;
 			}
 			default: break;
@@ -344,18 +293,41 @@ namespace Axion {
 		if (m_newSceneRequested) {
 			m_activeScene = std::make_shared<Scene>();
 			m_sceneHierarchyPanel->setContext(m_activeScene);
+			m_activeSceneFilePath.clear();
 			m_newSceneRequested = false;
+			AX_CORE_LOG_INFO("New Scene");
 		}
 
-		if (m_loadSceneRequested) {
+		if (m_openSceneRequested) {
 			std::string path = FileDialogs::openFile("Axion Scene (*.axion)\0*.axion\0");
 			if (!path.empty()) {
 				m_activeScene = std::make_shared<Scene>();
 				m_sceneHierarchyPanel->setContext(m_activeScene);
 				SceneSerializer serializer(m_activeScene);
 				serializer.deserializeText(path);
+				m_activeSceneFilePath = path;
+				AX_CORE_LOG_INFO("Open Scene");
 			}
-			m_loadSceneRequested = false;
+			m_openSceneRequested = false;
+		}
+
+		if (m_saveSceneRequested) {
+			if (!m_activeSceneFilePath.empty()) {
+				SceneSerializer serializer(m_activeScene);
+				serializer.serializeText(m_activeSceneFilePath);
+				AX_CORE_LOG_INFO("Save Scene");
+			}
+			m_saveSceneRequested = false;
+		}
+
+		if (m_saveSceneAsRequested) {
+			std::string filePath = FileDialogs::saveFile("Axion Scene (*.axion)\0*.axion\0");
+			if (!filePath.empty()) {
+				SceneSerializer serializer(m_activeScene);
+				serializer.serializeText(filePath);
+				AX_CORE_LOG_INFO("Save Scene As");
+			}
+			m_saveSceneAsRequested = false;
 		}
 
 		if (m_viewportResized) {

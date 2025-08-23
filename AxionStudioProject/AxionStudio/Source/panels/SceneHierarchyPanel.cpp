@@ -1,9 +1,11 @@
 #include "SceneHierarchyPanel.h"
 
-#include "AxionEngine/Source/scene/Components.h"
-
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/imgui/imgui_internal.h"
+
+#include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/utils/PlatformUtils.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 namespace Axion {
 
@@ -15,6 +17,21 @@ namespace Axion {
 
 	void SceneHierarchyPanel::setup(const Ref<Scene>& activeScene) {
 		setContext(activeScene);
+
+		// TODO: TEMP
+
+		ShaderSpecification shaderSpec;
+		shaderSpec.name = "Shader3D";
+		shaderSpec.vertexLayout = {
+			{ "POSITION", Axion::ShaderDataType::Float3 },
+			{ "NORMAL", Axion::ShaderDataType::Float3 },
+			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
+		};
+		Ref<Shader> shader = Shader::create(shaderSpec);
+		shader->compileFromFile("AxionStudio/Assets/shaders/PositionShader.hlsl");
+		m_basicMaterial = Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
+
+		// TEMP END
 	}
 
 	void SceneHierarchyPanel::shutdown() {}
@@ -178,6 +195,18 @@ namespace Axion {
 			if (component.mesh) {
 				ImGui::Text(component.mesh->getHandle().path.c_str());
 			}
+			else {
+				if (ImGui::Button("Open Mesh...")) {
+					std::string filePath = FileDialogs::openFile("OBJ File (*.obj)\0*.obj\0");
+					if (!filePath.empty()) {
+						AssetHandle<Mesh> handle(filePath);
+						if (!AssetManager::hasMesh(handle)) {
+							AssetManager::loadMesh(filePath);
+						}
+						component.mesh = AssetManager::get(handle);
+					}
+				}
+			}
 		});
 
 
@@ -195,6 +224,7 @@ namespace Axion {
 				ImGui::Text("Unknown Material");
 				ImGui::Text("Unknown Shader");
 				ImGui::Text("Unknown Color");
+				if (ImGui::Button("Load 'Basic Material'")) { component.material = m_basicMaterial; }
 			}
 		});
 
@@ -205,7 +235,15 @@ namespace Axion {
 
 
 		// ConstantBufferComponent
-		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, []() {
+		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<ConstantBufferComponent>();
+			if (component.uploadBuffer) {
+				ImGui::Text(std::to_string(component.uploadBuffer->getSize()).c_str());
+			}
+			else {
+				component.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
+			}
+
 		});
 	}
 

@@ -19,7 +19,6 @@ namespace Axion {
 
 		Ref<Scene> m_scene;
 
-
 	};
 
 }

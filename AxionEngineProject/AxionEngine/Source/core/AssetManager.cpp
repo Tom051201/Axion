@@ -91,4 +91,10 @@ namespace Axion {
 		}
 	}
 
+	bool AssetManager::hasMesh(const AssetHandle<Mesh>& handle) {
+		auto it = s_meshes.find(handle);
+		if (it != s_meshes.end()) { return true; }
+		else { return false; }
+	}
+
 }

@@ -7,6 +7,8 @@
 
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/render/Buffers.h"
 
 namespace YAML {
 
@@ -100,7 +102,6 @@ namespace Axion {
 		if (entity.hasComponent<MeshComponent>()) {
 			out << YAML::Key << "MeshComponent";
 			out << YAML::BeginMap; // MeshComponent
-			// TODO : add mesh
 			auto& mesh = entity.getComponent<MeshComponent>();
 			out << YAML::Key << "Path" << YAML::Value << mesh.mesh->getHandle().path;
 			out << YAML::EndMap; // MeshComponent
@@ -110,10 +111,20 @@ namespace Axion {
 		if (entity.hasComponent<MaterialComponent>()) {
 			out << YAML::Key << "MaterialComponent";
 			out << YAML::BeginMap; // MaterialComponent
-			// TODO : add material
+			auto& mat = entity.getComponent<MaterialComponent>();
+			out << YAML::Key << "Name" << YAML::Value << mat.getName();
 			out << YAML::EndMap; // MaterialComponent
 		}
-	
+
+		// -- ConstantBufferComponent --
+		if (entity.hasComponent<ConstantBufferComponent>()) {
+			out << YAML::Key << "ConstantBufferComponent";
+			out << YAML::BeginMap; // ConstantBufferComponent
+			auto& cb = entity.getComponent<MaterialComponent>();
+			out << YAML::Key << "Has" << YAML::Value << "TRUE";
+			out << YAML::EndMap; // ConstantBufferComponent
+		}
+
 		out << YAML::EndMap; // Entity
 	}
 
@@ -174,6 +185,34 @@ namespace Axion {
 					tc.position = transformComponent["Translation"].as<Vec3>();
 					tc.rotation = transformComponent["Rotation"].as<Vec3>();
 					tc.scale = transformComponent["Scale"].as<Vec3>();
+				}
+
+				// -- MeshComponent --
+				auto meshComponent = entity["MeshComponent"];
+				if (meshComponent) {
+					auto mc = deserializedEntity.addComponent<MeshComponent>();
+					AssetHandle<Mesh> handle(meshComponent["Path"].as<std::string>());
+					if (!AssetManager::hasMesh(handle)) {
+						AssetManager::loadMesh(handle.path);
+						AX_CORE_LOG_INFO("LOADED MESH");
+					}
+					mc.mesh = AssetManager::get(handle);
+				}
+
+				// -- MaterialComponent --
+				auto materialComponent = entity["MaterialComponent"];
+				if (materialComponent) {
+					auto mc = deserializedEntity.addComponent<MaterialComponent>();
+					if (materialComponent["Name"].as<std::string>() == "BasicMaterial") {
+						// TODO: load basic material which is client side...
+					}
+				}
+
+				// -- ConstantBufferComponent --
+				auto cbComponent = entity["ConstantBufferComponent"];
+				if (cbComponent) {
+					auto cbc = deserializedEntity.addComponent<ConstantBufferComponent>();
+					cbc.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 				}
 
 			}
