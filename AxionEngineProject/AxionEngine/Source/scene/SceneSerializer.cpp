@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/render/Buffers.h"
 
 namespace YAML {
@@ -76,7 +77,7 @@ namespace Axion {
 
 	static void serializeEntity(YAML::Emitter& out, Entity entity) {
 		out << YAML::BeginMap; // Entity
-		out << YAML::Key << "Entity" << YAML::Value << "111111"; // entity ID goes here
+		out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<UUIDComponent>().id.toString();
 
 		// -- TagComponent --
 		if (entity.hasComponent<TagComponent>()) {
@@ -165,7 +166,7 @@ namespace Axion {
 		YAML::Node entities = data["Entities"];
 		if (entities) {
 			for (auto entity : entities) {
-				uint64_t uuid = entity["Entity"].as<uint64_t>(); // TODO
+				UUID uuid = UUID::fromString(entity["Entity"].as<std::string>());
 
 				// -- TagComponent --
 				std::string name;
@@ -176,7 +177,7 @@ namespace Axion {
 
 				AX_CORE_LOG_TRACE("Deserialized entity with ID = {}, name = {}", uuid, name);
 
-				Entity deserializedEntity = m_scene->createEntity(name);
+				Entity deserializedEntity = m_scene->createEntityWithUUID(name, uuid);
 
 				// -- TransformComponent --
 				auto transformComponent = entity["TransformComponent"];

@@ -1,0 +1,15 @@
+Scene: Untitled
+Entities:
+  - Entity: 5ffe9ed76a8c76faa21efe43d8cd3974
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [3.70000005, 1.20000005, 3]
+    MeshComponent:
+      Path: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Assets\meshes\cubeBase.obj
+    MaterialComponent:
+      Name: BasicMaterial
+    ConstantBufferComponent:
+      Has: TRUE

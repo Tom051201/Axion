@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/core/Timestep.h"
+#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 
@@ -26,6 +27,8 @@ namespace Axion {
 
 		Entity createEntity();
 		Entity createEntity(const std::string& tag);
+		Entity createEntityWithUUID(UUID id);
+		Entity createEntityWithUUID(const std::string& tag, UUID id);
 
 		// will add Entity or Component to destroy queue
 		void destroyEntity(Entity entity);

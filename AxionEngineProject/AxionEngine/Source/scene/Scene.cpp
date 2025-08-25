@@ -14,13 +14,22 @@ namespace Axion {
 	Scene::~Scene() {}
 
 	Entity Scene::createEntity() {
-		return createEntity("Unnamed Entity");
+		return createEntityWithUUID("Unnamed Entity", UUID());
 	}
 
 	Entity Scene::createEntity(const std::string& tag) {
+		return createEntityWithUUID(tag, UUID());
+	}
+
+	Entity Scene::createEntityWithUUID(UUID id) {
+		return createEntityWithUUID("Unnamed Entity", id);
+	}
+
+	Entity Scene::createEntityWithUUID(const std::string& tag, UUID id) {
 		Entity entity = { m_registry.create(), this };
-		entity.addComponent<TransformComponent>();
+		entity.addComponent<UUIDComponent>(id);
 		entity.addComponent<TagComponent>(tag);
+		entity.addComponent<TransformComponent>();
 		return entity;
 	}
 

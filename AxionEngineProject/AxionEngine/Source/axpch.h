@@ -2,6 +2,7 @@
 
 // Defaults
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <functional>
@@ -9,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <random>
 #include <sstream>
 #include <stdexcept>
 #include <string>

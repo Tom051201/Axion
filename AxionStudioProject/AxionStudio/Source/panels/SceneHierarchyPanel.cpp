@@ -174,6 +174,11 @@ namespace Axion {
 			}
 		}
 
+		if (entity.hasComponent<UUIDComponent>()) {
+			auto& uuid = entity.getComponent<UUIDComponent>().id;
+			ImGui::Text(uuid.toString().c_str());
+		}
+
 		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
 
 		// TransformComponent

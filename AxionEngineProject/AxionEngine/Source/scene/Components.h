@@ -2,11 +2,23 @@
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Material.h"
 
 namespace Axion {
+
+	struct UUIDComponent {
+		UUID id;
+
+		UUIDComponent() = default;
+		UUIDComponent(const UUIDComponent&) = default;
+		UUIDComponent(UUID id) : id(id) {}
+		UUIDComponent(uint64_t high, uint64_t low) : id(high, low) {}
+	};
+
+
 
 	struct TagComponent {
 		std::string tag = "Unnamed Entity";
