@@ -35,6 +35,7 @@ namespace Axion {
 		
 		void setGraphicsBackend(RendererAPI api);
 		void setWindowTitle(const std::string& title);
+		void setWindowIcon(const std::string& path);
 
 		static Application& get() { return *s_instance; }
 

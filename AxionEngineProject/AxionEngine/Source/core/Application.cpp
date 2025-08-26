@@ -158,5 +158,9 @@ namespace Axion {
 		m_window->setTitle(title);
 	}
 
+	void Application::setWindowIcon(const std::string& path) {
+		m_window->setIcon(path);
+	}
+
 
 }

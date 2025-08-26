@@ -7,6 +7,7 @@
 #include "AxionEngine/Source/render/GraphicsContext.h"
 
 #include "AxionEngine/Platform/windows/WindowsInputMapper.h"
+#include "AxionEngine/Platform/windows/WindowsHelper.h"
 #include "AxionEngine/Platform/directx/D12Context.h"
 
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
@@ -107,6 +108,24 @@ namespace Axion {
 	void WindowsWindow::setTitle(const std::string& title) {
 		m_data.title = title;
 		SetWindowTextA(m_hwnd, title.c_str());
+	}
+
+	void WindowsWindow::setIcon(const std::string& path) const {
+		HICON hIcon = (HICON)LoadImage(
+			NULL,
+			WindowsHelper::StringToWString(path).c_str(),
+			IMAGE_ICON,
+			0, 0,
+			LR_LOADFROMFILE | LR_DEFAULTSIZE
+		);
+
+		if (hIcon) {
+			SendMessage(m_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+			SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+		}
+		else {
+			AX_CORE_LOG_ERROR("Failed to load icon for window");
+		}
 	}
 
 	LRESULT CALLBACK WindowsWindow::staticWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {

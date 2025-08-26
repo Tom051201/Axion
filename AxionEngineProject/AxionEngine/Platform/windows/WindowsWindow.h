@@ -18,13 +18,14 @@ namespace Axion {
 
 		void setPosition(uint32_t x, uint32_t y) override;
 		void setTitle(const std::string& title) override;
-		inline uint32_t getWidth() const override { return m_data.width; }
-		inline uint32_t getHeight() const override { return m_data.height; }
+		uint32_t getWidth() const override { return m_data.width; }
+		uint32_t getHeight() const override { return m_data.height; }
+		void setIcon(const std::string& path) const override;
 
-		inline void setEventCallback(const EventCallbackFn& callback) override { m_data.eventCallback = callback; }
-		inline void setVSync(bool enabled) override { m_data.vsync = enabled; }
-		inline bool isVSync() const override { return m_data.vsync; }
-		inline void* getNativeHandle() const override { return m_hwnd; }
+		void setEventCallback(const EventCallbackFn& callback) override { m_data.eventCallback = callback; }
+		void setVSync(bool enabled) override { m_data.vsync = enabled; }
+		bool isVSync() const override { return m_data.vsync; }
+		void* getNativeHandle() const override { return m_hwnd; }
 
 	private:
 
