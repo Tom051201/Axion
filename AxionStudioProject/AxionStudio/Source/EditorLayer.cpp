@@ -3,9 +3,8 @@
 #include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
 
 #include "AxionEngine/Source/events/Event.h"
-#include "AxionEngine/Source/core/PlatformInfo.h"
+#include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
-#include "AxionEngine/Source/utils/PlatformUtils.h"
 
 namespace Axion {
 
@@ -246,11 +245,11 @@ namespace Axion {
 			}
 
 			ImGui::SameLine(ImGui::GetWindowWidth() - 134);
-			if (ImGui::Button(u8"\uE15B", {42, 24})) {}
+			if (ImGui::Button(u8"\uE15B", { 42, 24 })) { Application::get().minimizeWindow(); }
 			ImGui::SameLine();
-			if (ImGui::Button(u8"\uE5D1", {42, 24})) {}
+			if (ImGui::Button(u8"\uE5D1", { 42, 24 })) { Application::get().maximizeOrRestoreWindow(); }
 			ImGui::SameLine();
-			if (ImGui::Button(u8"\uE5CD", {42, 24})) { Application::get().close(); }
+			if (ImGui::Button(u8"\uE5CD", { 42, 24 })) { Application::get().close(); }
 			#endif
 
 			ImGui::EndMenuBar();

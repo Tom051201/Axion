@@ -33,17 +33,20 @@ project "AxionStudio"
 			"AX_PLATFORM_WINDOWS"
 		}
 	
-	filter "configurations:Debug"
+	filter { "system:windows", "configurations:Debug" }
+		kind "ConsoleApp"
 		defines "AX_DEBUG"
 		runtime "Debug"
 		symbols "on"
 	
-	filter "configurations:Release"
+	filter { "system:windows", "configurations:Release" }
+		kind "ConsoleApp"
 		defines "AX_RELEASE"
 		runtime "Release"
 		optimize "on"
 	
-	filter "configurations:Distribution"
+	filter { "system:windows", "configurations:Distribution" }
+		kind "WindowedApp"
 		defines "AX_DISTRIBUTION"
 		runtime "Release"
 		optimize "on"

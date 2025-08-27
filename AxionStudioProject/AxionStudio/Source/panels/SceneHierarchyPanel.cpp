@@ -4,7 +4,7 @@
 #include "AxionEngine/Vendor/imgui/imgui_internal.h"
 
 #include "AxionEngine/Source/scene/Components.h"
-#include "AxionEngine/Source/utils/PlatformUtils.h"
+#include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 
 namespace Axion {

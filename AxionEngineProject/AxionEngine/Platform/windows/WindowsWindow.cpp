@@ -128,6 +128,18 @@ namespace Axion {
 		}
 	}
 
+	void WindowsWindow::minimize() const {
+		ShowWindow(m_hwnd, SW_MINIMIZE);
+	}
+
+	void WindowsWindow::maximizeOrRestore() const {
+		if (IsZoomed(m_hwnd)) {
+			ShowWindow(m_hwnd, SW_RESTORE);
+		} else {
+			ShowWindow(m_hwnd, SW_MAXIMIZE);
+		}
+	}
+
 	LRESULT CALLBACK WindowsWindow::staticWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		
 		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {

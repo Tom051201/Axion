@@ -162,5 +162,12 @@ namespace Axion {
 		m_window->setIcon(path);
 	}
 
+	void Application::minimizeWindow() {
+		m_window->minimize();
+	}
+
+	void Application::maximizeOrRestoreWindow() {
+		m_window->maximizeOrRestore();
+	}
 
 }

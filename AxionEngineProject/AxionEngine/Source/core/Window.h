@@ -35,6 +35,9 @@ namespace Axion {
 		virtual uint32_t getHeight() const = 0;
 		virtual void setIcon(const std::string& path) const = 0;
 
+		virtual void minimize() const = 0;
+		virtual void maximizeOrRestore() const = 0;
+
 		virtual void setEventCallback(const EventCallbackFn& callback) = 0;
 		virtual void setVSync(bool enabled) = 0;
 		virtual bool isVSync() const = 0;

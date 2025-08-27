@@ -34,8 +34,11 @@ namespace Axion {
 		void removeOverlay(Layer* layer);
 		
 		void setGraphicsBackend(RendererAPI api);
+
 		void setWindowTitle(const std::string& title);
 		void setWindowIcon(const std::string& path);
+		void minimizeWindow();
+		void maximizeOrRestoreWindow();
 
 		static Application& get() { return *s_instance; }
 

@@ -1,7 +1,7 @@
 #include "SystemInfoPanel.h"
 
 #include "AxionEngine/Source/render/GraphicsContext.h"
-#include "AxionEngine/Source/core/PlatformInfo.h"
+#include "AxionEngine/Source/core/PlatformUtils.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
 

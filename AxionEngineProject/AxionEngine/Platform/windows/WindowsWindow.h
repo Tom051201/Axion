@@ -22,6 +22,9 @@ namespace Axion {
 		uint32_t getHeight() const override { return m_data.height; }
 		void setIcon(const std::string& path) const override;
 
+		void minimize() const override;
+		void maximizeOrRestore() const override;
+
 		void setEventCallback(const EventCallbackFn& callback) override { m_data.eventCallback = callback; }
 		void setVSync(bool enabled) override { m_data.vsync = enabled; }
 		bool isVSync() const override { return m_data.vsync; }

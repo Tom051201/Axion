@@ -1,6 +1,5 @@
 #pragma once
 #include "axpch.h"
-#include "AxionEngine/Vendor/glm/glm.hpp"
 
 namespace Axion {
 
@@ -43,8 +42,7 @@ namespace Axion {
 
 		// Math operations
 		float dot(const Vec2& other) const {
-			//return DirectX::XMVectorGetX(DirectX::XMVector2Dot(toXM(), other.toXM()));
-			glm::dot(glm::vec2(), glm::vec2());
+			return DirectX::XMVectorGetX(DirectX::XMVector2Dot(toXM(), other.toXM()));
 		}
 
 		float length() const {

@@ -13,4 +13,17 @@ namespace Axion {
 
 	};
 
+
+
+	class PlatformInfo {
+	public:
+
+		static std::string getOsVersion();
+
+		static std::string getCpuName();
+		static uint32_t getCpuCores();
+		static uint64_t getRamMB();
+
+	};
+
 }
