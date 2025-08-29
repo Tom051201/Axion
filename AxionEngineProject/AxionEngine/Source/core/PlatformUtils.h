@@ -26,4 +26,13 @@ namespace Axion {
 
 	};
 
+
+
+	class PlatformUtils {
+	public:
+
+		static void showInFileExplorer(const std::string& path);
+
+	};
+
 }

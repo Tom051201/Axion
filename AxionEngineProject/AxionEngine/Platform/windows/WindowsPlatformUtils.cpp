@@ -98,4 +98,10 @@ namespace Axion {
 		return 0;
 	}
 
+	void PlatformUtils::showInFileExplorer(const std::string& path) {
+		std::wstring wpath(path.begin(), path.end());
+		std::wstring command = L"explorer.exe /select,\"" + wpath + L"\"";
+		_wsystem(command.c_str());
+	}
+
 }

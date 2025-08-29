@@ -3,6 +3,7 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/PlatformUtils.h"
 
 namespace Axion {
 
@@ -24,6 +25,8 @@ namespace Axion {
 		m_fileIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/FileIcon.png");
 		m_backIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/BackIcon.png");
 		m_refreshIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/RefreshIcon.png");
+
+		refreshDirectory();
 	}
 
 	void ContentBrowserPanel::shutdown() {
@@ -53,17 +56,24 @@ namespace Axion {
 		ImGui::BeginDisabled(m_currentDirectory == std::filesystem::path(s_assetPath));
 		if (ImGui::ImageButton("##Back_icon", reinterpret_cast<ImTextureID>(m_backIcon->getHandle()), { 30.0f, 30.0f })) {
 			m_currentDirectory = m_currentDirectory.parent_path();
+			refreshDirectory();
 		}
 		ImGui::EndDisabled();
 
 		ImGui::SameLine();
 		if (ImGui::ImageButton("##Refresh_icon", reinterpret_cast<ImTextureID>(m_refreshIcon->getHandle()), { 30.0f, 30.0f }, { 0, 1 }, { 1, 0 })) {
-			// TODO: add refreshing, so that the files dont have to be gone thru every frame
+			refreshDirectory();
 		}
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(200.0f);
 		ImGui::InputTextWithHint("##Search", "Search...", m_searchBuffer, IM_ARRAYSIZE(m_searchBuffer));
+		ImGui::SameLine();
+		ImGui::BeginDisabled(m_searchBuffer[0] == '\0');
+		if (ImGui::Button("X")) {
+			m_searchBuffer[0] = '\0';
+		}
+		ImGui::EndDisabled();
 
 		// TODO: add sorting
 		// TODO: show in explorer
@@ -78,7 +88,7 @@ namespace Axion {
 		if (colCount < 1) { colCount = 1; }
 		ImGui::Columns(colCount, 0, false);
 
-		for (auto& directoryEntry : std::filesystem::directory_iterator(m_currentDirectory)) {
+		for (auto& directoryEntry : m_directoryEntries) {
 			const auto& path = directoryEntry.path();
 			auto relativePath = std::filesystem::relative(directoryEntry.path(), s_assetPath);
 			std::string filenameString = relativePath.filename().string();
@@ -104,10 +114,23 @@ namespace Axion {
 				if (directoryEntry.is_directory()) {
 					// directory
 					m_currentDirectory /= path.filename();
+					refreshDirectory();
 				}
 				else {
 					// file
 				}
+			}
+
+			if (ImGui::BeginPopupContextItem(filenameString.c_str())) {
+				if (ImGui::MenuItem("Show in Explorer")) {
+					// TODO: impl
+					//PlatformUtils::showInFileExplorer(path.string());
+				}
+				if (ImGui::MenuItem("Rename")) {
+					// TODO: impl
+				}
+
+				ImGui::EndPopup();
 			}
 
 			// drag and drop source
@@ -120,7 +143,13 @@ namespace Axion {
 
 			ImGui::PopStyleColor();
 			if (thumbnailSize >= 50) {
-				ImGui::Text(filenameString.c_str());
+				ImVec2 textSize = ImGui::CalcTextSize(filenameString.c_str());
+				float textX = ImGui::GetCursorPosX() + (thumbnailSize - textSize.x) * 0.5f;
+
+				if (textX < ImGui::GetCursorPosX()) textX = ImGui::GetCursorPosX();
+
+				ImGui::SetCursorPosX(textX);
+				ImGui::TextUnformatted(filenameString.c_str());
 			}
 
 			ImGui::NextColumn();
@@ -131,6 +160,13 @@ namespace Axion {
 		ImGui::Columns(1);
 
 		ImGui::End();
+	}
+
+	void ContentBrowserPanel::refreshDirectory() {
+		m_directoryEntries.clear();
+		for (auto& entry : std::filesystem::directory_iterator(m_currentDirectory)) {
+			m_directoryEntries.push_back(entry);
+		}
 	}
 
 }
