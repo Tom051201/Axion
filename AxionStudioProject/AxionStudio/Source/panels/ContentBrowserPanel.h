@@ -1,4 +1,9 @@
 #pragma once
+#include "axpch.h"
+
+#include "AxionEngine/Source/render/Texture.h"
+
+#include <filesystem>
 
 namespace Axion {
 
@@ -12,6 +17,13 @@ namespace Axion {
 		void shutdown();
 
 		void onGuiRender();
+
+	private:
+
+		std::filesystem::path m_currentDirectory;
+
+		Ref<Texture2D> m_folderIcon;
+		Ref<Texture2D> m_fileIcon;
 
 	};
 

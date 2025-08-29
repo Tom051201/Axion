@@ -127,4 +127,9 @@ namespace Axion {
 	// not required
 	void D12Texture2D::unbind() const {}
 
+	void* D12Texture2D::getHandle() const {
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		return reinterpret_cast<void*>(context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
+	}
+
 }

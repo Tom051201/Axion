@@ -130,6 +130,16 @@ namespace Axion {
 				ImVec2((float)m_frameBuffer->getSpecification().width, (float)m_frameBuffer->getSpecification().height)
 			);
 
+			// Drag drop
+			if (ImGui::BeginDragDropTarget()) {
+
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+					const std::string* path = (const std::string*)payload->Data;
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+
 			// Gizmos begin
 			Entity selectedEntity = m_sceneHierarchyPanel->getSelectedEntity();
 			if (selectedEntity) {

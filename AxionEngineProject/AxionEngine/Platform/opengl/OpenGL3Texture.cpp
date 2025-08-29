@@ -50,4 +50,9 @@ namespace Axion {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
+	void* OpenGL3Texture2D::getHandle() const {
+		// TODO : add this function
+		return nullptr;
+	}
+
 }

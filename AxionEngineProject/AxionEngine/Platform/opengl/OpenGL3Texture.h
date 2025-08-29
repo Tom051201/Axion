@@ -18,6 +18,8 @@ namespace Axion {
 		uint32_t getWidth() const override { return m_width; }
 		uint32_t getHeight() const override { return m_height; }
 
+		void* getHandle() const override;
+
 	private:
 
 		uint32_t m_width = 0;

@@ -16,7 +16,9 @@ namespace Axion {
 		virtual uint32_t getWidth() const = 0;
 		virtual uint32_t getHeight() const = 0;
 
-		
+		virtual void* getHandle() const = 0;
+
+
 		static Ref<Texture2D> create(const std::string& path);
 
 	};

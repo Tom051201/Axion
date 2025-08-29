@@ -211,6 +211,21 @@ namespace Axion {
 						component.mesh = AssetManager::get(handle);
 					}
 				}
+
+				if (ImGui::BeginDragDropTarget()) {
+
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::string path = static_cast<const char*>(payload->Data);
+						std::string filePath = "AxionStudio/Assets/" + path;
+						
+						AssetHandle<Mesh> handle(filePath);
+						if (!AssetManager::hasMesh(handle)) {
+							AssetManager::loadMesh(filePath);
+						}
+						component.mesh = AssetManager::get(handle);
+					}
+					ImGui::EndDragDropTarget();
+				}
 			}
 		});
 
