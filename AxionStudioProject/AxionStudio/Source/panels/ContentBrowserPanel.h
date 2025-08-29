@@ -22,8 +22,13 @@ namespace Axion {
 
 		std::filesystem::path m_currentDirectory;
 
+		char m_searchBuffer[128] = "";
+		bool m_isDragging = false;
+
 		Ref<Texture2D> m_folderIcon;
 		Ref<Texture2D> m_fileIcon;
+		Ref<Texture2D> m_backIcon;
+		Ref<Texture2D> m_refreshIcon;
 
 	};
 

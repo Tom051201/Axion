@@ -8,7 +8,8 @@ namespace Axion {
 
 	Application* Application::s_instance = nullptr;
 
-	Application::Application() {
+	Application::Application(const ApplicationSpecification& spec)
+		: m_specification(spec) {
 		s_instance = this;
 
 		m_window = Scope<Window>(Window::create());
@@ -21,7 +22,7 @@ namespace Axion {
 
 		AssetManager::initialize();
 
-		m_imGuiLayer = new ImGuiLayer();
+		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter);
 		pushOverlay(m_imGuiLayer);
 	}
 
@@ -149,7 +150,7 @@ namespace Axion {
 			layer->onAttach();
 		}
 
-		m_imGuiLayer = new ImGuiLayer();
+		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter);
 		pushOverlay(m_imGuiLayer);
 
 	}

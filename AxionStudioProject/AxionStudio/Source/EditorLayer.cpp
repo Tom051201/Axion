@@ -41,7 +41,7 @@ namespace Axion {
 			ImGuiWindowFlags_NoNavFocus;
 
 		Application::get().setWindowTitle("Axion Studio");
-		Application::get().setWindowIcon("AxionStudio/Assets/logo.ico");
+		Application::get().setWindowIcon("AxionStudio/Resources/logo.ico");
 
 		SceneSerializer serializer(m_activeScene);
 		serializer.serializeText("AxionStudio/Assets/scenes/Example.axion");

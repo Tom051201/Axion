@@ -16,10 +16,14 @@
 
 namespace Axion {
 
+	struct ApplicationSpecification {
+		std::function<void()> guiSyleSetter = nullptr;
+	};
+
 	class Application {
 	public:
 
-		Application();
+		Application(const ApplicationSpecification& spec = ApplicationSpecification());
 		virtual ~Application();
 
 		void run();
@@ -48,6 +52,7 @@ namespace Axion {
 	private:
 
 		static Application* s_instance;
+		ApplicationSpecification m_specification;
 		bool m_firstStart = false;
 
 		float m_lastFrameTime = 0.0f;

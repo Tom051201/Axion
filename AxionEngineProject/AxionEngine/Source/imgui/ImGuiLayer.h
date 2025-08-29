@@ -17,7 +17,7 @@ namespace Axion {
 	class ImGuiLayer : public Layer {
 	public:
 
-		ImGuiLayer();
+		ImGuiLayer(const std::function<void()>& styleSetupFunc);
 		~ImGuiLayer();
 
 		void onAttach() override;
@@ -30,6 +30,7 @@ namespace Axion {
 	private:
 
 		RendererAPI m_activeAPI;
+		std::function<void()> m_styleSetupFunc = nullptr;
 
 		// directx12 specifics
 		D12Context* m_d12Context = nullptr;
@@ -50,8 +51,6 @@ namespace Axion {
 		bool onKeyTypedEvent(KeyTypedEvent& e);
 		bool onWindowResizeEvent(WindowResizeEvent& e);
 		bool onWindowCloseEvent(WindowCloseEvent& e);
-
-		void setStyle();
 
 	};
 

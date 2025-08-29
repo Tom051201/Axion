@@ -217,7 +217,9 @@ namespace Axion {
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 						std::string path = static_cast<const char*>(payload->Data);
 						std::string filePath = "AxionStudio/Assets/" + path;
-						
+
+						// TODO: add validation that its the correct file type
+
 						AssetHandle<Mesh> handle(filePath);
 						if (!AssetManager::hasMesh(handle)) {
 							AssetManager::loadMesh(filePath);
