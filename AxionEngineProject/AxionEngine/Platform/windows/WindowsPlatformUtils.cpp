@@ -5,45 +5,145 @@
 #include <intrin.h>
 #include <Windows.h>
 #include <winternl.h>
+#include <shobjidl.h> 
 
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
 
 namespace Axion {
 
-	std::string FileDialogs::openFile(const char* filter) {
+	std::string FileDialogs::openFile(const FilterList& filters) {
+		std::string result;
+		HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		if (SUCCEEDED(hr)) {
+			IFileDialog* pfd = nullptr;
+			hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_PPV_ARGS(&pfd));
 
-		OPENFILENAMEA ofn;
-		CHAR szFile[260] = { 0 };
-		ZeroMemory(&ofn, sizeof(OPENFILENAME));
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = static_cast<HWND>(Application::get().getWindow().getNativeHandle());
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = filter;
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-		if (GetOpenFileNameA(&ofn) == TRUE) {
-			return ofn.lpstrFile;
+			if (SUCCEEDED(hr)) {
+				// Convert filters to COMDLG_FILTERSPEC
+				std::vector<std::wstring> ownedNames;
+				std::vector<std::wstring> ownedPatterns;
+				std::vector<COMDLG_FILTERSPEC> specs;
+
+				for (auto& f : filters) {
+					ownedNames.emplace_back(f.name.begin(), f.name.end());
+					ownedPatterns.emplace_back(f.pattern.begin(), f.pattern.end());
+					specs.push_back({ ownedNames.back().c_str(), ownedPatterns.back().c_str() });
+				}
+
+				if (!specs.empty()) {
+					pfd->SetFileTypes(static_cast<UINT>(specs.size()), specs.data());
+					pfd->SetFileTypeIndex(1); // 1-based index, default to first filter
+				}
+
+				hr = pfd->Show(static_cast<HWND>(Application::get().getWindow().getNativeHandle()));
+				if (SUCCEEDED(hr)) {
+					IShellItem* psi = nullptr;
+					hr = pfd->GetResult(&psi);
+					if (SUCCEEDED(hr)) {
+						PWSTR pszFilePath = nullptr;
+						hr = psi->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+						if (SUCCEEDED(hr)) {
+							char path[MAX_PATH];
+							WideCharToMultiByte(CP_ACP, 0, pszFilePath, -1, path, MAX_PATH, NULL, NULL);
+							result = path;
+							CoTaskMemFree(pszFilePath);
+						}
+						psi->Release();
+					}
+				}
+				pfd->Release();
+			}
+			CoUninitialize();
 		}
-		return std::string();
+
+		return result;
 	}
 
-	std::string FileDialogs::saveFile(const char* filter) {
-		OPENFILENAMEA ofn;
-		CHAR szFile[260] = { 0 };
-		ZeroMemory(&ofn, sizeof(OPENFILENAME));
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = static_cast<HWND>(Application::get().getWindow().getNativeHandle());
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = filter;
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-		if (GetSaveFileNameA(&ofn) == TRUE) {
-			return ofn.lpstrFile;
+	std::string FileDialogs::saveFile(const FilterList& filters) {
+		std::string result;
+
+		HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		if (SUCCEEDED(hr)) {
+			IFileDialog* pfd = nullptr;
+			hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_PPV_ARGS(&pfd));
+
+			if (SUCCEEDED(hr)) {
+				// Convert filters to COMDLG_FILTERSPEC
+				std::vector<std::wstring> ownedNames;
+				std::vector<std::wstring> ownedPatterns;
+				std::vector<COMDLG_FILTERSPEC> specs;
+
+				for (auto& f : filters) {
+					ownedNames.emplace_back(f.name.begin(), f.name.end());
+					ownedPatterns.emplace_back(f.pattern.begin(), f.pattern.end());
+					specs.push_back({ ownedNames.back().c_str(), ownedPatterns.back().c_str() });
+				}
+
+				if (!specs.empty()) {
+					pfd->SetFileTypes(static_cast<UINT>(specs.size()), specs.data());
+					pfd->SetFileTypeIndex(1);
+				}
+
+				hr = pfd->Show(static_cast<HWND>(Application::get().getWindow().getNativeHandle()));
+				if (SUCCEEDED(hr)) {
+					IShellItem* psi = nullptr;
+					hr = pfd->GetResult(&psi);
+					if (SUCCEEDED(hr)) {
+						PWSTR pszFilePath = nullptr;
+						hr = psi->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+						if (SUCCEEDED(hr)) {
+							char path[MAX_PATH];
+							WideCharToMultiByte(CP_ACP, 0, pszFilePath, -1, path, MAX_PATH, NULL, NULL);
+							result = path;
+							CoTaskMemFree(pszFilePath);
+						}
+						psi->Release();
+					}
+				}
+				pfd->Release();
+			}
+			CoUninitialize();
 		}
-		return std::string();
+
+		return result; // empty if canceled
+	}
+
+	std::string FileDialogs::openFolder() {
+		IFileDialog* pfd = nullptr;
+		std::string result;
+
+		HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		if (SUCCEEDED(hr)) {
+			hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileDialog, reinterpret_cast<void**>(&pfd));
+
+			if (SUCCEEDED(hr)) {
+				DWORD options;
+				pfd->GetOptions(&options);
+				pfd->SetOptions(options | FOS_PICKFOLDERS); // allow folder selection
+
+				hr = pfd->Show(static_cast<HWND>(Application::get().getWindow().getNativeHandle()));
+				if (SUCCEEDED(hr)) {
+					IShellItem* psi;
+					hr = pfd->GetResult(&psi);
+					if (SUCCEEDED(hr)) {
+						PWSTR pszFilePath = nullptr;
+						hr = psi->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+						if (SUCCEEDED(hr)) {
+							char path[MAX_PATH];
+							WideCharToMultiByte(CP_ACP, 0, pszFilePath, -1, path, MAX_PATH, NULL, NULL);
+							result = path;
+							CoTaskMemFree(pszFilePath);
+						}
+						psi->Release();
+					}
+				}
+				pfd->Release();
+			}
+			CoUninitialize();
+		}
+
+		return result;
 	}
 
 	std::string PlatformInfo::getOsVersion() {

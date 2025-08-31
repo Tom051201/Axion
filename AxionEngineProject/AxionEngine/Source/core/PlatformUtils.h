@@ -1,15 +1,24 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace Axion {
+
+	struct FileDialogFilter {
+		std::string name;
+		std::string pattern;
+	};
 
 	class FileDialogs {
 	public:
 
+		using FilterList = std::vector<FileDialogFilter>;
+
 		// These return empty strings if canceled
-		static std::string openFile(const char* filter);
-		static std::string saveFile(const char* filter);
+		static std::string openFile(const FilterList& filters);
+		static std::string saveFile(const FilterList& filters);
+		static std::string openFolder();
 
 	};
 

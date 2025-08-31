@@ -202,7 +202,7 @@ namespace Axion {
 			}
 			else {
 				if (ImGui::Button("Open Mesh...")) {
-					std::string filePath = FileDialogs::openFile("OBJ File (*.obj)\0*.obj\0");
+					std::string filePath = FileDialogs::openFile({ {"OBJ File", "*.obj"} });
 					if (!filePath.empty()) {
 						AssetHandle<Mesh> handle(filePath);
 						if (!AssetManager::hasMesh(handle)) {
