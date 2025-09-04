@@ -35,4 +35,32 @@ namespace Axion {
 		uint32_t m_srvHeapIndex = 0;
 	};
 
+
+
+	class D12TextureCube : public TextureCube {
+	public:
+
+		// Order: +X, -X, +Y, -Y, +Z, -Z
+		D12TextureCube(const std::array<std::string, 6>& paths);
+		~D12TextureCube() override;
+
+		void release() override;
+
+		void bind() const override;
+		void unbind() const override;
+
+		void* getHandle() const override;
+
+	private:
+
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadHeap;
+		UINT m_srvHeapIndex;
+
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		uint32_t m_pixelSize = 4;
+
+	};
+
 }

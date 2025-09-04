@@ -9,9 +9,7 @@ namespace Axion {
 
 	static const std::filesystem::path s_assetPath = "AxionStudio/Assets"; // TODO: make this part of a project config
 
-	ContentBrowserPanel::ContentBrowserPanel() {
-
-	}
+	ContentBrowserPanel::ContentBrowserPanel() {}
 
 	ContentBrowserPanel::~ContentBrowserPanel() {
 		shutdown();

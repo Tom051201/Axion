@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
+#include "AxionEngine/Source/scene/Skybox.h"
 
 #include "AxionEngine/Vendor/entt/entt.hpp"
 
@@ -43,12 +44,16 @@ namespace Axion {
 
 		entt::registry& getRegistry() { return m_registry; }
 
+		void setSkybox(const Ref<Skybox>& sky) { m_skybox = sky; }
+
 	private:
 
 		entt::registry m_registry;
 
 		std::vector<Entity> m_entitiesPendingDestroy;
 		std::vector<std::function<void()>> m_componentsPendingRemove;
+
+		Ref<Skybox> m_skybox;
 
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();

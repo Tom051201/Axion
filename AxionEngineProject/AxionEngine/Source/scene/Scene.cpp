@@ -95,6 +95,11 @@ namespace Axion {
 		if (&cam) {
 			Renderer3D::beginScene(cam);
 
+			// ----- Render skybox -----
+			if (m_skybox != nullptr) {
+				m_skybox->onUpdate(ts);
+			}
+
 			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
 			for (auto entity : group) {
 				auto& transform = group.get<TransformComponent>(entity);

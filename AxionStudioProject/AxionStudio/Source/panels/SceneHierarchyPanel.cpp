@@ -78,7 +78,7 @@ namespace Axion {
 
 		// right click on blank space
 		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
-			if (ImGui::MenuItem("Create Entity")) { m_context->createEntity("Empty Entity"); }
+			if (ImGui::MenuItem("Empty Entity")) { m_context->createEntity("Empty Entity"); }
 			ImGui::EndPopup();
 		}
 		ImGui::End();

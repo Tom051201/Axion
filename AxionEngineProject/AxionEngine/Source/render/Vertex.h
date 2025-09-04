@@ -14,6 +14,9 @@ namespace Axion {
 		Vertex(float px, float py, float pz, float nx, float ny, float nz, float u, float v)
 			: position(px, py, pz), normal(nx, ny, nz), texcoord(u, v) {}
 
+		Vertex(float px, float py, float pz)
+			: position(px, py, pz), normal(0, 0, 0), texcoord(0, 0) {}
+
 		static void normalizeVertices(std::vector<Vertex>& vertices) {
 			if (vertices.empty()) return;
 

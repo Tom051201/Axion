@@ -23,4 +23,20 @@ namespace Axion {
 
 	};
 
+	class TextureCube {
+	public:
+
+		virtual ~TextureCube() = default;
+
+		virtual void release() = 0;
+
+		virtual void bind() const = 0;
+		virtual void unbind() const = 0;
+
+		virtual void* getHandle() const = 0;
+
+		static Ref<TextureCube> create(const std::array<std::string, 6>& filePaths);
+
+	};
+
 }

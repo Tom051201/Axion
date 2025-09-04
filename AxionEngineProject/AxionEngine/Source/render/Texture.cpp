@@ -21,4 +21,19 @@ namespace Axion {
 		return nullptr;
 	}
 
+
+
+	Ref<TextureCube> TextureCube::create(const std::array<std::string, 6>& paths) {
+		
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12TextureCube>(paths); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3TextureCube>(paths); }
+
+		}
+
+		return nullptr;
+	}
+
 }

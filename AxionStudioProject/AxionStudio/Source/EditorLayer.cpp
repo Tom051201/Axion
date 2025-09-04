@@ -12,8 +12,19 @@ namespace Axion {
 
 	void EditorLayer::onAttach() {
 
-		m_activeScene = std::make_shared<Scene>();
 		m_sceneState = SceneState::Editing;
+		m_activeScene = std::make_shared<Scene>();
+		
+		std::array<std::string, 6> faces = {
+			"AxionStudio/Assets/skybox/skyL.png",			// +x
+			"AxionStudio/Assets/skybox/skyR.png",			// -x
+			"AxionStudio/Assets/skybox/skyT.png",			// +y
+			"AxionStudio/Assets/skybox/skyB.png",			// -y
+			"AxionStudio/Assets/skybox/skyC.png",			// +z
+			"AxionStudio/Assets/skybox/skyRR.png"			// -z
+		};
+		Ref<Skybox> sky = std::make_shared<Skybox>(faces);
+		m_activeScene->setSkybox(sky);
 
 		m_systemInfoPanel = std::make_unique<SystemInfoPanel>();
 		m_systemInfoPanel->setup();

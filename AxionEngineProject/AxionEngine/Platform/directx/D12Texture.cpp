@@ -132,4 +132,146 @@ namespace Axion {
 		return reinterpret_cast<void*>(context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
 	}
 
+	//----------------------------------------------------------------------------------------------------------//
+	//----------------------------------------------------------------------------------------------------------//
+	//----------------------------------------------------------------------------------------------------------//
+
+	D12TextureCube::D12TextureCube(const std::array<std::string, 6>& paths) {
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* device = context->getDevice();
+		auto* cmdList = context->getCommandList();
+		auto* cmdQueue = context->getCommandQueue();
+
+		std::array<stbi_uc*, 6> pixels = {};
+		int texWidth, texHeight, texChannels;
+		stbi_set_flip_vertically_on_load(false); // maybe flip!
+
+		for (int i = 0; i < 6; i++) {
+			pixels[i] = stbi_load(paths[i].c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+			AX_CORE_ASSERT(pixels[i], "Failed to load cubemap face: {0}", paths[i]);
+		}
+
+		m_width = static_cast<uint32_t>(texWidth);
+		m_height = static_cast<uint32_t>(texHeight);
+		m_pixelSize = 4;
+
+
+		// ----- Texture resource -----
+		D3D12_RESOURCE_DESC texDesc = {};
+		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		texDesc.Width = m_width;
+		texDesc.Height = m_height;
+		texDesc.DepthOrArraySize = 6; // 6 faces
+		texDesc.MipLevels = 1;
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		CD3DX12_HEAP_PROPERTIES texProps(D3D12_HEAP_TYPE_DEFAULT);
+		HRESULT hr = device->CreateCommittedResource(
+			&texProps,
+			D3D12_HEAP_FLAG_NONE,
+			&texDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(&m_textureResource)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create cubemap texture resource");
+
+
+		// ----- Upload buffer -----
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, 6);
+		CD3DX12_HEAP_PROPERTIES uploadProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC uploadHeapDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+		hr = device->CreateCommittedResource(
+			&uploadProps,
+			D3D12_HEAP_FLAG_NONE,
+			&uploadHeapDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_uploadHeap)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create cubemap upload heap");
+
+
+		// ----- Subresources -----
+		std::array<D3D12_SUBRESOURCE_DATA, 6> subresources;
+		for (int i = 0; i < 6; i++) {
+			subresources[i].pData = pixels[i];
+			subresources[i].RowPitch = m_width * m_pixelSize;
+			subresources[i].SlicePitch = subresources[i].RowPitch * m_height;
+		}
+
+
+		context->getCommandListWrapper().reset();
+
+		UpdateSubresources(cmdList, m_textureResource.Get(), m_uploadHeap.Get(), 0, 0, 6, subresources.data());
+
+
+		// ----- Transition -----
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_textureResource.Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+		cmdList->ResourceBarrier(1, &barrier);
+
+
+		// ----- SRV -----
+		m_srvHeapIndex = context->getSrvHeapWrapper().allocate();
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.TextureCube.MipLevels = 1;
+
+		auto srvCpuHandle = context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
+
+
+		// ----- Execute -----
+		AX_THROW_IF_FAILED_HR(cmdList->Close(), "Failed to close command list for cubemap");
+		ID3D12CommandList* cmdLists[] = { cmdList };
+		cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+		context->waitForPreviousFrame();
+
+
+		// ----- Clean up -----
+		for (int i = 0; i < 6; i++) {
+			stbi_image_free(pixels[i]);
+		}
+
+	}
+
+	D12TextureCube::~D12TextureCube() {
+		release();
+	}
+
+	void D12TextureCube::release() {
+		m_textureResource.Reset();
+		m_uploadHeap.Reset();
+	}
+
+	void D12TextureCube::bind() const {
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* cmdList = context->getCommandList();
+
+		ID3D12DescriptorHeap* ppHeaps[] = { context->getSrvHeapWrapper().getHeap() };
+		cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+		auto srvGpuHandle = context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex);
+		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle); // make 2 configurable
+	}
+
+	void D12TextureCube::unbind() const {
+		// Not needed in DX12
+	}
+
+	void* D12TextureCube::getHandle() const {
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		return reinterpret_cast<void*>(context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
+	}
+
 }

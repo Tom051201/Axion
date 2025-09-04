@@ -30,4 +30,25 @@ namespace Axion {
 
 	};
 
+
+
+	class OpenGL3TextureCube : public TextureCube {
+	public:
+
+		OpenGL3TextureCube(const std::array<std::string, 6>& paths);
+		~OpenGL3TextureCube() override;
+
+		void release() override;
+
+		void bind() const override;
+		void unbind() const override;
+
+		void* getHandle() const override;
+
+	private:
+
+
+
+	};
+
 }

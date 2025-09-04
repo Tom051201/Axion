@@ -2,6 +2,7 @@
 #include "axpch.h"
 
 #include "AxionEngine/Source/render/Texture.h"
+#include "AxionEngine/Source/project/Project.h"
 
 #include <filesystem>
 
@@ -31,6 +32,8 @@ namespace Axion {
 		Ref<Texture2D> m_fileIcon;
 		Ref<Texture2D> m_backIcon;
 		Ref<Texture2D> m_refreshIcon;
+
+		Ref<Project> m_activeProject;
 
 		void refreshDirectory();
 
