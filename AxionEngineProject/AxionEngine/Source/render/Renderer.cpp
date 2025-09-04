@@ -12,6 +12,10 @@
 namespace Axion {
 
 	struct alignas(16) SceneData {
+		// TODO: only upload one option! - ViewProjection OR View and Projection
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
+
 		DirectX::XMMATRIX viewProjection;
 	};
 
@@ -79,7 +83,13 @@ namespace Axion {
 
 	void Renderer::beginScene(const Camera& camera) {
 		RenderCommand::resetRenderStats();
+		// REVIEW: remove one option
+		// option 1: view and projection
+		s_sceneData->view = camera.getViewMatrix().transposed().toXM();
+		s_sceneData->projection = camera.getProjectionMatrix().transposed().toXM();
+		// option 2: viewProjection
 		s_sceneData->viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
+
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
 

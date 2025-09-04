@@ -35,6 +35,7 @@ namespace Axion {
 
 		virtual void* getHandle() const = 0;
 
+		static Ref<TextureCube> create(const std::string& filePath);
 		static Ref<TextureCube> create(const std::array<std::string, 6>& filePaths);
 
 	};

@@ -136,6 +136,133 @@ namespace Axion {
 	//----------------------------------------------------------------------------------------------------------//
 	//----------------------------------------------------------------------------------------------------------//
 
+	D12TextureCube::D12TextureCube(const std::string& filePath) {
+	
+
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* device = context->getDevice();
+		auto* cmdList = context->getCommandList();
+		auto* cmdQueue = context->getCommandQueue();
+
+		int texWidth, texHeight, texChannels;
+		stbi_set_flip_vertically_on_load(false);
+		stbi_uc* fullImage = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		AX_CORE_ASSERT(fullImage, "Failed to load cubemap image: {0}", filePath);
+
+		m_pixelSize = 4;
+
+		// Determine single face size
+		int faceWidth = texWidth / 4;   // cross layout is 4 columns wide
+		int faceHeight = texHeight / 3; // cross layout is 3 rows tall
+		m_width = faceWidth;
+		m_height = faceHeight;
+
+		// Map layout to cubemap faces
+		// DX: +X, -X, +Y, -Y, +Z, -Z
+		std::array<std::pair<int, int>, 6> faceOffsets = {
+			std::make_pair(2, 1), // +X
+			std::make_pair(0, 1), // -X
+			std::make_pair(1, 0), // +Y
+			std::make_pair(1, 2), // -Y
+			std::make_pair(1, 1), // +Z
+			std::make_pair(3, 1)  // -Z
+		};
+
+		std::array<stbi_uc*, 6> pixels;
+		for (int i = 0; i < 6; i++) {
+			pixels[i] = new stbi_uc[faceWidth * faceHeight * m_pixelSize];
+			int offsetX = faceOffsets[i].first * faceWidth;
+			int offsetY = faceOffsets[i].second * faceHeight;
+
+			for (int y = 0; y < faceHeight; y++) {
+				memcpy(
+					pixels[i] + y * faceWidth * m_pixelSize,
+					fullImage + ((offsetY + y) * texWidth + offsetX) * m_pixelSize,
+					faceWidth * m_pixelSize
+				);
+			}
+		}
+
+		stbi_image_free(fullImage);
+
+		// ----- Texture resource -----
+		D3D12_RESOURCE_DESC texDesc = {};
+		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		texDesc.Width = m_width;
+		texDesc.Height = m_height;
+		texDesc.DepthOrArraySize = 6;
+		texDesc.MipLevels = 1;
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		CD3DX12_HEAP_PROPERTIES texProps(D3D12_HEAP_TYPE_DEFAULT);
+		HRESULT hr = device->CreateCommittedResource(
+			&texProps,
+			D3D12_HEAP_FLAG_NONE,
+			&texDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(&m_textureResource)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create cubemap texture resource");
+
+		// ----- Upload buffer -----
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, 6);
+		CD3DX12_HEAP_PROPERTIES uploadProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC uploadHeapDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+		hr = device->CreateCommittedResource(
+			&uploadProps,
+			D3D12_HEAP_FLAG_NONE,
+			&uploadHeapDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_uploadHeap)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create cubemap upload heap");
+
+		// ----- Subresources -----
+		std::array<D3D12_SUBRESOURCE_DATA, 6> subresources;
+		for (int i = 0; i < 6; i++) {
+			subresources[i].pData = pixels[i];
+			subresources[i].RowPitch = m_width * m_pixelSize;
+			subresources[i].SlicePitch = subresources[i].RowPitch * m_height;
+		}
+
+		context->getCommandListWrapper().reset();
+		UpdateSubresources(cmdList, m_textureResource.Get(), m_uploadHeap.Get(), 0, 0, 6, subresources.data());
+
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_textureResource.Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+		cmdList->ResourceBarrier(1, &barrier);
+
+		// ----- SRV -----
+		m_srvHeapIndex = context->getSrvHeapWrapper().allocate();
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.TextureCube.MipLevels = 1;
+
+		auto srvCpuHandle = context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
+
+		// ----- Execute -----
+		AX_THROW_IF_FAILED_HR(cmdList->Close(), "Failed to close command list for cubemap");
+		ID3D12CommandList* cmdLists[] = { cmdList };
+		cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+		context->waitForPreviousFrame();
+
+		for (int i = 0; i < 6; i++) {
+			delete[] pixels[i];
+		}
+	}
+
 	D12TextureCube::D12TextureCube(const std::array<std::string, 6>& paths) {
 		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = context->getDevice();

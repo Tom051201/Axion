@@ -1,4 +1,6 @@
 cbuffer SceneBuffer : register(b0) {
+	float4x4 u_view;
+	float4x4 u_projection;
 	float4x4 u_viewProjection;
 };
 

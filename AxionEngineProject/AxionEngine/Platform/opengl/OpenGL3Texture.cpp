@@ -59,6 +59,10 @@ namespace Axion {
 	//-----------------------------------------------------------------------------------------------------------------------//
 	//-----------------------------------------------------------------------------------------------------------------------//
 
+	OpenGL3TextureCube::OpenGL3TextureCube(const std::string& filePath) {
+		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
+	}
+
 	OpenGL3TextureCube::OpenGL3TextureCube(const std::array<std::string, 6>& paths) {
 		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
 	}

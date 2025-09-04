@@ -10,6 +10,7 @@ namespace Axion {
 	class Skybox {
 	public:
 
+		Skybox(const std::string& crossPath);
 		Skybox(const std::array<std::string, 6>& facePaths);
 		~Skybox();
 

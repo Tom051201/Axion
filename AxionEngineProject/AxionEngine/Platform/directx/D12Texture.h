@@ -41,6 +41,7 @@ namespace Axion {
 	public:
 
 		// Order: +X, -X, +Y, -Y, +Z, -Z
+		D12TextureCube(const std::string& filePath);
 		D12TextureCube(const std::array<std::string, 6>& paths);
 		~D12TextureCube() override;
 
