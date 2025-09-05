@@ -15,8 +15,8 @@ namespace Axion {
 		m_sceneState = SceneState::Editing;
 		m_activeScene = std::make_shared<Scene>();
 		
-		Ref<Skybox> sky = std::make_shared<Skybox>("AxionStudio/Assets/skybox/Daylight_Box_UV.png");
-		m_activeScene->setSkybox(sky);
+		//Ref<Skybox> sky = std::make_shared<Skybox>("AxionStudio/Assets/skybox/Daylight_Box_UV.png");
+		//m_activeScene->setSkybox(sky);
 
 		m_systemInfoPanel = std::make_unique<SystemInfoPanel>();
 		m_systemInfoPanel->setup();
@@ -139,7 +139,8 @@ namespace Axion {
 			if (ImGui::BeginDragDropTarget()) {
 
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-					const std::string* path = (const std::string*)payload->Data;
+					std::string path = static_cast<const char*>(payload->Data);
+					AX_CORE_LOG_WARN(path);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -206,7 +207,7 @@ namespace Axion {
 		if (m_showContentBrowserPanel) { m_contentBrowserPanel->onGuiRender(); }
 		if (m_showProjectPanel) { m_projectPanel->onGuiRender(); }
 		
-		drawNewProjectWindow();
+		if (m_showNewProjectWindow) drawNewProjectWindow();
 
 		// menu bar
 		if (ImGui::BeginMenuBar()) {
@@ -384,11 +385,7 @@ namespace Axion {
 		return false;
 	}
 
-	static std::string s_newProjectName;
-	static std::string s_newProjectLocation;
 	void EditorLayer::drawNewProjectWindow() {
-		if (!m_showNewProjectWindow) return;
-
 		ImGui::Begin("Create new Project", &m_showNewProjectWindow);
 
 		ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));

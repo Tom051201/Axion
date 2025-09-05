@@ -33,6 +33,9 @@ namespace Axion {
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;
 
+		virtual uint32_t getFaceWidth() const = 0;
+		virtual uint32_t getFaceHeight() const = 0;
+
 		virtual void* getHandle() const = 0;
 
 		static Ref<TextureCube> create(const std::string& filePath);

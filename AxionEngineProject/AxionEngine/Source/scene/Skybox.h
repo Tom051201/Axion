@@ -18,12 +18,18 @@ namespace Axion {
 
 		void onUpdate(Timestep ts);
 
+		void setTexture(const std::string& crossPath);
+
+		const std::string& getTexturePath() const { return m_texturePath; }
 
 	private:
 
 		Ref<Mesh> m_mesh;
 		Ref<TextureCube> m_texture;
+		std::string m_texturePath;
 		Ref<Shader> m_shader;
+
+		void setupShader(const std::string& filePath);
 
 	};
 

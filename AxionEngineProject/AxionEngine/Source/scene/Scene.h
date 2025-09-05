@@ -45,6 +45,7 @@ namespace Axion {
 		entt::registry& getRegistry() { return m_registry; }
 
 		void setSkybox(const Ref<Skybox>& sky) { m_skybox = sky; }
+		void setSkyboxTexture(const std::string& crossPath);
 
 	private:
 

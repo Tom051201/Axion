@@ -133,6 +133,7 @@ namespace Axion {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+		out << YAML::Key << "Skybox" << YAML::Value << m_scene->m_skybox->getTexturePath();
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto e : m_scene->m_registry.view<entt::entity>()) {
 			Entity entity = { e, m_scene.get() };
@@ -162,6 +163,10 @@ namespace Axion {
 
 		std::string sceneName = data["Scene"].as<std::string>();
 		AX_CORE_LOG_TRACE("Deserialized scene {}", sceneName);
+
+		std::string sceneSkybox = data["Skybox"].as<std::string>();
+		Ref<Skybox> sky = std::make_shared<Skybox>(sceneSkybox);
+		m_scene->setSkybox(sky);
 
 		YAML::Node entities = data["Entities"];
 		if (entities) {

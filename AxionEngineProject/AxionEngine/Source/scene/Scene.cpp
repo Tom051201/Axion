@@ -95,11 +95,13 @@ namespace Axion {
 		if (&cam) {
 			Renderer3D::beginScene(cam);
 
-			// ----- Render skybox -----
+			// ----- Render Skybox -----
 			if (m_skybox != nullptr) {
 				m_skybox->onUpdate(ts);
 			}
 
+
+			// ----- Render Meshes -----
 			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
 			for (auto entity : group) {
 				auto& transform = group.get<TransformComponent>(entity);
@@ -125,6 +127,10 @@ namespace Axion {
 		flushDestroyedEntities();
 
 		return false;
+	}
+
+	void Scene::setSkyboxTexture(const std::string& crossPath) {
+		m_skybox->setTexture(crossPath);
 	}
 
 }
