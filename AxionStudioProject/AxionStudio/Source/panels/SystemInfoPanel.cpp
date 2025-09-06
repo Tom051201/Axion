@@ -31,19 +31,24 @@ namespace Axion {
 		if (ImGui::Begin("System Info")) {
 			const auto& info = m_systemInfo;
 
+			ImGui::SeparatorText("GPU");
 			ImGui::Columns(2, nullptr, false);
 
 			ImGui::Text("GPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuName.c_str());			ImGui::NextColumn();
 			ImGui::Text("VRAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.vramMB);				ImGui::NextColumn();
 			ImGui::Text("Driver:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuDriverVersion.c_str());	ImGui::NextColumn();
 
-			ImGui::Separator();			ImGui::Columns(2, nullptr, false);
+			ImGui::Columns(1);
+			ImGui::SeparatorText("CPU");
+			ImGui::Columns(2, nullptr, false);
 
 			ImGui::Text("CPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.cpuName.c_str());			ImGui::NextColumn();
 			ImGui::Text("Cores:");		ImGui::NextColumn();	ImGui::Text("%u", info.cores);						ImGui::NextColumn();
 			ImGui::Text("RAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.totalRamMB);			ImGui::NextColumn();
 
-			ImGui::Separator();			ImGui::Columns(2, nullptr, false);
+			ImGui::Columns(1);
+			ImGui::SeparatorText("Operating System");
+			ImGui::Columns(2, nullptr, false);
 
 			ImGui::Text("OS:");			ImGui::NextColumn();	ImGui::TextWrapped("%s", info.os.c_str());			ImGui::NextColumn();
 

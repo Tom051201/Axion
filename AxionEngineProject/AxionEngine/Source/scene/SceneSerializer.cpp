@@ -164,10 +164,13 @@ namespace Axion {
 		std::string sceneName = data["Scene"].as<std::string>();
 		AX_CORE_LOG_TRACE("Deserialized scene {}", sceneName);
 
+		// ----- Skybox -----
 		std::string sceneSkybox = data["Skybox"].as<std::string>();
-		Ref<Skybox> sky = std::make_shared<Skybox>(sceneSkybox);
-		m_scene->setSkybox(sky);
+		AssetHandle<Skybox> skyboxHandle = AssetManager::loadSkybox(sceneSkybox);
+		m_scene->setSkybox(skyboxHandle);
 
+
+		// ----- Entities -----
 		YAML::Node entities = data["Entities"];
 		if (entities) {
 			for (auto entity : entities) {
@@ -202,7 +205,7 @@ namespace Axion {
 						AssetManager::loadMesh(handle.path);
 						AX_CORE_LOG_INFO("LOADED MESH");
 					}
-					mc.mesh = AssetManager::get(handle);
+					mc.mesh = AssetManager::getMesh(handle);
 				}
 
 				// -- MaterialComponent --

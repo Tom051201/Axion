@@ -7,6 +7,7 @@
 namespace Axion {
 
 	AssetMap<Mesh> AssetManager::s_meshes;
+	AssetMap<Skybox> AssetManager::s_skyboxes;
 
 	void AssetManager::initialize() {
 		AX_CORE_LOG_TRACE("AssetManager initialized");
@@ -14,11 +15,14 @@ namespace Axion {
 
 	void AssetManager::release() {
 		s_meshes.clear();
+		s_skyboxes.clear();
 	}
+
+	// ----- Mesh Assets -----
 
 	AssetHandle<Mesh> AssetManager::loadMesh(const std::string& path) {
 		tinyobj::ObjReader reader;
-		
+
 		if (!reader.Warning().empty()) AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
 		
 		if (!reader.ParseFromFile(path)) {
@@ -80,7 +84,7 @@ namespace Axion {
 		return handle;
 	}
 	
-	Ref<Mesh> AssetManager::get(const AssetHandle<Mesh>& handle) {
+	Ref<Mesh> AssetManager::getMesh(const AssetHandle<Mesh>& handle) {
 		auto it = s_meshes.find(handle);
 		if (it != s_meshes.end()) {
 			return it->second;
@@ -94,6 +98,32 @@ namespace Axion {
 	bool AssetManager::hasMesh(const AssetHandle<Mesh>& handle) {
 		auto it = s_meshes.find(handle);
 		if (it != s_meshes.end()) { return true; }
+		else { return false; }
+	}
+
+	// ----- Skybox Assets -----
+
+	AssetHandle<Skybox> AssetManager::loadSkybox(const std::string& path) {
+		AssetHandle<Skybox> handle(path);
+		Ref<Skybox> skybox = std::make_shared<Skybox>(path);
+		s_skyboxes[handle] = skybox;
+		return handle;
+	}
+
+	Ref<Skybox> AssetManager::getSkybox(const AssetHandle<Skybox>& handle) {
+		auto it = s_skyboxes.find(handle);
+		if (it != s_skyboxes.end()) {
+			return it->second;
+		}
+		else {
+			AX_CORE_LOG_WARN("Skybox handle not found: {}", handle);
+			return nullptr;
+		}
+	}
+
+	bool AssetManager::hasSkybox(const AssetHandle<Skybox>& handle) {
+		auto it = s_skyboxes.find(handle);
+		if (it != s_skyboxes.end()) { return true; }
 		else { return false; }
 	}
 

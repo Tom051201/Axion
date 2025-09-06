@@ -71,9 +71,9 @@ namespace Axion {
 		bool m_saveSceneRequested = false;
 		bool m_saveSceneAsRequested = false;
 
-		bool m_newProjectRequested = false;	 //TODO: review
-		bool m_openProjectRequested = false; //TODO: review
-		bool m_saveProjectRequested = false; //TODO: review
+		bool m_newProjectRequested = false;
+		bool m_openProjectRequested = false;
+		bool m_saveProjectRequested = false;
 
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onRenderingFinished(RenderingFinishedEvent& e);

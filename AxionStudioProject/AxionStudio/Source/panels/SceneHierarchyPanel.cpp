@@ -208,7 +208,7 @@ namespace Axion {
 						if (!AssetManager::hasMesh(handle)) {
 							AssetManager::loadMesh(filePath);
 						}
-						component.mesh = AssetManager::get(handle);
+						component.mesh = AssetManager::getMesh(handle);
 					}
 				}
 
@@ -224,7 +224,7 @@ namespace Axion {
 						if (!AssetManager::hasMesh(handle)) {
 							AssetManager::loadMesh(filePath);
 						}
-						component.mesh = AssetManager::get(handle);
+						component.mesh = AssetManager::getMesh(handle);
 					}
 					ImGui::EndDragDropTarget();
 				}

@@ -45,6 +45,7 @@ namespace Axion {
 		entt::registry& getRegistry() { return m_registry; }
 
 		void setSkybox(const Ref<Skybox>& sky) { m_skybox = sky; }
+		void setSkybox(const AssetHandle<Skybox>& handle);
 		void setSkyboxTexture(const std::string& crossPath);
 
 	private:
@@ -54,7 +55,7 @@ namespace Axion {
 		std::vector<Entity> m_entitiesPendingDestroy;
 		std::vector<std::function<void()>> m_componentsPendingRemove;
 
-		Ref<Skybox> m_skybox;
+		Ref<Skybox> m_skybox; // TODO: add reference thru assethandle!
 
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();

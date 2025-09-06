@@ -1,9 +1,9 @@
 #include "axpch.h"
 #include "Scene.h"
 
+#include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
-
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
 
@@ -127,6 +127,10 @@ namespace Axion {
 		flushDestroyedEntities();
 
 		return false;
+	}
+
+	void Scene::setSkybox(const AssetHandle<Skybox>& handle) {
+		m_skybox = AssetManager::getSkybox(handle);
 	}
 
 	void Scene::setSkyboxTexture(const std::string& crossPath) {
