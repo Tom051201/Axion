@@ -42,7 +42,7 @@ namespace Axion {
 	}
 
 	void SceneHierarchyPanel::onGuiRender() {
-		// -- Properties Panel --
+		// ----- Properties Panel -----
 		if (ImGui::Begin("Properties")) {
 			if (m_selectedEntity) {
 				displayComponents(m_selectedEntity);
@@ -63,7 +63,7 @@ namespace Axion {
 		}
 		ImGui::End();
 
-		// -- Scene Hierarchy Panel --
+		// ----- Scene Hierarchy Panel -----
 		if (ImGui::Begin("Scene Hierarchy")) {
 
 			for (auto e : m_context->getRegistry().view<entt::entity>()) {
@@ -76,7 +76,7 @@ namespace Axion {
 
 		}
 
-		// right click on blank space
+		// ----- Right click on blank space -----
 		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
 			if (ImGui::MenuItem("Empty Entity")) { m_context->createEntity("Empty Entity"); }
 			ImGui::EndPopup();
@@ -141,6 +141,7 @@ namespace Axion {
 
 		if (ImGui::IsItemClicked()) { m_selectedEntity = entity; }
 
+		// ----- Delete and Entity on right click -----
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
 			if (ImGui::MenuItem("Delete Entity")) { entityDeleted = true; }
@@ -151,8 +152,9 @@ namespace Axion {
 			ImGui::TreePop();
 		}
 
-		// delete entity at the end if it was deleted to allow child entities to work
+		// ----- Deleting Entities -----
 		if (entityDeleted) {
+			// delete entity at the end if it was deleted to allow child entities to work
 			m_context->destroyEntity(entity);
 			if (m_selectedEntity == entity) {
 				m_selectedEntity = {};
@@ -162,6 +164,8 @@ namespace Axion {
 	}
 
 	void SceneHierarchyPanel::displayComponents(Entity entity) {
+
+		// ----- TagComponent -----
 		if (entity.hasComponent<TagComponent>()) {
 			auto& tag = entity.getComponent<TagComponent>().tag;
 
@@ -174,6 +178,7 @@ namespace Axion {
 			}
 		}
 
+		// ----- UUIDComponent -----
 		if (entity.hasComponent<UUIDComponent>()) {
 			auto& uuid = entity.getComponent<UUIDComponent>().id;
 			ImGui::Text(uuid.toString().c_str());
@@ -181,20 +186,38 @@ namespace Axion {
 
 		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
 
-		// TransformComponent
-		drawComponentInfo<TransformComponent>("Transform", m_selectedEntity, [this]() {
-			auto& component = m_selectedEntity.getComponent<TransformComponent>();
-			auto& position = component.position;
-			auto& rotation = component.rotation;
-			auto& scale = component.scale;
+		// ----- TransformComponent -----
+		if (entity.hasComponent<TransformComponent>()) {
+			// Draw TransformComponent manual to disable removement
 			
-			drawVec3Control("Position", position);
-			drawVec3Control("Rotation", rotation);
-			drawVec3Control("Scale", scale, 1.0f);
-		});
+			// -- Creates treenode and + button --
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
+			bool open = ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, "Transform");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
+			if (ImGui::Button("+", ImVec2{ 20, 20 })) { ImGui::OpenPopup("ComponentSettings"); }
+			ImGui::PopStyleVar();
 
+			// -- Draws component settings on + button --
+			if (ImGui::BeginPopup("ComponentSettings")) {
+				ImGui::EndPopup();
+			}
 
-		// MeshComponent
+			// -- Draws the custom gui code --
+			if (open) {
+				auto& component = m_selectedEntity.getComponent<TransformComponent>();
+				auto& position = component.position;
+				auto& rotation = component.rotation;
+				auto& scale = component.scale;
+
+				drawVec3Control("Position", position);
+				drawVec3Control("Rotation", rotation);
+				drawVec3Control("Scale", scale, 1.0f);
+
+				ImGui::TreePop();
+			}
+		}
+
+		// ----- MeshComponent -----
 		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MeshComponent>();
 			if (component.mesh) {
@@ -231,8 +254,7 @@ namespace Axion {
 			}
 		});
 
-
-		// MaterialComponent
+		// ----- MaterialComponent -----
 		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MaterialComponent>();
 			if (component.material) {
@@ -250,13 +272,11 @@ namespace Axion {
 			}
 		});
 
-
-		// CameraComponent
+		// ----- CameraComponent -----
 		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, []() {
 		});
 
-
-		// ConstantBufferComponent
+		// ----- ConstantBufferComponent -----
 		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<ConstantBufferComponent>();
 			if (component.uploadBuffer) {
@@ -267,6 +287,7 @@ namespace Axion {
 			}
 
 		});
+
 	}
 
 }

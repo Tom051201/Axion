@@ -1,4 +1,4 @@
- #pragma once
+#pragma once
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Math.h"

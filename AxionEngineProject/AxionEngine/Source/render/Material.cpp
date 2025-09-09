@@ -3,22 +3,24 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 
-#include "AxionEngine/Platform/directx/D12Material.h"
-#include "AxionEngine/Platform/opengl/OpenGL3Material.h"
-
 namespace Axion {
 
 	Ref<Material> Material::create(const std::string& name, const Vec4& color, const Ref<Shader>& shader) {
+		return std::make_shared<Material>(name, color, shader);
+	}
 
-		switch (Renderer::getAPI()) {
+	Material::Material(const std::string& name, const Vec4& color, const Ref<Shader>& shader)
+	: m_name(name), m_color(color), m_shader(shader) {}
 
-			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12Material>(name, color, shader); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Material>(name, color, shader); }
+	Material::~Material() {
+		release();
+	}
 
-		}
-		return nullptr;
+	void Material::release() {}
 
+	void Material::use() const {
+		m_shader->bind();
+		Renderer::getSceneDataBuffer()->bind(0);
 	}
 
 }

@@ -16,7 +16,11 @@ namespace Axion {
 	}
 
 	void ContentBrowserPanel::setup() {
-		m_currentDirectory = s_assetPath;
+		std::error_code ec;
+		m_rootDirectory = std::filesystem::weakly_canonical(s_assetPath, ec);
+		if (ec) m_rootDirectory = std::filesystem::absolute(s_assetPath, ec);
+
+		m_currentDirectory = m_rootDirectory;
 
 		// TODO: create a editor own resource handler for such icons
 		m_folderIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/FolderIcon.png");
@@ -86,10 +90,11 @@ namespace Axion {
 		if (colCount < 1) { colCount = 1; }
 		ImGui::Columns(colCount, 0, false);
 
-		for (auto& directoryEntry : m_directoryEntries) {
-			const auto& path = directoryEntry.path();
-			auto relativePath = std::filesystem::relative(directoryEntry.path(), s_assetPath);
-			std::string filenameString = relativePath.filename().string();
+		std::filesystem::path navigateTo;
+		for (const auto& item : m_directoryEntries) {
+			const auto& path = item.path;
+			const std::string& filenameString = item.displayName;
+			Ref<Texture2D> icon = item.isDir ? m_folderIcon : m_fileIcon;
 
 			// apply search filter
 			if (m_searchBuffer[0] != '\0') {
@@ -97,22 +102,19 @@ namespace Axion {
 				std::string lowerFileName = filenameString;
 				std::string lowerSearch = searchString;
 
-				std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), ::tolower);
-				std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(), ::tolower);
+				std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), [](unsigned char c) { return (char)std::tolower(c); });
+				std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(), [](unsigned char c) { return (char)std::tolower(c); });
 
 				if (lowerFileName.find(lowerSearch) == std::string::npos)
 					continue;
 			}
 
-			Ref<Texture2D> icon = directoryEntry.is_directory() ? m_folderIcon : m_fileIcon;
-
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			std::string uniqueID = "##" + filenameString;
 			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), reinterpret_cast<ImTextureID>(icon->getHandle()), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 })) {
-				if (directoryEntry.is_directory()) {
+				if (item.isDir) {
 					// directory
-					m_currentDirectory /= path.filename();
-					refreshDirectory();
+					navigateTo = m_currentDirectory / path.filename();
 				}
 				else {
 					// file
@@ -133,7 +135,8 @@ namespace Axion {
 
 			// drag and drop source
 			if (ImGui::BeginDragDropSource()) {
-				const std::string itemPath = relativePath.string();
+				auto rel = path.lexically_relative(m_rootDirectory);
+				const std::string itemPath = rel.string();
 				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath.c_str(), itemPath.size() + 1);
 				ImGui::Image(reinterpret_cast<ImTextureID>(icon->getHandle()), { 30.0f, 30.0f }, { 0, 1 }, { 1, 0 });
 				ImGui::EndDragDropSource();
@@ -143,9 +146,7 @@ namespace Axion {
 			if (thumbnailSize >= 50) {
 				ImVec2 textSize = ImGui::CalcTextSize(filenameString.c_str());
 				float textX = ImGui::GetCursorPosX() + (thumbnailSize - textSize.x) * 0.5f;
-
 				if (textX < ImGui::GetCursorPosX()) textX = ImGui::GetCursorPosX();
-
 				ImGui::SetCursorPosX(textX);
 				ImGui::TextUnformatted(filenameString.c_str());
 			}
@@ -153,7 +154,11 @@ namespace Axion {
 			ImGui::NextColumn();
 
 		}
-		
+
+		if (!navigateTo.empty()) {
+			m_currentDirectory = navigateTo;
+			refreshDirectory();
+		}
 		
 		ImGui::Columns(1);
 
@@ -161,10 +166,38 @@ namespace Axion {
 	}
 
 	void ContentBrowserPanel::refreshDirectory() {
-		m_directoryEntries.clear();
-		for (auto& entry : std::filesystem::directory_iterator(m_currentDirectory)) {
-			m_directoryEntries.push_back(entry);
+		std::vector<DirItem> tmp;
+		tmp.reserve(64);
+
+		std::error_code ec;
+		std::filesystem::directory_iterator it(
+			m_currentDirectory,
+			std::filesystem::directory_options::skip_permission_denied,
+			ec
+		);
+		if (ec) {
+			m_directoryEntries.clear();
+			return;
 		}
+
+		for (auto end = std::filesystem::directory_iterator(); it != end; it.increment(ec)) {
+			if (ec) { ec.clear(); continue; }
+
+			const auto p = it->path();
+			bool isDir = it->is_directory(ec);
+			if (ec) { ec.clear(); isDir = false; }
+
+			DirItem di;
+			di.path = p;
+			di.isDir = isDir;
+
+			auto rel = p.lexically_relative(m_rootDirectory);
+			di.displayName = rel.empty() ? p.filename().string() : rel.filename().string();
+
+			tmp.push_back(std::move(di));
+		}
+
+		m_directoryEntries.swap(tmp);
 	}
 
 }

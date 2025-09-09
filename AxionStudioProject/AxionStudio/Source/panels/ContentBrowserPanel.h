@@ -21,12 +21,19 @@ namespace Axion {
 
 	private:
 
+		struct DirItem {
+			std::filesystem::path path;
+			bool isDir = false;
+			std::string displayName;
+		};
+
 		std::filesystem::path m_currentDirectory;
 
 		char m_searchBuffer[128] = "";
 		bool m_isDragging = false;
 
-		std::vector<std::filesystem::directory_entry> m_directoryEntries;
+		std::vector<DirItem> m_directoryEntries;
+		std::filesystem::path m_rootDirectory;
 
 		Ref<Texture2D> m_folderIcon;
 		Ref<Texture2D> m_fileIcon;

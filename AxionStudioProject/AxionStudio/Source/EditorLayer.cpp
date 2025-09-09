@@ -14,9 +14,6 @@ namespace Axion {
 
 		m_sceneState = SceneState::Editing;
 		m_activeScene = std::make_shared<Scene>();
-		
-		//Ref<Skybox> sky = std::make_shared<Skybox>("AxionStudio/Assets/skybox/Daylight_Box_UV.png");
-		//m_activeScene->setSkybox(sky);
 
 		m_systemInfoPanel = std::make_unique<SystemInfoPanel>();
 		m_systemInfoPanel->setup();
@@ -395,7 +392,7 @@ namespace Axion {
 		if (ImGui::Button("Browse...")) {
 			std::string folder = FileDialogs::openFolder();
 			if (!folder.empty()) {
-				strncpy(m_newLocationBuffer, folder.c_str(), IM_ARRAYSIZE(m_newLocationBuffer));
+				strcpy_s(m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer), folder.c_str());
 				m_newLocationBuffer[IM_ARRAYSIZE(m_newLocationBuffer) - 1] = '\0';
 			}
 		}

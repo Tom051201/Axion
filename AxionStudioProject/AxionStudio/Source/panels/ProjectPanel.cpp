@@ -24,7 +24,7 @@ namespace Axion {
 		ImGui::SeparatorText("General");
 		{
 			static char nameBuffer[256];
-			strncpy(nameBuffer, m_project->getName().c_str(), sizeof(nameBuffer));
+			strcpy_s(nameBuffer, sizeof(nameBuffer), m_project->getName().c_str());
 			nameBuffer[sizeof(nameBuffer) - 1] = '\0';
 
 			if (ImGui::InputText("Project Name", nameBuffer, sizeof(nameBuffer))) {

@@ -9,20 +9,26 @@ namespace Axion {
 	class Material {
 	public:
 
-		virtual ~Material() = default;
+		Material(const std::string& name, const Vec4& color, const Ref<Shader>& shader);
+		~Material();
 
-		virtual void release() = 0;
+		void release();
 
-		virtual void use() const = 0;
+		void use() const;
 
-		virtual const Vec4& getColor() const = 0;
-		virtual Vec4& getColor() = 0;
-		virtual Ref<Shader> getShader() const = 0;
-
-		virtual const std::string& getName() const = 0;
+		const Vec4& getColor() const { return m_color; }
+		Vec4& getColor() { return m_color; }
+		Ref<Shader> getShader() const { return m_shader; }
+		const std::string& getName() const { return m_name; }
 
 
 		static Ref<Material> create(const std::string& name, const Vec4& color, const Ref<Shader>& shader);
+
+	private:
+
+		std::string m_name = "Unknown Material";
+		Vec4 m_color = Vec4::one();
+		Ref<Shader> m_shader = nullptr;
 
 	};
 

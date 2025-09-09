@@ -32,6 +32,7 @@ namespace Axion {
 		Entity m_selectedEntity;
 
 		void drawVec3Control(const std::string& label, Vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+		
 		template<typename T>
 		void drawAddComponent(const char* name) {
 			if (!m_selectedEntity.hasComponent<T>()) {
@@ -41,6 +42,7 @@ namespace Axion {
 				}
 			}
 		}
+
 		template<typename T>
 		void drawComponentInfo(const char* name, Entity entity, std::function<void()> guiCode) {
 			if (entity.hasComponent<T>()) {
@@ -61,7 +63,6 @@ namespace Axion {
 				// draws the custom gui code
 				if (open) {
 					guiCode();
-
 					ImGui::TreePop();
 				}
 

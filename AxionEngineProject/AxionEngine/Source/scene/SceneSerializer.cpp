@@ -15,7 +15,7 @@ namespace YAML {
 
 	template<>
 	struct convert<Axion::Vec3> {
-		
+
 		static Node encode(const Axion::Vec3& rhs) {
 			Node node;
 			node.push_back(rhs.x);
@@ -31,7 +31,7 @@ namespace YAML {
 			rhs.z = node[2].as<float>();
 			return true;
 		}
-	
+
 	};
 
 	template<>
@@ -199,7 +199,7 @@ namespace Axion {
 				// -- MeshComponent --
 				auto meshComponent = entity["MeshComponent"];
 				if (meshComponent) {
-					auto mc = deserializedEntity.addComponent<MeshComponent>();
+					auto& mc = deserializedEntity.addComponent<MeshComponent>();
 					AssetHandle<Mesh> handle(meshComponent["Path"].as<std::string>());
 					if (!AssetManager::hasMesh(handle)) {
 						AssetManager::loadMesh(handle.path);
@@ -211,7 +211,7 @@ namespace Axion {
 				// -- MaterialComponent --
 				auto materialComponent = entity["MaterialComponent"];
 				if (materialComponent) {
-					auto mc = deserializedEntity.addComponent<MaterialComponent>();
+					auto& mc = deserializedEntity.addComponent<MaterialComponent>();
 					if (materialComponent["Name"].as<std::string>() == "BasicMaterial") {
 						// TODO: load basic material which is client side...
 					}
@@ -220,7 +220,7 @@ namespace Axion {
 				// -- ConstantBufferComponent --
 				auto cbComponent = entity["ConstantBufferComponent"];
 				if (cbComponent) {
-					auto cbc = deserializedEntity.addComponent<ConstantBufferComponent>();
+					auto& cbc = deserializedEntity.addComponent<ConstantBufferComponent>();
 					cbc.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 				}
 
