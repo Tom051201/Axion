@@ -6,47 +6,9 @@ Sandbox3D::~Sandbox3D() {}
 
 void Sandbox3D::onAttach() {
 
+	m_meshHandle = Axion::AssetManager::loadMesh("Sandbox/Assets/meshes/cubeBase.obj");
+
 	m_transform = Axion::Mat4::TRS(Axion::Vec3::zero(), Axion::Vec3::zero(), Axion::Vec3::one());
-
-	std::vector<Axion::Vertex> vertices = {
-		// Front face
-		//Axion::Vertex(-0.5f, -0.5f,  0.5f,   1, 0, 0, 1,   0.0f, 0.0f),
-		//Axion::Vertex( 0.5f, -0.5f,  0.5f,   0, 1, 0, 1,   1.0f, 0.0f),
-		//Axion::Vertex( 0.5f,  0.5f,  0.5f,   0, 0, 1, 1,   1.0f, 1.0f),
-		//Axion::Vertex(-0.5f,  0.5f,  0.5f,   1, 1, 0, 1,   0.0f, 1.0f),
-		//
-		//// Back face
-		//Axion::Vertex(-0.5f, -0.5f, -0.5f,   1, 0, 1, 1,   1.0f, 0.0f),
-		//Axion::Vertex( 0.5f, -0.5f, -0.5f,   0, 1, 1, 1,   0.0f, 0.0f),
-		//Axion::Vertex( 0.5f,  0.5f, -0.5f,   1, 1, 1, 1,   0.0f, 1.0f),
-		//Axion::Vertex(-0.5f,  0.5f, -0.5f,   0, 0, 0, 1,   1.0f, 1.0f)
-	};
-	std::vector<uint32_t> indices = {
-		// Front face
-		0, 1, 2,
-		2, 3, 0,
-
-		// Right face
-		1, 5, 6,
-		6, 2, 1,
-
-		// Back face
-		5, 4, 7,
-		7, 6, 5,
-
-		// Left face
-		4, 0, 3,
-		3, 7, 4,
-
-		// Top face
-		3, 2, 6,
-		6, 7, 3,
-
-		// Bottom face
-		4, 5, 1,
-		1, 0, 4
-	};
-	//m_mesh = Axion::Mesh::create(vertices, indices);
 
 	Axion::ShaderSpecification shaderSpec;
 	shaderSpec.name = "Shader3D";
@@ -62,22 +24,6 @@ void Sandbox3D::onAttach() {
 
 	m_buffer = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 
-
-
-	m_transform = Axion::Mat4::TRS({1.0f, 0.0f, 2.0f}, Axion::Vec3::zero(), Axion::Vec3::one());
-
-	Axion::ShaderSpecification shaderSpec1;
-	shaderSpec1.name = "Shader3D";
-	shaderSpec1.vertexLayout = {
-		{ "POSITION", Axion::ShaderDataType::Float3 },
-		{ "COLOR", Axion::ShaderDataType::Float4 },
-		{ "TEXCOORD", Axion::ShaderDataType::Float2 }
-	};
-	Axion::Ref<Axion::Shader> shader1 = Axion::Shader::create(shaderSpec1);
-	shader1->compileFromFile("Sandbox/Assets/shaders/ColorShader.hlsl");
-	m_material1 = Axion::Material::create("BasicMaterial1", { 0.0f, 1.0f, 0.0f, 1.0f }, shader1);
-
-	m_buffer1 = Axion::ConstantBuffer::create(sizeof(Axion::ObjectBuffer));
 }
 
 void Sandbox3D::onDetach() {
@@ -89,8 +35,7 @@ void Sandbox3D::onUpdate(Axion::Timestep ts) {
 
 	Axion::Renderer3D::beginScene(m_camera);
 
-	Axion::Renderer3D::drawMesh(m_transform, m_mesh, m_material, m_buffer);
-	Axion::Renderer3D::drawMesh(m_transform1, m_mesh, m_material1, m_buffer1);
+	Axion::Renderer3D::drawMesh(m_transform, Axion::AssetManager::getMesh(m_meshHandle), m_material, m_buffer);
 
 	Axion::Renderer3D::endScene();
 }

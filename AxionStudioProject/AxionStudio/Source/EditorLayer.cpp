@@ -383,6 +383,7 @@ namespace Axion {
 	}
 
 	void EditorLayer::drawNewProjectWindow() {
+		// TODO: make this a BeginPopupModal
 		ImGui::Begin("Create new Project", &m_showNewProjectWindow);
 
 		ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));

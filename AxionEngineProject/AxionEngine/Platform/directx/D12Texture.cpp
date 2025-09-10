@@ -24,7 +24,7 @@ namespace Axion {
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(true);
 		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		AX_CORE_ASSERT(pixels, "Failed to load texture image: {0}", path);
+		AX_CORE_ASSERT(pixels, "Failed to load texture image: {}", path);
 
 		m_width = static_cast<uint32_t>(texWidth);
 		m_height = static_cast<uint32_t>(texHeight);

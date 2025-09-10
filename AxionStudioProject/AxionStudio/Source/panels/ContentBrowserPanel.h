@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/project/Project.h"
 
 #include <filesystem>
+#include <optional>
 
 namespace Axion {
 
@@ -27,22 +28,44 @@ namespace Axion {
 			std::string displayName;
 		};
 
+		// -- File system state --
 		std::filesystem::path m_currentDirectory;
-
-		char m_searchBuffer[128] = "";
-		bool m_isDragging = false;
-
-		std::vector<DirItem> m_directoryEntries;
 		std::filesystem::path m_rootDirectory;
+		std::vector<DirItem> m_directoryEntries;
 
+		// -- Search / filtering --
+		char m_searchBuffer[128] = "";
+
+		// -- Renaming --
+		std::filesystem::path m_itemBeingRenamed;
+		char m_itemRenameBuffer[260] = "";
+		bool m_startRenaming = false;
+		std::optional<std::pair<std::filesystem::path, std::filesystem::path>> m_pendingRename;
+
+		// -- Deleting --
+		bool m_openDeletePopup = false;
+		std::optional<std::filesystem::path> m_pendingDelete;
+
+		// -- Navigating --
+		std::optional<std::filesystem::path> m_pendingNavigate;
+
+		// -- UI --
+		bool m_showNames = true;
+
+		// -- Icons --
 		Ref<Texture2D> m_folderIcon;
 		Ref<Texture2D> m_fileIcon;
 		Ref<Texture2D> m_backIcon;
 		Ref<Texture2D> m_refreshIcon;
+		Ref<Texture2D> m_addFolderIcon;
 
-		Ref<Project> m_activeProject;
-
+		// -- Helper functions --
 		void refreshDirectory();
+		void resetRenaming();
+		bool matchesSearch(const std::string& name);
+		void deletePath(const std::filesystem::path& path);
+
+		void drawToolbar();
 
 	};
 
