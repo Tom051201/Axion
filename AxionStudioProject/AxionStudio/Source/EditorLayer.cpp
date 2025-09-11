@@ -6,6 +6,9 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 
+// -- Windows only --
+#include "AxionEngine/Platform/windows/WindowsWindow.h"
+
 namespace Axion {
 
 	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_editorCamera(1280.0f / 720.0f) {}
@@ -249,31 +252,46 @@ namespace Axion {
 				ImGui::MenuItem("System Info", nullptr, &m_showSystemInfoPanel);
 				ImGui::EndMenu();
 			}
+			m_lastTitleBarMenuX = ImGui::GetCursorPosX();
 
 			#if AX_WIN_USING_CUSTOM_TITLE_BAR
 
 			// Detect dragging on empty space in the menu bar
-			float dragZoneStartX = 285.0f;
-			float dragZoneEndX = ImGui::GetWindowWidth() - 134.0f;
-			
+			static bool draggingWindow = false;
 			ImVec2 winPos = ImGui::GetWindowPos();
 			ImVec2 cursor = ImGui::GetMousePos();
 			ImVec2 local = ImVec2(cursor.x - winPos.x, cursor.y - winPos.y);
-
 			float menuBarHeight = ImGui::GetFrameHeight();
+			float buttonWidth = 42.0f;
+			float buttonHeight = 24.0f;
+			float buttonSpacing = 4.0f;
 
-			if (local.y >= 0 && local.y <= menuBarHeight && local.x >= dragZoneStartX && local.x <= dragZoneEndX && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-				HWND hwnd = static_cast<HWND>(Application::get().getWindow().getNativeHandle());
-				ReleaseCapture();
-				SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+			float totalButtonWidth = 3 * buttonWidth + 2 * buttonSpacing;
+
+			float dragZoneStartX = m_lastTitleBarMenuX; // approximately end of the "Help" menu
+			float dragZoneEndX = ImGui::GetWindowWidth() - totalButtonWidth;
+
+			if (local.y >= 0 && local.y <= menuBarHeight && 
+				local.x >= dragZoneStartX && local.x <= dragZoneEndX/* && ImGui::IsMouseDragging(ImGuiMouseButton_Left)*/) {
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+					draggingWindow = true;
+					HWND hwnd = static_cast<HWND>(Application::get().getWindow().getNativeHandle());
+					WindowsWindow& win = reinterpret_cast<WindowsWindow&>(Application::get().getWindow());
+					win.isDragZone = [menuBarHeight, dragZoneStartX, dragZoneEndX](int x, int y) {
+						return y >= 0 && y <= menuBarHeight && x >= dragZoneStartX && x <= dragZoneEndX;
+					};
+				}
+			}
+			if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+				draggingWindow = false;
 			}
 
 			ImGui::SameLine(ImGui::GetWindowWidth() - 134);
-			if (ImGui::Button(u8"\uE15B", { 42, 24 })) { Application::get().minimizeWindow(); }
+			if (ImGui::Button(u8"\uE15B", { buttonWidth, buttonHeight })) { Application::get().minimizeWindow(); }
 			ImGui::SameLine();
-			if (ImGui::Button(u8"\uE5D1", { 42, 24 })) { Application::get().maximizeOrRestoreWindow(); }
+			if (ImGui::Button(u8"\uE5D1", { buttonWidth, buttonHeight })) { Application::get().maximizeOrRestoreWindow(); }
 			ImGui::SameLine();
-			if (ImGui::Button(u8"\uE5CD", { 42, 24 })) { Application::get().close(); }
+			if (ImGui::Button(u8"\uE5CD", { buttonWidth, buttonHeight })) { Application::get().close(); }
 			#endif
 
 			ImGui::EndMenuBar();

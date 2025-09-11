@@ -30,6 +30,8 @@ namespace Axion {
 		bool isVSync() const override { return m_data.vsync; }
 		void* getNativeHandle() const override { return m_hwnd; }
 
+		std::function<bool(int x, int y)> isDragZone = nullptr;
+
 	private:
 
 		struct WindowData {

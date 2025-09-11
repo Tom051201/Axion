@@ -13,6 +13,10 @@
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
 
 
+#define WM_APP_MINIMIZE	(WM_APP + 1)
+#define WM_APP_MAXIMIZE	(WM_APP + 2)
+#define WM_APP_RESTORE	(WM_APP + 3)
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Axion {
@@ -50,6 +54,7 @@ namespace Axion {
 		#else
 			style = WS_OVERLAPPEDWINDOW;
 		#endif
+
 		AdjustWindowRect(&wRect, style, FALSE);
 
 		int screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -129,14 +134,17 @@ namespace Axion {
 	}
 
 	void WindowsWindow::minimize() const {
-		ShowWindow(m_hwnd, SW_MINIMIZE);
+		//ShowWindow(m_hwnd, SW_MINIMIZE);
+		PostMessage(m_hwnd, WM_APP_MINIMIZE, 0, 0);
 	}
 
 	void WindowsWindow::maximizeOrRestore() const {
 		if (IsZoomed(m_hwnd)) {
-			ShowWindow(m_hwnd, SW_RESTORE);
+			//ShowWindow(m_hwnd, SW_RESTORE);
+			PostMessage(m_hwnd, WM_APP_RESTORE, 0, 0);
 		} else {
-			ShowWindow(m_hwnd, SW_MAXIMIZE);
+			//ShowWindow(m_hwnd, SW_MAXIMIZE);
+			PostMessage(m_hwnd, WM_APP_MAXIMIZE, 0, 0);
 		}
 	}
 
@@ -250,30 +258,72 @@ namespace Axion {
 					#if AX_WIN_USING_CUSTOM_TITLE_BAR
 					POINT pt = { GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
 					ScreenToClient(hwnd, &pt);
-
+					
 					RECT rect;
 					GetClientRect(hwnd, &rect);
-
+					
 					const int border = 6;
-
+				int titleBarHeight = 30;
+					
 					bool left = pt.x < border;
 					bool right = pt.x >= rect.right - border;
 					bool top = pt.y < border;
 					bool bottom = pt.y >= rect.bottom - border;
-
+					
 					if (top && left) return HTTOPLEFT;
 					if (top && right) return HTTOPRIGHT;
 					if (bottom && left) return HTBOTTOMLEFT;
 					if (bottom && right) return HTBOTTOMRIGHT;
+
+					if (window->isDragZone && window->isDragZone(pt.x, pt.y)) return HTCAPTION;
+					
 					if (left) return HTLEFT;
 					if (right) return HTRIGHT;
 					if (top) return HTTOP;
 					if (bottom) return HTBOTTOM;
 
 					return HTCLIENT;
+
 					#else
 					break;
 					#endif
+				}
+				case WM_GETMINMAXINFO: {
+					#if AX_WIN_USING_CUSTOM_TITLE_BAR
+					LPMINMAXINFO mmi = (LPMINMAXINFO)lparam;
+
+					HMONITOR hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+					MONITORINFO mi = {};
+					mi.cbSize = sizeof(MONITORINFO);
+					GetMonitorInfo(hmonitor, &mi);
+
+					RECT rcWork = mi.rcWork; // work area excluding taskbar
+					RECT rcMonitor = mi.rcMonitor;
+
+					const int border = GetSystemMetrics(SM_CXSIZEFRAME); // horizontal border
+					const int caption = GetSystemMetrics(SM_CYCAPTION); // title bar height
+
+					mmi->ptMaxSize.x = rcWork.right - rcWork.left;
+					mmi->ptMaxSize.y = rcWork.bottom - rcWork.top;
+					mmi->ptMaxPosition.x = rcWork.left - rcMonitor.left;
+					mmi->ptMaxPosition.y = rcWork.top - rcMonitor.top;
+
+					return 0;
+					#else
+					break;
+					#endif
+				}
+				case WM_APP_MINIMIZE: {
+					ShowWindow(hwnd, SW_MINIMIZE);
+					break;
+				}
+				case WM_APP_MAXIMIZE: {
+					ShowWindow(hwnd, SW_MAXIMIZE);
+					break;
+				}
+				case WM_APP_RESTORE: {
+					ShowWindow(hwnd, SW_RESTORE);
+					break;
 				}
 				default: { break; }
 			}

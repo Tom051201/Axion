@@ -82,6 +82,8 @@ namespace Axion {
 		bool m_showNewProjectWindow = false;
 		char m_newNameBuffer[128] = "";
 		char m_newLocationBuffer[512] = "";
+
+		float m_lastTitleBarMenuX;
 	};
 
 }
