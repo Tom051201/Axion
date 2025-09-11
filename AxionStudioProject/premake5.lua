@@ -31,7 +31,8 @@ project "AxionStudio"
 		systemversion "latest"
 		buildoptions { "/utf-8" }
 		defines {
-			"AX_PLATFORM_WINDOWS"
+			"AX_PLATFORM_WINDOWS",
+			"YAML_CPP_STATIC_DEFINE"
 		}
 	
 	filter { "system:windows", "configurations:Debug" }

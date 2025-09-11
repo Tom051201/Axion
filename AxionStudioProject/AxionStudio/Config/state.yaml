@@ -8,4 +8,4 @@ Panels:
   - Name: ContentBrowserPanel
     Visible: true
   - Name: ProjectPanel
-    Visible: true
+    Visible: false

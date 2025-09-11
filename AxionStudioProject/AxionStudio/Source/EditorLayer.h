@@ -63,44 +63,74 @@ namespace Axion {
 			return (static_cast<uint32_t>(flags) & static_cast<uint32_t>(check)) != 0;
 		}
 
+		inline void setFlag(RequestFlags& flags, RequestFlags flag) { flags |= flag; }
+		inline void clearFlags(RequestFlags& flags) { flags = RequestFlags::None; }
+
+
+		// ----- Editor utils -----
+		EditorCamera3D m_editorCamera;
 		RequestFlags m_requests = RequestFlags::None;
 
 
-		EditorCamera3D m_editorCamera;
-
-		// panels
+		// ----- Panels -----
 		PanelManager m_panelManager;
+
 		SystemInfoPanel* m_systemInfoPanel;
 		SceneHierarchyPanel* m_sceneHierarchyPanel;
 		EditorCameraPanel* m_editorCameraPanel;
 		ContentBrowserPanel* m_contentBrowserPanel;
 		ProjectPanel* m_projectPanel;
 
-		// scene viewport
+
+		// ----- Scene viewport -----
 		Ref<FrameBuffer> m_frameBuffer;
-		Vec2 m_viewportDim = { 0.0f, 0.0f };
+		Vec2 m_viewportSize = { 0.0f, 0.0f };
 		bool m_viewportResized = false;
 		
+
+		// ----- Active scene -----
 		Ref<Scene> m_activeScene;
 		std::string m_activeSceneFilePath;
 		SceneState m_sceneState = SceneState::Editing;
 
+
+		// ----- Active project -----
 		Ref<Project> m_activeProject;
 		std::string m_activeProjectFilePath;
 
-		// ImGui
+
+		// ----- ImGui utils -----
 		ImGuiDockNodeFlags m_dockspaceFlags = 0;
 		ImGuiWindowFlags m_windowFlags = 0;
 
-		bool onKeyPressed(KeyPressedEvent& e);
-		bool onRenderingFinished(RenderingFinishedEvent& e);
 
+		// ----- New project window -----
 		void drawNewProjectWindow();
 		bool m_showNewProjectWindow = false;
 		char m_newNameBuffer[128] = "";
 		char m_newLocationBuffer[512] = "";
 
+
+		// ----- Input functions -----
+		bool onKeyPressed(KeyPressedEvent& e);
+		bool onRenderingFinished(RenderingFinishedEvent& e);
+
+
+		// ----- Helper functions -----
+		void beginDockspace();
+		void endDockspace();
+		void drawSceneViewport();
+		void drawGizmo();
+		void drawMenuBar();
+		void handleSceneRequests();
+		void handleProjectRequests();
+
+
+		// ----- WIN32 only -----
+		#if AX_WIN_USING_CUSTOM_TITLE_BAR
 		float m_lastTitleBarMenuX;
+		void drawCustomTitleBarWin32();
+		#endif
 	};
 
 }
