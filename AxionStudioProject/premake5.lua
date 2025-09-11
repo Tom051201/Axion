@@ -19,7 +19,8 @@ project "AxionStudio"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Source",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/imgui",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12",
-		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt"
+		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
+		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include"
 	}
 	
 	links {

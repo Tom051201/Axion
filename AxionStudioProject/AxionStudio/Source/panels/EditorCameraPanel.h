@@ -1,19 +1,19 @@
 #pragma once
 
+#include "AxionStudio/Source/core/Panel.h"
 #include "AxionStudio/Source/core/EditorCamera3D.h"
 
 namespace Axion {
 
-	class EditorCameraPanel {
+	class EditorCameraPanel : public Panel {
 	public:
 
-		EditorCameraPanel();
-		~EditorCameraPanel();
+		EditorCameraPanel(const std::string& name, EditorCamera3D* cam);
+		~EditorCameraPanel() override;
 
-		void setup(EditorCamera3D* cam);
-		void shutdown();
-
-		void onGuiRender();
+		void setup() override;
+		void shutdown() override;
+		void onGuiRender() override;
 
 	private:
 

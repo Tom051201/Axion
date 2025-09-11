@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AxionStudio/Source/core/Panel.h"
+
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Entity.h"
 
@@ -8,18 +10,18 @@
 
 namespace Axion {
 
-	class SceneHierarchyPanel {
+	class SceneHierarchyPanel : public Panel {
 	public:
 
-		SceneHierarchyPanel();
-		~SceneHierarchyPanel();
+		SceneHierarchyPanel(const std::string& name, const Ref<Scene>& activeScene);
+		~SceneHierarchyPanel() override;
 
-		void setup(const Ref<Scene>& activeScene);
-		void shutdown();
+		void setup() override;
+		void shutdown() override;
+		void onGuiRender() override;
 
 		void setContext(const Ref<Scene>& context);
 
-		void onGuiRender();
 
 		Entity getSelectedEntity() const { return m_selectedEntity; }
 

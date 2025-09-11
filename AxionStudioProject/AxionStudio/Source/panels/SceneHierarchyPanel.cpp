@@ -9,14 +9,15 @@
 
 namespace Axion {
 
-	SceneHierarchyPanel::SceneHierarchyPanel() {}
+	SceneHierarchyPanel::SceneHierarchyPanel(const std::string& name, const Ref<Scene>& activeScene) : Panel(name) {
+		setContext(activeScene);
+	}
 
 	SceneHierarchyPanel::~SceneHierarchyPanel() {
 		shutdown();
 	}
 
-	void SceneHierarchyPanel::setup(const Ref<Scene>& activeScene) {
-		setContext(activeScene);
+	void SceneHierarchyPanel::setup() {
 
 		// TODO: TEMP
 

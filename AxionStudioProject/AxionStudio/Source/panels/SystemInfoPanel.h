@@ -1,6 +1,7 @@
 #pragma once
-
 #include "axpch.h"
+
+#include "AxionStudio/Source/core/Panel.h"
 
 namespace Axion {
 
@@ -16,16 +17,15 @@ namespace Axion {
 		std::string os = "?";
 	};
 
-	class SystemInfoPanel {
+	class SystemInfoPanel : public Panel {
 	public:
 
-		SystemInfoPanel();
-		~SystemInfoPanel();
+		SystemInfoPanel(const std::string& name);
+		~SystemInfoPanel() override;
 
-		void setup();
-		void shutdown();
-
-		void onGuiRender();
+		void setup() override;
+		void shutdown() override;
+		void onGuiRender() override;
 
 		SystemInfo& getSystemInfo() { return m_systemInfo; }
 		const SystemInfo& getSystemInfo() const { return m_systemInfo; }

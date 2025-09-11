@@ -7,7 +7,7 @@
 
 namespace Axion {
 
-	SystemInfoPanel::SystemInfoPanel() {}
+	SystemInfoPanel::SystemInfoPanel(const std::string& name) : Panel(name) {}
 
 	SystemInfoPanel::~SystemInfoPanel() {
 		shutdown();

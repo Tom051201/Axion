@@ -1,0 +1,11 @@
+Panels:
+  - Name: SystemInfoPanel
+    Visible: false
+  - Name: SceneHierarchyPanel
+    Visible: true
+  - Name: EditorCameraPanel
+    Visible: false
+  - Name: ContentBrowserPanel
+    Visible: true
+  - Name: ProjectPanel
+    Visible: true

@@ -10,7 +10,8 @@ namespace Axion {
 	constexpr float iconSize = 30.0f;
 	static const std::filesystem::path s_assetPath = "AxionStudio/Assets"; // TODO: make this part of a project config
 
-	ContentBrowserPanel::ContentBrowserPanel() {}
+	ContentBrowserPanel::ContentBrowserPanel(const std::string& name) : Panel(name) {
+	}
 
 	ContentBrowserPanel::~ContentBrowserPanel() {
 		shutdown();

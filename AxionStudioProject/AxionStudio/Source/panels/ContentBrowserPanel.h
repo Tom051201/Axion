@@ -1,6 +1,8 @@
 #pragma once
 #include "axpch.h"
 
+#include "AxionStudio/Source/core/Panel.h"
+
 #include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/project/Project.h"
 
@@ -9,16 +11,15 @@
 
 namespace Axion {
 
-	class ContentBrowserPanel {
+	class ContentBrowserPanel : public Panel {
 	public:
 
-		ContentBrowserPanel();
-		~ContentBrowserPanel();
+		ContentBrowserPanel(const std::string& name);
+		~ContentBrowserPanel() override;
 
-		void setup();
-		void shutdown();
-
-		void onGuiRender();
+		void setup() override;
+		void shutdown() override;
+		void onGuiRender() override;
 
 	private:
 

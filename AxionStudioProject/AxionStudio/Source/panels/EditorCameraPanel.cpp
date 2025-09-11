@@ -6,14 +6,16 @@
 
 namespace Axion {
 
-	EditorCameraPanel::EditorCameraPanel() {}
+	EditorCameraPanel::EditorCameraPanel(const std::string& name, EditorCamera3D* cam) : Panel(name) {
+		m_camera = cam;
+	}
 
 	EditorCameraPanel::~EditorCameraPanel() {
 		shutdown();
 	}
 
-	void EditorCameraPanel::setup(EditorCamera3D* cam) {
-		m_camera = cam;
+	void EditorCameraPanel::setup() {
+		
 	}
 
 	void EditorCameraPanel::shutdown() {

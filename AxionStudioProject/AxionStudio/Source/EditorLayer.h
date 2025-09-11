@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/project/Project.h"
 
 #include "AxionStudio/Source/core/EditorCamera3D.h"
+#include "AxionStudio/Source/core/PanelManager.h"
 #include "AxionStudio/Source/panels/SystemInfoPanel.h"
 #include "AxionStudio/Source/panels/SceneHierarchyPanel.h"
 #include "AxionStudio/Source/panels/EditorCameraPanel.h"
@@ -30,25 +31,50 @@ namespace Axion {
 		void onAttach() override;
 		void onDetach() override;
 
-		void onUpdate(Axion::Timestep ts) override;
-		void onEvent(Axion::Event& e) override;
+		void onUpdate(Timestep ts) override;
+		void onEvent(Event& e) override;
 		void onGuiRender() override;
 
 	private:
 
+		// ----- Requesting operations -----
+		// Request flags used to defer operations 
+		// to once rendering has finished
+		enum class RequestFlags : uint32_t {
+			None = 0,
+			NewScene = 1 << 0,
+			OpenScene = 1 << 1,
+			SaveScene = 1 << 2,
+			SaveSceneAs = 1 << 3,
+			NewProject = 1 << 4,
+			OpenProject = 1 << 5,
+			SaveProject = 1 << 6
+		};
+
+		friend constexpr RequestFlags operator|(RequestFlags a, RequestFlags b) {
+			return static_cast<RequestFlags>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+		}
+
+		friend constexpr RequestFlags& operator|=(RequestFlags& a, RequestFlags b) {
+			a = a | b; return a;
+		}
+
+		inline bool hasFlag(RequestFlags flags, RequestFlags check) {
+			return (static_cast<uint32_t>(flags) & static_cast<uint32_t>(check)) != 0;
+		}
+
+		RequestFlags m_requests = RequestFlags::None;
+
+
 		EditorCamera3D m_editorCamera;
 
 		// panels
-		Scope<SystemInfoPanel> m_systemInfoPanel;
-		Scope<SceneHierarchyPanel> m_sceneHierarchyPanel;
-		Scope<EditorCameraPanel> m_editorCameraPanel;
-		Scope<ContentBrowserPanel> m_contentBrowserPanel;
-		Scope<ProjectPanel> m_projectPanel;
-		bool m_showSystemInfoPanel = false;
-		bool m_showSceneHierarchyPanel = true;
-		bool m_showEditorCameraPanel = false;
-		bool m_showContentBrowserPanel = true;
-		bool m_showProjectPanel = true;
+		PanelManager m_panelManager;
+		SystemInfoPanel* m_systemInfoPanel;
+		SceneHierarchyPanel* m_sceneHierarchyPanel;
+		EditorCameraPanel* m_editorCameraPanel;
+		ContentBrowserPanel* m_contentBrowserPanel;
+		ProjectPanel* m_projectPanel;
 
 		// scene viewport
 		Ref<FrameBuffer> m_frameBuffer;
@@ -65,15 +91,6 @@ namespace Axion {
 		// ImGui
 		ImGuiDockNodeFlags m_dockspaceFlags = 0;
 		ImGuiWindowFlags m_windowFlags = 0;
-
-		bool m_newSceneRequested = false;
-		bool m_openSceneRequested = false;
-		bool m_saveSceneRequested = false;
-		bool m_saveSceneAsRequested = false;
-
-		bool m_newProjectRequested = false;
-		bool m_openProjectRequested = false;
-		bool m_saveProjectRequested = false;
 
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onRenderingFinished(RenderingFinishedEvent& e);

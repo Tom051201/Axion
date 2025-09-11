@@ -1,22 +1,23 @@
 #pragma once
 
+#include "AxionStudio/Source/core/Panel.h"
+
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/project/Project.h"
 
 namespace Axion {
 
-	class ProjectPanel {
+	class ProjectPanel : public Panel {
 	public:
 
-		ProjectPanel();
-		~ProjectPanel();
+		ProjectPanel(const std::string& name);
+		~ProjectPanel() override;
 
-		void setup();
-		void shutdown();
+		void setup() override;
+		void shutdown() override;
+		void onGuiRender() override;
 
 		void setProject(const Ref<Project>& project);
-
-		void onGuiRender();
 
 	private:
 

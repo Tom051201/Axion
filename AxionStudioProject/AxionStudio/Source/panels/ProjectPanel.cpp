@@ -4,7 +4,7 @@
 
 namespace Axion {
 
-	ProjectPanel::ProjectPanel() {}
+	ProjectPanel::ProjectPanel(const std::string& name) : Panel(name) {}
 
 	ProjectPanel::~ProjectPanel() {
 		shutdown();
