@@ -106,7 +106,7 @@ namespace Axion {
 
 		// ----- New project window -----
 		void drawNewProjectWindow();
-		bool m_showNewProjectWindow = false;
+		bool m_openNewProjectPopup = false;
 		char m_newNameBuffer[128] = "";
 		char m_newLocationBuffer[512] = "";
 

@@ -7,6 +7,9 @@ project "AxionStudio"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 	
+	buildoptions { "/utf-8" }
+	defines { "FMT_UNICODE" }
+
 	files {
 		"AxionStudio/Source/**.h",
 		"AxionStudio/Source/**.cpp"

@@ -119,7 +119,12 @@ namespace Axion {
 		// -- Draw all panels --
 		m_panelManager.renderAll();
 
-		if (m_showNewProjectWindow) drawNewProjectWindow();
+		// -- New project popup --
+		if (m_openNewProjectPopup) {
+			ImGui::OpenPopup("Create New Project");
+			m_openNewProjectPopup = false;
+		}
+		drawNewProjectWindow();
 
 		drawMenuBar();
 
@@ -175,36 +180,40 @@ namespace Axion {
 	}
 
 	void EditorLayer::drawNewProjectWindow() {
-		ImGui::Begin("Create new Project", &m_showNewProjectWindow); // TODO: make this a BeginPopupModal
-		ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));
+		if (ImGui::BeginPopupModal("Create New Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));
 
-		// ----- Locatation -----
-		ImGui::InputText("Location", m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer));
-		ImGui::SameLine();
-		if (ImGui::Button("Browse...")) {
-			std::string folder = FileDialogs::openFolder();
-			if (!folder.empty()) {
-				strcpy_s(m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer), folder.c_str());
-				m_newLocationBuffer[IM_ARRAYSIZE(m_newLocationBuffer) - 1] = '\0';
+			// ----- Locatation -----
+			ImGui::InputText("Location", m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse...")) {
+				std::string folder = FileDialogs::openFolder();
+				if (!folder.empty()) {
+					strcpy_s(m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer), folder.c_str());
+					m_newLocationBuffer[IM_ARRAYSIZE(m_newLocationBuffer) - 1] = '\0';
+				}
 			}
-		}
-		ImGui::Separator();
+			ImGui::Separator();
 
 
-		// ----- Create Project -----
-		if (ImGui::Button("Create Project")) {
-			std::string name(m_newNameBuffer);
-			std::string location(m_newLocationBuffer);
+			// ----- Create Project -----
+			if (ImGui::Button("Create Project")) {
+				std::string name(m_newNameBuffer);
+				std::string location(m_newLocationBuffer);
 
-			if (!name.empty() && !location.empty()) {
-				m_activeProject = Project::createNew(location, name);
-				AX_CORE_LOG_INFO("Created Project {} at {}", m_activeProject->getName(), m_activeProject->getProjectPath());
-				m_showNewProjectWindow = false;
+				if (!name.empty() && !location.empty()) {
+					m_activeProject = Project::createNew(location, name);
+					AX_CORE_LOG_INFO("Created Project {} at {}", m_activeProject->getName(), m_activeProject->getProjectPath());
+					ImGui::CloseCurrentPopup();
+				}
 			}
+
+
+			// ----- Cancel on escape -----
+			if (ImGui::IsKeyPressed(ImGuiKey_Escape)) { ImGui::CloseCurrentPopup(); }
+
+			ImGui::EndPopup();
 		}
-
-
-		ImGui::End();
 	}
 
 	void EditorLayer::beginDockspace() {
@@ -364,7 +373,7 @@ namespace Axion {
 
 			// ----- Project menu -----
 			if (ImGui::BeginMenu("  Project  ")) {
-				if (ImGui::MenuItem("New...")) { m_showNewProjectWindow = true; }
+				if (ImGui::MenuItem("New...")) { m_openNewProjectPopup = true; }
 				if (ImGui::MenuItem("Open...")) { m_requests |= RequestFlags::OpenProject; }
 				if (ImGui::MenuItem("Save")) { m_requests |= RequestFlags::SaveProject; }
 				ImGui::EndMenu();
