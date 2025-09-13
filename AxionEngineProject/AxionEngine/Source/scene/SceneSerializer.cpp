@@ -132,8 +132,18 @@ namespace Axion {
 	void SceneSerializer::serializeText(const std::string& filePath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
+		// -- Scene name --
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
-		out << YAML::Key << "Skybox" << YAML::Value << m_scene->m_skybox->getTexturePath();
+
+		// -- Skybox --
+		if (m_scene->m_skybox != nullptr) {
+			out << YAML::Key << "Skybox" << YAML::Value << m_scene->m_skybox->getTexturePath();
+		}
+		else {
+			out << YAML::Key << "Skybox" << YAML::Value << "None";
+		}
+
+		// -- Entities --
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto e : m_scene->m_registry.view<entt::entity>()) {
 			Entity entity = { e, m_scene.get() };
@@ -166,8 +176,10 @@ namespace Axion {
 
 		// ----- Skybox -----
 		std::string sceneSkybox = data["Skybox"].as<std::string>();
-		AssetHandle<Skybox> skyboxHandle = AssetManager::loadSkybox(sceneSkybox);
-		m_scene->setSkybox(skyboxHandle);
+		if (sceneSkybox != "None") {
+			AssetHandle<Skybox> skyboxHandle = AssetManager::loadSkybox(sceneSkybox);
+			m_scene->setSkybox(skyboxHandle);
+		}
 
 
 		// ----- Entities -----

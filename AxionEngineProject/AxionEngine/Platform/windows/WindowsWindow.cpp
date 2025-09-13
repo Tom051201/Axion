@@ -12,7 +12,7 @@
 
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
 
-
+// ----- Used for custom title bar -----
 #define WM_APP_MINIMIZE	(WM_APP + 1)
 #define WM_APP_MAXIMIZE	(WM_APP + 2)
 #define WM_APP_RESTORE	(WM_APP + 3)
@@ -32,10 +32,13 @@ namespace Axion {
 	}
 
 	void WindowsWindow::initialize(const WindowProperties& wp) {
+		// ----- Set properties -----
 		m_data.width = wp.width;
 		m_data.height = wp.height;
 		m_data.title = wp.title;
 
+
+		// ----- Window class -----
 		WNDCLASSEX wcex = {};
 		wcex.cbSize = sizeof(WNDCLASSEX);
 		wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -46,17 +49,20 @@ namespace Axion {
 		ATOM resultCEX = RegisterClassEx(&wcex);
 		if (!resultCEX) { AX_CORE_LOG_ERROR("Failed to register window class"); throw::std::runtime_error("Failed to register window class"); }
 
-		RECT wRect = { 0, 0, (LONG)m_data.width, (LONG)m_data.height };
+
 		DWORD style;
-		// activates the custom title bar for windows
+		// ----- Activates the custom title bar -----
 		#if AX_WIN_USING_CUSTOM_TITLE_BAR
 			style = WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 		#else
 			style = WS_OVERLAPPEDWINDOW;
 		#endif
 
+		RECT wRect = { 0, 0, (LONG)m_data.width, (LONG)m_data.height };
 		AdjustWindowRect(&wRect, style, FALSE);
 
+
+		// ----- Create window -----
 		int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 		int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 		int posX = (screenWidth / 2) - (m_data.width / 2);
@@ -81,7 +87,6 @@ namespace Axion {
 	void WindowsWindow::shutdown() {
 		GraphicsContext::get()->shutdown();
 		AX_CORE_LOG_INFO("Window shutdown");
-		
 	}
 
 	void WindowsWindow::onUpdate() {
@@ -134,37 +139,39 @@ namespace Axion {
 	}
 
 	void WindowsWindow::minimize() const {
-		//ShowWindow(m_hwnd, SW_MINIMIZE);
+		// -- Minimize --
 		PostMessage(m_hwnd, WM_APP_MINIMIZE, 0, 0);
 	}
 
 	void WindowsWindow::maximizeOrRestore() const {
 		if (IsZoomed(m_hwnd)) {
-			//ShowWindow(m_hwnd, SW_RESTORE);
+			// -- Restore --
 			PostMessage(m_hwnd, WM_APP_RESTORE, 0, 0);
 		} else {
-			//ShowWindow(m_hwnd, SW_MAXIMIZE);
+			// -- Maximize --
 			PostMessage(m_hwnd, WM_APP_MAXIMIZE, 0, 0);
 		}
 	}
 
 	LRESULT CALLBACK WindowsWindow::staticWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-		
+
+		// ----- ImGui win32 wndProc -----
 		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
 			return true;
 		}
 		
 		WindowsWindow* window = (WindowsWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-
 		if (window && window->m_data.eventCallback) {
 
 			switch (msg) {
+				// ----- Close -----
 				case WM_CLOSE: {
 					WindowCloseEvent ev;
 					window->m_data.eventCallback(ev);
 					PostQuitMessage(0);
 					break;
 				}
+				// ----- Resizing -----
 				case WM_SIZE: {
 					UINT width = LOWORD(lparam);
 					UINT height = HIWORD(lparam);
@@ -175,16 +182,19 @@ namespace Axion {
 					window->m_data.height = height;
 					break;
 				}
+				// ----- Focused -----
 				case WM_SETFOCUS: {
 					WindowFocusEvent ev;
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Lost focus -----
 				case WM_KILLFOCUS: {
 					WindowLostFocusEvent ev;
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Window moved -----
 				case WM_MOVE: {
 					float x = (float)(short)LOWORD(lparam);
 					float y = (float)(short)HIWORD(lparam);
@@ -193,6 +203,7 @@ namespace Axion {
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Key pressed -----
 				case WM_KEYDOWN: case WM_SYSKEYDOWN: {
 					int keycode = static_cast<int>(wparam);
 					bool wasPreviouslyDown = (lparam & (1 << 30)) != 0;
@@ -201,18 +212,21 @@ namespace Axion {
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Key released -----
 				case WM_KEYUP: case WM_SYSKEYUP: {
 					int keycode = static_cast<int>(wparam);
 					KeyReleasedEvent ev(WindowsInputMapper::toAxionKeyCode(keycode));
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Key typed -----
 				case WM_CHAR: {
 					uint32_t character = static_cast<uint32_t>(wparam);
 					KeyTypedEvent ev(character);
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Mouse moved -----
 				case WM_MOUSEMOVE: {
 					float x = static_cast<float>(GET_X_LPARAM(lparam));
 					float y = static_cast<float>(GET_Y_LPARAM(lparam));
@@ -220,32 +234,38 @@ namespace Axion {
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Left mouse button pressed -----
 				case WM_LBUTTONDOWN: {
 					MouseButtonPressedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_LBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Left mouse button released -----
 				case WM_LBUTTONUP: {
 					MouseButtonReleasedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_LBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Right mouse button pressed -----
 				case WM_RBUTTONDOWN: {
 					MouseButtonPressedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_RBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Right mouse button released -----
 				case WM_RBUTTONUP: {
 					MouseButtonReleasedEvent ev(WindowsInputMapper::toAxionMouseButton(VK_RBUTTON));
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Mouse wheel scrolled -----
 				case WM_MOUSEWHEEL: {
 					float dt = GET_WHEEL_DELTA_WPARAM(wparam) / static_cast<float>(WHEEL_DELTA);
 					MouseScrolledEvent ev(0.0f, dt);
 					window->m_data.eventCallback(ev);
 					break;
 				}
+				// ----- Deactivate title bar -----
 				case WM_NCCALCSIZE: {
 					#if AX_WIN_USING_CUSTOM_TITLE_BAR
 					if (wparam == TRUE) {
@@ -254,6 +274,7 @@ namespace Axion {
 					#endif
 					break;
 				}
+				// ----- Hit test for custom title bar -----
 				case WM_NCHITTEST: {
 					#if AX_WIN_USING_CUSTOM_TITLE_BAR
 					POINT pt = { GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
@@ -263,7 +284,6 @@ namespace Axion {
 					GetClientRect(hwnd, &rect);
 					
 					const int border = 6;
-				int titleBarHeight = 30;
 					
 					bool left = pt.x < border;
 					bool right = pt.x >= rect.right - border;
@@ -288,6 +308,7 @@ namespace Axion {
 					break;
 					#endif
 				}
+				// ----- Calculating size for minimizing / maximizing -----
 				case WM_GETMINMAXINFO: {
 					#if AX_WIN_USING_CUSTOM_TITLE_BAR
 					LPMINMAXINFO mmi = (LPMINMAXINFO)lparam;
@@ -309,18 +330,20 @@ namespace Axion {
 					mmi->ptMaxPosition.y = rcWork.top - rcMonitor.top;
 
 					return 0;
-					#else
-					break;
 					#endif
+					break;
 				}
+				// ----- Custom event for custom minimizing -----
 				case WM_APP_MINIMIZE: {
 					ShowWindow(hwnd, SW_MINIMIZE);
 					break;
 				}
+				// ----- Custom event for custom maximizing -----
 				case WM_APP_MAXIMIZE: {
 					ShowWindow(hwnd, SW_MAXIMIZE);
 					break;
 				}
+				// ----- Custom event for custom restoring -----
 				case WM_APP_RESTORE: {
 					ShowWindow(hwnd, SW_RESTORE);
 					break;

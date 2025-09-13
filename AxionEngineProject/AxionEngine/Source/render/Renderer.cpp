@@ -59,6 +59,9 @@ namespace Axion {
 		delete s_sceneData;
 		s_sceneUploadBuffer->release();
 
+		// TODO: why are there live obj when doing this???
+		// delete s_rendererData;
+
 		Renderer2D::shutdown();
 
 		//GraphicsContext::get()->shutdown();	calling this here causes a crash on app termination!!!

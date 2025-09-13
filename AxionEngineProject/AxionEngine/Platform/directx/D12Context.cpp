@@ -18,16 +18,22 @@ namespace Axion {
 		m_width = width;
 		m_height = height;
 
+
+		// ----- Enable D3D12 Debug layer -----
 		#ifdef AX_DEBUG
 		D12DebugLayer::initialize();
 		#endif
 
+
+		// ----- Set swap chain specification -----
 		SwapChainSpecification swapSpec;
 		swapSpec.width = width;
 		swapSpec.height = height;
 		swapSpec.backBufferFormat = ColorFormat::RGBA8;
 		swapSpec.depthBufferFormat = DepthStencilFormat::DEPTH32F;
 
+
+		// ----- Initialize D3D12 backend -----
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
 		m_rtvHeap.initialize(m_device.getDevice(), AX_D12_MAX_RTV_DESCRIPTORS);
@@ -68,6 +74,8 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(m_commandList.getCommandAllocator()->Reset(), "Failed to reset command allocator");
 		AX_THROW_IF_FAILED_HR(cmd->Reset(m_commandList.getCommandAllocator(), nullptr), "Failed to reset command list");
 
+
+		// ----- Transition barrier -----
 		cmd->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
 			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
 			D3D12_RESOURCE_STATE_PRESENT,
@@ -76,7 +84,8 @@ namespace Axion {
 
 		clear();
 
-		// Set viewport and scissor
+
+		// ----- Set viewport and scissor -----
 		CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 		CD3DX12_RECT scissor(0, 0, m_width, m_height);
 		getCommandList()->RSSetViewports(1, &viewport);
@@ -84,7 +93,7 @@ namespace Axion {
 	}
 
 	void D12Context::finishRendering() {
-		// reverse barrier
+		// ----- Reverse barrier -----
 		m_commandList.getCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
 			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -125,7 +134,7 @@ namespace Axion {
 	}
 
 	void D12Context::resize(uint32_t width, uint32_t height) {
-		if (width <= 0 || height <= 0)return;
+		if (width <= 0 || height <= 0) return;
 
 		waitForPreviousFrame();
 
@@ -133,7 +142,6 @@ namespace Axion {
 		m_height = height;
 
 		m_swapChain.resize(width, height);
-	
 	}
 
 	void D12Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {

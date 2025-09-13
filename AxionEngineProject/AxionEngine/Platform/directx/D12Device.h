@@ -14,9 +14,9 @@ namespace Axion {
 
 		std::string getAdapterName() const;
 
-		inline ID3D12Device* getDevice() const { return m_device.Get(); }
-		inline IDXGIFactory6* getFactory() const { return m_factory.Get(); }
-		inline IDXGIAdapter1* getAdapter() const { return m_adapter.Get(); }
+		ID3D12Device* getDevice() const { return m_device.Get(); }
+		IDXGIFactory6* getFactory() const { return m_factory.Get(); }
+		IDXGIAdapter1* getAdapter() const { return m_adapter.Get(); }
 
 	private:
 

@@ -19,13 +19,13 @@ namespace Axion {
 		void bind() const override;
 		void unbind() const override;
 
-		inline void setLayout(const BufferLayout& layout) override { m_layout = layout; }
-		inline const BufferLayout& getLayout() const override { return m_layout; }
+		void setLayout(const BufferLayout& layout) override { m_layout = layout; }
+		const BufferLayout& getLayout() const override { return m_layout; }
 
-		inline uint32_t getVertexCount() const override { return m_vertexCount; }
-		inline uint32_t getSize() const override { return m_size; }
+		uint32_t getVertexCount() const override { return m_vertexCount; }
+		uint32_t getSize() const override { return m_size; }
 		
-		inline const D3D12_VERTEX_BUFFER_VIEW& getView() const { return m_view; }
+		const D3D12_VERTEX_BUFFER_VIEW& getView() const { return m_view; }
 
 	private:
 
@@ -53,9 +53,9 @@ namespace Axion {
 		void bind() const override;
 		void unbind() const override;
 
-		inline uint32_t getIndexCount() const override { return m_indexCount; }
+		uint32_t getIndexCount() const override { return m_indexCount; }
 
-		inline const D3D12_INDEX_BUFFER_VIEW& getView() const { return m_view; }
+		const D3D12_INDEX_BUFFER_VIEW& getView() const { return m_view; }
 
 	private:
 
@@ -83,7 +83,7 @@ namespace Axion {
 
 		void update(const void* data, size_t size) override;
 
-		inline uint32_t getSize() const override { return static_cast<uint32_t>(m_bufferSize); }
+		uint32_t getSize() const override { return static_cast<uint32_t>(m_bufferSize); }
 
 	private:
 

@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
 
@@ -57,14 +58,11 @@ namespace Axion {
 		Application::get().setWindowIcon("AxionStudio/Resources/logo.ico");
 
 
-		// ----- Set Project -----
-		m_activeProject = std::make_shared<Project>("Unknown");
-		m_projectPanel->setProject(m_activeProject);
-
-
 		// ----- Load editor state from file -----
 		EditorStateSerializer stateSerializer("AxionStudio/Config/state.yaml");
 		stateSerializer.load(m_panelManager);
+
+		m_projectPanel->setProject(std::make_shared<Project>("Unknown"));
 	}
 
 	void EditorLayer::onDetach() {
@@ -105,6 +103,7 @@ namespace Axion {
 	void EditorLayer::onEvent(Event& e) {
 		m_editorCamera.onEvent(e);
 		m_activeScene->onEvent(e);
+		m_panelManager.onEventAll(e);
 		
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
@@ -202,8 +201,8 @@ namespace Axion {
 				std::string location(m_newLocationBuffer);
 
 				if (!name.empty() && !location.empty()) {
-					m_activeProject = Project::createNew(location, name);
-					AX_CORE_LOG_INFO("Created Project {} at {}", m_activeProject->getName(), m_activeProject->getProjectPath());
+					ProjectManager::setActiveProject(Project::createNew(location, name));
+					AX_CORE_LOG_INFO("Created Project {} at {}", ProjectManager::getActiveProject()->getName(), ProjectManager::getActiveProject()->getProjectPath());
 					ImGui::CloseCurrentPopup();
 				}
 			}
@@ -451,20 +450,34 @@ namespace Axion {
 		if (hasFlag(m_requests, RequestFlags::OpenProject)) {
 			std::string filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
 			if (!filePath.empty()) {
-				if (!m_activeProjectFilePath.empty()) m_activeProject->save(m_activeProjectFilePath);
+				if (!m_activeProjectFilePath.empty()) ProjectManager::getActiveProject()->save(m_activeProjectFilePath);
 
-				m_activeProject->load(filePath);
-				m_activeProjectFilePath = m_activeProject->getProjectPath();
-				AX_CORE_LOG_TRACE("Loaded project {}", m_activeProject->getName());
+				Ref<Project> project = std::make_shared<Project>("");
+				project->load(filePath);
+				ProjectManager::setActiveProject(project);
+				m_activeProjectFilePath = project->getProjectPath();
+				AX_CORE_LOG_TRACE("Loaded project {}", project->getName());
 			}
 		}
 
 
 		// ----- Save Project -----
 		if (hasFlag(m_requests, RequestFlags::SaveProject)) {
-			if (!m_activeProjectFilePath.empty()) {
-				m_activeProject->save(m_activeProjectFilePath);
-				AX_CORE_LOG_TRACE("Saved Project {}", m_activeProject->getName());
+			if (ProjectManager::hasActiveProject()) {
+				Ref<Project> project = ProjectManager::getActiveProject();
+				std::string savePath = m_activeProjectFilePath;
+				if (savePath.empty()) {
+					savePath = FileDialogs::saveFile({ {"Axion Project", "*.axproj"} });
+				}
+
+				if (!savePath.empty()) {
+					project->save(savePath);
+					m_activeProjectFilePath = savePath;
+					AX_CORE_LOG_TRACE("Saved Project {}", project->getName());
+				}
+			}
+			else {
+				AX_CORE_LOG_WARN("No active project to save");
 			}
 		}
 	}

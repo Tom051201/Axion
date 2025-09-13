@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AxionEngine/Source/events/Event.h"
+
 #include <string>
 
 namespace Axion {
@@ -13,6 +15,7 @@ namespace Axion {
 
 		virtual void setup() = 0;
 		virtual void shutdown() = 0;
+		virtual void onEvent(Event& e) {}
 		virtual void onGuiRender() = 0;
 
 		virtual bool& isVisible() { return m_visible; }

@@ -25,6 +25,7 @@ namespace Axion {
 		void prepareRendering() override;
 		void finishRendering() override;
 
+		// ----- Clear swap chain -----
 		void setClearColor(const Vec4& color) override;
 		void clear() override;
 
@@ -34,15 +35,17 @@ namespace Axion {
 
 		void activateVsync() override { m_vsyncInterval = 1; };
 		void deactivateVsync() override { m_vsyncInterval = 0; };
-		
+
+		// ----- Draw Calls -----
 		void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) override;
 
+		// ----- Util functions -----
 		std::string getGpuName() const override;
 		std::string getGpuDriverVersion() const override;
 		uint64_t getVramMB() const override;
-
 		void waitForPreviousFrame();
 
+		// ----- Getter for D3D12 components -----
 		D12Device& getDeviceWrapper() { return m_device; }
 		D12CommandQueue& getCommandQueueWrapper() { return m_commandQueue; }
 		D12rtvHeap& getRtvHeapWrapper() { return m_rtvHeap; }

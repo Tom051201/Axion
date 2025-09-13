@@ -4,11 +4,12 @@
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace Axion {
 
 	constexpr float iconSize = 30.0f;
-	static const std::filesystem::path s_assetPath = "AxionStudio/Assets"; // TODO: make this part of a project config
+	//static const std::filesystem::path s_assetPath = "AxionStudio/Assets"; // TODO: make this part of a project config
 
 	ContentBrowserPanel::ContentBrowserPanel(const std::string& name) : Panel(name) {
 	}
@@ -18,11 +19,12 @@ namespace Axion {
 	}
 
 	void ContentBrowserPanel::setup() {
-		std::error_code ec;
-		m_rootDirectory = std::filesystem::weakly_canonical(s_assetPath, ec);
-		if (ec) m_rootDirectory = std::filesystem::absolute(s_assetPath, ec);
 
-		m_currentDirectory = m_rootDirectory;
+		if (ProjectManager::hasActiveProject()) {
+			m_rootDirectory = ProjectManager::getActiveProject()->getAssetsPath();
+			m_currentDirectory = m_rootDirectory;
+			refreshDirectory();
+		}
 
 		// TODO: create a editor own resource handler for such icons
 		m_folderIcon =		Texture2D::create("AxionStudio/Resources/contentbrowser/FolderIcon.png");
@@ -47,6 +49,14 @@ namespace Axion {
 
 		static float padding = 8.0f;
 		static float thumbnailSize = 128.0f;
+
+		// ----- Draw info when no project is selected -----
+		if (!ProjectManager::hasActiveProject()) {
+			ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
+			ImGui::End();
+			return;
+		}
+
 
 		// ----- Scrolling for zoom -----
 		if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
@@ -259,6 +269,11 @@ namespace Axion {
 		ImGui::End();
 	}
 
+	void ContentBrowserPanel::onEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(ContentBrowserPanel::onProjectChanged));
+	}
+
 	void ContentBrowserPanel::refreshDirectory() {
 		std::vector<DirItem> tmp;
 		tmp.reserve(64);
@@ -372,6 +387,25 @@ namespace Axion {
 		ImGui::EndDisabled();
 
 		ImGui::Separator();
+	}
+
+	bool ContentBrowserPanel::onProjectChanged(ProjectChangedEvent& e) {
+		if (ProjectManager::hasActiveProject()) {
+			std::error_code ec;
+			m_rootDirectory = std::filesystem::weakly_canonical(ProjectManager::getActiveProject()->getAssetsPath(), ec);
+			if (ec) {
+				m_rootDirectory = std::filesystem::absolute(ProjectManager::getActiveProject()->getAssetsPath(), ec);
+			}
+			m_currentDirectory = m_rootDirectory;
+			refreshDirectory();
+		}
+		else {
+			m_directoryEntries.clear();
+			m_rootDirectory.clear();
+			m_currentDirectory.clear();
+		}
+
+		return false;
 	}
 
 }

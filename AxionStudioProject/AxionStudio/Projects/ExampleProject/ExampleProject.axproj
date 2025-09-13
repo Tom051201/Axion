@@ -1,4 +1,4 @@
-Project: Project
+Project: ExampleProject
 ProjectPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject\ExampleProject.axproj
-AssetsPath: PATH
-ScenesPath: PATH
+AssetsPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject\Assets
+ScenesPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject\Scenes

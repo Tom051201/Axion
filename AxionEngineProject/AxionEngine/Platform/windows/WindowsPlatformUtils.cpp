@@ -12,15 +12,16 @@
 
 namespace Axion {
 
-	std::string FileDialogs::openFile(const FilterList& filters) {
+	std::string FileDialogs::openFile(const FilterList& filters, const std::string& initialPath) {
 		std::string result;
+
 		HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		if (SUCCEEDED(hr)) {
 			IFileDialog* pfd = nullptr;
 			hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_PPV_ARGS(&pfd));
 
 			if (SUCCEEDED(hr)) {
-				// Convert filters to COMDLG_FILTERSPEC
+				// ----- Convert filters to COMDLG_FILTERSPEC -----
 				std::vector<std::wstring> ownedNames;
 				std::vector<std::wstring> ownedPatterns;
 				std::vector<COMDLG_FILTERSPEC> specs;
@@ -36,6 +37,19 @@ namespace Axion {
 					pfd->SetFileTypeIndex(1); // 1-based index, default to first filter
 				}
 
+
+				// ----- Set initial path -----
+				if (!initialPath.empty()) {
+					std::wstring wInitial(initialPath.begin(), initialPath.end());
+					IShellItem* pItem = nullptr;
+					if (SUCCEEDED(SHCreateItemFromParsingName(wInitial.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+						pfd->SetFolder(pItem);
+						pItem->Release();
+					}
+				}
+
+
+				// ----- Showing and selecting -----
 				hr = pfd->Show(static_cast<HWND>(Application::get().getWindow().getNativeHandle()));
 				if (SUCCEEDED(hr)) {
 					IShellItem* psi = nullptr;
@@ -57,10 +71,10 @@ namespace Axion {
 			CoUninitialize();
 		}
 
-		return result;
+		return result; // <- Empty if canceled
 	}
 
-	std::string FileDialogs::saveFile(const FilterList& filters) {
+	std::string FileDialogs::saveFile(const FilterList& filters, const std::string& initialPath) {
 		std::string result;
 
 		HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -69,7 +83,7 @@ namespace Axion {
 			hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_PPV_ARGS(&pfd));
 
 			if (SUCCEEDED(hr)) {
-				// Convert filters to COMDLG_FILTERSPEC
+				// ----- Convert filters to COMDLG_FILTERSPEC -----
 				std::vector<std::wstring> ownedNames;
 				std::vector<std::wstring> ownedPatterns;
 				std::vector<COMDLG_FILTERSPEC> specs;
@@ -85,6 +99,19 @@ namespace Axion {
 					pfd->SetFileTypeIndex(1);
 				}
 
+
+				// ----- Set initial path -----
+				if (!initialPath.empty()) {
+					std::wstring wInitial(initialPath.begin(), initialPath.end());
+					IShellItem* pItem = nullptr;
+					if (SUCCEEDED(SHCreateItemFromParsingName(wInitial.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+						pfd->SetFolder(pItem);
+						pItem->Release();
+					}
+				}
+
+
+				// ----- Showing and selecting -----
 				hr = pfd->Show(static_cast<HWND>(Application::get().getWindow().getNativeHandle()));
 				if (SUCCEEDED(hr)) {
 					IShellItem* psi = nullptr;
@@ -106,10 +133,10 @@ namespace Axion {
 			CoUninitialize();
 		}
 
-		return result; // empty if canceled
+		return result; // <- Empty if canceled
 	}
 
-	std::string FileDialogs::openFolder() {
+	std::string FileDialogs::openFolder(const std::string& initialPath) {
 		IFileDialog* pfd = nullptr;
 		std::string result;
 
@@ -120,8 +147,21 @@ namespace Axion {
 			if (SUCCEEDED(hr)) {
 				DWORD options;
 				pfd->GetOptions(&options);
-				pfd->SetOptions(options | FOS_PICKFOLDERS); // allow folder selection
+				pfd->SetOptions(options | FOS_PICKFOLDERS); // <- Allows folder selection
 
+
+				// ----- Set initial path -----
+				if (!initialPath.empty()) {
+					std::wstring wInitial(initialPath.begin(), initialPath.end());
+					IShellItem* pItem = nullptr;
+					if (SUCCEEDED(SHCreateItemFromParsingName(wInitial.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+						pfd->SetFolder(pItem);
+						pItem->Release();
+					}
+				}
+
+
+				// ----- Showing and selecting -----
 				hr = pfd->Show(static_cast<HWND>(Application::get().getWindow().getNativeHandle()));
 				if (SUCCEEDED(hr)) {
 					IShellItem* psi;

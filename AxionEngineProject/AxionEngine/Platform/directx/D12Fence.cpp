@@ -20,8 +20,6 @@ namespace Axion {
 		if (!m_fenceEvent) {
 			AX_CORE_LOG_ERROR("Failed CreateEvent (fence)");
 			throw std::runtime_error("CreateEvent failed");
-		} else {
-			AX_CORE_LOG_TRACE("Successful CreateEvent (fence)");
 		}
 
 		#ifdef AX_DEBUG

@@ -19,6 +19,7 @@ namespace Axion {
 		void setupAll();
 		void shutdownAll();
 		void renderAll();
+		void onEventAll(Event& e);
 
 		std::vector<Scope<Panel>>& getAllPanels() { return m_panels; }
 		const std::vector<Scope<Panel>>& getAllPanels() const { return m_panels; }

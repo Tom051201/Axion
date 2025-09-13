@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/project/Project.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
 
 #include <filesystem>
 #include <optional>
@@ -19,6 +20,7 @@ namespace Axion {
 
 		void setup() override;
 		void shutdown() override;
+		void onEvent(Event& e) override;
 		void onGuiRender() override;
 
 	private:
@@ -59,6 +61,9 @@ namespace Axion {
 		Ref<Texture2D> m_backIcon;
 		Ref<Texture2D> m_refreshIcon;
 		Ref<Texture2D> m_addFolderIcon;
+
+		// ----- Events -----
+		bool onProjectChanged(ProjectChangedEvent& e);
 
 		// -- Helper functions --
 		void refreshDirectory();

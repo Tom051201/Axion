@@ -3,6 +3,7 @@
 
 namespace Axion {
 
+	// ----- Keys: Win32 -> Axion -----
 	KeyCode WindowsInputMapper::toAxionKeyCode(uint16_t win32KeyCode) {
 		auto it = s_win32KeyCodeMap.find(win32KeyCode);
 		if (it != s_win32KeyCodeMap.end()) {
@@ -11,6 +12,8 @@ namespace Axion {
 		return KeyCode::Unknown;
 	}
 
+
+	// ----- Mouse: Win32 -> Axion -----
 	MouseButton WindowsInputMapper::toAxionMouseButton(uint16_t win32MouseButton) {
 		auto it = s_win32MouseButtonMap.find(win32MouseButton);
 		if (it != s_win32MouseButtonMap.end()) {
@@ -19,6 +22,8 @@ namespace Axion {
 		return MouseButton::Unknown;
 	}
 
+
+	// ----- Keys: Axion -> Win32 -----
 	int WindowsInputMapper::toWin32KeyCode(KeyCode code) {
 		auto it = s_axionToWin32KeyCodeMap.find(code);
 		if (it != s_axionToWin32KeyCodeMap.end()) {
@@ -26,7 +31,9 @@ namespace Axion {
 		}
 		return -1;
 	}
-	
+
+
+	// ----- Mouse: Axion -> Win32 -----
 	int WindowsInputMapper::toWin32MouseButton(MouseButton button) {
 		auto it = s_axionToWin32MouseButtonMap.find(button);
 		if (it != s_axionToWin32MouseButtonMap.end()) {
@@ -35,6 +42,8 @@ namespace Axion {
 		return -1;
 	}
 
+
+	// ----- Keys: Win32 to Axion mapping -----
 	const std::unordered_map<uint16_t, KeyCode> WindowsInputMapper::s_win32KeyCodeMap = {
 		// Letter keys
 		{ 'A', KeyCode::A },		 { 'B', KeyCode::B },		 { 'C', KeyCode::C },
@@ -108,6 +117,8 @@ namespace Axion {
 
 	};
 
+
+	// ----- Mouse: Win32 to Axion mapping -----
 	const std::unordered_map<uint16_t, MouseButton> WindowsInputMapper::s_win32MouseButtonMap = {
 
 		{ MK_LBUTTON, MouseButton::Left },			{ VK_RBUTTON, MouseButton::Right },			{ VK_MBUTTON, MouseButton::Middle }, 
@@ -115,6 +126,8 @@ namespace Axion {
 
 	};
 
+
+	// ----- Keys: Axion to Win32 mapping -----
 	const std::unordered_map<KeyCode, uint16_t> WindowsInputMapper::s_axionToWin32KeyCodeMap = []() {
 		std::unordered_map<KeyCode, uint16_t> map;
 		for (const auto& [win32Code, axionCode] : WindowsInputMapper::s_win32KeyCodeMap) {
@@ -123,6 +136,8 @@ namespace Axion {
 		return map;
 	}();
 
+
+	// ----- Mouse: Axion to Win32 mapping -----
 	const std::unordered_map<MouseButton, uint16_t> WindowsInputMapper::s_axionToWin32MouseButtonMap = []() {
 		std::unordered_map<MouseButton, uint16_t> map;
 		for (const auto& [win32Code, axionCode] : WindowsInputMapper::s_win32MouseButtonMap) {

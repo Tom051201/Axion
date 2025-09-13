@@ -32,7 +32,7 @@ namespace Axion {
 	};
 
 	struct ShaderSpecification {
-		std::string name;
+		std::string name = "Unset";
 
 		ColorFormat colorFormat = ColorFormat::RGBA8;
 		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;

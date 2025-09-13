@@ -18,7 +18,8 @@ namespace Axion {
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_size);
 
-		// Create resource
+
+		// ----- Create resource -----
 		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
@@ -28,9 +29,10 @@ namespace Axion {
 			nullptr,
 			IID_PPV_ARGS(&m_buffer)
 		);
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create D3D12 vertex buffer");
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create vertex buffer");
 
-		// Upload data
+
+		// ----- Upload data -----
 		void* mappedData = nullptr;
 		D3D12_RANGE readRange = { 0, 0 };
 		hr = m_buffer->Map(0, &readRange, &mappedData);
@@ -39,7 +41,8 @@ namespace Axion {
 		memcpy(mappedData, vertices.data(), m_size);
 		m_buffer->Unmap(0, nullptr);
 
-		// Fill buffer view
+
+		// ----- Fill buffer view -----
 		m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
 		m_view.StrideInBytes = m_stride;
 		m_view.SizeInBytes = m_size;
@@ -63,7 +66,7 @@ namespace Axion {
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 
-	// not required
+	// Not required
 	void D12VertexBuffer::unbind() const {}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -77,6 +80,8 @@ namespace Axion {
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
+
+		// ----- Create resource -----
 		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
@@ -86,9 +91,10 @@ namespace Axion {
 			nullptr,
 			IID_PPV_ARGS(&m_buffer)
 		);
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create D3D12 index buffer");
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create index buffer");
 
-		// upload data
+
+		// ----- Upload data -----
 		void* mappedData = nullptr;
 		hr = m_buffer->Map(0, nullptr, &mappedData);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to map index buffer");
@@ -96,6 +102,8 @@ namespace Axion {
 		memcpy(mappedData, indices.data(), bufferSize);
 		m_buffer->Unmap(0, nullptr);
 
+
+		// ----- Fill buffer view -----
 		m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
 		m_view.Format = DXGI_FORMAT_R32_UINT;
 		m_view.SizeInBytes = bufferSize;
@@ -118,7 +126,7 @@ namespace Axion {
 		cmdList->IASetIndexBuffer(&m_view);
 	}
 
-	// not required
+	// Not required
 	void D12IndexBuffer::unbind() const {}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -126,10 +134,11 @@ namespace Axion {
 	////////////////////////////////////////////////////////////////////////////////
 
 	D12ConstantBuffer::D12ConstantBuffer(size_t size) : m_bufferSize((size + 255) & ~255) {
-
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize);
 
+
+		// ----- Create resource -----
 		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
@@ -139,8 +148,10 @@ namespace Axion {
 			nullptr,
 			IID_PPV_ARGS(&m_buffer)
 		);
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create D3D12 constant buffer");
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create constant buffer");
 
+
+		// ----- Upload data -----
 		D3D12_RANGE readRange = { 0, 0 };
 		hr = m_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedPtr));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to map constant buffer");
@@ -168,7 +179,7 @@ namespace Axion {
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress());
 	}
 
-	// not required
+	// Not required
 	void D12ConstantBuffer::unbind() const {}
 
 }

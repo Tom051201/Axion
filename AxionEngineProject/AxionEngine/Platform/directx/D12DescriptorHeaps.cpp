@@ -23,6 +23,7 @@ namespace Axion {
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
+		// ----- Create RTV heap -----
 		HRESULT hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_rtvHeap));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create RTV descriptor heap");
 
@@ -86,7 +87,9 @@ namespace Axion {
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-		AX_THROW_IF_FAILED_HR(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_srvHeap)), "Failed to create srv descriptor heap");
+		// ----- Create SRV heap -----
+		HRESULT hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_srvHeap));
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create srv descriptor heap");
 
 		m_descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -151,7 +154,9 @@ namespace Axion {
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-		AX_THROW_IF_FAILED_HR(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_dsvHeap)), "Failed to create dsv descriptor heap");
+		// ----- Create DSV heap -----
+		HRESULT hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_dsvHeap));
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create dsv descriptor heap");
 
 		m_descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 

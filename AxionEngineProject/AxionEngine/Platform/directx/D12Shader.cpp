@@ -9,9 +9,7 @@
 
 namespace Axion {
 
-	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {
-		m_specification.name = "Unset";
-	}
+	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {}
 
 	D12Shader::D12Shader(const ShaderSpecification& spec) : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec) {}
 
@@ -37,7 +35,6 @@ namespace Axion {
 		createRootSignature();
 		createPipelineState();
 
-		AX_CORE_LOG_TRACE("Shader '{0}' setup successful (root signature / pipeline state)", m_specification.name);
 		AX_CORE_LOG_TRACE("Shader '{0}' compiled ({1})", m_specification.name, filePath);
 	}
 

@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace Axion {
 
@@ -22,6 +23,8 @@ namespace Axion {
 
 		AssetManager::initialize();
 
+		ProjectManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
+
 		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter);
 		pushOverlay(m_imGuiLayer);
 	}
@@ -30,6 +33,7 @@ namespace Axion {
 		removeOverlay(m_imGuiLayer);
 		Renderer::release();
 
+		ProjectManager::release();
 		AssetManager::release();
 	}
 

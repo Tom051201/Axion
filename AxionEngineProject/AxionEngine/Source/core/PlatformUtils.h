@@ -16,9 +16,9 @@ namespace Axion {
 		using FilterList = std::vector<FileDialogFilter>;
 
 		// These return empty strings if canceled
-		static std::string openFile(const FilterList& filters);
-		static std::string saveFile(const FilterList& filters);
-		static std::string openFolder();
+		static std::string openFile(const FilterList& filters, const std::string& initialPath = "");
+		static std::string saveFile(const FilterList& filters, const std::string& initialPath = "");
+		static std::string openFolder(const std::string& initialPath = "");
 
 	};
 

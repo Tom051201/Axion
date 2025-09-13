@@ -22,7 +22,8 @@ namespace Axion {
 		auto& rtvHeap = m_context->getRtvHeapWrapper();
 		auto& dsvHeap = m_context->getDsvHeapWrapper();
 
-		// create swap chain
+
+		// ----- Create swap chain -----
 		DXGI_SWAP_CHAIN_DESC1 swapDesc = {};
 		swapDesc.BufferCount = spec.bufferCount;
 		swapDesc.Width = spec.width;
@@ -39,7 +40,8 @@ namespace Axion {
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 		AX_CORE_LOG_TRACE("Successfully created swap chain");
 
-		// create RTVs
+
+		// ----- Create RTVs -----
 		for (UINT i = 0; i < spec.bufferCount; ++i) {
 			AX_THROW_IF_FAILED_HR(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_backBuffers[i])), "Failed to get back buffer");
 
@@ -56,7 +58,8 @@ namespace Axion {
 		}
 		AX_CORE_LOG_TRACE("Successfully created {0} RTVs for the swap chain", spec.bufferCount);
 
-		// create DSVs
+
+		// ----- Create DSVs -----
 		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(spec.depthBufferFormat);
 		for (UINT i = 0; i < spec.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -103,8 +106,8 @@ namespace Axion {
 			m_depthBuffers[i]->SetName(name);
 			#endif
 		}
-		AX_CORE_LOG_TRACE("Successfully created {0} DSVs for the swap chain", spec.bufferCount);
 
+		AX_CORE_LOG_TRACE("Successfully created {0} DSVs for the swap chain", spec.bufferCount);
 	}
 
 	void D12SwapChain::release() {
@@ -130,24 +133,28 @@ namespace Axion {
 		auto& rtvHeap = m_context->getRtvHeapWrapper();
 		auto& dsvHeap = m_context->getDsvHeapWrapper();
 
-		// release existing resources
+
+		// ----- Release existing resources -----
 		for (auto& buffer : m_backBuffers) { buffer.Reset(); }
 		for (auto& buffer : m_depthBuffers) { buffer.Reset(); }
 
-		// get current swap chain description to preserve format/flags
+
+		// ----- Get current swap chain description to preserve format/flags -----
 		DXGI_SWAP_CHAIN_DESC1 desc = {};
 		if (FAILED(m_swapChain->GetDesc1(&desc))) {
 			AX_CORE_LOG_ERROR("Failed to get swap chain description");
 			return;
 		}
 
-		// resize swap chain buffers
+
+		// ----- Resize swap chain buffers -----
 		HRESULT hr = m_swapChain->ResizeBuffers(m_specification.bufferCount, width, height, desc.Format, desc.Flags);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to resize swap chain buffers");
 
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-		// recreate RTVs
+
+		// ----- Recreate RTVs -----
 		for (UINT i = 0; i < m_specification.bufferCount; ++i) {
 			Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
 			hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
@@ -158,7 +165,8 @@ namespace Axion {
 			m_backBuffers[i] = backBuffer;
 		}
 
-		// Recreate DSVs
+
+		// ----- Recreate DSVs -----
 		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(m_specification.depthBufferFormat);
 		for (UINT i = 0; i < m_specification.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -220,6 +228,8 @@ namespace Axion {
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndices[m_frameIndex]);
 		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
+
+		// ----- Set viewport and scissor -----
 		D3D12_VIEWPORT vp{
 			0.0f, 0.0f,
 			static_cast<float>(m_specification.width),

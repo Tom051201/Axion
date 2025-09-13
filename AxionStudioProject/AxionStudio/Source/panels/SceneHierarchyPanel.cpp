@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace Axion {
 
@@ -240,7 +241,7 @@ namespace Axion {
 
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 						std::string path = static_cast<const char*>(payload->Data);
-						std::string filePath = "AxionStudio/Assets/" + path;
+						std::string filePath = ProjectManager::getActiveProject()->getAssetsPath() + "\\" + path;
 
 						// TODO: add validation that its the correct file type
 

@@ -15,10 +15,10 @@ namespace Axion {
 		void signalAndWait();
 		bool hasCompleted() const;
 
-		inline ID3D12Fence* getFence() const { return m_fence.Get(); }
-		inline UINT64 getFenceValue() const { return m_fenceValue; }
-		inline HANDLE getFenceEvent() const { return m_fenceEvent; }
-		inline void incrFenceValue() { m_fenceValue++; }
+		ID3D12Fence* getFence() const { return m_fence.Get(); }
+		UINT64 getFenceValue() const { return m_fenceValue; }
+		HANDLE getFenceEvent() const { return m_fenceEvent; }
+		void incrFenceValue() { m_fenceValue++; }
 
 	private:
 

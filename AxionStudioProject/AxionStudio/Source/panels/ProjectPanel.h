@@ -4,6 +4,7 @@
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/project/Project.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
 
 namespace Axion {
 
@@ -15,6 +16,7 @@ namespace Axion {
 
 		void setup() override;
 		void shutdown() override;
+		void onEvent(Event& e) override;
 		void onGuiRender() override;
 
 		void setProject(const Ref<Project>& project);
@@ -22,6 +24,8 @@ namespace Axion {
 	private:
 
 		Ref<Project> m_project;
+
+		bool onProjectChanged(ProjectChangedEvent& e);
 
 	};
 

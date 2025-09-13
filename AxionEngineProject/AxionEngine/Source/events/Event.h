@@ -11,7 +11,8 @@ namespace Axion {
 		ApplicationTick, ApplicationUpdate, ApplicationRender,
 		KeyPressed, KeyReleased, KeyTyped,
 		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
-		RenderingPrepared, RenderingFinished
+		RenderingPrepared, RenderingFinished,
+		ProjectChanged
 	};
 
 	enum EventCategory {

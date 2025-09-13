@@ -3,6 +3,10 @@
 
 #include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
+#include "AxionEngine/Source/project/ProjectManager.h"
+
+#include "AxionStudio/Source/core/EditorConfig.h"
+
 namespace Axion {
 
 	EditorStateSerializer::EditorStateSerializer(const std::string& filepath)
@@ -10,8 +14,12 @@ namespace Axion {
 
 	void EditorStateSerializer::save(const PanelManager& panelManager) {
 		YAML::Emitter out;
-
 		out << YAML::BeginMap;
+
+		// -- Startup project --
+		out << YAML::Key << "StartupProject" << YAML::Value << EditorConfig::startupProjectPath;
+
+		// -- Panels --
 		out << YAML::Key << "Panels" << YAML::Value << YAML::BeginSeq;
 		for (const auto& panel : panelManager.getAllPanels()) {
 			out << YAML::BeginMap;
@@ -34,6 +42,17 @@ namespace Axion {
 		}
 
 		YAML::Node data = YAML::LoadFile(m_filepath);
+
+		if (data["StartupProject"]) {
+			std::string path = data["StartupProject"].as<std::string>();
+			if (path != "None") {
+				EditorConfig::startupProjectPath = path;
+
+				Ref<Project> project = std::make_shared<Project>("");
+				project->load(path);
+				ProjectManager::setActiveProject(project);
+			}
+		}
 
 		if (data["Panels"]) {
 			for (auto panelNode : data["Panels"]) {

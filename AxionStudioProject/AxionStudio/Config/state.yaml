@@ -1,3 +1,4 @@
+StartupProject: None
 Panels:
   - Name: SystemInfoPanel
     Visible: false
@@ -8,4 +9,4 @@ Panels:
   - Name: ContentBrowserPanel
     Visible: true
   - Name: ProjectPanel
-    Visible: false
+    Visible: true

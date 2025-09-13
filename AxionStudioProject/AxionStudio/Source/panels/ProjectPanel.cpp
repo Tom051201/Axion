@@ -2,6 +2,8 @@
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
 
+#include "AxionEngine/Source/project/ProjectManager.h"
+
 namespace Axion {
 
 	ProjectPanel::ProjectPanel(const std::string& name) : Panel(name) {}
@@ -35,6 +37,16 @@ namespace Axion {
 		}
 
 		ImGui::End();
+	}
+
+	void ProjectPanel::onEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(ProjectPanel::onProjectChanged));
+	}
+
+	bool ProjectPanel::onProjectChanged(ProjectChangedEvent& e) {
+		setProject(ProjectManager::getActiveProject());
+		return false;
 	}
 
 }

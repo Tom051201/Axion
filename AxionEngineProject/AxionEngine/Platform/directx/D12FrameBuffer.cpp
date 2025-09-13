@@ -16,7 +16,7 @@ namespace Axion {
 			m_allocated = true;
 		}
 		catch (...) {
-			AX_CORE_LOG_ERROR("Error creating buffers");
+			AX_CORE_LOG_ERROR("Error creating frame buffer");
 			throw;
 		}
 	}
@@ -47,9 +47,12 @@ namespace Axion {
 		width = std::max(1u, width);
 		height = std::max(1u, height);
 
+
+		// ----- Destroy old framebuffer -----
 		release();
 
-		// reallocate descriptor heap indices
+
+		// ----- Reallocate descriptor heap indices -----
 		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
 		m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
 		m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
@@ -59,7 +62,8 @@ namespace Axion {
 		m_specification.width = width;
 		m_specification.height = height;
 
-		// texture
+
+		// ----- Texture -----
 		D3D12_RESOURCE_DESC texDesc = {};
 		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		texDesc.Width = m_specification.width;
@@ -71,6 +75,7 @@ namespace Axion {
 		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+		// -- Set color clear value --
 		D3D12_CLEAR_VALUE clearValue = {};
 		clearValue.Format = texDesc.Format;
 		clearValue.Color[0] = m_specification.clearColor.x;
@@ -78,6 +83,7 @@ namespace Axion {
 		clearValue.Color[2] = m_specification.clearColor.z;
 		clearValue.Color[3] = m_specification.clearColor.w;
 
+		// -- Create color resource --
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
@@ -87,9 +93,10 @@ namespace Axion {
 			&clearValue,
 			IID_PPV_ARGS(&m_colorResource)
 		);
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer texture resource");
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer color resource");
 
-		// depth
+
+		// ----- Depth -----
 		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(m_specification.depthStencilFormat);
 		if (depthFormat == DXGI_FORMAT_UNKNOWN) {
 			AX_CORE_LOG_WARN("Attempting to create framebuffer with unknown depth format");
@@ -103,11 +110,13 @@ namespace Axion {
 		);
 		depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
+		// -- Set depth clear value --
 		D3D12_CLEAR_VALUE depthClearValue = {};
 		depthClearValue.Format = depthFormat;
 		depthClearValue.DepthStencil.Depth = 1.0f;
 		depthClearValue.DepthStencil.Stencil = 0;
 
+		// -- Create depth resource --
 		CD3DX12_HEAP_PROPERTIES depthHeapProps(D3D12_HEAP_TYPE_DEFAULT);
 		hr = device->CreateCommittedResource(
 			&depthHeapProps,
@@ -119,6 +128,8 @@ namespace Axion {
 		);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer depth resource");
 
+
+		// ----- Depth Stencil View -----
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = depthFormat;
 		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -130,16 +141,19 @@ namespace Axion {
 			m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex)
 		);
 
-		// RTV
+
+		// ----- Render Target View (RTV) -----
 		device->CreateRenderTargetView(m_colorResource.Get(), nullptr, m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex));
 
-		// SRV
+
+		// ----- Shader Resource View (SRV) -----
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Format = texDesc.Format;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 		m_context->getDevice()->CreateShaderResourceView(m_colorResource.Get(), &srvDesc, m_context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex));
+
 
 		#ifdef AX_DEBUG
 		m_colorResource->SetName(L"FrameBufferColor");
@@ -150,6 +164,8 @@ namespace Axion {
 	void D12FrameBuffer::bind() const {
 		auto* cmdList = m_context->getCommandList();
 		
+
+		// ----- Transition barrier -----
 		if (m_currentState != D3D12_RESOURCE_STATE_RENDER_TARGET) {
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				m_colorResource.Get(),
@@ -160,11 +176,14 @@ namespace Axion {
 			m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		}
 
+
+		// ----- Set Render Target -----
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
-		// set viewport and scissorRect
+
+		// ----- Set viewport and scissor -----
 		D3D12_VIEWPORT vp{};
 		vp.TopLeftX = 0.0f;
 		vp.TopLeftY = 0.0f;
@@ -180,12 +199,12 @@ namespace Axion {
 		sc.right = static_cast<LONG>(m_specification.width);
 		sc.bottom = static_cast<LONG>(m_specification.height);
 		cmdList->RSSetScissorRects(1, &sc);
-
 	}
 
 	void D12FrameBuffer::unbind() const {
 		auto* cmdList = m_context->getCommandList();
 
+		// ----- Reverse barrier -----
 		if (m_currentState != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) {
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				m_colorResource.Get(),
@@ -197,9 +216,10 @@ namespace Axion {
 		}
 	}
 
-	// using different values here than specified
+	// NOTE:
+	// Using different values here than specified
 	// in the resource description causes warning!
-	// Also does setting colors here not change the
+	// Setting a color here does not change the
 	// specification!
 	void D12FrameBuffer::clear(const Vec4& clearColor) {
 		auto* cmdList = m_context->getCommandList();

@@ -20,7 +20,8 @@ namespace Axion {
 		auto* cmdList = context->getCommandList();
 		auto* cmdQueue = context->getCommandQueue();
 
-		// texture loading from file
+
+		// ----- Texture loading from file -----
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(true);
 		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -30,7 +31,8 @@ namespace Axion {
 		m_height = static_cast<uint32_t>(texHeight);
 		m_pixelSize = 4;
 
-		// create the texture resource
+
+		// ----- Create the texture resource -----
 		D3D12_RESOURCE_DESC texDesc = {};
 		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		texDesc.Width = m_width;
@@ -54,7 +56,8 @@ namespace Axion {
 		);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create create texture resource");
 
-		// upload heap
+
+		// ----- Upload heap -----
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, 1);
 		CD3DX12_RESOURCE_DESC uploadHeapDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 		CD3DX12_HEAP_PROPERTIES uploadProps(D3D12_HEAP_TYPE_UPLOAD);
@@ -72,13 +75,15 @@ namespace Axion {
 		textureData.RowPitch = m_width * m_pixelSize;
 		textureData.SlicePitch = textureData.RowPitch * m_height;
 
-		// keep this, need to reset command list to work
+		// NOTE: Keep this, need to reset command list to work
 		context->getCommandListWrapper().reset();
 
-		// UpdateSubresources
+
+		// ----- Update the subresources -----
 		UpdateSubresources(cmdList, m_textureResource.Get(), m_uploadHeap.Get(), 0, 0, 1, &textureData); // add data
 
-		// transition
+
+		// ----- Transition barrier -----
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_textureResource.Get(),
 			D3D12_RESOURCE_STATE_COPY_DEST,
@@ -86,7 +91,8 @@ namespace Axion {
 		);
 		cmdList->ResourceBarrier(1, &barrier);
 
-		// create srv
+
+		// ----- Create SRV -----
 		m_srvHeapIndex = context->getSrvHeapWrapper().allocate();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -98,7 +104,8 @@ namespace Axion {
 		auto srvCpuHandle = context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
 		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
 
-		// close cmdlist
+
+		// ----- Close commandList -----
 		AX_THROW_IF_FAILED_HR(cmdList->Close(), "Failed to close the command list");
 		ID3D12CommandList* cmdLists[] = { cmdList };
 		cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
@@ -255,6 +262,7 @@ namespace Axion {
 		auto* device = context->getDevice();
 		auto* cmdList = context->getCommandList();
 		auto* cmdQueue = context->getCommandQueue();
+
 
 		// ----- Texture resource -----
 		D3D12_RESOURCE_DESC texDesc = {};

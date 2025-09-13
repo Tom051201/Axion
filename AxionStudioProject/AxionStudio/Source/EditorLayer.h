@@ -95,7 +95,7 @@ namespace Axion {
 
 
 		// ----- Active project -----
-		Ref<Project> m_activeProject;
+		//Ref<Project> m_activeProject;
 		std::string m_activeProjectFilePath;
 
 

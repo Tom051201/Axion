@@ -99,9 +99,9 @@ namespace Axion {
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 
 	};
-	
-	
-	
+
+
+
 	class AppUpdateEvent : public Event {
 	public:
 
@@ -111,15 +111,27 @@ namespace Axion {
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 
 	};
-	
-	
-	
+
+
+
 	class  AppRenderEvent : public Event {
 	public:
 
 		AppRenderEvent() {}
 
 		EVENT_CLASS_TYPE(ApplicationTick)
+		EVENT_CLASS_CATEGORY(EventCategoryApplication)
+
+	};
+
+
+
+	class ProjectChangedEvent : public Event {
+	public:
+
+		ProjectChangedEvent() {}
+
+		EVENT_CLASS_TYPE(ProjectChanged)
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 
 	};
