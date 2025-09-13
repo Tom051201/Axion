@@ -17,7 +17,7 @@ namespace Axion {
 	class ImGuiLayer : public Layer {
 	public:
 
-		ImGuiLayer(const std::function<void()>& styleSetupFunc);
+		ImGuiLayer(const std::function<void()>& styleSetupFunc, const std::string& layoutFilePath);
 		~ImGuiLayer();
 
 		void onAttach() override;
@@ -31,6 +31,7 @@ namespace Axion {
 
 		RendererAPI m_activeAPI;
 		std::function<void()> m_styleSetupFunc = nullptr;
+		std::string m_layoutFilePath;
 
 		// directx12 specifics
 		D12Context* m_d12Context = nullptr;

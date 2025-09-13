@@ -46,9 +46,8 @@ namespace Axion {
 			OpenScene = 1 << 1,
 			SaveScene = 1 << 2,
 			SaveSceneAs = 1 << 3,
-			NewProject = 1 << 4,
-			OpenProject = 1 << 5,
-			SaveProject = 1 << 6
+			OpenProject = 1 << 4,
+			SaveProject = 1 << 5
 		};
 
 		friend constexpr RequestFlags operator|(RequestFlags a, RequestFlags b) {
@@ -95,7 +94,6 @@ namespace Axion {
 
 
 		// ----- Active project -----
-		//Ref<Project> m_activeProject;
 		std::string m_activeProjectFilePath;
 
 
@@ -109,6 +107,9 @@ namespace Axion {
 		bool m_openNewProjectPopup = false;
 		char m_newNameBuffer[128] = "";
 		char m_newLocationBuffer[512] = "";
+		char m_newProjectAuthor[128] = "";
+		char m_newProjectCompany[128] = "";
+		char m_newProjectDescription[128] = "";
 
 
 		// ----- Input functions -----

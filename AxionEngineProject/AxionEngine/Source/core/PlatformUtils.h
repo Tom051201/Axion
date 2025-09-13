@@ -41,6 +41,7 @@ namespace Axion {
 	public:
 
 		static void showInFileExplorer(const std::string& path);
+		static void openFolderInFileExplorer(const std::string& path);
 
 	};
 

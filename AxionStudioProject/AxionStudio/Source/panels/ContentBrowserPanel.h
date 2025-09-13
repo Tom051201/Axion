@@ -23,6 +23,9 @@ namespace Axion {
 		void onEvent(Event& e) override;
 		void onGuiRender() override;
 
+		void serialize(YAML::Emitter& out) const override;
+		void deserialize(const YAML::Node& node) override;
+
 	private:
 
 		struct DirItem {
@@ -54,6 +57,7 @@ namespace Axion {
 
 		// -- UI --
 		bool m_showNames = true;
+		float m_thumbnailSize = 128.0f;
 
 		// -- Icons --
 		Ref<Texture2D> m_folderIcon;

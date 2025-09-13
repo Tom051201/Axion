@@ -25,7 +25,7 @@ namespace Axion {
 
 		ProjectManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 
-		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter);
+		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter, m_specification.guiLayoutFilePath);
 		pushOverlay(m_imGuiLayer);
 	}
 
@@ -154,7 +154,7 @@ namespace Axion {
 			layer->onAttach();
 		}
 
-		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter);
+		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter, m_specification.guiLayoutFilePath);
 		pushOverlay(m_imGuiLayer);
 
 	}

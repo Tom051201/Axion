@@ -9,7 +9,6 @@
 namespace Axion {
 
 	constexpr float iconSize = 30.0f;
-	//static const std::filesystem::path s_assetPath = "AxionStudio/Assets"; // TODO: make this part of a project config
 
 	ContentBrowserPanel::ContentBrowserPanel(const std::string& name) : Panel(name) {
 	}
@@ -48,7 +47,6 @@ namespace Axion {
 		ImGui::Begin("Content Browser");
 
 		static float padding = 8.0f;
-		static float thumbnailSize = 128.0f;
 
 		// ----- Draw info when no project is selected -----
 		if (!ProjectManager::hasActiveProject()) {
@@ -63,9 +61,9 @@ namespace Axion {
 			ImGuiIO& io = ImGui::GetIO();
 			float scrollY = io.MouseWheel;
 			if (io.KeyCtrl && scrollY != 0) {
-				thumbnailSize += (io.KeyShift) ? scrollY : scrollY * 5.0f;
-				thumbnailSize = std::clamp(thumbnailSize, 16.0f, 512.0f);
-				m_showNames = thumbnailSize >= 50;
+				m_thumbnailSize += (io.KeyShift) ? scrollY : scrollY * 5.0f;
+				m_thumbnailSize = std::clamp(m_thumbnailSize, 16.0f, 512.0f);
+				m_showNames = m_thumbnailSize >= 50;
 			}
 		}
 
@@ -75,7 +73,7 @@ namespace Axion {
 
 
 		// ----- Draw ContentBrowser -----
-		float cellSize = thumbnailSize + padding;
+		float cellSize = m_thumbnailSize + padding;
 		float panelWidth = ImGui::GetContentRegionAvail().x;
 		int colCount = (int)(panelWidth / cellSize);
 		if (colCount < 1) { colCount = 1; }
@@ -93,7 +91,7 @@ namespace Axion {
 			// -- Draw file / folder icon --
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			std::string uniqueID = "##" + filenameString;
-			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), reinterpret_cast<ImTextureID>(icon->getHandle()), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 })) {
+			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), reinterpret_cast<ImTextureID>(icon->getHandle()), { m_thumbnailSize, m_thumbnailSize }, { 0, 1 }, { 1, 0 })) {
 				if (item.isDir) {
 					// -- Clicked on folder --
 					m_pendingNavigate = m_currentDirectory / path.filename();
@@ -145,7 +143,7 @@ namespace Axion {
 			if (m_showNames) {
 				// -- Renaming --
 				if (m_itemBeingRenamed == path) {
-					ImGui::SetNextItemWidth(thumbnailSize);
+					ImGui::SetNextItemWidth(m_thumbnailSize);
 					if (m_startRenaming) {
 						ImGui::SetKeyboardFocusHere();
 						m_startRenaming = false;
@@ -191,7 +189,7 @@ namespace Axion {
 				// -- Draw name --
 				else {
 					ImVec2 textSize = ImGui::CalcTextSize(filenameString.c_str());
-					float textX = std::max(ImGui::GetCursorPosX(), ImGui::GetCursorPosX() + (thumbnailSize - textSize.x) * 0.5f);
+					float textX = std::max(ImGui::GetCursorPosX(), ImGui::GetCursorPosX() + (m_thumbnailSize - textSize.x) * 0.5f);
 					ImGui::SetCursorPosX(textX);
 					ImGui::TextUnformatted(filenameString.c_str());
 				}
@@ -406,6 +404,19 @@ namespace Axion {
 		}
 
 		return false;
+	}
+
+	void ContentBrowserPanel::serialize(YAML::Emitter& out) const {
+		Panel::serialize(out);
+		out << YAML::Key << "ThumbnailSize" << YAML::Value << m_thumbnailSize;
+	}
+
+	void ContentBrowserPanel::deserialize(const YAML::Node& node) {
+		Panel::deserialize(node);
+		if (node["ThumbnailSize"]) {
+			m_thumbnailSize = node["ThumbnailSize"].as<float>();
+			m_showNames = m_thumbnailSize >= 50;
+		}
 	}
 
 }

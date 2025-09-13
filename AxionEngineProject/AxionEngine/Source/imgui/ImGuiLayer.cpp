@@ -20,7 +20,8 @@ namespace Axion {
 		OpenGL3Context* ctx;
 	};
 
-	ImGuiLayer::ImGuiLayer(const std::function<void()>& styleSetupFunc) : Layer("ImGuiLayer"), m_activeAPI(RendererAPI::None), m_styleSetupFunc(styleSetupFunc) {}
+	ImGuiLayer::ImGuiLayer(const std::function<void()>& styleSetupFunc, const std::string& layoutFilePath)
+		: Layer("ImGuiLayer"), m_activeAPI(RendererAPI::None), m_styleSetupFunc(styleSetupFunc), m_layoutFilePath(layoutFilePath) {}
 
 	ImGuiLayer::~ImGuiLayer() {}
 
@@ -33,6 +34,10 @@ namespace Axion {
 		ImGui::CreateContext();
 		
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+		if (!m_layoutFilePath.empty()) {
+			io.IniFilename = m_layoutFilePath.c_str();
+		}
 
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;

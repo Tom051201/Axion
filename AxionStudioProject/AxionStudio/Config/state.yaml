@@ -1,12 +1,13 @@
-StartupProject: None
+StartupProject: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\TestProject.axproj
 Panels:
   - Name: SystemInfoPanel
-    Visible: false
+    Visible: true
   - Name: SceneHierarchyPanel
     Visible: true
   - Name: EditorCameraPanel
     Visible: false
   - Name: ContentBrowserPanel
     Visible: true
+    ThumbnailSize: 146
   - Name: ProjectPanel
     Visible: true

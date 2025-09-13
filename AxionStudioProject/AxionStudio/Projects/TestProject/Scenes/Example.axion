@@ -1,14 +1,15 @@
 Scene: Untitled
+Skybox: None
 Entities:
-  - Entity: 5ffe9ed76a8c76faa21efe43d8cd3974
+  - Entity: 798f50ddbdc8bcdbd3c597f32ebb63c4
     TagComponent:
-      Tag: Entity
+      Tag: Empty Entity
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
-      Scale: [3.70000005, 1.20000005, 3]
+      Scale: [1, 1, 1]
     MeshComponent:
-      Path: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Assets\meshes\cubeBase.obj
+      Path: AxionStudio/Assets/meshes\cubeBase.obj
     MaterialComponent:
       Name: BasicMaterial
     ConstantBufferComponent:

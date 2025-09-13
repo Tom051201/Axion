@@ -24,6 +24,7 @@ namespace Axion {
 
 	Application* createApplication() {
 		ApplicationSpecification spec;
+		spec.guiLayoutFilePath = "AxionStudio/Config/Layout.ini";
 		spec.guiSyleSetter = []() {
 			ImGuiStyle& style = ImGui::GetStyle();
 

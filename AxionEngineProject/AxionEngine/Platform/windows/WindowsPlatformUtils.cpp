@@ -244,4 +244,17 @@ namespace Axion {
 		_wsystem(command.c_str());
 	}
 
+	void PlatformUtils::openFolderInFileExplorer(const std::string& path) {
+		std::filesystem::path fsPath(path);
+		if (!std::filesystem::exists(fsPath) || !std::filesystem::is_directory(fsPath)) {
+			AX_CORE_LOG_WARN("Path is not a folder: {}", path);
+			return;
+		}
+
+		std::wstring wpath = fsPath.wstring();
+		std::wstring command = L"explorer.exe \"" + wpath + L"\"";
+
+		_wsystem(command.c_str());
+	}
+
 }

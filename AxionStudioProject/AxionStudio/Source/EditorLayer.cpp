@@ -59,16 +59,14 @@ namespace Axion {
 
 
 		// ----- Load editor state from file -----
-		EditorStateSerializer stateSerializer("AxionStudio/Config/state.yaml");
+		EditorStateSerializer stateSerializer("AxionStudio/Config/State.yaml");
 		stateSerializer.load(m_panelManager);
-
-		m_projectPanel->setProject(std::make_shared<Project>("Unknown"));
 	}
 
 	void EditorLayer::onDetach() {
 		m_frameBuffer->release();
 
-		EditorStateSerializer stateSerializer("AxionStudio/Config/state.yaml");
+		EditorStateSerializer stateSerializer("AxionStudio/Config/State.yaml");
 		stateSerializer.save(m_panelManager);
 		m_panelManager.shutdownAll();
 	}
@@ -180,6 +178,7 @@ namespace Axion {
 
 	void EditorLayer::drawNewProjectWindow() {
 		if (ImGui::BeginPopupModal("Create New Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			// ----- Name -----
 			ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));
 
 			// ----- Locatation -----
@@ -192,16 +191,32 @@ namespace Axion {
 					m_newLocationBuffer[IM_ARRAYSIZE(m_newLocationBuffer) - 1] = '\0';
 				}
 			}
-			ImGui::Separator();
 
+			ImGui::SeparatorText("Optional");
+
+			ImGui::InputText("Author", m_newProjectAuthor, IM_ARRAYSIZE(m_newProjectAuthor));
+			ImGui::InputText("Company", m_newProjectCompany, IM_ARRAYSIZE(m_newProjectCompany));
+			ImGui::InputText("Description", m_newProjectDescription, IM_ARRAYSIZE(m_newProjectDescription));
+
+			ImGui::Separator();
 
 			// ----- Create Project -----
 			if (ImGui::Button("Create Project")) {
-				std::string name(m_newNameBuffer);
-				std::string location(m_newLocationBuffer);
+				//std::string name(m_newNameBuffer);
+				//std::string location(m_newLocationBuffer);
+				//std::string author(m_newProjectAuthor);
+				//std::string company(m_newProjectCompany);
+				//std::string description(m_newProjectDescription);
 
-				if (!name.empty() && !location.empty()) {
-					ProjectManager::setActiveProject(Project::createNew(location, name));
+				ProjectSpecification spec;
+				spec.name = m_newNameBuffer;
+				spec.location = m_newLocationBuffer;
+				spec.author = m_newProjectAuthor;
+				spec.company = m_newProjectCompany;
+				spec.description = m_newProjectDescription;
+
+				if (!spec.name.empty() && !spec.location.empty()) {
+					ProjectManager::setActiveProject(Project::createNew(spec));
 					AX_CORE_LOG_INFO("Created Project {} at {}", ProjectManager::getActiveProject()->getName(), ProjectManager::getActiveProject()->getProjectPath());
 					ImGui::CloseCurrentPopup();
 				}
@@ -439,24 +454,15 @@ namespace Axion {
 	}
 
 	void EditorLayer::handleProjectRequests() {
-		// ----- New Project -----
-		if (hasFlag(m_requests, RequestFlags::NewProject)) {
-			std::string folderPath = FileDialogs::openFolder();
-			AX_CORE_LOG_WARN(folderPath);
-		}
-
-
 		// ----- Open Project -----
 		if (hasFlag(m_requests, RequestFlags::OpenProject)) {
 			std::string filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
 			if (!filePath.empty()) {
 				if (!m_activeProjectFilePath.empty()) ProjectManager::getActiveProject()->save(m_activeProjectFilePath);
 
-				Ref<Project> project = std::make_shared<Project>("");
-				project->load(filePath);
-				ProjectManager::setActiveProject(project);
-				m_activeProjectFilePath = project->getProjectPath();
-				AX_CORE_LOG_TRACE("Loaded project {}", project->getName());
+				ProjectManager::setActiveProject(Project::load(filePath));
+				m_activeProjectFilePath = ProjectManager::getActiveProject()->getProjectPath();
+				AX_CORE_LOG_TRACE("Loaded project {}", ProjectManager::getActiveProject()->getName());
 			}
 		}
 

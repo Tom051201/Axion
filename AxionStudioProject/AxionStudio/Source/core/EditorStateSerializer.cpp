@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorConfig.h"
+#include "AxionStudio/Source/panels/ContentBrowserPanel.h"
 
 namespace Axion {
 
@@ -23,8 +24,7 @@ namespace Axion {
 		out << YAML::Key << "Panels" << YAML::Value << YAML::BeginSeq;
 		for (const auto& panel : panelManager.getAllPanels()) {
 			out << YAML::BeginMap;
-			out << YAML::Key << "Name" << YAML::Value << panel->getName();
-			out << YAML::Key << "Visible" << YAML::Value << panel->isVisible();
+			panel->serialize(out);
 			out << YAML::EndMap;
 		}
 		out << YAML::EndSeq;
@@ -48,19 +48,16 @@ namespace Axion {
 			if (path != "None") {
 				EditorConfig::startupProjectPath = path;
 
-				Ref<Project> project = std::make_shared<Project>("");
-				project->load(path);
-				ProjectManager::setActiveProject(project);
+				ProjectManager::setActiveProject(Project::load(path));
 			}
 		}
 
 		if (data["Panels"]) {
 			for (auto panelNode : data["Panels"]) {
 				std::string name = panelNode["Name"].as<std::string>();
-				bool visible = panelNode["Visible"].as<bool>();
-
-				if (auto* panel = panelManager.findPanelByName(name)) {
-					panel->isVisible() = visible;
+				auto panel = panelManager.findPanelByName(name);
+				if (panel) {
+					panel->deserialize(panelNode);
 				}
 			}
 		}

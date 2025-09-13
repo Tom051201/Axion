@@ -18,6 +18,7 @@ namespace Axion {
 
 	struct ApplicationSpecification {
 		std::function<void()> guiSyleSetter = nullptr;
+		std::string guiLayoutFilePath;
 	};
 
 	class Application {
