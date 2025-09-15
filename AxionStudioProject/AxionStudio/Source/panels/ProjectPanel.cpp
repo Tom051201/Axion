@@ -23,20 +23,16 @@ namespace Axion {
 		m_project = project;
 		m_rootDirectory = std::filesystem::path(m_project->getProjectPath()).parent_path();
 
-		auto projectFileRelative = std::filesystem::relative(project->getProjectPath(), m_rootDirectory);
-		auto assetsRelative = std::filesystem::relative(project->getAssetsPath(), m_rootDirectory);
-		auto scenesRelative = std::filesystem::relative(project->getScenesPath(), m_rootDirectory);
-
-		m_projectFileDisplay = (std::filesystem::path(m_rootDirectory.filename().string()) / projectFileRelative).string();
-		m_assetsDisplay = (std::filesystem::path(m_rootDirectory.filename().string()) / assetsRelative).string();
-		m_scenesDisplay = (std::filesystem::path(m_rootDirectory.filename().string()) / scenesRelative).string();
+		m_projectFileRelative = std::filesystem::relative(project->getProjectPath(), m_rootDirectory);
+		m_assetsRelative = std::filesystem::relative(project->getAssetsPath(), m_rootDirectory);
+		m_scenesRelative = std::filesystem::relative(project->getScenesPath(), m_rootDirectory);
 	}
 
 	void ProjectPanel::onGuiRender() {
 		ImGui::Begin("Project Overview");
 
 		// ----- Draw info when no project is selected -----
-		if (!ProjectManager::hasActiveProject()) {
+		if (!ProjectManager::hasProject()) {
 			ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
 			ImGui::End();
 			return;
@@ -66,7 +62,7 @@ namespace Axion {
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Project");
 			ImGui::TableSetColumnIndex(1);
-			ImGui::Text("%s", m_projectFileDisplay.c_str());
+			ImGui::Text("%s", m_projectFileRelative.string().c_str());
 			ImGui::TableSetColumnIndex(2);
 			if (ImGui::Button("Open Project Folder")) {
 				PlatformUtils::openFolderInFileExplorer(m_project->getProjectPath());
@@ -77,7 +73,7 @@ namespace Axion {
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Assets");
 			ImGui::TableSetColumnIndex(1);
-			ImGui::Text("%s", m_assetsDisplay.c_str());
+			ImGui::Text("%s", m_assetsRelative.string().c_str());
 			ImGui::TableSetColumnIndex(2);
 			if (ImGui::Button("Open Assets")) {
 				PlatformUtils::openFolderInFileExplorer(m_project->getAssetsPath());
@@ -88,13 +84,22 @@ namespace Axion {
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Scenes");
 			ImGui::TableSetColumnIndex(1);
-			ImGui::Text("%s", m_scenesDisplay.c_str());
+			ImGui::Text("%s", m_scenesRelative.string().c_str());
 			ImGui::TableSetColumnIndex(2);
 			if (ImGui::Button("Open Scenes")) {
 				PlatformUtils::openFolderInFileExplorer(m_project->getScenesPath());
 			}
 
 			ImGui::EndTable();
+		}
+
+		// Default scene
+		ImGui::Text("Default Scene: ");
+		ImGui::SameLine();
+		ImGui::Text(m_project->getDefaultScene().c_str());
+		ImGui::SameLine();
+		if (ImGui::Button("Select")) {
+
 		}
 
 		ImGui::Separator();
@@ -104,6 +109,7 @@ namespace Axion {
 
 			}
 
+			ImGui::SameLine();
 			if (ImGui::Button("Set As Startup")) {
 				EditorConfig::startupProjectPath = m_project->getProjectPath() + "\\" + m_project->getName() + ".axproj";
 			}
@@ -118,7 +124,7 @@ namespace Axion {
 	}
 
 	bool ProjectPanel::onProjectChanged(ProjectChangedEvent& e) {
-		setProject(ProjectManager::getActiveProject());
+		setProject(ProjectManager::getProject());
 		return false;
 	}
 

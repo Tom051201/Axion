@@ -4,6 +4,7 @@
 #include "AxionEngine/Vendor/imgui/imgui_internal.h"
 
 #include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -37,6 +38,11 @@ namespace Axion {
 	}
 
 	void SceneHierarchyPanel::shutdown() {}
+
+	void SceneHierarchyPanel::onEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(SceneHierarchyPanel::onSceneChanged));
+	}
 
 	void SceneHierarchyPanel::setContext(const Ref<Scene>& context) {
 		m_context = context;
@@ -241,7 +247,7 @@ namespace Axion {
 
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 						std::string path = static_cast<const char*>(payload->Data);
-						std::string filePath = ProjectManager::getActiveProject()->getAssetsPath() + "\\" + path;
+						std::string filePath = ProjectManager::getProject()->getAssetsPath() + "\\" + path;
 
 						// TODO: add validation that its the correct file type
 
@@ -290,6 +296,12 @@ namespace Axion {
 
 		});
 
+	}
+
+	bool SceneHierarchyPanel::onSceneChanged(SceneChangedEvent& e) {
+		setContext(SceneManager::getScene());
+
+		return false;
 	}
 
 }

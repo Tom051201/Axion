@@ -28,16 +28,29 @@ namespace Axion {
 
 	private:
 
+		// ----- Content browser item -----
 		struct DirItem {
 			std::filesystem::path path;
 			bool isDir = false;
 			std::string displayName;
 		};
 
-		// -- File system state --
+		// ----- Scenes overview item -----
+		struct SceneNode {
+			std::string name;
+			std::filesystem::path path;
+			bool isFolder = false;
+			std::vector<SceneNode> children; // only valid if isFolder == true
+		};
+
+		// -- Content browser --
 		std::filesystem::path m_currentDirectory;
 		std::filesystem::path m_rootDirectory;
 		std::vector<DirItem> m_directoryEntries;
+
+		// -- Scenes overview --
+		std::filesystem::path m_scenesDirectory;
+		SceneNode m_scenesRootNode;
 
 		// -- Search / filtering --
 		char m_searchBuffer[128] = "";
@@ -69,11 +82,16 @@ namespace Axion {
 		// ----- Events -----
 		bool onProjectChanged(ProjectChangedEvent& e);
 
-		// -- Helper functions --
+		// -- Helper functions for content browser --
 		void refreshDirectory();
 		void resetRenaming();
 		bool matchesSearch(const std::string& name);
 		void deletePath(const std::filesystem::path& path);
+
+		// -- Helper functions for scenes overview --
+		void refreshScenes();
+		SceneNode scanSceneFolder(const std::filesystem::path& folderPath);
+		void drawSceneNode(const SceneNode& node);
 
 		void drawToolbar();
 

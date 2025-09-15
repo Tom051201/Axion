@@ -2,13 +2,25 @@
 #include "ProjectManager.h"
 
 #include "AxionEngine/Source/events/ApplicationEvent.h"
+#include "AxionEngine/Source/events/RenderingEvent.h"
 #include "AxionEngine/Source/project/Project.h"
 
 namespace Axion {
 
 	struct ProjectManagerData {
-		Ref<Project> activeProject;
+		Ref<Project> project = nullptr;
+		std::string projectPath;
 		std::function<void(Event&)> eventCallback;
+		std::function<bool(RenderingFinishedEvent&)> onRenderingFinished;
+		// -- New project --
+		bool newProjectRequest = false;
+		ProjectSpecification newProjectSpecification;
+		// -- Load project --
+		bool loadProjectRequest = false;
+		std::string toLoadProjectPath;
+		// -- Save project --
+		bool saveProjectRequest = false;
+		std::string toSaveProjectPath;
 	};
 
 	static ProjectManagerData* s_managerData;
@@ -16,23 +28,81 @@ namespace Axion {
 	void ProjectManager::initialize(std::function<void(Event&)> eventCallback) {
 		s_managerData = new ProjectManagerData();
 		s_managerData->eventCallback = eventCallback;
+		s_managerData->onRenderingFinished = [&](RenderingFinishedEvent& e) {
+			// -- New project --
+			if (s_managerData->newProjectRequest) {
+				Project::createNew(s_managerData->newProjectSpecification);
+				AX_CORE_LOG_INFO("New Project");
+				s_managerData->newProjectRequest = false;
+				s_managerData->newProjectSpecification = {};
+			}
+
+			// -- Load project --
+			if (s_managerData->loadProjectRequest) {
+				std::string filePath = s_managerData->toLoadProjectPath;
+				if (!filePath.empty() && std::filesystem::exists(std::filesystem::path(filePath))) {
+					setProject(Project::load(filePath));
+					s_managerData->projectPath = filePath;
+					AX_CORE_LOG_INFO("Project loaded");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Unable to load project");
+				}
+				s_managerData->loadProjectRequest = false;
+				s_managerData->toLoadProjectPath.clear();
+			}
+
+			// -- Save project --
+			if (s_managerData->saveProjectRequest) {
+				std::string filePath = s_managerData->toSaveProjectPath;
+				if (!filePath.empty() && std::filesystem::exists(std::filesystem::path(filePath))) {
+					s_managerData->project->save(filePath);
+					AX_CORE_LOG_INFO("Project saved");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Unable to save project");
+				}
+				s_managerData->saveProjectRequest = false;
+				s_managerData->toSaveProjectPath.clear();
+			}
+
+			return false;
+		};
 	}
 
 	void ProjectManager::release() {
 		delete s_managerData;
 	}
 
-	void ProjectManager::setActiveProject(const Ref<Project>& project) {
-		s_managerData->activeProject = project;
-
-		if (s_managerData->eventCallback) {
-			ProjectChangedEvent ev;
-			s_managerData->eventCallback(ev);
-		}
+	void ProjectManager::onEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<RenderingFinishedEvent>(s_managerData->onRenderingFinished);
 	}
 
-	Ref<Project> ProjectManager::getActiveProject() { return s_managerData->activeProject; }
+	void ProjectManager::newProject(const ProjectSpecification& spec) {
+		s_managerData->newProjectSpecification = spec;
+		s_managerData->newProjectRequest = true;
+	}
 
-	bool ProjectManager::hasActiveProject() { return s_managerData && s_managerData->activeProject != nullptr; }
+	void ProjectManager::loadProject(const std::string& filePath) {
+		s_managerData->toLoadProjectPath = filePath;
+		s_managerData->loadProjectRequest = true;
+	}
 
+	void ProjectManager::saveProject(const std::string& filePath) {
+		s_managerData->toSaveProjectPath = filePath;
+		s_managerData->saveProjectRequest = true;
+	}
+
+	Ref<Project> ProjectManager::getProject() { return s_managerData->project; }
+
+	bool ProjectManager::hasProject() { return s_managerData && s_managerData->project != nullptr; }
+
+	void ProjectManager::setProject(const Ref<Project>& project) {
+		s_managerData->project = project;
+
+		AX_CORE_ASSERT(s_managerData->eventCallback, "Invalid event callback for project manager")
+		ProjectChangedEvent ev;
+		s_managerData->eventCallback(ev);
+	}
 }

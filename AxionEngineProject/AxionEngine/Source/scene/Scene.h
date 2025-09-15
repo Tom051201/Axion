@@ -44,18 +44,26 @@ namespace Axion {
 
 		entt::registry& getRegistry() { return m_registry; }
 
+		void setTitle(const std::string& title) { m_title = title; }
+		const std::string& getTitle() const { return m_title; }
+
+		bool hasSkybox() const { return (bool)m_skybox; }
 		void setSkybox(const Ref<Skybox>& sky) { m_skybox = sky; }
 		void setSkybox(const AssetHandle<Skybox>& handle);
 		void setSkyboxTexture(const std::string& crossPath);
+		const std::string& getSkyboxPath() const { return m_skybox->getTexturePath(); }
 
 	private:
 
+		std::string m_title = "Untitled";
 		entt::registry m_registry;
 
 		std::vector<Entity> m_entitiesPendingDestroy;
 		std::vector<std::function<void()>> m_componentsPendingRemove;
 
 		Ref<Skybox> m_skybox; // TODO: add reference thru assethandle!
+		bool m_setSkyboxRequested = false;
+		AssetHandle<Skybox> m_requestedSky;
 
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();

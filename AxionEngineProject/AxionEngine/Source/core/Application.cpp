@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
 
 namespace Axion {
 
@@ -22,7 +23,7 @@ namespace Axion {
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
 		AssetManager::initialize();
-
+		SceneManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 		ProjectManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 
 		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter, m_specification.guiLayoutFilePath);
@@ -34,6 +35,7 @@ namespace Axion {
 		Renderer::release();
 
 		ProjectManager::release();
+		SceneManager::release();
 		AssetManager::release();
 	}
 
@@ -51,6 +53,9 @@ namespace Axion {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<WindowCloseEvent>(AX_BIND_EVENT_FN(Application::onWindowClose));
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(Application::onKeyPressed));
+
+		SceneManager::onEvent(e);
+		ProjectManager::onEvent(e);
 
 		for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
 			(*--it)->onEvent(e);

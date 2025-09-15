@@ -126,11 +126,23 @@ namespace Axion {
 
 		flushDestroyedEntities();
 
+		// -- Set skybox --
+		if (m_setSkyboxRequested) {
+			if (!AssetManager::hasSkybox(m_requestedSky)) {
+				AssetManager::loadSkybox(m_requestedSky.path);
+			}
+
+			m_skybox = AssetManager::getSkybox(m_requestedSky);
+			m_requestedSky = {};
+			m_setSkyboxRequested = false;
+		}
+
 		return false;
 	}
 
 	void Scene::setSkybox(const AssetHandle<Skybox>& handle) {
-		m_skybox = AssetManager::getSkybox(handle);
+		m_requestedSky = handle;
+		m_setSkyboxRequested = true;
 	}
 
 	void Scene::setSkyboxTexture(const std::string& crossPath) {

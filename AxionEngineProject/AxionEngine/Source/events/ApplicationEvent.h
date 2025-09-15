@@ -136,5 +136,17 @@ namespace Axion {
 
 	};
 
+
+
+	class SceneChangedEvent : public Event {
+	public:
+
+		SceneChangedEvent() {}
+
+		EVENT_CLASS_TYPE(SceneChanged);
+		EVENT_CLASS_CATEGORY(EventCategoryApplication);
+
+	};
+
 }
 

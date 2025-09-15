@@ -26,9 +26,9 @@ namespace Axion {
 		Ref<Project> m_project;
 
 		std::filesystem::path m_rootDirectory;
-		std::string m_projectFileDisplay;
-		std::string m_assetsDisplay;
-		std::string m_scenesDisplay;
+		std::filesystem::path m_projectFileRelative;
+		std::filesystem::path m_assetsRelative;
+		std::filesystem::path m_scenesRelative;
 
 		bool onProjectChanged(ProjectChangedEvent& e);
 

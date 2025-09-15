@@ -14,6 +14,7 @@
 #include "AxionStudio/Source/panels/EditorCameraPanel.h"
 #include "AxionStudio/Source/panels/ContentBrowserPanel.h"
 #include "AxionStudio/Source/panels/ProjectPanel.h"
+#include "AxionStudio/Source/panels/SceneOverviewPanel.h"
 
 namespace Axion {
 
@@ -37,38 +38,8 @@ namespace Axion {
 
 	private:
 
-		// ----- Requesting operations -----
-		// Request flags used to defer operations 
-		// to once rendering has finished
-		enum class RequestFlags : uint32_t {
-			None = 0,
-			NewScene = 1 << 0,
-			OpenScene = 1 << 1,
-			SaveScene = 1 << 2,
-			SaveSceneAs = 1 << 3,
-			OpenProject = 1 << 4,
-			SaveProject = 1 << 5
-		};
-
-		friend constexpr RequestFlags operator|(RequestFlags a, RequestFlags b) {
-			return static_cast<RequestFlags>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-		}
-
-		friend constexpr RequestFlags& operator|=(RequestFlags& a, RequestFlags b) {
-			a = a | b; return a;
-		}
-
-		inline bool hasFlag(RequestFlags flags, RequestFlags check) {
-			return (static_cast<uint32_t>(flags) & static_cast<uint32_t>(check)) != 0;
-		}
-
-		inline void setFlag(RequestFlags& flags, RequestFlags flag) { flags |= flag; }
-		inline void clearFlags(RequestFlags& flags) { flags = RequestFlags::None; }
-
-
 		// ----- Editor utils -----
 		EditorCamera3D m_editorCamera;
-		RequestFlags m_requests = RequestFlags::None;
 
 
 		// ----- Panels -----
@@ -79,6 +50,7 @@ namespace Axion {
 		EditorCameraPanel* m_editorCameraPanel;
 		ContentBrowserPanel* m_contentBrowserPanel;
 		ProjectPanel* m_projectPanel;
+		SceneOverviewPanel* m_sceneOverviewPanel;
 
 
 		// ----- Scene viewport -----
@@ -115,6 +87,7 @@ namespace Axion {
 		// ----- Input functions -----
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onRenderingFinished(RenderingFinishedEvent& e);
+		bool onSceneChanged(SceneChangedEvent& e);
 
 
 		// ----- Helper functions -----
@@ -123,8 +96,6 @@ namespace Axion {
 		void drawSceneViewport();
 		void drawGizmo();
 		void drawMenuBar();
-		void handleSceneRequests();
-		void handleProjectRequests();
 
 
 		// ----- WIN32 only -----

@@ -13,10 +13,17 @@ namespace Axion {
 
 		static void initialize(std::function<void(Event&)> eventCallback);
 		static void release();
+		static void onEvent(Event& e);
 
-		static void setActiveProject(const Ref<Project>& project);
-		static Ref<Project> getActiveProject();
-		static bool hasActiveProject();
+		static void newProject(const ProjectSpecification& spec);
+		static void loadProject(const std::string& filePath);
+		static void saveProject(const std::string& filePath);
+		static Ref<Project> getProject();
+		static bool hasProject();
+
+	private:
+
+		static void setProject(const Ref<Project>& project);
 
 	};
 

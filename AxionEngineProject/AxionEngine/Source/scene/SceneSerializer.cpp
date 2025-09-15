@@ -3,13 +3,12 @@
 
 #include <fstream>
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
-
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/render/Buffers.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace YAML {
 
@@ -75,7 +74,7 @@ namespace Axion {
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene) : m_scene(scene) {}
 
-	static void serializeEntity(YAML::Emitter& out, Entity entity) {
+	void SceneSerializer::serializeEntity(YAML::Emitter& out, Entity entity) {
 		out << YAML::BeginMap; // Entity
 		out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<UUIDComponent>().id.toString();
 
@@ -104,7 +103,10 @@ namespace Axion {
 			out << YAML::Key << "MeshComponent";
 			out << YAML::BeginMap; // MeshComponent
 			auto& mesh = entity.getComponent<MeshComponent>();
-			out << YAML::Key << "Path" << YAML::Value << mesh.mesh->getHandle().path;
+			//std::filesystem::path absPath(mesh.mesh->getHandle().path);
+			//std::filesystem::path assetsDir = ProjectManager::getActiveProject()->getAssetsPath();
+			//std::filesystem::path relativePath = std::filesystem::relative(absPath, assetsDir);
+			out << YAML::Key << "Path" << YAML::Value << getRelAssetPath(mesh.mesh->getHandle().path);
 			out << YAML::EndMap; // MeshComponent
 		}
 
@@ -132,12 +134,13 @@ namespace Axion {
 	void SceneSerializer::serializeText(const std::string& filePath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
+
 		// -- Scene name --
-		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+		out << YAML::Key << "Scene" << YAML::Value << m_scene->getTitle();
 
 		// -- Skybox --
 		if (m_scene->m_skybox != nullptr) {
-			out << YAML::Key << "Skybox" << YAML::Value << m_scene->m_skybox->getTexturePath();
+			out << YAML::Key << "Skybox" << YAML::Value << getRelAssetPath(m_scene->m_skybox->getTexturePath());
 		}
 		else {
 			out << YAML::Key << "Skybox" << YAML::Value << "None";
@@ -171,13 +174,15 @@ namespace Axion {
 		YAML::Node data = YAML::Load(strStream.str());
 		if (!data["Scene"]) return false;
 
+		// ----- Title -----
 		std::string sceneName = data["Scene"].as<std::string>();
+		m_scene->setTitle(sceneName);
 		AX_CORE_LOG_TRACE("Deserialized scene {}", sceneName);
 
 		// ----- Skybox -----
 		std::string sceneSkybox = data["Skybox"].as<std::string>();
 		if (sceneSkybox != "None") {
-			AssetHandle<Skybox> skyboxHandle = AssetManager::loadSkybox(sceneSkybox);
+			AssetHandle<Skybox> skyboxHandle = AssetManager::loadSkybox(getAbsAssetPath(sceneSkybox));
 			m_scene->setSkybox(skyboxHandle);
 		}
 
@@ -212,7 +217,10 @@ namespace Axion {
 				auto meshComponent = entity["MeshComponent"];
 				if (meshComponent) {
 					auto& mc = deserializedEntity.addComponent<MeshComponent>();
-					AssetHandle<Mesh> handle(meshComponent["Path"].as<std::string>());
+					//std::string relPath = meshComponent["Path"].as<std::string>();
+					//std::string absPath = ProjectManager::getActiveProject()->getAssetsPath() + "\\" + relPath;
+
+					AssetHandle<Mesh> handle(getAbsAssetPath(meshComponent["Path"].as<std::string>()));
 					if (!AssetManager::hasMesh(handle)) {
 						AssetManager::loadMesh(handle.path);
 						AX_CORE_LOG_INFO("LOADED MESH");
@@ -246,6 +254,17 @@ namespace Axion {
 		// TODO: create SceneSerializer::deserializeBinary
 		AX_CORE_ASSERT(false, "Not implemented yet!");
 		return false;
+	}
+
+	std::string SceneSerializer::getRelAssetPath(const std::string& path) {
+		std::filesystem::path absPath(path);
+		std::filesystem::path assetsDir = ProjectManager::getProject()->getAssetsPath();
+		std::filesystem::path relPath = std::filesystem::relative(absPath, assetsDir);
+		return relPath.string();
+	}
+
+	std::string SceneSerializer::getAbsAssetPath(const std::string& path) {
+		return ProjectManager::getProject()->getAssetsPath() + "\\" + path;
 	}
 
 }

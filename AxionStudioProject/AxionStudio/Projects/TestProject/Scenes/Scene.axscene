@@ -1,0 +1,10 @@
+Scene: Untitled
+Skybox: skybox\Daylight_Box_UV.png
+Entities:
+  - Entity: ff851fc2884f29dd25d6197daf5568f9
+    TagComponent:
+      Tag: cube
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]

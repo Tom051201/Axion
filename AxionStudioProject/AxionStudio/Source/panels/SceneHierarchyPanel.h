@@ -4,6 +4,7 @@
 
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
 
 // TODO : TEMP
 #include "AxionEngine/Source/render/Material.h"
@@ -18,6 +19,7 @@ namespace Axion {
 
 		void setup() override;
 		void shutdown() override;
+		void onEvent(Event& e) override;
 		void onGuiRender() override;
 
 		void setContext(const Ref<Scene>& context);
@@ -78,6 +80,8 @@ namespace Axion {
 
 		void displayEntity(Entity entity);
 		void displayComponents(Entity entity);
+
+		bool onSceneChanged(SceneChangedEvent& e);
 
 	};
 

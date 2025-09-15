@@ -48,7 +48,7 @@ namespace Axion {
 			if (path != "None") {
 				EditorConfig::startupProjectPath = path;
 
-				ProjectManager::setActiveProject(Project::load(path));
+				ProjectManager::loadProject(path);
 			}
 		}
 

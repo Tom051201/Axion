@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
 
 namespace Axion {
 
@@ -19,8 +20,8 @@ namespace Axion {
 
 	void ContentBrowserPanel::setup() {
 
-		if (ProjectManager::hasActiveProject()) {
-			m_rootDirectory = ProjectManager::getActiveProject()->getAssetsPath();
+		if (ProjectManager::hasProject()) {
+			m_rootDirectory = ProjectManager::getProject()->getAssetsPath();
 			m_currentDirectory = m_rootDirectory;
 			refreshDirectory();
 		}
@@ -49,14 +50,27 @@ namespace Axion {
 		static float padding = 8.0f;
 
 		// ----- Draw info when no project is selected -----
-		if (!ProjectManager::hasActiveProject()) {
+		if (!ProjectManager::hasProject()) {
 			ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
 			ImGui::End();
 			return;
 		}
 
 
-		// ----- Scrolling for zoom -----
+		// ----- Draw toolbar -----
+		drawToolbar();
+
+
+		// ----- Draw ContentBrowser -----
+		float cellSize = m_thumbnailSize + padding;
+		float panelWidth = ImGui::GetContentRegionAvail().x - 200.0f;
+		panelWidth = std::max(0.0f, panelWidth);
+		int colCount = (int)(panelWidth / cellSize);
+		if (colCount < 1) { colCount = 1; }
+		ImGui::BeginChild("ContentBrowserChild", ImVec2(panelWidth, ImGui::GetContentRegionAvail().y));	// ContentBrowserChild begin
+
+
+		// ----- Scrolling for zoom (only inside the content area) -----
 		if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
 			ImGuiIO& io = ImGui::GetIO();
 			float scrollY = io.MouseWheel;
@@ -68,17 +82,8 @@ namespace Axion {
 		}
 
 
-		// ----- Draw toolbar -----
-		drawToolbar();
-
-
-		// ----- Draw ContentBrowser -----
-		float cellSize = m_thumbnailSize + padding;
-		float panelWidth = ImGui::GetContentRegionAvail().x;
-		int colCount = (int)(panelWidth / cellSize);
-		if (colCount < 1) { colCount = 1; }
+		// ----- Draw content -----
 		ImGui::Columns(colCount, 0, false);
-
 		for (const auto& item : m_directoryEntries) {
 			const auto& path = item.path;
 			const std::string& filenameString = item.displayName;
@@ -90,7 +95,7 @@ namespace Axion {
 
 			// -- Draw file / folder icon --
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			std::string uniqueID = "##" + filenameString;
+			std::string uniqueID = "##" + path.string();
 			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), reinterpret_cast<ImTextureID>(icon->getHandle()), { m_thumbnailSize, m_thumbnailSize }, { 0, 1 }, { 1, 0 })) {
 				if (item.isDir) {
 					// -- Clicked on folder --
@@ -199,6 +204,32 @@ namespace Axion {
 
 		}
 		ImGui::Columns(1);
+		ImGui::EndChild();	// ContentBrowserChild end
+
+
+		// ---- Vertical separator -----
+		ImGui::SameLine();
+		ImGui::InvisibleButton("vspe", ImVec2(1, ImGui::GetContentRegionAvail().y));
+		if (ImGui::IsItemVisible()) {
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			ImVec2 p0 = ImGui::GetItemRectMin();
+			ImVec2 p1 = ImGui::GetItemRectMax();
+			drawList->AddLine(p0, p1, ImGui::GetColorU32(ImGuiCol_Separator));
+		}
+		ImGui::SameLine();
+
+
+		// ----- Scenes overview -----
+		ImGui::SameLine();
+		ImGui::BeginChild("ScenesChild", ImVec2(200.0f, ImGui::GetContentRegionAvail().y));	// ScenesChild begin
+		ImGui::Text("Scenes");
+		ImGui::Separator();
+
+		for (const auto& child : m_scenesRootNode.children) {
+			drawSceneNode(child);
+		}
+
+		ImGui::EndChild();	// ScenesChild end
 
 
 		// ----- Execute renaming after the loop -----
@@ -244,6 +275,7 @@ namespace Axion {
 				deletePath(*m_pendingDelete);
 				m_pendingDelete.reset();
 				refreshDirectory();
+				refreshScenes();
 				ImGui::CloseCurrentPopup();
 			}
 
@@ -344,6 +376,7 @@ namespace Axion {
 		ImGui::SameLine();
 		if (ImGui::ImageButton("##Refresh_icon", reinterpret_cast<ImTextureID>(m_refreshIcon->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
 			refreshDirectory();
+			refreshScenes();
 		}
 
 
@@ -388,14 +421,19 @@ namespace Axion {
 	}
 
 	bool ContentBrowserPanel::onProjectChanged(ProjectChangedEvent& e) {
-		if (ProjectManager::hasActiveProject()) {
+		if (ProjectManager::hasProject()) {
 			std::error_code ec;
-			m_rootDirectory = std::filesystem::weakly_canonical(ProjectManager::getActiveProject()->getAssetsPath(), ec);
+			// -- Content browser --
+			m_rootDirectory = std::filesystem::weakly_canonical(ProjectManager::getProject()->getAssetsPath(), ec);
 			if (ec) {
-				m_rootDirectory = std::filesystem::absolute(ProjectManager::getActiveProject()->getAssetsPath(), ec);
+				m_rootDirectory = std::filesystem::absolute(ProjectManager::getProject()->getAssetsPath(), ec);
 			}
 			m_currentDirectory = m_rootDirectory;
 			refreshDirectory();
+
+			// -- Scenes overview --
+			m_scenesDirectory = ProjectManager::getProject()->getScenesPath();
+			refreshScenes();
 		}
 		else {
 			m_directoryEntries.clear();
@@ -416,6 +454,105 @@ namespace Axion {
 		if (node["ThumbnailSize"]) {
 			m_thumbnailSize = node["ThumbnailSize"].as<float>();
 			m_showNames = m_thumbnailSize >= 50;
+		}
+	}
+
+	void ContentBrowserPanel::refreshScenes() {
+		if (std::filesystem::exists(m_scenesDirectory)) {
+			m_scenesRootNode = scanSceneFolder(m_scenesDirectory);
+		}
+		else {
+			m_scenesRootNode = {};
+		}
+	}
+
+	ContentBrowserPanel::SceneNode ContentBrowserPanel::scanSceneFolder(const std::filesystem::path& folderPath) {
+		SceneNode node;
+		node.name = folderPath.filename().string();
+		node.path = folderPath;
+		node.isFolder = true;
+
+		std::error_code ec;
+		for (auto& entry : std::filesystem::directory_iterator(folderPath, std::filesystem::directory_options::skip_permission_denied, ec)) {
+			if (ec) { ec.clear(); continue; }
+
+			SceneNode child;
+			if (entry.is_directory(ec)) {
+				child = scanSceneFolder(entry.path());
+			}
+			else if (entry.is_regular_file(ec) && entry.path().extension() == ".axscene") {
+				child.name = entry.path().filename().string();
+				child.path = entry.path();
+				child.isFolder = false;
+			}
+			else continue;
+
+			node.children.push_back(std::move(child));
+		}
+
+		return node;
+	}
+
+	void ContentBrowserPanel::drawSceneNode(const SceneNode& node) {
+		ImVec2 iconSize{ 16, 16 };
+		float verticalSpacing = 2.0f;
+
+		if (node.isFolder) {
+			ImGui::PushID(node.path.string().c_str());
+
+			// -- Icon --
+			ImGui::Image(reinterpret_cast<ImTextureID>(m_folderIcon->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
+			ImGui::SameLine();
+
+			if (ImGui::TreeNodeEx(node.name.c_str(), ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth)) {
+				// -- Spacing --
+				ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
+
+				// -- Draw children --
+				for (const auto& child : node.children) {
+					drawSceneNode(child);
+				}
+				ImGui::TreePop();
+			}
+
+			ImGui::PopID();
+
+			// -- Spacing --
+			ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
+		}
+		else {
+			ImGui::Image(reinterpret_cast<ImTextureID>(m_fileIcon->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
+			ImGui::SameLine();
+			if (ImGui::Selectable(node.name.c_str())) {
+				SceneManager::loadScene(node.path.string());
+			}
+
+
+			// -- Draw options on right click --
+			if (ImGui::BeginPopupContextItem(node.name.c_str())) {
+				// -- Show in explorer button --
+				if (ImGui::MenuItem("Show in Explorer")) {
+					PlatformUtils::showInFileExplorer(node.path.string());
+				}
+
+				if (ImGui::MenuItem("Set as default Scene")) {
+					// TODO: set as default scene
+					ProjectManager::getProject()->setDefaultScene(node.path.string());
+				}
+
+				// -- Deleting --
+				ImGui::Separator();
+				if (ImGui::MenuItem("Delete")) {
+					m_pendingDelete = node.path;
+					m_openDeletePopup = true;
+				}
+
+				ImGui::EndPopup();
+			}
+
+
+			// -- Spacing --
+			ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
 		}
 	}
 

@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
@@ -22,15 +23,16 @@ namespace Axion {
 
 		// ----- Set scene -----
 		m_sceneState = SceneState::Editing;
-		m_activeScene = std::make_shared<Scene>();
+		m_activeScene = SceneManager::getScene();
 
 
 		// ----- Setup all panels -----
 		m_systemInfoPanel		= m_panelManager.addPanel<SystemInfoPanel>("SystemInfoPanel");
-		m_sceneHierarchyPanel	= m_panelManager.addPanel<SceneHierarchyPanel>("SceneHierarchyPanel", m_activeScene);
+		m_sceneHierarchyPanel	= m_panelManager.addPanel<SceneHierarchyPanel>("SceneHierarchyPanel", SceneManager::getScene());
 		m_editorCameraPanel		= m_panelManager.addPanel<EditorCameraPanel>("EditorCameraPanel", &m_editorCamera);
 		m_contentBrowserPanel	= m_panelManager.addPanel<ContentBrowserPanel>("ContentBrowserPanel");
 		m_projectPanel			= m_panelManager.addPanel<ProjectPanel>("ProjectPanel");
+		m_sceneOverviewPanel	= m_panelManager.addPanel< SceneOverviewPanel>("SceneOverviewPanel");
 		m_panelManager.setupAll();
 
 
@@ -106,6 +108,7 @@ namespace Axion {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 		dispatcher.dispatch<RenderingFinishedEvent>(AX_BIND_EVENT_FN(EditorLayer::onRenderingFinished));
+		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(EditorLayer::onSceneChanged));
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -136,20 +139,28 @@ namespace Axion {
 		switch (e.getKeyCode()) {
 			case KeyCode::N: {
 				// -- Ctrl + N --
-				if (controlPressed) { m_requests |= RequestFlags::NewScene; }
+				if (controlPressed) {
+					// TODO: new scene
+				}
 				break;
 			}
 			case KeyCode::O: {
 				// -- Ctrl + O --
-				if (controlPressed) { m_requests |= RequestFlags::OpenScene; }
+				if (controlPressed) {
+					// TODO: open scene
+				}
 				break;
 			}
 			case KeyCode::S: {
 				// -- Ctrl + Shift + S --
-				if (controlPressed && shiftPressed) { m_requests |= RequestFlags::SaveSceneAs; }
+				if (controlPressed && shiftPressed) {
+					//TODO: save scene as
+				}
 				
 				// -- Ctrl + S
-				else if (controlPressed && (!shiftPressed)) { m_requests |= RequestFlags::SaveScene; }
+				else if (controlPressed && (!shiftPressed)) {
+					// TODO: save scene
+				}
 				break;
 			}
 			default: break;
@@ -159,10 +170,6 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onRenderingFinished(RenderingFinishedEvent& e) {
-		// ----- Handle requests -----
-		handleSceneRequests();
-		handleProjectRequests();
-
 
 		// ----- Resize viewport -----
 		if (m_viewportResized) {
@@ -171,8 +178,11 @@ namespace Axion {
 			m_viewportResized = false;
 		}
 
+		return false;
+	}
 
-		clearFlags(m_requests);
+	bool EditorLayer::onSceneChanged(SceneChangedEvent& e) {
+		m_activeScene = SceneManager::getScene();
 		return false;
 	}
 
@@ -200,14 +210,28 @@ namespace Axion {
 
 			ImGui::Separator();
 
-			// ----- Create Project -----
-			if (ImGui::Button("Create Project")) {
-				//std::string name(m_newNameBuffer);
-				//std::string location(m_newLocationBuffer);
-				//std::string author(m_newProjectAuthor);
-				//std::string company(m_newProjectCompany);
-				//std::string description(m_newProjectDescription);
 
+			// ----- Clearing values function lambda -----
+			auto clearNewProjectsFields = [this]() {
+				m_newNameBuffer[0] = '\0';
+				m_newLocationBuffer[0] = '\0';
+				m_newProjectAuthor[0] = '\0';
+				m_newProjectCompany[0] = '\0';
+				m_newProjectDescription[0] = '\0';
+			};
+
+
+			// ----- Validate input -----
+			std::filesystem::path locPath(m_newLocationBuffer);
+			bool validLocation = std::filesystem::is_directory(locPath);
+			std::filesystem::path projecFolder = locPath / m_newNameBuffer;
+			bool invalidName = std::filesystem::exists(projecFolder);
+
+			bool disabled = (strlen(m_newNameBuffer) == 0 || strlen(m_newLocationBuffer) == 0 || !validLocation || invalidName);
+
+			// ----- Create Project -----
+			ImGui::BeginDisabled(disabled);
+			if (ImGui::Button("Create Project")) {
 				ProjectSpecification spec;
 				spec.name = m_newNameBuffer;
 				spec.location = m_newLocationBuffer;
@@ -216,15 +240,24 @@ namespace Axion {
 				spec.description = m_newProjectDescription;
 
 				if (!spec.name.empty() && !spec.location.empty()) {
-					ProjectManager::setActiveProject(Project::createNew(spec));
-					AX_CORE_LOG_INFO("Created Project {} at {}", ProjectManager::getActiveProject()->getName(), ProjectManager::getActiveProject()->getProjectPath());
+					ProjectManager::newProject(spec);
 					ImGui::CloseCurrentPopup();
+					clearNewProjectsFields();
 				}
 			}
+			ImGui::EndDisabled();
 
 
-			// ----- Cancel on escape -----
-			if (ImGui::IsKeyPressed(ImGuiKey_Escape)) { ImGui::CloseCurrentPopup(); }
+			// ----- Cancel -----
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel")) {
+				ImGui::CloseCurrentPopup();
+				clearNewProjectsFields();
+			}
+			if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+				ImGui::CloseCurrentPopup();
+				clearNewProjectsFields();
+			}
 
 			ImGui::EndPopup();
 		}
@@ -358,11 +391,24 @@ namespace Axion {
 
 			// ----- File menu -----
 			if (ImGui::BeginMenu("  File  ")) {
-				if (ImGui::MenuItem("New Scene", "Ctrl+N")) { m_requests |= RequestFlags::NewScene; }
-				if (ImGui::MenuItem("Open Scene...", "Ctrl+O")) { m_requests |= RequestFlags::OpenScene; }
+				if (ImGui::MenuItem("New Scene", "Ctrl+N")) {
+					SceneManager::newScene();
+				}
+				if (ImGui::MenuItem("Open Scene...", "Ctrl+O")) {
+					std::string path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
+					SceneManager::loadScene(path);
+				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) { m_requests |= RequestFlags::SaveScene; }
-				if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) { m_requests |= RequestFlags::SaveSceneAs; }
+				ImGui::BeginDisabled(SceneManager::isNewScene());
+				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {
+					std::string path = SceneManager::getScenePath();
+					SceneManager::saveScene(path);
+				}
+				ImGui::EndDisabled();
+				if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) {
+					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} });
+					SceneManager::saveScene(path);
+				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Exit")) { Application::get().close(); }
 				ImGui::EndMenu();
@@ -380,6 +426,7 @@ namespace Axion {
 				ImGui::MenuItem("Scene Hierarchy", nullptr, &m_sceneHierarchyPanel->isVisible());
 				ImGui::MenuItem("Content Browser", nullptr, &m_contentBrowserPanel->isVisible());
 				ImGui::MenuItem("Project Overview", nullptr, &m_projectPanel->isVisible());
+				ImGui::MenuItem("Scene Overview", nullptr, &m_sceneOverviewPanel->isVisible());
 				ImGui::MenuItem("Editor Camera Properties", nullptr, &m_editorCameraPanel->isVisible());
 				ImGui::EndMenu();
 			}
@@ -388,8 +435,14 @@ namespace Axion {
 			// ----- Project menu -----
 			if (ImGui::BeginMenu("  Project  ")) {
 				if (ImGui::MenuItem("New...")) { m_openNewProjectPopup = true; }
-				if (ImGui::MenuItem("Open...")) { m_requests |= RequestFlags::OpenProject; }
-				if (ImGui::MenuItem("Save")) { m_requests |= RequestFlags::SaveProject; }
+				if (ImGui::MenuItem("Open...")) {
+					std::string filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
+					ProjectManager::loadProject(filePath);
+				}
+				if (ImGui::MenuItem("Save")) {
+					std::string filePath = FileDialogs::saveFile({ {"Axion Project", "*.axproj"} });
+					ProjectManager::saveProject(filePath);
+				}
 				ImGui::EndMenu();
 			}
 
@@ -408,83 +461,6 @@ namespace Axion {
 
 			ImGui::EndMenuBar();
 
-		}
-	}
-
-	void EditorLayer::handleSceneRequests() {
-		// ----- New Scene -----
-		if (hasFlag(m_requests, RequestFlags::NewScene)) {
-			m_activeScene = std::make_shared<Scene>();
-			m_sceneHierarchyPanel->setContext(m_activeScene);
-			m_activeSceneFilePath.clear();
-		}
-
-
-		// ----- Open Scene -----
-		if (hasFlag(m_requests, RequestFlags::OpenScene)) {
-			std::string path = FileDialogs::openFile({ {"Axion Scene", "*.axion"} });
-			if (!path.empty()) {
-				m_activeScene = std::make_shared<Scene>();
-				m_sceneHierarchyPanel->setContext(m_activeScene);
-				SceneSerializer serializer(m_activeScene);
-				serializer.deserializeText(path);
-				m_activeSceneFilePath = path;
-			}
-		}
-
-
-		// ----- Save Scene -----
-		if (hasFlag(m_requests, RequestFlags::SaveScene)) {
-			if (!m_activeSceneFilePath.empty()) {
-				SceneSerializer serializer(m_activeScene);
-				serializer.serializeText(m_activeSceneFilePath);
-			}
-		}
-
-
-		// ----- Save Scene As -----
-		if (hasFlag(m_requests, RequestFlags::SaveSceneAs)) {
-			std::string filePath = FileDialogs::saveFile({ {"Axion Scene", "*.axion"} });
-			if (!filePath.empty()) {
-				SceneSerializer serializer(m_activeScene);
-				serializer.serializeText(filePath);
-			}
-		}
-
-	}
-
-	void EditorLayer::handleProjectRequests() {
-		// ----- Open Project -----
-		if (hasFlag(m_requests, RequestFlags::OpenProject)) {
-			std::string filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
-			if (!filePath.empty()) {
-				if (!m_activeProjectFilePath.empty()) ProjectManager::getActiveProject()->save(m_activeProjectFilePath);
-
-				ProjectManager::setActiveProject(Project::load(filePath));
-				m_activeProjectFilePath = ProjectManager::getActiveProject()->getProjectPath();
-				AX_CORE_LOG_TRACE("Loaded project {}", ProjectManager::getActiveProject()->getName());
-			}
-		}
-
-
-		// ----- Save Project -----
-		if (hasFlag(m_requests, RequestFlags::SaveProject)) {
-			if (ProjectManager::hasActiveProject()) {
-				Ref<Project> project = ProjectManager::getActiveProject();
-				std::string savePath = m_activeProjectFilePath;
-				if (savePath.empty()) {
-					savePath = FileDialogs::saveFile({ {"Axion Project", "*.axproj"} });
-				}
-
-				if (!savePath.empty()) {
-					project->save(savePath);
-					m_activeProjectFilePath = savePath;
-					AX_CORE_LOG_TRACE("Saved Project {}", project->getName());
-				}
-			}
-			else {
-				AX_CORE_LOG_WARN("No active project to save");
-			}
 		}
 	}
 

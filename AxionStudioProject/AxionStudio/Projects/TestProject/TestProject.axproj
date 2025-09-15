@@ -7,3 +7,4 @@ Description: A simple project
 ProjectPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject
 AssetsPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets
 ScenesPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scenes
+DefaultScene: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scenes\Scene.axscene

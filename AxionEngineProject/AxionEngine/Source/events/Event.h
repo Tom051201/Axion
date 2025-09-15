@@ -12,7 +12,7 @@ namespace Axion {
 		KeyPressed, KeyReleased, KeyTyped,
 		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
 		RenderingPrepared, RenderingFinished,
-		ProjectChanged
+		ProjectChanged, SceneChanged
 	};
 
 	enum EventCategory {
