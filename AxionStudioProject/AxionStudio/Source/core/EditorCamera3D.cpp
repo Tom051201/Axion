@@ -25,6 +25,8 @@ namespace Axion {
 	}
 
 	void EditorCamera3D::onUpdate(Timestep ts) {
+		if (!m_hoveringSceneViewport) return;
+
 		Vec3 forward = getForward();
 		Vec3 right = getRight();
 		Vec3 up = getUp();
@@ -54,9 +56,12 @@ namespace Axion {
 	}
 
 	bool EditorCamera3D::onMouseScrolled(MouseScrolledEvent& e) {
-		m_fov -= e.getYOffset();
-		m_fov = Math::clamp(m_fov, 1.0f, 90.0f);
-		setProjection(m_fov, m_aspectRatio, m_nearClip, m_farClip);
+		// ----- Change fov on scrolling only when hovering the viewport -----
+		if (m_hoveringSceneViewport) {
+			m_fov -= e.getYOffset();
+			m_fov = Math::clamp(m_fov, 1.0f, 90.0f);
+			setProjection(m_fov, m_aspectRatio, m_nearClip, m_farClip);
+		}
 		return false;
 	}
 
@@ -125,7 +130,6 @@ namespace Axion {
 		Vec3 target = m_position + forward;
 		m_viewMatrix = Mat4::lookAt(m_position, target, Vec3::up());
 		m_viewProjectionMatrix = m_viewMatrix * m_projectionMatrix;
-		//m_viewProjectionMatrix = m_projectionMatrix * m_viewMatrix;
 	}
 
 	void EditorCamera3D::setProjection(float fovDegrees, float aspect, float nearZ, float farZ) {

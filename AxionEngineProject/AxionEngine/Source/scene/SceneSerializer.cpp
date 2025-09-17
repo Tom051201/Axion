@@ -103,9 +103,6 @@ namespace Axion {
 			out << YAML::Key << "MeshComponent";
 			out << YAML::BeginMap; // MeshComponent
 			auto& mesh = entity.getComponent<MeshComponent>();
-			//std::filesystem::path absPath(mesh.mesh->getHandle().path);
-			//std::filesystem::path assetsDir = ProjectManager::getActiveProject()->getAssetsPath();
-			//std::filesystem::path relativePath = std::filesystem::relative(absPath, assetsDir);
 			out << YAML::Key << "Path" << YAML::Value << getRelAssetPath(mesh.mesh->getHandle().path);
 			out << YAML::EndMap; // MeshComponent
 		}
@@ -115,7 +112,12 @@ namespace Axion {
 			out << YAML::Key << "MaterialComponent";
 			out << YAML::BeginMap; // MaterialComponent
 			auto& mat = entity.getComponent<MaterialComponent>();
-			out << YAML::Key << "Name" << YAML::Value << mat.getName();
+			if (mat.material) {
+				out << YAML::Key << "Name" << YAML::Value << mat.getName();
+			}
+			else {
+				out << YAML::Key << "Name" << YAML::Value << "None";
+			}
 			out << YAML::EndMap; // MaterialComponent
 		}
 
@@ -200,8 +202,6 @@ namespace Axion {
 					name = tagComponent["Tag"].as<std::string>();
 				}
 
-				AX_CORE_LOG_TRACE("Deserialized entity with ID = {}, name = {}", uuid, name);
-
 				Entity deserializedEntity = m_scene->createEntityWithUUID(name, uuid);
 
 				// -- TransformComponent --
@@ -217,13 +217,11 @@ namespace Axion {
 				auto meshComponent = entity["MeshComponent"];
 				if (meshComponent) {
 					auto& mc = deserializedEntity.addComponent<MeshComponent>();
-					//std::string relPath = meshComponent["Path"].as<std::string>();
-					//std::string absPath = ProjectManager::getActiveProject()->getAssetsPath() + "\\" + relPath;
-
-					AssetHandle<Mesh> handle(getAbsAssetPath(meshComponent["Path"].as<std::string>()));
+					std::string relPath = meshComponent["Path"].as<std::string>();
+					AssetHandle<Mesh> handle(getAbsAssetPath(relPath));
 					if (!AssetManager::hasMesh(handle)) {
 						AssetManager::loadMesh(handle.path);
-						AX_CORE_LOG_INFO("LOADED MESH");
+						AX_CORE_LOG_TRACE("Loaded mesh: {}", relPath);
 					}
 					mc.mesh = AssetManager::getMesh(handle);
 				}

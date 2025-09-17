@@ -26,6 +26,8 @@ namespace Axion {
 		void serialize(YAML::Emitter& out) const override;
 		void deserialize(const YAML::Node& node) override;
 
+		void refresh();
+
 	private:
 
 		// ----- Content browser item -----

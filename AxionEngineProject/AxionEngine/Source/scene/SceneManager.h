@@ -18,6 +18,7 @@ namespace Axion {
 		static void newScene();
 		static void loadScene(const std::string& filePath);
 		static void saveScene(const std::string& filePath);
+		static void unloadScene();
 		static Ref<Scene> getScene();
 		static bool hasScene();
 		static bool isNewScene();

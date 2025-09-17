@@ -32,7 +32,7 @@ namespace Axion {
 		m_editorCameraPanel		= m_panelManager.addPanel<EditorCameraPanel>("EditorCameraPanel", &m_editorCamera);
 		m_contentBrowserPanel	= m_panelManager.addPanel<ContentBrowserPanel>("ContentBrowserPanel");
 		m_projectPanel			= m_panelManager.addPanel<ProjectPanel>("ProjectPanel");
-		m_sceneOverviewPanel	= m_panelManager.addPanel< SceneOverviewPanel>("SceneOverviewPanel");
+		m_sceneOverviewPanel	= m_panelManager.addPanel<SceneOverviewPanel>("SceneOverviewPanel");
 		m_panelManager.setupAll();
 
 
@@ -140,26 +140,29 @@ namespace Axion {
 			case KeyCode::N: {
 				// -- Ctrl + N --
 				if (controlPressed) {
-					// TODO: new scene
+					SceneManager::newScene();
 				}
 				break;
 			}
 			case KeyCode::O: {
 				// -- Ctrl + O --
 				if (controlPressed) {
-					// TODO: open scene
+					std::string path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
+					if (!path.empty()) SceneManager::loadScene(path);
 				}
 				break;
 			}
 			case KeyCode::S: {
 				// -- Ctrl + Shift + S --
 				if (controlPressed && shiftPressed) {
-					//TODO: save scene as
+					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} });
+					if (!path.empty()) SceneManager::saveScene(path);
 				}
 				
 				// -- Ctrl + S
 				else if (controlPressed && (!shiftPressed)) {
-					// TODO: save scene
+					std::string path = SceneManager::getScenePath();
+					if (!path.empty()) SceneManager::saveScene(path);
 				}
 				break;
 			}
@@ -289,7 +292,7 @@ namespace Axion {
 
 	void EditorLayer::drawSceneViewport() {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
-		ImGui::Begin("Editor Viewport");
+		ImGui::Begin("Editor Viewport", nullptr, ImGuiWindowFlags_NoScrollbar);
 		m_editorCamera.setIsHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
@@ -314,6 +317,12 @@ namespace Axion {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 					std::string path = static_cast<const char*>(payload->Data);
 					AX_CORE_LOG_WARN(path);
+					// -- Try loading a skybox --
+					// TODO: replace this with validation thru actual asset file
+					if (path.find("skybox") != std::string::npos) {
+						std::string absPath = ProjectManager::getProject()->getAssetsPath() + "\\" + path;
+						SceneManager::getScene()->setSkybox(AssetHandle<Skybox>(absPath));
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -396,18 +405,21 @@ namespace Axion {
 				}
 				if (ImGui::MenuItem("Open Scene...", "Ctrl+O")) {
 					std::string path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
-					SceneManager::loadScene(path);
+					if (!path.empty()) SceneManager::loadScene(path);
 				}
 				ImGui::Separator();
 				ImGui::BeginDisabled(SceneManager::isNewScene());
 				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {
 					std::string path = SceneManager::getScenePath();
-					SceneManager::saveScene(path);
+					if (!path.empty()) SceneManager::saveScene(path);
 				}
 				ImGui::EndDisabled();
 				if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) {
 					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} });
-					SceneManager::saveScene(path);
+					if (!path.empty()) {
+						SceneManager::saveScene(path);
+						m_contentBrowserPanel->refresh();
+					}
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Exit")) { Application::get().close(); }
@@ -437,11 +449,15 @@ namespace Axion {
 				if (ImGui::MenuItem("New...")) { m_openNewProjectPopup = true; }
 				if (ImGui::MenuItem("Open...")) {
 					std::string filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
-					ProjectManager::loadProject(filePath);
+					if (!filePath.empty()) ProjectManager::loadProject(filePath);
 				}
 				if (ImGui::MenuItem("Save")) {
 					std::string filePath = FileDialogs::saveFile({ {"Axion Project", "*.axproj"} });
-					ProjectManager::saveProject(filePath);
+					if (!filePath.empty()) ProjectManager::saveProject(filePath);
+				}
+				if (ImGui::MenuItem("Close")) {
+					ProjectManager::unloadProject();
+					SceneManager::newScene();
 				}
 				ImGui::EndMenu();
 			}

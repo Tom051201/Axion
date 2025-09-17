@@ -21,11 +21,14 @@ namespace Axion {
 
 	void ProjectPanel::setProject(const Ref<Project>& project) {
 		m_project = project;
-		m_rootDirectory = std::filesystem::path(m_project->getProjectPath()).parent_path();
+		if (ProjectManager::hasProject()) {
+			m_rootDirectory = std::filesystem::path(m_project->getProjectPath()).parent_path();
 
-		m_projectFileRelative = std::filesystem::relative(project->getProjectPath(), m_rootDirectory);
-		m_assetsRelative = std::filesystem::relative(project->getAssetsPath(), m_rootDirectory);
-		m_scenesRelative = std::filesystem::relative(project->getScenesPath(), m_rootDirectory);
+			m_projectFileRelative = std::filesystem::relative(project->getProjectPath(), m_rootDirectory);
+			m_assetsRelative = std::filesystem::relative(project->getAssetsPath(), m_rootDirectory);
+			m_scenesRelative = std::filesystem::relative(project->getScenesPath(), m_rootDirectory);
+		}
+
 	}
 
 	void ProjectPanel::onGuiRender() {
@@ -99,14 +102,13 @@ namespace Axion {
 		ImGui::Text(m_project->getDefaultScene().c_str());
 		ImGui::SameLine();
 		if (ImGui::Button("Select")) {
-
+			
 		}
 
 		ImGui::Separator();
 		{
-			// TODO: save project button
 			if (ImGui::Button("Save Project")) {
-
+				ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 			}
 
 			ImGui::SameLine();

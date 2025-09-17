@@ -21,6 +21,8 @@ namespace Axion {
 		// -- Save scene --
 		bool saveSceneRequest = false;
 		std::string toSaveScenePath;
+		// -- Unload scene --
+		bool unloadSceneRequest = false;
 	};
 
 	static SceneManagerData* s_managerData;
@@ -30,14 +32,20 @@ namespace Axion {
 		s_managerData->eventCallback = eventCallback;
 		s_managerData->scene = std::make_shared<Scene>(); // load a blank scene
 		s_managerData->onRenderingFinished = [&](RenderingFinishedEvent& e) {
-			// -- New Scene --
-			if (s_managerData->newSceneRequest) {
-				Ref<Scene> scene = std::make_shared<Scene>();
-				setScene(scene);
-				s_managerData->isNewScene = true;
-				s_managerData->newSceneRequest = false;
-				s_managerData->scenePath.clear();
-				AX_CORE_LOG_INFO("New Scene");
+			// -- Save scene --
+			if (s_managerData->saveSceneRequest) {
+				std::string filePath = s_managerData->toSaveScenePath;
+				if (!filePath.empty()) {
+					SceneSerializer serializer(s_managerData->scene);
+					serializer.serializeText(filePath);
+					s_managerData->isNewScene = false;
+					AX_CORE_LOG_INFO("Scene saved");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Unable to save scene");
+				}
+				s_managerData->saveSceneRequest = false;
+				s_managerData->toSaveScenePath.clear();
 			}
 
 			// -- Load scene --
@@ -60,20 +68,22 @@ namespace Axion {
 				s_managerData->toLoadScenePath.clear();
 			}
 
-			// -- Save scene --
-			if (s_managerData->saveSceneRequest) {
-				std::string filePath = s_managerData->toSaveScenePath;
-				if (!filePath.empty() && std::filesystem::exists(std::filesystem::path(filePath))) {
-					SceneSerializer serializer(s_managerData->scene);
-					serializer.serializeText(filePath);
-					s_managerData->isNewScene = false;
-					AX_CORE_LOG_INFO("Scene saved");
-				}
-				else {
-					AX_CORE_LOG_ERROR("Unable to save scene");
-				}
-				s_managerData->saveSceneRequest = false;
-				s_managerData->toSaveScenePath.clear();
+			// -- Unload scene --
+			if (s_managerData->unloadSceneRequest) {
+				setScene(nullptr);
+				s_managerData->scenePath.clear();
+				AX_CORE_LOG_INFO("Unload scene");
+				s_managerData->unloadSceneRequest = false;
+			}
+
+			// -- New Scene --
+			if (s_managerData->newSceneRequest) {
+				Ref<Scene> scene = std::make_shared<Scene>();
+				setScene(scene);
+				s_managerData->isNewScene = true;
+				s_managerData->newSceneRequest = false;
+				s_managerData->scenePath.clear();
+				AX_CORE_LOG_INFO("New Scene");
 			}
 
 			return false;
@@ -99,6 +109,10 @@ namespace Axion {
 	void SceneManager::saveScene(const std::string& filePath) {
 		s_managerData->toSaveScenePath = filePath;
 		s_managerData->saveSceneRequest = true;
+	}
+
+	void SceneManager::unloadScene() {
+		s_managerData->unloadSceneRequest = true;
 	}
 
 	Ref<Scene> SceneManager::getScene() { return s_managerData->scene; }

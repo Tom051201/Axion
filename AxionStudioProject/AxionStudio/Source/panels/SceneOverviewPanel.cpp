@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace Axion {
 
@@ -26,21 +27,51 @@ namespace Axion {
 	void SceneOverviewPanel::onGuiRender() {
 		ImGui::Begin("Scene Overview");
 
-		if (m_activeScene) ImGui::Text(m_activeScene->getTitle().c_str());
-		
+		if (!ProjectManager::hasProject()) {
+			ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
+			ImGui::End();
+			return;
+		}
+
+		if (!m_activeScene) {
+			ImGui::TextWrapped("No Scene loaded");
+			ImGui::End();
+			return;
+		}
+
+		// -- Title --
+		ImGui::TextUnformatted("Title");
+		ImGui::SameLine();
+		strcpy_s(m_titleBuffer, sizeof(m_titleBuffer), m_activeScene->getTitle().c_str());
+		m_titleBuffer[sizeof(m_titleBuffer) - 1] = '\0';
+		if (ImGui::InputText("##sceneTitle", m_titleBuffer, sizeof(m_titleBuffer))) {
+			m_activeScene->setTitle(m_titleBuffer);
+		}
+
+		ImGui::SeparatorText("Skybox");
+		if (m_activeScene->hasSkybox()) {
+			// -- Has a skybox --
+			std::filesystem::path skyPath = std::filesystem::path(m_activeScene->getSkyboxPath());
+			std::filesystem::path skyRel = std::filesystem::relative(skyPath, ProjectManager::getProject()->getAssetsPath());
+			ImGui::Text("Title: %s", skyPath.stem().string().c_str());
+			ImGui::Text("Path: %s", skyRel.string().c_str());
+		} 
+		else {
+			// -- Does not have a skybox --
+			ImGui::Text("No Skybox has been selected");
+		}
+
+
 		if (ImGui::Button("Select Skybox")) {
-			std::string filePath = FileDialogs::openFile({ {"PNG", "*.png"} });
+			std::string filePath = FileDialogs::openFile({ {"PNG", "*.png"} }, ProjectManager::getProject()->getAssetsPath() + "\\skybox");
 			if (!filePath.empty()) {
 				m_activeScene->setSkybox(AssetHandle<Skybox>(filePath));
 			}
 		}
-		
-		if (m_activeScene && m_activeScene->hasSkybox()) {
-			ImGui::Text(m_activeScene->getSkyboxPath().c_str());
-		}
 
-		if (m_activeScene) {
-			ImGui::Text("Is new: %s", std::to_string(SceneManager::isNewScene()).c_str());
+		ImGui::SameLine();
+		if (ImGui::Button("Remove")) {
+			m_activeScene->setSkybox(nullptr);
 		}
 
 		ImGui::End();

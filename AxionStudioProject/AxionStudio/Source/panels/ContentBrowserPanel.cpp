@@ -11,8 +11,7 @@ namespace Axion {
 
 	constexpr float iconSize = 30.0f;
 
-	ContentBrowserPanel::ContentBrowserPanel(const std::string& name) : Panel(name) {
-	}
+	ContentBrowserPanel::ContentBrowserPanel(const std::string& name) : Panel(name) {}
 
 	ContentBrowserPanel::~ContentBrowserPanel() {
 		shutdown();
@@ -274,8 +273,7 @@ namespace Axion {
 			if (ImGui::Button("Yes", ImVec2(120, 0))) {
 				deletePath(*m_pendingDelete);
 				m_pendingDelete.reset();
-				refreshDirectory();
-				refreshScenes();
+				refresh();
 				ImGui::CloseCurrentPopup();
 			}
 
@@ -375,8 +373,7 @@ namespace Axion {
 		// ----- Refresh button -----
 		ImGui::SameLine();
 		if (ImGui::ImageButton("##Refresh_icon", reinterpret_cast<ImTextureID>(m_refreshIcon->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
-			refreshDirectory();
-			refreshScenes();
+			refresh();
 		}
 
 
@@ -429,11 +426,11 @@ namespace Axion {
 				m_rootDirectory = std::filesystem::absolute(ProjectManager::getProject()->getAssetsPath(), ec);
 			}
 			m_currentDirectory = m_rootDirectory;
-			refreshDirectory();
 
 			// -- Scenes overview --
 			m_scenesDirectory = ProjectManager::getProject()->getScenesPath();
-			refreshScenes();
+
+			refresh();
 		}
 		else {
 			m_directoryEntries.clear();
@@ -481,7 +478,7 @@ namespace Axion {
 				child = scanSceneFolder(entry.path());
 			}
 			else if (entry.is_regular_file(ec) && entry.path().extension() == ".axscene") {
-				child.name = entry.path().filename().string();
+				child.name = entry.path().filename().stem().string();
 				child.path = entry.path();
 				child.isFolder = false;
 			}
@@ -523,8 +520,9 @@ namespace Axion {
 		else {
 			ImGui::Image(reinterpret_cast<ImTextureID>(m_fileIcon->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
 			ImGui::SameLine();
-			if (ImGui::Selectable(node.name.c_str())) {
-				SceneManager::loadScene(node.path.string());
+			bool isTheSame = node.path.string() == SceneManager::getScenePath();
+			if (ImGui::Selectable(node.name.c_str(), isTheSame)) {
+				if (!isTheSame) SceneManager::loadScene(node.path.string());
 			}
 
 
@@ -536,7 +534,6 @@ namespace Axion {
 				}
 
 				if (ImGui::MenuItem("Set as default Scene")) {
-					// TODO: set as default scene
 					ProjectManager::getProject()->setDefaultScene(node.path.string());
 				}
 
@@ -554,6 +551,11 @@ namespace Axion {
 			// -- Spacing --
 			ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
 		}
+	}
+
+	void ContentBrowserPanel::refresh() {
+		refreshDirectory();
+		refreshScenes();
 	}
 
 }

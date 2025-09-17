@@ -50,6 +50,21 @@ namespace Axion {
 	}
 
 	void SceneHierarchyPanel::onGuiRender() {
+		// ----- Draw info when no project is selected -----
+		if (!ProjectManager::hasProject()) {
+			if (ImGui::Begin("Properties")) {
+				ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
+				ImGui::End();
+			}
+			if (ImGui::Begin("Scene Hierarchy")) {
+				ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
+				ImGui::End();
+				return;
+			}
+
+		}
+
+
 		// ----- Properties Panel -----
 		if (ImGui::Begin("Properties")) {
 			if (m_selectedEntity) {
@@ -233,7 +248,7 @@ namespace Axion {
 			}
 			else {
 				if (ImGui::Button("Open Mesh...")) {
-					std::string filePath = FileDialogs::openFile({ {"OBJ File", "*.obj"} });
+					std::string filePath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
 					if (!filePath.empty()) {
 						AssetHandle<Mesh> handle(filePath);
 						if (!AssetManager::hasMesh(handle)) {

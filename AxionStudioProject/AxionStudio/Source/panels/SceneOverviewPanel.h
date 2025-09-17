@@ -24,6 +24,10 @@ namespace Axion {
 
 		Ref<Scene> m_activeScene;
 
+		// -- Title --
+		char m_titleBuffer[128] = "";
+
+
 		bool onSceneChanged(SceneChangedEvent& e);
 
 	};

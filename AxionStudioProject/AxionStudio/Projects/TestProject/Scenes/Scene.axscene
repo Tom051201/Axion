@@ -1,10 +1,29 @@
-Scene: Untitled
+Scene: Scenes
 Skybox: skybox\Daylight_Box_UV.png
 Entities:
-  - Entity: ff851fc2884f29dd25d6197daf5568f9
+  - Entity: b14ddab7d2eff7129b82a70b33ec0ac2
     TagComponent:
-      Tag: cube
+      Tag: Empty Entity
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\homer.obj
+    MaterialComponent:
+      Name: None
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: ff851fc2884f29dd25d6197daf5568f9
+    TagComponent:
+      Tag: cube
+    TransformComponent:
+      Translation: [0.88879925, 0, 0]
+      Rotation: [-0, 0, -0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\cubeBase.obj
+    MaterialComponent:
+      Name: None
+    ConstantBufferComponent:
+      Has: TRUE
