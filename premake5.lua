@@ -21,6 +21,9 @@ group "Dependencies"
 	include "AxionEngineProject/AxionEngine/Vendor/imgui"
 	include "AxionEngineProject/AxionEngine/Vendor/yaml-cpp"
 
+group "Subsystems"
+	include "AxionSubsystems/AxionAssetPipelineProject"
+
 group ""
 
 include "AxionEngineProject"

@@ -24,7 +24,7 @@ namespace Axion {
 		tinyobj::ObjReader reader;
 
 		if (!reader.Warning().empty()) AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
-		
+
 		if (!reader.ParseFromFile(path)) {
 			AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", path);
 			if (!reader.Error().empty()) AX_CORE_LOG_ERROR("OBJ error: {}", reader.Error());
@@ -83,7 +83,7 @@ namespace Axion {
 
 		return handle;
 	}
-	
+
 	Ref<Mesh> AssetManager::getMesh(const AssetHandle<Mesh>& handle) {
 		auto it = s_meshes.find(handle);
 		if (it != s_meshes.end()) {

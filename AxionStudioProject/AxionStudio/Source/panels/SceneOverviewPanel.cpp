@@ -55,7 +55,7 @@ namespace Axion {
 			std::filesystem::path skyRel = std::filesystem::relative(skyPath, ProjectManager::getProject()->getAssetsPath());
 			ImGui::Text("Title: %s", skyPath.stem().string().c_str());
 			ImGui::Text("Path: %s", skyRel.string().c_str());
-		} 
+		}
 		else {
 			// -- Does not have a skybox --
 			ImGui::Text("No Skybox has been selected");

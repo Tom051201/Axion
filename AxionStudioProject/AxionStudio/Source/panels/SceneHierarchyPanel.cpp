@@ -212,7 +212,7 @@ namespace Axion {
 		// ----- TransformComponent -----
 		if (entity.hasComponent<TransformComponent>()) {
 			// Draw TransformComponent manual to disable removement
-			
+
 			// -- Creates treenode and + button --
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
 			bool open = ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, "Transform");

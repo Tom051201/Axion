@@ -14,7 +14,7 @@ namespace Axion {
 
 	class Scene {
 	public:
-		
+
 		Scene();
 		~Scene();
 
