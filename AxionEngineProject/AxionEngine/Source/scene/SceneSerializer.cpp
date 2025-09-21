@@ -1,76 +1,15 @@
 #include "axpch.h"
 #include "SceneSerializer.h"
 
-#include <fstream>
-
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/UUID.h"
+#include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-namespace YAML {
-
-	template<>
-	struct convert<Axion::Vec3> {
-
-		static Node encode(const Axion::Vec3& rhs) {
-			Node node;
-			node.push_back(rhs.x);
-			node.push_back(rhs.y);
-			node.push_back(rhs.z);
-			return node;
-		}
-
-		static bool decode(const Node& node, Axion::Vec3& rhs) {
-			if (!node.IsSequence() || node.size() != 3) return false;
-			rhs.x = node[0].as<float>();
-			rhs.y = node[1].as<float>();
-			rhs.z = node[2].as<float>();
-			return true;
-		}
-
-	};
-
-	template<>
-	struct convert<Axion::Vec4> {
-
-		static Node encode(const Axion::Vec4& rhs) {
-			Node node;
-			node.push_back(rhs.x);
-			node.push_back(rhs.y);
-			node.push_back(rhs.z);
-			node.push_back(rhs.w);
-			return node;
-		}
-
-		static bool decode(const Node& node, Axion::Vec4& rhs) {
-			if (!node.IsSequence() || node.size() != 4) return false;
-			rhs.x = node[0].as<float>();
-			rhs.y = node[1].as<float>();
-			rhs.z = node[2].as<float>();
-			rhs.w = node[3].as<float>();
-			return true;
-		}
-
-	};
-
-}
-
 namespace Axion {
-
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Vec3& v) {
-		out << YAML::Flow;
-		out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
-		return out;
-	}
-
-	YAML::Emitter& operator<<(YAML::Emitter& out, const Vec4& v) {
-		out << YAML::Flow;
-		out << YAML::BeginSeq << v.x << v.y << v.z << v.w << YAML::EndSeq;
-		return out;
-	}
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene) : m_scene(scene) {}
 
@@ -218,8 +157,7 @@ namespace Axion {
 					auto& mc = deserializedEntity.addComponent<MeshComponent>();
 					std::string relPath = meshComponent["Path"].as<std::string>();
 					std::string absPath = AssetManager::getAbsolute(relPath);
-
-					AssetHandle<Mesh> handle = AssetManager::loadMesh(absPath); // TODO: Add check if already in system, maybe inside the load function
+					AssetHandle<Mesh> handle = AssetManager::loadMesh(absPath);
 					mc.mesh = AssetManager::getMesh(handle);
 				}
 

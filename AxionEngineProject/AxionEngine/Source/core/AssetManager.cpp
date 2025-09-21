@@ -3,11 +3,10 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "AxionEngine/Vendor/tinyobjloader/tiny_obj_loader.h"
-
-#include "AxionEngine/Source/project/ProjectManager.h"
-
-// TODO: TEMP
 #include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+
+#include "AxionEngine/Source/core/YamlHelper.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace Axion {
 
@@ -34,6 +33,7 @@ namespace Axion {
 			for (auto& sky : s_skyboxLoadQueue) {
 				Ref<Skybox> skybox = std::make_shared<Skybox>(sky.second);
 				s_skyboxes[sky.first] = skybox;
+				AX_CORE_LOG_INFO("Skybox loaded: {}", sky.first.uuid.toString());
 			}
 			s_skyboxLoadQueue.clear();
 		}
@@ -80,8 +80,8 @@ namespace Axion {
 			return {};
 		}
 
-		std::string sourcePath = ProjectManager::getProject()->getAssetsPath() + "\\" + data["Source"].as<std::string>();
-		UUID uuid = UUID::fromString(data["UUID"].as<std::string>()); // TODO: add yaml conversion
+		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+		UUID uuid = data["UUID"].as<UUID>();
 
 		tinyobj::ObjReader reader;
 
@@ -140,10 +140,14 @@ namespace Axion {
 		Vertex::normalizeVertices(vertices);
 
 		AssetHandle<Mesh> handle(uuid);
-		Ref<Mesh> mesh = Mesh::create(handle, vertices, indices);
-		s_meshes[handle] = mesh;
-
-		s_meshHandleToPath[handle] = absolutePath;
+		
+		// -- Only load if not already loaded --
+		if (!hasMesh(handle)) {
+			Ref<Mesh> mesh = Mesh::create(handle, vertices, indices);
+			s_meshes[handle] = mesh;
+			s_meshHandleToPath[handle] = absolutePath;
+			AX_CORE_LOG_INFO("Mesh loaded: {}", uuid.toString());
+		}
 
 		return handle;
 	}
@@ -180,13 +184,18 @@ namespace Axion {
 			return {};
 		}
 
-		std::string sourcePath = ProjectManager::getProject()->getAssetsPath() + "\\" + data["Texture"].as<std::string>();
-		UUID uuid = UUID::fromString(data["UUID"].as<std::string>());
+		std::string sourcePath = getAbsolute(data["Texture"].as<std::string>());
+		UUID uuid = data["UUID"].as<UUID>();
 
 		AssetHandle<Skybox> handle(uuid);
-		s_skyboxes[handle] = nullptr; // TODO: maybe put some dummy skybox
-		s_skyboxLoadQueue.push_back({ handle, sourcePath });
-		s_skyboxHandleToPath[handle] = absolutePath;
+		
+		// -- Only load if not already loaded --
+		if (!hasSkybox(handle)) {
+			s_skyboxes[handle] = nullptr;
+			s_skyboxLoadQueue.push_back({ handle, sourcePath });
+			s_skyboxHandleToPath[handle] = absolutePath;
+		}
+		
 
 		return handle;
 	}

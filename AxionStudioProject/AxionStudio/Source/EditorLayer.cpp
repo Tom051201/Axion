@@ -33,6 +33,7 @@ namespace Axion {
 		m_contentBrowserPanel	= m_panelManager.addPanel<ContentBrowserPanel>("ContentBrowserPanel");
 		m_projectPanel			= m_panelManager.addPanel<ProjectPanel>("ProjectPanel");
 		m_sceneOverviewPanel	= m_panelManager.addPanel<SceneOverviewPanel>("SceneOverviewPanel");
+		m_assetManagerPanel		= m_panelManager.addPanel<AssetManagerPanel>("AssetManagerPanel");
 		m_panelManager.setupAll();
 
 
@@ -46,13 +47,14 @@ namespace Axion {
 		m_viewportSize = { (float)fbs.width, (float)fbs.height };
 
 
-		// ----- Setup dockspace -----
+		// ----- Setup imgui -----
 		m_dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None;
 		m_windowFlags = ImGuiWindowFlags_MenuBar |
 			ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
+		ImGuizmo::SetOrthographic(false);
 
 
 		// ----- Setup application -----
@@ -318,11 +320,8 @@ namespace Axion {
 					std::string path = static_cast<const char*>(payload->Data);
 					AX_CORE_LOG_WARN(path);
 					// -- Try loading a skybox --
-					// TODO: replace this with validation thru actual asset file
 					if (path.find(".axsky") != std::string::npos) {
 						std::string absPath = AssetManager::getAbsolute(path);
-
-						// TODO: add check if already in manager
 						AssetHandle<Skybox> handle = AssetManager::loadSkybox(absPath);
 						SceneManager::getScene()->setSkybox(handle);
 					}
@@ -340,7 +339,6 @@ namespace Axion {
 	void EditorLayer::drawGizmo() {
 		Entity selectedEntity = m_sceneHierarchyPanel->getSelectedEntity();
 		if (selectedEntity) {
-			ImGuizmo::SetOrthographic(false); // TODO: review, maybe not every frame needed
 			ImGuizmo::SetDrawlist();
 			float windowWidth = (float)ImGui::GetWindowWidth();
 			float windowHeight = (float)ImGui::GetWindowHeight();
@@ -469,6 +467,7 @@ namespace Axion {
 			// ----- Help menu -----
 			if (ImGui::BeginMenu("  Help  ")) {
 				ImGui::MenuItem("System Info", nullptr, &m_systemInfoPanel->isVisible());
+				ImGui::MenuItem("Asset Manager Inspector", nullptr, &m_assetManagerPanel->isVisible());
 				ImGui::EndMenu();
 			}
 

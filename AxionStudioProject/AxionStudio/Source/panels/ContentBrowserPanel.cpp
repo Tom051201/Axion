@@ -86,6 +86,7 @@ namespace Axion {
 		for (const auto& item : m_directoryEntries) {
 			const auto& path = item.path;
 			const std::string& filenameString = item.displayName;
+			// -- Setup icon --
 			Ref<Texture2D> icon = item.isDir ? m_folderIcon : m_fileIcon;
 
 			// -- Apply search filter --

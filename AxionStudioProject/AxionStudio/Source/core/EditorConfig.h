@@ -7,7 +7,7 @@ namespace Axion {
 	class EditorConfig {
 	public:
 
-		static std::string startupProjectPath; // TODO: maybe move to ProjectPanel
+		static std::string startupProjectPath;
 
 	};
 

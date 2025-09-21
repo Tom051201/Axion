@@ -5,8 +5,6 @@
 
 #include "AxionEngine/Source/AxionSettings.h"
 
-#include <fstream>
-
 namespace Axion {
 
 	// LAYOUT

@@ -7,7 +7,6 @@
 #include "AxionEngine/Source/project/Project.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
-#include <filesystem>
 #include <optional>
 
 namespace Axion {
@@ -56,7 +55,7 @@ namespace Axion {
 
 		// -- Search / filtering --
 		char m_searchBuffer[128] = "";
-		bool m_onlyEngineAssets = false; // TODO: add to state file
+		bool m_onlyEngineAssets = false;
 
 		// -- Renaming --
 		std::filesystem::path m_itemBeingRenamed;

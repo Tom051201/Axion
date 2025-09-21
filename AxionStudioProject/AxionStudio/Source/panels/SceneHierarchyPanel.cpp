@@ -248,10 +248,9 @@ namespace Axion {
 			}
 			else {
 				if (ImGui::Button("Open Mesh...")) {
-					std::string filePath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
-					if (!filePath.empty()) {
-						// TODO: add check if already loaded in manager
-						AssetHandle<Mesh> handle = AssetManager::loadMesh(filePath);
+					std::string absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
+					if (!absPath.empty()) {
+						AssetHandle<Mesh> handle = AssetManager::loadMesh(absPath);
 						component.mesh = AssetManager::getMesh(handle);
 					}
 				}
@@ -259,13 +258,12 @@ namespace Axion {
 				if (ImGui::BeginDragDropTarget()) {
 
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-						std::string path = static_cast<const char*>(payload->Data);
-						std::string filePath = ProjectManager::getProject()->getAssetsPath() + "\\" + path;
-
-						// TODO: add validation that its the correct file type
-						// TODO: add check if already loaded in manager
-						AssetHandle<Mesh> handle = AssetManager::loadMesh(filePath);
-						component.mesh = AssetManager::getMesh(handle);
+						std::string relPath = static_cast<const char*>(payload->Data);
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.find(".axmesh") != std::string::npos) {
+							AssetHandle<Mesh> handle = AssetManager::loadMesh(absPath);
+							component.mesh = AssetManager::getMesh(handle);
+						}
 					}
 					ImGui::EndDragDropTarget();
 				}

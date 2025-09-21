@@ -1,5 +1,5 @@
 Scene: Untitled
-Skybox: skybox\skybox.axsky
+Skybox: skybox\skybox2.axsky
 Entities:
   - Entity: fb28ff93590d7d965da96fc6e0e6ec4c
     TagComponent:

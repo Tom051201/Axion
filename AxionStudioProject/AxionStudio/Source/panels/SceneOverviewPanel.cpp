@@ -65,7 +65,6 @@ namespace Axion {
 		if (ImGui::Button("Select Skybox")) {
 			std::string absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, ProjectManager::getProject()->getAssetsPath() + "\\skybox");
 			if (!absolutePath.empty()) {
-				// TODO: add check if already inside manager
 				AssetHandle<Skybox> handle = AssetManager::loadSkybox(absolutePath);
 				m_activeScene->setSkybox(handle);
 			}

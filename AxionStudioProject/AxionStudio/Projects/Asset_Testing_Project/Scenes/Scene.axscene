@@ -27,3 +27,16 @@ Entities:
       Name: None
     ConstantBufferComponent:
       Has: TRUE
+  - Entity: 312e1661964e274764d79355348cc4a4
+    TagComponent:
+      Tag: Homer
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\homer.axmesh
+    MaterialComponent:
+      Name: None
+    ConstantBufferComponent:
+      Has: TRUE

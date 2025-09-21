@@ -15,6 +15,7 @@
 #include "AxionStudio/Source/panels/ContentBrowserPanel.h"
 #include "AxionStudio/Source/panels/ProjectPanel.h"
 #include "AxionStudio/Source/panels/SceneOverviewPanel.h"
+#include "AxionStudio/Source/panels/AssetManagerPanel.h"
 
 namespace Axion {
 
@@ -51,6 +52,7 @@ namespace Axion {
 		ContentBrowserPanel* m_contentBrowserPanel;
 		ProjectPanel* m_projectPanel;
 		SceneOverviewPanel* m_sceneOverviewPanel;
+		AssetManagerPanel* m_assetManagerPanel;
 
 
 		// ----- Scene viewport -----

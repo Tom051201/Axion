@@ -128,11 +128,6 @@ namespace Axion {
 
 		// -- Set skybox --
 		if (m_setSkyboxRequested) {
-			// TODO: rework this
-			//if (!AssetManager::hasSkybox(m_requestedSky)) {
-			//	AssetManager::loadSkybox();
-			//}
-
 			m_skybox = AssetManager::getSkybox(m_requestedSky);
 			m_skyboxHandle = m_requestedSky;
 			m_requestedSky = {};
