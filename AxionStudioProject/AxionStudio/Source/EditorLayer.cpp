@@ -319,9 +319,12 @@ namespace Axion {
 					AX_CORE_LOG_WARN(path);
 					// -- Try loading a skybox --
 					// TODO: replace this with validation thru actual asset file
-					if (path.find("skybox") != std::string::npos) {
-						std::string absPath = ProjectManager::getProject()->getAssetsPath() + "\\" + path;
-						SceneManager::getScene()->setSkybox(AssetHandle<Skybox>(absPath));
+					if (path.find(".axsky") != std::string::npos) {
+						std::string absPath = AssetManager::getAbsolute(path);
+
+						// TODO: add check if already in manager
+						AssetHandle<Skybox> handle = AssetManager::loadSkybox(absPath);
+						SceneManager::getScene()->setSkybox(handle);
 					}
 				}
 				ImGui::EndDragDropTarget();

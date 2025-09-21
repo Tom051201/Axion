@@ -48,10 +48,10 @@ namespace Axion {
 		const std::string& getTitle() const { return m_title; }
 
 		bool hasSkybox() const { return (bool)m_skybox; }
-		void setSkybox(const Ref<Skybox>& sky) { m_skybox = sky; }
 		void setSkybox(const AssetHandle<Skybox>& handle);
 		void setSkyboxTexture(const std::string& crossPath);
 		const std::string& getSkyboxPath() const { return m_skybox->getTexturePath(); }
+		void removeSkybox();
 
 	private:
 
@@ -62,6 +62,7 @@ namespace Axion {
 		std::vector<std::function<void()>> m_componentsPendingRemove;
 
 		Ref<Skybox> m_skybox; // TODO: add reference thru assethandle!
+		AssetHandle<Skybox> m_skyboxHandle;
 		bool m_setSkyboxRequested = false;
 		AssetHandle<Skybox> m_requestedSky;
 

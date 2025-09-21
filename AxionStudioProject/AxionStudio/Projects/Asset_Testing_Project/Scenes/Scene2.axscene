@@ -1,0 +1,10 @@
+Scene: Untitled
+Skybox: skybox\skybox.axsky
+Entities:
+  - Entity: fb28ff93590d7d965da96fc6e0e6ec4c
+    TagComponent:
+      Tag: Empty Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]

@@ -244,16 +244,14 @@ namespace Axion {
 		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MeshComponent>();
 			if (component.mesh) {
-				ImGui::Text(component.mesh->getHandle().path.c_str());
+				ImGui::Text(component.mesh->getHandle().uuid.toString().c_str());
 			}
 			else {
 				if (ImGui::Button("Open Mesh...")) {
-					std::string filePath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
+					std::string filePath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
 					if (!filePath.empty()) {
-						AssetHandle<Mesh> handle(filePath);
-						if (!AssetManager::hasMesh(handle)) {
-							AssetManager::loadMesh(filePath);
-						}
+						// TODO: add check if already loaded in manager
+						AssetHandle<Mesh> handle = AssetManager::loadMesh(filePath);
 						component.mesh = AssetManager::getMesh(handle);
 					}
 				}
@@ -265,11 +263,8 @@ namespace Axion {
 						std::string filePath = ProjectManager::getProject()->getAssetsPath() + "\\" + path;
 
 						// TODO: add validation that its the correct file type
-
-						AssetHandle<Mesh> handle(filePath);
-						if (!AssetManager::hasMesh(handle)) {
-							AssetManager::loadMesh(filePath);
-						}
+						// TODO: add check if already loaded in manager
+						AssetHandle<Mesh> handle = AssetManager::loadMesh(filePath);
 						component.mesh = AssetManager::getMesh(handle);
 					}
 					ImGui::EndDragDropTarget();

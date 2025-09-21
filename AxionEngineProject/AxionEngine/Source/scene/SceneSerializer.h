@@ -23,9 +23,6 @@ namespace Axion {
 
 		static void serializeEntity(YAML::Emitter& out, Entity entity);
 
-		static std::string getRelAssetPath(const std::string& path);
-		static std::string getAbsAssetPath(const std::string& path);
-
 	};
 
 }

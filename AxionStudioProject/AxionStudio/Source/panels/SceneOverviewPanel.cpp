@@ -63,15 +63,17 @@ namespace Axion {
 
 
 		if (ImGui::Button("Select Skybox")) {
-			std::string filePath = FileDialogs::openFile({ {"PNG", "*.png"} }, ProjectManager::getProject()->getAssetsPath() + "\\skybox");
-			if (!filePath.empty()) {
-				m_activeScene->setSkybox(AssetHandle<Skybox>(filePath));
+			std::string absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, ProjectManager::getProject()->getAssetsPath() + "\\skybox");
+			if (!absolutePath.empty()) {
+				// TODO: add check if already inside manager
+				AssetHandle<Skybox> handle = AssetManager::loadSkybox(absolutePath);
+				m_activeScene->setSkybox(handle);
 			}
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Remove")) {
-			m_activeScene->setSkybox(nullptr);
+			m_activeScene->removeSkybox();
 		}
 
 		ImGui::End();

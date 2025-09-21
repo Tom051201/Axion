@@ -4,10 +4,19 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "AxionEngine/Vendor/tinyobjloader/tiny_obj_loader.h"
 
+#include "AxionEngine/Source/project/ProjectManager.h"
+
+// TODO: TEMP
+#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+
 namespace Axion {
 
 	AssetMap<Mesh> AssetManager::s_meshes;
+	HandleToPathMap<Mesh> AssetManager::s_meshHandleToPath;
+
 	AssetMap<Skybox> AssetManager::s_skyboxes;
+	HandleToPathMap<Skybox> AssetManager::s_skyboxHandleToPath;
+	LoadQueue<Skybox> AssetManager::s_skyboxLoadQueue;
 
 	void AssetManager::initialize() {
 		AX_CORE_LOG_TRACE("AssetManager initialized");
@@ -18,15 +27,68 @@ namespace Axion {
 		s_skyboxes.clear();
 	}
 
+	void AssetManager::onEvent(Event& e) {
+		// -- RenderingFinished --
+		if (e.getEventType() == EventType::RenderingFinished) {
+			// -- Load Queues Skybox --
+			for (auto& sky : s_skyboxLoadQueue) {
+				Ref<Skybox> skybox = std::make_shared<Skybox>(sky.second);
+				s_skyboxes[sky.first] = skybox;
+			}
+			s_skyboxLoadQueue.clear();
+		}
+	}
+
+	std::string AssetManager::getRelativeToAssets(const std::string& absolutePath) {
+		if (ProjectManager::hasProject()) {
+			std::filesystem::path absPath(absolutePath);
+			std::filesystem::path assetsDir = ProjectManager::getProject()->getAssetsPath();
+			std::filesystem::path relPath = std::filesystem::relative(absPath, assetsDir);
+			return relPath.string();
+		}
+		else {
+			AX_CORE_LOG_WARN("Unable converting absolute path to relative assets path: no project loaded");
+			return {};
+		}
+	}
+
+	std::string AssetManager::getAbsolute(const std::string& relativePath) {
+		if (ProjectManager::hasProject()) {
+			std::string absPath = ProjectManager::getProject()->getAssetsPath() + "\\" + relativePath;
+			if (std::filesystem::exists(absPath)) {
+				return absPath;
+			}
+			else {
+				AX_CORE_LOG_WARN("Unable converting relative path to absolute assets path: path does not exist");
+				return {};
+			}
+		}
+		else {
+			AX_CORE_LOG_WARN("Unable converting relative path to absolute assets path: no project loaded");
+			return {};
+		}
+	}
+
 	// ----- Mesh Assets -----
 
-	AssetHandle<Mesh> AssetManager::loadMesh(const std::string& path) {
+	AssetHandle<Mesh> AssetManager::loadMesh(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Mesh") {
+			AX_CORE_LOG_ERROR("Loading mesh failed, file is not a mesh asset file");
+			return {};
+		}
+
+		std::string sourcePath = ProjectManager::getProject()->getAssetsPath() + "\\" + data["Source"].as<std::string>();
+		UUID uuid = UUID::fromString(data["UUID"].as<std::string>()); // TODO: add yaml conversion
+
 		tinyobj::ObjReader reader;
 
 		if (!reader.Warning().empty()) AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
 
-		if (!reader.ParseFromFile(path)) {
-			AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", path);
+		if (!reader.ParseFromFile(sourcePath)) {
+			AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", sourcePath);
 			if (!reader.Error().empty()) AX_CORE_LOG_ERROR("OBJ error: {}", reader.Error());
 			return {};
 		}
@@ -77,9 +139,11 @@ namespace Axion {
 
 		Vertex::normalizeVertices(vertices);
 
-		AssetHandle<Mesh> handle(path);
+		AssetHandle<Mesh> handle(uuid);
 		Ref<Mesh> mesh = Mesh::create(handle, vertices, indices);
 		s_meshes[handle] = mesh;
+
+		s_meshHandleToPath[handle] = absolutePath;
 
 		return handle;
 	}
@@ -101,12 +165,29 @@ namespace Axion {
 		else { return false; }
 	}
 
+	const std::string& AssetManager::getMeshAssetFilePath(const AssetHandle<Mesh>& handle) {
+		return s_meshHandleToPath[handle];
+	}
+
 	// ----- Skybox Assets -----
 
-	AssetHandle<Skybox> AssetManager::loadSkybox(const std::string& path) {
-		AssetHandle<Skybox> handle(path);
-		Ref<Skybox> skybox = std::make_shared<Skybox>(path);
-		s_skyboxes[handle] = skybox;
+	AssetHandle<Skybox> AssetManager::loadSkybox(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Skybox") {
+			AX_CORE_LOG_ERROR("Loading skybox failed, file is not a skybox asset file");
+			return {};
+		}
+
+		std::string sourcePath = ProjectManager::getProject()->getAssetsPath() + "\\" + data["Texture"].as<std::string>();
+		UUID uuid = UUID::fromString(data["UUID"].as<std::string>());
+
+		AssetHandle<Skybox> handle(uuid);
+		s_skyboxes[handle] = nullptr; // TODO: maybe put some dummy skybox
+		s_skyboxLoadQueue.push_back({ handle, sourcePath });
+		s_skyboxHandleToPath[handle] = absolutePath;
+
 		return handle;
 	}
 
@@ -125,6 +206,10 @@ namespace Axion {
 		auto it = s_skyboxes.find(handle);
 		if (it != s_skyboxes.end()) { return true; }
 		else { return false; }
+	}
+
+	const std::string& AssetManager::getSkyboxAssetFilePath(const AssetHandle<Skybox>& handle) {
+		return s_skyboxHandleToPath[handle];
 	}
 
 }

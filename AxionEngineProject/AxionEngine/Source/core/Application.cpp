@@ -1,8 +1,8 @@
 #include "axpch.h"
 #include "Application.h"
 
-#include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 
@@ -46,7 +46,7 @@ namespace Axion {
 			uint32_t width = resizeEvent.getWidth();
 			uint32_t height = resizeEvent.getHeight();
 			if (width > 0 && height > 0) {
-				static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->resize(width, height);
+				GraphicsContext::get()->resize(width, height);
 			}
 		}
 
@@ -56,6 +56,7 @@ namespace Axion {
 
 		SceneManager::onEvent(e);
 		ProjectManager::onEvent(e);
+		AssetManager::onEvent(e);
 
 		for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
 			(*--it)->onEvent(e);

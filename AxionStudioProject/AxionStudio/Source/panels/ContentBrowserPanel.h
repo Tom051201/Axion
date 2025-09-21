@@ -56,6 +56,7 @@ namespace Axion {
 
 		// -- Search / filtering --
 		char m_searchBuffer[128] = "";
+		bool m_onlyEngineAssets = false; // TODO: add to state file
 
 		// -- Renaming --
 		std::filesystem::path m_itemBeingRenamed;
@@ -88,6 +89,7 @@ namespace Axion {
 		void refreshDirectory();
 		void resetRenaming();
 		bool matchesSearch(const std::string& name);
+		bool isEngineAssetExtension(const std::filesystem::path& path);
 		void deletePath(const std::filesystem::path& path);
 
 		// -- Helper functions for scenes overview --

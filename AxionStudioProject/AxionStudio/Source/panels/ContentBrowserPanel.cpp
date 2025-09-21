@@ -91,6 +91,8 @@ namespace Axion {
 			// -- Apply search filter --
 			if (!matchesSearch(filenameString)) continue;
 
+			// -- Apply "Only Engine Assets" filter --
+			if (m_onlyEngineAssets && !item.isDir && !isEngineAssetExtension(path)) continue;
 
 			// -- Draw file / folder icon --
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -348,6 +350,12 @@ namespace Axion {
 		return lower(name).find(lower(m_searchBuffer)) != std::string::npos;
 	}
 
+	bool ContentBrowserPanel::isEngineAssetExtension(const std::filesystem::path& path) {
+		auto ext = path.extension().string();
+		std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+		return ext == ".axmesh" || ext == ".axsky";
+	}
+
 	void ContentBrowserPanel::deletePath(const std::filesystem::path& path) {
 		std::error_code ec;
 		if (std::filesystem::is_directory(path, ec) && !ec) {
@@ -414,6 +422,13 @@ namespace Axion {
 		if (ImGui::Button("X")) { m_searchBuffer[0] = '\0'; }
 		ImGui::EndDisabled();
 
+
+		// ----- Only engine assets toggle -----
+		ImGui::SameLine();
+		ImGui::Checkbox("##OnlyEngineAssets_checkbox", &m_onlyEngineAssets);
+		if (ImGui::IsItemHovered()) {
+			ImGui::SetTooltip("Show only Asset files");
+		}
 		ImGui::Separator();
 	}
 
@@ -444,6 +459,7 @@ namespace Axion {
 	void ContentBrowserPanel::serialize(YAML::Emitter& out) const {
 		Panel::serialize(out);
 		out << YAML::Key << "ThumbnailSize" << YAML::Value << m_thumbnailSize;
+		out << YAML::Key << "OnlyAssetFiles" << YAML::Value << m_onlyEngineAssets;
 	}
 
 	void ContentBrowserPanel::deserialize(const YAML::Node& node) {
@@ -451,6 +467,9 @@ namespace Axion {
 		if (node["ThumbnailSize"]) {
 			m_thumbnailSize = node["ThumbnailSize"].as<float>();
 			m_showNames = m_thumbnailSize >= 50;
+		}
+		if (node["OnlyAssetFiles"]) {
+			m_onlyEngineAssets = node["OnlyAssetFiles"].as<bool>();
 		}
 	}
 

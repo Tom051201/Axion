@@ -33,7 +33,7 @@ namespace Axion {
 			3, 7, 4,			6, 2, 1
 		};
 
-		AssetHandle<Mesh> handle("internal_skybox_mesh");
+		AssetHandle<Mesh> handle;
 		return Mesh::create(handle, vertices, indices);
 	}
 

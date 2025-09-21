@@ -128,11 +128,13 @@ namespace Axion {
 
 		// -- Set skybox --
 		if (m_setSkyboxRequested) {
-			if (!AssetManager::hasSkybox(m_requestedSky)) {
-				AssetManager::loadSkybox(m_requestedSky.path);
-			}
+			// TODO: rework this
+			//if (!AssetManager::hasSkybox(m_requestedSky)) {
+			//	AssetManager::loadSkybox();
+			//}
 
 			m_skybox = AssetManager::getSkybox(m_requestedSky);
+			m_skyboxHandle = m_requestedSky;
 			m_requestedSky = {};
 			m_setSkyboxRequested = false;
 		}
@@ -147,6 +149,11 @@ namespace Axion {
 
 	void Scene::setSkyboxTexture(const std::string& crossPath) {
 		m_skybox->setTexture(crossPath);
+	}
+
+	void Scene::removeSkybox() {
+		m_skybox = nullptr;
+		m_skyboxHandle = {};
 	}
 
 }
