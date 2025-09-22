@@ -36,7 +36,7 @@ namespace Axion {
 
 		ProjectManager::release();
 		SceneManager::release();
-		AssetManager::release();
+		AssetManager::shutdown();
 	}
 
 	void Application::onEvent(Event& e) {

@@ -5,11 +5,13 @@
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Texture.h"
+#include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 
 namespace Axion {
 
+	// ----- Usings for easier syntax -----
 	template<typename T>
 	using AssetMap = std::unordered_map<AssetHandle<T>, Ref<T>>;
 
@@ -20,38 +22,86 @@ namespace Axion {
 	template<typename T>
 	using LoadQueue = std::vector<std::pair<AssetHandle<T>, std::string>>;
 
+
+
+	// ----- Asset storage template -----
+	template<typename T>
+	struct AssetStorage {
+		AssetMap<T> assets;
+		HandleToPathMap<T> handleToPath;
+		LoadQueue<T> loadQueue;
+	};
+
+
+
+	// ----- Asset manager -----
 	class AssetManager {
 	public:
 
 		AssetManager() = delete;
 
 		static void initialize();
-		static void release();
+		static void shutdown();
 		static void onEvent(Event& e);
 
 		static std::string getRelativeToAssets(const std::string& absolutePath);	// Returns the relative path to the Assets directory
 		static std::string getAbsolute(const std::string& relativePath);			// Returns the absolute path
 
-		static AssetHandle<Mesh> loadMesh(const std::string& absolutePath);
-		static Ref<Mesh> getMesh(const AssetHandle<Mesh>& handle);
-		static const AssetMap<Mesh>& getMeshMap() { return s_meshes; }
-		static bool hasMesh(const AssetHandle<Mesh>& handle);
-		static const std::string& getMeshAssetFilePath(const AssetHandle<Mesh>& handle);
+		template<typename T>
+		static AssetHandle<T> load(const std::string& absolutePath);
 
-		static AssetHandle<Skybox> loadSkybox(const std::string& absolutePath);
-		static Ref<Skybox> getSkybox(const AssetHandle<Skybox>& handle);
-		static const AssetMap<Skybox>& getSkyboxMap() { return s_skyboxes; }
-		static bool hasSkybox(const AssetHandle<Skybox>& handle);
-		static const std::string& getSkyboxAssetFilePath(const AssetHandle<Skybox>& handle);
+		// -- Templated getter function --
+		template<typename T>
+		static Ref<T> get(const AssetHandle<T>& handle) {
+			auto& map = storage<T>().assets;
+			auto it = map.find(handle);
+			return it != map.end() ? it->second : nullptr;
+		}
+
+		// -- Templated has function --
+		template<typename T>
+		static bool has(const AssetHandle<T>& handle) {
+			return storage<T>().assets.find(handle) != storage<T>().assets.end();
+		}
+
+		// -- Templated getMap function --
+		template<typename T>
+		static const AssetMap<T>& getMap() {
+			return storage<T>().assets;
+		}
+
+		// -- Templated asset file path function --
+		template<typename T>
+		static const std::string& getAssetFilePath(const AssetHandle<T>& handle) {
+			return storage<T>().handleToPath.at(handle);
+		}
 
 	private:
 
-		static AssetMap<Mesh> s_meshes;
-		static HandleToPathMap<Mesh> s_meshHandleToPath;
+		template<typename T>
+		static AssetStorage<T>& storage() {
+			static AssetStorage<T> s_storage;
+			return s_storage;
+		}
 
-		static AssetMap<Skybox> s_skyboxes;
-		static HandleToPathMap<Skybox> s_skyboxHandleToPath;
-		static LoadQueue<Skybox> s_skyboxLoadQueue;
+		template<typename T>
+		static void release() {
+			auto& s = storage<T>();
+			s.assets.clear();
+			s.handleToPath.clear();
+			s.loadQueue.clear();
+		}
+
+		template<typename T, typename Loader>
+		static void processLoadQueue(Loader loader) {
+			auto& storageRef = storage<T>();
+			for (auto& [handle, source] : storageRef.loadQueue) {
+				Ref<T> asset = loader(source, handle);
+				storageRef.assets[handle] = asset;
+				AX_CORE_LOG_INFO("{} loaded: {}", typeid(T).name(), handle.uuid.toString());
+			}
+			storageRef.loadQueue.clear();
+		}
 
 	};
 

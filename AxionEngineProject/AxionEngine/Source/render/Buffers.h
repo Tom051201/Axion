@@ -51,18 +51,25 @@ namespace Axion {
 
 		BufferLayout() {}
 
-		BufferLayout(const std::initializer_list<BufferElement>& elements) : m_elements(elements) {
+		BufferLayout(const std::initializer_list<BufferElement>& elements)
+			: m_elements(elements) {
 			calculateOffsetAndStride();
 		}
 
-		inline const std::vector<BufferElement>& getElements() const { return m_elements; }
+		BufferLayout(const std::vector<BufferElement>& elements)
+			: m_elements(elements) {
+			calculateOffsetAndStride();
+		}
+
+		void calculateOffsetAndStride();
+
+		const std::vector<BufferElement>& getElements() const { return m_elements; }
+		std::vector<BufferElement>& getElements() { return m_elements; }
 
 	private:
 
 		std::vector<BufferElement> m_elements;
 		uint32_t m_stride = 0;
-
-		void calculateOffsetAndStride();
 
 	};
 

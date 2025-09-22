@@ -23,6 +23,7 @@ namespace Axion {
 
 		// TODO: TEMP
 
+		// TODO: Rework this material to use a shader from the assets system
 		ShaderSpecification shaderSpec;
 		shaderSpec.name = "Shader3D";
 		shaderSpec.vertexLayout = {
@@ -243,15 +244,15 @@ namespace Axion {
 		// ----- MeshComponent -----
 		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MeshComponent>();
-			if (component.mesh) {
-				ImGui::Text(component.mesh->getHandle().uuid.toString().c_str());
+			if (component.handle.isValid()) {
+				ImGui::Text(component.handle.uuid.toString().c_str());
 			}
 			else {
 				if (ImGui::Button("Open Mesh...")) {
 					std::string absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
 					if (!absPath.empty()) {
-						AssetHandle<Mesh> handle = AssetManager::loadMesh(absPath);
-						component.mesh = AssetManager::getMesh(handle);
+						AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
+						component.handle = handle;
 					}
 				}
 
@@ -261,8 +262,8 @@ namespace Axion {
 						std::string relPath = static_cast<const char*>(payload->Data);
 						std::string absPath = AssetManager::getAbsolute(relPath);
 						if (absPath.find(".axmesh") != std::string::npos) {
-							AssetHandle<Mesh> handle = AssetManager::loadMesh(absPath);
-							component.mesh = AssetManager::getMesh(handle);
+							AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
+							component.handle = handle;
 						}
 					}
 					ImGui::EndDragDropTarget();

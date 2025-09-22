@@ -1,9 +1,6 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
-
-#include "AxionAssetPipeline/Source/core/ParsingUtils.h"
 
 namespace Axion::AAP {
 

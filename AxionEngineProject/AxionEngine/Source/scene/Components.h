@@ -48,11 +48,13 @@ namespace Axion {
 
 
 	struct MeshComponent {
-		Ref<Mesh> mesh;
+		//Ref<Mesh> mesh;
+		AssetHandle<Mesh> handle;
 
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
-		MeshComponent(const Ref<Mesh>& mesh) : mesh(mesh) {}
+		//MeshComponent(const Ref<Mesh>& mesh) : mesh(mesh) {}
+		MeshComponent(const AssetHandle<Mesh>& handle) : handle(handle) {}
 	};
 
 

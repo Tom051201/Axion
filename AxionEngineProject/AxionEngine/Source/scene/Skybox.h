@@ -27,7 +27,7 @@ namespace Axion {
 		Ref<Mesh> m_mesh;
 		Ref<TextureCube> m_texture;
 		std::string m_texturePath;
-		Ref<Shader> m_shader;
+		AssetHandle<Shader> m_shaderHandle;
 
 		void setupShader(const std::string& filePath);
 

@@ -14,11 +14,11 @@ namespace Axion {
 	Scene::~Scene() {}
 
 	Entity Scene::createEntity() {
-		return createEntityWithUUID("Unnamed Entity", UUID());
+		return createEntityWithUUID("Unnamed Entity", UUID::generate());
 	}
 
 	Entity Scene::createEntity(const std::string& tag) {
-		return createEntityWithUUID(tag, UUID());
+		return createEntityWithUUID(tag, UUID::generate());
 	}
 
 	Entity Scene::createEntityWithUUID(UUID id) {
@@ -81,8 +81,8 @@ namespace Axion {
 				auto& material = group.get<MaterialComponent>(entity);
 				auto& cb = group.get<ConstantBufferComponent>(entity);
 
-				if (mesh.mesh != nullptr && material.material != nullptr && cb.uploadBuffer != nullptr) {
-					Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
+				if (mesh.handle.isValid() && material.material != nullptr && cb.uploadBuffer != nullptr) {
+					Renderer3D::drawMesh(transform.getTransform(), AssetManager::get<Mesh>(mesh.handle), material.material, cb.uploadBuffer);
 				}
 			}
 
@@ -109,8 +109,8 @@ namespace Axion {
 				auto& material = group.get<MaterialComponent>(entity);
 				auto& cb = group.get<ConstantBufferComponent>(entity);
 			
-				if (mesh.mesh != nullptr && material.material != nullptr && cb.uploadBuffer != nullptr) {
-					Renderer3D::drawMesh(transform.getTransform(), mesh.mesh, material.material, cb.uploadBuffer);
+				if (mesh.handle.isValid() && material.material != nullptr && cb.uploadBuffer != nullptr) {
+					Renderer3D::drawMesh(transform.getTransform(), AssetManager::get<Mesh>(mesh.handle), material.material, cb.uploadBuffer);
 				}
 			}
 
@@ -128,7 +128,7 @@ namespace Axion {
 
 		// -- Set skybox --
 		if (m_setSkyboxRequested) {
-			m_skybox = AssetManager::getSkybox(m_requestedSky);
+			m_skybox = AssetManager::get<Skybox>(m_requestedSky);
 			m_skyboxHandle = m_requestedSky;
 			m_requestedSky = {};
 			m_setSkyboxRequested = false;

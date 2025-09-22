@@ -42,8 +42,12 @@ namespace Axion {
 			out << YAML::Key << "MeshComponent";
 			out << YAML::BeginMap;
 			auto& mesh = entity.getComponent<MeshComponent>();
-			std::string relativeMeshPath = AssetManager::getRelativeToAssets(AssetManager::getMeshAssetFilePath(mesh.mesh->getHandle()));
-			out << YAML::Key << "Path" << YAML::Value << relativeMeshPath;
+			if (mesh.handle.isValid()) {
+				std::string relativeMeshPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Mesh>(mesh.handle));
+				out << YAML::Key << "Path" << YAML::Value << relativeMeshPath;
+			} else {
+				out << YAML::Key << "Path" << YAML::Value << "None";
+			}
 			out << YAML::EndMap;
 		}
 
@@ -82,7 +86,7 @@ namespace Axion {
 
 		// -- Skybox --
 		if (m_scene->m_skybox != nullptr) {
-			std::string relativeSkyboxPath = AssetManager::getRelativeToAssets(AssetManager::getSkyboxAssetFilePath(m_scene->m_skyboxHandle));
+			std::string relativeSkyboxPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Skybox>(m_scene->m_skyboxHandle));
 			out << YAML::Key << "Skybox" << YAML::Value << relativeSkyboxPath;
 		}
 		else {
@@ -121,7 +125,7 @@ namespace Axion {
 		// ----- Skybox -----
 		std::string sceneSkybox = data["Skybox"].as<std::string>();
 		if (sceneSkybox != "None") {
-			AssetHandle<Skybox> skyboxHandle = AssetManager::loadSkybox(AssetManager::getAbsolute(sceneSkybox));
+			AssetHandle<Skybox> skyboxHandle = AssetManager::load<Skybox>(AssetManager::getAbsolute(sceneSkybox));
 			m_scene->setSkybox(skyboxHandle);
 		}
 		
@@ -156,9 +160,13 @@ namespace Axion {
 				if (meshComponent) {
 					auto& mc = deserializedEntity.addComponent<MeshComponent>();
 					std::string relPath = meshComponent["Path"].as<std::string>();
-					std::string absPath = AssetManager::getAbsolute(relPath);
-					AssetHandle<Mesh> handle = AssetManager::loadMesh(absPath);
-					mc.mesh = AssetManager::getMesh(handle);
+					if (relPath != "None") {
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
+						mc.handle = handle;
+					} else {
+						mc.handle = AssetHandle<Mesh>();
+					}
 				}
 
 				// -- MaterialComponent --

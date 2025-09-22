@@ -3,10 +3,9 @@
 
 namespace Axion {
 
-	UUID::UUID() {
+	UUID UUID::generate() {
 		static thread_local std::mt19937_64 rng{ std::random_device{}() };
-		high = rng();
-		low = rng();
+		return { rng(), rng() };
 	}
 
 	std::string UUID::toString() const {

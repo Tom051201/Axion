@@ -1,28 +1,15 @@
 Scene: Scene
 Skybox: skybox\skybox.axsky
 Entities:
-  - Entity: 50345c34daaa75d410c28c7841798e1a
+  - Entity: 8006e31761a7b9d6a1db8b3fee90c543
     TagComponent:
-      Tag: Cube 2
-    TransformComponent:
-      Translation: [1.42618406, 0, 0]
-      Rotation: [-0, 0, -0]
-      Scale: [1, 1, 1]
-    MeshComponent:
-      Path: meshes\mesh.axmesh
-    MaterialComponent:
-      Name: None
-    ConstantBufferComponent:
-      Has: TRUE
-  - Entity: f30180fd7829fe27ed42a3a5a45697fc
-    TagComponent:
-      Tag: Cube 1
+      Tag: Empty Entity
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      Path: meshes\mesh.axmesh
+      Path: None
     MaterialComponent:
       Name: None
     ConstantBufferComponent:
@@ -37,6 +24,32 @@ Entities:
     MeshComponent:
       Path: meshes\homer.axmesh
     MaterialComponent:
-      Name: None
+      Name: BasicMaterial
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: f30180fd7829fe27ed42a3a5a45697fc
+    TagComponent:
+      Tag: Cube 1
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\mesh.axmesh
+    MaterialComponent:
+      Name: BasicMaterial
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: 50345c34daaa75d410c28c7841798e1a
+    TagComponent:
+      Tag: Cube 2
+    TransformComponent:
+      Translation: [1.42618406, 0, 0]
+      Rotation: [-0, 0, -0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\mesh.axmesh
+    MaterialComponent:
+      Name: BasicMaterial
     ConstantBufferComponent:
       Has: TRUE

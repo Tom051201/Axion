@@ -73,27 +73,4 @@ namespace Axion {
 		static std::string readShaderFile(const std::string& filePath);
 	};
 
-	////////////////////////////////////////////////////////////////////////////////
-	///// ShaderLibrary ////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////
-
-	class ShaderLibrary {
-	public:
-
-		void release();
-
-		void add(const Ref<Shader>& shader);
-		Ref<Shader> load(const std::string& filePath);
-		Ref<Shader> load(const std::string& name, const std::string& filePath);
-
-		Ref<Shader> get(const std::string& name);
-
-	private:
-
-		std::unordered_map<std::string, Ref<Shader>> m_shaders;
-
-		std::string getNameFromFile(const std::string& filePath);
-
-	};
-
 }

@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Renderer.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 namespace Axion {
 
@@ -40,13 +41,13 @@ namespace Axion {
 	Skybox::Skybox(const std::string& crossPath) {
 		m_mesh = createCubeMesh();
 		setTexture(crossPath);
-		setupShader("AxionStudio/Assets/shaders/SkyboxShader.hlsl");
+		setupShader("shaders/skyboxShader.axshader");
 	}
 
 	Skybox::Skybox(const std::array<std::string, 6>& facePaths) {
 		m_mesh = createCubeMesh();
 		m_texture = TextureCube::create(facePaths);
-		setupShader("AxionStudio/Assets/shaders/SkyboxShader.hlsl");
+		setupShader("shaders/skyboxShader.axshader");
 	}
 
 	Skybox::~Skybox() {
@@ -56,16 +57,16 @@ namespace Axion {
 	void Skybox::release() {
 		m_texture->release();
 		m_mesh->release();
-		m_shader->release();
+		//m_shader->release();
 	}
 
 	void Skybox::onUpdate(Timestep ts) {
-		m_shader->bind();
+		AssetManager::get<Shader>(m_shaderHandle)->bind();
 		Renderer::getSceneDataBuffer()->bind(0);
 		m_texture->bind();
 		m_mesh->render();
 		RenderCommand::drawIndexed(m_mesh->getVertexBuffer(), m_mesh->getIndexBuffer());
-		m_shader->unbind();
+		AssetManager::get<Shader>(m_shaderHandle)->unbind();
 	}
 
 	void Skybox::setTexture(const std::string& crossPath) {
@@ -74,20 +75,8 @@ namespace Axion {
 	}
 
 	void Skybox::setupShader(const std::string& filePath) {
-		ShaderSpecification skySpec;
-		skySpec.name = "SkyboxShader";
-		skySpec.colorFormat = ColorFormat::RGBA8;
-		skySpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
-		skySpec.depthTest = true;
-		skySpec.depthWrite = false;
-		skySpec.depthFunction = DepthCompare::LessEqual;
-		skySpec.cullMode = CullMode::Back;
-		skySpec.topology = PrimitiveTopology::TriangleList;
-		skySpec.vertexLayout = {
-			{ "POSITION", ShaderDataType::Float3 }
-		};
-		m_shader = Shader::create(skySpec);
-		m_shader->compileFromFile(filePath);
+		AssetHandle<Shader> handle = AssetManager::load<Shader>(AssetManager::getAbsolute(filePath));
+		m_shaderHandle = handle;
 	}
 
 }

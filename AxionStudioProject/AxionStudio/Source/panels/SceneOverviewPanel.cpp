@@ -7,6 +7,9 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
+// TODO: TEMP
+#include "AxionAssetPipeline/Source/AxShader.h"
+
 namespace Axion {
 
 	SceneOverviewPanel::SceneOverviewPanel(const std::string& name) : Panel(name) {}
@@ -65,7 +68,7 @@ namespace Axion {
 		if (ImGui::Button("Select Skybox")) {
 			std::string absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, ProjectManager::getProject()->getAssetsPath() + "\\skybox");
 			if (!absolutePath.empty()) {
-				AssetHandle<Skybox> handle = AssetManager::loadSkybox(absolutePath);
+				AssetHandle<Skybox> handle = AssetManager::load<Skybox>(absolutePath);
 				m_activeScene->setSkybox(handle);
 			}
 		}
@@ -73,6 +76,41 @@ namespace Axion {
 		ImGui::SameLine();
 		if (ImGui::Button("Remove")) {
 			m_activeScene->removeSkybox();
+		}
+
+		// TODO: TEMP
+		if (ImGui::Button("Create skybox shader")) {
+			AAP::ShaderAssetData data;
+			data.fileFormat = "HLSL";
+			data.filePath = "shaders/skyboxShader.hlsl";
+			ShaderSpecification spec{};
+			spec.name = "SkyboxShader";
+			spec.colorFormat = ColorFormat::RGBA8;
+			spec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+			spec.depthTest = true;
+			spec.depthWrite = false;
+			spec.depthFunction = DepthCompare::LessEqual;
+			spec.cullMode = CullMode::Back;
+			spec.topology = PrimitiveTopology::TriangleList;
+			spec.vertexLayout = {
+				{ "POSITION", ShaderDataType::Float3 }
+			};
+			data.spec = spec;
+			AAP::ShaderParser::createAxShaderFile(data, AssetManager::getAbsolute("shaders/skyboxShader.axshader"));
+		}
+		if (ImGui::Button("Create position shader")) {
+			AAP::ShaderAssetData data;
+			data.fileFormat = "HLSL";
+			data.filePath = "shaders/positionShader.hlsl";
+			ShaderSpecification spec{};
+			spec.name = "PositionShader";
+			spec.vertexLayout = {
+				{ "POSITION", Axion::ShaderDataType::Float3 },
+				{ "NORMAL", Axion::ShaderDataType::Float3 },
+				{ "TEXCOORD", Axion::ShaderDataType::Float2 }
+			};
+			data.spec = spec;
+			AAP::ShaderParser::createAxShaderFile(data, AssetManager::getAbsolute("shaders/positionShader.axshader"));
 		}
 
 		ImGui::End();

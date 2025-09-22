@@ -6,11 +6,14 @@ namespace Axion {
 	class UUID {
 	public:
 
-		uint64_t high;
-		uint64_t low;
+		uint64_t high = 0;
+		uint64_t low = 0;
 
-		UUID();
+		UUID() = default;
 		UUID(uint64_t high, uint64_t low) : high(high), low(low) {}
+
+		static UUID generate();
+		bool isValid() const { return high != 0 || low != 0; }
 
 		std::string toString() const;
 		static UUID fromString(const std::string& str);

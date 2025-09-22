@@ -322,7 +322,7 @@ namespace Axion {
 					// -- Try loading a skybox --
 					if (path.find(".axsky") != std::string::npos) {
 						std::string absPath = AssetManager::getAbsolute(path);
-						AssetHandle<Skybox> handle = AssetManager::loadSkybox(absPath);
+						AssetHandle<Skybox> handle = AssetManager::load<Skybox>(absPath);
 						SceneManager::getScene()->setSkybox(handle);
 					}
 				}
