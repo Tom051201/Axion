@@ -81,8 +81,13 @@ namespace Axion {
 				auto& material = group.get<MaterialComponent>(entity);
 				auto& cb = group.get<ConstantBufferComponent>(entity);
 
-				if (mesh.handle.isValid() && material.material != nullptr && cb.uploadBuffer != nullptr) {
-					Renderer3D::drawMesh(transform.getTransform(), AssetManager::get<Mesh>(mesh.handle), material.material, cb.uploadBuffer);
+				if (mesh.handle.isValid() && material.handle.isValid() && cb.uploadBuffer != nullptr) {
+					Renderer3D::drawMesh(
+						transform.getTransform(), 
+						AssetManager::get<Mesh>(mesh.handle), 
+						AssetManager::get<Material>(material.handle),
+						cb.uploadBuffer
+					);
 				}
 			}
 
@@ -108,9 +113,14 @@ namespace Axion {
 				auto& mesh = group.get<MeshComponent>(entity);
 				auto& material = group.get<MaterialComponent>(entity);
 				auto& cb = group.get<ConstantBufferComponent>(entity);
-			
-				if (mesh.handle.isValid() && material.material != nullptr && cb.uploadBuffer != nullptr) {
-					Renderer3D::drawMesh(transform.getTransform(), AssetManager::get<Mesh>(mesh.handle), material.material, cb.uploadBuffer);
+
+				if (mesh.handle.isValid() && material.handle.isValid() && cb.uploadBuffer != nullptr) {
+					Renderer3D::drawMesh(
+						transform.getTransform(),
+						AssetManager::get<Mesh>(mesh.handle),
+						AssetManager::get<Material>(material.handle),
+						cb.uploadBuffer
+					);
 				}
 			}
 

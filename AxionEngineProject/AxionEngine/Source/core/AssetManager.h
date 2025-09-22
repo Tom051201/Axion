@@ -3,11 +3,7 @@
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
-#include "AxionEngine/Source/render/Mesh.h"
-#include "AxionEngine/Source/render/Texture.h"
-#include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
-#include "AxionEngine/Source/scene/Skybox.h"
 
 namespace Axion {
 
@@ -98,7 +94,7 @@ namespace Axion {
 			for (auto& [handle, source] : storageRef.loadQueue) {
 				Ref<T> asset = loader(source, handle);
 				storageRef.assets[handle] = asset;
-				AX_CORE_LOG_INFO("{} loaded: {}", typeid(T).name(), handle.uuid.toString());
+				AX_CORE_LOG_TRACE("{} loaded: {}", typeid(T).name(), handle.uuid.toString());
 			}
 			storageRef.loadQueue.clear();
 		}

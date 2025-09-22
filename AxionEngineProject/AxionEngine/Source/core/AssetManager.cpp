@@ -8,6 +8,10 @@
 #include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/scene/Skybox.h"
+#include "AxionEngine/Source/render/Mesh.h"
+#include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Material.h"
 
 namespace Axion {
 
@@ -19,11 +23,13 @@ namespace Axion {
 		release<Mesh>();
 		release<Skybox>();
 		release<Shader>();
+		release<Material>();
 	}
 
 	void AssetManager::onEvent(Event& e) {
 		// -- RenderingFinished --
 		if (e.getEventType() == EventType::RenderingFinished) {
+
 			// -- Load Queue Skybox --
 			processLoadQueue<Skybox>([](const std::string& path, const AssetHandle<Skybox>& handle) -> Ref<Skybox> {
 				return std::make_shared<Skybox>(path);
@@ -97,37 +103,48 @@ namespace Axion {
 				shader->compileFromFile(path);
 				return shader;
 			});
+
+			// -- Load Queue Material --
+			processLoadQueue<Material>([](const std::string& path, const AssetHandle<Material>& handle) -> Ref<Material> {
+				Ref<Material> mat = AssetManager::get<Material>(handle); // TODO: make this not neccessary, this needs to be done otherwise it registers a nullptr
+				return mat;
+			});
+
 		}
 	}
 
 	std::string AssetManager::getRelativeToAssets(const std::string& absolutePath) {
-		if (ProjectManager::hasProject()) {
-			std::filesystem::path absPath(absolutePath);
-			std::filesystem::path assetsDir = ProjectManager::getProject()->getAssetsPath();
+		if (!ProjectManager::hasProject()) {
+			AX_CORE_LOG_WARN("Unable converting absolute path to relative assets path: no project loaded");
+			return {};
+		}
+
+		std::filesystem::path absPath(absolutePath);
+		std::filesystem::path assetsDir = ProjectManager::getProject()->getAssetsPath();
+
+		try {
 			std::filesystem::path relPath = std::filesystem::relative(absPath, assetsDir);
 			return relPath.string();
-		}
-		else {
-			AX_CORE_LOG_WARN("Unable converting absolute path to relative assets path: no project loaded");
+		} catch (const std::exception& e) {
+			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
 			return {};
 		}
 	}
 
 	std::string AssetManager::getAbsolute(const std::string& relativePath) {
-		if (ProjectManager::hasProject()) {
-			std::string absPath = ProjectManager::getProject()->getAssetsPath() + "\\" + relativePath;
-			if (std::filesystem::exists(absPath)) {
-				return absPath;
-			}
-			else {
-				AX_CORE_LOG_WARN("Unable converting relative path to absolute assets path: path does not exist");
-				return {};
-			}
-		}
-		else {
+		if (!ProjectManager::hasProject()) {
 			AX_CORE_LOG_WARN("Unable converting relative path to absolute assets path: no project loaded");
 			return {};
 		}
+
+		std::filesystem::path absPath = ProjectManager::getProject()->getAssetsPath();
+		absPath /= relativePath;
+		if (!std::filesystem::exists(absPath)) {
+			AX_CORE_LOG_WARN("Unable converting relative path to absolute assets path: path does not exist");
+			return {};
+		}
+
+		return absPath.string();
 	}
 
 	// ----- Mesh Assets -----
@@ -247,4 +264,39 @@ namespace Axion {
 
 		return handle;
 	}
+
+	// ----- Material Assets -----
+	template<>
+	AssetHandle<Material> AssetManager::load<Material>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Material") {
+			AX_CORE_LOG_ERROR("Loading material failed, file is not a material asset file");
+			return {};
+		}
+
+		std::string sourcePath = ""; // No source file for materials yet
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<Material> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<Material>(handle)) {
+			return handle;
+		}
+
+		std::string name = data["Name"].as<std::string>();
+		Vec4 color = data["Color"].as<Vec4>();
+
+		std::string absShaderPath = getAbsolute(data["Shader"].as<std::string>());
+		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(absShaderPath);
+		Ref<Material> material = Material::create(name, color, shaderHandle);
+
+		storage<Material>().assets[handle] = material;
+		storage<Material>().loadQueue.push_back({ handle, sourcePath });
+		storage<Material>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
 }

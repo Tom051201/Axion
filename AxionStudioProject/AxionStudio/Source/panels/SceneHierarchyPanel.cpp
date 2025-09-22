@@ -19,24 +19,7 @@ namespace Axion {
 		shutdown();
 	}
 
-	void SceneHierarchyPanel::setup() {
-
-		// TODO: TEMP
-
-		// TODO: Rework this material to use a shader from the assets system
-		ShaderSpecification shaderSpec;
-		shaderSpec.name = "Shader3D";
-		shaderSpec.vertexLayout = {
-			{ "POSITION", Axion::ShaderDataType::Float3 },
-			{ "NORMAL", Axion::ShaderDataType::Float3 },
-			{ "TEXCOORD", Axion::ShaderDataType::Float2 }
-		};
-		Ref<Shader> shader = Shader::create(shaderSpec);
-		shader->compileFromFile("AxionStudio/Assets/shaders/PositionShader.hlsl");
-		m_basicMaterial = Material::create("BasicMaterial", { 0.0f, 1.0f, 0.0f, 1.0f }, shader);
-
-		// TEMP END
-	}
+	void SceneHierarchyPanel::setup() {}
 
 	void SceneHierarchyPanel::shutdown() {}
 
@@ -274,18 +257,38 @@ namespace Axion {
 		// ----- MaterialComponent -----
 		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MaterialComponent>();
-			if (component.material) {
+			if (component.handle.isValid()) {
 				// Material is not a nullptr
-				ImGui::Text(component.getName().c_str());
-				ImGui::Text(component.material->getShader()->getName().c_str());
-				ImGui::ColorPicker4("Color", component.getColor().data());
+				ImGui::Text(AssetManager::get<Material>(component.handle)->getName().c_str());
+				ImGui::Text(AssetManager::get<Shader>(AssetManager::get<Material>(component.handle)->getShaderHandle())->getName().c_str());
+				ImGui::ColorPicker4("Color", AssetManager::get<Material>(component.handle)->getColor().data());
 			}
 			else {
 				// Material is a nullptr
 				ImGui::Text("Unknown Material");
 				ImGui::Text("Unknown Shader");
 				ImGui::Text("Unknown Color");
-				if (ImGui::Button("Load 'Basic Material'")) { component.material = m_basicMaterial; }
+
+				if (ImGui::Button("Open Material...")) {
+					std::string absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes"); //TODO: remove back slashes here and above
+					if (!absPath.empty()) {
+						AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
+						component.handle = handle;
+					}
+				}
+
+				if (ImGui::BeginDragDropTarget()) {
+
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::string relPath = static_cast<const char*>(payload->Data);
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.find(".axmat") != std::string::npos) {
+							AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
+							component.handle = handle;
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
 			}
 		});
 

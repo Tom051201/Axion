@@ -9,6 +9,7 @@
 
 // TODO: TEMP
 #include "AxionAssetPipeline/Source/AxShader.h"
+#include "AxionAssetPipeline/Source/AxMaterial.h"
 
 namespace Axion {
 
@@ -111,6 +112,14 @@ namespace Axion {
 			};
 			data.spec = spec;
 			AAP::ShaderParser::createAxShaderFile(data, AssetManager::getAbsolute("shaders/positionShader.axshader"));
+		}
+
+		if (ImGui::Button("Create Basic Material")) {
+			AAP::MaterialAssetData data;
+			data.name = "BasicMaterial";
+			data.color = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+			data.shaderAsset = "shaders/positionShader.axshader";
+			AAP::MaterialParser::createAxMatFile(data, AssetManager::getAbsolute("materials/basicMaterial.axmat"));
 		}
 
 		ImGui::End();

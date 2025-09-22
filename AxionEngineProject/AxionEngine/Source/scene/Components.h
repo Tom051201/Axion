@@ -48,27 +48,25 @@ namespace Axion {
 
 
 	struct MeshComponent {
-		//Ref<Mesh> mesh;
 		AssetHandle<Mesh> handle;
 
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
-		//MeshComponent(const Ref<Mesh>& mesh) : mesh(mesh) {}
 		MeshComponent(const AssetHandle<Mesh>& handle) : handle(handle) {}
 	};
 
 
 
 	struct MaterialComponent {
-		Ref<Material> material;
+		AssetHandle<Material> handle;
 
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
-		MaterialComponent(const Ref<Material>& mat) : material(mat) {}
+		MaterialComponent(const AssetHandle<Material>& handle) : handle(handle) {}
 
-		const std::string& getName() const { return material->getName(); }
-		const Vec4& getColor() const { return material->getColor(); }
-		Vec4& getColor() { return material->getColor(); }
+		//const std::string& getName() const { return material->getName(); }
+		//const Vec4& getColor() const { return material->getColor(); }
+		//Vec4& getColor() { return material->getColor(); }
 	};
 
 

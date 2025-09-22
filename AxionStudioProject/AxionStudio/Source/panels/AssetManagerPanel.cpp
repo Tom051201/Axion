@@ -3,6 +3,10 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/render/Mesh.h"
+#include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Material.h"
+#include "AxionEngine/Source/scene/Skybox.h"
 
 namespace Axion {
 
@@ -100,6 +104,36 @@ namespace Axion {
 						}
 						else {
 							ImGui::TextDisabled("Shader is queued for load.");
+						}
+						ImGui::TreePop();
+					}
+
+					ImGui::PopID();
+				}
+			}
+		}
+
+		// -- Material Assets --
+		const auto& materials = AssetManager::getMap<Material>();
+		std::string materialsLabel = "Materials (" + std::to_string(materials.size()) + ")";
+		if (ImGui::CollapsingHeader(materialsLabel.c_str())) {
+			if (materials.empty()) {
+				ImGui::TextDisabled("No materials loaded");
+			}
+			else {
+				for (const auto& [handle, material] : materials) {
+					ImGui::PushID((int)std::hash<UUID>()(handle.uuid));
+
+					bool open = ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_SpanAvailWidth, "Material [%s]", handle.uuid.toString().c_str());
+
+					if (open) {
+						ImGui::Text("Asset File: %s", AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Material>(handle)).c_str());
+
+						if (material) {
+							ImGui::Text("Name: %s", material->getName().c_str());
+						}
+						else {
+							ImGui::TextDisabled("Material is queued for load.");
 						}
 						ImGui::TreePop();
 					}

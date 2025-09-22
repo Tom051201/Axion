@@ -35,7 +35,7 @@ namespace Axion {
 		createRootSignature();
 		createPipelineState();
 
-		AX_CORE_LOG_TRACE("Shader '{0}' compiled ({1})", m_specification.name, filePath);
+		AX_CORE_LOG_TRACE("Shader '{}' compiled", m_specification.name);
 	}
 
 

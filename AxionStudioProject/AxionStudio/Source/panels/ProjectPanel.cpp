@@ -113,7 +113,9 @@ namespace Axion {
 
 			ImGui::SameLine();
 			if (ImGui::Button("Set As Startup")) {
-				EditorConfig::startupProjectPath = m_project->getProjectPath() + "\\" + m_project->getName() + ".axproj";
+				std::filesystem::path projectPath = m_project->getProjectPath();
+				projectPath /= m_project->getName() + ".axproj";
+				EditorConfig::startupProjectPath = projectPath.string();
 			}
 		}
 

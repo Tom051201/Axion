@@ -56,11 +56,12 @@ namespace Axion {
 			out << YAML::Key << "MaterialComponent";
 			out << YAML::BeginMap;
 			auto& mat = entity.getComponent<MaterialComponent>();
-			if (mat.material) {
-				out << YAML::Key << "Name" << YAML::Value << mat.getName();
+			if (mat.handle.isValid()) {
+				std::string relativeMatPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Material>(mat.handle));
+				out << YAML::Key << "Path" << YAML::Value << relativeMatPath;
 			}
 			else {
-				out << YAML::Key << "Name" << YAML::Value << "None";
+				out << YAML::Key << "Path" << YAML::Value << "None";
 			}
 			out << YAML::EndMap;
 		}
@@ -120,7 +121,8 @@ namespace Axion {
 		// ----- Title -----
 		std::string sceneName = data["Scene"].as<std::string>();
 		m_scene->setTitle(sceneName);
-		AX_CORE_LOG_TRACE("Deserialized scene {}", sceneName);
+
+
 
 		// ----- Skybox -----
 		std::string sceneSkybox = data["Skybox"].as<std::string>();
@@ -173,8 +175,13 @@ namespace Axion {
 				auto materialComponent = entity["MaterialComponent"];
 				if (materialComponent) {
 					auto& mc = deserializedEntity.addComponent<MaterialComponent>();
-					if (materialComponent["Name"].as<std::string>() == "BasicMaterial") {
-						// TODO: load basic material which is client side...
+					std::string relPath = materialComponent["Path"].as<std::string>();
+					if (relPath != "None") {
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
+						mc.handle = handle;
+					} else {
+						mc.handle = AssetHandle<Material>();
 					}
 				}
 
