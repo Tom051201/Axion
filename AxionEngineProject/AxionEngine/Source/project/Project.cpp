@@ -85,10 +85,12 @@ namespace Axion {
 	Ref<Project> Project::createNew(const ProjectSpecification& spec) {
 		namespace fs = std::filesystem;
 
+		std::string projectName = spec.name;
+		std::replace(projectName.begin(), projectName.end(), ' ', '_');
 		Ref<Project> result = std::make_shared<Project>(spec.name);
 
 		try {
-			fs::path projectDir = fs::path(spec.location) / spec.name;
+			fs::path projectDir = fs::path(spec.location) / projectName;
 
 			// create project dir
 			if (!fs::exists(projectDir)) {
@@ -116,7 +118,7 @@ namespace Axion {
 			if (!spec.description.empty()) result->setDescription(spec.description);
 
 			// write the project file (.axproj)
-			result->save((projectDir / (spec.name + ".axproj")).string());
+			result->save((projectDir / (projectName + ".axproj")).string());
 
 			return result;
 		}

@@ -86,7 +86,7 @@ namespace Axion {
 		out << YAML::Key << "Scene" << YAML::Value << m_scene->getTitle();
 
 		// -- Skybox --
-		if (m_scene->m_skybox != nullptr) {
+		if (m_scene->m_skyboxHandle.isValid()) {
 			std::string relativeSkyboxPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Skybox>(m_scene->m_skyboxHandle));
 			out << YAML::Key << "Skybox" << YAML::Value << relativeSkyboxPath;
 		}

@@ -1,0 +1,16 @@
+Scene: Untitled
+Skybox: skybox\skybox2.axsky
+Entities:
+  - Entity: fb28ff93590d7d965da96fc6e0e6ec4c
+    TagComponent:
+      Tag: Homer
+    TransformComponent:
+      Translation: [0.400000006, 0, 0]
+      Rotation: [0.200000003, -3.5, 0]
+      Scale: [3.29999995, 0.899999976, 1.89999998]
+    MeshComponent:
+      Path: meshes\homer.axmesh
+    MaterialComponent:
+      Path: materials\basicMaterial.axmat
+    ConstantBufferComponent:
+      Has: TRUE

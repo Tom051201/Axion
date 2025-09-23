@@ -1,0 +1,5 @@
+Name: BasicMaterial
+UUID: b357b033e34c984b65ff40e4cfa42f01
+Type: Material
+Color: [1, 0, 0, 1]
+Shader: shaders/positionShader.axshader

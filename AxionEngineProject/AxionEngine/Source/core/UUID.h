@@ -13,7 +13,8 @@ namespace Axion {
 		UUID(uint64_t high, uint64_t low) : high(high), low(low) {}
 
 		static UUID generate();
-		bool isValid() const { return high != 0 && low != 0; } // TODO: replace && with ||
+		bool isValid() const { return high != 0 || low != 0; }
+		void invalidate() { high = 0; low = 0; }
 
 		std::string toString() const;
 		static UUID fromString(const std::string& str);

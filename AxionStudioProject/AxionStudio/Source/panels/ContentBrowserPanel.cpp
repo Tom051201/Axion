@@ -195,10 +195,13 @@ namespace Axion {
 				}
 				// -- Draw name --
 				else {
-					ImVec2 textSize = ImGui::CalcTextSize(filenameString.c_str());
+					std::filesystem::path p(filenameString);
+					std::string displayName = m_showFileExtensions ? p.filename().string() : p.stem().string();
+					
+					ImVec2 textSize = ImGui::CalcTextSize(displayName.c_str());
 					float textX = std::max(ImGui::GetCursorPosX(), ImGui::GetCursorPosX() + (m_thumbnailSize - textSize.x) * 0.5f);
 					ImGui::SetCursorPosX(textX);
-					ImGui::TextUnformatted(filenameString.c_str());
+					ImGui::TextUnformatted(displayName.c_str());
 				}
 			}
 
@@ -430,6 +433,15 @@ namespace Axion {
 		if (ImGui::IsItemHovered()) {
 			ImGui::SetTooltip("Show only Asset files");
 		}
+
+
+		// ----- Show file extensions toggle -----
+		ImGui::SameLine();
+		ImGui::Checkbox("##ShowFileExtensions_checkbox", &m_showFileExtensions);
+		if (ImGui::IsItemHovered()) {
+			ImGui::SetTooltip("Show file extensions");
+		}
+
 		ImGui::Separator();
 	}
 
@@ -461,6 +473,7 @@ namespace Axion {
 		Panel::serialize(out);
 		out << YAML::Key << "ThumbnailSize" << YAML::Value << m_thumbnailSize;
 		out << YAML::Key << "OnlyAssetFiles" << YAML::Value << m_onlyEngineAssets;
+		out << YAML::Key << "ShowExtensions" << YAML::Value << m_showFileExtensions;
 	}
 
 	void ContentBrowserPanel::deserialize(const YAML::Node& node) {
@@ -471,6 +484,9 @@ namespace Axion {
 		}
 		if (node["OnlyAssetFiles"]) {
 			m_onlyEngineAssets = node["OnlyAssetFiles"].as<bool>();
+		}
+		if (node["ShowExtensions"]) {
+			m_showFileExtensions = node["ShowExtensions"].as<bool>();
 		}
 	}
 

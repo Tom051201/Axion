@@ -55,10 +55,10 @@ namespace Axion {
 		ImGui::SeparatorText("Skybox");
 		if (m_activeScene->hasSkybox()) {
 			// -- Has a skybox --
-			std::filesystem::path skyPath = std::filesystem::path(m_activeScene->getSkyboxPath());
-			std::filesystem::path skyRel = std::filesystem::relative(skyPath, ProjectManager::getProject()->getAssetsPath());
-			ImGui::Text("Title: %s", skyPath.stem().string().c_str());
-			ImGui::Text("Path: %s", skyRel.string().c_str());
+			//std::filesystem::path skyPath = std::filesystem::path(m_activeScene->getSkyboxPath());
+			//std::filesystem::path skyRel = std::filesystem::relative(skyPath, ProjectManager::getProject()->getAssetsPath());
+			//ImGui::Text("Title: %s", skyPath.stem().string().c_str());
+			//ImGui::Text("Path: %s", skyRel.string().c_str());
 		}
 		else {
 			// -- Does not have a skybox --

@@ -53,19 +53,6 @@ namespace Axion {
 		if (ImGui::Begin("Properties")) {
 			if (m_selectedEntity) {
 				displayComponents(m_selectedEntity);
-
-				if (ImGui::Button("Add Component")) ImGui::OpenPopup("AddComponent");
-				if (ImGui::BeginPopup("AddComponent")) {
-
-					drawAddComponent<TransformComponent>("Transform");
-					drawAddComponent<MeshComponent>("Mesh");
-					drawAddComponent<MaterialComponent>("Material");
-					drawAddComponent<CameraComponent>("Camera");
-					drawAddComponent<ConstantBufferComponent>("Upload Buffer");
-
-					ImGui::EndPopup();
-				}
-
 			}
 		}
 		ImGui::End();
@@ -95,13 +82,14 @@ namespace Axion {
 	void SceneHierarchyPanel::drawVec3Control(const std::string& label, Vec3& values, float resetValue, float columnWidth) {
 		ImGui::PushID(label.c_str());
 
-		ImGui::Columns(2);
+		ImGui::Columns(2, 0, false);
 		ImGui::SetColumnWidth(0, columnWidth);
 		ImGui::Text(label.c_str());
 		ImGui::NextColumn();
 
 		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
 
 		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y + 2.0f;
 		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
@@ -135,7 +123,7 @@ namespace Axion {
 		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 
-		ImGui::PopStyleVar();
+		ImGui::PopStyleVar(2);
 		ImGui::Columns(1);
 		ImGui::PopID();
 	}
@@ -178,31 +166,58 @@ namespace Axion {
 
 			char buffer[256];
 			memset(buffer, 0, sizeof(buffer));
-			strcpy_s(buffer, sizeof(buffer), tag.c_str());
+			strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
 
-			if (ImGui::InputText("Tag", buffer, sizeof(buffer))) {
+			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
 			}
+		}
+
+		// ------ Add Component -----
+		bool hasAll =
+			m_selectedEntity.hasComponent<TransformComponent>() &&
+			m_selectedEntity.hasComponent<MeshComponent>() &&
+			m_selectedEntity.hasComponent<MaterialComponent>() &&
+			m_selectedEntity.hasComponent<ConstantBufferComponent>() &&
+			m_selectedEntity.hasComponent<CameraComponent>();
+
+		ImGui::SameLine();
+		ImGui::BeginDisabled(hasAll);
+		if (ImGui::Button("Add Component")) ImGui::OpenPopup("AddComponent");
+		ImGui::EndDisabled();
+		if (ImGui::BeginPopup("AddComponent")) {
+
+			drawAddComponent<TransformComponent>("Transform");
+			drawAddComponent<MeshComponent>("Mesh");
+			drawAddComponent<MaterialComponent>("Material");
+			drawAddComponent<ConstantBufferComponent>("Upload Buffer");
+			drawAddComponent<CameraComponent>("Camera");
+
+			ImGui::EndPopup();
 		}
 
 		// ----- UUIDComponent -----
 		if (entity.hasComponent<UUIDComponent>()) {
 			auto& uuid = entity.getComponent<UUIDComponent>().id;
-			ImGui::Text(uuid.toString().c_str());
+			ImGui::TextDisabled(uuid.toString().c_str());
 		}
-
-		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
 
 		// ----- TransformComponent -----
 		if (entity.hasComponent<TransformComponent>()) {
 			// Draw TransformComponent manual to disable removement
 
 			// -- Creates treenode and + button --
+			const ImGuiTreeNodeFlags treeNodeFlags = /*ImGuiTreeNodeFlags_DefaultOpen | */ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+			ImGui::PushID((void*)typeid(TransformComponent).hash_code());
+			ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
-			bool open = ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, "Transform");
-			ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
-			if (ImGui::Button("+", ImVec2{ 20, 20 })) { ImGui::OpenPopup("ComponentSettings"); }
+			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+
+			ImGui::SeparatorText("");
+			bool open = ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), treeNodeFlags, "Transform");
 			ImGui::PopStyleVar();
+			ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
+			if (ImGui::Button("+", ImVec2{ lineHeight, lineHeight })) { ImGui::OpenPopup("ComponentSettings"); }
 
 			// -- Draws component settings on + button --
 			if (ImGui::BeginPopup("ComponentSettings")) {
@@ -216,21 +231,29 @@ namespace Axion {
 				auto& rotation = component.rotation;
 				auto& scale = component.scale;
 
-				drawVec3Control("Position", position);
-				drawVec3Control("Rotation", rotation);
-				drawVec3Control("Scale", scale, 1.0f);
+				drawVec3Control("Position", position, 0.0f, 70.0f);
+				drawVec3Control("Rotation", rotation, 0.0f, 70.0f);
+				drawVec3Control("Scale", scale, 1.0f, 70.0f);
 
 				ImGui::TreePop();
 			}
+			ImGui::PopID();
 		}
 
 		// ----- MeshComponent -----
 		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MeshComponent>();
 			if (component.handle.isValid()) {
-				ImGui::Text(component.handle.uuid.toString().c_str());
+				Ref<Mesh> mesh = AssetManager::get<Mesh>(component.handle);
+				ImGui::Text("UUID: %s ", component.handle.uuid.toString().c_str());
+				ImGui::Text("Vertices: %u", mesh->getVertexBuffer()->getVertexCount());
+				ImGui::Text("Indices: %u", mesh->getIndexCount());
+				if (ImGui::Button("Remove")) {
+					component.handle.invalidate();
+				}
 			}
 			else {
+				// -- Load Button --
 				if (ImGui::Button("Open Mesh...")) {
 					std::string absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
 					if (!absPath.empty()) {
@@ -239,8 +262,8 @@ namespace Axion {
 					}
 				}
 
+				// -- Drag drop on button --
 				if (ImGui::BeginDragDropTarget()) {
-
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 						std::string relPath = static_cast<const char*>(payload->Data);
 						std::string absPath = AssetManager::getAbsolute(relPath);
@@ -251,6 +274,7 @@ namespace Axion {
 					}
 					ImGui::EndDragDropTarget();
 				}
+
 			}
 		});
 
@@ -258,27 +282,25 @@ namespace Axion {
 		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MaterialComponent>();
 			if (component.handle.isValid()) {
-				// Material is not a nullptr
 				ImGui::Text(AssetManager::get<Material>(component.handle)->getName().c_str());
 				ImGui::Text(AssetManager::get<Shader>(AssetManager::get<Material>(component.handle)->getShaderHandle())->getName().c_str());
-				ImGui::ColorPicker4("Color", AssetManager::get<Material>(component.handle)->getColor().data());
+				ImGui::ColorEdit4("##ColorEdit", AssetManager::get<Material>(component.handle)->getColor().data());
+				if (ImGui::Button("Remove")) {
+					component.handle.invalidate();
+				}
 			}
 			else {
-				// Material is a nullptr
-				ImGui::Text("Unknown Material");
-				ImGui::Text("Unknown Shader");
-				ImGui::Text("Unknown Color");
-
+				// -- Load Button --
 				if (ImGui::Button("Open Material...")) {
-					std::string absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes"); //TODO: remove back slashes here and above
+					std::string absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, ProjectManager::getProject()->getAssetsPath() + "\\materials"); //TODO: remove back slashes here and above
 					if (!absPath.empty()) {
 						AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
 						component.handle = handle;
 					}
 				}
 
+				// -- Drag drop on button --
 				if (ImGui::BeginDragDropTarget()) {
-
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 						std::string relPath = static_cast<const char*>(payload->Data);
 						std::string absPath = AssetManager::getAbsolute(relPath);
@@ -289,18 +311,15 @@ namespace Axion {
 					}
 					ImGui::EndDragDropTarget();
 				}
-			}
-		});
 
-		// ----- CameraComponent -----
-		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, []() {
+			}
 		});
 
 		// ----- ConstantBufferComponent -----
 		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<ConstantBufferComponent>();
 			if (component.uploadBuffer) {
-				ImGui::Text(std::to_string(component.uploadBuffer->getSize()).c_str());
+				ImGui::Text("Upload size: %s", std::to_string(component.uploadBuffer->getSize()).c_str());
 			}
 			else {
 				component.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
@@ -308,11 +327,13 @@ namespace Axion {
 
 		});
 
+		// ----- CameraComponent -----
+		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, []() {});
+
 	}
 
 	bool SceneHierarchyPanel::onSceneChanged(SceneChangedEvent& e) {
 		setContext(SceneManager::getScene());
-
 		return false;
 	}
 

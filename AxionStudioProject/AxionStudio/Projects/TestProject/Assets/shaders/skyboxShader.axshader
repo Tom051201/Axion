@@ -1,0 +1,21 @@
+Name: SkyboxShader
+UUID: d3519f5e84317cbba2496921dee99640
+Type: Shader
+Format: HLSL
+Source: shaders/skyboxShader.hlsl
+Specification:
+  Name: SkyboxShader
+  ColorFormat: RGBA8
+  DepthStencilFormat: DEPTH32F
+  DepthTest: true
+  DepthWrite: false
+  DepthFunction: LessEqual
+  StencilEnabled: false
+  SampleCount: 1
+  CullMode: Back
+  Topology: TriangleList
+  BufferLayout:
+    - Name: POSITION
+      Type: Float3
+      Size: 12
+      Offset: 0

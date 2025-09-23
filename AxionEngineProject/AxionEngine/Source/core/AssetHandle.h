@@ -13,6 +13,7 @@ namespace Axion {
 		AssetHandle(const UUID& uuid) : uuid(uuid) {}
 
 		bool isValid() const { return uuid.isValid(); }
+		void invalidate() { uuid.invalidate(); }
 
 		bool operator==(const AssetHandle& other) const { return uuid == other.uuid; }
 		bool operator!=(const AssetHandle& other) const { return !(*this == other); };

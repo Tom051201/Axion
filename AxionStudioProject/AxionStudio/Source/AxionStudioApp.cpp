@@ -65,7 +65,7 @@ namespace Axion {
 			colors[ImGuiCol_FrameBgActive] = ImVec4(0.32f, 0.0f, 0.0f, 1.0f);
 			colors[ImGuiCol_FrameBgHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);
 
-			colors[ImGuiCol_ResizeGrip] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+			colors[ImGuiCol_ResizeGrip] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);	// TODO: change
 			colors[ImGuiCol_ResizeGripHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
 			colors[ImGuiCol_ResizeGripActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.45f);
 

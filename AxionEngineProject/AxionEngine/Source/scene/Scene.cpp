@@ -101,8 +101,8 @@ namespace Axion {
 			Renderer3D::beginScene(cam);
 
 			// ----- Render Skybox -----
-			if (m_skybox != nullptr) {
-				m_skybox->onUpdate(ts);
+			if (m_skyboxHandle.isValid()) {
+				AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
 			}
 
 
@@ -133,32 +133,17 @@ namespace Axion {
 	}
 
 	bool Scene::onRenderingFinished(RenderingFinishedEvent& e) {
-
 		flushDestroyedEntities();
-
-		// -- Set skybox --
-		if (m_setSkyboxRequested) {
-			m_skybox = AssetManager::get<Skybox>(m_requestedSky);
-			m_skyboxHandle = m_requestedSky;
-			m_requestedSky = {};
-			m_setSkyboxRequested = false;
-		}
 
 		return false;
 	}
 
 	void Scene::setSkybox(const AssetHandle<Skybox>& handle) {
-		m_requestedSky = handle;
-		m_setSkyboxRequested = true;
-	}
-
-	void Scene::setSkyboxTexture(const std::string& crossPath) {
-		m_skybox->setTexture(crossPath);
+		m_skyboxHandle = handle;
 	}
 
 	void Scene::removeSkybox() {
-		m_skybox = nullptr;
-		m_skyboxHandle = {};
+		m_skyboxHandle.invalidate();
 	}
 
 }

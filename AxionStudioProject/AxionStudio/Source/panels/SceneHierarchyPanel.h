@@ -31,6 +31,7 @@ namespace Axion {
 
 		void drawVec3Control(const std::string& label, Vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 		
+		// Returns true if the entity already has the component
 		template<typename T>
 		void drawAddComponent(const char* name) {
 			if (!m_selectedEntity.hasComponent<T>()) {
@@ -43,13 +44,19 @@ namespace Axion {
 
 		template<typename T>
 		void drawComponentInfo(const char* name, Entity entity, std::function<void()> guiCode) {
+			const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
 			if (entity.hasComponent<T>()) {
 				// creates treenode and + button
+				ImGui::PushID((void*)typeid(T).hash_code());
+				ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
-				bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, name);
-				ImGui::SameLine(ImGui::GetWindowWidth() - 25.0f);
-				if (ImGui::Button("+", ImVec2{ 20, 20 })) { ImGui::OpenPopup("ComponentSettings"); }
+				float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+
+				ImGui::SeparatorText("");
+				bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name);
 				ImGui::PopStyleVar();
+				ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
+				if (ImGui::Button("+", ImVec2{ lineHeight, lineHeight })) { ImGui::OpenPopup("ComponentSettings"); }
 
 				// draws component settings on + button
 				bool removeComponent = false;
@@ -68,7 +75,7 @@ namespace Axion {
 				if (removeComponent) {
 					entity.removeComponent<T>();
 				}
-
+				ImGui::PopID();
 			}
 		}
 

@@ -1,13 +1,13 @@
 Scene: Scene
 Skybox: skybox\skybox.axsky
 Entities:
-  - Entity: c77a5a13b37a0fe6a27a0a1b5e6d3d85
+  - Entity: b54c61f7680f425b27660ce156e46275
     TagComponent:
-      Tag: Homer
+      Tag: Homer 2
     TransformComponent:
-      Translation: [1.20896375, 0, 0]
-      Rotation: [0, 3.5, -0]
-      Scale: [1, 1, 1]
+      Translation: [-1.36275482, 3.187071e-30, 0]
+      Rotation: [-0, 0, -0]
+      Scale: [1.64960599, 3.23686767, 3.03445649]
     MeshComponent:
       Path: meshes\homer.axmesh
     MaterialComponent:
@@ -18,11 +18,24 @@ Entities:
     TagComponent:
       Tag: Cube
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [0, 0, 4.37953281]
       Rotation: [-0, 0, -0]
-      Scale: [1, 1, 1]
+      Scale: [1.60000002, 4.5999999, 4.0999999]
     MeshComponent:
       Path: meshes\mesh.axmesh
+    MaterialComponent:
+      Path: materials\basicMaterial.axmat
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: c77a5a13b37a0fe6a27a0a1b5e6d3d85
+    TagComponent:
+      Tag: Homer
+    TransformComponent:
+      Translation: [1.20896375, 0, 0]
+      Rotation: [0, 3.5, -0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\homer.axmesh
     MaterialComponent:
       Path: materials\basicMaterial.axmat
     ConstantBufferComponent:

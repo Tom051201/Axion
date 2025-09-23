@@ -48,6 +48,7 @@ namespace Axion {
 		std::filesystem::path m_currentDirectory;
 		std::filesystem::path m_rootDirectory;
 		std::vector<DirItem> m_directoryEntries;
+		bool m_showFileExtensions = true;
 
 		// -- Scenes overview --
 		std::filesystem::path m_scenesDirectory;
