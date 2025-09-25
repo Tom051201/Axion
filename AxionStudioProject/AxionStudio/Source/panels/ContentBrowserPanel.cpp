@@ -357,7 +357,7 @@ namespace Axion {
 	bool ContentBrowserPanel::isEngineAssetExtension(const std::filesystem::path& path) {
 		auto ext = path.extension().string();
 		std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-		return ext == ".axmesh" || ext == ".axsky" || ext == ".axshader" || ext == ".axmat";
+		return ext == ".axmesh" || ext == ".axsky" || ext == ".axshader" || ext == ".axmat" || ext == ".axaudio";
 	}
 
 	void ContentBrowserPanel::deletePath(const std::filesystem::path& path) {

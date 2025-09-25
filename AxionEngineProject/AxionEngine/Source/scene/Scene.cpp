@@ -6,12 +6,23 @@
 #include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/audio/AudioManager.h"
 
 namespace Axion {
 
 	Scene::Scene() {}
 
-	Scene::~Scene() {}
+	Scene::~Scene() {
+		release();
+	}
+
+	void Scene::release() {
+		auto view = m_registry.view<AudioComponent>();
+		for (auto entity : view) {
+			auto& ac = view.get<AudioComponent>(entity);
+			if (ac.audio != nullptr) { ac.audio->release(); }
+		}
+	}
 
 	Entity Scene::createEntity() {
 		return createEntityWithUUID("Unnamed Entity", UUID::generate());
@@ -99,6 +110,24 @@ namespace Axion {
 
 		if (&cam) {
 			Renderer3D::beginScene(cam);
+
+			// ----- Spatial Audio Listener -----
+			DirectX::XMFLOAT4X4 m;
+			DirectX::XMStoreFloat4x4(&m, cam.getViewMatrix().inverse().toXM());
+			Vec3 listenerPos(m._41, m._42, m._43);
+			Vec3 listenerForward(-m._31, -m._32, -m._33);
+			AudioManager::setListener(listenerPos, listenerForward);
+
+
+			// ----- Spatial Audio Source ------
+			auto view = m_registry.view<TransformComponent, AudioComponent>();
+			view.each([&](auto entity, auto& transform, auto& audio) {
+				if (audio.isSource && audio.audio != nullptr) {
+					Ref<AudioSource> source = audio.audio;
+					if (source) source->setPosition(transform.position);
+				}
+			});
+
 
 			// ----- Render Skybox -----
 			if (m_skyboxHandle.isValid()) {

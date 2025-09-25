@@ -18,6 +18,8 @@ namespace Axion {
 		Scene();
 		~Scene();
 
+		void release();
+
 		// for rendering through a camera entity
 		void onUpdate(Timestep ts);
 

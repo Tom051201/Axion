@@ -21,7 +21,10 @@ namespace Axion {
 #if defined(AX_PLATFORM_WINDOWS) && (defined(AX_DEBUG) || defined(AX_RELEASE))
 
 int main(int argc, char** argv) {
-	return Axion::EngineMain(argc, argv);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	int result = Axion::EngineMain(argc, argv);
+	CoUninitialize();
+	return result;
 }
 
 #endif
@@ -31,7 +34,10 @@ int main(int argc, char** argv) {
 
 #include <Windows.h>
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	return Axion::EngineMain(__argc, __argv);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	int result = Axion::EngineMain(__argc, __argv);
+	CoUninitialize();
+	return result;
 }
 
 #endif

@@ -12,6 +12,7 @@
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
+#include "AxionEngine/Source/audio/AudioClip.h"
 
 namespace Axion {
 
@@ -24,6 +25,8 @@ namespace Axion {
 		release<Skybox>();
 		release<Shader>();
 		release<Material>();
+		release<AudioClip>();
+		AX_CORE_LOG_INFO("AssetManager shutdown");
 	}
 
 	void AssetManager::onEvent(Event& e) {
@@ -295,6 +298,38 @@ namespace Axion {
 		storage<Material>().assets[handle] = material;
 		storage<Material>().loadQueue.push_back({ handle, sourcePath });
 		storage<Material>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
+	// ----- AudioClip Assets -----
+	template<>
+	AssetHandle<AudioClip> AssetManager::load<AudioClip>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "AudioClip") {
+			AX_CORE_LOG_ERROR("Loading audioclip failed, file is not a audioclip asset file");
+			return {};
+		}
+
+		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<AudioClip> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<AudioClip>(handle)) {
+			return handle;
+		}
+
+		// Load Audio clip instant
+		// Could check format here as well!
+		AudioClip::Mode mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
+		Ref<AudioClip> clip = std::make_shared<AudioClip>(sourcePath, mode);
+
+		storage<AudioClip>().assets[handle] = clip;
+		//storage<AudioClip>().loadQueue.push_back({ handle, sourcePath });
+		storage<AudioClip>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}

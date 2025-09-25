@@ -29,7 +29,7 @@ namespace Axion {
 		Ref<Scene> m_context = nullptr;
 		Entity m_selectedEntity;
 
-		void drawVec3Control(const std::string& label, Vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+		void drawVec3Control(const std::string& label, Vec3& values, float resetX = 0.0f, float resetY = 0.0f, float resetZ = 0.0f, float columnWidth = 100.0f);
 		
 		// Returns true if the entity already has the component
 		template<typename T>
@@ -44,7 +44,7 @@ namespace Axion {
 
 		template<typename T>
 		void drawComponentInfo(const char* name, Entity entity, std::function<void()> guiCode) {
-			const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+			const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
 			if (entity.hasComponent<T>()) {
 				// creates treenode and + button
 				ImGui::PushID((void*)typeid(T).hash_code());

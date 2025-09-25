@@ -4,10 +4,12 @@
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/UUID.h"
+#include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/scene/Skybox.h"
+#include "AxionEngine/Source/audio/AudioClip.h"
 
 namespace Axion {
 
@@ -49,6 +51,13 @@ namespace Axion {
 		ImGui::SeparatorText("");
 		drawAssetInfo<Shader>("Shader", [](Ref<Shader> shader) {
 			ImGui::Text("Name: %s", shader->getName().c_str());
+		});
+
+
+		// -- AudioClip Assets --
+		ImGui::SeparatorText("");
+		drawAssetInfo<AudioClip>("AudioClip", [](Ref<AudioClip> clip) {
+			ImGui::Text("Mode: %s", EnumUtils::toString(clip->getMode()));
 		});
 
 

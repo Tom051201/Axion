@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/audio/AudioManager.h"
 
 namespace Axion {
 
@@ -22,6 +23,8 @@ namespace Axion {
 		Renderer::setAPI(RendererAPI::DirectX12);
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
+		AudioManager::initialize();
+
 		AssetManager::initialize();
 		SceneManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 		ProjectManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
@@ -37,6 +40,7 @@ namespace Axion {
 		ProjectManager::release();
 		SceneManager::release();
 		AssetManager::shutdown();
+		AudioManager::shutdown();
 	}
 
 	void Application::onEvent(Event& e) {

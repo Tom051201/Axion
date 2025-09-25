@@ -3,6 +3,7 @@
 #include "AxionEngine/Source/render/Formats.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Buffers.h"
+#include "AxionEngine/Source/audio/AudioClip.h"
 
 namespace Axion {
 
@@ -157,6 +158,21 @@ namespace Axion {
 			if (str == "Int4")   return Axion::ShaderDataType::Int4;
 			if (str == "Bool")   return Axion::ShaderDataType::Bool;
 			throw std::invalid_argument("Invalid ShaderDataType string: " + str);
+		}
+
+		// --- Audio Mode ---
+		inline static const char* toString(AudioClip::Mode mode) {
+			switch (mode) {
+			case AudioClip::Mode::Memory: return "Memory";
+			case AudioClip::Mode::Stream: return "Stream";
+			}
+			return "Unknown";
+		}
+
+		inline static AudioClip::Mode AudioClipModeFromString(const std::string& str) {
+			if (str == "Memory") return AudioClip::Mode::Memory;
+			if (str == "Stream") return AudioClip::Mode::Stream;
+			throw std::invalid_argument("Invalid AudioClip::Mode string: " + str);
 		}
 
 	};

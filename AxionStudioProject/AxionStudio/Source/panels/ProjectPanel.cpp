@@ -54,11 +54,11 @@ namespace Axion {
 		}
 
 		ImGui::SeparatorText("Paths");
-		if (ImGui::BeginTable("ProjectPaths", 3, ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg)) {
-			ImGui::TableSetupColumn("Type");
-			ImGui::TableSetupColumn("Path");
-			ImGui::TableSetupColumn("Action");
-			ImGui::TableHeadersRow();
+		if (ImGui::BeginTable("ProjectPaths", 3)) {
+			//ImGui::TableSetupColumn("Type");
+			//ImGui::TableSetupColumn("Path");
+			//ImGui::TableSetupColumn("Action");
+			//ImGui::TableHeadersRow();
 
 			// ----- Project row -----
 			ImGui::TableNextRow();

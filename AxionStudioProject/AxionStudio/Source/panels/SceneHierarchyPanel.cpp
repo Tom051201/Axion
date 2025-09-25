@@ -7,6 +7,7 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace Axion {
@@ -79,7 +80,7 @@ namespace Axion {
 
 	}
 
-	void SceneHierarchyPanel::drawVec3Control(const std::string& label, Vec3& values, float resetValue, float columnWidth) {
+	void SceneHierarchyPanel::drawVec3Control(const std::string& label, Vec3& values, float resetX, float resetY, float resetZ, float columnWidth) {
 		ImGui::PushID(label.c_str());
 
 		ImGui::Columns(2, 0, false);
@@ -97,7 +98,7 @@ namespace Axion {
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-		if (ImGui::Button("X", buttonSize)) { values.x = resetValue; }
+		if (ImGui::Button("X", buttonSize)) { values.x = resetX; }
 		ImGui::PopStyleColor(3);
 		ImGui::SameLine();
 		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
@@ -107,7 +108,7 @@ namespace Axion {
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-		if (ImGui::Button("Y", buttonSize)) { values.y = resetValue; }
+		if (ImGui::Button("Y", buttonSize)) { values.y = resetY; }
 		ImGui::PopStyleColor(3);
 		ImGui::SameLine();
 		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
@@ -117,7 +118,7 @@ namespace Axion {
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-		if (ImGui::Button("Z", buttonSize)) { values.z = resetValue; }
+		if (ImGui::Button("Z", buttonSize)) { values.z = resetZ; }
 		ImGui::PopStyleColor(3);
 		ImGui::SameLine();
 		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
@@ -179,7 +180,8 @@ namespace Axion {
 			m_selectedEntity.hasComponent<MeshComponent>() &&
 			m_selectedEntity.hasComponent<MaterialComponent>() &&
 			m_selectedEntity.hasComponent<ConstantBufferComponent>() &&
-			m_selectedEntity.hasComponent<CameraComponent>();
+			m_selectedEntity.hasComponent<CameraComponent>() &&
+			m_selectedEntity.hasComponent<AudioComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -192,6 +194,7 @@ namespace Axion {
 			drawAddComponent<MaterialComponent>("Material");
 			drawAddComponent<ConstantBufferComponent>("Upload Buffer");
 			drawAddComponent<CameraComponent>("Camera");
+			drawAddComponent<AudioComponent>("Audio");
 
 			ImGui::EndPopup();
 		}
@@ -231,9 +234,9 @@ namespace Axion {
 				auto& rotation = component.rotation;
 				auto& scale = component.scale;
 
-				drawVec3Control("Position", position, 0.0f, 70.0f);
-				drawVec3Control("Rotation", rotation, 0.0f, 70.0f);
-				drawVec3Control("Scale", scale, 1.0f, 70.0f);
+				drawVec3Control("Position", position, 0.0f, 0.0f, 0.0f, 70.0f);
+				drawVec3Control("Rotation", rotation, 0.0f, 0.0f, 0.0f, 70.0f);
+				drawVec3Control("Scale", scale, 1.0f, 1.0f, 1.0f, 70.0f);
 
 				ImGui::TreePop();
 			}
@@ -329,6 +332,186 @@ namespace Axion {
 
 		// ----- CameraComponent -----
 		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, []() {});
+
+		// ----- AudioComponent -----
+		drawComponentInfo<AudioComponent>("Audio", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<AudioComponent>();
+			if (component.audio != nullptr) {
+				if (ImGui::BeginTable("AudioTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- Name --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Name");
+					ImGui::TableSetColumnIndex(1);
+					std::filesystem::path path = std::filesystem::path(AssetManager::get<AudioClip>(component.audio->getClipHandle())->getPath());
+					std::string name = path.filename().string();
+					static char nameBuffer[256];
+					strcpy_s(nameBuffer, sizeof(nameBuffer), name.c_str());
+					nameBuffer[sizeof(nameBuffer) - 1] = '\0';
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::InputText("##Name_input", nameBuffer, sizeof(nameBuffer), ImGuiInputTextFlags_ReadOnly);
+
+					// -- UUID --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("UUID");
+					ImGui::TableSetColumnIndex(1);
+					std::string uuid = component.audio->getClipHandle().uuid.toString();
+					static char uuidBuffer[128];
+					strcpy_s(uuidBuffer, sizeof(uuidBuffer), uuid.c_str());
+					uuidBuffer[sizeof(uuidBuffer) - 1] = '\0';
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::InputText("##Uuid_input", uuidBuffer, sizeof(uuidBuffer), ImGuiInputTextFlags_ReadOnly);
+
+					// -- Mode --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Mode");
+					ImGui::TableSetColumnIndex(1);
+					std::string mode = EnumUtils::toString(AssetManager::get<AudioClip>(component.audio->getClipHandle())->getMode());
+					static char modeBuffer[64];
+					strcpy_s(modeBuffer, sizeof(modeBuffer), mode.c_str());
+					modeBuffer[sizeof(modeBuffer) - 1] = '\0';
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::InputText("##Mode_input", modeBuffer, sizeof(modeBuffer), ImGuiInputTextFlags_ReadOnly);
+
+					// -- Playback controls --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Playback");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Play")) component.audio->play();
+					ImGui::SameLine();
+					if (ImGui::Button("Stop")) component.audio->stop();
+					ImGui::SameLine();
+					if (component.audio->isPaused()) {
+						if (ImGui::Button("Resume")) component.audio->resume();
+					} else {
+						if (ImGui::Button("Pause")) component.audio->pause();
+					}
+
+					// -- Volume --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Volume");
+					ImGui::TableSetColumnIndex(1);
+					float vol = component.audio->getVolume();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::DragFloat("##Volume_drag", &vol, 0.05f, 0.0f, 4.0f, "%.2f")) {
+						component.audio->setVolume(vol);
+					}
+					
+					// -- Pitch --
+					ImGui::TableNextColumn();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Pitch");
+					ImGui::TableSetColumnIndex(1);
+					float pitch = component.audio->getPitch();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::DragFloat("##Pitch_drag", &pitch, 0.05f, 0.0f, 4.0f, "%.2f")) {
+						component.audio->setPitch(pitch);
+					}
+
+					// -- Pan --
+					ImGui::TableNextColumn();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Pan");
+					ImGui::TableSetColumnIndex(1);
+					float pan = component.audio->getPan();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::DragFloat("##Pan_drag", &pan, 0.05f, -1.0f, 1.0f, "%.2f")) {
+						component.audio->setPan(pan);
+					}
+
+					// -- Looping toggle --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Loop");
+					ImGui::TableSetColumnIndex(1);
+					bool loop = component.audio->isLooping();
+					if (ImGui::Checkbox("##Loop_check", &loop)) {
+						if (loop) component.audio->loop(true);
+						else component.audio->loop(false);
+					}
+
+					// -- Spatialization toggle --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Spatialize");
+					ImGui::TableSetColumnIndex(1);
+					bool spatial = component.audio->isSpatial();
+					if (ImGui::Checkbox("##Spatial_check", &spatial)) {
+						if (spatial) component.audio->enableSpatial();
+						else component.audio->disableSpatial();
+					}
+
+					// -- Velocity --
+					// TODO: add velocity
+
+					// -- Min distance --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Min Distance");
+					ImGui::TableSetColumnIndex(1);
+					float minDist = component.audio->getMinDistance();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::DragFloat("##MinDistance_drag", &minDist, 0.2f, 0.0f, 100.0f)) {
+						component.audio->setMinDistance(minDist);
+					}
+
+					// -- Max distance --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Max Distance");
+					ImGui::TableSetColumnIndex(1);
+					float maxDist = component.audio->getMaxDistance();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::DragFloat("##MaxDistance_drag", &maxDist, 0.2f, 1.0f, 500.0f)) {
+						component.audio->setMaxDistance(maxDist);
+					}
+
+					// -- Doppler --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0); ImGui::Text("Doppler");
+					ImGui::TableSetColumnIndex(1);
+					float doppler = component.audio->getDopplerFactor();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::DragFloat("##Doppler_drag", &doppler, 0.05f, 0.0f, 4.0f)) {
+						component.audio->setDopplerFactor(doppler);
+					}
+					
+					ImGui::EndTable();
+				}
+
+			}
+			else {
+				// -- Load Button --
+				if (ImGui::Button("Load Audio Clip...")) {
+					std::string absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, ProjectManager::getProject()->getAssetsPath() + "\\audio"); //TODO: remove back slashes here and above
+					if (!absPath.empty()) {
+						AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(absPath);
+						component.audio = std::make_shared<AudioSource>(handle);
+					}
+				}
+
+				// -- Drag drop on button --
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::string relPath = static_cast<const char*>(payload->Data);
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.find(".axaudio") != std::string::npos) {
+							AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(absPath);
+							component.audio = std::make_shared<AudioSource>(handle);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+			}
+		});
 
 	}
 

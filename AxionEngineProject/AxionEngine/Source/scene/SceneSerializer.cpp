@@ -75,6 +75,34 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
+		// -- AudioComponent --
+		if (entity.hasComponent<AudioComponent>()) {
+			out << YAML::Key << "AudioComponent";
+			out << YAML::BeginMap;
+			auto& ac = entity.getComponent<AudioComponent>();
+			out << YAML::Key << "IsListener" << YAML::Value << ac.isListener;
+			out << YAML::Key << "IsSource" << YAML::Value << ac.isSource;
+			if (ac.audio) {
+				out << YAML::Key << "AudioSource" << YAML::BeginMap; // AudioSource
+				std::string clipPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<AudioClip>(ac.audio->getClipHandle()));
+				out << YAML::Key << "AudioClip" << YAML::Value << clipPath;
+				out << YAML::Key << "Volume" << YAML::Value << ac.audio->getVolume();
+				out << YAML::Key << "Pitch" << YAML::Value << ac.audio->getPitch();
+				out << YAML::Key << "Pan" << YAML::Value << ac.audio->getPan();
+				out << YAML::Key << "IsSpatial" << YAML::Value << ac.audio->isSpatial();
+				out << YAML::Key << "Position" << YAML::Value << ac.audio->getPosition();
+				out << YAML::Key << "Velocity" << YAML::Value << ac.audio->getVelocity();
+				out << YAML::Key << "MinDistance" << YAML::Value << ac.audio->getMinDistance();
+				out << YAML::Key << "MaxDistance" << YAML::Value << ac.audio->getMaxDistance();
+				out << YAML::Key << "DopplerFactor" << YAML::Value << ac.audio->getDopplerFactor();
+				out << YAML::EndMap; // AudioSource
+			}
+			else {
+				out << YAML::Key << "AudioSource" << YAML::Value << "None";
+			}
+			out << YAML::EndMap;
+		}
+
 		out << YAML::EndMap; // Entity
 	}
 
@@ -190,6 +218,38 @@ namespace Axion {
 				if (cbComponent) {
 					auto& cbc = deserializedEntity.addComponent<ConstantBufferComponent>();
 					cbc.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
+				}
+
+				// -- AudioComponent --
+				auto audioComponent = entity["AudioComponent"];
+				if (audioComponent) {
+					auto& ac = deserializedEntity.addComponent<AudioComponent>();
+					ac.isListener = audioComponent["IsListener"].as<bool>();
+					ac.isSource = audioComponent["IsSource"].as<bool>();
+
+					auto as = audioComponent["AudioSource"];
+					if (as && as.IsScalar() && as.as<std::string>() == "None") {
+						ac.audio = nullptr;
+					}
+					else {
+						auto as = audioComponent["AudioSource"];
+						std::string clipPath = AssetManager::getAbsolute(as["AudioClip"].as<std::string>());
+						AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(clipPath);
+						ac.audio = std::make_shared<AudioSource>(handle);
+						ac.audio->setVolume(as["Volume"].as<float>());
+						ac.audio->setPitch(as["Pitch"].as<float>());
+						ac.audio->setPan(as["Pan"].as<float>());
+						if (as["IsSpatial"].as<bool>()) {
+							ac.audio->enableSpatial();
+						} else {
+							ac.audio->disableSpatial();
+						}
+						ac.audio->setPosition(as["Position"].as<Vec3>());
+						ac.audio->setVelocity(as["Velocity"].as<Vec3>());
+						ac.audio->setMinDistance(as["MinDistance"].as<float>());
+						ac.audio->setMaxDistance(as["MaxDistance"].as<float>());
+						ac.audio->setDopplerFactor(as["DopplerFactor"].as<float>());
+					}
 				}
 
 			}

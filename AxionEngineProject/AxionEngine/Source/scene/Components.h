@@ -6,6 +6,8 @@
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Material.h"
+#include "AxionEngine/Source/audio/AudioClip.h"
+#include "AxionEngine/Source/audio/AudioSource.h"
 
 namespace Axion {
 
@@ -63,10 +65,6 @@ namespace Axion {
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
 		MaterialComponent(const AssetHandle<Material>& handle) : handle(handle) {}
-
-		//const std::string& getName() const { return material->getName(); }
-		//const Vec4& getColor() const { return material->getColor(); }
-		//Vec4& getColor() { return material->getColor(); }
 	};
 
 
@@ -101,4 +99,16 @@ namespace Axion {
 		ConstantBufferComponent(const Ref<ConstantBuffer>& uploadBuffer) : uploadBuffer(uploadBuffer) {}
 	};
 
+
+
+	struct AudioComponent {
+		Ref<AudioSource> audio = nullptr;
+		bool isListener = false;
+		bool isSource = true;
+
+		AudioComponent() = default;
+		AudioComponent(const AudioComponent&) = default;
+		AudioComponent(const Ref<AudioSource>& source) : audio(source), isListener(false), isSource(true) {}
+		AudioComponent(bool isListener, bool isSource) : audio(), isListener(isListener), isSource(isSource) {}
+	};
 }
