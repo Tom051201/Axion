@@ -53,6 +53,11 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Shader '{0}' compiled and linked successfully ({1})", m_name, filePath);
 	}
 
+	void OpenGL3Shader::recompile() {
+		AX_CORE_LOG_ERROR("Recompiling an opengl shader is not supported yet!");
+		return;
+	}
+
 	uint32_t OpenGL3Shader::compileStage(uint32_t type, const std::string& source) {
 		uint32_t shader = glCreateShader(type);
 		const char* src = source.c_str();

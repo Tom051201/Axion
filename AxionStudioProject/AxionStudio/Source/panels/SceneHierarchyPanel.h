@@ -29,6 +29,8 @@ namespace Axion {
 		Ref<Scene> m_context = nullptr;
 		Entity m_selectedEntity;
 
+		Ref<Texture2D> m_addComponentIcon;
+
 		void drawVec3Control(const std::string& label, Vec3& values, float resetX = 0.0f, float resetY = 0.0f, float resetZ = 0.0f, float columnWidth = 100.0f);
 		
 		// Returns true if the entity already has the component

@@ -19,6 +19,7 @@ namespace Axion {
 		const std::string& getName() const override { return m_name; }
 
 		void compileFromFile(const std::string& filePath) override;
+		void recompile() override;
 
 	private:
 

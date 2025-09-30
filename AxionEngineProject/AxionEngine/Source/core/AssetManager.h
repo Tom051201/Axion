@@ -41,6 +41,7 @@ namespace Axion {
 		static void onEvent(Event& e);
 
 		static std::string getRelativeToAssets(const std::string& absolutePath);	// Returns the relative path to the Assets directory
+		static std::filesystem::path getRelativeToAssets(const std::filesystem::path& absolutePath);
 		static std::string getAbsolute(const std::string& relativePath);			// Returns the absolute path
 
 		template<typename T>

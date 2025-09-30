@@ -1,0 +1,29 @@
+Name: ExperimentalShader
+UUID: 46eb633b1f7b32cd4535294b558cc770
+Type: Shader
+Format: HLSL
+Source: shaders/experimentalShader.hlsl
+Specification:
+  Name: ExperimentalShader
+  ColorFormat: RGBA8
+  DepthStencilFormat: DEPTH32F
+  DepthTest: true
+  DepthWrite: true
+  DepthFunction: Less
+  StencilEnabled: false
+  SampleCount: 1
+  CullMode: Back
+  Topology: TriangleList
+  BufferLayout:
+    - Name: POSITION
+      Type: Float3
+      Size: 12
+      Offset: 0
+    - Name: NORMAL
+      Type: Float3
+      Size: 12
+      Offset: 12
+    - Name: TEXCOORD
+      Type: Float2
+      Size: 8
+      Offset: 24

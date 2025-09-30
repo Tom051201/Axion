@@ -13,6 +13,7 @@ namespace Axion {
 
 		D12Shader();
 		D12Shader(const ShaderSpecification& spec);
+		D12Shader(const ShaderSpecification& spec, const std::string& filePath);
 		~D12Shader() override;
 
 		void release() override;
@@ -23,6 +24,7 @@ namespace Axion {
 		const std::string& getName() const override { return m_specification.name; }
 
 		void compileFromFile(const std::string& filePath) override;
+		void recompile() override;
 
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getPixelBlob() const { return m_pixelShaderBlob; }
@@ -32,6 +34,7 @@ namespace Axion {
 	private:
 
 		ShaderSpecification m_specification;
+		std::string m_shaderFileLocation;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;

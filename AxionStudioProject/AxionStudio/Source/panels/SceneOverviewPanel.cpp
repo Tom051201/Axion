@@ -7,10 +7,6 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-// TODO: TEMP
-#include "AxionAssetPipeline/Source/AxShader.h"
-#include "AxionAssetPipeline/Source/AxMaterial.h"
-
 namespace Axion {
 
 	SceneOverviewPanel::SceneOverviewPanel(const std::string& name) : Panel(name) {}
@@ -30,7 +26,9 @@ namespace Axion {
 
 	void SceneOverviewPanel::onGuiRender() {
 		ImGui::Begin("Scene Overview");
+		ImGui::SeparatorText("Scene Overview");
 
+		// -- No project or scene loaded --
 		if (!ProjectManager::hasProject()) {
 			ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
 			ImGui::End();
@@ -43,83 +41,83 @@ namespace Axion {
 			return;
 		}
 
-		// -- Title --
-		ImGui::TextUnformatted("Title");
-		ImGui::SameLine();
-		strcpy_s(m_titleBuffer, sizeof(m_titleBuffer), m_activeScene->getTitle().c_str());
-		m_titleBuffer[sizeof(m_titleBuffer) - 1] = '\0';
-		if (ImGui::InputText("##sceneTitle", m_titleBuffer, sizeof(m_titleBuffer))) {
-			m_activeScene->setTitle(m_titleBuffer);
-		}
 
-		ImGui::SeparatorText("Skybox");
-		if (m_activeScene->hasSkybox()) {
-			// -- Has a skybox --
-			//std::filesystem::path skyPath = std::filesystem::path(m_activeScene->getSkyboxPath());
-			//std::filesystem::path skyRel = std::filesystem::relative(skyPath, ProjectManager::getProject()->getAssetsPath());
-			//ImGui::Text("Title: %s", skyPath.stem().string().c_str());
-			//ImGui::Text("Path: %s", skyRel.string().c_str());
-		}
-		else {
-			// -- Does not have a skybox --
-			ImGui::Text("No Skybox has been selected");
-		}
+		if (ImGui::BeginTable("SceneOverviewTable", 2, ImGuiTableFlags_BordersInnerV)) {
+			ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+			ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
 
-
-		if (ImGui::Button("Select Skybox")) {
-			std::string absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, ProjectManager::getProject()->getAssetsPath() + "\\skybox");
-			if (!absolutePath.empty()) {
-				AssetHandle<Skybox> handle = AssetManager::load<Skybox>(absolutePath);
-				m_activeScene->setSkybox(handle);
+			// -- Title --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Title");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			strcpy_s(m_titleBuffer, sizeof(m_titleBuffer), m_activeScene->getTitle().c_str());
+			m_titleBuffer[sizeof(m_titleBuffer) - 1] = '\0';
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			if (ImGui::InputText("##SceneTitle_input", m_titleBuffer, sizeof(m_titleBuffer))) {
+				m_activeScene->setTitle(m_titleBuffer);
 			}
-		}
 
-		ImGui::SameLine();
-		if (ImGui::Button("Remove")) {
-			m_activeScene->removeSkybox();
-		}
+			if (m_activeScene->hasSkybox()) {
+				// -- Has a skybox --
+				std::filesystem::path skyPath = AssetManager::getAssetFilePath<Skybox>(m_activeScene->getSkyboxHandle());
+				std::filesystem::path skyRel = AssetManager::getRelativeToAssets(skyPath);
 
-		// TODO: TEMP
-		if (ImGui::Button("Create skybox shader")) {
-			AAP::ShaderAssetData data;
-			data.fileFormat = "HLSL";
-			data.filePath = "shaders/skyboxShader.hlsl";
-			ShaderSpecification spec{};
-			spec.name = "SkyboxShader";
-			spec.colorFormat = ColorFormat::RGBA8;
-			spec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
-			spec.depthTest = true;
-			spec.depthWrite = false;
-			spec.depthFunction = DepthCompare::LessEqual;
-			spec.cullMode = CullMode::Back;
-			spec.topology = PrimitiveTopology::TriangleList;
-			spec.vertexLayout = {
-				{ "POSITION", ShaderDataType::Float3 }
-			};
-			data.spec = spec;
-			AAP::ShaderParser::createAxShaderFile(data, AssetManager::getAbsolute("shaders/skyboxShader.axshader"));
-		}
-		if (ImGui::Button("Create position shader")) {
-			AAP::ShaderAssetData data;
-			data.fileFormat = "HLSL";
-			data.filePath = "shaders/positionShader.hlsl";
-			ShaderSpecification spec{};
-			spec.name = "PositionShader";
-			spec.vertexLayout = {
-				{ "POSITION", Axion::ShaderDataType::Float3 },
-				{ "NORMAL", Axion::ShaderDataType::Float3 },
-				{ "TEXCOORD", Axion::ShaderDataType::Float2 }
-			};
-			data.spec = spec;
-			AAP::ShaderParser::createAxShaderFile(data, AssetManager::getAbsolute("shaders/positionShader.axshader"));
-		}
+				// -- Skybox name --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Skybox");
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Text(skyPath.stem().string().c_str());
 
-		if (ImGui::Button("Create Basic Material")) {
-			AAP::MaterialAssetData data;
-			data.name = "BasicMaterial";
-			data.color = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
-			data.shaderAsset = "shaders/positionShader.axshader";
-			AAP::MaterialParser::createAxMatFile(data, AssetManager::getAbsolute("materials/basicMaterial.axmat"));
+				// -- Skybox file --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("File");
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Text(skyRel.string().c_str());
+
+				// -- Load skybox button --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Options");
+				ImGui::TableSetColumnIndex(1);
+				if (ImGui::Button("Select Skybox")) {
+					std::filesystem::path skyDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "skybox";
+					std::string absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, skyDir.string());
+					if (!absolutePath.empty()) {
+						AssetHandle<Skybox> handle = AssetManager::load<Skybox>(absolutePath);
+						m_activeScene->setSkybox(handle);
+					}
+				}
+
+				// -- Remove skybox button --
+				ImGui::SameLine();
+				if (ImGui::Button("Remove")) {
+					m_activeScene->removeSkybox();
+				}
+
+			}
+			else {
+				// -- Does not have a skybox --
+
+				// -- Skybox name --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Skybox");
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Text("No Skybox Loaded");
+
+				// -- Skybox file --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("File");
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Text("No Skybox Loaded");
+			}
+
+			ImGui::EndTable();
 		}
 
 		ImGui::End();

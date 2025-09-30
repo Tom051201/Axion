@@ -25,6 +25,19 @@ namespace Axion {
 
 	}
 
+	Ref<Shader> Shader::create(const ShaderSpecification& spec, const std::string& filePath) {
+
+		switch (Renderer::getAPI()) {
+
+		case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
+		case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(spec, filePath); }
+		case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(spec); }
+
+		}
+		return nullptr;
+
+	}
+
 	std::string Shader::readShaderFile(const std::string& filePath) {
 		std::ifstream file(filePath);
 		if (!file.is_open()) {

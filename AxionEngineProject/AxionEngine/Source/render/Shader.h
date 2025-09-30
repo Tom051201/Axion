@@ -67,9 +67,11 @@ namespace Axion {
 		virtual const std::string& getName() const = 0;
 
 		virtual void compileFromFile(const std::string& filePath) = 0;
+		virtual void recompile() = 0;
 
 
 		static Ref<Shader> create(const ShaderSpecification& spec);
+		static Ref<Shader> create(const ShaderSpecification& spec, const std::string& filePath);
 		static std::string readShaderFile(const std::string& filePath);
 	};
 

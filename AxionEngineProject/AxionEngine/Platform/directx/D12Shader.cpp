@@ -11,7 +11,11 @@ namespace Axion {
 
 	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {}
 
-	D12Shader::D12Shader(const ShaderSpecification& spec) : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec) {}
+	D12Shader::D12Shader(const ShaderSpecification& spec)
+		: m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec), m_shaderFileLocation("") {}
+
+	D12Shader::D12Shader(const ShaderSpecification& spec, const std::string& filePath)
+		: m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec), m_shaderFileLocation(filePath) {}
 
 	D12Shader::~D12Shader() {
 		release();
@@ -36,6 +40,17 @@ namespace Axion {
 		createPipelineState();
 
 		AX_CORE_LOG_TRACE("Shader '{}' compiled", m_specification.name);
+	}
+
+
+
+	void D12Shader::recompile() {
+		if (m_shaderFileLocation.empty()) {
+			AX_CORE_LOG_WARN("Cannot recompile a shader that has no file path cached");
+			return;
+		}
+
+		compileFromFile(m_shaderFileLocation);
 	}
 
 

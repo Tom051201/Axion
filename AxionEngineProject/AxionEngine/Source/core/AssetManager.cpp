@@ -13,6 +13,7 @@
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
+#include "AxionEngine/Source/render/Renderer.h"
 
 namespace Axion {
 
@@ -107,12 +108,6 @@ namespace Axion {
 				return shader;
 			});
 
-			// -- Load Queue Material --
-			processLoadQueue<Material>([](const std::string& path, const AssetHandle<Material>& handle) -> Ref<Material> {
-				Ref<Material> mat = AssetManager::get<Material>(handle); // TODO: make this not neccessary, this needs to be done otherwise it registers a nullptr
-				return mat;
-			});
-
 		}
 	}
 
@@ -129,6 +124,24 @@ namespace Axion {
 			std::filesystem::path relPath = std::filesystem::relative(absPath, assetsDir);
 			return relPath.string();
 		} catch (const std::exception& e) {
+			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
+			return {};
+		}
+	}
+
+	std::filesystem::path AssetManager::getRelativeToAssets(const std::filesystem::path& absolutePath) {
+		if (!ProjectManager::hasProject()) {
+			AX_CORE_LOG_WARN("Unable converting absolute path to relative assets path: no project loaded");
+			return {};
+		}
+
+		std::filesystem::path assetsDir = ProjectManager::getProject()->getAssetsPath();
+
+		try {
+			std::filesystem::path relPath = std::filesystem::relative(absolutePath, assetsDir);
+			return relPath;
+		}
+		catch (const std::exception& e) {
 			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
 			return {};
 		}
@@ -217,10 +230,36 @@ namespace Axion {
 
 		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
 		UUID uuid = data["UUID"].as<UUID>();
-		// TODO: also check format
-		AssetHandle<Shader> handle(uuid);
+
+		// -- Check format --
+		std::string format = data["Format"].as<std::string>();
+		RendererAPI api = Renderer::getAPI();
+
+		bool formatMatches =
+			(format == "HLSL" && api == RendererAPI::DirectX12) ||
+			(format == "GLSL" && api == RendererAPI::OpenGL3);
+
+		// -- Check extension --
+		std::filesystem::path srcPath(sourcePath);
+		std::string ext = srcPath.extension().string();
+
+		bool extensionMatches =
+			(api == RendererAPI::DirectX12 && ext == ".hlsl") ||
+			(api == RendererAPI::OpenGL3 && ext == ".glsl");
+
+		if (!formatMatches) {
+			if (extensionMatches) {
+				AX_CORE_LOG_WARN("Shader format '{}' in '{}' does not match current RendererAPI, but file extension '{}' is valid. Attempting to load anyway.",
+					format, absolutePath, ext);
+			} else {
+				AX_CORE_LOG_ERROR("Shader format '{}' in '{}' is not supported by current RendererAPI and file extension '{}' does not match expected format",
+					format, absolutePath, ext);
+				return {};
+			}
+		}
 
 		// -- Return if already registered --
+		AssetHandle<Shader> handle(uuid);
 		if (has<Shader>(handle)) {
 			return handle;
 		}
@@ -260,7 +299,7 @@ namespace Axion {
 
 		}
 
-		Ref<Shader> shader = Shader::create(spec);
+		Ref<Shader> shader = Shader::create(spec, sourcePath);
 		storage<Shader>().assets[handle] = shader;
 		storage<Shader>().loadQueue.push_back({ handle, sourcePath });
 		storage<Shader>().handleToPath[handle] = absolutePath;
@@ -296,7 +335,7 @@ namespace Axion {
 		Ref<Material> material = Material::create(name, color, shaderHandle);
 
 		storage<Material>().assets[handle] = material;
-		storage<Material>().loadQueue.push_back({ handle, sourcePath });
+		//storage<Material>().loadQueue.push_back({ handle, sourcePath });
 		storage<Material>().handleToPath[handle] = absolutePath;
 
 		return handle;

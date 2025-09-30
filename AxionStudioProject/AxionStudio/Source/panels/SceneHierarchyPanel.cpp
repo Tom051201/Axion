@@ -20,7 +20,10 @@ namespace Axion {
 		shutdown();
 	}
 
-	void SceneHierarchyPanel::setup() {}
+	void SceneHierarchyPanel::setup() {
+		// TODO: add to central manager in future
+		m_addComponentIcon = Texture2D::create("AxionStudio/Resources/scenehierarchy/AddComponentIcon.png");
+	}
 
 	void SceneHierarchyPanel::shutdown() {}
 
@@ -185,7 +188,9 @@ namespace Axion {
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
-		if (ImGui::Button("Add Component")) ImGui::OpenPopup("AddComponent");
+		if (ImGui::ImageButton("##AddComponent_button", reinterpret_cast<ImTextureID>(m_addComponentIcon->getHandle()), { 18, 18 }, { 0, 1 }, { 1, 0 })) {
+			ImGui::OpenPopup("AddComponent");
+		}
 		ImGui::EndDisabled();
 		if (ImGui::BeginPopup("AddComponent")) {
 
@@ -210,7 +215,7 @@ namespace Axion {
 			// Draw TransformComponent manual to disable removement
 
 			// -- Creates treenode and + button --
-			const ImGuiTreeNodeFlags treeNodeFlags = /*ImGuiTreeNodeFlags_DefaultOpen | */ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+			const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
 			ImGui::PushID((void*)typeid(TransformComponent).hash_code());
 			ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
@@ -247,18 +252,52 @@ namespace Axion {
 		drawComponentInfo<MeshComponent>("Mesh", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MeshComponent>();
 			if (component.handle.isValid()) {
-				Ref<Mesh> mesh = AssetManager::get<Mesh>(component.handle);
-				ImGui::Text("UUID: %s ", component.handle.uuid.toString().c_str());
-				ImGui::Text("Vertices: %u", mesh->getVertexBuffer()->getVertexCount());
-				ImGui::Text("Indices: %u", mesh->getIndexCount());
-				if (ImGui::Button("Remove")) {
-					component.handle.invalidate();
+
+				if (ImGui::BeginTable("MeshTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					Ref<Mesh> mesh = AssetManager::get<Mesh>(component.handle);
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- UUID --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("UUID");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(AssetManager::get<Mesh>(component.handle)->getHandle().uuid.toString().c_str());
+
+					// -- Vertices --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Vertices");
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text("%u", mesh->getVertexBuffer()->getVertexCount());
+
+					// -- Indices --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Indices");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text("%u", mesh->getIndexCount());
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.handle.invalidate();
+					}
+
+					ImGui::EndTable();
 				}
 			}
 			else {
 				// -- Load Button --
 				if (ImGui::Button("Open Mesh...")) {
-					std::string absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, ProjectManager::getProject()->getAssetsPath() + "\\meshes");
+					std::filesystem::path meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
+					std::string absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, meshDir.string());
 					if (!absPath.empty()) {
 						AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
 						component.handle = handle;
@@ -285,17 +324,51 @@ namespace Axion {
 		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MaterialComponent>();
 			if (component.handle.isValid()) {
-				ImGui::Text(AssetManager::get<Material>(component.handle)->getName().c_str());
-				ImGui::Text(AssetManager::get<Shader>(AssetManager::get<Material>(component.handle)->getShaderHandle())->getName().c_str());
-				ImGui::ColorEdit4("##ColorEdit", AssetManager::get<Material>(component.handle)->getColor().data());
-				if (ImGui::Button("Remove")) {
-					component.handle.invalidate();
+				if (ImGui::BeginTable("MaterialTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- Name --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Name");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(AssetManager::get<Material>(component.handle)->getName().c_str());
+
+					// -- Shader --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Shader");
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(AssetManager::get<Shader>(AssetManager::get<Material>(component.handle)->getShaderHandle())->getName().c_str());
+
+					// -- Color --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Color");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::ColorEdit4("##ColorEdit", AssetManager::get<Material>(component.handle)->getColor().data());
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.handle.invalidate();
+					}
+
+					ImGui::EndTable();
 				}
 			}
 			else {
 				// -- Load Button --
 				if (ImGui::Button("Open Material...")) {
-					std::string absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, ProjectManager::getProject()->getAssetsPath() + "\\materials"); //TODO: remove back slashes here and above
+					std::filesystem::path materialDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "materials";
+					std::string absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir.string());
 					if (!absPath.empty()) {
 						AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
 						component.handle = handle;
@@ -322,7 +395,22 @@ namespace Axion {
 		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<ConstantBufferComponent>();
 			if (component.uploadBuffer) {
-				ImGui::Text("Upload size: %s", std::to_string(component.uploadBuffer->getSize()).c_str());
+
+				if (ImGui::BeginTable("ConstantBufferTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- Upload size --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Upload size");
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::Text("%s %s", std::to_string(component.uploadBuffer->getSize()).c_str(), " bytes");
+
+					ImGui::EndTable();
+				}
+
 			}
 			else {
 				component.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
@@ -338,7 +426,7 @@ namespace Axion {
 			auto& component = m_selectedEntity.getComponent<AudioComponent>();
 			if (component.audio != nullptr) {
 				if (ImGui::BeginTable("AudioTable", 2, ImGuiTableFlags_BordersInnerV)) {
-					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
 					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
 
 					// -- Name --
@@ -348,11 +436,7 @@ namespace Axion {
 					ImGui::TableSetColumnIndex(1);
 					std::filesystem::path path = std::filesystem::path(AssetManager::get<AudioClip>(component.audio->getClipHandle())->getPath());
 					std::string name = path.filename().string();
-					static char nameBuffer[256];
-					strcpy_s(nameBuffer, sizeof(nameBuffer), name.c_str());
-					nameBuffer[sizeof(nameBuffer) - 1] = '\0';
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::InputText("##Name_input", nameBuffer, sizeof(nameBuffer), ImGuiInputTextFlags_ReadOnly);
+					ImGui::Text(name.c_str());
 
 					// -- UUID --
 					ImGui::TableNextRow();
@@ -360,23 +444,16 @@ namespace Axion {
 					ImGui::Text("UUID");
 					ImGui::TableSetColumnIndex(1);
 					std::string uuid = component.audio->getClipHandle().uuid.toString();
-					static char uuidBuffer[128];
-					strcpy_s(uuidBuffer, sizeof(uuidBuffer), uuid.c_str());
-					uuidBuffer[sizeof(uuidBuffer) - 1] = '\0';
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::InputText("##Uuid_input", uuidBuffer, sizeof(uuidBuffer), ImGuiInputTextFlags_ReadOnly);
+					ImGui::Text(uuid.c_str());
 
 					// -- Mode --
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
 					ImGui::Text("Mode");
+					ImGui::Separator();
 					ImGui::TableSetColumnIndex(1);
 					std::string mode = EnumUtils::toString(AssetManager::get<AudioClip>(component.audio->getClipHandle())->getMode());
-					static char modeBuffer[64];
-					strcpy_s(modeBuffer, sizeof(modeBuffer), mode.c_str());
-					modeBuffer[sizeof(modeBuffer) - 1] = '\0';
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::InputText("##Mode_input", modeBuffer, sizeof(modeBuffer), ImGuiInputTextFlags_ReadOnly);
+					ImGui::Text(mode.c_str());
 
 					// -- Playback controls --
 					ImGui::TableNextRow();
@@ -430,6 +507,7 @@ namespace Axion {
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
 					ImGui::Text("Loop");
+					ImGui::Separator();
 					ImGui::TableSetColumnIndex(1);
 					bool loop = component.audio->isLooping();
 					if (ImGui::Checkbox("##Loop_check", &loop)) {
@@ -475,22 +553,33 @@ namespace Axion {
 
 					// -- Doppler --
 					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0); ImGui::Text("Doppler");
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Doppler");
+					ImGui::Separator();
 					ImGui::TableSetColumnIndex(1);
 					float doppler = component.audio->getDopplerFactor();
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 					if (ImGui::DragFloat("##Doppler_drag", &doppler, 0.05f, 0.0f, 4.0f)) {
 						component.audio->setDopplerFactor(doppler);
 					}
-					
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.audio = nullptr;
+					}
+
 					ImGui::EndTable();
 				}
-
 			}
 			else {
 				// -- Load Button --
 				if (ImGui::Button("Load Audio Clip...")) {
-					std::string absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, ProjectManager::getProject()->getAssetsPath() + "\\audio"); //TODO: remove back slashes here and above
+					std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
+					std::string absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, audioDir.string());
 					if (!absPath.empty()) {
 						AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(absPath);
 						component.audio = std::make_shared<AudioSource>(handle);
