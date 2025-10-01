@@ -58,6 +58,8 @@ namespace Axion {
 				}
 			}
 
+			// TODO: Add shader input
+
 
 			// -- Output path --
 			ImGui::TableNextRow();

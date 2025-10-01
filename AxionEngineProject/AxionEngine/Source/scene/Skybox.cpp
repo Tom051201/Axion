@@ -41,13 +41,13 @@ namespace Axion {
 	Skybox::Skybox(const std::string& crossPath) {
 		m_mesh = createCubeMesh();
 		setTexture(crossPath);
-		setupShader("shaders/skyboxShader.axshader");
+		setupShader("shaders/SkyboxShader.axshader");
 	}
 
 	Skybox::Skybox(const std::array<std::string, 6>& facePaths) {
 		m_mesh = createCubeMesh();
 		m_texture = TextureCube::create(facePaths);
-		setupShader("shaders/skyboxShader.axshader");
+		setupShader("shaders/SkyboxShader.axshader"); // TODO: MAKE THIS CONFIGURABLE!!!
 	}
 
 	Skybox::~Skybox() {
@@ -57,7 +57,6 @@ namespace Axion {
 	void Skybox::release() {
 		m_texture->release();
 		m_mesh->release();
-		//m_shader->release();
 	}
 
 	void Skybox::onUpdate(Timestep ts) {

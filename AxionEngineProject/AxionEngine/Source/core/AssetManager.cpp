@@ -236,8 +236,8 @@ namespace Axion {
 		RendererAPI api = Renderer::getAPI();
 
 		bool formatMatches =
-			(format == "HLSL" && api == RendererAPI::DirectX12) ||
-			(format == "GLSL" && api == RendererAPI::OpenGL3);
+			(format == ".hlsl" && api == RendererAPI::DirectX12) ||
+			(format == ".glsl" && api == RendererAPI::OpenGL3);
 
 		// -- Check extension --
 		std::filesystem::path srcPath(sourcePath);

@@ -1,0 +1,5 @@
+Name: PositionMaterial
+UUID: 25b2875225a92e862b5ce89c1a229e6f
+Type: Material
+Color: [1, 1, 1, 1]
+Shader: shaders\PositionShader.axshader

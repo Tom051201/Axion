@@ -56,6 +56,9 @@ namespace Axion {
 					if (!s_managerData->project->getDefaultScene().empty()) {
 						SceneManager::loadScene(s_managerData->project->getDefaultScene());
 					}
+					else {
+						SceneManager::newScene();
+					}
 
 					AX_CORE_LOG_INFO("Project loaded");
 				}

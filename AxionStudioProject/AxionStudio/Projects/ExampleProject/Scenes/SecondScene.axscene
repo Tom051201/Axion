@@ -1,0 +1,29 @@
+Scene: Second Scene
+Skybox: skybox\PinkSkybox.axsky
+Entities:
+  - Entity: ce140d6edced714a5d136de628e136a1
+    TagComponent:
+      Tag: Position Entity
+    TransformComponent:
+      Translation: [1.52639937, 1.61919475, -0.233338714]
+      Rotation: [0.600000024, 0.800000012, 0.400000006]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\Cube.axmesh
+    MaterialComponent:
+      Path: materials\PositionMaterial.axmat
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: c81bd22c14fa0ceddd178d1125a59217
+    TagComponent:
+      Tag: Experimental Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1.70000005, 2.70000005, 4]
+    MeshComponent:
+      Path: meshes\Cube.axmesh
+    MaterialComponent:
+      Path: materials\ExperimentalMaterial.axmat
+    ConstantBufferComponent:
+      Has: TRUE

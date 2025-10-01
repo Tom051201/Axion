@@ -388,6 +388,7 @@ namespace Axion {
 		}
 		ImGui::EndDisabled();
 
+		// TODO: add go folder forward button
 
 		// ----- Refresh button -----
 		ImGui::SameLine();

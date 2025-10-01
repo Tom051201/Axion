@@ -1,0 +1,10 @@
+Project: ExampleProject
+Version: 0.1.0
+EngineVersion: 0.1.0
+Author: John Doe
+Company: Example Company
+Description: This is a little example project
+ProjectPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject
+AssetsPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject\Assets
+ScenesPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject\Scenes
+DefaultScene: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject\Scenes\BaseScene.axscene

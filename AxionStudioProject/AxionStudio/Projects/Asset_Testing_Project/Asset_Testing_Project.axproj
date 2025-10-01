@@ -1,8 +1,0 @@
-Project: Asset Testing Project
-Version: 0.1.0
-EngineVersion: 0.1.0
-Description: Simple project to test new asset loading
-ProjectPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\Asset_Testing_Project
-AssetsPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\Asset_Testing_Project\Assets
-ScenesPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\Asset_Testing_Project\Scenes
-DefaultScene: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\Asset_Testing_Project\Scenes\Scene2.axscene

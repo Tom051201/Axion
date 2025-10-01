@@ -1,0 +1,5 @@
+Name: ExperimentalMaterial
+UUID: e8334600c2964bbda7ef1bb90a17ece9
+Type: Material
+Color: [1, 1, 1, 1]
+Shader: shaders\ExperimentalShader.axshader
