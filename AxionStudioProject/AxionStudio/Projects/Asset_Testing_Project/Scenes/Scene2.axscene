@@ -1,19 +1,33 @@
 Scene: Untitled
 Skybox: skybox\skybox2.axsky
 Entities:
-  - Entity: 7cc127fad3d5c96b1a281732be1ab27a
+  - Entity: 4c3b58076cb40e0eaeabfa491b9fb5ad
     TagComponent:
-      Tag: Cube
+      Tag: Empty Entity
     TransformComponent:
-      Translation: [-1.2307626, 0, 0]
+      Translation: [2.27545929, 0, 0]
       Rotation: [-0, 0, -0]
       Scale: [1, 1, 1]
     MeshComponent:
       Path: meshes\mesh.axmesh
     MaterialComponent:
-      Path: materials\experimentalMaterial.axmat
+      Path: materials\TestMaterial.axmat
     ConstantBufferComponent:
       Has: TRUE
+    AudioComponent:
+      IsListener: false
+      IsSource: true
+      AudioSource:
+        AudioClip: audio\bingbang.axaudio
+        Volume: 1
+        Pitch: 1
+        Pan: 0
+        IsSpatial: true
+        Position: [2.27545929, 0, 0]
+        Velocity: [0, 0, 0]
+        MinDistance: 1
+        MaxDistance: 100
+        DopplerFactor: 1
   - Entity: fb28ff93590d7d965da96fc6e0e6ec4c
     TagComponent:
       Tag: Homer
@@ -25,5 +39,18 @@ Entities:
       Path: meshes\homer.axmesh
     MaterialComponent:
       Path: materials\basicMaterial.axmat
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: 7cc127fad3d5c96b1a281732be1ab27a
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [-1.2307626, 0, 0]
+      Rotation: [-0, 0, -0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: meshes\mesh.axmesh
+    MaterialComponent:
+      Path: materials\experimentalMaterial.axmat
     ConstantBufferComponent:
       Has: TRUE

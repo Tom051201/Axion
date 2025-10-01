@@ -9,6 +9,7 @@
 
 #include "AxionStudio/Source/core/EditorCamera3D.h"
 #include "AxionStudio/Source/core/PanelManager.h"
+#include "AxionStudio/Source/core/ModalManager.h"
 #include "AxionStudio/Source/panels/SystemInfoPanel.h"
 #include "AxionStudio/Source/panels/SceneHierarchyPanel.h"
 #include "AxionStudio/Source/panels/EditorCameraPanel.h"
@@ -16,6 +17,11 @@
 #include "AxionStudio/Source/panels/ProjectPanel.h"
 #include "AxionStudio/Source/panels/SceneOverviewPanel.h"
 #include "AxionStudio/Source/panels/AssetManagerPanel.h"
+#include "AxionStudio/Source/modals/SkyboxImportModal.h"
+#include "AxionStudio/Source/modals/MeshImportModal.h"
+#include "AxionStudio/Source/modals/AudioImportModal.h"
+#include "AxionStudio/Source/modals/ShaderImportModal.h"
+#include "AxionStudio/Source/modals/MaterialImportModal.h"
 
 namespace Axion {
 
@@ -53,6 +59,16 @@ namespace Axion {
 		ProjectPanel* m_projectPanel;
 		SceneOverviewPanel* m_sceneOverviewPanel;
 		AssetManagerPanel* m_assetManagerPanel;
+
+
+		// ----- Modals -----
+		ModalManager m_modalManager;
+
+		SkyboxImportModal* m_skyboxImportModal;
+		MeshImportModal* m_meshImportModal;
+		AudioImportModal* m_audioImportModal;
+		ShaderImportModal* m_shaderImportModal;
+		MaterialImportModal* m_materialImportModal;
 
 
 		// ----- Scene viewport -----

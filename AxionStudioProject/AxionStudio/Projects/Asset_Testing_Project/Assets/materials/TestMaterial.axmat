@@ -1,0 +1,5 @@
+Name: TestMaterial
+UUID: ff2ec2f71640170705a8965e1b70d832
+Type: Material
+Color: [0.603921592, 1, 0.827450991, 1]
+Shader: shaders\flatColorShader.axshader

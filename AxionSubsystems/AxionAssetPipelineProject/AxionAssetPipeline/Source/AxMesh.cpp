@@ -24,6 +24,7 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
+		AX_CORE_LOG_TRACE("Created .axmesh file ({})", outputPath);
 	}
 
 	void MeshParser::createAxMeshBinary(const MeshAssetData& data, const std::string& outputPath) {

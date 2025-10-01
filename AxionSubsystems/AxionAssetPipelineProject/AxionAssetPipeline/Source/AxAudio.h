@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace Axion {
+namespace Axion::AAP {
 
 	struct AudioAssetData {
 		std::string name;

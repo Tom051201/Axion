@@ -10,7 +10,7 @@
 
 #include <fstream>
 
-namespace Axion {
+namespace Axion::AAP {
 
 	void AudioParser::createAxAudioFile(const AudioAssetData& data, const std::string& outputPath) {
 		YAML::Emitter out;
@@ -28,6 +28,7 @@ namespace Axion {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
+		AX_CORE_LOG_TRACE("Created .axaudio file ({})", outputPath);
 	}
 
 	void AudioParser::createAxAudioBinary(const AudioAssetData& data, const std::string& outputPath) {

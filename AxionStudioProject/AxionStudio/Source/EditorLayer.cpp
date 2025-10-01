@@ -37,6 +37,14 @@ namespace Axion {
 		m_panelManager.setupAll();
 
 
+		// ----- Setup all modals -----
+		m_skyboxImportModal		= m_modalManager.addModal<SkyboxImportModal>("SkyboxImportModal");
+		m_meshImportModal		= m_modalManager.addModal<MeshImportModal>("MeshImportModal");
+		m_audioImportModal		= m_modalManager.addModal<AudioImportModal>("AudioImportModal");
+		m_shaderImportModal		= m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
+		m_materialImportModal	= m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
+
+
 		// ----- Setup framebuffer for scene viewport -----
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
@@ -120,6 +128,9 @@ namespace Axion {
 	
 		// -- Draw all panels --
 		m_panelManager.renderAll();
+
+		// -- Draw all modals --
+		m_modalManager.renderAll();
 
 		// -- New project popup --
 		if (m_openNewProjectPopup) {
@@ -422,6 +433,18 @@ namespace Axion {
 						m_contentBrowserPanel->refresh();
 					}
 				}
+
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Import##_menu")) {
+					if (ImGui::MenuItem("Mesh")) { m_meshImportModal->open(); }
+					if (ImGui::MenuItem("Material")) { m_materialImportModal->open(); }
+					if (ImGui::MenuItem("Skybox")) { m_skyboxImportModal->open(); }
+					if (ImGui::MenuItem("Shader")) { m_shaderImportModal->open(); }
+					if (ImGui::MenuItem("Audio")) { m_audioImportModal->open(); }
+
+					ImGui::EndMenu();
+				}
+
 				ImGui::Separator();
 				if (ImGui::MenuItem("Exit")) { Application::get().close(); }
 				ImGui::EndMenu();

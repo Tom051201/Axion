@@ -36,6 +36,7 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
+		AX_CORE_LOG_TRACE("Created .axsky file ({})", outputPath);
 	}
 
 	void SkyboxParser::createAxSkyBinary(const SkyboxAssetData& data, const std::string& outputPath) {

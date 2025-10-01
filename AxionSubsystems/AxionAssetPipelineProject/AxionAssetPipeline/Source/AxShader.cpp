@@ -50,6 +50,7 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
+		AX_CORE_LOG_TRACE("Created .axshader file ({})", outputPath);
 	}
 
 	void ShaderParser::createAxShaderBinary(const ShaderAssetData& data, const std::string& outputPath) {

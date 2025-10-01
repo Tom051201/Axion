@@ -26,6 +26,7 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
+		AX_CORE_LOG_TRACE("Created .axmat file ({})", outputPath);
 	}
 
 	void MaterialParser::createAxMatBinary(const MaterialAssetData& data, const std::string& outputPath) {
