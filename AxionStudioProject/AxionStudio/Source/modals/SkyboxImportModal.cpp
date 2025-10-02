@@ -40,6 +40,24 @@ namespace Axion {
 			ImGui::InputText("##SkyboxName_input", m_nameBuffer, sizeof(m_nameBuffer));
 
 
+			// -- Shader path --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Shader");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##SkyboxShaderPath_input", m_shaderPathBuffer, sizeof(m_shaderPathBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse##SkyboxShaderFile_button")) {
+				std::filesystem::path skyDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
+				std::string absPath = FileDialogs::openFile({ {"Axion Shader Asset", "*.axshader"} }, skyDir.string());
+				if (!absPath.empty()) {
+					strcpy_s(m_shaderPathBuffer, IM_ARRAYSIZE(m_shaderPathBuffer), absPath.c_str());
+					m_shaderPathBuffer[IM_ARRAYSIZE(m_shaderPathBuffer) - 1] = '\0';
+				}
+			}
+
+
 			// -- Source path --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
@@ -57,8 +75,6 @@ namespace Axion {
 					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
 				}
 			}
-
-			// TODO: Add shader input
 
 
 			// -- Output path --
@@ -84,6 +100,9 @@ namespace Axion {
 			std::filesystem::path sourceFilePath = std::string(m_sourcePathBuffer);
 			bool validSource = std::filesystem::exists(sourceFilePath);
 
+			std::filesystem::path shaderFilePath = std::string(m_shaderPathBuffer);
+			bool validShader = std::filesystem::exists(shaderFilePath);
+
 			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
 			bool validOutputPath = std::filesystem::exists(outputDirPath);
 			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axsky"));
@@ -92,9 +111,11 @@ namespace Axion {
 				strlen(m_nameBuffer) == 0 ||
 				strlen(m_sourcePathBuffer) == 0 ||
 				strlen(m_outputPathBuffer) == 0 ||
+				strlen(m_shaderPathBuffer) == 0 ||
 				!validSource ||
 				!validOutputPath ||
-				!validOutputFile
+				!validOutputFile ||
+				!validShader
 			);
 
 			ImGui::Separator();
@@ -107,6 +128,7 @@ namespace Axion {
 				data.name = m_nameBuffer;
 				data.singleFileImport = true;
 				data.singleFilePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.shaderPath = AssetManager::getRelativeToAssets(std::string(m_shaderPathBuffer));
 
 				AAP::SkyboxParser::createAxSkyFile(data, outFile.string());
 				close();

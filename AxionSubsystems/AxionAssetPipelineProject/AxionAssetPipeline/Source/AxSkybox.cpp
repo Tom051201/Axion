@@ -32,6 +32,8 @@ namespace Axion::AAP {
 			out << YAML::EndMap;
 		}
 
+		out << YAML::Key << "Shader" << YAML::Value << data.shaderPath;
+
 		out << YAML::EndMap;
 
 		std::ofstream fout(outputPath);

@@ -16,7 +16,7 @@ namespace Axion {
 	using HandleToPathMap = std::unordered_map<AssetHandle<T>, std::string>;
 
 	template<typename T>
-	using LoadQueue = std::vector<std::pair<AssetHandle<T>, std::string>>;
+	using LoadQueue = std::vector<std::pair<AssetHandle<T>, std::function<Ref<T>()>>>;
 
 
 
@@ -89,12 +89,11 @@ namespace Axion {
 			s.loadQueue.clear();
 		}
 
-		template<typename T, typename Loader>
-		static void processLoadQueue(Loader loader) {
+		template<typename T>
+		static void processLoadQueue() {
 			auto& storageRef = storage<T>();
-			for (auto& [handle, source] : storageRef.loadQueue) {
-				Ref<T> asset = loader(source, handle);
-				storageRef.assets[handle] = asset;
+			for (auto& [handle, task] : storageRef.loadQueue) {
+				storageRef.assets[handle] = task();
 				AX_CORE_LOG_TRACE("{} loaded: {}", typeid(T).name(), handle.uuid.toString());
 			}
 			storageRef.loadQueue.clear();

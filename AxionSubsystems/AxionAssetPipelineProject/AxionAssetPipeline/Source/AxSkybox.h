@@ -12,6 +12,7 @@ namespace Axion::AAP {
 		bool singleFileImport = true;
 		std::string singleFilePath;
 		std::unordered_map<std::string, std::string> facesFilePaths;
+		std::string shaderPath;
 	};
 
 	class SkyboxParser {

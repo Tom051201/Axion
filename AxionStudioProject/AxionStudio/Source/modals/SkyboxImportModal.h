@@ -21,6 +21,7 @@ namespace Axion {
 		char m_nameBuffer[128] = "";
 		char m_sourcePathBuffer[256] = "";
 		char m_outputPathBuffer[256] = "";
+		char m_shaderPathBuffer[256] = "";
 
 	};
 

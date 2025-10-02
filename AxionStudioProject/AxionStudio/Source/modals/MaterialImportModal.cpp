@@ -60,7 +60,7 @@ namespace Axion {
 			ImGui::SameLine();
 			if (ImGui::Button("Browse##MatShaderFile_button")) {
 				std::filesystem::path matDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
-				std::string absPath = FileDialogs::openFile({ {"Axion Shader Asset", "*.axshader"} }, matDir.string()); // TODO: add more
+				std::string absPath = FileDialogs::openFile({ {"Axion Shader Asset", "*.axshader"} }, matDir.string());
 				if (!absPath.empty()) {
 					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
 					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';

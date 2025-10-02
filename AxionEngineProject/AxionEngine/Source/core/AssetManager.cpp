@@ -34,79 +34,9 @@ namespace Axion {
 		// -- RenderingFinished --
 		if (e.getEventType() == EventType::RenderingFinished) {
 
-			// -- Load Queue Skybox --
-			processLoadQueue<Skybox>([](const std::string& path, const AssetHandle<Skybox>& handle) -> Ref<Skybox> {
-				return std::make_shared<Skybox>(path);
-			});
-
-			// -- Load Queue Mesh --
-			processLoadQueue<Mesh>([](const std::string& path, const AssetHandle<Mesh>& handle) -> Ref<Mesh> {
-				tinyobj::ObjReader reader;
-
-				if (!reader.Warning().empty()) AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
-
-				if (!reader.ParseFromFile(path)) {
-					AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", path);
-					if (!reader.Error().empty()) AX_CORE_LOG_ERROR("OBJ error: {}", reader.Error());
-					return {};
-				}
-
-				const auto& attrib = reader.GetAttrib();
-				const auto& shapes = reader.GetShapes();
-
-				std::vector<Vertex> vertices;
-				std::vector<uint32_t> indices;
-				std::unordered_map<Vertex, uint32_t> uniqueVertices;
-
-				for (const auto& shape : shapes) {
-					for (const auto& index : shape.mesh.indices) {
-						Vertex vertex{};
-
-						vertex.position = {
-							attrib.vertices[3 * index.vertex_index + 0],
-							attrib.vertices[3 * index.vertex_index + 1],
-							attrib.vertices[3 * index.vertex_index + 2]
-						};
-
-						if (index.normal_index >= 0) {
-							vertex.normal = {
-								attrib.normals[3 * index.normal_index + 0],
-								attrib.normals[3 * index.normal_index + 1],
-								attrib.normals[3 * index.normal_index + 2]
-							};
-						}
-						else { vertex.normal = { 0.0f, 0.0f, 0.0f }; }
-
-						if (index.texcoord_index >= 0) {
-							vertex.texcoord = {
-								attrib.texcoords[2 * index.texcoord_index + 0],
-								1.0f - attrib.texcoords[2 * index.texcoord_index + 1] // flip V
-							};
-						}
-						else { vertex.texcoord = { 0.0f, 0.0f }; }
-
-						if (uniqueVertices.count(vertex) == 0) {
-							uint32_t newIndex = static_cast<uint32_t>(vertices.size());
-							uniqueVertices[vertex] = newIndex;
-							vertices.push_back(vertex);
-							indices.push_back(newIndex);
-						}
-						else {
-							indices.push_back(uniqueVertices[vertex]);
-						}
-					}
-				}
-
-				Vertex::normalizeVertices(vertices);
-				return Mesh::create(handle, vertices, indices);
-			});
-
-			// -- Load Queue Shader --
-			processLoadQueue<Shader>([](const std::string& path, const AssetHandle<Shader>& handle) -> Ref<Shader> {
-				Ref<Shader> shader = AssetManager::get<Shader>(handle);
-				shader->compileFromFile(path);
-				return shader;
-			});
+			processLoadQueue<Skybox>();
+			processLoadQueue<Mesh>();
+			processLoadQueue<Shader>();
 
 		}
 	}
@@ -184,7 +114,68 @@ namespace Axion {
 		}
 
 		storage<Mesh>().assets[handle] = nullptr;
-		storage<Mesh>().loadQueue.push_back({ handle, sourcePath });
+		storage<Mesh>().loadQueue.push_back({ handle,
+			[sourcePath, handle]() {
+				tinyobj::ObjReader reader;
+
+				if (!reader.Warning().empty()) AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
+
+				if (!reader.ParseFromFile(sourcePath)) {
+					AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", sourcePath);
+					if (!reader.Error().empty()) AX_CORE_LOG_ERROR("OBJ error: {}", reader.Error());
+					return Ref<Mesh>{};
+				}
+
+				const auto& attrib = reader.GetAttrib();
+				const auto& shapes = reader.GetShapes();
+
+				std::vector<Vertex> vertices;
+				std::vector<uint32_t> indices;
+				std::unordered_map<Vertex, uint32_t> uniqueVertices;
+
+				for (const auto& shape : shapes) {
+					for (const auto& index : shape.mesh.indices) {
+						Vertex vertex{};
+
+						vertex.position = {
+							attrib.vertices[3 * index.vertex_index + 0],
+							attrib.vertices[3 * index.vertex_index + 1],
+							attrib.vertices[3 * index.vertex_index + 2]
+						};
+
+						if (index.normal_index >= 0) {
+							vertex.normal = {
+								attrib.normals[3 * index.normal_index + 0],
+								attrib.normals[3 * index.normal_index + 1],
+								attrib.normals[3 * index.normal_index + 2]
+							};
+						}
+						else { vertex.normal = { 0.0f, 0.0f, 0.0f }; }
+
+						if (index.texcoord_index >= 0) {
+							vertex.texcoord = {
+								attrib.texcoords[2 * index.texcoord_index + 0],
+								1.0f - attrib.texcoords[2 * index.texcoord_index + 1] // flip V
+							};
+						}
+						else { vertex.texcoord = { 0.0f, 0.0f }; }
+
+						if (uniqueVertices.count(vertex) == 0) {
+							uint32_t newIndex = static_cast<uint32_t>(vertices.size());
+							uniqueVertices[vertex] = newIndex;
+							vertices.push_back(vertex);
+							indices.push_back(newIndex);
+						}
+						else {
+							indices.push_back(uniqueVertices[vertex]);
+						}
+					}
+				}
+
+				Vertex::normalizeVertices(vertices);
+				return Mesh::create(handle, vertices, indices);
+			} 
+		});
 		storage<Mesh>().handleToPath[handle] = absolutePath;
 
 		return handle;
@@ -202,6 +193,7 @@ namespace Axion {
 		}
 
 		std::string sourcePath = getAbsolute(data["Texture"].as<std::string>());
+		std::string shaderPath = getAbsolute(data["Shader"].as<std::string>());
 		UUID uuid = data["UUID"].as<UUID>();
 		AssetHandle<Skybox> handle(uuid);
 
@@ -211,7 +203,11 @@ namespace Axion {
 		}
 
 		storage<Skybox>().assets[handle] = nullptr;
-		storage<Skybox>().loadQueue.push_back({ handle, sourcePath });
+		storage<Skybox>().loadQueue.push_back({ handle,
+			[sourcePath, shaderPath, handle]() {
+				return std::make_shared<Skybox>(sourcePath, shaderPath);
+			}
+		});
 		storage<Skybox>().handleToPath[handle] = absolutePath;
 
 		return handle;
@@ -301,7 +297,13 @@ namespace Axion {
 
 		Ref<Shader> shader = Shader::create(spec, sourcePath);
 		storage<Shader>().assets[handle] = shader;
-		storage<Shader>().loadQueue.push_back({ handle, sourcePath });
+		storage<Shader>().loadQueue.push_back({ handle, 
+			[sourcePath, handle]() {
+				Ref<Shader> shader = AssetManager::get<Shader>(handle);
+				shader->compileFromFile(sourcePath);
+				return shader;
+			}
+		});
 		storage<Shader>().handleToPath[handle] = absolutePath;
 
 		return handle;

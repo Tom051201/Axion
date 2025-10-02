@@ -193,7 +193,7 @@ namespace Axion {
 			ImGui::SameLine();
 			if (ImGui::Button("Browse##ShaderSourceFile_button")) {
 				std::filesystem::path shaderDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
-				std::string absPath = FileDialogs::openFile({ {"HLSL File", "*.hlsl"} }, shaderDir.string()); // TODO: add more
+				std::string absPath = FileDialogs::openFile({ {"Shader Source", "*.hlsl;*.glsl"} }, shaderDir.string());
 				if (!absPath.empty()) {
 					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
 					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';

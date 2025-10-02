@@ -60,7 +60,7 @@ namespace Axion {
 			ImGui::SameLine();
 			if (ImGui::Button("Browse##AudioSourceFile_button")) {
 				std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
-				std::string absPath = FileDialogs::openFile({ {"MP3 File", "*.mp3"} }, audioDir.string()); // TODO: add more
+				std::string absPath = FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir.string());
 				if (!absPath.empty()) {
 					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
 					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';

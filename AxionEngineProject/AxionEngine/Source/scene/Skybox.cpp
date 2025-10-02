@@ -38,16 +38,16 @@ namespace Axion {
 		return Mesh::create(handle, vertices, indices);
 	}
 
-	Skybox::Skybox(const std::string& crossPath) {
+	Skybox::Skybox(const std::string& crossPath, const std::string& shaderPath) {
 		m_mesh = createCubeMesh();
 		setTexture(crossPath);
-		setupShader("shaders/SkyboxShader.axshader");
+		setupShader(shaderPath);
 	}
 
-	Skybox::Skybox(const std::array<std::string, 6>& facePaths) {
+	Skybox::Skybox(const std::array<std::string, 6>& facePaths, const std::string& shaderPath) {
 		m_mesh = createCubeMesh();
 		m_texture = TextureCube::create(facePaths);
-		setupShader("shaders/SkyboxShader.axshader"); // TODO: MAKE THIS CONFIGURABLE!!!
+		setupShader(shaderPath);
 	}
 
 	Skybox::~Skybox() {
