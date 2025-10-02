@@ -251,7 +251,7 @@ namespace Axion {
 			// -- Final safety checks --
 			if (!std::filesystem::exists(newPath, ec)) {
 				std::filesystem::rename(oldPath, newPath, ec);
-				if (ec) AX_CORE_LOG_ERROR("Rename failed: {}", ec.message());
+				if (ec) { AX_CORE_LOG_ERROR("Rename failed: {}", ec.message()); }
 			}
 			else {
 				AX_CORE_LOG_WARN("Rename target already exists: {}", newPath.string());

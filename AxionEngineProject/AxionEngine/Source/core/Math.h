@@ -280,22 +280,18 @@ namespace Axion {
 
 		static Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up) {
 			return Mat4(DirectX::XMMatrixLookAtLH(eye.toXM(), target.toXM(), up.toXM()));
-			//return Mat4(DirectX::XMMatrixLookAtRH(eye.toXM(), target.toXM(), up.toXM()));
 		}
 
 		static Mat4 orthographic(float width, float height, float nearZ, float farZ) {
 			return Mat4(DirectX::XMMatrixOrthographicLH(width, height, nearZ, farZ));
-			//return Mat4(DirectX::XMMatrixOrthographicRH(width, height, nearZ, farZ));
 		}
 
 		static Mat4 orthographicOffCenter(float left, float right, float bottom, float top, float nearZ, float farZ) {
 			return Mat4(DirectX::XMMatrixOrthographicOffCenterLH(left, right, bottom, top, nearZ, farZ));
-			//return Mat4(DirectX::XMMatrixOrthographicOffCenterRH(left, right, bottom, top, nearZ, farZ));
 		}
 
 		static Mat4 perspective(float fovY, float aspect, float nearZ, float farZ) {
 			return Mat4(DirectX::XMMatrixPerspectiveFovLH(fovY, aspect, nearZ, farZ));
-			//return Mat4(DirectX::XMMatrixPerspectiveFovRH(fovY, aspect, nearZ, farZ));
 		}
 
 		Mat4 transposed() const {
@@ -344,7 +340,6 @@ namespace Axion {
 			Mat4 t = Mat4::translation(translation);
 			Mat4 r = Mat4::rotation(rotationEuler);
 			Mat4 s = Mat4::scale(scale);
-			//return t * r * s;
 			return s * r * t;
 		}
 
@@ -379,7 +374,7 @@ namespace Axion {
 		Mat4& operator*=(const Mat4& other) { matrix = DirectX::XMMatrixMultiply(matrix, other.matrix); return *this; }
 
 	private:
-		mutable DirectX::XMFLOAT4X4 cachedF4x4;
+		mutable DirectX::XMFLOAT4X4 cachedF4x4 = {};
 
 	};
 

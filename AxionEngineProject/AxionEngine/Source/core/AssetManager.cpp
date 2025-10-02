@@ -55,6 +55,7 @@ namespace Axion {
 			return relPath.string();
 		} catch (const std::exception& e) {
 			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
+			(void)e; // Prevents compiler warning
 			return {};
 		}
 	}
@@ -73,6 +74,7 @@ namespace Axion {
 		}
 		catch (const std::exception& e) {
 			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
+			(void)e; // Prevents compiler warning
 			return {};
 		}
 	}
@@ -118,11 +120,15 @@ namespace Axion {
 			[sourcePath, handle]() {
 				tinyobj::ObjReader reader;
 
-				if (!reader.Warning().empty()) AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
+				if (!reader.Warning().empty()) {
+					AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
+				}
 
 				if (!reader.ParseFromFile(sourcePath)) {
 					AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", sourcePath);
-					if (!reader.Error().empty()) AX_CORE_LOG_ERROR("OBJ error: {}", reader.Error());
+					if (!reader.Error().empty()) {
+						AX_CORE_LOG_ERROR("OBJ error: {}", reader.Error());
+					}
 					return Ref<Mesh>{};
 				}
 

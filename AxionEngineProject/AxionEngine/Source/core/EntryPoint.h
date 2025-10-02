@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 #if defined(AX_PLATFORM_WINDOWS) && defined(AX_DISTRIBUTION)
 
 #include <Windows.h>
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 	int result = Axion::EngineMain(__argc, __argv);
 	CoUninitialize();

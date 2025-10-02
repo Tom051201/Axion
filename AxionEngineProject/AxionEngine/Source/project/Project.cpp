@@ -124,6 +124,7 @@ namespace Axion {
 		}
 		catch (std::exception& e) {
 			AX_CORE_LOG_ERROR("Failed to create project: {}", e.what());
+			(void)e;
 			return nullptr;
 		}
 	}
