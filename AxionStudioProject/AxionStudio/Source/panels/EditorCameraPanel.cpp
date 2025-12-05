@@ -6,8 +6,9 @@
 
 namespace Axion {
 
-	EditorCameraPanel::EditorCameraPanel(const std::string& name, EditorCamera3D* cam) : Panel(name) {
-		m_camera = cam;
+	EditorCameraPanel::EditorCameraPanel(const std::string& name, EditorCamera2D* cam2D, EditorCamera3D* cam3D) : Panel(name) {
+		m_camera2D = cam2D;
+		m_camera3D = cam3D;
 	}
 
 	EditorCameraPanel::~EditorCameraPanel() {
@@ -25,11 +26,15 @@ namespace Axion {
 	void EditorCameraPanel::onGuiRender() {
 		if (ImGui::Begin("Editor Camera")) {
 
-			ImGui::InputFloat3("Position", m_camera->getPosition().data());
-
-			ImGui::DragFloat("Movement Speed", m_camera->getTranslationSpeedData(), 0.5f, 0.0f, 25.0f);
+			ImGui::Text("Camera 3D");
+			ImGui::InputFloat3("Position#3d", m_camera3D->getPosition().data());
+			ImGui::DragFloat("Movement Speed", m_camera3D->getTranslationSpeedData(), 0.5f, 0.0f, 25.0f);
 
 			// add fov
+
+			ImGui::Separator();
+			ImGui::Text("Camera 2D");
+			ImGui::InputFloat2("Position#2d", m_camera2D->getPosition().data());
 		}
 		ImGui::End();
 

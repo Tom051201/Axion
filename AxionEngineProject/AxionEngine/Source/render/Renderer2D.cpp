@@ -67,7 +67,7 @@ namespace Axion {
 
 		s_material->use();
 		Mat4 transform = Mat4::TRS(
-			Vec3(position.x, position.y, 1),
+			Vec3(position.x, position.y, 0),
 			Vec3(0.0f, 0.0f, 0.0f),
 			Vec3(size.x, size.y, 1.0f)
 		);

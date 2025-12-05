@@ -17,9 +17,12 @@
 
 namespace Axion {
 
-	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_editorCamera(1280.0f / 720.0f) {}
+	EditorLayer::EditorLayer()
+		: Layer("AxionStudioLayer"), m_editorCamera2D(1280.0f, 720.0f), m_editorCamera3D(1280.0f / 720.0f) {}
 
 	void EditorLayer::onAttach() {
+
+		m_cameraState = CameraState::Perspective;
 
 		// ----- Set scene -----
 		m_sceneState = SceneState::Editing;
@@ -29,7 +32,7 @@ namespace Axion {
 		// ----- Setup all panels -----
 		m_systemInfoPanel		= m_panelManager.addPanel<SystemInfoPanel>("SystemInfoPanel");
 		m_sceneHierarchyPanel	= m_panelManager.addPanel<SceneHierarchyPanel>("SceneHierarchyPanel", SceneManager::getScene());
-		m_editorCameraPanel		= m_panelManager.addPanel<EditorCameraPanel>("EditorCameraPanel", &m_editorCamera);
+		m_editorCameraPanel		= m_panelManager.addPanel<EditorCameraPanel>("EditorCameraPanel", &m_editorCamera2D, &m_editorCamera3D);
 		m_contentBrowserPanel	= m_panelManager.addPanel<ContentBrowserPanel>("ContentBrowserPanel");
 		m_projectPanel			= m_panelManager.addPanel<ProjectPanel>("ProjectPanel");
 		m_sceneOverviewPanel	= m_panelManager.addPanel<SceneOverviewPanel>("SceneOverviewPanel");
@@ -62,7 +65,7 @@ namespace Axion {
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
-		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::SetOrthographic(false); // TODO maybe do orthographic
 
 
 		// ----- Setup application -----
@@ -85,7 +88,8 @@ namespace Axion {
 
 	void EditorLayer::onUpdate(Timestep ts) {
 
-		m_editorCamera.onUpdate(ts);
+		if (m_cameraState == CameraState::Perspective) { m_editorCamera3D.onUpdate(ts); }
+		else { m_editorCamera2D.onUpdate(ts); }
 
 		if (m_viewportSize.x > 0 && m_viewportSize.y > 0) {
 
@@ -94,7 +98,9 @@ namespace Axion {
 
 			switch (m_sceneState) {
 				case Axion::SceneState::Editing: {
-					m_activeScene->onUpdate(ts, m_editorCamera);
+					if (m_cameraState == CameraState::Perspective) { m_activeScene->onUpdate(ts, m_editorCamera3D); }
+					else { m_activeScene->onUpdate(ts, m_editorCamera2D); }
+					
 					break;
 				}
 				case Axion::SceneState::Playing: {
@@ -111,7 +117,8 @@ namespace Axion {
 	}
 
 	void EditorLayer::onEvent(Event& e) {
-		m_editorCamera.onEvent(e);
+		if (m_cameraState == CameraState::Perspective) { m_editorCamera3D.onEvent(e); }
+		else { m_editorCamera2D.onEvent(e); }
 		m_activeScene->onEvent(e);
 		m_panelManager.onEventAll(e);
 		
@@ -145,6 +152,15 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
+		if (e.getKeyCode() == KeyCode::Tab) {
+			if (m_cameraState == CameraState::Perspective) {
+				m_cameraState = CameraState::Orthographic;
+			}
+			else {
+				m_cameraState = CameraState::Perspective;
+			}
+		}
+
 		// -> Shortcuts only from here on
 		if (e.getRepeatCount() > 0) return false;
 		bool controlPressed = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
@@ -190,7 +206,8 @@ namespace Axion {
 		// ----- Resize viewport -----
 		if (m_viewportResized) {
 			m_frameBuffer->resize((uint32_t)m_viewportSize.x, (uint32_t)m_viewportSize.y);
-			m_editorCamera.resize(m_viewportSize.x, m_viewportSize.y);
+			m_editorCamera3D.resize(m_viewportSize.x, m_viewportSize.y);
+			m_editorCamera2D.resize(m_viewportSize.x, m_viewportSize.y);
 			m_viewportResized = false;
 		}
 
@@ -306,7 +323,8 @@ namespace Axion {
 	void EditorLayer::drawSceneViewport() {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
 		ImGui::Begin("Editor Viewport", nullptr, ImGuiWindowFlags_NoScrollbar);
-		m_editorCamera.setIsHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
+		m_editorCamera3D.setIsHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
+		m_editorCamera2D.setIsHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
 		if (viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
@@ -357,8 +375,17 @@ namespace Axion {
 
 
 			// ----- Camera -----
-			const Mat4& cameraView = m_editorCamera.getViewMatrix();
-			const Mat4& cameraProjection = m_editorCamera.getProjectionMatrix();
+			const Mat4* cameraView = nullptr;
+			const Mat4* cameraProjection = nullptr;
+			
+			if (m_cameraState == CameraState::Perspective) {
+				cameraView = &m_editorCamera3D.getViewMatrix();
+				cameraProjection = &m_editorCamera3D.getProjectionMatrix();
+			}
+			else {
+				cameraView = &m_editorCamera2D.getViewMatrix();
+				cameraProjection = &m_editorCamera2D.getProjectionMatrix();
+			}
 
 
 			// ----- Entity transform -----
@@ -382,8 +409,8 @@ namespace Axion {
 
 			// ----- Do gizmo stuff -----
 			ImGuizmo::Manipulate(
-				cameraView.data(),
-				cameraProjection.data(),
+				cameraView->data(),
+				cameraProjection->data(),
 				currentOp,
 				ImGuizmo::LOCAL,
 				object
