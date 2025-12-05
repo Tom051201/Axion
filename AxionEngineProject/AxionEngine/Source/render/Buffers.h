@@ -93,7 +93,10 @@ namespace Axion {
 		virtual uint32_t getVertexCount() const = 0; // in vertices
 		virtual uint32_t getSize() const = 0; // in bytes
 
+		virtual void update(const void* data, size_t size) = 0;
+
 		static Ref<VertexBuffer> create(const std::vector<Vertex>& vertices);
+		static Ref<VertexBuffer> createDynamic(uint32_t size, uint32_t stride);
 
 	};
 

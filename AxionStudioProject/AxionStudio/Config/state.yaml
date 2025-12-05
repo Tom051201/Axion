@@ -5,7 +5,7 @@ Panels:
   - Name: SceneHierarchyPanel
     Visible: true
   - Name: EditorCameraPanel
-    Visible: false
+    Visible: true
   - Name: ContentBrowserPanel
     Visible: true
     ThumbnailSize: 92

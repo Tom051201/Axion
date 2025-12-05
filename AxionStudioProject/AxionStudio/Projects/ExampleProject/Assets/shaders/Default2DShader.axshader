@@ -1,0 +1,29 @@
+Name: Default2DShader
+UUID: bdbe3c538d656270772e99f4a7385a9a
+Type: Shader
+Format: .hlsl
+Source: shaders\Default2DShader.hlsl
+Specification:
+  Name: Default2DShader
+  ColorFormat: RGBA8
+  DepthStencilFormat: DEPTH32F
+  DepthTest: true
+  DepthWrite: true
+  DepthFunction: Less
+  StencilEnabled: false
+  SampleCount: 1
+  CullMode: Back
+  Topology: TriangleList
+  BufferLayout:
+    - Name: POSITION
+      Type: Float3
+      Size: 12
+      Offset: 0
+    - Name: NORMAL
+      Type: Float3
+      Size: 12
+      Offset: 12
+    - Name: TEXCOORD
+      Type: Float2
+      Size: 8
+      Offset: 24

@@ -1,39 +1,56 @@
 #include "axpch.h"
 #include "Renderer2D.h"
 
-#include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
-#include "AxionEngine/Source/render/Mesh.h"
-#include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Texture.h"
 
 namespace Axion {
 
-	struct RendererData {
-		Ref<Mesh> quadMesh;
-	};
-
-	static RendererData* s_rendererData;
+	Ref<VertexBuffer> Renderer2D::s_vertexBuffer = nullptr;
+	Ref<IndexBuffer> Renderer2D::s_indexBuffer = nullptr;
+	Ref<ConstantBuffer> Renderer2D::s_constantBuffer = nullptr;
+	Ref<Material> Renderer2D::s_material = nullptr;
+	bool Renderer2D::s_done = false;
+	bool Renderer2D::s_initialized = false;
 
 	void Renderer2D::initialize() {
-		s_rendererData = new RendererData();
 
 		std::vector<Vertex> vertices = {
-			Vertex(-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		0.0f, 0.0f),
-			Vertex( 0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		1.0f, 0.0f),
-			Vertex( 0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		1.0f, 1.0f),
-			Vertex(-0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		0.0f, 1.0f)
+			{ -0.5f,  0.5f, 0, 0,0,1,  0,0 }, // TL  (0)
+			{  0.5f,  0.5f, 0, 0,0,1,  1,0 }, // TR  (1)
+			{  0.5f, -0.5f, 0, 0,0,1,  1,1 }, // BR  (2)
+			{ -0.5f, -0.5f, 0, 0,0,1,  0,1 }, // BL  (3)
 		};
-		std::vector<uint32_t> indices = { 0, 2, 1,	2, 0, 3 };
-		s_rendererData->quadMesh = Mesh::create({}, vertices, indices);
+		
+		std::vector<uint32_t> indices = {
+			0, 1, 2,  // First triangle
+			0, 2, 3   // Second triangle
+		};
+		
+		s_vertexBuffer = VertexBuffer::create(vertices);
+		s_indexBuffer = IndexBuffer::create(indices);
+		s_constantBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
+
+		s_initialized = true;
 	}
 
 	void Renderer2D::shutdown() {
-		delete s_rendererData;
+		s_vertexBuffer->release();
+		s_indexBuffer->release();
+		s_constantBuffer->release();
+		s_material->release();
+
+		s_initialized = false;
 	}
 
-	void Renderer2D::beginScene(const Mat4& projection, const Mat4& transform) {
-		Renderer::beginScene(projection, transform);
+	void Renderer2D::onEvent(Event& e) {
+		if (e.getEventType() == EventType::ProjectChanged) {
+			AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(AssetManager::getAbsolute("shaders/Default2DShader.axshader"));
+			s_material = Material::create("Default2DMat", { 1.0f, 0.0f, 0.0f, 1.0f }, shaderHandle);
+			s_done = true;
+		}
 	}
 
 	void Renderer2D::beginScene(const Camera& camera) {
@@ -41,48 +58,30 @@ namespace Axion {
 	}
 
 	void Renderer2D::endScene() {
-		// Does nothing for now
+		// nothing special - no batching
 	}
 
-	void Renderer2D::setClearColor(const Vec4& color) {
-		RenderCommand::setClearColor(color);
-	}
+	void Renderer2D::drawQuad(const Vec2& position, const Vec2& size, const Vec4& color) {
+		if (!s_initialized) return;
+		if (!s_done) return;
 
-	void Renderer2D::clear() {
-		RenderCommand::clear();
-	}
-
-	void Renderer2D::drawQuad(const Mat4& transform, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
-		material->use();
+		s_material->use();
+		Mat4 transform = Mat4::TRS(
+			Vec3(position.x, position.y, 1),
+			Vec3(0.0f, 0.0f, 0.0f),
+			Vec3(size.x, size.y, 1.0f)
+		);
 
 		ObjectBuffer buffer;
-		buffer.color = material->getColor().toFloat4();
+		buffer.color = s_material->getColor().toFloat4();
 		buffer.modelMatrix = transform.transposed().toXM();
 
-		uploadBuffer->update(&buffer, sizeof(ObjectBuffer));
-		uploadBuffer->bind(1);
+		s_constantBuffer->update(&buffer, sizeof(ObjectBuffer));
+		s_constantBuffer->bind(1);
 
-		s_rendererData->quadMesh->render();
-		RenderCommand::drawIndexed(s_rendererData->quadMesh->getVertexBuffer(), s_rendererData->quadMesh->getIndexBuffer());
-	}
-
-	void Renderer2D::drawTexture(const Vec3& position, const Vec2& dim, Ref<Texture2D>& texture, Ref<ConstantBuffer>& uploadBuffer) {
-		// TODO: rewrite this
-		//s_rendererData->quadShader->bind();
-
-		ObjectBuffer buffer;
-		buffer.color = Vec4::one().toFloat4();
-
-		Mat4 model = Mat4::translation(position) * Mat4::scale(Vec3(dim.x, dim.y, 1.0f));
-		buffer.modelMatrix = model.transposed().toXM();
-		
-		uploadBuffer->update(&buffer, sizeof(ObjectBuffer));
-		uploadBuffer->bind(1);
-
-		s_rendererData->quadMesh->render();
-		texture->bind();
-		
-		RenderCommand::drawIndexed(s_rendererData->quadMesh->getVertexBuffer(), s_rendererData->quadMesh->getIndexBuffer());
+		s_vertexBuffer->bind();
+		s_indexBuffer->bind();
+		RenderCommand::drawIndexed(s_vertexBuffer, s_indexBuffer);
 	}
 
 }

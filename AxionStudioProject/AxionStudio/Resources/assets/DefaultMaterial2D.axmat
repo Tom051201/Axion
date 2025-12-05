@@ -1,0 +1,5 @@
+Name: DefaultMaterial2D
+UUID: 356d337cb9e7e69b06f7abcf551417dc
+Type: Material
+Color: [1, 0, 0, 1]
+Shader: DefaultShader2D.axshader

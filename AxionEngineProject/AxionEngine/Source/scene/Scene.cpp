@@ -60,7 +60,6 @@ namespace Axion {
 			fn();
 		}
 		m_componentsPendingRemove.clear();
-
 	}
 
 	void Scene::onUpdate(Timestep ts) {
@@ -134,6 +133,7 @@ namespace Axion {
 				AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
 			}
 
+			Renderer2D::drawQuad({ 1, 1 }, {1, 1}, { 1.0f, 0.0f, 0.0f, 1.0f });
 
 			// ----- Render Meshes -----
 			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();

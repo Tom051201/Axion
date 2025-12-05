@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/render/Renderer.h"
+#include "AxionEngine/Source/render/Renderer2D.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
@@ -57,6 +58,8 @@ namespace Axion {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<WindowCloseEvent>(AX_BIND_EVENT_FN(Application::onWindowClose));
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(Application::onKeyPressed));
+
+		Renderer2D::onEvent(e);
 
 		SceneManager::onEvent(e);
 		ProjectManager::onEvent(e);

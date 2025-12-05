@@ -12,6 +12,7 @@ namespace Axion {
 	public:
 
 		D12VertexBuffer(const std::vector<Vertex>& vertices);
+		D12VertexBuffer(uint32_t size, uint32_t stride);
 		~D12VertexBuffer() override;
 
 		void release() override;
@@ -24,7 +25,9 @@ namespace Axion {
 
 		uint32_t getVertexCount() const override { return m_vertexCount; }
 		uint32_t getSize() const override { return m_size; }
-		
+
+		void update(const void* data, size_t size) override;
+
 		const D3D12_VERTEX_BUFFER_VIEW& getView() const { return m_view; }
 
 	private:

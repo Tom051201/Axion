@@ -47,6 +47,33 @@ namespace Axion {
 		template<typename T>
 		static AssetHandle<T> load(const std::string& absolutePath);
 
+		// -- Creating from code --
+		template<typename T, typename... Args>
+		static AssetHandle<T> create(Args&&... args) {
+			UUID uuid = UUID::generate(); // TODO: find a way to handle this cause this is always new
+			AssetHandle<T> handle(uuid);
+
+			Ref<T> asset = std::make_shared<T>(std::forward<Args>(args)...);
+
+			storage<T>().assets[handle] = asset;
+			storage<T>().handleToPath[handle] = ""; // created assets dont have a stored path
+
+			return handle;
+		}
+
+		template<typename T>
+		static AssetHandle<T> insert(Ref<T> instance) {
+			UUID uuid = UUID::generate(); // TODO: find a way to handle this cause this is always new
+			AssetHandle<T> handle(uuid);
+
+			Ref<T> asset = instance;
+
+			storage<T>().assets[handle] = asset;
+			storage<T>().handleToPath[handle] = ""; // created assets dont have a stored path
+
+			return handle;
+		}
+
 		// -- Templated getter function --
 		template<typename T>
 		static Ref<T> get(const AssetHandle<T>& handle) {

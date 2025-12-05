@@ -7,7 +7,7 @@ Entities:
     TransformComponent:
       Translation: [-0.663046718, 0, 0]
       Rotation: [-0, 0, -0]
-      Scale: [1, 1, 1]
+      Scale: [0.6794523, 1, 1.36489952]
     MeshComponent:
       Path: meshes\Cube.axmesh
     MaterialComponent:

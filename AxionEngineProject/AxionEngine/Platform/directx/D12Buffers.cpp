@@ -52,6 +52,37 @@ namespace Axion {
 		#endif
 	}
 
+	D12VertexBuffer::D12VertexBuffer(uint32_t size, uint32_t stride) {
+		m_vertexCount = 0;
+		m_size = size;
+		m_stride = stride;
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_size);
+
+
+		// ----- Create resource -----
+		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		HRESULT hr = device->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_buffer)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create dynamic vertex buffer");
+
+		// ----- Fill buffer view -----
+		m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
+		m_view.StrideInBytes = m_stride;
+		m_view.SizeInBytes = m_size;
+
+		#ifdef AX_DEBUG
+		m_buffer->SetName(L"VertexBuffer");
+		#endif
+	}
+
 	D12VertexBuffer::~D12VertexBuffer() {
 		release();
 	}
@@ -68,6 +99,14 @@ namespace Axion {
 
 	// Not required
 	void D12VertexBuffer::unbind() const {}
+
+	void D12VertexBuffer::update(const void* data, size_t size) {
+		void* mapped = nullptr;
+		D3D12_RANGE readRange = { 0, 0 };
+		m_buffer->Map(0, &readRange, &mapped);
+		memcpy(mapped, data, size);
+		m_buffer->Unmap(0, nullptr);
+	}
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// D12IndexBuffer ///////////////////////////////////////////////////////////

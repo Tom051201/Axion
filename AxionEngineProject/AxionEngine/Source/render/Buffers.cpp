@@ -39,6 +39,17 @@ namespace Axion {
 		return nullptr;
 	}
 
+	Ref<VertexBuffer> VertexBuffer::createDynamic(uint32_t size, uint32_t stride) {
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12VertexBuffer>(size, stride); }
+			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "Opengl is not supported yet!"); /*TODO: Add functionality*/ }
+
+		}
+		return nullptr;
+	}
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// IndexBuffer //////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////

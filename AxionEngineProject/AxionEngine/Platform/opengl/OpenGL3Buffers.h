@@ -25,6 +25,8 @@ namespace Axion {
 		uint32_t getVertexCount() const override { return m_vertexCount; }
 		uint32_t getSize() const override { return m_size; }
 
+		void update(const void* data, size_t size) override;
+
 		uint32_t getRendererID() const { return m_rendererID; }
 
 	private:

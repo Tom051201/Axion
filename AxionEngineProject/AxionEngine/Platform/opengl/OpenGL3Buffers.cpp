@@ -35,6 +35,11 @@ namespace Axion {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
+	void OpenGL3VertexBuffer::update(const void* data, size_t size) {
+		// TODO: add function
+		AX_CORE_ASSERT(false, "Updating opengl vertex buffer is not supported yet");
+	}
+
 
 
 	////////////////////////////////////////////////////////////////////////////////
