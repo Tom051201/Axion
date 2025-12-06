@@ -148,6 +148,10 @@ namespace Axion {
 		m_commandList.getCommandList()->DrawIndexedInstanced(ib->getIndexCount(), 1, 0, 0, 0);
 	}
 
+	void D12Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount) {
+		m_commandList.getCommandList()->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);
+	}
+
 	std::string D12Context::getGpuName() const {
 		DXGI_ADAPTER_DESC1 desc;
 		m_device.getAdapter()->GetDesc1(&desc);

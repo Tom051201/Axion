@@ -2,6 +2,7 @@
 #include "Scene.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/scene/Components.h"
@@ -10,7 +11,10 @@
 
 namespace Axion {
 
-	Scene::Scene() {}
+	Scene::Scene() {
+		m_tex = Texture2D::create("AxionStudio\\Projects\\ExampleProject\\Assets\\logo.png");
+	
+	}
 
 	Scene::~Scene() {
 		release();
@@ -133,7 +137,6 @@ namespace Axion {
 				AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
 			}
 
-			Renderer2D::drawQuad({ 1, 1 }, {1, 1}, { 1.0f, 0.0f, 0.0f, 1.0f });
 
 			// ----- Render Meshes -----
 			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
@@ -152,6 +155,35 @@ namespace Axion {
 					);
 				}
 			}
+
+			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent, ConstantBufferComponent>);
+			for (auto entity : spriteGroup) {
+				auto& transform = spriteGroup.get<TransformComponent>(entity);
+				auto& sprite = spriteGroup.get<SpriteComponent>(entity);
+				auto& cb = spriteGroup.get<ConstantBufferComponent>(entity);
+				
+				if (cb.uploadBuffer != nullptr) { // Check for sprite also
+					if (sprite.texture != nullptr) {
+						Renderer2D::drawQuad(
+							{ transform.position.x, transform.position.y },
+							{ transform.scale.x, transform.scale.y },
+							sprite.texture,
+							cb.uploadBuffer,
+							sprite.tint
+						);
+					}
+					else {
+						Renderer2D::drawQuad(
+							{ transform.position.x, transform.position.y },
+							{ transform.scale.x, transform.scale.y },
+							sprite.tint,
+							cb.uploadBuffer
+						);
+					}
+				}
+			}
+
+			Renderer::endScene();
 
 		}
 	}

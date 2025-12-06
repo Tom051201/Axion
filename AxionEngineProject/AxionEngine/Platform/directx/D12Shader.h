@@ -5,8 +5,8 @@
 
 namespace Axion {
 
-	constexpr const char* SHADER_MODEL_VS = "vs_5_0";
-	constexpr const char* SHADER_MODEL_PS = "ps_5_0";
+	constexpr const char* SHADER_MODEL_VS = "vs_5_1";
+	constexpr const char* SHADER_MODEL_PS = "ps_5_1";
 
 	class D12Shader : public Shader {
 	public:

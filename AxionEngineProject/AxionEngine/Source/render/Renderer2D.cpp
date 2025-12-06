@@ -6,11 +6,13 @@
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Texture.h"
 
+#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/D12CommandList.h"
+
 namespace Axion {
 
 	Ref<VertexBuffer> Renderer2D::s_vertexBuffer = nullptr;
 	Ref<IndexBuffer> Renderer2D::s_indexBuffer = nullptr;
-	Ref<ConstantBuffer> Renderer2D::s_constantBuffer = nullptr;
 	Ref<Material> Renderer2D::s_material = nullptr;
 	bool Renderer2D::s_done = false;
 	bool Renderer2D::s_initialized = false;
@@ -24,14 +26,13 @@ namespace Axion {
 			{ -0.5f, -0.5f, 0, 0,0,1,  0,1 }, // BL  (3)
 		};
 		
-		std::vector<uint32_t> indices = {
+		std::vector<uint32_t> indices1 = {
 			0, 1, 2,  // First triangle
 			0, 2, 3   // Second triangle
 		};
 		
 		s_vertexBuffer = VertexBuffer::create(vertices);
-		s_indexBuffer = IndexBuffer::create(indices);
-		s_constantBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
+		s_indexBuffer = IndexBuffer::create(indices1);
 
 		s_initialized = true;
 	}
@@ -39,9 +40,8 @@ namespace Axion {
 	void Renderer2D::shutdown() {
 		s_vertexBuffer->release();
 		s_indexBuffer->release();
-		s_constantBuffer->release();
 		s_material->release();
-
+		
 		s_initialized = false;
 	}
 
@@ -58,10 +58,10 @@ namespace Axion {
 	}
 
 	void Renderer2D::endScene() {
-		// nothing special - no batching
+
 	}
 
-	void Renderer2D::drawQuad(const Vec2& position, const Vec2& size, const Vec4& color) {
+	void Renderer2D::drawQuad(const Vec2& position, const Vec2& size, const Vec4& color, const Ref<ConstantBuffer>& cb) {
 		if (!s_initialized) return;
 		if (!s_done) return;
 
@@ -73,15 +73,50 @@ namespace Axion {
 		);
 
 		ObjectBuffer buffer;
-		buffer.color = s_material->getColor().toFloat4();
+		buffer.color = color.toFloat4();
 		buffer.modelMatrix = transform.transposed().toXM();
 
-		s_constantBuffer->update(&buffer, sizeof(ObjectBuffer));
-		s_constantBuffer->bind(1);
+		cb->update(&buffer, sizeof(ObjectBuffer));
+		cb->bind(1);
 
 		s_vertexBuffer->bind();
 		s_indexBuffer->bind();
 		RenderCommand::drawIndexed(s_vertexBuffer, s_indexBuffer);
+	}
+
+	void Renderer2D::drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Ref<ConstantBuffer>& cb, const Vec4& tint) {
+		if (!s_initialized) return;
+		if (!s_done) return;
+		
+		s_material->use();
+		Mat4 transform = Mat4::TRS(
+			Vec3(position.x, position.y, 0),
+			Vec3(0.0f, 0.0f, 0.0f),
+			Vec3(size.x, size.y, 1.0f)
+		);
+
+		ObjectBuffer buffer;
+		buffer.color = tint.toFloat4();
+		buffer.modelMatrix = transform.transposed().toXM();
+
+		cb->update(&buffer, sizeof(ObjectBuffer));
+		cb->bind(1);
+
+		texture->bind();
+
+		s_vertexBuffer->bind();
+		s_indexBuffer->bind();
+		RenderCommand::drawIndexed(s_vertexBuffer, s_indexBuffer);
+	}
+
+	Ref<Texture2D> Renderer2D::loadWhiteTextureFallback() {
+		Ref<Texture2D> tex = Texture2D::create("AxionStudio\\Projects\\ExampleProject\\Assets\\white.png");
+		if (!tex) {
+			AX_CORE_LOG_WARN("Unable loading a white fallback texture for the renderer2d");
+			return nullptr;
+		}
+		return tex;
+		
 	}
 
 }

@@ -103,7 +103,7 @@ namespace Axion {
 	}
 
 	void Renderer::endScene() {
-		// Does nothing for now
+		Renderer2D::endScene();
 	}
 
 	void Renderer::setClearColor(const Vec4& color) {

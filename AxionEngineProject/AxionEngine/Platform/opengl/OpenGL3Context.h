@@ -28,6 +28,7 @@ namespace Axion {
 		void deactivateVsync() override;
 
 		void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) override;
+		void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount) override;
 
 		std::string getGpuName() const override;
 		std::string getGpuDriverVersion() const override;

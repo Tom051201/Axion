@@ -13,6 +13,7 @@ namespace Axion {
 		static void clear();
 
 		static void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib);
+		static void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount);
 
 		static void resetRenderStats();
 		static uint32_t getDrawCallCount() { return s_drawCallCount; }

@@ -119,6 +119,11 @@ namespace Axion {
 		glDrawElements(GL_TRIANGLES, ib->getIndexCount(), GL_UNSIGNED_INT, nullptr);
 	}
 
+	void OpenGL3Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount) {
+		// TODO: Add this function
+		AX_CORE_ASSERT(false, "Add this function");
+	}
+
 	void OpenGL3Context::activateVsync() {
 		if (wglSwapIntervalEXT) wglSwapIntervalEXT(1);
 	}

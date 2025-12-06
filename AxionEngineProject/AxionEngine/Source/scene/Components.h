@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Material.h"
+#include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
 
@@ -111,4 +112,16 @@ namespace Axion {
 		AudioComponent(const Ref<AudioSource>& source) : audio(source), isListener(false), isSource(true) {}
 		AudioComponent(bool isListener, bool isSource) : audio(), isListener(isListener), isSource(isSource) {}
 	};
+
+
+
+	struct SpriteComponent {
+		Ref<Texture2D> texture = nullptr;
+		Vec4 tint = Vec4::one();
+
+		SpriteComponent() = default;
+		SpriteComponent(const SpriteComponent&) = default;
+		SpriteComponent(const Ref<Texture2D>& tex, const Vec4& tint) : texture(tex), tint(tint) {}
+	};
+
 }

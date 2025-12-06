@@ -21,6 +21,11 @@ namespace Axion {
 		GraphicsContext::get()->drawIndexed(vb, ib);
 	}
 
+	void RenderCommand::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount) {
+		s_drawCallCount++;
+		GraphicsContext::get()->drawIndexed(ib, indexCount);
+	}
+
 	void RenderCommand::resetRenderStats() {
 		s_drawCallCount = 0;
 	}

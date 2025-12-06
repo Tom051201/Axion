@@ -23,19 +23,20 @@ namespace Axion {
 		static void beginScene(const Camera& camera);
 		static void endScene();
 
-		static void drawQuad(const Vec2& position, const Vec2& size, const Vec4& color);
+		static void drawQuad(const Vec2& position, const Vec2& size, const Vec4& color, const Ref<ConstantBuffer>& cb);
+		static void drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Ref<ConstantBuffer>& cb, const Vec4& tint = Vec4::one());
 
 	private:
 
 		static Ref<VertexBuffer> s_vertexBuffer;
 		static Ref<IndexBuffer> s_indexBuffer;
-
 		static Ref<Material> s_material;
-		static Ref<ConstantBuffer> s_constantBuffer;
 
 		static bool s_done;
 
 		static bool s_initialized;
+
+		static Ref<Texture2D> loadWhiteTextureFallback();
 
 	};
 

@@ -9,9 +9,12 @@ cbuffer ObjectBuffer : register(b1) {
 	float4x4 u_modelMatrix;
 };
 
+Texture2D u_texture : register(t0);
+SamplerState u_sampler : register(s0);
+
 struct VSInput {
 	float3 pos		: POSITION;
-	float3 normal	: NORMAL;
+	float4 normal	: NORMAL;
 	float2 uv		: TEXCOORD;
 };
 
@@ -35,6 +38,7 @@ PSInput VSMain(VSInput input) {
 	return output;
 }
 
-float4 PSMain(PSInput input) : SV_TARGET {
-	return input.color;
+float4 PSMain(PSInput input) : SV_TARGET{
+	float4 texColor = u_texture.Sample(u_sampler, input.uv);
+	return texColor * input.color;
 }
