@@ -46,6 +46,7 @@ namespace Axion {
 		m_audioImportModal		= m_modalManager.addModal<AudioImportModal>("AudioImportModal");
 		m_shaderImportModal		= m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
 		m_materialImportModal	= m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
+		m_tex2dImportModal =	m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
 
 
 		// ----- Setup framebuffer for scene viewport -----
@@ -100,7 +101,7 @@ namespace Axion {
 				case Axion::SceneState::Editing: {
 					if (m_cameraState == CameraState::Perspective) { m_activeScene->onUpdate(ts, m_editorCamera3D); }
 					else { m_activeScene->onUpdate(ts, m_editorCamera2D); }
-					
+
 					break;
 				}
 				case Axion::SceneState::Playing: {
@@ -464,6 +465,7 @@ namespace Axion {
 				ImGui::Separator();
 				if (ImGui::BeginMenu("Import##_menu")) {
 					if (ImGui::MenuItem("Mesh")) { m_meshImportModal->open(); }
+					if (ImGui::MenuItem("2D Texture")) { m_tex2dImportModal->open(); }
 					if (ImGui::MenuItem("Material")) { m_materialImportModal->open(); }
 					if (ImGui::MenuItem("Skybox")) { m_skyboxImportModal->open(); }
 					if (ImGui::MenuItem("Shader")) { m_shaderImportModal->open(); }

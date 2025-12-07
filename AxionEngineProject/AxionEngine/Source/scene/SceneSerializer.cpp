@@ -51,6 +51,22 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
+		// -- SpriteComponent --
+		if (entity.hasComponent<SpriteComponent>()) {
+			out << YAML::Key << "SpriteComponent";
+			out << YAML::BeginMap;
+			auto& sprite = entity.getComponent<SpriteComponent>();
+			if (sprite.texture.isValid()) {
+				std::string relativeSpritePath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Texture2D>(sprite.texture));
+				out << YAML::Key << "Path" << YAML::Value << relativeSpritePath;
+			}
+			else {
+				out << YAML::Key << "Path" << YAML::Value << "None";
+			}
+			out << YAML::Key << "Tint" << YAML::Value << sprite.tint;
+			out << YAML::EndMap;
+		}
+
 		// -- MaterialComponent --
 		if (entity.hasComponent<MaterialComponent>()) {
 			out << YAML::Key << "MaterialComponent";
@@ -197,6 +213,21 @@ namespace Axion {
 					} else {
 						mc.handle = AssetHandle<Mesh>();
 					}
+				}
+
+				auto spriteComponent = entity["SpriteComponent"];
+				if (spriteComponent) {
+					auto& sc = deserializedEntity.addComponent<SpriteComponent>();
+					std::string relPath = spriteComponent["Path"].as<std::string>();
+					if (relPath != "None") {
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+						sc.texture = handle;
+					}
+					else {
+						sc.texture = AssetHandle<Texture2D>();
+					}
+					sc.tint = spriteComponent["Tint"].as<Vec4>();
 				}
 
 				// -- MaterialComponent --

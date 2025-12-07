@@ -11,10 +11,7 @@
 
 namespace Axion {
 
-	Scene::Scene() {
-		m_tex = Texture2D::create("AxionStudio\\Projects\\ExampleProject\\Assets\\logo.png");
-	
-	}
+	Scene::Scene() {}
 
 	Scene::~Scene() {
 		release();
@@ -162,12 +159,12 @@ namespace Axion {
 				auto& sprite = spriteGroup.get<SpriteComponent>(entity);
 				auto& cb = spriteGroup.get<ConstantBufferComponent>(entity);
 				
-				if (cb.uploadBuffer != nullptr) { // Check for sprite also
-					if (sprite.texture != nullptr) {
+				if (cb.uploadBuffer != nullptr) {
+					if (sprite.texture.isValid()) {
 						Renderer2D::drawQuad(
 							{ transform.position.x, transform.position.y },
 							{ transform.scale.x, transform.scale.y },
-							sprite.texture,
+							AssetManager::get<Texture2D>(sprite.texture),
 							cb.uploadBuffer,
 							sprite.tint
 						);

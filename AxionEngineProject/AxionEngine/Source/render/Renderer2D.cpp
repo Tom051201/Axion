@@ -109,14 +109,4 @@ namespace Axion {
 		RenderCommand::drawIndexed(s_vertexBuffer, s_indexBuffer);
 	}
 
-	Ref<Texture2D> Renderer2D::loadWhiteTextureFallback() {
-		Ref<Texture2D> tex = Texture2D::create("AxionStudio\\Projects\\ExampleProject\\Assets\\white.png");
-		if (!tex) {
-			AX_CORE_LOG_WARN("Unable loading a white fallback texture for the renderer2d");
-			return nullptr;
-		}
-		return tex;
-		
-	}
-
 }

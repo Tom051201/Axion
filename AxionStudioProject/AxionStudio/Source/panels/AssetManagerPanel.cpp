@@ -33,6 +33,14 @@ namespace Axion {
 		});
 
 
+		// -- Texture2D --
+		ImGui::SeparatorText("");
+		drawAssetInfo<Texture2D>("Texture2D", [](Ref<Texture2D> tex) {
+			ImGui::Text("Width: %u", tex->getWidth());
+			ImGui::Text("Height: %u", tex->getHeight());
+		});
+
+
 		// -- Material Assets --
 		ImGui::SeparatorText("");
 		drawAssetInfo<Material>("Material", [](Ref<Material> material) {

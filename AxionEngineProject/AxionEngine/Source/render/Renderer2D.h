@@ -36,8 +36,6 @@ namespace Axion {
 
 		static bool s_initialized;
 
-		static Ref<Texture2D> loadWhiteTextureFallback();
-
 	};
 
 }

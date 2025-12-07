@@ -27,6 +27,7 @@ namespace Axion {
 		release<Shader>();
 		release<Material>();
 		release<AudioClip>();
+		release<Texture2D>();
 		AX_CORE_LOG_INFO("AssetManager shutdown");
 	}
 
@@ -37,6 +38,7 @@ namespace Axion {
 			processLoadQueue<Skybox>();
 			processLoadQueue<Mesh>();
 			processLoadQueue<Shader>();
+			processLoadQueue<Texture2D>();
 
 		}
 	}
@@ -377,6 +379,37 @@ namespace Axion {
 		storage<AudioClip>().assets[handle] = clip;
 		//storage<AudioClip>().loadQueue.push_back({ handle, sourcePath });
 		storage<AudioClip>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
+	// ----- Texture2D Assets -----
+	template<>
+	AssetHandle<Texture2D> AssetManager::load<Texture2D>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Texture2D") {
+			AX_CORE_LOG_ERROR("Loading texture2d failed, file is not a texture2d asset file");
+			return {};
+		}
+
+		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<Texture2D> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<Texture2D>(handle)) {
+			return handle;
+		}
+
+		storage<Texture2D>().assets[handle] = nullptr;
+		storage<Texture2D>().loadQueue.push_back({ handle,
+			[sourcePath, handle]() {
+				return Texture2D::create(sourcePath);
+			}
+		});
+		storage<Texture2D>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}

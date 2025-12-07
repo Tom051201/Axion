@@ -116,12 +116,12 @@ namespace Axion {
 
 
 	struct SpriteComponent {
-		Ref<Texture2D> texture = nullptr;
+		AssetHandle<Texture2D> texture;
 		Vec4 tint = Vec4::one();
 
 		SpriteComponent() = default;
 		SpriteComponent(const SpriteComponent&) = default;
-		SpriteComponent(const Ref<Texture2D>& tex, const Vec4& tint) : texture(tex), tint(tint) {}
+		SpriteComponent(const AssetHandle<Texture2D>& tex, const Vec4& tint) : texture(tex), tint(tint) {}
 	};
 
 }

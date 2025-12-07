@@ -40,7 +40,10 @@ namespace Axion {
 		float m_maxZoom = 10.0f;
 
 		bool m_dragging = false;
-		Vec2 m_lastMousePosition;
+		Vec2 m_savedCursorPosition = { 0.0f, 0.0f };
+
+		float m_dragSpeed = 0.01f;
+		float m_keyboardSpeed = 5.0f;
 
 		bool m_hoveringSceneViewport = false;
 

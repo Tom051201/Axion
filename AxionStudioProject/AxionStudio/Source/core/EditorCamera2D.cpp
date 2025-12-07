@@ -2,6 +2,7 @@
 #include "EditorCamera2D.h"
 
 #include "AxionEngine/Source/input/Input.h"
+#include "AxionEngine/Source/core/Application.h"
 
 namespace Axion {
 
@@ -21,7 +22,7 @@ namespace Axion {
 	void EditorCamera2D::onUpdate(Timestep ts) {
 		if (!m_hoveringSceneViewport) return;
 
-		float speed = 3.0f * m_zoom;
+		float speed = m_keyboardSpeed / std::max(m_zoom, 0.0001f);
 
 		if (Input::isKeyPressed(KeyCode::W)) m_position.y += speed * ts;
 		if (Input::isKeyPressed(KeyCode::S)) m_position.y -= speed * ts;
@@ -62,17 +63,26 @@ namespace Axion {
 	}
 
 	bool EditorCamera2D::onMouseMoved(MouseMovedEvent& e) {
-		if (!m_hoveringSceneViewport) return false;
+		if (!m_dragging || !m_hoveringSceneViewport) return false;
 
-		Vec2 mouse{ e.getX(), e.getY() };
-		Vec2 delta = mouse - m_lastMousePosition;
+		auto& window = Application::get().getWindow();
+		float centerX = window.getWidth() * 0.5f;
+		float centerY = window.getHeight() * 0.5f;
 
-		if (m_dragging) {
-			m_position.x -= delta.x * m_zoom * 0.01f;
-			m_position.y += delta.y * m_zoom * 0.01f;
+		float deltaX = e.getX() - centerX;
+		float deltaY = centerY - e.getY();
+
+		if (deltaX != 0.0f || deltaY != 0.0f) {
+			float zoomFactor = std::log2(m_zoom + 1.0f);
+			float moveScale = 1.0f / std::max(zoomFactor, 0.1f);
+
+			m_position.x -= deltaX * moveScale * m_dragSpeed;
+			m_position.y -= deltaY * moveScale * m_dragSpeed;
+
+			auto& cursor = Application::get().getCursor();
+			cursor.centerInWindow();
 		}
 
-		m_lastMousePosition = mouse;
 		recalculateViewMatrix();
 		recalculateProjection();
 
@@ -80,18 +90,27 @@ namespace Axion {
 	}
 
 	bool EditorCamera2D::onMouseButtonPressed(MouseButtonPressedEvent& e) {
-		if ((e.getMouseButton() == MouseButton::Middle || e.getMouseButton() == MouseButton::Right) && m_hoveringSceneViewport) {
+		if (e.getMouseButton() == MouseButton::Right && m_hoveringSceneViewport && !m_dragging) {
 			m_dragging = true;
+
 			auto pos = Input::getMousePosition();
-			m_lastMousePosition = { pos.first, pos.second };
+			m_savedCursorPosition = { pos.first, pos.second };
+
+			auto& cursor = Application::get().getCursor();
+			cursor.hide();
+			cursor.centerInWindow();
 		}
 
 		return false;
 	}
 
 	bool EditorCamera2D::onMouseButtonReleased(MouseButtonReleasedEvent& e) {
-		if (e.getMouseButton() == MouseButton::Middle || e.getMouseButton() == MouseButton::Right) {
+		if (e.getMouseButton() == MouseButton::Right && m_dragging) {
 			m_dragging = false;
+
+			auto& cursor = Application::get().getCursor();
+			cursor.show();
+			cursor.setPositionInWindow((uint32_t)m_savedCursorPosition.x, (uint32_t)m_savedCursorPosition.y);
 		}
 
 		return false;
@@ -99,6 +118,11 @@ namespace Axion {
 
 	bool EditorCamera2D::onWindowResize(WindowResizeEvent& e) {
 		resize((float)e.getWidth(), (float)e.getHeight());
+
+		if (m_dragging) {
+			auto& cursor = Application::get().getCursor();
+			cursor.centerInWindow();
+		}
 
 		return false;
 	}

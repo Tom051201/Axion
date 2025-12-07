@@ -181,6 +181,7 @@ namespace Axion {
 		bool hasAll =
 			m_selectedEntity.hasComponent<TransformComponent>() &&
 			m_selectedEntity.hasComponent<MeshComponent>() &&
+			m_selectedEntity.hasComponent<SpriteComponent>() &&
 			m_selectedEntity.hasComponent<MaterialComponent>() &&
 			m_selectedEntity.hasComponent<ConstantBufferComponent>() &&
 			m_selectedEntity.hasComponent<CameraComponent>() &&
@@ -196,6 +197,7 @@ namespace Axion {
 
 			drawAddComponent<TransformComponent>("Transform");
 			drawAddComponent<MeshComponent>("Mesh");
+			drawAddComponent<SpriteComponent>("Sprite");
 			drawAddComponent<MaterialComponent>("Material");
 			drawAddComponent<ConstantBufferComponent>("Upload Buffer");
 			drawAddComponent<CameraComponent>("Camera");
@@ -318,6 +320,64 @@ namespace Axion {
 				}
 
 			}
+		});
+
+		// ----- SpriteComponent -----
+		drawComponentInfo<SpriteComponent>("Sprite", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<SpriteComponent>();
+			if (component.texture.isValid()) {
+				if (ImGui::BeginTable("SpriteTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					Ref<Texture2D> sprite = AssetManager::get<Texture2D>(component.texture);
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- UUID --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("UUID");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(component.texture.uuid.toString().c_str());
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.texture.invalidate();
+					}
+
+					ImGui::EndTable();
+				}
+			}
+			else {
+				// -- Load Button --
+				if (ImGui::Button("Open Texture2D...")) {
+					std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+					std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
+					if (!absPath.empty()) {
+						AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+						component.texture = handle;
+					}
+				}
+
+				// -- Drag drop on button --
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::string relPath = static_cast<const char*>(payload->Data);
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.find(".axtex") != std::string::npos) {
+							AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+							component.texture = handle;
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+			}
+
+			ImGui::ColorPicker4("##ColorPickerTint", component.tint.data());
+
 		});
 
 		// ----- MaterialComponent -----

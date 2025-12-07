@@ -70,9 +70,6 @@ namespace Axion {
 		friend class Entity;
 		friend class SceneSerializer;
 
-		// TODO: TEMP
-		Ref<Texture2D> m_tex;
-
 	};
 
 }
