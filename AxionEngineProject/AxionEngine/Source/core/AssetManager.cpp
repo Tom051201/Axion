@@ -9,6 +9,7 @@
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/Skybox.h"
+#include "AxionEngine/Source/scene/TileMap.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
@@ -23,6 +24,7 @@ namespace Axion {
 
 	void AssetManager::shutdown() {
 		release<Mesh>();
+		release<Tile>();
 		release<Skybox>();
 		release<Shader>();
 		release<Material>();
@@ -410,6 +412,37 @@ namespace Axion {
 			}
 		});
 		storage<Texture2D>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
+	template<>
+	AssetHandle<Tile> AssetManager::load<Tile>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Tile") {
+			AX_CORE_LOG_ERROR("Loading tile failed, file is not a tile asset file");
+			return {};
+		}
+
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<Tile> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<Tile>(handle)) {
+			return handle;
+		}
+
+		AssetHandle<Texture2D> textureHandle = load<Texture2D>(AssetManager::getAbsolute(data["Texture"].as<std::string>()));
+		bool isSolid = data["Solid"].as<bool>();
+		uint32_t mapID = data["MapID"].as<uint32_t>();
+
+		Ref<Tile> tile = std::make_shared<Tile>(textureHandle, isSolid);
+		TileManager::registerTile(mapID, handle);
+
+		storage<Tile>().assets[handle] = tile;
+		storage<Tile>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}

@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 #include "AxionEngine/Source/scene/Skybox.h"
+#include "AxionEngine/Source/scene/TileMap.h"
 
 #include "AxionEngine/Vendor/entt/entt.hpp"
 
@@ -63,6 +64,7 @@ namespace Axion {
 		std::vector<std::function<void()>> m_componentsPendingRemove;
 
 		AssetHandle<Skybox> m_skyboxHandle;
+		TileMap m_tileMap;
 
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();

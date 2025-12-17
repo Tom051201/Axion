@@ -135,6 +135,12 @@ namespace Axion {
 			}
 
 
+			// ----- Render TileMap -----
+			if (m_tileMap.isLoaded()) {
+				m_tileMap.onUpdate(ts, cam);
+			}
+
+
 			// ----- Render Meshes -----
 			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
 			for (auto entity : group) {

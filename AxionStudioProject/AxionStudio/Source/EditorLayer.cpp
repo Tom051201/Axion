@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/scene/TileMap.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
@@ -354,6 +355,11 @@ namespace Axion {
 						std::string absPath = AssetManager::getAbsolute(path);
 						AssetHandle<Skybox> handle = AssetManager::load<Skybox>(absPath);
 						SceneManager::getScene()->setSkybox(handle);
+					}
+					if (path.find(".axtile") != std::string::npos) {
+						// TODO: remove this, its only for debugging (or make it a proper feature)
+						std::string absPath = AssetManager::getAbsolute(path);
+						AssetManager::load<Tile>(absPath);
 					}
 				}
 				ImGui::EndDragDropTarget();
