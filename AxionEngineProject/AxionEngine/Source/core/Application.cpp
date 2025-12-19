@@ -32,6 +32,7 @@ namespace Axion {
 
 		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter, m_specification.guiLayoutFilePath);
 		pushOverlay(m_imGuiLayer);
+		activeVsync();
 	}
 
 	Application::~Application() {

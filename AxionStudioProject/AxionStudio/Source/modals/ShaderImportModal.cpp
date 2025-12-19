@@ -131,6 +131,15 @@ namespace Axion {
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::Combo("##Topology_combo", &m_topologyIndex, m_topologiesNames, IM_ARRAYSIZE(m_topologiesNames));
 
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Max Batch Textures");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputInt("##BatchTexturesCount_input", &m_batchTexturesCount);
+			if (m_batchTexturesCount < 1) m_batchTexturesCount = 1;
+
 
 			// -- Buffer layout --
 			ImGui::TableNextRow();
@@ -254,6 +263,7 @@ namespace Axion {
 				spec.sampleCount = m_sampleCount;
 				spec.cullMode = m_cullModes[m_cullModeIndex];
 				spec.topology = m_topologies[m_topologyIndex];
+				spec.batchTextures = m_batchTexturesCount;
 				BufferLayout layout(m_bufferElements);
 				spec.vertexLayout = layout;
 
@@ -288,6 +298,7 @@ namespace Axion {
 		m_sampleCount = 1;
 		m_cullModeIndex = 2;
 		m_topologyIndex = 3;
+		m_batchTexturesCount = 1;
 		m_bufferElements.clear();
 	}
 

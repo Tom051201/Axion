@@ -25,6 +25,7 @@ namespace Axion {
 	}
 
 	void D12CommandQueue::executeCommandList(ID3D12CommandList* cmdList) {
+		AX_CORE_ASSERT(cmdList != nullptr, "Null command list");
 		ID3D12CommandList* lists[] = { cmdList };
 		m_cmdQueue->ExecuteCommandLists(1, lists);
 	}

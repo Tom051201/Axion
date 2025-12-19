@@ -283,6 +283,7 @@ namespace Axion {
 		spec.sampleCount = specData["SampleCount"].as<uint32_t>();
 		spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
 		spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
+		spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
 		YAML::Node layoutData = specData["BufferLayout"];
 		if (layoutData && layoutData.IsSequence()) {
 			std::vector<BufferElement> elements;

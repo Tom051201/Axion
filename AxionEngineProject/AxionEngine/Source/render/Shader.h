@@ -47,6 +47,8 @@ namespace Axion {
 		CullMode cullMode = CullMode::Back;
 		PrimitiveTopology topology = PrimitiveTopology::TriangleList;
 
+		uint32_t batchTextures = 1;
+
 		BufferLayout vertexLayout;
 	};
 

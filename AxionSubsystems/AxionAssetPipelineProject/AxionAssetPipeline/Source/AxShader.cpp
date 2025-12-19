@@ -32,6 +32,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "SampleCount" << YAML::Value << data.spec.sampleCount;
 		out << YAML::Key << "CullMode" << YAML::Value << EnumUtils::toString(data.spec.cullMode);
 		out << YAML::Key << "Topology" << YAML::Value << EnumUtils::toString(data.spec.topology);
+		out << YAML::Key << "BatchTextures" << YAML::Value << data.spec.batchTextures;
 
 		out << YAML::Key << "BufferLayout" << YAML::Value << YAML::BeginSeq;
 		for (const auto& elem : data.spec.vertexLayout.getElements()) {

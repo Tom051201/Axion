@@ -45,6 +45,9 @@ namespace Axion {
 		void minimizeWindow();
 		void maximizeOrRestoreWindow();
 
+		void activeVsync() const { GraphicsContext::get()->activateVsync(); }
+		void deactiveVsync() const { GraphicsContext::get()->deactivateVsync(); }
+
 		static Application& get() { return *s_instance; }
 
 		Window& getWindow() { return *m_window; }

@@ -53,6 +53,8 @@ namespace Axion {
 		PrimitiveTopology m_topologies[5] = { PrimitiveTopology::PointList, PrimitiveTopology::LineList, PrimitiveTopology::LineStrip, PrimitiveTopology::TriangleList, PrimitiveTopology::TriangleStrip };
 		const char* m_topologiesNames[5] = { "Point List", "Line List", "Line Strip", "Triangle List", "Triangle Strip" };
 
+		int m_batchTexturesCount = 1;
+
 		std::vector<BufferElement> m_bufferElements;
 		const char* m_shaderDataTypeNames[10] = { "None", "Float", "Float2", "Float3", "Float4", "Int", "Int2", "Int3", "Int4", "Bool" };
 
