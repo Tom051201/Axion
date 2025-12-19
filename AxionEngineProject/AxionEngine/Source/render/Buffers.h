@@ -10,6 +10,16 @@ namespace Axion {
 	///// BufferElement ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
+	enum class BufferType {
+		Static,
+		Dynamic
+	};
+
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// BufferElement ////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
 	enum class ShaderDataType {
 		None = 0,
 		Float, Float2, Float3, Float4,
@@ -94,6 +104,7 @@ namespace Axion {
 		virtual uint32_t getSize() const = 0; // in bytes
 
 		virtual void update(const void* data, size_t size) = 0;
+		virtual void update(const void* data, size_t size, size_t offset) = 0;
 
 		static Ref<VertexBuffer> create(const std::vector<Vertex>& vertices);
 		static Ref<VertexBuffer> createDynamic(uint32_t size, uint32_t stride);
@@ -116,7 +127,11 @@ namespace Axion {
 
 		virtual uint32_t getIndexCount() const = 0;
 
+		virtual void update(const void* data, size_t size) = 0;
+		virtual void update(const void* data, size_t size, size_t offset) = 0;
+
 		static Ref<IndexBuffer> create(const std::vector<uint32_t>& indices);
+		static Ref<IndexBuffer> createDynamic(uint32_t maxIndices);
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +146,7 @@ namespace Axion {
 		virtual void release() = 0;
 
 		virtual void bind(uint32_t slot) const = 0;
+		virtual void bind(uint32_t slot, size_t offset) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual void update(const void* data, size_t size) = 0;

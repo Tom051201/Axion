@@ -11,6 +11,9 @@
 
 namespace Axion {
 
+	FrameTimer Renderer::s_frameTimer;
+	double Renderer::s_lastFrameTimeMs = 0.0;
+
 	struct alignas(16) SceneData {
 		// TODO: only upload one option! - ViewProjection OR View and Projection
 		DirectX::XMMATRIX view;
@@ -69,17 +72,19 @@ namespace Axion {
 	}
 
 	void Renderer::prepareRendering() {
+		s_frameTimer.begin();
 		GraphicsContext::get()->prepareRendering();
 
-		// create RenderingPreparedEvent
 		RenderingPreparedEvent ev;
 		s_rendererData->eventCallback(ev);
 	}
 
 	void Renderer::finishRendering() {
 		GraphicsContext::get()->finishRendering();
-		
-		// create RenderingFinishedEvent
+
+		s_frameTimer.end();
+		s_lastFrameTimeMs = s_frameTimer.getMilliseconds();
+
 		RenderingFinishedEvent ev;
 		s_rendererData->eventCallback(ev);
 	}

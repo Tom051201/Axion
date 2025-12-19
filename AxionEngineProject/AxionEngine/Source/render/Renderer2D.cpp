@@ -25,12 +25,12 @@ namespace Axion {
 			{  0.5f, -0.5f, 0, 0,0,1,  1,1 }, // BR  (2)
 			{ -0.5f, -0.5f, 0, 0,0,1,  0,1 }, // BL  (3)
 		};
-		
+
 		std::vector<uint32_t> indices1 = {
 			0, 1, 2,  // First triangle
 			0, 2, 3   // Second triangle
 		};
-		
+
 		s_vertexBuffer = VertexBuffer::create(vertices);
 		s_indexBuffer = IndexBuffer::create(indices1);
 
@@ -41,7 +41,7 @@ namespace Axion {
 		s_vertexBuffer->release();
 		s_indexBuffer->release();
 		s_material->release();
-		
+
 		s_initialized = false;
 	}
 
@@ -87,7 +87,7 @@ namespace Axion {
 	void Renderer2D::drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Ref<ConstantBuffer>& cb, const Vec4& tint) {
 		if (!s_initialized) return;
 		if (!s_done) return;
-		
+
 		s_material->use();
 		Mat4 transform = Mat4::TRS(
 			Vec3(position.x, position.y, 0),

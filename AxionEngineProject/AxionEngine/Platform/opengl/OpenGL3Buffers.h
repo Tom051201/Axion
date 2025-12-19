@@ -26,6 +26,7 @@ namespace Axion {
 		uint32_t getSize() const override { return m_size; }
 
 		void update(const void* data, size_t size) override;
+		void update(const void* data, size_t size, size_t offset) override;
 
 		uint32_t getRendererID() const { return m_rendererID; }
 
@@ -49,6 +50,7 @@ namespace Axion {
 	public:
 
 		OpenGL3IndexBuffer(const std::vector<uint32_t>& indices);
+		OpenGL3IndexBuffer(uint32_t maxIndices);
 		~OpenGL3IndexBuffer() override;
 
 		void release() override;
@@ -57,6 +59,9 @@ namespace Axion {
 		void unbind() const override;
 
 		uint32_t getIndexCount() const override { return m_indexCount; }
+
+		void update(const void* data, size_t size) override;
+		void update(const void* data, size_t size, size_t offset) override;
 
 		uint32_t getRendererID() const { return m_rendererID; }
 
@@ -83,6 +88,7 @@ namespace Axion {
 		void release() override;
 
 		void bind(uint32_t slot) const override;
+		void bind(uint32_t slot, size_t offset) const override;
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;

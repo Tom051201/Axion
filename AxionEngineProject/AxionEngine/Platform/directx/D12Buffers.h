@@ -27,14 +27,17 @@ namespace Axion {
 		uint32_t getSize() const override { return m_size; }
 
 		void update(const void* data, size_t size) override;
+		void update(const void* data, size_t size, size_t offset) override;
 
 		const D3D12_VERTEX_BUFFER_VIEW& getView() const { return m_view; }
 
 	private:
 
+		BufferType m_type;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_buffer;
 		D3D12_VERTEX_BUFFER_VIEW m_view;
 
+		uint8_t* m_mappedPtr;
 		uint32_t m_vertexCount = 0;
 		uint32_t m_size = 0;
 		uint32_t m_stride = sizeof(Vertex);
@@ -49,6 +52,7 @@ namespace Axion {
 	public:
 
 		D12IndexBuffer(const std::vector<uint32_t>& indices);
+		D12IndexBuffer(uint32_t maxIndices);
 		~D12IndexBuffer();
 
 		void release() override;
@@ -58,13 +62,18 @@ namespace Axion {
 
 		uint32_t getIndexCount() const override { return m_indexCount; }
 
+		void update(const void* data, size_t size) override;
+		void update(const void* data, size_t size, size_t offset) override;
+
 		const D3D12_INDEX_BUFFER_VIEW& getView() const { return m_view; }
 
 	private:
 
+		BufferType m_type;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_buffer;
 		D3D12_INDEX_BUFFER_VIEW m_view;
 
+		uint8_t* m_mappedPtr;
 		uint32_t m_indexCount = 0;
 
 	};
@@ -82,6 +91,7 @@ namespace Axion {
 		void release() override;
 
 		void bind(uint32_t slot) const override;
+		void bind(uint32_t slot, size_t offset) const override;
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;

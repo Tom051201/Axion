@@ -40,6 +40,11 @@ namespace Axion {
 		AX_CORE_ASSERT(false, "Updating opengl vertex buffer is not supported yet");
 	}
 
+	void OpenGL3VertexBuffer::update(const void* data, size_t size, size_t offset) {
+		// TODO: add function
+		AX_CORE_ASSERT(false, "Updating opengl vertex buffer is not supported yet");
+	}
+
 
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +57,11 @@ namespace Axion {
 		glGenBuffers(1, &m_rendererID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * m_indexCount, indices.data(), GL_STATIC_DRAW);
+	}
+
+	OpenGL3IndexBuffer::OpenGL3IndexBuffer(uint32_t maxIndices) {
+		// TODO: add function
+		AX_CORE_ASSERT(false, "creating opengl index buffer with maxIndides is not supported yet");
 	}
 
 	OpenGL3IndexBuffer::~OpenGL3IndexBuffer() {
@@ -69,6 +79,16 @@ namespace Axion {
 
 	void OpenGL3IndexBuffer::unbind() const {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+	void OpenGL3IndexBuffer::update(const void* data, size_t size) {
+		// TODO: add function
+		AX_CORE_ASSERT(false, "Updating opengl index buffer is not supported yet");
+	}
+
+	void OpenGL3IndexBuffer::update(const void* data, size_t size, size_t offset) {
+		// TODO: add function
+		AX_CORE_ASSERT(false, "Updating opengl index buffer is not supported yet");
 	}
 
 
@@ -101,6 +121,11 @@ namespace Axion {
 
 	void OpenGL3ConstantBuffer::bind(uint32_t slot) const {
 		glBindBufferBase(GL_UNIFORM_BUFFER, slot, m_rendererID);
+	}
+
+	void OpenGL3ConstantBuffer::bind(uint32_t slot, size_t offset) const {
+		// TODO: add function
+		AX_CORE_ASSERT(false, "Binding index buffer with offset is not supported yet");
 	}
 
 	void OpenGL3ConstantBuffer::unbind() const {

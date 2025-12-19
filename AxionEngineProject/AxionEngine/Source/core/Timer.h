@@ -38,4 +38,26 @@ namespace Axion {
 		bool m_stopped;
 	};
 
+	class FrameTimer {
+	public:
+
+		void begin() {
+			m_start = std::chrono::high_resolution_clock::now();
+		}
+
+		void end() {
+			m_end = std::chrono::high_resolution_clock::now();
+		}
+
+		double getMilliseconds() const {
+			return std::chrono::duration<double, std::milli>(m_end - m_start).count();
+		}
+
+	private:
+
+		std::chrono::high_resolution_clock::time_point m_start;
+		std::chrono::high_resolution_clock::time_point m_end;
+
+	};
+
 }

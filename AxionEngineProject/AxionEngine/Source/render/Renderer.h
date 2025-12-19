@@ -32,6 +32,7 @@ namespace Axion {
 
 		static void renderToSwapChain();
 		static const Ref<ConstantBuffer>& getSceneDataBuffer();
+		static double getFrameTimeMs() { return s_lastFrameTimeMs; }
 
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
@@ -41,6 +42,9 @@ namespace Axion {
 	private:
 		
 		static RendererAPI s_api;
+
+		static FrameTimer s_frameTimer;
+		static double s_lastFrameTimeMs;
 
 	};
 

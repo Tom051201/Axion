@@ -91,6 +91,7 @@ namespace Axion {
 		auto* cmdList = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
 		cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 		cmdList->SetPipelineState(m_pipelineState.Get());
+		cmdList->IASetPrimitiveTopology(D12Helpers::toD12Topology(m_specification.topology));
 	}
 
 

@@ -1,6 +1,7 @@
 #include "SystemInfoPanel.h"
 
 #include "AxionEngine/Source/render/GraphicsContext.h"
+#include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
@@ -31,6 +32,7 @@ namespace Axion {
 		if (ImGui::Begin("System Info")) {
 			const auto& info = m_systemInfo;
 
+			// ----- GPU -----
 			ImGui::SeparatorText("GPU");
 			ImGui::Columns(2, nullptr, false);
 
@@ -38,6 +40,7 @@ namespace Axion {
 			ImGui::Text("VRAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.vramMB);				ImGui::NextColumn();
 			ImGui::Text("Driver:");		ImGui::NextColumn();	ImGui::Text("%s", info.gpuDriverVersion.c_str());	ImGui::NextColumn();
 
+			// ----- CPU -----
 			ImGui::Columns(1);
 			ImGui::SeparatorText("CPU");
 			ImGui::Columns(2, nullptr, false);
@@ -45,7 +48,10 @@ namespace Axion {
 			ImGui::Text("CPU:");		ImGui::NextColumn();	ImGui::Text("%s", info.cpuName.c_str());			ImGui::NextColumn();
 			ImGui::Text("Cores:");		ImGui::NextColumn();	ImGui::Text("%u", info.cores);						ImGui::NextColumn();
 			ImGui::Text("RAM:");		ImGui::NextColumn();	ImGui::Text("%llu MB", info.totalRamMB);			ImGui::NextColumn();
+			ImGui::Text("Frame Time:");	ImGui::NextColumn();	ImGui::Text("%s ms", std::to_string(Renderer::getFrameTimeMs()).c_str());	ImGui::NextColumn();
+			ImGui::Text("FPS:");		ImGui::NextColumn();	ImGui::Text("%s FPS", std::to_string(1000.0 / Renderer::getFrameTimeMs()).c_str());	ImGui::NextColumn();
 
+			// ----- OS -----
 			ImGui::Columns(1);
 			ImGui::SeparatorText("Operating System");
 			ImGui::Columns(2, nullptr, false);

@@ -67,6 +67,18 @@ namespace Axion {
 
 	}
 
+	Ref<IndexBuffer> IndexBuffer::createDynamic(uint32_t maxIndices) {
+
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12IndexBuffer>(maxIndices); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3IndexBuffer>(maxIndices); }
+
+		}
+		return nullptr;
+	}
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// ConstatBuffer ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
