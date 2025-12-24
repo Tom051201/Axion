@@ -5,12 +5,12 @@ Panels:
   - Name: SceneHierarchyPanel
     Visible: true
   - Name: EditorCameraPanel
-    Visible: false
+    Visible: true
   - Name: ContentBrowserPanel
     Visible: true
     ThumbnailSize: 92
-    OnlyAssetFiles: false
-    ShowExtensions: true
+    OnlyAssetFiles: true
+    ShowExtensions: false
   - Name: ProjectPanel
     Visible: true
   - Name: SceneOverviewPanel

@@ -125,12 +125,6 @@ namespace Axion {
 		void drawGizmo();
 		void drawMenuBar();
 
-
-		// ----- WIN32 only -----
-		#if AX_WIN_USING_CUSTOM_TITLE_BAR
-		float m_lastTitleBarMenuX;
-		void drawCustomTitleBarWin32();
-		#endif
 	};
 
 }

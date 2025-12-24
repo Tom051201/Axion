@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
 
+
 #ifdef AX_DEBUG
 	#include "AxionEngine/Platform/directx/D12DebugLayer.h"
 #endif
@@ -90,6 +91,9 @@ namespace Axion {
 		CD3DX12_RECT scissor(0, 0, m_width, m_height);
 		getCommandList()->RSSetViewports(1, &viewport);
 		getCommandList()->RSSetScissorRects(1, &scissor);
+
+		ID3D12DescriptorHeap* heaps[] = { m_srvHeap.getHeap() };
+		cmd->SetDescriptorHeaps(1, heaps);
 	}
 
 	void D12Context::finishRendering() {
@@ -131,6 +135,30 @@ namespace Axion {
 
 	void D12Context::bindSwapChainRenderTarget() {
 		m_swapChain.setAsRenderTarget();
+	}
+
+	void D12Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
+		auto* device = m_device.getDevice();
+		auto* cmdList = m_commandList.getCommandList();
+
+		uint32_t batchStartOffset = m_srvHeap.allocateRange(16);
+		D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_srvHeap.getCpuHandle(batchStartOffset);
+
+		for (uint32_t i = 0; i < 16; i++) {
+			D3D12_CPU_DESCRIPTOR_HANDLE srcHandle;
+			if (i < count && textures[i]) {
+				srcHandle = m_srvHeap.getCpuHandle(static_cast<D12Texture2D*>(textures[i].get())->getSrvHeapIndex());
+			}
+			else {
+				srcHandle = m_srvHeap.getCpuHandle(static_cast<D12Texture2D*>(textures[0].get())->getSrvHeapIndex());
+			}
+
+			device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			destHandle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		}
+
+		auto gpuHandle = m_srvHeap.getGpuHandle(batchStartOffset);
+		cmdList->SetGraphicsRootDescriptorTable(rootIndex, gpuHandle);
 	}
 
 	void D12Context::resize(uint32_t width, uint32_t height) {

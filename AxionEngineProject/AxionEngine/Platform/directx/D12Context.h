@@ -10,6 +10,7 @@
 #include "AxionEngine/Platform/directx/D12CommandList.h"
 #include "AxionEngine/Platform/directx/D12Fence.h"
 #include "AxionEngine/Platform/directx/D12DescriptorHeaps.h"
+#include "AxionEngine/Platform/directx/D12Texture.h"
 
 namespace Axion {
 
@@ -30,6 +31,7 @@ namespace Axion {
 		void clear() override;
 
 		void bindSwapChainRenderTarget() override;
+		void bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count);
 
 		void resize(uint32_t width, uint32_t height) override;
 
