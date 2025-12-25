@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
+#include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 
 #include "AxionEngine/Platform/directx/D12Context.h"
@@ -54,17 +55,19 @@ namespace Axion {
 
 		// setup renderer
 		Renderer2D::initialize();
+		Renderer3D::initialize();
 
 		AX_CORE_LOG_INFO("Renderer initialized");
 	}
 
-	void Renderer::release() {
+	void Renderer::shutdown() {
 		delete s_sceneData;
 		s_sceneUploadBuffer->release();
 
 		// TODO: why are there live obj when doing this???
 		// delete s_rendererData;
 
+		Renderer3D::shutdown();
 		Renderer2D::shutdown();
 
 		//GraphicsContext::get()->shutdown();	calling this here causes a crash on app termination!!!

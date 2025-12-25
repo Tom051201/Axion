@@ -1,5 +1,7 @@
 #include "WindowsTitleBar.h"
 
+#if AX_WIN_USING_CUSTOM_TITLE_BAR
+
 #include <Windows.h>
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
@@ -54,3 +56,5 @@ namespace Axion {
 	}
 
 }
+
+#endif

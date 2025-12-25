@@ -266,7 +266,7 @@ namespace Axion {
 					ImGui::Text("UUID");
 					ImGui::Separator();
 					ImGui::TableSetColumnIndex(1);
-					ImGui::Text(AssetManager::get<Mesh>(component.handle)->getHandle().uuid.toString().c_str());
+					ImGui::Text(component.handle.uuid.toString().c_str());
 
 					// -- Vertices --
 					ImGui::TableNextRow();

@@ -7,11 +7,11 @@
 namespace Axion {
 
 	void Renderer3D::initialize() {
-
+		AX_CORE_LOG_TRACE("Renderer3D initialized");
 	}
 
 	void Renderer3D::shutdown() {
-
+		AX_CORE_LOG_TRACE("Renderer3D shutdown");
 	}
 
 	void Renderer3D::beginScene(const Camera& cam) {

@@ -37,10 +37,10 @@ namespace Axion {
 
 	Application::~Application() {
 		removeOverlay(m_imGuiLayer);
-		Renderer::release();
+		Renderer::shutdown();
 
-		ProjectManager::release();
-		SceneManager::release();
+		ProjectManager::shutdown();
+		SceneManager::shutdown();
 		AssetManager::shutdown();
 		AudioManager::shutdown();
 	}
@@ -151,7 +151,7 @@ namespace Axion {
 	void Application::setGraphicsBackend(RendererAPI api) {
 		
 		// shutting down and releasing
-		Renderer::release();
+		Renderer::shutdown();
 
 		for (Layer* layer : m_layerStack) {
 			layer->onDetach();

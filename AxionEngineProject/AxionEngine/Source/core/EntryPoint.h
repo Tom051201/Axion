@@ -7,7 +7,7 @@ extern Axion::Application* Axion::createApplication();
 
 namespace Axion {
 	inline int EngineMain(int argc, char** argv) {
-		Axion::Log::init();
+		Axion::Log::initialize();
 
 		auto app = Axion::createApplication();
 		app->run();

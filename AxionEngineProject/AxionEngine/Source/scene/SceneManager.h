@@ -12,7 +12,7 @@ namespace Axion {
 	public:
 
 		static void initialize(std::function<void(Event&)> eventCallback);
-		static void release();
+		static void shutdown();
 		static void onEvent(Event& e);
 
 		static void newScene();

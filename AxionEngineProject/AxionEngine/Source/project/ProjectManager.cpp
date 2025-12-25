@@ -89,7 +89,7 @@ namespace Axion {
 		};
 	}
 
-	void ProjectManager::release() {
+	void ProjectManager::shutdown() {
 		delete s_managerData;
 	}
 

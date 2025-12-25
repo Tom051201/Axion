@@ -11,7 +11,6 @@ namespace Axion::AAP {
 		std::string audioFilePath;
 		std::string fileFormat;
 		AudioClip::Mode mode;
-		// TODO: Format
 	};
 
 	class AudioParser {

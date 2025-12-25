@@ -10,7 +10,7 @@ namespace Axion {
 	class Log {
 	public:
 
-		static void init();
+		static void initialize();
 
 		inline static std::shared_ptr<spdlog::logger>& getCoreLogger() { return s_coreLogger; }
 		inline static std::shared_ptr<spdlog::logger>& getClientLogger() { return s_clientLogger; }

@@ -35,6 +35,8 @@ namespace Axion {
 		s_indexBuffer = IndexBuffer::create(indices1);
 
 		s_initialized = true;
+
+		AX_CORE_LOG_TRACE("Renderer2D initialized");
 	}
 
 	void Renderer2D::shutdown() {
@@ -43,6 +45,8 @@ namespace Axion {
 		s_material->release();
 
 		s_initialized = false;
+
+		AX_CORE_LOG_TRACE("Renderer2D shutdown");
 	}
 
 	void Renderer2D::onEvent(Event& e) {

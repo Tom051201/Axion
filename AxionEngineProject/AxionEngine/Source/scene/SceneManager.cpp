@@ -90,7 +90,7 @@ namespace Axion {
 		};
 	}
 
-	void SceneManager::release() {
+	void SceneManager::shutdown() {
 		s_managerData->scene->release();
 		delete s_managerData;
 	}

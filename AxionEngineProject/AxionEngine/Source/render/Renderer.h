@@ -18,7 +18,7 @@ namespace Axion {
 	public:
 
 		static void initialize(Window* window, std::function<void(Event&)> eventCallback);
-		static void release();
+		static void shutdown();
 
 		static void prepareRendering();
 		static void finishRendering();
