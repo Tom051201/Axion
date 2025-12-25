@@ -12,6 +12,7 @@ namespace Axion {
 	public:
 
 		OpenGL3VertexBuffer(const std::vector<Vertex>& vertices);
+		OpenGL3VertexBuffer(uint32_t size, uint32_t stride);
 		~OpenGL3VertexBuffer() override;
 
 		void release() override;
@@ -32,10 +33,12 @@ namespace Axion {
 
 	private:
 
+		BufferType m_type;
 		uint32_t m_rendererID = 0;
 
 		uint32_t m_vertexCount = 0;
 		uint32_t m_size = 0;
+		uint32_t m_stride = sizeof(Vertex);
 		BufferLayout m_layout;
 
 	};
@@ -67,6 +70,7 @@ namespace Axion {
 
 	private:
 
+		BufferType m_type;
 		uint32_t m_rendererID = 0;
 
 		uint32_t m_indexCount = 0;

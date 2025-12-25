@@ -9,13 +9,27 @@ namespace Axion {
 	///// OpenGL3VertexBuffer //////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
+	// Static constructor
 	OpenGL3VertexBuffer::OpenGL3VertexBuffer(const std::vector<Vertex>& vertices) {
+		m_type = BufferType::Static;
 		m_vertexCount = static_cast<uint32_t>(vertices.size());
-		m_size = sizeof(Vertex) * m_vertexCount;
+		m_size = m_vertexCount * sizeof(Vertex);
 
 		glGenBuffers(1, &m_rendererID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_rendererID);
 		glBufferData(GL_ARRAY_BUFFER, m_size, vertices.data(), GL_STATIC_DRAW);
+	}
+
+	// Dynamic constuctor
+	OpenGL3VertexBuffer::OpenGL3VertexBuffer(uint32_t size, uint32_t stride) {
+		m_type = BufferType::Dynamic;
+		m_vertexCount = 0;
+		m_size = size;
+		m_stride = stride;
+
+		glGenBuffers(1, &m_rendererID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererID);
+		glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
 	}
 
 	OpenGL3VertexBuffer::~OpenGL3VertexBuffer() {
@@ -23,6 +37,8 @@ namespace Axion {
 	}
 
 	void OpenGL3VertexBuffer::release() {
+		if (!m_rendererID) return;
+
 		glDeleteBuffers(1, &m_rendererID);
 		m_rendererID = 0;
 	}
@@ -36,13 +52,19 @@ namespace Axion {
 	}
 
 	void OpenGL3VertexBuffer::update(const void* data, size_t size) {
-		// TODO: add function
-		AX_CORE_ASSERT(false, "Updating opengl vertex buffer is not supported yet");
+		AX_CORE_ASSERT(m_type == BufferType::Dynamic, "Updating a static OpenGL vertex buffer");
+		AX_CORE_ASSERT(size <= m_size, "OpenGL vertex buffer overflow");
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererID);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 	}
 
 	void OpenGL3VertexBuffer::update(const void* data, size_t size, size_t offset) {
-		// TODO: add function
-		AX_CORE_ASSERT(false, "Updating opengl vertex buffer is not supported yet");
+		AX_CORE_ASSERT(m_type == BufferType::Dynamic, "Updating a static OpenGL vertex buffer");
+		AX_CORE_ASSERT(offset + size <= m_size, "OpenGL vertex buffer overflow");
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_rendererID);
+		glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 	}
 
 
@@ -51,17 +73,23 @@ namespace Axion {
 	///// OpenGL3IndexBuffer ///////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
+	// Static constructor
 	OpenGL3IndexBuffer::OpenGL3IndexBuffer(const std::vector<uint32_t>& indices) {
+		m_type = BufferType::Static;
 		m_indexCount = static_cast<uint32_t>(indices.size());
 
 		glGenBuffers(1, &m_rendererID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * m_indexCount, indices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexCount * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
 	}
 
 	OpenGL3IndexBuffer::OpenGL3IndexBuffer(uint32_t maxIndices) {
-		// TODO: add function
-		AX_CORE_ASSERT(false, "creating opengl index buffer with maxIndides is not supported yet");
+		m_type = BufferType::Dynamic;
+		m_indexCount = 0;
+
+		glGenBuffers(1, &m_rendererID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxIndices * sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
 	}
 
 	OpenGL3IndexBuffer::~OpenGL3IndexBuffer() {
@@ -69,6 +97,8 @@ namespace Axion {
 	}
 
 	void OpenGL3IndexBuffer::release() {
+		if (!m_rendererID) return;
+
 		glDeleteBuffers(1, &m_rendererID);
 		m_rendererID = 0;
 	}
@@ -82,13 +112,13 @@ namespace Axion {
 	}
 
 	void OpenGL3IndexBuffer::update(const void* data, size_t size) {
-		// TODO: add function
-		AX_CORE_ASSERT(false, "Updating opengl index buffer is not supported yet");
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, data);
 	}
 
 	void OpenGL3IndexBuffer::update(const void* data, size_t size, size_t offset) {
-		// TODO: add function
-		AX_CORE_ASSERT(false, "Updating opengl index buffer is not supported yet");
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
 	}
 
 
@@ -97,8 +127,11 @@ namespace Axion {
 	///// OpenGL3ConstantBuffer ////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	OpenGL3ConstantBuffer::OpenGL3ConstantBuffer(size_t size)
-		: m_size(static_cast<uint32_t>(size)) {
+	OpenGL3ConstantBuffer::OpenGL3ConstantBuffer(size_t size) {
+		GLint alignment = 0;
+		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
+
+		m_size = static_cast<uint32_t>((size + alignment - 1) & ~(alignment - 1));
 
 		glGenBuffers(1, &m_rendererID);
 		glBindBuffer(GL_UNIFORM_BUFFER, m_rendererID);
@@ -110,11 +143,15 @@ namespace Axion {
 	}
 
 	void OpenGL3ConstantBuffer::release() {
+		if (!m_rendererID) return;
+
 		glDeleteBuffers(1, &m_rendererID);
 		m_rendererID = 0;
 	}
 
 	void OpenGL3ConstantBuffer::update(const void* data, size_t size) {
+		AX_CORE_ASSERT(size <= m_size, "OpenGL constant buffer overflow");
+
 		glBindBuffer(GL_UNIFORM_BUFFER, m_rendererID);
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
 	}
@@ -124,8 +161,9 @@ namespace Axion {
 	}
 
 	void OpenGL3ConstantBuffer::bind(uint32_t slot, size_t offset) const {
-		// TODO: add function
-		AX_CORE_ASSERT(false, "Binding index buffer with offset is not supported yet");
+		AX_CORE_ASSERT(offset + 256 <= m_size, "OpenGL constant buffer bounds check failed");
+
+		glBindBufferRange(GL_UNIFORM_BUFFER, slot, m_rendererID, offset, m_size - offset);
 	}
 
 	void OpenGL3ConstantBuffer::unbind() const {
