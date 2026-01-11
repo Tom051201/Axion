@@ -13,7 +13,7 @@
 
 // -- Windows only --
 #if AX_WIN_USING_CUSTOM_TITLE_BAR
-#include "AxionStudio/Platform/windows/WindowsTitleBar.h"
+#include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"
 #endif
 
 namespace Axion {
