@@ -23,7 +23,12 @@ namespace Axion {
 
 
 	Application* createApplication() {
+		WindowProperties windowProperties;
+		windowProperties.title = "Axion Studio";
+		windowProperties.dragAcceptFiles = true;
+
 		ApplicationSpecification spec;
+		spec.windowProperties = windowProperties;
 		spec.guiLayoutFilePath = "AxionStudio/Config/Layout.ini";
 		spec.guiSyleSetter = []() {
 			ImGuiStyle& style = ImGui::GetStyle();

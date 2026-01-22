@@ -71,8 +71,7 @@ namespace Axion {
 
 
 		// ----- Setup application -----
-		Application::get().setWindowTitle("Axion Studio");
-		Application::get().setWindowIcon("AxionStudio/Resources/logo.ico");
+		Application::get().setWindowIcon("AxionStudio/Resources/logo.ico"); // TODO: move to windowproperties and do also on creation instantly
 
 
 		// ----- Load editor state from file -----
@@ -128,6 +127,7 @@ namespace Axion {
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 		dispatcher.dispatch<RenderingFinishedEvent>(AX_BIND_EVENT_FN(EditorLayer::onRenderingFinished));
 		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(EditorLayer::onSceneChanged));
+		dispatcher.dispatch<FileDropEvent>(AX_BIND_EVENT_FN(EditorLayer::onFileDrop));
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -219,6 +219,30 @@ namespace Axion {
 	bool EditorLayer::onSceneChanged(SceneChangedEvent& e) {
 		m_activeScene = SceneManager::getScene();
 		return false;
+	}
+	
+	bool EditorLayer::onFileDrop(FileDropEvent& e) {
+		if (e.getPaths().empty() || !m_editorCamera3D.isHoveringSceneViewport()) { // TODO: set cursor when not droppable
+			return false;
+		}
+
+		const auto& paths = e.getPaths();
+		const auto& path = paths[0];
+		std::string ext = path.extension().string();
+
+		if (ext == ".obj") {
+			m_meshImportModal->presetFromFile(path);
+			m_meshImportModal->open();
+		}
+		else if (ext == ".mp3" || ext == ".wav") {
+			m_audioImportModal->presetFromFile(path);
+			m_audioImportModal->open();
+		}
+		else {
+			AX_CORE_LOG_WARN("Unsupported dropped file: {}", path.string());
+		}
+
+		return true;
 	}
 
 	void EditorLayer::drawNewProjectWindow() {

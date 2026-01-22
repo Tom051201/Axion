@@ -2,6 +2,8 @@
 
 #include "AxionEngine/Source/events/Event.h"
 
+#include <filesystem>
+
 namespace Axion {
 
 	class WindowResizeEvent : public Event {
@@ -85,6 +87,25 @@ namespace Axion {
 	private:
 
 		float m_winX, m_winY;
+
+	};
+
+
+
+	class FileDropEvent : public Event {
+	public:
+
+		explicit FileDropEvent(std::vector<std::filesystem::path>&& paths)
+			: m_paths(std::move(paths)) {}
+
+		inline const std::vector<std::filesystem::path>& getPaths() const { return m_paths; }
+
+		EVENT_CLASS_TYPE(FileDrop)
+		EVENT_CLASS_CATEGORY(EventCategoryApplication)
+
+	private:
+
+		std::vector<std::filesystem::path> m_paths;
 
 	};
 

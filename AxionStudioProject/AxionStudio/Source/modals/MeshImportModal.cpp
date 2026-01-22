@@ -21,6 +21,31 @@ namespace Axion {
 		clearBuffers();
 	}
 
+	void MeshImportModal::presetFromFile(const std::filesystem::path& sourceFile) {
+		clearBuffers();
+
+		// -- Source Path --
+		std::string abs = sourceFile.string();
+		strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), abs.c_str());
+
+		// -- Default output folder --
+		auto meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
+		strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), meshDir.string().c_str());
+
+		// -- Default name --
+		std::string name = sourceFile.stem().string();
+		strcpy_s(m_nameBuffer, IM_ARRAYSIZE(m_nameBuffer), name.c_str());
+
+		// -- Type --
+		std::string typeStr = sourceFile.extension().string();
+		if (typeStr == ".obj") {
+			m_importType = 0;
+		}
+		else {
+			AX_CORE_LOG_WARN("Unable to identify automatically type of mesh");
+		}
+	}
+
 	void MeshImportModal::renderContent() {
 		
 		ImGui::SeparatorText("Import Mesh Asset");

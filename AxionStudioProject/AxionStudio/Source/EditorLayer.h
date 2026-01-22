@@ -112,10 +112,11 @@ namespace Axion {
 		char m_newProjectDescription[128] = "";
 
 
-		// ----- Input functions -----
+		// ----- Event functions -----
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		bool onSceneChanged(SceneChangedEvent& e);
+		bool onFileDrop(FileDropEvent& e);
 
 
 		// ----- Helper functions -----

@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/audio/AudioManager.h"
 
 #include "AxionAssetPipeline/Source/AxAudio.h"
 
@@ -19,6 +20,45 @@ namespace Axion {
 	void AudioImportModal::close() {
 		Modal::close();
 		clearBuffers();
+	}
+
+	void AudioImportModal::presetFromFile(const std::filesystem::path& sourceFile) {
+		clearBuffers();
+
+		// -- Source Path --
+		std::string abs = sourceFile.string();
+		strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), abs.c_str());
+
+		// -- Default output folder --
+		auto audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
+		strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), audioDir.string().c_str());
+
+		// -- Default name --
+		std::string name = sourceFile.stem().string();
+		strcpy_s(m_nameBuffer, IM_ARRAYSIZE(m_nameBuffer), name.c_str());
+
+		// -- Load type --
+		AudioFileInfo fileInfo;
+		bool success = AudioManager::readAudioFileMetadata(sourceFile, fileInfo);
+		AudioClip::Mode mode = AudioClip::Mode::Stream;
+		if (success) {
+			mode = AudioManager::decideMode(fileInfo);
+			if (mode == AudioClip::Mode::Memory) {
+				m_loadType = 1;
+			}
+		}
+
+		// -- Format --
+		std::string formatStr = sourceFile.extension().string();
+		if (formatStr == ".mp3") {
+			m_importFormat = 0;
+		}
+		else if (formatStr == ".wav") {
+			m_importFormat = 1;
+		}
+		else {
+			AX_CORE_LOG_WARN("Unable to identify automatically format of audio");
+		}
 	}
 
 	void AudioImportModal::renderContent() {
@@ -38,6 +78,15 @@ namespace Axion {
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::InputText("##AudioName_input", m_nameBuffer, sizeof(m_nameBuffer));
+
+
+			// -- Format --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Format");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::Combo("##AudioFormat_combo", &m_importFormat, m_formatNames, IM_ARRAYSIZE(m_formatNames));
 
 
 			// -- Type --
@@ -112,6 +161,7 @@ namespace Axion {
 
 				AAP::AudioAssetData data;
 				data.name = m_nameBuffer;
+				data.fileFormat = m_formatNames[m_importFormat];
 				data.audioFilePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 				data.mode = m_types[m_loadType];
 
@@ -131,6 +181,7 @@ namespace Axion {
 		m_sourcePathBuffer[0] = '\0';
 		m_outputPathBuffer[0] = '\0';
 		m_loadType = 0;
+		m_importFormat = 0;
 	}
 
 }

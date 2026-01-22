@@ -15,4 +15,4 @@
 
 
 // ----- Win32 -----
-#define AX_WIN_USING_CUSTOM_TITLE_BAR 1
+#define AX_WIN_USING_CUSTOM_TITLE_BAR 0

@@ -43,6 +43,49 @@ namespace Axion {
 		ma_engine_listener_set_direction(&s_engine, listenerIndex, forward.x, forward.y, forward.z);
 	}
 
+	bool AudioManager::readAudioFileMetadata(const std::filesystem::path& path, AudioFileInfo& outInfo) {
+		outInfo.path = path;
+		outInfo.fileSizeBytes = std::filesystem::file_size(path);
+
+		ma_decoder decoder;
+		ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 0, 0);
+
+		if (ma_decoder_init_file(path.string().c_str(), &config, &decoder) != MA_SUCCESS) {
+			return false;
+		}
+
+		outInfo.channels = decoder.outputChannels;
+		outInfo.sampleRate = decoder.outputSampleRate;
+
+		ma_uint64 frameCount;
+		if (ma_decoder_get_length_in_pcm_frames(&decoder, &frameCount) == MA_SUCCESS) {
+			outInfo.durationSeconds = static_cast<float>(frameCount) / static_cast<float>(outInfo.sampleRate);
+		}
+
+		ma_decoder_uninit(&decoder);
+		return true;
+	}
+
+	AudioClip::Mode AudioManager::decideMode(const AudioFileInfo& fileInfo) {
+		if (fileInfo.durationSeconds >= 15.0f) {
+			AX_CORE_LOG_WARN("DURATION");
+			return AudioClip::Mode::Stream;
+		}
+
+		if (fileInfo.fileSizeBytes >= 2 * 1024 * 1024) {
+			AX_CORE_LOG_WARN("SIZE");
+			return AudioClip::Mode::Stream;
+		}
+
+		if (fileInfo.channels > 2) {
+			AX_CORE_LOG_WARN("CHANNELS");
+			return AudioClip::Mode::Stream;
+		}
+
+		AX_CORE_LOG_WARN("MEMORY");
+		return AudioClip::Mode::Memory;
+	}
+
 	ma_engine* AudioManager::getEngine() {
 		return &s_engine;
 	}

@@ -28,6 +28,7 @@ namespace Axion {
 		void setEventCallback(const EventCallbackFn& callback) override { m_data.eventCallback = callback; }
 		void setVSync(bool enabled) override { m_data.vsync = enabled; }
 		bool isVSync() const override { return m_data.vsync; }
+
 		void* getNativeHandle() const override { return m_hwnd; }
 
 		std::function<bool(int x, int y)> isDragZone = nullptr;

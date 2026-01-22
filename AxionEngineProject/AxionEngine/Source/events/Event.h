@@ -8,6 +8,7 @@ namespace Axion {
 	enum class EventType {
 		None = 0,
 		WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
+		FileDrop,
 		ApplicationTick, ApplicationUpdate, ApplicationRender,
 		KeyPressed, KeyReleased, KeyTyped,
 		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,

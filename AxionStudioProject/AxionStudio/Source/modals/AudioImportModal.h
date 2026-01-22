@@ -13,6 +13,8 @@ namespace Axion {
 
 		void close() override;
 
+		void presetFromFile(const std::filesystem::path& sourceFile);
+
 	private:
 
 		void renderContent() override;
@@ -22,6 +24,9 @@ namespace Axion {
 		char m_nameBuffer[128] = "";
 		char m_sourcePathBuffer[256] = "";
 		char m_outputPathBuffer[256] = "";
+
+		int m_importFormat = 0;
+		const char* m_formatNames[2] = { "MP3", "WAV" };
 
 		int m_loadType = 0;
 		AudioClip::Mode m_types[2] = { AudioClip::Mode::Stream, AudioClip::Mode::Memory };

@@ -16,7 +16,7 @@ namespace Axion {
 		: m_specification(spec) {
 		s_instance = this;
 
-		m_window = Scope<Window>(Window::create());
+		m_window = Scope<Window>(Window::create(spec.windowProperties));
 		m_window->setEventCallback(AX_BIND_EVENT_FN(Application::onEvent));
 		m_cursor = Scope<Cursor>(Cursor::create(m_window.get()));
 

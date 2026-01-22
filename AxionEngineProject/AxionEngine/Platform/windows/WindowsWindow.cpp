@@ -12,6 +12,8 @@
 
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
 
+#include <shellapi.h>
+
 // ----- Used for custom title bar -----
 #define WM_APP_MINIMIZE	(WM_APP + 1)
 #define WM_APP_MAXIMIZE	(WM_APP + 2)
@@ -79,6 +81,12 @@ namespace Axion {
 		if (!m_hwnd) { AX_CORE_LOG_ERROR("Failed to create window"); throw::std::runtime_error("Failed to create window"); }
 
 		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, (LONG_PTR)this);
+
+		// ----- Enable File dropping -----
+		if (wp.dragAcceptFiles) {
+			DragAcceptFiles(m_hwnd, TRUE);
+			AX_CORE_LOG_TRACE("Drag accept files enabled");
+		}
 
 		ShowWindow(m_hwnd, SW_SHOW);
 		AX_CORE_LOG_INFO("Created window '{0}' ({1}, {2})", wp.title, wp.width, wp.height);
@@ -346,6 +354,25 @@ namespace Axion {
 				// ----- Custom event for custom restoring -----
 				case WM_APP_RESTORE: {
 					ShowWindow(hwnd, SW_RESTORE);
+					break;
+				}
+				// ----- Accept file drops -----
+				case WM_DROPFILES: {
+					HDROP hDrop = (HDROP)wparam;
+
+					UINT fileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
+					std::vector<std::filesystem::path> files;
+
+					for (UINT i = 0; i < fileCount; i++) {
+						wchar_t path[MAX_PATH];
+						DragQueryFileW(hDrop, i, path, MAX_PATH);
+						files.emplace_back(path);
+					}
+
+					DragFinish(hDrop);
+
+					window->m_data.eventCallback(FileDropEvent(std::move(files)));
+
 					break;
 				}
 				default: { break; }

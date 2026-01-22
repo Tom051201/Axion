@@ -2,6 +2,8 @@
 
 #include "AxionStudio/Source/core/Modal.h"
 
+#include <filesystem>
+
 namespace Axion {
 
 	class MeshImportModal : public Modal {
@@ -11,6 +13,8 @@ namespace Axion {
 		~MeshImportModal() override;
 
 		void close() override;
+
+		void presetFromFile(const std::filesystem::path& sourceFile);
 
 	private:
 
