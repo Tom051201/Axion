@@ -68,21 +68,17 @@ namespace Axion {
 
 	AudioClip::Mode AudioManager::decideMode(const AudioFileInfo& fileInfo) {
 		if (fileInfo.durationSeconds >= 15.0f) {
-			AX_CORE_LOG_WARN("DURATION");
 			return AudioClip::Mode::Stream;
 		}
 
 		if (fileInfo.fileSizeBytes >= 2 * 1024 * 1024) {
-			AX_CORE_LOG_WARN("SIZE");
 			return AudioClip::Mode::Stream;
 		}
 
 		if (fileInfo.channels > 2) {
-			AX_CORE_LOG_WARN("CHANNELS");
 			return AudioClip::Mode::Stream;
 		}
 
-		AX_CORE_LOG_WARN("MEMORY");
 		return AudioClip::Mode::Memory;
 	}
 

@@ -70,10 +70,6 @@ namespace Axion {
 		ImGuizmo::SetOrthographic(false); // TODO maybe do orthographic
 
 
-		// ----- Setup application -----
-		Application::get().setWindowIcon("AxionStudio/Resources/logo.ico"); // TODO: move to windowproperties and do also on creation instantly
-
-
 		// ----- Load editor state from file -----
 		EditorStateSerializer stateSerializer("AxionStudio/Config/State.yaml");
 		stateSerializer.load(m_panelManager);

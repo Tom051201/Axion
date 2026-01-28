@@ -26,6 +26,7 @@ namespace Axion {
 		WindowProperties windowProperties;
 		windowProperties.title = "Axion Studio";
 		windowProperties.dragAcceptFiles = true;
+		windowProperties.iconFilePath = "AxionStudio/Resources/logo.ico";
 
 		ApplicationSpecification spec;
 		spec.windowProperties = windowProperties;

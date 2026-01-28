@@ -88,6 +88,11 @@ namespace Axion {
 			AX_CORE_LOG_TRACE("Drag accept files enabled");
 		}
 
+		// ----- Load icon -----
+		if (!wp.iconFilePath.empty()) {
+			setIcon(wp.iconFilePath);
+		}
+
 		ShowWindow(m_hwnd, SW_SHOW);
 		AX_CORE_LOG_INFO("Created window '{0}' ({1}, {2})", wp.title, wp.width, wp.height);
 	}

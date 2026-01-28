@@ -13,9 +13,10 @@ namespace Axion {
 		uint32_t width;
 		uint32_t height;
 		bool dragAcceptFiles;
+		std::string iconFilePath;
 
-		WindowProperties(const std::string& title = "Axion Engine", uint32_t width = 1280, uint32_t height = 720, bool dragAcceptFiles = false)
-			: title(title), width(width), height(height), dragAcceptFiles(dragAcceptFiles) {}
+		WindowProperties(const std::string& title = "Axion Engine", uint32_t width = 1280, uint32_t height = 720, bool dragAcceptFiles = false, const std::string& iconFilePath = "")
+			: title(title), width(width), height(height), dragAcceptFiles(dragAcceptFiles), iconFilePath(iconFilePath) {}
 
 	};
 
