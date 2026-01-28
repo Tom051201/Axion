@@ -13,6 +13,13 @@ namespace Axion {
 	class Renderer2D {
 	public:
 
+		struct Statistics {
+			uint32_t drawCalls = 0;
+			uint32_t quadCount = 0;
+			uint32_t getTotalVertexCount() { return quadCount * 4; }
+			uint32_t getTotalIndexCount() { return quadCount * 6; }
+		};
+
 		Renderer2D() = delete;
 
 		static void initialize();
@@ -23,18 +30,22 @@ namespace Axion {
 		static void beginScene(const Camera& camera);
 		static void endScene();
 
-		static void drawQuad(const Vec2& position, const Vec2& size, const Vec4& color, const Ref<ConstantBuffer>& cb);
-		static void drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Ref<ConstantBuffer>& cb, const Vec4& tint = Vec4::one());
+		static void drawQuad(const Vec2& position, const Vec2& size, const Vec4& color);
+		static void drawQuad(const Vec3& position, const Vec2& size, const Vec4& color);
+
+		static void drawQuad(const Vec2& position, const Vec2& size, float rotation, const Vec4& color);
+		static void drawQuad(const Vec3& position, const Vec2& size, float rotation, const Vec4& color);
+
+		static void drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
+
+		static Statistics getStats();
 
 	private:
 
-		static Ref<VertexBuffer> s_vertexBuffer;
-		static Ref<IndexBuffer> s_indexBuffer;
-		static Ref<Material> s_material;
-
-		static bool s_done;
-
-		static bool s_initialized;
+		static void flush();
+		static void startBatch();
+		static void nextBatch();
+		static void resetStats();
 
 	};
 

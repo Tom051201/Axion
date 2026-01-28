@@ -83,7 +83,7 @@ namespace Axion {
 			D3D12_RESOURCE_STATE_RENDER_TARGET
 		));
 
-		clear();
+		//clear();
 
 
 		// ----- Set viewport and scissor -----

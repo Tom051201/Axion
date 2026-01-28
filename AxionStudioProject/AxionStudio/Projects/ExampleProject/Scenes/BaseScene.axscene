@@ -1,18 +1,6 @@
 Scene: Base Scene
 Skybox: skybox\BlueSkybox.axsky
 Entities:
-  - Entity: 5b4755ea1a2e064e63630231100f3cd3
-    TagComponent:
-      Tag: Empty Entity
-    TransformComponent:
-      Translation: [0, 1.53208184, 0]
-      Rotation: [-0, 0, -0]
-      Scale: [1, 1, 1]
-    SpriteComponent:
-      Path: None
-      Tint: [1, 1, 1, 1]
-    ConstantBufferComponent:
-      Has: TRUE
   - Entity: 9901deeaab40cd36ac39b79dd08cf660
     TagComponent:
       Tag: Music Entity

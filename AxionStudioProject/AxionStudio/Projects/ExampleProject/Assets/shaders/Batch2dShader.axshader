@@ -1,0 +1,38 @@
+Name: Batch2dShader
+UUID: bdbe3c538d656270772e99f4a7675a9a
+Type: Shader
+Format: .hlsl
+Source: shaders\Batch2dShader.hlsl
+Specification:
+  Name: Batch2dShader
+  ColorFormat: RGBA8
+  DepthStencilFormat: DEPTH32F
+  DepthTest: true
+  DepthWrite: false
+  DepthFunction: Less
+  StencilEnabled: false
+  SampleCount: 1
+  CullMode: Front
+  Topology: TriangleList
+  BatchTextures: 1
+  BufferLayout:
+    - Name: POSITION
+      Type: Float3
+      Size: 12
+      Offset: 0
+    - Name: COLOR
+      Type: Float4
+      Size: 16
+      Offset: 12
+    - Name: TEXCOORD
+      Type: Float2
+      Size: 8
+      Offset: 28
+    - Name: TEXINDEX
+      Type: Float
+      Size: 4
+      Offset: 36
+    - Name: TILING
+      Type: Float
+      Size: 4
+      Offset: 40

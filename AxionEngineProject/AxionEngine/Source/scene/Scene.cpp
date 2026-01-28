@@ -107,8 +107,8 @@ namespace Axion {
 	}
 
 	void Scene::onUpdate(Timestep ts, const Camera& cam) {
-
 		if (&cam) {
+			
 			Renderer3D::beginScene(cam);
 
 			// ----- Spatial Audio Listener -----
@@ -159,31 +159,18 @@ namespace Axion {
 				}
 			}
 
-			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent, ConstantBufferComponent>);
+			Renderer2D::beginScene(cam);
+			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent>);
 			for (auto entity : spriteGroup) {
 				auto& transform = spriteGroup.get<TransformComponent>(entity);
 				auto& sprite = spriteGroup.get<SpriteComponent>(entity);
-				auto& cb = spriteGroup.get<ConstantBufferComponent>(entity);
 				
-				if (cb.uploadBuffer != nullptr) {
-					if (sprite.texture.isValid()) {
-						Renderer2D::drawQuad(
-							{ transform.position.x, transform.position.y },
-							{ transform.scale.x, transform.scale.y },
-							AssetManager::get<Texture2D>(sprite.texture),
-							cb.uploadBuffer,
-							sprite.tint
-						);
-					}
-					else {
-						Renderer2D::drawQuad(
-							{ transform.position.x, transform.position.y },
-							{ transform.scale.x, transform.scale.y },
-							sprite.tint,
-							cb.uploadBuffer
-						);
-					}
-				}
+				Renderer2D::drawQuad(
+					transform.position,
+					{ transform.scale.x, transform.scale.y },
+					transform.rotation.z,
+					sprite.tint
+				);
 			}
 
 			Renderer::endScene();

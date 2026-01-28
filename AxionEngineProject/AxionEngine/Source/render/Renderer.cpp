@@ -80,6 +80,8 @@ namespace Axion {
 
 		RenderingPreparedEvent ev;
 		s_rendererData->eventCallback(ev);
+
+		RenderCommand::clear();
 	}
 
 	void Renderer::finishRendering() {

@@ -200,6 +200,10 @@ namespace Axion {
 			return fromXM(DirectX::XMVector4Normalize(toXM()));
 		}
 
+		Vec3 xyz() const {
+			return Vec3(x, y, z);
+		}
+
 		DirectX::XMFLOAT4 toFloat4() const {
 			return DirectX::XMFLOAT4(x, y, z, w);
 		}
@@ -308,6 +312,10 @@ namespace Axion {
 
 		Vec4 transform(const Vec4& vector) const {
 			return Vec4::fromXM(DirectX::XMVector4Transform(vector.toXM(), matrix));
+		}
+
+		Vec4 operator*(const Vec4& vector) const {
+			return transform(vector);
 		}
 
 		DirectX::XMFLOAT4X4 toFloat4x4() const {
