@@ -187,6 +187,19 @@ namespace Axion {
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.RasterizerState.CullMode = D12Helpers::toD12CullMode(m_specification.cullMode);
 
+		// TODO: make this configurable
+		// MAYBE SO:
+		//D3D12_RENDER_TARGET_BLEND_DESC blendDesc = {};
+		//blendDesc.BlendEnable = TRUE;
+		//blendDesc.LogicOpEnable = FALSE;
+		//blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		//blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		//blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		//blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		//blendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		//blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		//blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+		//psoDesc.BlendState.RenderTarget[0] = blendDesc;
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
