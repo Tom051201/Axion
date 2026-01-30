@@ -7,7 +7,7 @@
 
 
 #ifdef AX_DEBUG
-	#include "AxionEngine/Platform/directx/D12DebugLayer.h"
+#include "AxionEngine/Platform/directx/D12DebugLayer.h"
 #endif
 
 namespace Axion {

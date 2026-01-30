@@ -26,7 +26,7 @@ namespace Axion {
 		static void beginScene(const Camera& camera);
 		static void beginScene(const Mat4& projection, const Mat4& transform);
 		static void endScene();
-		
+
 		static void setClearColor(const Vec4& color);
 		static void clear();
 
@@ -40,7 +40,7 @@ namespace Axion {
 		inline static RendererAPI getAPI() { return s_api; }
 
 	private:
-		
+
 		static RendererAPI s_api;
 
 		static FrameTimer s_frameTimer;

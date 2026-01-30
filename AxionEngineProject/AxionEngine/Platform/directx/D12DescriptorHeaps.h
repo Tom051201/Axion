@@ -29,7 +29,7 @@ namespace Axion {
 
 		uint32_t m_descriptorSize = 0;
 		uint32_t m_numDescriptors = 0;
-		
+
 		std::atomic<uint32_t> m_nextIndex = 0;
 		std::queue<uint32_t> m_freeList;
 		std::mutex m_freeListMutex;

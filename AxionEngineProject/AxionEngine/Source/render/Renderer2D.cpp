@@ -125,7 +125,6 @@ namespace Axion {
 
 	void Renderer2D::endScene() {
 		flush();
-		AX_CORE_LOG_WARN(s_data.stats.drawCalls);
 		resetStats();
 	}
 
@@ -176,10 +175,8 @@ namespace Axion {
 				nextBatch();
 			}
 
-			Mat4 transform = Mat4::translation(position)
-				* Mat4::rotationZ(rotation)
-				* Mat4::scale({ size.x, size.y, 1.0f });
-			
+			Mat4 transform = Mat4::TRS(position, { 0.0f, 0.0f, rotation }, { size.x, size.y, 1.0f });
+
 			for (size_t i = 0; i < 4; i++) {
 				Vec3 pos = (transform * s_data.quadVertexPositions[i]).xyz();
 

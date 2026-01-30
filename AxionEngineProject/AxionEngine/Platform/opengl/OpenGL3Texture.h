@@ -44,7 +44,7 @@ namespace Axion {
 		void bind() const override;
 		void unbind() const override;
 
-		uint32_t getFaceWidth() const override  { AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!"); return 0; }
+		uint32_t getFaceWidth() const override { AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!"); return 0; }
 		uint32_t getFaceHeight() const override { AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!"); return 0; }
 
 		void* getHandle() const override;

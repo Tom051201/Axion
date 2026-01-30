@@ -32,7 +32,7 @@ namespace Axion {
 		IMGUI_CHECKVERSION();
 		ImGui_ImplWin32_EnableDpiAwareness();
 		ImGui::CreateContext();
-		
+
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 		if (!m_layoutFilePath.empty()) {
@@ -78,7 +78,7 @@ namespace Axion {
 
 		AX_CORE_LOG_TRACE("ImGuiLayer detatched");
 	}
-	
+
 	void ImGuiLayer::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);
 		dispatcher.dispatch<MouseButtonPressedEvent>(AX_BIND_EVENT_FN(ImGuiLayer::onMouseButtonPressedEvent));
@@ -170,7 +170,7 @@ namespace Axion {
 
 			platform_io.Renderer_CreateWindow = [](ImGuiViewport* viewport) {
 				auto* context = static_cast<OpenGL3Context*>(GraphicsContext::get()->getNativeContext());
-				
+
 				OpenGL3WindowData* data = IM_NEW(OpenGL3WindowData);
 				data->hwnd = (HWND)viewport->PlatformHandle;
 				data->hdc = GetDC(data->hwnd);
@@ -196,7 +196,7 @@ namespace Axion {
 					SwapBuffers(data->hdc);
 				}
 			};
-			
+
 			platform_io.Platform_RenderWindow = [](ImGuiViewport* viewport, void*) {
 				auto* data = static_cast<OpenGL3WindowData*>(viewport->RendererUserData);
 				if (data) {

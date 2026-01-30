@@ -40,7 +40,7 @@ namespace Axion {
 
 		HGLRC tempCtx = wglCreateContext(m_hdc);
 		wglMakeCurrent(m_hdc, tempCtx);
-		
+
 		// Load wgl extensions
 		auto wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
 

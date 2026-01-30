@@ -26,11 +26,11 @@ namespace Axion {
 		}
 
 		// TODO: create a editor own resource handler for such icons
-		m_folderIcon =		Texture2D::create("AxionStudio/Resources/contentbrowser/FolderIcon.png");
-		m_fileIcon =		Texture2D::create("AxionStudio/Resources/contentbrowser/FileIcon.png");
-		m_backIcon =		Texture2D::create("AxionStudio/Resources/contentbrowser/BackIcon.png");
-		m_refreshIcon =		Texture2D::create("AxionStudio/Resources/contentbrowser/RefreshIcon.png");
-		m_addFolderIcon =	Texture2D::create("AxionStudio/Resources/contentbrowser/AddFolderIcon.png");
+		m_folderIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/FolderIcon.png");
+		m_fileIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/FileIcon.png");
+		m_backIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/BackIcon.png");
+		m_refreshIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/RefreshIcon.png");
+		m_addFolderIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/AddFolderIcon.png");
 
 		refreshDirectory();
 	}
@@ -120,7 +120,7 @@ namespace Axion {
 				}
 
 				if (ImGui::MenuItem("Show in Explorer")) {
-					PlatformUtils::showInFileExplorer(path.string()); 
+					PlatformUtils::showInFileExplorer(path.string());
 				}
 
 				// -- Renaming --
@@ -204,7 +204,7 @@ namespace Axion {
 				else {
 					std::filesystem::path p(filenameString);
 					std::string displayName = m_showFileExtensions ? p.filename().string() : p.stem().string();
-					
+
 					ImVec2 textSize = ImGui::CalcTextSize(displayName.c_str());
 					float textX = std::max(ImGui::GetCursorPosX(), ImGui::GetCursorPosX() + (m_thumbnailSize - textSize.x) * 0.5f);
 					ImGui::SetCursorPosX(textX);
@@ -304,7 +304,7 @@ namespace Axion {
 			}
 
 			ImGui::EndPopup();
-			
+
 		}
 
 		ImGui::End();

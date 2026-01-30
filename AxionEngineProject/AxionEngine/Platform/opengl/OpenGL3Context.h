@@ -23,7 +23,7 @@ namespace Axion {
 		void bindSwapChainRenderTarget() override;
 
 		void resize(uint32_t width, uint32_t height) override;
-		
+
 		void activateVsync() override;
 		void deactivateVsync() override;
 
@@ -49,7 +49,7 @@ namespace Axion {
 		uint32_t m_height = 0;
 
 		#ifdef AX_PLATFORM_WINDOWS
-		
+
 		HWND m_hwnd = nullptr;
 		HDC m_hdc = nullptr;
 		HGLRC m_glContext = nullptr;
