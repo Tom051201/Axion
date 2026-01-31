@@ -16,6 +16,9 @@
 #include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"
 #endif
 
+// TODO: REMOVE this
+#include "AxionEngine/Source/scripting/NativeScripts.h"
+
 namespace Axion {
 
 	EditorLayer::EditorLayer()
@@ -47,7 +50,7 @@ namespace Axion {
 		m_audioImportModal		= m_modalManager.addModal<AudioImportModal>("AudioImportModal");
 		m_shaderImportModal		= m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
 		m_materialImportModal	= m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
-		m_tex2dImportModal =	m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
+		m_tex2dImportModal		= m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
 
 
 		// ----- Setup framebuffer for scene viewport -----
@@ -118,7 +121,7 @@ namespace Axion {
 		else { m_editorCamera2D.onEvent(e); }
 		m_activeScene->onEvent(e);
 		m_panelManager.onEventAll(e);
-		
+
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 		dispatcher.dispatch<RenderingFinishedEvent>(AX_BIND_EVENT_FN(EditorLayer::onRenderingFinished));
@@ -130,7 +133,7 @@ namespace Axion {
 		beginDockspace();
 
 		drawSceneViewport();
-	
+
 		// -- Draw all panels --
 		m_panelManager.renderAll();
 
@@ -159,6 +162,12 @@ namespace Axion {
 			}
 		}
 
+		if (e.getKeyCode() == KeyCode::Enter) {
+			Entity e = m_activeScene->createEntity();
+			e.addComponent<SpriteComponent>();
+			e.addComponent<NativeScriptComponent>().bind<CameraController>();
+		}
+
 		// -> Shortcuts only from here on
 		if (e.getRepeatCount() > 0) return false;
 		bool controlPressed = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
@@ -185,7 +194,7 @@ namespace Axion {
 					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} });
 					if (!path.empty()) SceneManager::saveScene(path);
 				}
-				
+
 				// -- Ctrl + S
 				else if (controlPressed && (!shiftPressed)) {
 					std::string path = SceneManager::getScenePath();
@@ -216,7 +225,7 @@ namespace Axion {
 		m_activeScene = SceneManager::getScene();
 		return false;
 	}
-	
+
 	bool EditorLayer::onFileDrop(FileDropEvent& e) {
 		if (e.getPaths().empty() || !m_editorCamera3D.isHoveringSceneViewport()) { // TODO: set cursor when not droppable
 			return false;
@@ -404,7 +413,7 @@ namespace Axion {
 			// ----- Camera -----
 			const Mat4* cameraView = nullptr;
 			const Mat4* cameraProjection = nullptr;
-			
+
 			if (m_cameraState == CameraState::Perspective) {
 				cameraView = &m_editorCamera3D.getViewMatrix();
 				cameraProjection = &m_editorCamera3D.getProjectionMatrix();

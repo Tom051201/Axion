@@ -9,6 +9,7 @@
 #include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
+#include "AxionEngine/Source/scene/ScriptableEntity.h"
 
 namespace Axion {
 
@@ -123,5 +124,22 @@ namespace Axion {
 		SpriteComponent(const SpriteComponent&) = default;
 		SpriteComponent(const AssetHandle<Texture2D>& tex, const Vec4& tint) : texture(tex), tint(tint) {}
 	};
+
+
+
+	struct NativeScriptComponent {
+		ScriptableEntity* instance = nullptr;
+
+		ScriptableEntity* (*instantiateScript)();
+		void (*destroyScript)(NativeScriptComponent*);
+
+		template<typename T>
+		void bind() {
+			instantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
+			destroyScript = [](NativeScriptComponent* nsc) { delete nsc->instance; nsc->instance = nullptr; };
+		}
+
+	};
+
 
 }

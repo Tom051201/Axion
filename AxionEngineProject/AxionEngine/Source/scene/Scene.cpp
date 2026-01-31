@@ -18,11 +18,25 @@ namespace Axion {
 	}
 
 	void Scene::release() {
-		auto view = m_registry.view<AudioComponent>();
-		for (auto entity : view) {
-			auto& ac = view.get<AudioComponent>(entity);
-			if (ac.audio != nullptr) { ac.audio->release(); }
+		{
+			auto view = m_registry.view<AudioComponent>();
+			for (auto entity : view) {
+				auto& ac = view.get<AudioComponent>(entity);
+				if (ac.audio != nullptr) { ac.audio->release(); }
+			}
 		}
+
+		{
+			auto view = m_registry.view<NativeScriptComponent>();
+			for (auto entity : view) {
+				auto& nsc = view.get<NativeScriptComponent>(entity);
+				if (nsc.instance) {
+					nsc.instance->onDestroy();
+					nsc.destroyScript(&nsc);
+				}
+			}
+		}
+
 	}
 
 	Entity Scene::createEntity() {
@@ -50,13 +64,24 @@ namespace Axion {
 	}
 
 	void Scene::flushDestroyedEntities() {
-		// destroy entities
+		// -- Destroy native script --
+		for (auto& e : m_entitiesPendingDestroy) {
+			if (m_registry.all_of<NativeScriptComponent>(e)) {
+				auto& nsc = m_registry.get<NativeScriptComponent>(e);
+				if (nsc.instance) {
+					nsc.instance->onDestroy();
+					nsc.destroyScript(&nsc);
+				}
+			}
+		}
+
+		// -- Destroy entities --
 		for (auto& e : m_entitiesPendingDestroy) {
 			m_registry.destroy(e);
 		}
 		m_entitiesPendingDestroy.clear();
 
-		// remove components
+		// -- Remove components --
 		for (auto& fn : m_componentsPendingRemove) {
 			fn();
 		}
@@ -94,8 +119,8 @@ namespace Axion {
 
 				if (mesh.handle.isValid() && material.handle.isValid() && cb.uploadBuffer != nullptr) {
 					Renderer3D::drawMesh(
-						transform.getTransform(), 
-						AssetManager::get<Mesh>(mesh.handle), 
+						transform.getTransform(),
+						AssetManager::get<Mesh>(mesh.handle),
 						AssetManager::get<Material>(material.handle),
 						cb.uploadBuffer
 					);
@@ -108,8 +133,25 @@ namespace Axion {
 
 	void Scene::onUpdate(Timestep ts, const Camera& cam) {
 		if (&cam) {
-			
+
 			Renderer3D::beginScene(cam);
+
+			{
+				auto view = m_registry.view<NativeScriptComponent>();
+				for (auto entity : view) {
+					auto& nsc = view.get<NativeScriptComponent>(entity);
+
+					// -- Instantiate if it hasn't been yet --
+					if (!nsc.instance) {
+						nsc.instance = nsc.instantiateScript();
+						nsc.instance->m_entity = Entity{ entity, this };
+						nsc.instance->onCreate();
+					}
+
+					// -- Run the update --
+					nsc.instance->onUpdate(ts);
+				}
+			}
 
 			// ----- Spatial Audio Listener -----
 			DirectX::XMFLOAT4X4 m;
@@ -164,7 +206,7 @@ namespace Axion {
 			for (auto entity : spriteGroup) {
 				auto& transform = spriteGroup.get<TransformComponent>(entity);
 				auto& sprite = spriteGroup.get<SpriteComponent>(entity);
-				
+
 				Renderer2D::drawQuad(
 					transform.position,
 					{ transform.scale.x, transform.scale.y },

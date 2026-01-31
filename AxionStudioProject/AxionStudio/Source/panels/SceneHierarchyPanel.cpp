@@ -185,7 +185,8 @@ namespace Axion {
 			m_selectedEntity.hasComponent<MaterialComponent>() &&
 			m_selectedEntity.hasComponent<ConstantBufferComponent>() &&
 			m_selectedEntity.hasComponent<CameraComponent>() &&
-			m_selectedEntity.hasComponent<AudioComponent>();
+			m_selectedEntity.hasComponent<AudioComponent>() &&
+			m_selectedEntity.hasComponent<NativeScriptComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -202,6 +203,7 @@ namespace Axion {
 			drawAddComponent<ConstantBufferComponent>("Upload Buffer");
 			drawAddComponent<CameraComponent>("Camera");
 			drawAddComponent<AudioComponent>("Audio");
+			drawAddComponent<NativeScriptComponent>("Native Script");
 
 			ImGui::EndPopup();
 		}
@@ -320,7 +322,7 @@ namespace Axion {
 				}
 
 			}
-		});
+			});
 
 		// ----- SpriteComponent -----
 		drawComponentInfo<SpriteComponent>("Sprite", m_selectedEntity, [this]() {
@@ -378,7 +380,7 @@ namespace Axion {
 
 			ImGui::ColorPicker4("##ColorPickerTint", component.tint.data());
 
-		});
+			});
 
 		// ----- MaterialComponent -----
 		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
@@ -449,7 +451,7 @@ namespace Axion {
 				}
 
 			}
-		});
+			});
 
 		// ----- ConstantBufferComponent -----
 		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, [this]() {
@@ -476,10 +478,26 @@ namespace Axion {
 				component.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 			}
 
-		});
+			});
 
 		// ----- CameraComponent -----
-		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, []() {});
+		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<CameraComponent>();
+			if (ImGui::BeginTable("CameraTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Primary toggle --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Primary");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Checkbox("##Primary_check", &component.isPrimary);
+
+				ImGui::EndTable();
+			}
+		});
 
 		// ----- AudioComponent -----
 		drawComponentInfo<AudioComponent>("Audio", m_selectedEntity, [this]() {
@@ -660,6 +678,11 @@ namespace Axion {
 				}
 
 			}
+		});
+
+		// ----- NativeScriptComponent -----
+		drawComponentInfo<NativeScriptComponent>("Native Script", m_selectedEntity, [this]() {
+
 		});
 
 	}
