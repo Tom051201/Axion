@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
+#include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
 
 // -- Windows only --
@@ -20,10 +21,11 @@
 
 namespace Axion {
 
-	EditorLayer::EditorLayer()
-		: Layer("AxionStudioLayer"), m_editorCamera(1280, 720) {}
+	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_editorCamera(1280, 720) {}
 
 	void EditorLayer::onAttach() {
+
+		EditorResourceManager::initialize();
 
 		// ----- Set scene -----
 		m_sceneState = SceneState::Editing;
@@ -66,12 +68,17 @@ namespace Axion {
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoNavFocus;
-		ImGuizmo::SetOrthographic(false); // TODO maybe do orthographic
+		ImGuizmo::SetOrthographic(false);
 
 
 		// ----- Load editor state from file -----
 		EditorStateSerializer stateSerializer("AxionStudio/Config/State.yaml");
 		stateSerializer.load(m_panelManager);
+
+
+		// ----- Load icons -----
+		EditorResourceManager::loadIcon("PlayButton", "AxionStudio/Resources/toolbar/PlayIcon.png");
+		EditorResourceManager::loadIcon("StopButton", "AxionStudio/Resources/toolbar/StopIcon.png");
 	}
 
 	void EditorLayer::onDetach() {
@@ -80,6 +87,8 @@ namespace Axion {
 		EditorStateSerializer stateSerializer("AxionStudio/Config/State.yaml");
 		stateSerializer.save(m_panelManager);
 		m_panelManager.shutdownAll();
+
+		EditorResourceManager::shutdown();
 	}
 
 	void EditorLayer::onUpdate(Timestep ts) {
@@ -124,12 +133,12 @@ namespace Axion {
 	void EditorLayer::onGuiRender() {
 		beginDockspace();
 
+		drawToolBar();
+
 		drawSceneViewport();
 
-		// -- Draw all panels --
 		m_panelManager.renderAll();
 
-		// -- Draw all modals --
 		m_modalManager.renderAll();
 
 		// -- New project popup --
@@ -145,15 +154,6 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
-		if (e.getKeyCode() == KeyCode::Space) {
-			if (m_sceneState == SceneState::Editing) {
-				m_sceneState = SceneState::Playing;
-			}
-			else {
-				m_sceneState = SceneState::Editing;
-			}
-		}
-
 		if (e.getKeyCode() == KeyCode::Tab) {
 			if (m_editorCamera.is2D()) {
 				m_editorCamera.set3D();
@@ -566,6 +566,35 @@ namespace Axion {
 			ImGui::EndMenuBar();
 
 		}
+	}
+
+	void EditorLayer::drawToolBar() {
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		auto& colors = ImGui::GetStyle().Colors;
+		const auto& buttonHovered = colors[ImGuiCol_ButtonHovered];
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
+		const auto& buttonActive = colors[ImGuiCol_ButtonActive];
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
+
+		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar);
+		float size = ImGui::GetContentRegionAvail().y - 4.0f;
+
+		Ref<Texture2D> icon = (m_sceneState == SceneState::Editing) ? EditorResourceManager::getIcon("PlayButton") : EditorResourceManager::getIcon("StopButton");
+		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+
+		if (ImGui::ImageButton("play_icon", reinterpret_cast<ImTextureID>(icon->getHandle()), { size, size }, { 0, 1 }, { 1, 0 })) {
+			if (m_sceneState == SceneState::Editing) { m_sceneState = SceneState::Playing; }
+			else { m_sceneState = SceneState::Editing; }
+		}
+
+		ImGui::End();
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(3);
+
 	}
 
 }

@@ -12,7 +12,7 @@ namespace Axion {
 		void onCreate() override {
 			auto& camera = getComponent<CameraComponent>();
 			camera.isPrimary = true;
-			camera.camera.setPerspective(Math::toRadians(45.0f), 0.01, 1000.0f);
+			camera.camera.setPerspective(Math::toRadians(45.0f), 0.01f, 1000.0f);
 		}
 
 		void onDestroy() override {}
@@ -20,7 +20,7 @@ namespace Axion {
 		void onUpdate(Timestep ts) override {
 			auto& transform = getComponent<TransformComponent>();
 			auto& audio = getComponent<AudioComponent>();
-			float speed = 5.0 * ts;
+			float speed = 5.0f * ts;
 
 			if (Input::isKeyPressed(KeyCode::W)) transform.position.y += speed;
 			if (Input::isKeyPressed(KeyCode::S)) transform.position.y -= speed;

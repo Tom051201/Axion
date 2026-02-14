@@ -3,7 +3,6 @@
 
 #include "AxionStudio/Source/core/Panel.h"
 
-#include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/project/Project.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
@@ -74,13 +73,6 @@ namespace Axion {
 		// -- UI --
 		bool m_showNames = true;
 		float m_thumbnailSize = 128.0f;
-
-		// -- Icons --
-		Ref<Texture2D> m_folderIcon;
-		Ref<Texture2D> m_fileIcon;
-		Ref<Texture2D> m_backIcon;
-		Ref<Texture2D> m_refreshIcon;
-		Ref<Texture2D> m_addFolderIcon;
 
 		// ----- Events -----
 		bool onProjectChanged(ProjectChangedEvent& e);

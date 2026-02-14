@@ -10,6 +10,8 @@
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
+#include "AxionStudio/Source/core/EditorResourceManager.h"
+
 namespace Axion {
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const std::string& name, const Ref<Scene>& activeScene) : Panel(name) {
@@ -21,8 +23,7 @@ namespace Axion {
 	}
 
 	void SceneHierarchyPanel::setup() {
-		// TODO: add to central manager in future
-		m_addComponentIcon = Texture2D::create("AxionStudio/Resources/scenehierarchy/AddComponentIcon.png");
+		EditorResourceManager::loadIcon("AddComponentIcon", "AxionStudio/Resources/scenehierarchy/AddComponentIcon.png");
 	}
 
 	void SceneHierarchyPanel::shutdown() {}
@@ -190,7 +191,7 @@ namespace Axion {
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
-		if (ImGui::ImageButton("##AddComponent_button", reinterpret_cast<ImTextureID>(m_addComponentIcon->getHandle()), { 18, 18 }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##AddComponent_button", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("AddComponentIcon")->getHandle()), {18, 18}, {0, 1}, {1, 0})) {
 			ImGui::OpenPopup("AddComponent");
 		}
 		ImGui::EndDisabled();

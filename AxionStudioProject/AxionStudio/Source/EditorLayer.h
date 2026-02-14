@@ -77,7 +77,7 @@ namespace Axion {
 		Ref<FrameBuffer> m_frameBuffer;
 		Vec2 m_viewportSize = { 0.0f, 0.0f };
 		bool m_viewportResized = false;
-		
+
 
 		// ----- Active scene -----
 		Ref<Scene> m_activeScene;
@@ -117,6 +117,7 @@ namespace Axion {
 		void drawSceneViewport();
 		void drawGizmo();
 		void drawMenuBar();
+		void drawToolBar();
 
 	};
 

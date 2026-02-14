@@ -7,6 +7,8 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 
+#include "AxionStudio/Source/core/EditorResourceManager.h"
+
 namespace Axion {
 
 	constexpr float iconSize = 30.0f;
@@ -25,23 +27,16 @@ namespace Axion {
 			refreshDirectory();
 		}
 
-		// TODO: create a editor own resource handler for such icons
-		m_folderIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/FolderIcon.png");
-		m_fileIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/FileIcon.png");
-		m_backIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/BackIcon.png");
-		m_refreshIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/RefreshIcon.png");
-		m_addFolderIcon = Texture2D::create("AxionStudio/Resources/contentbrowser/AddFolderIcon.png");
+		EditorResourceManager::loadIcon("FolderIcon", "AxionStudio/Resources/contentbrowser/FolderIcon.png");
+		EditorResourceManager::loadIcon("FileIcon", "AxionStudio/Resources/contentbrowser/FileIcon.png");
+		EditorResourceManager::loadIcon("BackIcon", "AxionStudio/Resources/contentbrowser/BackIcon.png");
+		EditorResourceManager::loadIcon("RefreshIcon", "AxionStudio/Resources/contentbrowser/RefreshIcon.png");
+		EditorResourceManager::loadIcon("AddFolderIcon", "AxionStudio/Resources/contentbrowser/AddFolderIcon.png");
 
 		refreshDirectory();
 	}
 
-	void ContentBrowserPanel::shutdown() {
-		m_folderIcon->release();
-		m_fileIcon->release();
-		m_backIcon->release();
-		m_refreshIcon->release();
-		m_addFolderIcon->release();
-	}
+	void ContentBrowserPanel::shutdown() {}
 
 	void ContentBrowserPanel::onGuiRender() {
 		ImGui::Begin("Content Browser");
@@ -87,7 +82,7 @@ namespace Axion {
 			const auto& path = item.path;
 			const std::string& filenameString = item.displayName;
 			// -- Setup icon --
-			Ref<Texture2D> icon = item.isDir ? m_folderIcon : m_fileIcon;
+			Ref<Texture2D> icon = item.isDir ? EditorResourceManager::getIcon("FolderIcon") : EditorResourceManager::getIcon("FileIcon");
 
 			// -- Apply search filter --
 			if (!matchesSearch(filenameString)) continue;
@@ -382,7 +377,7 @@ namespace Axion {
 	void ContentBrowserPanel::drawToolbar() {
 		// ----- Go a folder back button -----
 		ImGui::BeginDisabled(m_currentDirectory == m_rootDirectory);
-		if (ImGui::ImageButton("##Back_icon", reinterpret_cast<ImTextureID>(m_backIcon->getHandle()), { iconSize, iconSize })) {
+		if (ImGui::ImageButton("##Back_icon", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("BackIcon")->getHandle()), {iconSize, iconSize})) {
 			m_currentDirectory = m_currentDirectory.parent_path();
 			refreshDirectory();
 		}
@@ -391,14 +386,14 @@ namespace Axion {
 
 		// ----- Refresh button -----
 		ImGui::SameLine();
-		if (ImGui::ImageButton("##Refresh_icon", reinterpret_cast<ImTextureID>(m_refreshIcon->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##Refresh_icon", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("RefreshIcon")->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
 			refresh();
 		}
 
 
 		// ----- Add folder button -----
 		ImGui::SameLine();
-		if (ImGui::ImageButton("##AddFolder_icon", reinterpret_cast<ImTextureID>(m_addFolderIcon->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##AddFolder_icon", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("AddFolderIcon")->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
 			std::string baseName = "New Folder";
 			std::filesystem::path newFolderPath = m_currentDirectory / baseName;
 
@@ -541,7 +536,7 @@ namespace Axion {
 			ImGui::PushID(node.path.string().c_str());
 
 			// -- Icon --
-			ImGui::Image(reinterpret_cast<ImTextureID>(m_folderIcon->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
+			ImGui::Image(reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("FolderIcon")->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
 			ImGui::SameLine();
 
 			if (ImGui::TreeNodeEx(node.name.c_str(), ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth)) {
@@ -561,7 +556,7 @@ namespace Axion {
 			ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
 		}
 		else {
-			ImGui::Image(reinterpret_cast<ImTextureID>(m_fileIcon->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
+			ImGui::Image(reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("FileIcon")->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
 			ImGui::SameLine();
 			bool isTheSame = node.path.string() == SceneManager::getScenePath();
 			if (ImGui::Selectable(node.name.c_str(), isTheSame)) {
