@@ -21,21 +21,18 @@
 namespace Axion {
 
 	EditorLayer::EditorLayer()
-		: Layer("AxionStudioLayer"), m_editorCamera2D(1280.0f, 720.0f), m_editorCamera3D(1280.0f / 720.0f) {}
+		: Layer("AxionStudioLayer"), m_editorCamera(1280, 720) {}
 
 	void EditorLayer::onAttach() {
-
-		m_cameraState = CameraState::Perspective;
 
 		// ----- Set scene -----
 		m_sceneState = SceneState::Editing;
 		m_activeScene = SceneManager::getScene();
 
-
 		// ----- Setup all panels -----
 		m_systemInfoPanel		= m_panelManager.addPanel<SystemInfoPanel>("SystemInfoPanel");
 		m_sceneHierarchyPanel	= m_panelManager.addPanel<SceneHierarchyPanel>("SceneHierarchyPanel", SceneManager::getScene());
-		m_editorCameraPanel		= m_panelManager.addPanel<EditorCameraPanel>("EditorCameraPanel", &m_editorCamera2D, &m_editorCamera3D);
+		m_editorCameraPanel		= m_panelManager.addPanel<EditorCameraPanel>("EditorCameraPanel", &m_editorCamera);
 		m_contentBrowserPanel	= m_panelManager.addPanel<ContentBrowserPanel>("ContentBrowserPanel");
 		m_projectPanel			= m_panelManager.addPanel<ProjectPanel>("ProjectPanel");
 		m_sceneOverviewPanel	= m_panelManager.addPanel<SceneOverviewPanel>("SceneOverviewPanel");
@@ -87,8 +84,7 @@ namespace Axion {
 
 	void EditorLayer::onUpdate(Timestep ts) {
 
-		if (m_cameraState == CameraState::Perspective) { m_editorCamera3D.onUpdate(ts); }
-		else { m_editorCamera2D.onUpdate(ts); }
+		m_editorCamera.onUpdate(ts);
 
 		if (m_viewportSize.x > 0 && m_viewportSize.y > 0) {
 
@@ -97,9 +93,7 @@ namespace Axion {
 
 			switch (m_sceneState) {
 				case Axion::SceneState::Editing: {
-					if (m_cameraState == CameraState::Perspective) { m_activeScene->onUpdate(ts, m_editorCamera3D); }
-					else { m_activeScene->onUpdate(ts, m_editorCamera2D); }
-
+					m_activeScene->onUpdate(ts, m_editorCamera);
 					break;
 				}
 				case Axion::SceneState::Playing: {
@@ -116,8 +110,7 @@ namespace Axion {
 	}
 
 	void EditorLayer::onEvent(Event& e) {
-		if (m_cameraState == CameraState::Perspective) { m_editorCamera3D.onEvent(e); }
-		else { m_editorCamera2D.onEvent(e); }
+		m_editorCamera.onEvent(e);
 		m_activeScene->onEvent(e);
 		m_panelManager.onEventAll(e);
 
@@ -162,11 +155,11 @@ namespace Axion {
 		}
 
 		if (e.getKeyCode() == KeyCode::Tab) {
-			if (m_cameraState == CameraState::Perspective) {
-				m_cameraState = CameraState::Orthographic;
+			if (m_editorCamera.is2D()) {
+				m_editorCamera.set3D();
 			}
 			else {
-				m_cameraState = CameraState::Perspective;
+				m_editorCamera.set2D();
 			}
 		}
 
@@ -178,6 +171,7 @@ namespace Axion {
 			AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
 			e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
 			e.getComponent<AudioComponent>().isSource = true;
+			e.addComponent<CameraComponent>();
 		}
 
 		// -> Shortcuts only from here on
@@ -225,8 +219,7 @@ namespace Axion {
 		// ----- Resize viewport -----
 		if (m_viewportResized) {
 			m_frameBuffer->resize((uint32_t)m_viewportSize.x, (uint32_t)m_viewportSize.y);
-			m_editorCamera3D.resize(m_viewportSize.x, m_viewportSize.y);
-			m_editorCamera2D.resize(m_viewportSize.x, m_viewportSize.y);
+			m_editorCamera.resize((uint32_t)m_viewportSize.x, (uint32_t)m_viewportSize.y);
 			m_viewportResized = false;
 		}
 
@@ -239,7 +232,7 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onFileDrop(FileDropEvent& e) {
-		if (e.getPaths().empty() || !m_editorCamera3D.isHoveringSceneViewport()) { // TODO: set cursor when not droppable
+		if (e.getPaths().empty() || !ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) { // TODO: set cursor when not droppable // TODO: add function for this
 			return false;
 		}
 
@@ -366,8 +359,7 @@ namespace Axion {
 	void EditorLayer::drawSceneViewport() {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
 		ImGui::Begin("Editor Viewport", nullptr, ImGuiWindowFlags_NoScrollbar);
-		m_editorCamera3D.setIsHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
-		m_editorCamera2D.setIsHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
+		m_editorCamera.setHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
 		if (viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
@@ -418,18 +410,8 @@ namespace Axion {
 
 
 			// ----- Camera -----
-			const Mat4* cameraView = nullptr;
-			const Mat4* cameraProjection = nullptr;
-
-			if (m_cameraState == CameraState::Perspective) {
-				cameraView = &m_editorCamera3D.getViewMatrix();
-				cameraProjection = &m_editorCamera3D.getProjectionMatrix();
-			}
-			else {
-				cameraView = &m_editorCamera2D.getViewMatrix();
-				cameraProjection = &m_editorCamera2D.getProjectionMatrix();
-			}
-
+			const Mat4& cameraView = m_editorCamera.getViewMatrix();
+			const Mat4& cameraProjection = m_editorCamera.getProjectionMatrix();
 
 			// ----- Entity transform -----
 			auto& tc = selectedEntity.getComponent<TransformComponent>();
@@ -449,14 +431,21 @@ namespace Axion {
 			if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) currentOp = ImGuizmo::ROTATE;
 			if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) currentOp = ImGuizmo::SCALE;
 
+			// ----- Snapping -----
+			bool snap = Input::isKeyPressed(KeyCode::LeftControl);
+			float snapValue = 0.5f;
+			if (currentOp == ImGuizmo::ROTATE) snapValue = 45.0f;
+			float snapValues[3] = { snapValue, snapValue, snapValue };
 
 			// ----- Do gizmo stuff -----
 			ImGuizmo::Manipulate(
-				cameraView->data(),
-				cameraProjection->data(),
+				cameraView.data(),
+				cameraProjection.data(),
 				currentOp,
 				ImGuizmo::LOCAL,
-				object
+				object,
+				nullptr,
+				snap ? snapValues : nullptr
 			);
 
 
@@ -467,8 +456,11 @@ namespace Axion {
 				TRSData trs = updated.decompose();
 
 				tc.position = trs.translation;
-				tc.rotation = trs.rotationEuler;	// TODO: rotation from the gizmo does not work
 				tc.scale = trs.scale;
+				
+				tc.rotation.x = Math::toDegrees(trs.rotationEuler.x);
+				tc.rotation.y = Math::toDegrees(trs.rotationEuler.y);
+				tc.rotation.z = Math::toDegrees(trs.rotationEuler.z);
 
 				worldM = Mat4::TRS(tc.position, tc.rotation, tc.scale);
 			}

@@ -85,10 +85,11 @@ namespace Axion {
 	struct CameraComponent {
 		Camera camera;
 		bool isPrimary = false;
+		bool fixedAspectRatio = false;
 
 		CameraComponent() = default;
 		CameraComponent(const CameraComponent&) = default;
-		CameraComponent(const Mat4& projection) : camera(projection) {}
+		CameraComponent(float aspectRatio) : camera(aspectRatio) {}
 	};
 
 

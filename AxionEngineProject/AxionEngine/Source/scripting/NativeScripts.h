@@ -10,25 +10,24 @@ namespace Axion {
 	public:
 
 		void onCreate() override {
-			auto& transform = getComponent<TransformComponent>();
+			auto& camera = getComponent<CameraComponent>();
+			camera.isPrimary = true;
+			camera.camera.setPerspective(Math::toRadians(45.0f), 0.01, 1000.0f);
 		}
 
-		void onDestroy() override {
-
-		}
+		void onDestroy() override {}
 
 		void onUpdate(Timestep ts) override {
 			auto& transform = getComponent<TransformComponent>();
 			auto& audio = getComponent<AudioComponent>();
 			float speed = 5.0 * ts;
 
-			if (Input::isKeyPressed(KeyCode::W)) {
-				transform.position.y += speed;
-			}
-
-			if (Input::isKeyPressed(KeyCode::S)) {
-				transform.position.y -= speed;
-			}
+			if (Input::isKeyPressed(KeyCode::W)) transform.position.y += speed;
+			if (Input::isKeyPressed(KeyCode::S)) transform.position.y -= speed;
+			if (Input::isKeyPressed(KeyCode::D)) transform.position.x -= speed;
+			if (Input::isKeyPressed(KeyCode::A)) transform.position.x += speed;
+			if (Input::isKeyPressed(KeyCode::E)) transform.position.z += speed;
+			if (Input::isKeyPressed(KeyCode::Q)) transform.position.z -= speed;
 
 			if (Input::isKeyPressed(KeyCode::G)) {
 				audio.audio->play();

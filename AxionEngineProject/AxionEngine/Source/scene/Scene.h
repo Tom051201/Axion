@@ -54,6 +54,8 @@ namespace Axion {
 		bool hasSkybox() const { return m_skyboxHandle.isValid(); }
 		void removeSkybox();
 
+		void onViewportResized(uint32_t width, uint32_t height);
+
 	private:
 
 		std::string m_title = "Untitled";

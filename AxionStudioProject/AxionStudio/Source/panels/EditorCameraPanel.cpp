@@ -6,9 +6,8 @@
 
 namespace Axion {
 
-	EditorCameraPanel::EditorCameraPanel(const std::string& name, EditorCamera2D* cam2D, EditorCamera3D* cam3D) : Panel(name) {
-		m_camera2D = cam2D;
-		m_camera3D = cam3D;
+	EditorCameraPanel::EditorCameraPanel(const std::string& name, EditorCamera* cam) : Panel(name) {
+		m_camera = cam;
 	}
 
 	EditorCameraPanel::~EditorCameraPanel() {
@@ -26,15 +25,21 @@ namespace Axion {
 	void EditorCameraPanel::onGuiRender() {
 		if (ImGui::Begin("Editor Camera")) {
 
-			ImGui::Text("Camera 3D");
-			ImGui::InputFloat3("Position#3d", m_camera3D->getPosition().data());
-			ImGui::DragFloat("Movement Speed", m_camera3D->getTranslationSpeedData(), 0.5f, 0.0f, 25.0f);
-
-			// add fov
+			ImGui::InputFloat3("Position#3d", m_camera->getPosition().data());
 
 			ImGui::Separator();
-			ImGui::Text("Camera 2D");
-			ImGui::InputFloat2("Position#2d", m_camera2D->getPosition().data());
+			ImGui::Text("Perspective Camera (3D)");
+			ImGui::DragFloat("Movement Speed#3d", &m_camera->m_translationSpeed3D, 0.5f, 0.0f, 25.0f);
+			ImGui::DragFloat("Rotation Speed#3d", &m_camera->m_rotationSpeed3D, 0.001, 0.0f, 0.01f);
+			ImGui::Text("Pitch: %f", m_camera->m_pitch);
+			ImGui::Text("Yaw: %f", m_camera->m_yaw);
+			ImGui::Text("Distance: %f", m_camera->m_distance);
+			ImGui::Text("FOV: %f", m_camera->m_fov);
+			
+			ImGui::Separator();
+			ImGui::Text("Orthographic Camera (2D)");
+			ImGui::DragFloat("Movement Speed#2d", &m_camera->m_keyboardSpeed2D, 0.5f, 0.0f, 25.0f);
+			ImGui::DragFloat("Drag Speed#2d", &m_camera->m_dragSpeed2D, 0.005, 0.0f, 0.1f);
 		}
 		ImGui::End();
 

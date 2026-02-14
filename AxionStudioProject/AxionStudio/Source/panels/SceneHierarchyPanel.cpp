@@ -495,6 +495,14 @@ namespace Axion {
 				ImGui::TableSetColumnIndex(1);
 				ImGui::Checkbox("##Primary_check", &component.isPrimary);
 
+				// -- Fixed aspect ratio toggle --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Fixed Aspect Ratio");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Checkbox("##FixedAspectRatio_check", &component.fixedAspectRatio);
+
 				ImGui::EndTable();
 			}
 		});

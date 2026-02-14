@@ -90,7 +90,7 @@ namespace Axion {
 
 	void Scene::onUpdate(Timestep ts) {
 		Camera* primaryCamera = nullptr;
-		Mat4* cameraTransform = nullptr;
+		Mat4 cameraTransform;
 
 		// camera setup
 		{
@@ -100,19 +100,19 @@ namespace Axion {
 
 				if (camera.isPrimary) {
 					primaryCamera = &camera.camera;
-					cameraTransform = &transform.getTransform();
+					cameraTransform = transform.getTransform();
 					break;
 				}
 
 			}
 		}
 
-		if (!primaryCamera) return;
+		if (primaryCamera) {
+			Mat4 view = cameraTransform.inverse();
+			primaryCamera->setViewMatrix(view);
 
-		Mat4 view = *cameraTransform;
-		primaryCamera->setViewMatrix(view);
-
-		onUpdate(ts, *primaryCamera);
+			onUpdate(ts, *primaryCamera);
+		}
 
 	}
 
@@ -216,6 +216,16 @@ namespace Axion {
 
 	void Scene::removeSkybox() {
 		m_skyboxHandle.invalidate();
+	}
+
+	void Scene::onViewportResized(uint32_t width, uint32_t height) {
+		auto view = m_registry.view<CameraComponent>();
+		for (auto entity : view) {
+			auto& cc = view.get<CameraComponent>(entity);
+			if (!cc.fixedAspectRatio) {
+				cc.camera.setViewportSize(width, height);
+			}
+		}
 	}
 
 }

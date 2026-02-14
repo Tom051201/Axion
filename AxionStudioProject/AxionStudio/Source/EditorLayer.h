@@ -7,8 +7,7 @@
 
 #include "AxionEngine/Source/project/Project.h"
 
-#include "AxionStudio/Source/core/EditorCamera2D.h"
-#include "AxionStudio/Source/core/EditorCamera3D.h"
+#include "AxionStudio/Source/core/EditorCamera.h"
 #include "AxionStudio/Source/core/PanelManager.h"
 #include "AxionStudio/Source/core/ModalManager.h"
 #include "AxionStudio/Source/panels/SystemInfoPanel.h"
@@ -32,11 +31,6 @@ namespace Axion {
 		Playing
 	};
 
-	enum class CameraState {
-		Orthographic,
-		Perspective
-	};
-
 	class EditorLayer : public Layer {
 	public:
 
@@ -53,9 +47,7 @@ namespace Axion {
 	private:
 
 		// ----- Editor utils -----
-		CameraState m_cameraState;
-		EditorCamera2D m_editorCamera2D;
-		EditorCamera3D m_editorCamera3D;
+		EditorCamera m_editorCamera;
 
 
 		// ----- Panels -----
