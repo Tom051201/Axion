@@ -6,7 +6,6 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
-#include "AxionEngine/Source/scene/TileMap.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
@@ -153,6 +152,15 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
+		if (e.getKeyCode() == KeyCode::Space) {
+			if (m_sceneState == SceneState::Editing) {
+				m_sceneState = SceneState::Playing;
+			}
+			else {
+				m_sceneState = SceneState::Editing;
+			}
+		}
+
 		if (e.getKeyCode() == KeyCode::Tab) {
 			if (m_cameraState == CameraState::Perspective) {
 				m_cameraState = CameraState::Orthographic;
@@ -166,6 +174,10 @@ namespace Axion {
 			Entity e = m_activeScene->createEntity();
 			e.addComponent<SpriteComponent>();
 			e.addComponent<NativeScriptComponent>().bind<CameraController>();
+			e.addComponent<AudioComponent>();
+			AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
+			e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
+			e.getComponent<AudioComponent>().isSource = true;
 		}
 
 		// -> Shortcuts only from here on
@@ -384,11 +396,6 @@ namespace Axion {
 						std::string absPath = AssetManager::getAbsolute(path);
 						AssetHandle<Skybox> handle = AssetManager::load<Skybox>(absPath);
 						SceneManager::getScene()->setSkybox(handle);
-					}
-					if (path.find(".axtile") != std::string::npos) {
-						// TODO: remove this, its only for debugging (or make it a proper feature)
-						std::string absPath = AssetManager::getAbsolute(path);
-						AssetManager::load<Tile>(absPath);
 					}
 				}
 				ImGui::EndDragDropTarget();

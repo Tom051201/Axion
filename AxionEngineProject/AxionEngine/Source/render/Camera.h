@@ -15,6 +15,11 @@ namespace Axion {
 		const Mat4& getViewMatrix() const { return m_viewMatrix; }
 		const Mat4& getViewProjectionMatrix() const { return m_viewProjectionMatrix; }
 
+		void setViewMatrix(const Mat4& viewMatrix) {
+			m_viewMatrix = viewMatrix;
+			m_viewProjectionMatrix = m_projectionMatrix * m_viewMatrix;
+		}
+
 	protected:
 
 		Mat4 m_projectionMatrix;

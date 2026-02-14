@@ -86,7 +86,6 @@ namespace Axion {
 		if (entity.hasComponent<ConstantBufferComponent>()) {
 			out << YAML::Key << "ConstantBufferComponent";
 			out << YAML::BeginMap;
-			auto& cb = entity.getComponent<MaterialComponent>();
 			out << YAML::Key << "Has" << YAML::Value << "TRUE";
 			out << YAML::EndMap;
 		}
@@ -116,6 +115,15 @@ namespace Axion {
 			else {
 				out << YAML::Key << "AudioSource" << YAML::Value << "None";
 			}
+			out << YAML::EndMap;
+		}
+
+		// -- Camera Component --
+		if (entity.hasComponent<CameraComponent>()) {
+			out << YAML::Key << "CameraComponent";
+			out << YAML::BeginMap;
+			bool primary = entity.getComponent<CameraComponent>().isPrimary;
+			out << YAML::Key << "Primary" << YAML::Value << primary;
 			out << YAML::EndMap;
 		}
 
@@ -281,6 +289,13 @@ namespace Axion {
 						ac.audio->setMaxDistance(as["MaxDistance"].as<float>());
 						ac.audio->setDopplerFactor(as["DopplerFactor"].as<float>());
 					}
+				}
+
+				// -- CameraComponent --
+				auto cameraComponent = entity["CameraComponent"];
+				if (cameraComponent) {
+					auto& cc = deserializedEntity.addComponent<CameraComponent>();
+					cc.isPrimary = cameraComponent["Primary"].as<bool>();
 				}
 
 			}

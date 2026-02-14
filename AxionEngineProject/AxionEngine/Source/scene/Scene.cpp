@@ -107,27 +107,12 @@ namespace Axion {
 			}
 		}
 
-		if (primaryCamera) {
-			Renderer3D::beginScene(primaryCamera->getProjectionMatrix(), *cameraTransform);
+		if (!primaryCamera) return;
 
-			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
-			for (auto entity : group) {
-				auto& transform = group.get<TransformComponent>(entity);
-				auto& mesh = group.get<MeshComponent>(entity);
-				auto& material = group.get<MaterialComponent>(entity);
-				auto& cb = group.get<ConstantBufferComponent>(entity);
+		Mat4 view = *cameraTransform;
+		primaryCamera->setViewMatrix(view);
 
-				if (mesh.handle.isValid() && material.handle.isValid() && cb.uploadBuffer != nullptr) {
-					Renderer3D::drawMesh(
-						transform.getTransform(),
-						AssetManager::get<Mesh>(mesh.handle),
-						AssetManager::get<Material>(material.handle),
-						cb.uploadBuffer
-					);
-				}
-			}
-
-		}
+		onUpdate(ts, *primaryCamera);
 
 	}
 
@@ -174,12 +159,6 @@ namespace Axion {
 			// ----- Render Skybox -----
 			if (m_skyboxHandle.isValid()) {
 				AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
-			}
-
-
-			// ----- Render TileMap -----
-			if (m_tileMap.isLoaded()) {
-				m_tileMap.onUpdate(ts, cam);
 			}
 
 

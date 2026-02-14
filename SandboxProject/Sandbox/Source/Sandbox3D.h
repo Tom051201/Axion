@@ -21,11 +21,6 @@ private:
 
 	SandboxCamera m_camera;
 
-	Axion::Mat4 m_transform;
-	Axion::Ref<Axion::Mesh> m_mesh;
-	Axion::Ref<Axion::Material> m_material;
-	Axion::Ref<Axion::ConstantBuffer> m_buffer;
-
-	Axion::AssetHandle<Axion::Mesh> m_meshHandle;
+	Axion::Ref<Axion::Scene> m_scene;
 
 };

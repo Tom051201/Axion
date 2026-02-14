@@ -19,6 +19,7 @@ namespace Axion {
 
 		void onUpdate(Timestep ts) override {
 			auto& transform = getComponent<TransformComponent>();
+			auto& audio = getComponent<AudioComponent>();
 			float speed = 5.0 * ts;
 
 			if (Input::isKeyPressed(KeyCode::W)) {
@@ -27,6 +28,10 @@ namespace Axion {
 
 			if (Input::isKeyPressed(KeyCode::S)) {
 				transform.position.y -= speed;
+			}
+
+			if (Input::isKeyPressed(KeyCode::G)) {
+				audio.audio->play();
 			}
 		}
 

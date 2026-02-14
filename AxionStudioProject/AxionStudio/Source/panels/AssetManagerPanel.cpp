@@ -9,7 +9,6 @@
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/scene/Skybox.h"
-#include "AxionEngine/Source/scene/TileMap.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 
 namespace Axion {
@@ -67,13 +66,6 @@ namespace Axion {
 		ImGui::SeparatorText("");
 		drawAssetInfo<AudioClip>("AudioClip", [](Ref<AudioClip> clip) {
 			ImGui::Text("Mode: %s", EnumUtils::toString(clip->getMode()));
-		});
-
-
-		// -- Tile Assets --
-		ImGui::SeparatorText("");
-		drawAssetInfo<Tile>("Tile", [](Ref<Tile> tile) {
-			ImGui::Text("Solid: %s", std::to_string(tile->isSolid()).c_str());
 		});
 
 		ImGui::End();
