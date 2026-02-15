@@ -31,7 +31,7 @@ namespace Axion {
 		if (m_colorResource) {
 			m_colorResource.Reset();
 			m_context->getRtvHeapWrapper().free(m_rtvHeapIndex);
-			m_context->getSrvHeapWrapper().free(m_srvHeapIndex);
+			m_context->getStagingSrvHeapWrapper().free(m_srvHeapIndex);
 		}
 
 		if (m_depthResource) {
@@ -54,7 +54,7 @@ namespace Axion {
 
 		// ----- Reallocate descriptor heap indices -----
 		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
-		m_srvHeapIndex = m_context->getSrvHeapWrapper().allocate();
+		m_srvHeapIndex = m_context->getStagingSrvHeapWrapper().allocate();
 		m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
 
 		auto* device = m_context->getDevice();
@@ -152,7 +152,7 @@ namespace Axion {
 		srvDesc.Format = texDesc.Format;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
-		m_context->getDevice()->CreateShaderResourceView(m_colorResource.Get(), &srvDesc, m_context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex));
+		m_context->getDevice()->CreateShaderResourceView(m_colorResource.Get(), &srvDesc, m_context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex));
 
 
 		#ifdef AX_DEBUG
@@ -242,7 +242,16 @@ namespace Axion {
 	}
 
 	void* D12FrameBuffer::getColorAttachmentHandle() const {
-		return reinterpret_cast<void*>(m_context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
+		auto* device = m_context->getDevice();
+
+		uint32_t viewIndex = m_context->getSrvHeapWrapper().allocate();
+
+		auto destHandle = m_context->getSrvHeapWrapper().getCpuHandle(viewIndex);
+		auto srcHandle = m_context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+
+		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		return reinterpret_cast<void*>(m_context->getSrvHeapWrapper().getGpuHandle(viewIndex).ptr);
 	}
 
 }

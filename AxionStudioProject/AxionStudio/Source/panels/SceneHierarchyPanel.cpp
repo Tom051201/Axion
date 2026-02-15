@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
+#include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
@@ -191,7 +192,8 @@ namespace Axion {
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
-		if (ImGui::ImageButton("##AddComponent_button", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("AddComponentIcon")->getHandle()), {18, 18}, {0, 1}, {1, 0})) {
+		void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("AddComponentIcon"));
+		if (ImGui::ImageButton("##AddComponent_button", (ImTextureID)texID, {18, 18}, {0, 1}, {1, 0})) {
 			ImGui::OpenPopup("AddComponent");
 		}
 		ImGui::EndDisabled();

@@ -21,6 +21,7 @@ namespace Axion {
 		void clear() override;
 
 		void bindSwapChainRenderTarget() override;
+		void* getImGuiTextureID(const Ref<Texture2D>& texture) override;
 
 		void resize(uint32_t width, uint32_t height) override;
 

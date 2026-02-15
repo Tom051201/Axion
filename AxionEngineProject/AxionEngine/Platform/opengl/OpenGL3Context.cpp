@@ -101,6 +101,10 @@ namespace Axion {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	void* OpenGL3Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
+		return texture->getHandle();
+	}
+
 	void OpenGL3Context::resize(uint32_t width, uint32_t height) {
 		if (width == 0 || height == 0) return;
 

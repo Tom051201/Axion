@@ -80,15 +80,15 @@ namespace Axion {
 		release();
 	}
 
-	void D12srvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors, uint32_t frameCount) {
+	void D12srvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors, bool isShaderVisible, uint32_t frameCount) {
 		m_numDescriptors = numDescriptors;
 		m_frameCount = frameCount;
 
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 		desc.NumDescriptors = numDescriptors;
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
+		desc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		
 		// ----- Create SRV heap -----
 		HRESULT hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_srvHeap));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create srv descriptor heap");
@@ -121,7 +121,6 @@ namespace Axion {
 			return index;
 		}
 
-		//uint32_t idx = m_nextIndex.fetch_add(1, std::memory_order_relaxed);
 		uint32_t idx = m_frameNextIndex[m_currentFrame]++;
 		AX_CORE_ASSERT(idx < m_numDescriptors, "Out of srv heap descriptors for current frame");
 		return idx;
@@ -135,15 +134,25 @@ namespace Axion {
 		return startIdx;
 	}
 
+	uint32_t D12srvHeap::allocateStatic() {
+		AX_CORE_ASSERT(m_staticIndex < m_reservedCount, "Out of static SRV descriptors");
+		return m_staticIndex++;
+	}
+
 	void D12srvHeap::free(uint32_t index) {
 		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid SRV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
 	}
 
+	void D12srvHeap::reserve(uint32_t numDescriptors) {
+		m_reservedCount = numDescriptors;
+		std::fill(m_frameNextIndex.begin(), m_frameNextIndex.end(), m_reservedCount);
+	}
+
 	void D12srvHeap::nextFrame() {
 		m_currentFrame = (m_currentFrame + 1) % m_frameCount;
-		m_frameNextIndex[m_currentFrame] = 0;
+		m_frameNextIndex[m_currentFrame] = m_reservedCount;
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12srvHeap::getCpuHandle(uint32_t index) const {

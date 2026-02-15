@@ -11,7 +11,7 @@ namespace Axion {
 	}
 
 	Material::Material(const std::string& name, const Vec4& color, const AssetHandle<Shader>& shaderHandle)
-	: m_name(name), m_color(color), m_shaderHandle(shaderHandle) {}
+		: m_name(name), m_color(color), m_shaderHandle(shaderHandle) {}
 
 	Material::~Material() {
 		release();

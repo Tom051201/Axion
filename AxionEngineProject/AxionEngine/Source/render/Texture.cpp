@@ -21,6 +21,20 @@ namespace Axion {
 		return nullptr;
 	}
 
+	Ref<Texture2D> Texture2D::create(uint32_t width, uint32_t height, void* data) {
+
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12Texture2D>(width, height, data); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Texture2D>(width, height, data); }
+
+		}
+
+		return nullptr;
+
+	}
+
 
 
 	Ref<TextureCube> TextureCube::create(const std::array<std::string, 6>& paths) {

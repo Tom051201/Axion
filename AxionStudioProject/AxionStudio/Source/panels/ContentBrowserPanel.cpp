@@ -4,6 +4,7 @@
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
+#include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 
@@ -93,7 +94,8 @@ namespace Axion {
 			// -- Draw file / folder icon --
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			std::string uniqueID = "##" + path.string();
-			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), reinterpret_cast<ImTextureID>(icon->getHandle()), { m_thumbnailSize, m_thumbnailSize }, { 0, 1 }, { 1, 0 })) {
+			void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
+			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), (ImTextureID)texID, {m_thumbnailSize, m_thumbnailSize}, {0, 1}, {1, 0})) {
 				if (item.isDir) {
 					// -- Clicked on folder --
 					m_pendingNavigate = m_currentDirectory / path.filename();
@@ -142,7 +144,8 @@ namespace Axion {
 				auto rel = path.lexically_relative(m_rootDirectory);
 				const std::string itemPath = rel.string();
 				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath.c_str(), itemPath.size() + 1);
-				ImGui::Image(reinterpret_cast<ImTextureID>(icon->getHandle()), { 30.0f, 30.0f }, { 0, 1 }, { 1, 0 });
+				void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
+				ImGui::Image((ImTextureID)texID, { 30.0f, 30.0f }, { 0, 1 }, { 1, 0 });
 				ImGui::EndDragDropSource();
 			}
 
@@ -377,7 +380,8 @@ namespace Axion {
 	void ContentBrowserPanel::drawToolbar() {
 		// ----- Go a folder back button -----
 		ImGui::BeginDisabled(m_currentDirectory == m_rootDirectory);
-		if (ImGui::ImageButton("##Back_icon", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("BackIcon")->getHandle()), {iconSize, iconSize})) {
+		void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("BackIcon"));
+		if (ImGui::ImageButton("##Back_icon", (ImTextureID)texID, {iconSize, iconSize})) {
 			m_currentDirectory = m_currentDirectory.parent_path();
 			refreshDirectory();
 		}
@@ -386,14 +390,16 @@ namespace Axion {
 
 		// ----- Refresh button -----
 		ImGui::SameLine();
-		if (ImGui::ImageButton("##Refresh_icon", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("RefreshIcon")->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
+		texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("RefreshIcon"));
+		if (ImGui::ImageButton("##Refresh_icon", (ImTextureID)texID, { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
 			refresh();
 		}
 
 
 		// ----- Add folder button -----
 		ImGui::SameLine();
-		if (ImGui::ImageButton("##AddFolder_icon", reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("AddFolderIcon")->getHandle()), { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
+		texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("AddFolderIcon"));
+		if (ImGui::ImageButton("##AddFolder_icon", (ImTextureID)texID, { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
 			std::string baseName = "New Folder";
 			std::filesystem::path newFolderPath = m_currentDirectory / baseName;
 
@@ -536,7 +542,8 @@ namespace Axion {
 			ImGui::PushID(node.path.string().c_str());
 
 			// -- Icon --
-			ImGui::Image(reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("FolderIcon")->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
+			void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("FolderIcon"));
+			ImGui::Image((ImTextureID)texID, iconSize, { 0, 1 }, { 1, 0 });
 			ImGui::SameLine();
 
 			if (ImGui::TreeNodeEx(node.name.c_str(), ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth)) {
@@ -556,7 +563,8 @@ namespace Axion {
 			ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
 		}
 		else {
-			ImGui::Image(reinterpret_cast<ImTextureID>(EditorResourceManager::getIcon("FileIcon")->getHandle()), iconSize, { 0, 1 }, { 1, 0 });
+			void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("FileIcon"));
+			ImGui::Image((ImTextureID)texID, iconSize, { 0, 1 }, { 1, 0 });
 			ImGui::SameLine();
 			bool isTheSame = node.path.string() == SceneManager::getScenePath();
 			if (ImGui::Selectable(node.name.c_str(), isTheSame)) {

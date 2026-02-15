@@ -38,7 +38,9 @@ namespace Axion {
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
 		m_rtvHeap.initialize(m_device.getDevice(), AX_D12_MAX_RTV_DESCRIPTORS);
-		m_srvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS);
+		m_gpuSrvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS, true);
+		m_gpuSrvHeap.reserve(64);
+		m_stagingSrvHeap.initialize(m_device.getDevice(), AX_D12_MAX_SRV_DESCRIPTORS, false);
 		m_dsvHeap.initialize(m_device.getDevice(), AX_D12_MAX_DSV_DESCRIPTORS);
 		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), swapSpec);
 		m_commandList.initialize(m_device.getDevice());
@@ -54,7 +56,8 @@ namespace Axion {
 		m_commandQueue.getCommandQueue()->Signal(m_fence.getFence(), m_fence.getFenceValue());
 
 		m_dsvHeap.release();
-		m_srvHeap.release();
+		m_stagingSrvHeap.release();
+		m_gpuSrvHeap.release();
 		m_fence.release();
 		m_commandList.release();
 		m_swapChain.release();
@@ -92,7 +95,7 @@ namespace Axion {
 		getCommandList()->RSSetViewports(1, &viewport);
 		getCommandList()->RSSetScissorRects(1, &scissor);
 
-		ID3D12DescriptorHeap* heaps[] = { m_srvHeap.getHeap() };
+		ID3D12DescriptorHeap* heaps[] = { m_gpuSrvHeap.getHeap() };
 		cmd->SetDescriptorHeaps(1, heaps);
 	}
 
@@ -108,6 +111,9 @@ namespace Axion {
 
 		m_commandQueue.executeCommandList(m_commandList.getCommandList());
 		m_swapChain.present(m_vsyncInterval, 0);
+
+		m_gpuSrvHeap.nextFrame();
+
 		waitForPreviousFrame();
 	}
 
@@ -137,28 +143,36 @@ namespace Axion {
 		m_swapChain.setAsRenderTarget();
 	}
 
+	void* D12Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
+		auto* d12tex = static_cast<D12Texture2D*>(texture.get());
+
+		uint32_t viewIndex = m_gpuSrvHeap.allocate();
+
+		auto destHandle = m_gpuSrvHeap.getCpuHandle(viewIndex);
+		auto srcHandle = m_stagingSrvHeap.getCpuHandle(d12tex->getSrvHeapIndex());
+
+		m_device.getDevice()->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		auto gpuHandle = m_gpuSrvHeap.getGpuHandle(viewIndex);
+		return (void*)gpuHandle.ptr;
+	}
+
 	void D12Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
 		auto* device = m_device.getDevice();
-		auto* cmdList = m_commandList.getCommandList();
 
-		uint32_t batchStartOffset = m_srvHeap.allocateRange(16);
-		D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_srvHeap.getCpuHandle(batchStartOffset);
+		uint32_t batchStartOffset = m_gpuSrvHeap.allocateRange(count);
 
-		for (uint32_t i = 0; i < 16; i++) {
-			D3D12_CPU_DESCRIPTOR_HANDLE srcHandle;
-			if (i < count && textures[i]) {
-				srcHandle = m_srvHeap.getCpuHandle(static_cast<D12Texture2D*>(textures[i].get())->getSrvHeapIndex());
+		for (uint32_t i = 0; i < count; i++) {
+			if (textures[i]) {
+				auto srcHandle = m_stagingSrvHeap.getCpuHandle(static_cast<D12Texture2D*>(textures[i].get())->getSrvHeapIndex());
+				auto destHandle = m_gpuSrvHeap.getCpuHandle(batchStartOffset + i);
+
+				device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			}
-			else {
-				srcHandle = m_srvHeap.getCpuHandle(static_cast<D12Texture2D*>(textures[0].get())->getSrvHeapIndex());
-			}
-
-			device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-			destHandle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		}
 
-		auto gpuHandle = m_srvHeap.getGpuHandle(batchStartOffset);
-		cmdList->SetGraphicsRootDescriptorTable(rootIndex, gpuHandle);
+		auto gpuHandle = m_gpuSrvHeap.getGpuHandle(batchStartOffset);
+		m_commandList.getCommandList()->SetGraphicsRootDescriptorTable(rootIndex, gpuHandle);
 	}
 
 	void D12Context::resize(uint32_t width, uint32_t height) {

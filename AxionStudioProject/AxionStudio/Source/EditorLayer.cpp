@@ -586,7 +586,8 @@ namespace Axion {
 		Ref<Texture2D> icon = (m_sceneState == SceneState::Editing) ? EditorResourceManager::getIcon("PlayButton") : EditorResourceManager::getIcon("StopButton");
 		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
 
-		if (ImGui::ImageButton("play_icon", reinterpret_cast<ImTextureID>(icon->getHandle()), { size, size }, { 0, 1 }, { 1, 0 })) {
+		void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
+		if (ImGui::ImageButton("play_icon", (ImTextureID)texID, { size, size }, { 0, 1 }, { 1, 0 })) {
 			if (m_sceneState == SceneState::Editing) { m_sceneState = SceneState::Playing; }
 			else { m_sceneState = SceneState::Editing; }
 		}

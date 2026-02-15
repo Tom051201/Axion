@@ -31,6 +31,7 @@ namespace Axion {
 		void clear() override;
 
 		void bindSwapChainRenderTarget() override;
+		void* getImGuiTextureID(const Ref<Texture2D>& texture) override;
 		void bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count);
 
 		void resize(uint32_t width, uint32_t height) override;
@@ -55,7 +56,8 @@ namespace Axion {
 		D12SwapChain& getSwapChainWrapper() { return m_swapChain; }
 		D12CommandList& getCommandListWrapper() { return m_commandList; }
 		D12Fence& getFenceWrapper() { return m_fence; }
-		D12srvHeap& getSrvHeapWrapper() { return m_srvHeap; }
+		D12srvHeap& getSrvHeapWrapper() { return m_gpuSrvHeap; }
+		D12srvHeap& getStagingSrvHeapWrapper() { return m_stagingSrvHeap; }
 		D12dsvHeap& getDsvHeapWrapper() { return m_dsvHeap; }
 
 		ID3D12Device* getDevice() const { return m_device.getDevice(); }
@@ -80,7 +82,8 @@ namespace Axion {
 		D12SwapChain m_swapChain;
 		D12CommandList m_commandList;
 		D12Fence m_fence;
-		D12srvHeap m_srvHeap;
+		D12srvHeap m_gpuSrvHeap;
+		D12srvHeap m_stagingSrvHeap;
 		D12dsvHeap m_dsvHeap;
 
 	};

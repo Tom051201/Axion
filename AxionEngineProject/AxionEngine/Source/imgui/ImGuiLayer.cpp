@@ -142,12 +142,12 @@ namespace Axion {
 	void ImGuiLayer::setupD12() {
 		m_d12Context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto& srvHeap = m_d12Context->getSrvHeapWrapper();
-		m_srvHeapIndex = srvHeap.allocate();
+		m_srvHeapIndex = srvHeap.allocateStatic();
 
 		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
 		ImGui_ImplDX12_Init(
 			m_d12Context->getDevice(),
-			2,
+			3, // TODO get from somewhere
 			DXGI_FORMAT_R8G8B8A8_UNORM,
 			srvHeap.getHeap(),
 			srvHeap.getCpuHandle(m_srvHeapIndex),

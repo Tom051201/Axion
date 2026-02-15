@@ -94,7 +94,7 @@ namespace Axion {
 
 
 		// ----- Create SRV -----
-		m_srvHeapIndex = context->getSrvHeapWrapper().allocate();
+		m_srvHeapIndex = context->getStagingSrvHeapWrapper().allocate();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -102,7 +102,7 @@ namespace Axion {
 		srvDesc.Texture2D.MipLevels = 1;
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-		auto srvCpuHandle = context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+		auto srvCpuHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
 		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
 
 
@@ -114,6 +114,113 @@ namespace Axion {
 		context->waitForPreviousFrame();
 
 		stbi_image_free(pixels);
+	}
+
+	D12Texture2D::D12Texture2D(uint32_t width, uint32_t height, void* data)
+		: m_width(width), m_height(height) {
+
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* device = context->getDevice();
+		auto* cmdList = context->getCommandList();
+		auto* cmdQueue = context->getCommandQueue();
+
+		m_pixelSize = 4; // Assuming RGBA8
+
+		// ----- Handle Data Generation (White Default) -----
+		// If no data is provided, allocate a white buffer
+		bool generatedData = false;
+		if (!data) {
+			generatedData = true;
+			uint32_t totalPixels = width * height;
+			uint32_t* whiteData = new uint32_t[totalPixels];
+			// Fill with solid white (ABGR/RGBA: 0xFFFFFFFF)
+			for (uint32_t i = 0; i < totalPixels; i++) {
+				whiteData[i] = 0xFFFFFFFF;
+			}
+			data = whiteData;
+		}
+
+		// ----- Create the texture resource -----
+		D3D12_RESOURCE_DESC texDesc = {};
+		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		texDesc.Width = m_width;
+		texDesc.Height = m_height;
+		texDesc.DepthOrArraySize = 1;
+		texDesc.MipLevels = 1;
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		CD3DX12_HEAP_PROPERTIES texProps(D3D12_HEAP_TYPE_DEFAULT);
+		HRESULT hr = device->CreateCommittedResource(
+			&texProps,
+			D3D12_HEAP_FLAG_NONE,
+			&texDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(&m_textureResource)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create texture resource from data");
+
+		// ----- Upload heap -----
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureResource.Get(), 0, 1);
+		CD3DX12_RESOURCE_DESC uploadHeapDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+		CD3DX12_HEAP_PROPERTIES uploadProps(D3D12_HEAP_TYPE_UPLOAD);
+
+		hr = device->CreateCommittedResource(
+			&uploadProps,
+			D3D12_HEAP_FLAG_NONE,
+			&uploadHeapDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_uploadHeap)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create texture upload heap");
+
+		// ----- Prepare Data for Upload -----
+		D3D12_SUBRESOURCE_DATA textureData = {};
+		textureData.pData = data;
+		textureData.RowPitch = m_width * m_pixelSize;
+		textureData.SlicePitch = textureData.RowPitch * m_height;
+
+		// Reset command list if necessary (as per your existing code)
+		context->getCommandListWrapper().reset();
+
+		// ----- Update Subresources -----
+		UpdateSubresources(cmdList, m_textureResource.Get(), m_uploadHeap.Get(), 0, 0, 1, &textureData);
+
+		// ----- Transition Barrier -----
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_textureResource.Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+		cmdList->ResourceBarrier(1, &barrier);
+
+		// ----- Create SRV -----
+		m_srvHeapIndex = context->getStagingSrvHeapWrapper().allocate();
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+		auto srvCpuHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+
+		// ----- Execute Command List -----
+		AX_THROW_IF_FAILED_HR(cmdList->Close(), "Failed to close the command list");
+		ID3D12CommandList* cmdLists[] = { cmdList };
+		cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+		context->waitForPreviousFrame();
+
+		// ----- Cleanup -----
+		if (generatedData) {
+			delete[] static_cast<uint32_t*>(data);
+		}
 	}
 
 	D12Texture2D::~D12Texture2D() {
@@ -128,11 +235,17 @@ namespace Axion {
 	void D12Texture2D::bind() const {
 		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
+		auto* device = context->getDevice();
 
-		ID3D12DescriptorHeap* ppHeaps[] = { context->getSrvHeapWrapper().getHeap() };
-		cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		auto& gpuHeap = context->getSrvHeapWrapper();
+		uint32_t viewIndex = gpuHeap.allocate();
 
-		auto srvGpuHandle = context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex);
+		auto destHandle = gpuHeap.getCpuHandle(viewIndex);
+		auto srcHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+
+		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		auto srvGpuHandle = gpuHeap.getGpuHandle(viewIndex);
 		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle);
 	}
 
@@ -241,12 +354,19 @@ namespace Axion {
 	void D12TextureCube::bind() const {
 		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
+		auto* device = context->getDevice();
 
-		ID3D12DescriptorHeap* ppHeaps[] = { context->getSrvHeapWrapper().getHeap() };
-		cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		auto& gpuHeap = context->getSrvHeapWrapper();
 
-		auto srvGpuHandle = context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex);
-		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle); // make 2 configurable
+		uint32_t viewIndex = gpuHeap.allocate();
+
+		auto destHandle = gpuHeap.getCpuHandle(viewIndex);
+		auto srcHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+
+		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		auto srvGpuHandle = gpuHeap.getGpuHandle(viewIndex);
+		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle); // TODO Make 2 configurable
 	}
 
 	void D12TextureCube::unbind() const {
@@ -326,7 +446,7 @@ namespace Axion {
 
 
 		// ----- SRV -----
-		m_srvHeapIndex = context->getSrvHeapWrapper().allocate();
+		m_srvHeapIndex = context->getStagingSrvHeapWrapper().allocate();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -334,7 +454,7 @@ namespace Axion {
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.TextureCube.MipLevels = 1;
 
-		auto srvCpuHandle = context->getSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+		auto srvCpuHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
 		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
 
 

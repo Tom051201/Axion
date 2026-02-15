@@ -31,6 +31,11 @@ namespace Axion {
 		stbi_image_free(pixels);
 	}
 
+	OpenGL3Texture2D::OpenGL3Texture2D(uint32_t width, uint32_t height, void* data) {
+		// TODO
+		AX_CORE_ASSERT(false, "OpenGl3Texture2D from raw data is not supported yet!");
+	}
+
 	OpenGL3Texture2D::~OpenGL3Texture2D() {
 		release();
 	}

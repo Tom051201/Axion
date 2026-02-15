@@ -138,6 +138,7 @@ namespace Axion {
 
 	bool EditorCamera::onMouseMoved(MouseMovedEvent& e) {
 		if (!m_isActive) return false;
+		if (!m_hoveringSceneViewport) return false;
 
 		auto& window = Application::get().getWindow();
 		float centerX = window.getWidth() * 0.5f;
@@ -179,7 +180,7 @@ namespace Axion {
 	}
 
 	bool EditorCamera::onMouseButtonReleased(MouseButtonReleasedEvent& e) {
-		if (e.getMouseButton() == MouseButton::Right) {
+		if (e.getMouseButton() == MouseButton::Right && m_hoveringSceneViewport) {
 			m_isActive = false;
 
 			Application::get().getCursor().show();

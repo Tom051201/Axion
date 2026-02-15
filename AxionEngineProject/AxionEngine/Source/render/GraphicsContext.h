@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/render/Buffers.h"
+#include "AxionEngine/Source/render/Texture.h"
 
 namespace Axion {
 
@@ -22,6 +23,7 @@ namespace Axion {
 		virtual void clear() = 0;
 
 		virtual void bindSwapChainRenderTarget() = 0;
+		virtual void* getImGuiTextureID(const Ref<Texture2D>& texture) = 0;
 
 		virtual void resize(uint32_t width, uint32_t height) = 0;
 

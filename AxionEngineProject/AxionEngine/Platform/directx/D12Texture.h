@@ -17,6 +17,7 @@ namespace Axion {
 	public:
 
 		D12Texture2D(const std::string& path);
+		D12Texture2D(uint32_t width, uint32_t height, void* data);
 		~D12Texture2D() override;
 
 		void release() override;

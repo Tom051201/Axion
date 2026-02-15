@@ -48,13 +48,15 @@ namespace Axion {
 		D12srvHeap();
 		~D12srvHeap();
 
-		void initialize(ID3D12Device* device, uint32_t numDescriptors, uint32_t frameCount = 3);
+		void initialize(ID3D12Device* device, uint32_t numDescriptors, bool isShaderVisible, uint32_t frameCount = 3);
 		void release();
 
 		uint32_t allocate();
 		uint32_t allocateRange(uint32_t count);
+		uint32_t allocateStatic();
 		void free(uint32_t index);
 
+		void reserve(uint32_t numDescriptors);
 		void nextFrame();
 
 		ID3D12DescriptorHeap* getHeap() const { return m_srvHeap.Get(); }
@@ -75,6 +77,9 @@ namespace Axion {
 		std::atomic<uint32_t> m_nextIndex = 0;
 		std::queue<uint32_t> m_freeList;
 		std::mutex m_freeListMutex;
+
+		uint32_t m_reservedCount = 0;
+		uint32_t m_staticIndex = 0;
 
 	};
 
