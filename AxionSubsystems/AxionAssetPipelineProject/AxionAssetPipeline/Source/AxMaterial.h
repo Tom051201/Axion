@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/render/MaterialData.h"
 
 #include <string>
 
@@ -8,7 +9,7 @@ namespace Axion::AAP {
 
 	struct MaterialAssetData {
 		std::string name;
-		Vec4 color;
+		MaterialProperties properties;
 		std::string shaderAsset;
 	};
 

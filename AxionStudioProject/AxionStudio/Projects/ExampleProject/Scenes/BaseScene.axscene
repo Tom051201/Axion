@@ -81,7 +81,7 @@ Entities:
     MeshComponent:
       Path: meshes\Cube.axmesh
     MaterialComponent:
-      Path: materials\ColorMaterial.axmat
+      Path: materials\PBR.axmat
     ConstantBufferComponent:
       Has: TRUE
   - Entity: fb69a07b71f1a31a73395a840deb43c4

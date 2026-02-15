@@ -204,6 +204,7 @@ namespace Axion {
 			return handle;
 		}
 
+
 		// -- create shader specification --
 		YAML::Node specData = data["Specification"];
 		ShaderSpecification spec{};
@@ -244,6 +245,7 @@ namespace Axion {
 		storage<Shader>().assets[handle] = shader;
 		storage<Shader>().loadQueue.push_back({ handle, 
 			[sourcePath, handle]() {
+				AX_CORE_LOG_WARN(sourcePath);
 				Ref<Shader> shader = AssetManager::get<Shader>(handle);
 				shader->compileFromFile(sourcePath);
 				return shader;
@@ -265,7 +267,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string sourcePath = ""; // No source file for materials yet
+		std::string sourcePath = "";
 		UUID uuid = data["UUID"].as<UUID>();
 		AssetHandle<Material> handle(uuid);
 
@@ -275,11 +277,31 @@ namespace Axion {
 		}
 
 		std::string name = data["Name"].as<std::string>();
-		Vec4 color = data["Color"].as<Vec4>();
+
+		Vec4 albedoColor = data["AlbedoColor"].as<Vec4>();
+		float metalness = data["Metalness"].as<float>();
+		float roughness = data["Roughness"].as<float>();
+		float emission = data["Emission"].as<float>();
+		float tiling = data["Tiling"].as<float>();
+		float useNormalMap = data["UseNormalMap"].as<float>();
+		float useMetalnessMap = data["UseMetalnessMap"].as<float>();
+		float useRoughnessMap = data["UseRoughnessMap"].as<float>();
+		float useOcclusionMap = data["UseOcclusionMap"].as<float>();
+
+		MaterialProperties prop;
+		prop.albedoColor = albedoColor;
+		prop.metalness = metalness;
+		prop.roughness = roughness;
+		prop.emissionStrength = emission;
+		prop.tiling = tiling;
+		prop.useNormalMap = useNormalMap;
+		prop.useMetalnessMap = useMetalnessMap;
+		prop.useRoughnessMap = useRoughnessMap;
+		prop.useOcclusionMap = useOcclusionMap;
 
 		std::string absShaderPath = getAbsolute(data["Shader"].as<std::string>());
 		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(absShaderPath);
-		Ref<Material> material = Material::create(name, color, shaderHandle);
+		Ref<Material> material = Material::create(name, shaderHandle, prop);
 
 		storage<Material>().assets[handle] = material;
 		//storage<Material>().loadQueue.push_back({ handle, sourcePath });

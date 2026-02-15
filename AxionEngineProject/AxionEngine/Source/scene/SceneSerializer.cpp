@@ -6,8 +6,8 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
-#include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/render/Renderer3D.h"
 
 namespace Axion {
 

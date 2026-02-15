@@ -111,7 +111,7 @@ namespace Axion {
 	void Renderer2D::onEvent(Event& e) {
 		if (e.getEventType() == EventType::ProjectChanged) {
 			AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(AssetManager::getAbsolute("shaders/Batch2dShader.axshader"));
-			s_data.quadMaterial = Material::create("Batch2DMat", { 1.0f, 0.0f, 0.0f, 1.0f }, shaderHandle);
+			s_data.quadMaterial = Material::create("Batch2DMat",/*{1.0f, 0.0f, 0.0f, 1.0f},*/ shaderHandle);
 		}
 	}
 
@@ -145,7 +145,7 @@ namespace Axion {
 
 		s_data.quadVertexBuffer->update(s_data.quadVertexBufferBase, dataSize);
 
-		s_data.quadMaterial->use();
+		s_data.quadMaterial->bind();
 		s_data.cameraConstantBuffer->bind(0);
 
 		s_data.quadVertexBuffer->bind();

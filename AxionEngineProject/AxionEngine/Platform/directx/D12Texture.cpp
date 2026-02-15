@@ -210,6 +210,8 @@ namespace Axion {
 
 		auto srvCpuHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
 
+		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
+
 		// ----- Execute Command List -----
 		AX_THROW_IF_FAILED_HR(cmdList->Close(), "Failed to close the command list");
 		ID3D12CommandList* cmdLists[] = { cmdList };

@@ -1,0 +1,34 @@
+Name: StandardPBR
+UUID: 550ae4e1aa9b50f4a29875f02156c607
+Type: Shader
+Format: .hlsl
+Source: shaders\StandardPBR.hlsl
+Specification:
+  Name: StandardPBR
+  ColorFormat: RGBA8
+  DepthStencilFormat: DEPTH32F
+  DepthTest: true
+  DepthWrite: true
+  DepthFunction: Less
+  StencilEnabled: false
+  SampleCount: 1
+  CullMode: Back
+  Topology: TriangleList
+  BatchTextures: 16
+  BufferLayout:
+    - Name: POSITION
+      Type: Float3
+      Size: 12
+      Offset: 0
+    - Name: NORMAL
+      Type: Float3
+      Size: 12
+      Offset: 12
+    - Name: TANGENT
+      Type: Float3
+      Size: 12
+      Offset: 24
+    - Name: TEXCOORD
+      Type: Float2
+      Size: 8
+      Offset: 36

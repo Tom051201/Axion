@@ -9,6 +9,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/render/GraphicsContext.h"
+#include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
@@ -400,23 +401,23 @@ namespace Axion {
 					ImGui::Separator();
 					ImGui::TableSetColumnIndex(1);
 					ImGui::Text(AssetManager::get<Material>(component.handle)->getName().c_str());
-
+					
 					// -- Shader --
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
 					ImGui::Text("Shader");
 					ImGui::TableSetColumnIndex(1);
 					ImGui::Text(AssetManager::get<Shader>(AssetManager::get<Material>(component.handle)->getShaderHandle())->getName().c_str());
-
-					// -- Color --
+					
+					// -- AlbedoColor --
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Color");
+					ImGui::Text("Albedo Color");
 					ImGui::Separator();
 					ImGui::TableSetColumnIndex(1);
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::ColorEdit4("##ColorEdit", AssetManager::get<Material>(component.handle)->getColor().data());
-
+					ImGui::ColorEdit4("##ColorEdit", AssetManager::get<Material>(component.handle)->getAlbedoColor().data());
+					
 					// -- Options --
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);

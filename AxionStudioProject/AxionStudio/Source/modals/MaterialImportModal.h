@@ -23,7 +23,15 @@ namespace Axion {
 		char m_sourcePathBuffer[256] = "";
 		char m_outputPathBuffer[256] = "";
 
-		Vec4 m_color = Vec4::one();
+		Vec4 m_albedoColor = Vec4::one();
+		float m_metalness = 0.0f;
+		float m_roughness = 0.0f;
+		float m_emission = 0.0f;
+		float m_tiling = 0.0f;
+		bool m_useNormalMap = false;
+		bool m_useMetalnessMap = false;
+		bool m_useRoughnessMap = false;
+		bool m_useOcclusionMap = false;
 
 	};
 

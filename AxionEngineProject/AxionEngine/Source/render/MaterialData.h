@@ -13,7 +13,7 @@ namespace Axion {
 		float tiling = 1.0f;
 
 		float useNormalMap = 0.0f;
-		float useMatelnessMap = 0.0f;
+		float useMetalnessMap = 0.0f;
 		float useRoughnessMap = 0.0f;
 		float useOcclusionMap = 0.0f;
 

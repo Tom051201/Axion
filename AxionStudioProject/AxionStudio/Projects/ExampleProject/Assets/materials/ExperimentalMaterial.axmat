@@ -1,5 +1,13 @@
 Name: ExperimentalMaterial
 UUID: e8334600c2964bbda7ef1bb90a17ece9
 Type: Material
-Color: [1, 1, 1, 1]
+AlbedoColor: [1, 1, 1, 1]
+Metalness: 0.0
+Roughness: 0.0
+Emission: 0.0
+Tiling: 0.0
+UseNormalMap: 0.0
+UseMetalnessMap: 0.0
+UseRoughnessMap: 0.0
+UseOcclusionMap: 0.0
 Shader: shaders\ExperimentalShader.axshader

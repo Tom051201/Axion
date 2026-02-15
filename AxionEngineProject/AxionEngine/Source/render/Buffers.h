@@ -157,11 +157,4 @@ namespace Axion {
 
 	};
 
-
-
-	struct alignas(16) ObjectBuffer {
-		DirectX::XMFLOAT4 color;
-		DirectX::XMMATRIX modelMatrix;
-	};
-
 }

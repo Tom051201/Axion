@@ -35,10 +35,12 @@ namespace Axion {
 	}
 
 	void Renderer3D::drawMesh(const Mat4& transform, Ref<Mesh>& mesh, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
-		material->use();
+		material->bind();
+
+		Renderer::getSceneDataBuffer()->bind(0);
 
 		ObjectBuffer buffer;
-		buffer.color = material->getColor().toFloat4();
+		buffer.color = material->getAlbedoColor().toFloat4();
 		buffer.modelMatrix = transform.transposed().toXM();
 
 		uploadBuffer->update(&buffer, sizeof(ObjectBuffer));

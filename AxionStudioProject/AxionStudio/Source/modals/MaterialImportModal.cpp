@@ -40,13 +40,85 @@ namespace Axion {
 			ImGui::InputText("##MatName_input", m_nameBuffer, sizeof(m_nameBuffer));
 
 
-			// -- Name --
+			// -- AlbedoColor --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Color");
+			ImGui::Text("Albedo Color");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::ColorEdit4("##Color_edit", m_color.data());
+			ImGui::ColorEdit4("##AlbedoColor_edit", m_albedoColor.data());
+
+
+			// -- Metalness --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Metalness");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::DragFloat("##Metalness_drag", &m_metalness, 0.05f, 0.0f, 1.0f);
+
+
+			// -- Roughness --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Roughness");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::DragFloat("##Roughness_drag", &m_roughness, 0.05f, 0.0f, 1.0f);
+
+
+			// -- Emission --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Emission");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::DragFloat("##Emission_drag", &m_emission, 0.05f, 0.0f, 1.0f);
+
+
+			// -- Tiling --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Tiling");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::DragFloat("##tiling_drag", &m_tiling, 0.05f, 0.0f, 1.0f);
+
+
+			// -- Use normal map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Use a Normal map");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::Checkbox("##useNormal_check", &m_useNormalMap);
+
+
+			// -- Use metalness map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Use a Metalness map");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::Checkbox("##useMetalness_check", &m_useMetalnessMap);
+
+
+			// -- Use roughness map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Use a Roughness map");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::Checkbox("##useRoughness_check", &m_useRoughnessMap);
+
+
+			// -- Use occlusion map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Use an Occlusion map");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::Checkbox("##useOcclusion_check", &m_useOcclusionMap);
 
 
 			// -- Shader path --
@@ -112,8 +184,20 @@ namespace Axion {
 
 				AAP::MaterialAssetData data;
 				data.name = m_nameBuffer;
-				data.color = m_color;
 				data.shaderAsset = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+
+				MaterialProperties prop;
+				prop.albedoColor = m_albedoColor;
+				prop.metalness = m_metalness;
+				prop.roughness = m_roughness;
+				prop.emissionStrength = m_emission;
+				prop.tiling = m_tiling;
+				prop.useNormalMap = m_useNormalMap ? 1.0f : 0.0f;
+				prop.useMetalnessMap = m_useMetalnessMap ? 1.0f : 0.0f;
+				prop.useRoughnessMap = m_useRoughnessMap ? 1.0f : 0.0f;
+				prop.useOcclusionMap = m_useOcclusionMap ? 1.0f : 0.0f;
+
+				data.properties = prop;
 
 				AAP::MaterialParser::createAxMatFile(data, outFile.string());
 				close();
@@ -132,7 +216,15 @@ namespace Axion {
 		m_nameBuffer[0] = '\0';
 		m_sourcePathBuffer[0] = '\0';
 		m_outputPathBuffer[0] = '\0';
-		m_color = Vec4::one();
+		m_albedoColor = Vec4::one();
+		m_metalness = 0.0f;
+		m_roughness = 0.0f;
+		m_emission = 0.0f;
+		m_tiling = 0.0f;
+		m_useNormalMap = false;
+		m_useMetalnessMap = false;
+		m_useRoughnessMap = false;
+		m_useOcclusionMap = false;
 	}
 
 }

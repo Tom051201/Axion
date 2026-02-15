@@ -1,0 +1,13 @@
+Name: PBR
+UUID: e5831d6e21777878eb6da068041df3bc
+Type: Material
+AlbedoColor: [0.482625484, 0, 0, 1]
+Metalness: 0
+Roughness: 0
+Emission: 0
+Tiling: 1
+UseNormalMap: 0
+UseMetalnessMap: 0
+UseRoughnessMap: 0
+UseOcclusionMap: 0
+Shader: shaders\StandardPBR.axshader

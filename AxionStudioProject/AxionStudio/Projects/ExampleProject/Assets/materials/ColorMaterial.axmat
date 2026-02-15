@@ -1,5 +1,13 @@
 Name: ColorMaterial
 UUID: 356d737cb9e7e69b06f7abcf551417dc
 Type: Material
-Color: [0.670588255, 0.737254918, 1, 1]
+AlbedoColor: [0.670588255, 0.737254918, 1, 1]
+Metalness: 0.0
+Roughness: 0.0
+Emission: 0.0
+Tiling: 0.0
+UseNormalMap: 0.0
+UseMetalnessMap: 0.0
+UseRoughnessMap: 0.0
+UseOcclusionMap: 0.0
 Shader: shaders\FlatColorShader.axshader
