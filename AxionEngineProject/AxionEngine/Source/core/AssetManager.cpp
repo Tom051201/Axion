@@ -245,13 +245,43 @@ namespace Axion {
 		storage<Shader>().assets[handle] = shader;
 		storage<Shader>().loadQueue.push_back({ handle, 
 			[sourcePath, handle]() {
-				AX_CORE_LOG_WARN(sourcePath);
 				Ref<Shader> shader = AssetManager::get<Shader>(handle);
 				shader->compileFromFile(sourcePath);
 				return shader;
 			}
 		});
 		storage<Shader>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
+	// ----- Texture2D Assets -----
+	template<>
+	AssetHandle<Texture2D> AssetManager::load<Texture2D>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Texture2D") {
+			AX_CORE_LOG_ERROR("Loading texture2d failed, file is not a texture2d asset file");
+			return {};
+		}
+
+		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<Texture2D> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<Texture2D>(handle)) {
+			return handle;
+		}
+
+		storage<Texture2D>().assets[handle] = nullptr;
+		storage<Texture2D>().loadQueue.push_back({ handle,
+			[sourcePath, handle]() {
+				return Texture2D::create(sourcePath);
+			}
+			});
+		storage<Texture2D>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}
@@ -278,30 +308,55 @@ namespace Axion {
 
 		std::string name = data["Name"].as<std::string>();
 
-		Vec4 albedoColor = data["AlbedoColor"].as<Vec4>();
-		float metalness = data["Metalness"].as<float>();
-		float roughness = data["Roughness"].as<float>();
-		float emission = data["Emission"].as<float>();
-		float tiling = data["Tiling"].as<float>();
-		float useNormalMap = data["UseNormalMap"].as<float>();
-		float useMetalnessMap = data["UseMetalnessMap"].as<float>();
-		float useRoughnessMap = data["UseRoughnessMap"].as<float>();
-		float useOcclusionMap = data["UseOcclusionMap"].as<float>();
-
 		MaterialProperties prop;
-		prop.albedoColor = albedoColor;
-		prop.metalness = metalness;
-		prop.roughness = roughness;
-		prop.emissionStrength = emission;
-		prop.tiling = tiling;
-		prop.useNormalMap = useNormalMap;
-		prop.useMetalnessMap = useMetalnessMap;
-		prop.useRoughnessMap = useRoughnessMap;
-		prop.useOcclusionMap = useOcclusionMap;
+		prop.albedoColor = data["AlbedoColor"].as<Vec4>();
+		prop.metalness = data["Metalness"].as<float>();
+		prop.roughness = data["Roughness"].as<float>();
+		prop.emissionStrength = data["Emission"].as<float>();
+		prop.tiling = data["Tiling"].as<float>();
+		prop.useNormalMap = data["UseNormalMap"].as<float>();
+		prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
+		prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
+		prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
 
 		std::string absShaderPath = getAbsolute(data["Shader"].as<std::string>());
 		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(absShaderPath);
 		Ref<Material> material = Material::create(name, shaderHandle, prop);
+
+		if (data["Textures"]) {
+			auto textures = data["Textures"];
+
+			if (textures["Albedo"] && !textures["Albedo"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Albedo"].as<std::string>()));
+				material->setTexture(TextureSlot::Albedo, handle);
+			}
+
+			if (textures["Normal"] && !textures["Normal"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Normal"].as<std::string>()));
+				material->setTexture(TextureSlot::Normal, handle);
+			}
+
+			if (textures["Metalness"] && !textures["Metalness"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Metalness"].as<std::string>()));
+				material->setTexture(TextureSlot::Metalness, handle);
+			}
+
+			if (textures["Roughness"] && !textures["Roughness"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Roughness"].as<std::string>()));
+				material->setTexture(TextureSlot::Roughness, handle);
+			}
+
+			if (textures["Occlusion"] && !textures["Occlusion"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Occlusion"].as<std::string>()));
+				material->setTexture(TextureSlot::Occlusion, handle);
+			}
+
+			if (textures["Emissive"] && !textures["Emissive"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Emissive"].as<std::string>()));
+				material->setTexture(TextureSlot::Emissive, handle);
+			}
+
+		}
 
 		storage<Material>().assets[handle] = material;
 		//storage<Material>().loadQueue.push_back({ handle, sourcePath });
@@ -338,37 +393,6 @@ namespace Axion {
 		storage<AudioClip>().assets[handle] = clip;
 		//storage<AudioClip>().loadQueue.push_back({ handle, sourcePath });
 		storage<AudioClip>().handleToPath[handle] = absolutePath;
-
-		return handle;
-	}
-
-	// ----- Texture2D Assets -----
-	template<>
-	AssetHandle<Texture2D> AssetManager::load<Texture2D>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
-
-		if (data["Type"].as<std::string>() != "Texture2D") {
-			AX_CORE_LOG_ERROR("Loading texture2d failed, file is not a texture2d asset file");
-			return {};
-		}
-
-		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
-		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<Texture2D> handle(uuid);
-
-		// -- Return if already registered --
-		if (has<Texture2D>(handle)) {
-			return handle;
-		}
-
-		storage<Texture2D>().assets[handle] = nullptr;
-		storage<Texture2D>().loadQueue.push_back({ handle,
-			[sourcePath, handle]() {
-				return Texture2D::create(sourcePath);
-			}
-		});
-		storage<Texture2D>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}

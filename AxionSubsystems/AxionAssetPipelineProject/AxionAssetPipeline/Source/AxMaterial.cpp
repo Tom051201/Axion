@@ -30,6 +30,24 @@ namespace Axion::AAP {
 		out << YAML::Key << "UseRoughnessMap" << YAML::Value << data.properties.useRoughnessMap;
 		out << YAML::Key << "UseOcclusionMap" << YAML::Value << data.properties.useOcclusionMap;
 
+		out << YAML::Key << "Textures" << YAML::BeginMap;
+		for (auto const& [slot, path] : data.textures) {
+			std::string label;
+			switch (slot) {
+				case TextureSlot::Albedo: { label = "Albedo"; break; }
+				case TextureSlot::Normal: { label = "Normal"; break; }
+				case TextureSlot::Metalness: { label = "Metalness"; break; }
+				case TextureSlot::Roughness: { label = "Roughness"; break; }
+				case TextureSlot::Occlusion: { label = "Occlusion"; break; }
+				case TextureSlot::Emissive: { label = "Emissive"; break; }
+			}
+
+			if (!label.empty()) {
+				out << YAML::Key << label << YAML::Value << path;
+			}
+		}
+		out << YAML::EndMap;
+
 		out << YAML::Key << "Shader" << YAML::Value << data.shaderAsset;
 
 		out << YAML::EndMap;

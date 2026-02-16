@@ -1,0 +1,18 @@
+Name: BlueMetal
+UUID: 5c1b4d6a9b0bf876d660416da4fb5346
+Type: Material
+AlbedoColor: [0.247104228, 0.625005722, 1, 1]
+Metalness: 0.0
+Roughness: 0.0
+Emission: 0
+Tiling: 0
+UseNormalMap: 0
+UseMetalnessMap: 0
+UseRoughnessMap: 0
+UseOcclusionMap: 0
+Textures:
+  Albedo: textures\colormap.axtex
+  Normal: textures\normalmap.axtex
+  Metalness: textures\metalnessmap.axtex
+  Roughness: textures\roughnessmap.axtex
+Shader: shaders\StandardPBR.axshader

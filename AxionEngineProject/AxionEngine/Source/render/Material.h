@@ -47,7 +47,7 @@ namespace Axion {
 
 		Ref<ConstantBuffer> m_materialBuffer;
 
-		std::map<TextureSlot, AssetHandle<Texture2D>> m_textures;
+		std::map<TextureSlot, AssetHandle<Texture2D>> m_textures; // TODO: make this an array
 
 		mutable bool m_dirty = true;
 

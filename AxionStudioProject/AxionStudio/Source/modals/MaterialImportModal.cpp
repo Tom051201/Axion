@@ -120,6 +120,113 @@ namespace Axion {
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::Checkbox("##useOcclusion_check", &m_useOcclusionMap);
 
+			// -- Albedo Map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Albedo Map");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##AlbedoMapPath_input", m_albedoMapPathBuffer, sizeof(m_albedoMapPathBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse##AlbedoMapFile_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+				if (!absPath.empty()) {
+					strcpy_s(m_albedoMapPathBuffer, IM_ARRAYSIZE(m_albedoMapPathBuffer), absPath.c_str());
+					m_albedoMapPathBuffer[IM_ARRAYSIZE(m_albedoMapPathBuffer) - 1] = '\0';
+				}
+			}
+
+			// -- Normal Map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Normal Map");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##NormalMapPath_input", m_normalMapPathBuffer, sizeof(m_normalMapPathBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse##...File_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+				if (!absPath.empty()) {
+					strcpy_s(m_normalMapPathBuffer, IM_ARRAYSIZE(m_normalMapPathBuffer), absPath.c_str());
+					m_normalMapPathBuffer[IM_ARRAYSIZE(m_normalMapPathBuffer) - 1] = '\0';
+				}
+			}
+
+			// -- Metalness Map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Metalness Map");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##MetalnessMapPath_input", m_metalnessMapPathBuffer, sizeof(m_metalnessMapPathBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse##MetalnessMapFile_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+				if (!absPath.empty()) {
+					strcpy_s(m_metalnessMapPathBuffer, IM_ARRAYSIZE(m_metalnessMapPathBuffer), absPath.c_str());
+					m_metalnessMapPathBuffer[IM_ARRAYSIZE(m_metalnessMapPathBuffer) - 1] = '\0';
+				}
+			}
+
+			// -- Roughness Map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Roughness Map");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##RoughnessMapPath_input", m_roughnessMapPathBuffer, sizeof(m_roughnessMapPathBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse##RoughnessMapFile_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+				if (!absPath.empty()) {
+					strcpy_s(m_roughnessMapPathBuffer, IM_ARRAYSIZE(m_roughnessMapPathBuffer), absPath.c_str());
+					m_roughnessMapPathBuffer[IM_ARRAYSIZE(m_roughnessMapPathBuffer) - 1] = '\0';
+				}
+			}
+
+			// -- Occlusion Map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Occlusion Map");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##OcclusionMapPath_input", m_occlusionMapPathBuffer, sizeof(m_occlusionMapPathBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse##OcclusionMapFile_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+				if (!absPath.empty()) {
+					strcpy_s(m_occlusionMapPathBuffer, IM_ARRAYSIZE(m_occlusionMapPathBuffer), absPath.c_str());
+					m_occlusionMapPathBuffer[IM_ARRAYSIZE(m_occlusionMapPathBuffer) - 1] = '\0';
+				}
+			}
+
+			// -- Emissive Map --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Emissive Map");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##EmissiveMapPath_input", m_emissiveMapPathBuffer, sizeof(m_emissiveMapPathBuffer));
+			ImGui::SameLine();
+			if (ImGui::Button("Browse##EmissiveMapFile_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+				if (!absPath.empty()) {
+					strcpy_s(m_emissiveMapPathBuffer, IM_ARRAYSIZE(m_emissiveMapPathBuffer), absPath.c_str());
+					m_emissiveMapPathBuffer[IM_ARRAYSIZE(m_emissiveMapPathBuffer) - 1] = '\0';
+				}
+			}
 
 			// -- Shader path --
 			ImGui::TableNextRow();
@@ -199,6 +306,31 @@ namespace Axion {
 
 				data.properties = prop;
 
+				if (strlen(m_albedoMapPathBuffer) != 0 && std::filesystem::exists(m_albedoMapPathBuffer)) {
+					data.textures[TextureSlot::Albedo] = AssetManager::getRelativeToAssets(std::string(m_albedoMapPathBuffer));
+				}
+
+				if (strlen(m_normalMapPathBuffer) != 0 && std::filesystem::exists(m_normalMapPathBuffer)) {
+					data.textures[TextureSlot::Normal] = AssetManager::getRelativeToAssets(std::string(m_normalMapPathBuffer));
+				}
+
+				if (strlen(m_metalnessMapPathBuffer) != 0 && std::filesystem::exists(m_metalnessMapPathBuffer)) {
+					data.textures[TextureSlot::Metalness] = AssetManager::getRelativeToAssets(std::string(m_metalnessMapPathBuffer));
+				}
+
+				if (strlen(m_roughnessMapPathBuffer) != 0 && std::filesystem::exists(m_roughnessMapPathBuffer)) {
+					data.textures[TextureSlot::Roughness] = AssetManager::getRelativeToAssets(std::string(m_roughnessMapPathBuffer));
+				}
+
+				if (strlen(m_occlusionMapPathBuffer) != 0 && std::filesystem::exists(m_occlusionMapPathBuffer)) {
+					data.textures[TextureSlot::Occlusion] = AssetManager::getRelativeToAssets(std::string(m_occlusionMapPathBuffer));
+				}
+
+				if (strlen(m_emissiveMapPathBuffer) != 0 && std::filesystem::exists(m_emissiveMapPathBuffer)) {
+					data.textures[TextureSlot::Emissive] = AssetManager::getRelativeToAssets(std::string(m_emissiveMapPathBuffer));
+				}
+
+
 				AAP::MaterialParser::createAxMatFile(data, outFile.string());
 				close();
 			}
@@ -225,6 +357,12 @@ namespace Axion {
 		m_useMetalnessMap = false;
 		m_useRoughnessMap = false;
 		m_useOcclusionMap = false;
+		m_albedoMapPathBuffer[0] = '\0';
+		m_normalMapPathBuffer[0] = '\0';
+		m_metalnessMapPathBuffer[0] = '\0';
+		m_roughnessMapPathBuffer[0] = '\0';
+		m_occlusionMapPathBuffer[0] = '\0';
+		m_emissiveMapPathBuffer[0] = '\0';
 	}
 
 }

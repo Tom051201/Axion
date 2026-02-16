@@ -165,7 +165,24 @@ namespace Axion {
 
 		if (e.getKeyCode() == KeyCode::Enter) {
 			Entity e = m_activeScene->createEntity();
-			e.addComponent<SpriteComponent>();
+			//AssetHandle<Mesh> meshHandle = AssetManager::load<Mesh>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/meshes/homer.axmesh").string());
+			Ref<Mesh> mesh = Mesh::createPBRCube();
+			AssetHandle<Mesh> meshHandle = AssetManager::insert(mesh);
+			e.addComponent<MeshComponent>(meshHandle);
+			e.addComponent<ConstantBufferComponent>();
+
+			//AssetHandle<Texture2D> roughnessMapHandle = AssetManager::load<Texture2D>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/textures/roughnessmap.axtex").string());
+			//AssetHandle<Texture2D> colorMapHandle = AssetManager::load<Texture2D>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/textures/colormap.axtex").string());
+			//AssetHandle<Texture2D> normalMapHandle = AssetManager::load<Texture2D>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/textures/normalmap.axtex").string());
+			//AssetHandle<Texture2D> metalnessMapHandle = AssetManager::load<Texture2D>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/textures/metalnessmap.axtex").string());
+			AssetHandle<Material> matHandle = AssetManager::load<Material>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/materials/Green Metal.axmat").string());
+			Ref<Material> mat = AssetManager::get<Material>(matHandle);
+			//mat->setTexture(TextureSlot::Roughness, roughnessMapHandle);
+			//mat->setTexture(TextureSlot::Albedo, colorMapHandle);
+			//mat->setTexture(TextureSlot::Normal, normalMapHandle);
+			//mat->setTexture(TextureSlot::Metalness, metalnessMapHandle);
+
+			e.addComponent<MaterialComponent>(matHandle);
 			e.addComponent<NativeScriptComponent>().bind<CameraController>();
 			e.addComponent<AudioComponent>();
 			AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());

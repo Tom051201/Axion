@@ -1,0 +1,5 @@
+Name: NormalMap
+UUID: 9f10ced443e435d12e970540aa0f34fb
+Type: Texture2D
+Format: PNG
+Source: textures\normalmap.png

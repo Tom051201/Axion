@@ -1,13 +1,20 @@
 Name: PBR
 UUID: e5831d6e21777878eb6da068041df3bc
 Type: Material
-AlbedoColor: [0.482625484, 0, 0, 1]
-Metalness: 0
-Roughness: 0
+AlbedoColor: [1, 0, 0, 1]
+Metalness: 1
+Roughness: 1
 Emission: 0
 Tiling: 1
 UseNormalMap: 0
 UseMetalnessMap: 0
-UseRoughnessMap: 0
+UseRoughnessMap: 1
 UseOcclusionMap: 0
+Textures:
+  - Albedo: textures\albedomap.axtex
+  - Normal: textures\normalmap.axtex
+  - Metalness: textures\metalnessmap.axtex
+  - Roughness: textures\roughnessmap.axtex
+  - Occlusion: textures\occlusionmap.axtex
+  - Emissive: 
 Shader: shaders\StandardPBR.axshader

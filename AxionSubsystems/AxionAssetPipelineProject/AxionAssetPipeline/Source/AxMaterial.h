@@ -1,7 +1,9 @@
 #pragma once
 
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/render/MaterialData.h"
+#include "AxionEngine/Source/render/Texture.h"
 
 #include <string>
 
@@ -11,6 +13,7 @@ namespace Axion::AAP {
 		std::string name;
 		MaterialProperties properties;
 		std::string shaderAsset;
+		std::map<TextureSlot, std::string> textures;
 	};
 
 	class MaterialParser {

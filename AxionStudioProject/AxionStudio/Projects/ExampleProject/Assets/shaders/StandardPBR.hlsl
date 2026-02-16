@@ -185,5 +185,9 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	// Gamma Correction (Linear -> sRGB)
 	color = pow(color, 1.0 / 2.2);
 
+	// DEBUG
+	//float3 T = input.tbn[0];
+	//return float4(T * 0.5 + 0.5, 1.0);
+
 	return float4(color, 1.0);
 }

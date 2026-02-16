@@ -9,7 +9,7 @@
 namespace Axion {
 
 	struct alignas(16) ObjectBuffer {
-		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT4 color; // TODO: remove this and remove from shaders
 		DirectX::XMMATRIX modelMatrix;
 	};
 

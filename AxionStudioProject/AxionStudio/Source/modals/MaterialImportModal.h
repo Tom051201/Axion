@@ -2,6 +2,7 @@
 
 #include "AxionStudio/Source/core/Modal.h"
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/render/MaterialData.h"
 
 namespace Axion {
 
@@ -32,6 +33,13 @@ namespace Axion {
 		bool m_useMetalnessMap = false;
 		bool m_useRoughnessMap = false;
 		bool m_useOcclusionMap = false;
+
+		char m_albedoMapPathBuffer[256] = "";
+		char m_normalMapPathBuffer[256] = "";
+		char m_metalnessMapPathBuffer[256] = "";
+		char m_roughnessMapPathBuffer[256] = "";
+		char m_occlusionMapPathBuffer[256] = "";
+		char m_emissiveMapPathBuffer[256] = "";
 
 	};
 

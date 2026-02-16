@@ -1,0 +1,15 @@
+Name: Green Metal
+UUID: a44fa11b04aba26eb9ffc3038d9c7eae
+Type: Material
+AlbedoColor: [0.054054141, 1, 0, 1]
+Metalness: 1
+Roughness: 0
+Emission: 0
+Tiling: 0
+UseNormalMap: 0
+UseMetalnessMap: 0
+UseRoughnessMap: 0
+UseOcclusionMap: 0
+Textures:
+  Albedo: textures\colormap.axtex
+Shader: shaders\StandardPBR.axshader

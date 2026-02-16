@@ -1,0 +1,5 @@
+Name: RoughnessMap
+UUID: 9f10cdc343e425d12e970440aa0f34fb
+Type: Texture2D
+Format: PNG
+Source: textures\roughnessmap.png

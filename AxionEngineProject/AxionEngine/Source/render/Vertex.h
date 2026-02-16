@@ -6,16 +6,17 @@ namespace Axion {
 	struct Vertex {
 		DirectX::XMFLOAT3 position;
 		DirectX::XMFLOAT3 normal;
+		DirectX::XMFLOAT3 tangent;
 		DirectX::XMFLOAT2 texcoord;
 
 		Vertex()
-			: position(0.0f, 0.0f, 0.0f), normal(0.0f, 0.0f, 1.0f), texcoord(0.0f, 0.0f) {}
+			: position(0.0f, 0.0f, 0.0f), normal(0.0f, 0.0f, 1.0f), tangent(0.0f, 0.0f, 0.0f), texcoord(0.0f, 0.0f) {}
 
-		Vertex(float px, float py, float pz, float nx, float ny, float nz, float u, float v)
-			: position(px, py, pz), normal(nx, ny, nz), texcoord(u, v) {}
+		Vertex(float px, float py, float pz, float nx, float ny, float nz, float tx, float ty, float tz, float u, float v)
+			: position(px, py, pz), normal(nx, ny, nz), tangent(tx, ty, tz), texcoord(u, v) {}
 
 		Vertex(float px, float py, float pz)
-			: position(px, py, pz), normal(0, 0, 0), texcoord(0, 0) {}
+			: position(px, py, pz), normal(0.0f, 0.0f, 0.0f), tangent(0.0f, 0.0f, 0.0f), texcoord(0.0f, 0.0f) {}
 
 		static void normalizeVertices(std::vector<Vertex>& vertices) {
 			if (vertices.empty()) return;
@@ -65,6 +66,9 @@ namespace Axion {
 				normal.x == other.normal.x &&
 				normal.y == other.normal.y &&
 				normal.z == other.normal.z &&
+				tangent.x == other.tangent.x &&
+				tangent.y == other.tangent.y &&
+				tangent.z == other.tangent.z &&
 				texcoord.x == other.texcoord.x &&
 				texcoord.y == other.texcoord.y;
 		}

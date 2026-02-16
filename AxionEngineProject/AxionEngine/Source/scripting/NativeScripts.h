@@ -22,14 +22,14 @@ namespace Axion {
 			auto& audio = getComponent<AudioComponent>();
 			float speed = 5.0f * ts;
 
-			if (Input::isKeyPressed(KeyCode::W)) transform.position.y += speed;
-			if (Input::isKeyPressed(KeyCode::S)) transform.position.y -= speed;
-			if (Input::isKeyPressed(KeyCode::D)) transform.position.x -= speed;
-			if (Input::isKeyPressed(KeyCode::A)) transform.position.x += speed;
-			if (Input::isKeyPressed(KeyCode::E)) transform.position.z += speed;
-			if (Input::isKeyPressed(KeyCode::Q)) transform.position.z -= speed;
+			if (Input::isKeyPressed(KeyCode::Numpad5)) transform.position.y += speed;
+			if (Input::isKeyPressed(KeyCode::Numpad2)) transform.position.y -= speed;
+			if (Input::isKeyPressed(KeyCode::Numpad3)) transform.position.x -= speed;
+			if (Input::isKeyPressed(KeyCode::Numpad1)) transform.position.x += speed;
+			if (Input::isKeyPressed(KeyCode::Numpad6)) transform.position.z += speed;
+			if (Input::isKeyPressed(KeyCode::Numpad4)) transform.position.z -= speed;
 
-			if (Input::isKeyPressed(KeyCode::G)) {
+			if (Input::isKeyPressed(KeyCode::Numpad0)) {
 				audio.audio->play();
 			}
 		}
