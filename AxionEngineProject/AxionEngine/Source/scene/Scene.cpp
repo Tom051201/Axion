@@ -119,7 +119,24 @@ namespace Axion {
 	void Scene::onUpdate(Timestep ts, const Camera& cam) {
 		if (&cam) {
 
-			Renderer3D::beginScene(cam);
+			LightingData lightData;
+			lightData.direction = { 0.5f, 1.0f, -0.5f };
+			lightData.color = Vec4::one();
+			
+			auto lightView = m_registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
+			for (auto entity : lightView) {
+				auto& [transform, dlc] = lightView.get<TransformComponent, DirectionalLightComponent>(entity);
+
+				Mat4 transformMat = transform.getTransform();
+				Vec4 forward = transformMat * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+
+				lightData.direction = { -forward.x, -forward.y, -forward.z };
+				lightData.color = dlc.color;
+
+				break;
+			}
+
+			Renderer3D::beginScene(cam, lightData);
 
 			{
 				auto view = m_registry.view<NativeScriptComponent>();

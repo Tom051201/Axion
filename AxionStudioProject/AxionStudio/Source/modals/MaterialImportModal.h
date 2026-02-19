@@ -29,10 +29,6 @@ namespace Axion {
 		float m_roughness = 0.0f;
 		float m_emission = 0.0f;
 		float m_tiling = 0.0f;
-		bool m_useNormalMap = false;
-		bool m_useMetalnessMap = false;
-		bool m_useRoughnessMap = false;
-		bool m_useOcclusionMap = false;
 
 		char m_albedoMapPathBuffer[256] = "";
 		char m_normalMapPathBuffer[256] = "";

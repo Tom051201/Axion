@@ -80,51 +80,52 @@ namespace Axion {
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Tiling");
+			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::DragFloat("##tiling_drag", &m_tiling, 0.05f, 0.0f, 1.0f);
 
 
-			// -- Use normal map --
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Use a Normal map");
-			ImGui::TableSetColumnIndex(1);
-			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::Checkbox("##useNormal_check", &m_useNormalMap);
-
-
-			// -- Use metalness map --
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Use a Metalness map");
-			ImGui::TableSetColumnIndex(1);
-			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::Checkbox("##useMetalness_check", &m_useMetalnessMap);
-
-
-			// -- Use roughness map --
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Use a Roughness map");
-			ImGui::TableSetColumnIndex(1);
-			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::Checkbox("##useRoughness_check", &m_useRoughnessMap);
-
-
-			// -- Use occlusion map --
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Use an Occlusion map");
-			ImGui::TableSetColumnIndex(1);
-			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::Checkbox("##useOcclusion_check", &m_useOcclusionMap);
+			//// -- Use normal map --
+			//ImGui::TableNextRow();
+			//ImGui::TableSetColumnIndex(0);
+			//ImGui::Text("Use Normal map");
+			//ImGui::TableSetColumnIndex(1);
+			//ImGui::SetNextItemWidth(inputFieldWidth);
+			//ImGui::Checkbox("##useNormal_check", &m_useNormalMap);
+			//
+			//
+			//// -- Use metalness map --
+			//ImGui::TableNextRow();
+			//ImGui::TableSetColumnIndex(0);
+			//ImGui::Text("Use Metalness map");
+			//ImGui::TableSetColumnIndex(1);
+			//ImGui::SetNextItemWidth(inputFieldWidth);
+			//ImGui::Checkbox("##useMetalness_check", &m_useMetalnessMap);
+			//
+			//
+			//// -- Use roughness map --
+			//ImGui::TableNextRow();
+			//ImGui::TableSetColumnIndex(0);
+			//ImGui::Text("Use Roughness map");
+			//ImGui::TableSetColumnIndex(1);
+			//ImGui::SetNextItemWidth(inputFieldWidth);
+			//ImGui::Checkbox("##useRoughness_check", &m_useRoughnessMap);
+			//
+			//
+			//// -- Use occlusion map --
+			//ImGui::TableNextRow();
+			//ImGui::TableSetColumnIndex(0);
+			//ImGui::Text("Use Occlusion map");
+			//ImGui::Separator();
+			//ImGui::TableSetColumnIndex(1);
+			//ImGui::SetNextItemWidth(inputFieldWidth);
+			//ImGui::Checkbox("##useOcclusion_check", &m_useOcclusionMap);
 
 			// -- Albedo Map --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Albedo Map");
-			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::InputText("##AlbedoMapPath_input", m_albedoMapPathBuffer, sizeof(m_albedoMapPathBuffer));
@@ -142,7 +143,6 @@ namespace Axion {
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Normal Map");
-			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::InputText("##NormalMapPath_input", m_normalMapPathBuffer, sizeof(m_normalMapPathBuffer));
@@ -160,7 +160,6 @@ namespace Axion {
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Metalness Map");
-			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::InputText("##MetalnessMapPath_input", m_metalnessMapPathBuffer, sizeof(m_metalnessMapPathBuffer));
@@ -178,7 +177,6 @@ namespace Axion {
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Roughness Map");
-			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::InputText("##RoughnessMapPath_input", m_roughnessMapPathBuffer, sizeof(m_roughnessMapPathBuffer));
@@ -196,7 +194,6 @@ namespace Axion {
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Occlusion Map");
-			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
 			ImGui::InputText("##OcclusionMapPath_input", m_occlusionMapPathBuffer, sizeof(m_occlusionMapPathBuffer));
@@ -299,12 +296,10 @@ namespace Axion {
 				prop.roughness = m_roughness;
 				prop.emissionStrength = m_emission;
 				prop.tiling = m_tiling;
-				prop.useNormalMap = m_useNormalMap ? 1.0f : 0.0f;
-				prop.useMetalnessMap = m_useMetalnessMap ? 1.0f : 0.0f;
-				prop.useRoughnessMap = m_useRoughnessMap ? 1.0f : 0.0f;
-				prop.useOcclusionMap = m_useOcclusionMap ? 1.0f : 0.0f;
-
-				data.properties = prop;
+				prop.useNormalMap = 0.0f;
+				prop.useMetalnessMap = 0.0f;
+				prop.useRoughnessMap = 0.0f;
+				prop.useOcclusionMap = 0.0f;
 
 				if (strlen(m_albedoMapPathBuffer) != 0 && std::filesystem::exists(m_albedoMapPathBuffer)) {
 					data.textures[TextureSlot::Albedo] = AssetManager::getRelativeToAssets(std::string(m_albedoMapPathBuffer));
@@ -312,23 +307,29 @@ namespace Axion {
 
 				if (strlen(m_normalMapPathBuffer) != 0 && std::filesystem::exists(m_normalMapPathBuffer)) {
 					data.textures[TextureSlot::Normal] = AssetManager::getRelativeToAssets(std::string(m_normalMapPathBuffer));
+					prop.useNormalMap = 1.0f;
 				}
 
 				if (strlen(m_metalnessMapPathBuffer) != 0 && std::filesystem::exists(m_metalnessMapPathBuffer)) {
 					data.textures[TextureSlot::Metalness] = AssetManager::getRelativeToAssets(std::string(m_metalnessMapPathBuffer));
+					prop.useMetalnessMap = 1.0f;
 				}
 
 				if (strlen(m_roughnessMapPathBuffer) != 0 && std::filesystem::exists(m_roughnessMapPathBuffer)) {
 					data.textures[TextureSlot::Roughness] = AssetManager::getRelativeToAssets(std::string(m_roughnessMapPathBuffer));
+					prop.useRoughnessMap = 1.0f;
 				}
 
 				if (strlen(m_occlusionMapPathBuffer) != 0 && std::filesystem::exists(m_occlusionMapPathBuffer)) {
 					data.textures[TextureSlot::Occlusion] = AssetManager::getRelativeToAssets(std::string(m_occlusionMapPathBuffer));
+					prop.useOcclusionMap = 1.0f;
 				}
 
 				if (strlen(m_emissiveMapPathBuffer) != 0 && std::filesystem::exists(m_emissiveMapPathBuffer)) {
 					data.textures[TextureSlot::Emissive] = AssetManager::getRelativeToAssets(std::string(m_emissiveMapPathBuffer));
 				}
+
+				data.properties = prop;
 
 
 				AAP::MaterialParser::createAxMatFile(data, outFile.string());
@@ -353,10 +354,6 @@ namespace Axion {
 		m_roughness = 0.0f;
 		m_emission = 0.0f;
 		m_tiling = 0.0f;
-		m_useNormalMap = false;
-		m_useMetalnessMap = false;
-		m_useRoughnessMap = false;
-		m_useOcclusionMap = false;
 		m_albedoMapPathBuffer[0] = '\0';
 		m_normalMapPathBuffer[0] = '\0';
 		m_metalnessMapPathBuffer[0] = '\0';

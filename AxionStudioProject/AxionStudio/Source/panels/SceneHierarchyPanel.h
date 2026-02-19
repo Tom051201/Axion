@@ -31,12 +31,22 @@ namespace Axion {
 
 		void drawVec3Control(const std::string& label, Vec3& values, float resetX = 0.0f, float resetY = 0.0f, float resetZ = 0.0f, float columnWidth = 100.0f);
 		
-		// Returns true if the entity already has the component
 		template<typename T>
 		void drawAddComponent(const char* name) {
 			if (!m_selectedEntity.hasComponent<T>()) {
 				if (ImGui::MenuItem(name)) {
 					m_selectedEntity.addComponent<T>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+		}
+
+		template<typename T>
+		void drawAddComponentWithFuncOnAdd(const char* name, std::function<void(T&)> onAdd) {
+			if (!m_selectedEntity.hasComponent<T>()) {
+				if (ImGui::MenuItem(name)) {
+					T& comp = m_selectedEntity.addComponent<T>();
+					onAdd(comp);
 					ImGui::CloseCurrentPopup();
 				}
 			}

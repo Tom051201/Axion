@@ -72,12 +72,37 @@ namespace Axion {
 
 
 	struct DirectionalLightComponent {
-		Vec3 direction = { 0.0f, 1.0f, 0.0f };
+		Vec3 direction = { 0.0f, 1.0f, 0.0f }; // TODO: maybe remove and rely on transform rotation
 		Vec4 color = Vec4::one();
 
 		DirectionalLightComponent() = default;
 		DirectionalLightComponent(const DirectionalLightComponent&) = default;
 		DirectionalLightComponent(const Vec3& dir, const Vec4& col) : direction(dir), color(col) {}
+	};
+
+
+
+	struct PointLightComponent {
+		Vec4 color = Vec4::one();
+		float intensity = 1.0f;
+		float radius = 10.0f;
+		float falloff = 1.0f;
+
+		PointLightComponent() = default;
+		PointLightComponent(const PointLightComponent&) = default;
+	};
+
+
+
+	struct SpotLightComponent {
+		Vec4 color = Vec4::one();
+		float intensity = 1.0f;
+		float range = 10.0f;
+		float innerConeAngle = 12.5f; // degrees
+		float outerConeAngle = 17.5f; // degrees
+
+		SpotLightComponent() = default;
+		SpotLightComponent(const SpotLightComponent&) = default;
 	};
 
 

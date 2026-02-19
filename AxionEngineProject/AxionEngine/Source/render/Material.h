@@ -51,8 +51,6 @@ namespace Axion {
 
 		mutable bool m_dirty = true;
 
-		AssetHandle<Texture2D> m_whiteTexture; // TODO: store ONE white texture at the beginning with a public static handle somewhere
-
 	};
 
 }

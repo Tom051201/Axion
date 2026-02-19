@@ -2,6 +2,10 @@ cbuffer CameraBuffer : register(b0) {
 	float4x4 u_view;
 	float4x4 u_projection;
 	float4x4 u_viewProjection;
+
+	// TODO: move those to own buffer or leave here...
+	float4 u_lightDir;
+	float4 u_lightColor;
 }
 
 cbuffer ObjectBuffer : register(b1) {
@@ -147,10 +151,12 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	// -- Lighting setup --
 	float3 camPos = getCameraPosition();
 	float3 V = normalize(camPos - input.worldPos);
-	float3 lightDir = normalize(float3(0.5, 1.0, -0.5));
+	//float3 lightDir = normalize(float3(0.5, 1.0, -0.5));
+	float3 lightDir = normalize(float3(u_lightDir.x, u_lightDir.y, u_lightDir.z));
 	float3 L = normalize(lightDir);
 	float3 H = normalize(V + L);
-	float3 radiance = float3(1.0, 1.0, 1.0) * 2.0;
+	//float3 radiance = float3(1.0, 1.0, 1.0) * 2.0;
+	float3 radiance = float3(u_lightColor.x, u_lightColor.y, u_lightColor.z) * 2.0;
 
 	// -- Base reflectivity : 0.04 for Dielectrics (Plastic), Albedo color for Metals --
 	float3 F0 = float3(0.04, 0.04, 0.04);

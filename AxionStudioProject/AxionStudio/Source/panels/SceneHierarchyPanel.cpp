@@ -189,7 +189,8 @@ namespace Axion {
 			m_selectedEntity.hasComponent<ConstantBufferComponent>() &&
 			m_selectedEntity.hasComponent<CameraComponent>() &&
 			m_selectedEntity.hasComponent<AudioComponent>() &&
-			m_selectedEntity.hasComponent<NativeScriptComponent>();
+			m_selectedEntity.hasComponent<NativeScriptComponent>() &&
+			m_selectedEntity.hasComponent<DirectionalLightComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -204,10 +205,13 @@ namespace Axion {
 			drawAddComponent<MeshComponent>("Mesh");
 			drawAddComponent<SpriteComponent>("Sprite");
 			drawAddComponent<MaterialComponent>("Material");
-			drawAddComponent<ConstantBufferComponent>("Upload Buffer");
+			drawAddComponentWithFuncOnAdd<ConstantBufferComponent>("Upload Buffer", [](ConstantBufferComponent& comp) {
+				comp.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
+			});
 			drawAddComponent<CameraComponent>("Camera");
 			drawAddComponent<AudioComponent>("Audio");
 			drawAddComponent<NativeScriptComponent>("Native Script");
+			drawAddComponent<DirectionalLightComponent>("Directional Light");
 
 			ImGui::EndPopup();
 		}
@@ -326,7 +330,7 @@ namespace Axion {
 				}
 
 			}
-			});
+		});
 
 		// ----- SpriteComponent -----
 		drawComponentInfo<SpriteComponent>("Sprite", m_selectedEntity, [this]() {
@@ -460,6 +464,7 @@ namespace Axion {
 		// ----- ConstantBufferComponent -----
 		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<ConstantBufferComponent>();
+
 			if (component.uploadBuffer) {
 
 				if (ImGui::BeginTable("ConstantBufferTable", 2, ImGuiTableFlags_BordersInnerV)) {
@@ -476,13 +481,12 @@ namespace Axion {
 
 					ImGui::EndTable();
 				}
-
 			}
 			else {
 				component.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 			}
 
-			});
+		});
 
 		// ----- CameraComponent -----
 		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, [this]() {
@@ -695,6 +699,28 @@ namespace Axion {
 		// ----- NativeScriptComponent -----
 		drawComponentInfo<NativeScriptComponent>("Native Script", m_selectedEntity, [this]() {
 
+		});
+
+		drawComponentInfo<DirectionalLightComponent>("Directional Light", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<DirectionalLightComponent>();
+			if (ImGui::BeginTable("DirectionalLightTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Color --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Color");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::ColorEdit4("##DLColorEdit", component.color.data());
+
+				// -- Direction --
+				drawVec3Control("Direction", component.direction, 0.0f, 0.0f, 0.0f, 70.0f);
+
+				ImGui::EndTable();
+			}
 		});
 
 	}

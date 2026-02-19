@@ -14,6 +14,7 @@ namespace Axion {
 
 	FrameTimer Renderer::s_frameTimer;
 	double Renderer::s_lastFrameTimeMs = 0.0;
+	Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
 
 	struct alignas(16) SceneData {
 		// TODO: only upload one option! - ViewProjection OR View and Projection
@@ -21,6 +22,10 @@ namespace Axion {
 		DirectX::XMMATRIX projection;
 
 		DirectX::XMMATRIX viewProjection;
+
+		// TODO: move to new buffer or keep...
+		DirectX::XMFLOAT4 lightDir;
+		DirectX::XMFLOAT4 lightColor;
 	};
 
 
@@ -53,6 +58,9 @@ namespace Axion {
 		s_rendererData = new RendererData();
 		s_rendererData->eventCallback = eventCallback;
 
+		// white texture creation
+		s_whiteFallbackTexture = Texture2D::create(32, 32, nullptr);
+
 		// setup renderer
 		Renderer2D::initialize();
 		Renderer3D::initialize();
@@ -63,6 +71,8 @@ namespace Axion {
 	void Renderer::shutdown() {
 		delete s_sceneData;
 		s_sceneUploadBuffer->release();
+
+		s_whiteFallbackTexture->release();
 
 		// TODO: why are there live obj when doing this???
 		// delete s_rendererData;
@@ -94,7 +104,7 @@ namespace Axion {
 		s_rendererData->eventCallback(ev);
 	}
 
-	void Renderer::beginScene(const Camera& camera) {
+	void Renderer::beginScene(const Camera& camera, const LightingData& lightingData) {
 		RenderCommand::resetRenderStats();
 		// REVIEW: remove one option
 		// option 1: view and projection
@@ -102,6 +112,9 @@ namespace Axion {
 		s_sceneData->projection = camera.getProjectionMatrix().transposed().toXM();
 		// option 2: viewProjection
 		s_sceneData->viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
+
+		s_sceneData->lightDir = Vec4(lightingData.direction.x, lightingData.direction.y, lightingData.direction.z, 1.0f).toFloat4();
+		s_sceneData->lightColor = lightingData.color.toFloat4();
 
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}
@@ -130,6 +143,10 @@ namespace Axion {
 
 	const Ref<ConstantBuffer>& Renderer::getSceneDataBuffer() {
 		return s_sceneUploadBuffer;
+	}
+
+	const Ref<Texture2D>& Renderer::getWhiteFallbackTexture() {
+		return s_whiteFallbackTexture;
 	}
 
 	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer) {

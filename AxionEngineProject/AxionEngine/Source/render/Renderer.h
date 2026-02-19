@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Texture.h"
 
 namespace Axion {
 
@@ -12,6 +13,11 @@ namespace Axion {
 		None = 0,
 		DirectX12 = 1,
 		OpenGL3 = 2
+	};
+
+	struct LightingData {
+		Vec3 direction;
+		Vec4 color;
 	};
 
 	class Renderer {
@@ -23,7 +29,7 @@ namespace Axion {
 		static void prepareRendering();
 		static void finishRendering();
 
-		static void beginScene(const Camera& camera);
+		static void beginScene(const Camera& camera, const LightingData& lightingData);
 		static void beginScene(const Mat4& projection, const Mat4& transform);
 		static void endScene();
 
@@ -33,6 +39,8 @@ namespace Axion {
 		static void renderToSwapChain();
 		static const Ref<ConstantBuffer>& getSceneDataBuffer();
 		static double getFrameTimeMs() { return s_lastFrameTimeMs; }
+
+		static const Ref<Texture2D>& getWhiteFallbackTexture();
 
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
@@ -45,6 +53,7 @@ namespace Axion {
 
 		static FrameTimer s_frameTimer;
 		static double s_lastFrameTimeMs;
+		static Ref<Texture2D> s_whiteFallbackTexture;
 
 	};
 

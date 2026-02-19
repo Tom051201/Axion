@@ -6,6 +6,8 @@
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Buffers.h"
 
+#include "AxionEngine/Source/render/Renderer.h"
+
 namespace Axion {
 
 	struct alignas(16) ObjectBuffer {
@@ -25,7 +27,7 @@ namespace Axion {
 		static void initialize();
 		static void shutdown();
 
-		static void beginScene(const Camera& cam);
+		static void beginScene(const Camera& cam, const LightingData& lightingData);
 		static void beginScene(const Mat4& projection, const Mat4& transform);
 		static void endScene();
 

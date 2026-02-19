@@ -13,9 +13,6 @@ namespace Axion {
 		: m_name(name), m_shaderHandle(shaderHandle), m_properties(properties) {
 
 		m_materialBuffer = ConstantBuffer::create(sizeof(MaterialProperties));
-
-		Ref<Texture2D> white = Texture2D::create(32, 32, nullptr);
-		m_whiteTexture = AssetManager::insert<Texture2D>(white);
 	}
 
 	Material::~Material() {
@@ -42,14 +39,16 @@ namespace Axion {
 		// -- Textures --
 		std::array<Ref<Texture2D>, 16> textureBatch = {};
 		uint32_t count = static_cast<uint32_t>(TextureSlot::COUNT);
+		Ref<Texture2D> whiteTex = Renderer::getWhiteFallbackTexture();
+
 		for (uint32_t i = 0; i < count; i++) {
 			TextureSlot slot = (TextureSlot)i;
+			Ref<Texture2D> tex = nullptr;
+
 			if (m_textures.find(slot) != m_textures.end()) {
-				textureBatch[i] = AssetManager::get<Texture2D>(m_textures.at(slot));
+				tex = AssetManager::get<Texture2D>(m_textures.at(slot));
 			}
-			else {
-				textureBatch[i] = AssetManager::get<Texture2D>(m_whiteTexture);
-			}
+			textureBatch[i] = tex ? tex : whiteTex;
 		}
 
 		// TODO: make this idependent

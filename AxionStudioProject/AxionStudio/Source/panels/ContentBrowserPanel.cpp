@@ -108,7 +108,7 @@ namespace Axion {
 
 			// -- Draw options on right click --
 			if (ImGui::BeginPopupContextItem(filenameString.c_str())) {
-				// -- Show in explorer button --
+				// -- Shader only --
 				if (item.path.string().find(".axshader") != std::string::npos) {
 					if (ImGui::MenuItem("Recompile")) {
 						AssetHandle<Shader> handle = AssetManager::load<Shader>(item.path.string());
@@ -116,6 +116,15 @@ namespace Axion {
 					}
 				}
 
+				// -- Material only --
+				if (item.path.string().find(".axmat") != std::string::npos) {
+					if (ImGui::MenuItem("Reload")) {
+						AX_CORE_LOG_WARN("Reloading is not supported yet");
+						// TODO: Add reloading materials
+					}
+				}
+
+				// -- Show in explorer button --
 				if (ImGui::MenuItem("Show in Explorer")) {
 					PlatformUtils::showInFileExplorer(path.string());
 				}

@@ -14,8 +14,8 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Renderer3D shutdown");
 	}
 
-	void Renderer3D::beginScene(const Camera& cam) {
-		Renderer::beginScene(cam);
+	void Renderer3D::beginScene(const Camera& cam, const LightingData& lightData) {
+		Renderer::beginScene(cam, lightData);
 	}
 
 	void Renderer3D::beginScene(const Mat4& projection, const Mat4& transform) {
