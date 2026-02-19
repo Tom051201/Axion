@@ -16,6 +16,24 @@ namespace Axion {
 	double Renderer::s_lastFrameTimeMs = 0.0;
 	Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
 
+	struct alignas(16) HLSLDirLight {
+		DirectX::XMFLOAT4 direction;
+		DirectX::XMFLOAT4 color;
+	};
+
+	struct alignas(16) HLSLPointLight {
+		DirectX::XMFLOAT4 position;
+		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT4 params; // x = radius, y = falloff, z = padding, w = padding
+	};
+
+	struct alignas(16) HLSLSpotLight {
+		DirectX::XMFLOAT4 position;
+		DirectX::XMFLOAT4 direction;
+		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT4 params; // x = range, y = inner cutoff, z = outer cutoff, w = padding
+	};
+
 	struct alignas(16) SceneData {
 		// TODO: only upload one option! - ViewProjection OR View and Projection
 		DirectX::XMMATRIX view;
@@ -23,21 +41,16 @@ namespace Axion {
 
 		DirectX::XMMATRIX viewProjection;
 
-		// TODO: move to new buffer or keep...
-		// Directional light
-		DirectX::XMFLOAT4 lightDir;
-		DirectX::XMFLOAT4 lightColor;
+		int directionalLightsCount;
+		int pointLightsCount;
+		int spotLightCount;
+		int padding;
 
-		// Point light
-		DirectX::XMFLOAT4 pointLightPos;
-		DirectX::XMFLOAT4 pointLightColor;
-		DirectX::XMFLOAT4 pointLightParams; // x = radius, y = falloff, z = padding, w = padding
+		DirectX::XMFLOAT4 ambientColor;
 
-		// Spot light
-		DirectX::XMFLOAT4 spotLightPos;
-		DirectX::XMFLOAT4 spotLightDir;
-		DirectX::XMFLOAT4 spotLightColor;
-		DirectX::XMFLOAT4 spotLightParams; // x = range, y = inner cutoff, z = outer cutoff, w = padding
+		HLSLDirLight directionalLights[MAX_DIR_LIGHTS];
+		HLSLPointLight pointLights[MAX_POINT_LIGHTS];
+		HLSLSpotLight spotLights[MAX_SPOT_LIGHTS];
 	};
 
 
@@ -125,17 +138,32 @@ namespace Axion {
 		// option 2: viewProjection
 		s_sceneData->viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
 
-		s_sceneData->lightDir = Vec4(lightingData.direction.x, lightingData.direction.y, lightingData.direction.z, 1.0f).toFloat4();
-		s_sceneData->lightColor = lightingData.color.toFloat4();
+		// -- Ambient Color --
+		s_sceneData->ambientColor = lightingData.ambientColor.toFloat4();
 
-		s_sceneData->pointLightPos = Vec4(lightingData.pointLightPosition.x, lightingData.pointLightPosition.y, lightingData.pointLightPosition.z, 1.0f).toFloat4();
-		s_sceneData->pointLightColor = lightingData.pointLightColor.toFloat4();
-		s_sceneData->pointLightParams = { lightingData.pointLightRadius, lightingData.pointLightFalloff, 0.0f, 0.0f };
+		// -- Directional Lights --
+		s_sceneData->directionalLightsCount = std::min((uint32_t)lightingData.directionalLights.size(), MAX_DIR_LIGHTS);
+		for (int i = 0; i < s_sceneData->directionalLightsCount; i++) {
+			s_sceneData->directionalLights[i].direction = { lightingData.directionalLights[i].direction.x, lightingData.directionalLights[i].direction.y, lightingData.directionalLights[i].direction.z, 1.0f };
+			s_sceneData->directionalLights[i].color = lightingData.directionalLights[i].color.toFloat4();
+		}
 
-		s_sceneData->spotLightPos = Vec4(lightingData.spotLightPosition.x, lightingData.spotLightPosition.y, lightingData.spotLightPosition.z, 1.0f).toFloat4();
-		s_sceneData->spotLightDir = Vec4(lightingData.spotLightDirection.x, lightingData.spotLightDirection.y, lightingData.spotLightDirection.z, 0.0f).toFloat4();
-		s_sceneData->spotLightColor = lightingData.spotLightColor.toFloat4();
-		s_sceneData->spotLightParams = { lightingData.spotLightRange, lightingData.spotLightInnerCutoff, lightingData.spotLightOuterCutoff, 0.0f };
+		// -- Point Lights --
+		s_sceneData->pointLightsCount = std::min((uint32_t)lightingData.pointLights.size(), MAX_POINT_LIGHTS);
+		for (int i = 0; i < s_sceneData->pointLightsCount; i++) {
+			s_sceneData->pointLights[i].position = { lightingData.pointLights[i].position.x, lightingData.pointLights[i].position.y, lightingData.pointLights[i].position.z, 0.0f };
+			s_sceneData->pointLights[i].color = lightingData.pointLights[i].color.toFloat4();
+			s_sceneData->pointLights[i].params = { lightingData.pointLights[i].radius, lightingData.pointLights[i].falloff, 0.0f, 0.0f };
+		}
+
+		// -- Spot lights --
+		s_sceneData->spotLightCount = std::min((uint32_t)lightingData.spotLights.size(), MAX_SPOT_LIGHTS);
+		for (int i = 0; i < s_sceneData->spotLightCount; i++) {
+			s_sceneData->spotLights[i].position = { lightingData.spotLights[i].position.x, lightingData.spotLights[i].position.y, lightingData.spotLights[i].position.z, 0.0f };
+			s_sceneData->spotLights[i].direction = { lightingData.spotLights[i].direction.x, lightingData.spotLights[i].direction.y, lightingData.spotLights[i].direction.z, 1.0f };
+			s_sceneData->spotLights[i].color = lightingData.spotLights[i].color.toFloat4();
+			s_sceneData->spotLights[i].params = { lightingData.spotLights[i].range, lightingData.spotLights[i].innerCutoff, lightingData.spotLights[i].outerCutoff, 0.0f };
+		}
 
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}

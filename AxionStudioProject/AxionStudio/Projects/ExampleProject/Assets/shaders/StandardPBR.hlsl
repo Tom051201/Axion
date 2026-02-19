@@ -1,20 +1,36 @@
+struct DirectionalLight {
+	float4 direction;
+	float4 color;
+};
+
+struct PointLight {
+	float4 position;
+	float4 color;
+	float4 params; // x = radius, y = falloff, z = padding, w = padding
+};
+
+struct SpotLight {
+	float4 position;
+	float4 direction;
+	float4 color;
+	float4 params; // x = range, y = inner cutoff, z = outer cutoff, w = padding
+};
+
 cbuffer CameraBuffer : register(b0) {
 	float4x4 u_view;
 	float4x4 u_projection;
 	float4x4 u_viewProjection;
 
-	// TODO: move those to own buffer or leave here...
-	float4 u_lightDir;
-	float4 u_lightColor;
+	int u_directionalLightsCount;
+	int u_pointLightsCount;
+	int u_spotLightsCount;
+	int u_padding;
 
-	float4 u_pointLightPos;
-	float4 u_pointLightColor;
-	float4 u_pointLightParams; // x = radius, y = falloff
+	float4 u_ambientColor;
 
-	float4 u_spotLightPos;
-	float4 u_spotLightDir;
-	float4 u_spotLightColor;
-	float4 u_spotLightParams; // x = range, y = inner cutoff, z = outer cutoff
+	DirectionalLight u_directionalLights[4];
+	PointLight u_pointLights[16];
+	SpotLight u_spotLights[16];
 }
 
 cbuffer ObjectBuffer : register(b1) {
@@ -180,68 +196,74 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	float ao = 1.0f;
 	if (u_useOcclusionMap > 0.5) ao = t_occlusion.Sample(s_sampler, uv).r;
 
+
+
 	// -- Lighting setup --
 	float3 camPos = getCameraPosition();
 	float3 V = normalize(camPos - input.worldPos);
-
 	float3 Lo = float3(0.0, 0.0, 0.0);
 
 	// -- Directional light --
-	float3 L_dir = normalize(u_lightDir.xyz);
-	float3 radiance_dir = u_lightColor.rgb * 2.0;
-	Lo += CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
+	for (int i = 0; i < u_directionalLightsCount; ++i) {
+		float3 L_dir = normalize(u_directionalLights[i].direction.xyz);
+		float3 radiance_dir = u_directionalLights[i].color.rgb * 2.0;
+		Lo += CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
+	}
 
 	// -- Point light --
-	float3 lightVec = u_pointLightPos.xyz - input.worldPos;
-	float distance = length(lightVec);
 
-	float radius = u_pointLightParams.x;
-	float falloffExponent = u_pointLightParams.y;
+	for (int j = 0; j < u_pointLightsCount; ++j) {
+		float3 lightVec = u_pointLights[j].position.xyz - input.worldPos;
+		float distance = length(lightVec);
 
-	if (distance < radius) {
-		float3 L_point = lightVec / distance;
+		float radius = u_pointLights[j].params.x;
+		float falloffExponent = u_pointLights[j].params.y;
 
-		float invSquare = 1.0 / (distance * distance + 0.0001);
+		if (distance < radius) {
+			float3 L_point = lightVec / distance;
+			float invSquare = 1.0 / (distance * distance + 0.0001);
+			float distanceRatio = distance / radius;
+			float window = saturate(1.0 - pow(distanceRatio, falloffExponent));
 
-		float distanceRatio = distance / radius;
-		float window = saturate(1.0 - pow(distanceRatio, falloffExponent));
+			float attenuation = invSquare * (window * window);
+			float3 radiance_point = u_pointLights[j].color.rgb * attenuation;
 
-		float attenuation = invSquare * (window * window);
-		float3 radiance_point = u_pointLightColor.rgb * attenuation;
-
-		Lo += CalculateLight(N, V, L_point, radiance_point, albedo, roughness, metalness);
+			Lo += CalculateLight(N, V, L_point, radiance_point, albedo, roughness, metalness);
+		}
 	}
 
 	// -- Spot light --
-	float3 spotLightVec = u_spotLightPos.xyz - input.worldPos;
-	float spotDistance = length(spotLightVec);
-	float spotRange = u_spotLightParams.x;
+	for (int k = 0; k < u_spotLightsCount; ++k) {
+		float3 spotLightVec = u_spotLights[k].position.xyz - input.worldPos;
+		float spotDistance = length(spotLightVec);
+		float spotRange = u_spotLights[k].params.x;
 
-	if (spotDistance < spotRange) {
-		float3 L_spot = spotLightVec / spotDistance;
+		if (spotDistance < spotRange) {
+			float3 L_spot = spotLightVec / spotDistance;
 
-		float invSquare = 1.0 / (spotDistance * spotDistance + 0.0001);
-		float distanceRatio = spotDistance / spotRange;
-		float window = saturate(1.0 - distanceRatio); // Simple linear window, or pow() for custom falloff
-		float distanceAttenuation = invSquare * (window * window);
+			float invSquare = 1.0 / (spotDistance * spotDistance + 0.0001);
+			float distanceRatio = spotDistance / spotRange;
+			float window = saturate(1.0 - distanceRatio); // Simple linear window, or pow() for custom falloff
+			float distanceAttenuation = invSquare * (window * window);
 
-		float theta = dot(-L_spot, normalize(u_spotLightDir.xyz));
+			float theta = dot(-L_spot, normalize(u_spotLights[k].direction.xyz));
 
-		float innerCutoff = u_spotLightParams.y;
-		float outerCutoff = u_spotLightParams.z;
-		float epsilon = innerCutoff - outerCutoff;
+			float innerCutoff = u_spotLights[k].params.y;
+			float outerCutoff = u_spotLights[k].params.z;
+			float epsilon = innerCutoff - outerCutoff;
 
-		float spotIntensity = saturate((theta - outerCutoff) / epsilon);
+			float spotIntensity = saturate((theta - outerCutoff) / epsilon);
 
-		float3 radiance_spot = u_spotLightColor.rgb * distanceAttenuation * spotIntensity;
+			float3 radiance_spot = u_spotLights[k].color.rgb * distanceAttenuation * spotIntensity;
 
-		if (spotIntensity > 0.0) {
-			Lo += CalculateLight(N, V, L_spot, radiance_spot, albedo, roughness, metalness);
+			if (spotIntensity > 0.0) {
+				Lo += CalculateLight(N, V, L_spot, radiance_spot, albedo, roughness, metalness);
+			}
 		}
 	}
 
 	// -- Ambient --
-	float3 ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
+	float3 ambient = u_ambientColor.rgb * albedo * ao;
 	float3 color = ambient + Lo;
 
 	// -- HDR tone mapping and gamma correction --

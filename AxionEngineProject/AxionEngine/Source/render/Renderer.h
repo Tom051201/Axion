@@ -15,24 +15,37 @@ namespace Axion {
 		OpenGL3 = 2
 	};
 
-	struct LightingData {
-		// Directional light
+	constexpr uint32_t MAX_DIR_LIGHTS = 4;
+	constexpr uint32_t MAX_POINT_LIGHTS = 16;
+	constexpr uint32_t MAX_SPOT_LIGHTS = 16;
+
+	struct DirectionalLightData {
 		Vec3 direction;
 		Vec4 color;
+	};
 
-		// Point light
-		Vec3 pointLightPosition;
-		Vec4 pointLightColor;
-		float pointLightRadius;
-		float pointLightFalloff;
+	struct PointLightData {
+		Vec3 position;
+		Vec4 color;
+		float radius;
+		float falloff;
+	};
 
-		// Spot light
-		Vec3 spotLightPosition;
-		Vec3 spotLightDirection;
-		Vec4 spotLightColor;
-		float spotLightRange;
-		float spotLightInnerCutoff;
-		float spotLightOuterCutoff;
+	struct SpotLightData {
+		Vec3 position;
+		Vec3 direction;
+		Vec4 color;
+		float range;
+		float innerCutoff;
+		float outerCutoff;
+	};
+
+	struct LightingData {
+		Vec4 ambientColor;
+
+		std::vector<DirectionalLightData> directionalLights;
+		std::vector<PointLightData> pointLights;
+		std::vector<SpotLightData> spotLights;
 	};
 
 	class Renderer {

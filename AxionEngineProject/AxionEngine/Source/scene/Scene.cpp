@@ -120,61 +120,55 @@ namespace Axion {
 		if (&cam) {
 
 			LightingData lightData;
-			lightData.direction = { 0.5f, 1.0f, -0.5f };
-			lightData.color = Vec4::one();
-			lightData.pointLightPosition = Vec3::zero();
-			lightData.pointLightColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-			lightData.pointLightRadius = 10.0f;
-			lightData.pointLightFalloff = 1.0f;
-			lightData.spotLightPosition = Vec3::zero();
-			lightData.spotLightDirection = { 0.0f, -1.0f, 0.0f };
-			lightData.spotLightColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-			lightData.spotLightRange = 10.0f;
-			lightData.spotLightInnerCutoff = std::cos(12.5f * 3.14159265f / 180.0f);
-			lightData.spotLightOuterCutoff = std::cos(17.5f * 3.14159265f / 180.0f);
+			lightData.ambientColor = { 0.03f, 0.03f, 0.03f, 1.0f };
 
 			// -- Directional lights --
 			auto dirLightGroup = m_registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
 			for (auto entity : dirLightGroup) {
-				auto& [transform, dlc] = dirLightGroup.get<TransformComponent, DirectionalLightComponent>(entity);
+				if (lightData.directionalLights.size() >= MAX_DIR_LIGHTS) break;
 
+				auto& [transform, dlc] = dirLightGroup.get<TransformComponent, DirectionalLightComponent>(entity);
 				Mat4 transformMat = transform.getTransform();
 				Vec4 forward = transformMat * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
 
-				lightData.direction = { -forward.x, -forward.y, -forward.z };
-				lightData.color = dlc.color;
-
-				break;
+				lightData.directionalLights.push_back({
+					{ -forward.x, -forward.y, -forward.z },
+					dlc.color
+				});
 			}
 
 			// -- Point lights --
 			auto pointLightGroup = m_registry.group<PointLightComponent>(entt::get<TransformComponent>);
 			for (auto entity : pointLightGroup) {
+				if (lightData.pointLights.size() >= MAX_POINT_LIGHTS) break;
+
 				auto& [transform, plc] = pointLightGroup.get<TransformComponent, PointLightComponent>(entity);
-				lightData.pointLightPosition = transform.position;
-				lightData.pointLightColor = plc.color * plc.intensity;
-				lightData.pointLightRadius = plc.radius;
-				lightData.pointLightFalloff = plc.falloff;
-				break;
+
+				lightData.pointLights.push_back({
+					transform.position,
+					plc.color * plc.intensity,
+					plc.radius,
+					plc.falloff
+				});
 			}
 
 			// -- Spot lights --
 			auto spotLightGroup = m_registry.group<SpotLightComponent>(entt::get<TransformComponent>);
 			for (auto entity : spotLightGroup) {
-				auto& [transform, slc] = spotLightGroup.get<TransformComponent, SpotLightComponent>(entity);
-				lightData.spotLightPosition = transform.position;
+				if (lightData.spotLights.size() >= MAX_SPOT_LIGHTS) break;
 
+				auto& [transform, slc] = spotLightGroup.get<TransformComponent, SpotLightComponent>(entity);
 				Mat4 transformMat = transform.getTransform();
 				Vec4 forward = transformMat * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-				lightData.spotLightDirection = { forward.x, forward.y, forward.z };
 
-				lightData.spotLightColor = slc.color * slc.intensity;
-				lightData.spotLightRange = slc.range;
-
-				lightData.spotLightInnerCutoff = std::cos(slc.innerConeAngle * 3.14159265f / 180.0f);
-				lightData.spotLightOuterCutoff = std::cos(slc.outerConeAngle * 3.14159265f / 180.0f);
-
-				break;
+				lightData.spotLights.push_back({
+					transform.position,
+					{ forward.x, forward.y, forward.z },
+					slc.color * slc.intensity,
+					slc.range,
+					std::cos(slc.innerConeAngle * 3.14159265f / 180.0f),
+					std::cos(slc.outerConeAngle * 3.14159265f / 180.0f)
+				});
 			}
 
 			Renderer3D::beginScene(cam, lightData);
