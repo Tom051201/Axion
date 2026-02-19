@@ -84,4 +84,43 @@ namespace Axion {
 
 	};
 
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// D12DepthTexture //////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+
+	class D12DepthTexture : public Texture2D {
+	public:
+
+		D12DepthTexture(uint32_t width, uint32_t height);
+		~D12DepthTexture() override;
+
+		void release() override;
+
+		void bind() const override;
+		void unbind() const override;
+
+		void* getHandle() const override;
+
+		uint32_t getWidth() const override { return m_width; }
+		uint32_t getHeight() const override { return m_height; }
+
+		uint32_t getSrvHeapIndex() const { return m_srvHeapIndex; }
+
+		D3D12_CPU_DESCRIPTOR_HANDLE getDsvHandle() const { return m_dsvHandle; }
+
+	private:
+
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
+
+		uint32_t m_srvHeapIndex;
+
+		D3D12_CPU_DESCRIPTOR_HANDLE m_dsvHandle;
+
+	};
+
 }

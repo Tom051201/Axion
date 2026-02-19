@@ -48,6 +48,7 @@ namespace Axion {
 		PrimitiveTopology topology = PrimitiveTopology::TriangleList;
 
 		uint32_t batchTextures = 1;
+		uint32_t numRenderTargets = 1;
 
 		BufferLayout vertexLayout;
 	};

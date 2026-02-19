@@ -467,4 +467,101 @@ namespace Axion {
 		context->waitForPreviousFrame();
 	}
 
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// D12DepthTexture //////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+
+	D12DepthTexture::D12DepthTexture(uint32_t width, uint32_t height)
+		: m_width(width), m_height(height) {
+
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* device = context->getDevice();
+
+		// ----- Create resource -----
+		D3D12_RESOURCE_DESC texDesc = {};
+		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		texDesc.Width = width;
+		texDesc.Height = height;
+		texDesc.DepthOrArraySize = 1;
+		texDesc.MipLevels = 1;
+		texDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+		D3D12_CLEAR_VALUE clearValue = {};
+		clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+		clearValue.DepthStencil.Depth = 1.0f;
+		clearValue.DepthStencil.Stencil = 0;
+
+		CD3DX12_HEAP_PROPERTIES texProps(D3D12_HEAP_TYPE_DEFAULT);
+		HRESULT hr = device->CreateCommittedResource(
+			&texProps,
+			D3D12_HEAP_FLAG_NONE,
+			&texDesc,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			&clearValue,
+			IID_PPV_ARGS(&m_textureResource)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create depth texture resource");
+
+		// ----- DSV -----
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		uint32_t dsvHeapIndex = context->getDsvHeapWrapper().allocate();
+		m_dsvHandle = context->getDsvHeapWrapper().getCpuHandle(dsvHeapIndex);
+		device->CreateDepthStencilView(m_textureResource.Get(), &dsvDesc, m_dsvHandle);
+
+		// ----- SRV -----
+		m_srvHeapIndex = context->getStagingSrvHeapWrapper().allocate();
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+		auto srvCpuHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
+	}
+
+	D12DepthTexture::~D12DepthTexture() {
+		release();
+	}
+
+	void D12DepthTexture::release() {
+		m_textureResource.Reset();
+	}
+
+	void D12DepthTexture::bind() const {
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* cmdList = context->getCommandList();
+		auto* device = context->getDevice();
+
+		auto& gpuHeap = context->getSrvHeapWrapper();
+		uint32_t viewIndex = gpuHeap.allocate();
+
+		auto destHandle = gpuHeap.getCpuHandle(viewIndex);
+		auto srcHandle = context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+
+		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		auto srvGpuHandle = gpuHeap.getGpuHandle(viewIndex);
+		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle);
+	}
+
+	void D12DepthTexture::unbind() const {
+		// Explicit unbinding is not required in DirectX 12
+	}
+
+	void* D12DepthTexture::getHandle() const {
+		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		return reinterpret_cast<void*>(context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
+	}
+
 }

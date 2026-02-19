@@ -217,8 +217,10 @@ namespace Axion {
 
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.PrimitiveTopologyType = D12Helpers::toD12ToplogyType(m_specification.topology);
-		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = D12Helpers::toD12ColorFormat(m_specification.colorFormat);
+		psoDesc.NumRenderTargets = m_specification.numRenderTargets;
+		if (m_specification.numRenderTargets > 0) {
+			psoDesc.RTVFormats[0] = D12Helpers::toD12ColorFormat(m_specification.colorFormat);
+		}
 		psoDesc.SampleDesc.Count = m_specification.sampleCount;
 
 		HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
