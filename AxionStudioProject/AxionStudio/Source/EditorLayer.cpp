@@ -182,7 +182,7 @@ namespace Axion {
 			e.getComponent<AudioComponent>().isSource = true;
 			e.addComponent<CameraComponent>();
 
-			e.addComponent<DirectionalLightComponent>().direction = { 1.0f, 0.0f, 0.0f };
+			e.addComponent<DirectionalLightComponent>();
 		}
 
 		// -> Shortcuts only from here on

@@ -51,11 +51,7 @@ namespace Axion {
 			textureBatch[i] = tex ? tex : whiteTex;
 		}
 
-		// TODO: make this idependent
-		if (Renderer::getAPI() == RendererAPI::DirectX12) {
-			auto context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-			context->bindSrvTable(2, textureBatch, count); // TODO: make this from renderer
-		}
+		Renderer::bindTextures(textureBatch, count, 2);
 	}
 
 	void Material::unbind() {}

@@ -7,6 +7,8 @@
 #include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/audio/AudioClip.h"
+#include "AxionEngine/Source/audio/AudioSource.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 

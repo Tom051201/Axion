@@ -1,37 +1,55 @@
 Scene: Base Scene
 Skybox: skybox\BlueSkybox.axsky
 Entities:
-  - Entity: fb69a07b71f1a31a73395a840deb43c4
+  - Entity: 2db29d0105db04a1204c4807aacb5f38
     TagComponent:
-      Tag: Sprite Entity
+      Tag: Spot Light
     TransformComponent:
-      Translation: [0.43536374, 4.13137341, -0.4567132]
-      Rotation: [-0, 0, -0]
+      Translation: [2.23000002, 1.66705275, -2.98139119]
+      Rotation: [6.0999999, 1.60000002, 0.800000012]
+      Scale: [1, 1, 1]
+    SpotLightComponent:
+      Color: [0.540540695, 0, 1, 1]
+      Intensity: 20
+      Range: 7
+      InnerConeAngle: 17.5
+      OuterConeAngle: 17.5
+  - Entity: df531452f1bfe37c33d564433e0960b4
+    TagComponent:
+      Tag: Pickaxe
+    TransformComponent:
+      Translation: [-3.29999995, 3.29999995, 0]
+      Rotation: [0, 0, 2.4000001]
       Scale: [1, 1, 1]
     SpriteComponent:
-      Path: None
-      Tint: [0, 0.0317461491, 1, 1]
-  - Entity: 9901deeaab40cd36ac39b79dd08cf660
+      Path: textures\Pickaxe.axtex
+      Tint: [1, 1, 1, 1]
+  - Entity: a47b10a2f7ee7598c6917dbff64d0a7e
     TagComponent:
-      Tag: Music Entity
+      Tag: Floor
     TransformComponent:
-      Translation: [2.15924978, 2.2032547, 3.58886743]
+      Translation: [-1.31241107, -2.64718151, 0]
       Rotation: [-0, 0, -0]
-      Scale: [1, 1, 1]
-    AudioComponent:
-      IsListener: false
-      IsSource: true
-      AudioSource:
-        AudioClip: audio\MusicClip.axaudio
-        Volume: 0.449999988
-        Pitch: 1
-        Pan: 0
-        IsSpatial: true
-        Position: [2.15924978, 2.2032547, 3.58886743]
-        Velocity: [0, 0, 0]
-        MinDistance: 1
-        MaxDistance: 100
-        DopplerFactor: 1
+      Scale: [15.5100002, 0.999996066, 18.1000004]
+    MeshComponent:
+      Path: meshes\Cube.axmesh
+    MaterialComponent:
+      Path: materials\Green Metal.axmat
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: 8aee4a344c5fe14ba2df3fd3cad8016d
+    TagComponent:
+      Tag: Homer Entity
+    TransformComponent:
+      Translation: [0.909387469, -0.142656326, -0.443987638]
+      Rotation: [-0, -3.5999999, -0]
+      Scale: [1.89998043, 1.90000105, 1.89998162]
+    MeshComponent:
+      Path: meshes\Homer.axmesh
+    MaterialComponent:
+      Path: materials\ColorMaterial.axmat
+    ConstantBufferComponent:
+      Has: TRUE
   - Entity: 1dc4b3d807108cc8032d565a855c9e60
     TagComponent:
       Tag: Wind Entity
@@ -59,29 +77,59 @@ Entities:
         MinDistance: 1
         MaxDistance: 100
         DopplerFactor: 1
-  - Entity: 8aee4a344c5fe14ba2df3fd3cad8016d
+  - Entity: 9901deeaab40cd36ac39b79dd08cf660
     TagComponent:
-      Tag: Homer Entity
+      Tag: Music Entity
     TransformComponent:
-      Translation: [0.909387469, -0.142656326, -0.443987638]
-      Rotation: [-0, -3.5999999, -0]
-      Scale: [1.89998043, 1.90000105, 1.89998162]
-    MeshComponent:
-      Path: meshes\Homer.axmesh
-    MaterialComponent:
-      Path: materials\ColorMaterial.axmat
-    ConstantBufferComponent:
-      Has: TRUE
-  - Entity: a47b10a2f7ee7598c6917dbff64d0a7e
-    TagComponent:
-      Tag: Cube Entity
-    TransformComponent:
-      Translation: [-1.31241107, 1.47902656, 0]
+      Translation: [2.15924978, 2.2032547, 3.58886743]
       Rotation: [-0, 0, -0]
-      Scale: [15.5100002, 0.999996066, 18.1000004]
+      Scale: [1, 1, 1]
+    AudioComponent:
+      IsListener: false
+      IsSource: true
+      AudioSource:
+        AudioClip: audio\MusicClip.axaudio
+        Volume: 0.449999988
+        Pitch: 1
+        Pan: 0
+        IsSpatial: true
+        Position: [2.15924978, 2.2032547, 3.58886743]
+        Velocity: [0, 0, 0]
+        MinDistance: 1
+        MaxDistance: 100
+        DopplerFactor: 1
+  - Entity: fb69a07b71f1a31a73395a840deb43c4
+    TagComponent:
+      Tag: Sprite Entity
+    TransformComponent:
+      Translation: [0.43536374, 4.13137341, -0.4567132]
+      Rotation: [-0, 0, -0]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Path: textures\logo.axtex
+      Tint: [0, 0.0317461491, 1, 1]
+  - Entity: abdb8fe935834ba677951ad6c572c0df
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Translation: [6.24282312, 0.834379077, 0]
+      Rotation: [-0, 0, -0]
+      Scale: [1.13, 7.73000002, 18.9300003]
     MeshComponent:
       Path: meshes\Cube.axmesh
     MaterialComponent:
-      Path: materials\Green Metal.axmat
+      Path: materials\BlueMetal.axmat
     ConstantBufferComponent:
       Has: TRUE
+  - Entity: 38f548b05ff487c2689332ee9b9d747c
+    TagComponent:
+      Tag: Point Light
+    TransformComponent:
+      Translation: [4.710711, 1.72320366, 5.70191765]
+      Rotation: [-0, 0, -0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0, 0, 1]
+      Intensity: 20
+      Radius: 6
+      Falloff: 6.5

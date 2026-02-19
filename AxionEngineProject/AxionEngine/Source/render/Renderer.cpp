@@ -24,8 +24,20 @@ namespace Axion {
 		DirectX::XMMATRIX viewProjection;
 
 		// TODO: move to new buffer or keep...
+		// Directional light
 		DirectX::XMFLOAT4 lightDir;
 		DirectX::XMFLOAT4 lightColor;
+
+		// Point light
+		DirectX::XMFLOAT4 pointLightPos;
+		DirectX::XMFLOAT4 pointLightColor;
+		DirectX::XMFLOAT4 pointLightParams; // x = radius, y = falloff, z = padding, w = padding
+
+		// Spot light
+		DirectX::XMFLOAT4 spotLightPos;
+		DirectX::XMFLOAT4 spotLightDir;
+		DirectX::XMFLOAT4 spotLightColor;
+		DirectX::XMFLOAT4 spotLightParams; // x = range, y = inner cutoff, z = outer cutoff, w = padding
 	};
 
 
@@ -115,6 +127,15 @@ namespace Axion {
 
 		s_sceneData->lightDir = Vec4(lightingData.direction.x, lightingData.direction.y, lightingData.direction.z, 1.0f).toFloat4();
 		s_sceneData->lightColor = lightingData.color.toFloat4();
+
+		s_sceneData->pointLightPos = Vec4(lightingData.pointLightPosition.x, lightingData.pointLightPosition.y, lightingData.pointLightPosition.z, 1.0f).toFloat4();
+		s_sceneData->pointLightColor = lightingData.pointLightColor.toFloat4();
+		s_sceneData->pointLightParams = { lightingData.pointLightRadius, lightingData.pointLightFalloff, 0.0f, 0.0f };
+
+		s_sceneData->spotLightPos = Vec4(lightingData.spotLightPosition.x, lightingData.spotLightPosition.y, lightingData.spotLightPosition.z, 1.0f).toFloat4();
+		s_sceneData->spotLightDir = Vec4(lightingData.spotLightDirection.x, lightingData.spotLightDirection.y, lightingData.spotLightDirection.z, 0.0f).toFloat4();
+		s_sceneData->spotLightColor = lightingData.spotLightColor.toFloat4();
+		s_sceneData->spotLightParams = { lightingData.spotLightRange, lightingData.spotLightInnerCutoff, lightingData.spotLightOuterCutoff, 0.0f };
 
 		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
 	}

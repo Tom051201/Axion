@@ -190,7 +190,9 @@ namespace Axion {
 			m_selectedEntity.hasComponent<CameraComponent>() &&
 			m_selectedEntity.hasComponent<AudioComponent>() &&
 			m_selectedEntity.hasComponent<NativeScriptComponent>() &&
-			m_selectedEntity.hasComponent<DirectionalLightComponent>();
+			m_selectedEntity.hasComponent<DirectionalLightComponent>() &&
+			m_selectedEntity.hasComponent<PointLightComponent>() &&
+			m_selectedEntity.hasComponent<SpotLightComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -212,6 +214,8 @@ namespace Axion {
 			drawAddComponent<AudioComponent>("Audio");
 			drawAddComponent<NativeScriptComponent>("Native Script");
 			drawAddComponent<DirectionalLightComponent>("Directional Light");
+			drawAddComponent<PointLightComponent>("Point Light");
+			drawAddComponent<SpotLightComponent>("Spot Light");
 
 			ImGui::EndPopup();
 		}
@@ -701,6 +705,7 @@ namespace Axion {
 
 		});
 
+		// ----- DirectionalLightComponent -----
 		drawComponentInfo<DirectionalLightComponent>("Directional Light", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<DirectionalLightComponent>();
 			if (ImGui::BeginTable("DirectionalLightTable", 2, ImGuiTableFlags_BordersInnerV)) {
@@ -716,8 +721,108 @@ namespace Axion {
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				ImGui::ColorEdit4("##DLColorEdit", component.color.data());
 
-				// -- Direction --
-				drawVec3Control("Direction", component.direction, 0.0f, 0.0f, 0.0f, 70.0f);
+				ImGui::EndTable();
+			}
+		});
+
+		// ----- PointLightComponent -----
+		drawComponentInfo<PointLightComponent>("Point Light", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<PointLightComponent>();
+			if (ImGui::BeginTable("PointLightTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Color --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Color");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::ColorEdit4("##PLColorEdit", component.color.data());
+
+				// -- Intensity --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Intensity");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##PLIntensityDrag", &component.intensity, 0.5f, 0.0f, 20.0f);
+
+				// -- Radius --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Radius");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##PLRadiusDrag", &component.radius, 1.0f, 0.0f, 100.0f);
+
+				// -- Falloff --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Falloff");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##PLFalloffDrag", &component.falloff, 0.5f, 0.0f, 20.0f);
+
+				ImGui::EndTable();
+			}
+		});
+
+		// ----- SpotLightComponent -----
+		drawComponentInfo<SpotLightComponent>("Spot Light", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<SpotLightComponent>();
+			if (ImGui::BeginTable("SpotLightTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Color --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Color");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::ColorEdit4("##SLColorEdit", component.color.data());
+
+				// -- Intensity --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Intensity");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##SLIntensityDrag", &component.intensity, 0.5f, 0.0f, 20.0f);
+
+				// -- Range --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Range");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##SLRangeDrag", &component.range, 1.0f, 0.0f, 100.0f);
+
+				// -- InnerConeAngle --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Inner Cone Angle");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##SLICADrag", &component.innerConeAngle, 0.5f, 0.0f, 20.0f);
+
+				// -- OuterConeAngle --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Outer Cone Angle");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##SLOCADrag", &component.outerConeAngle, 0.5f, 0.0f, 20.0f);
 
 				ImGui::EndTable();
 			}

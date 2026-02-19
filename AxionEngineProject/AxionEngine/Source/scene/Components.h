@@ -72,12 +72,11 @@ namespace Axion {
 
 
 	struct DirectionalLightComponent {
-		Vec3 direction = { 0.0f, 1.0f, 0.0f }; // TODO: maybe remove and rely on transform rotation
 		Vec4 color = Vec4::one();
 
 		DirectionalLightComponent() = default;
 		DirectionalLightComponent(const DirectionalLightComponent&) = default;
-		DirectionalLightComponent(const Vec3& dir, const Vec4& col) : direction(dir), color(col) {}
+		DirectionalLightComponent(const Vec4& col) : color(col) {}
 	};
 
 
@@ -154,6 +153,7 @@ namespace Axion {
 
 
 	struct NativeScriptComponent {
+		// TODO: add to scene serializer
 		ScriptableEntity* instance = nullptr;
 
 		ScriptableEntity* (*instantiateScript)();

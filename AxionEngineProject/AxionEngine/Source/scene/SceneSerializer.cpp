@@ -122,8 +122,43 @@ namespace Axion {
 		if (entity.hasComponent<CameraComponent>()) {
 			out << YAML::Key << "CameraComponent";
 			out << YAML::BeginMap;
-			bool primary = entity.getComponent<CameraComponent>().isPrimary;
-			out << YAML::Key << "Primary" << YAML::Value << primary;
+			auto& cc = entity.getComponent<CameraComponent>();
+			out << YAML::Key << "Primary" << YAML::Value << cc.isPrimary;
+			out << YAML::Key << "FixedAspectRatio" << YAML::Value << cc.fixedAspectRatio;
+			out << YAML::EndMap;
+		}
+
+		// -- DirectionalLightComponent --
+		if (entity.hasComponent<DirectionalLightComponent>()) {
+			out << YAML::Key << "DirectionalLightComponent";
+			out << YAML::BeginMap;
+			auto& dlc = entity.getComponent<DirectionalLightComponent>();
+			out << YAML::Key << "Color" << YAML::Value << dlc.color;
+			out << YAML::EndMap;
+		}
+
+		// -- PointLightComponent --
+		if (entity.hasComponent<PointLightComponent>()) {
+			out << YAML::Key << "PointLightComponent";
+			out << YAML::BeginMap;
+			auto& plc = entity.getComponent<PointLightComponent>();
+			out << YAML::Key << "Color" << YAML::Value << plc.color;
+			out << YAML::Key << "Intensity" << YAML::Value << plc.intensity;
+			out << YAML::Key << "Radius" << YAML::Value << plc.radius;
+			out << YAML::Key << "Falloff" << YAML::Value << plc.falloff;
+			out << YAML::EndMap;
+		}
+
+		// -- SpotLightComponent --
+		if (entity.hasComponent<SpotLightComponent>()) {
+			out << YAML::Key << "SpotLightComponent";
+			out << YAML::BeginMap;
+			auto& slc = entity.getComponent<SpotLightComponent>();
+			out << YAML::Key << "Color" << YAML::Value << slc.color;
+			out << YAML::Key << "Intensity" << YAML::Value << slc.intensity;
+			out << YAML::Key << "Range" << YAML::Value << slc.range;
+			out << YAML::Key << "InnerConeAngle" << YAML::Value << slc.innerConeAngle;
+			out << YAML::Key << "OuterConeAngle" << YAML::Value << slc.outerConeAngle;
 			out << YAML::EndMap;
 		}
 
@@ -223,6 +258,7 @@ namespace Axion {
 					}
 				}
 
+				// -- SpriteComponent --
 				auto spriteComponent = entity["SpriteComponent"];
 				if (spriteComponent) {
 					auto& sc = deserializedEntity.addComponent<SpriteComponent>();
@@ -296,6 +332,35 @@ namespace Axion {
 				if (cameraComponent) {
 					auto& cc = deserializedEntity.addComponent<CameraComponent>();
 					cc.isPrimary = cameraComponent["Primary"].as<bool>();
+					cc.fixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
+				}
+
+				// -- DirectionalLightComponent --
+				auto directionalLightComponent = entity["DirectionalLightComponent"];
+				if (directionalLightComponent) {
+					auto& dlc = deserializedEntity.addComponent<DirectionalLightComponent>();
+					dlc.color = directionalLightComponent["Color"].as<Vec4>();
+				}
+
+				// -- PointLightComponent --
+				auto pointLightComponent = entity["PointLightComponent"];
+				if (pointLightComponent) {
+					auto& plc = deserializedEntity.addComponent<PointLightComponent>();
+					plc.color = pointLightComponent["Color"].as<Vec4>();
+					plc.intensity = pointLightComponent["Intensity"].as<float>();
+					plc.radius = pointLightComponent["Radius"].as<float>();
+					plc.falloff = pointLightComponent["Falloff"].as<float>();
+				}
+
+				// -- SpotLightComponent --
+				auto spotLightComponent = entity["SpotLightComponent"];
+				if (spotLightComponent) {
+					auto& slc = deserializedEntity.addComponent<SpotLightComponent>();
+					slc.color = spotLightComponent["Color"].as<Vec4>();
+					slc.intensity = spotLightComponent["Intensity"].as<float>();
+					slc.range = spotLightComponent["Range"].as<float>();
+					slc.innerConeAngle = spotLightComponent["InnerConeAngle"].as<float>();
+					slc.outerConeAngle = spotLightComponent["OuterConeAngle"].as<float>();
 				}
 
 			}

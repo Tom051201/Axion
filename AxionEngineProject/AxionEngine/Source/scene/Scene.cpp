@@ -122,16 +122,57 @@ namespace Axion {
 			LightingData lightData;
 			lightData.direction = { 0.5f, 1.0f, -0.5f };
 			lightData.color = Vec4::one();
-			
-			auto lightView = m_registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
-			for (auto entity : lightView) {
-				auto& [transform, dlc] = lightView.get<TransformComponent, DirectionalLightComponent>(entity);
+			lightData.pointLightPosition = Vec3::zero();
+			lightData.pointLightColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+			lightData.pointLightRadius = 10.0f;
+			lightData.pointLightFalloff = 1.0f;
+			lightData.spotLightPosition = Vec3::zero();
+			lightData.spotLightDirection = { 0.0f, -1.0f, 0.0f };
+			lightData.spotLightColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+			lightData.spotLightRange = 10.0f;
+			lightData.spotLightInnerCutoff = std::cos(12.5f * 3.14159265f / 180.0f);
+			lightData.spotLightOuterCutoff = std::cos(17.5f * 3.14159265f / 180.0f);
+
+			// -- Directional lights --
+			auto dirLightGroup = m_registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
+			for (auto entity : dirLightGroup) {
+				auto& [transform, dlc] = dirLightGroup.get<TransformComponent, DirectionalLightComponent>(entity);
 
 				Mat4 transformMat = transform.getTransform();
 				Vec4 forward = transformMat * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
 
 				lightData.direction = { -forward.x, -forward.y, -forward.z };
 				lightData.color = dlc.color;
+
+				break;
+			}
+
+			// -- Point lights --
+			auto pointLightGroup = m_registry.group<PointLightComponent>(entt::get<TransformComponent>);
+			for (auto entity : pointLightGroup) {
+				auto& [transform, plc] = pointLightGroup.get<TransformComponent, PointLightComponent>(entity);
+				lightData.pointLightPosition = transform.position;
+				lightData.pointLightColor = plc.color * plc.intensity;
+				lightData.pointLightRadius = plc.radius;
+				lightData.pointLightFalloff = plc.falloff;
+				break;
+			}
+
+			// -- Spot lights --
+			auto spotLightGroup = m_registry.group<SpotLightComponent>(entt::get<TransformComponent>);
+			for (auto entity : spotLightGroup) {
+				auto& [transform, slc] = spotLightGroup.get<TransformComponent, SpotLightComponent>(entity);
+				lightData.spotLightPosition = transform.position;
+
+				Mat4 transformMat = transform.getTransform();
+				Vec4 forward = transformMat * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+				lightData.spotLightDirection = { forward.x, forward.y, forward.z };
+
+				lightData.spotLightColor = slc.color * slc.intensity;
+				lightData.spotLightRange = slc.range;
+
+				lightData.spotLightInnerCutoff = std::cos(slc.innerConeAngle * 3.14159265f / 180.0f);
+				lightData.spotLightOuterCutoff = std::cos(slc.outerConeAngle * 3.14159265f / 180.0f);
 
 				break;
 			}

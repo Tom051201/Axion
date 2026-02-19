@@ -16,8 +16,23 @@ namespace Axion {
 	};
 
 	struct LightingData {
+		// Directional light
 		Vec3 direction;
 		Vec4 color;
+
+		// Point light
+		Vec3 pointLightPosition;
+		Vec4 pointLightColor;
+		float pointLightRadius;
+		float pointLightFalloff;
+
+		// Spot light
+		Vec3 spotLightPosition;
+		Vec3 spotLightDirection;
+		Vec4 spotLightColor;
+		float spotLightRange;
+		float spotLightInnerCutoff;
+		float spotLightOuterCutoff;
 	};
 
 	class Renderer {

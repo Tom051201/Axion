@@ -6,6 +6,15 @@ cbuffer CameraBuffer : register(b0) {
 	// TODO: move those to own buffer or leave here...
 	float4 u_lightDir;
 	float4 u_lightColor;
+
+	float4 u_pointLightPos;
+	float4 u_pointLightColor;
+	float4 u_pointLightParams; // x = radius, y = falloff
+
+	float4 u_spotLightPos;
+	float4 u_spotLightDir;
+	float4 u_spotLightColor;
+	float4 u_spotLightParams; // x = range, y = inner cutoff, z = outer cutoff
 }
 
 cbuffer ObjectBuffer : register(b1) {
@@ -92,6 +101,29 @@ float3 FresnelSchlick(float cosTheta, float3 F0) {
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+float3 CalculateLight(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float roughness, float metalness) {
+	float3 H = normalize(V + L);
+
+	float3 F0 = float3(0.04, 0.04, 0.04);
+	F0 = lerp(F0, albedo, metalness);
+
+	float NDF = DistributionGGX(N, H, roughness);
+	float G = GeometrySmith(N, V, L, roughness);
+	float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+
+	float3 numerator = NDF * G * F;
+	float denom = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+	float3 specular = numerator / denom;
+
+	float3 kS = F;
+	float3 kD = float3(1.0, 1.0, 1.0) - kS;
+	kD *= 1.0 - metalness;
+
+	float NdotL = max(dot(N, L), 0.0);
+
+	return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+
 // Camera helper
 float3 getCameraPosition() {
 	float3x3 rot = transpose((float3x3)u_view);
@@ -151,49 +183,70 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	// -- Lighting setup --
 	float3 camPos = getCameraPosition();
 	float3 V = normalize(camPos - input.worldPos);
-	//float3 lightDir = normalize(float3(0.5, 1.0, -0.5));
-	float3 lightDir = normalize(float3(u_lightDir.x, u_lightDir.y, u_lightDir.z));
-	float3 L = normalize(lightDir);
-	float3 H = normalize(V + L);
-	//float3 radiance = float3(1.0, 1.0, 1.0) * 2.0;
-	float3 radiance = float3(u_lightColor.x, u_lightColor.y, u_lightColor.z) * 2.0;
 
-	// -- Base reflectivity : 0.04 for Dielectrics (Plastic), Albedo color for Metals --
-	float3 F0 = float3(0.04, 0.04, 0.04);
-	F0 = lerp(F0, albedo, metalness);
+	float3 Lo = float3(0.0, 0.0, 0.0);
 
-	// -- Cook-Torrance BRDF --
-	float NDF = DistributionGGX(N, H, roughness);
-	float G = GeometrySmith(N, V, L, roughness);
-	float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+	// -- Directional light --
+	float3 L_dir = normalize(u_lightDir.xyz);
+	float3 radiance_dir = u_lightColor.rgb * 2.0;
+	Lo += CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
 
-	float3 numerator = NDF * G * F;
-	float denom = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-	float3 specular = numerator / denom;
+	// -- Point light --
+	float3 lightVec = u_pointLightPos.xyz - input.worldPos;
+	float distance = length(lightVec);
 
-	// -- Energy conservation --
-	float3 kS = F;
-	float3 kD = float3(1.0, 1.0, 1.0) - kS;
-	kD *= 1.0 - metalness;
+	float radius = u_pointLightParams.x;
+	float falloffExponent = u_pointLightParams.y;
 
-	float NdotL = max(dot(N, L), 0.0);
+	if (distance < radius) {
+		float3 L_point = lightVec / distance;
 
-	// -- Final radiance --
-	float3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
+		float invSquare = 1.0 / (distance * distance + 0.0001);
+
+		float distanceRatio = distance / radius;
+		float window = saturate(1.0 - pow(distanceRatio, falloffExponent));
+
+		float attenuation = invSquare * (window * window);
+		float3 radiance_point = u_pointLightColor.rgb * attenuation;
+
+		Lo += CalculateLight(N, V, L_point, radiance_point, albedo, roughness, metalness);
+	}
+
+	// -- Spot light --
+	float3 spotLightVec = u_spotLightPos.xyz - input.worldPos;
+	float spotDistance = length(spotLightVec);
+	float spotRange = u_spotLightParams.x;
+
+	if (spotDistance < spotRange) {
+		float3 L_spot = spotLightVec / spotDistance;
+
+		float invSquare = 1.0 / (spotDistance * spotDistance + 0.0001);
+		float distanceRatio = spotDistance / spotRange;
+		float window = saturate(1.0 - distanceRatio); // Simple linear window, or pow() for custom falloff
+		float distanceAttenuation = invSquare * (window * window);
+
+		float theta = dot(-L_spot, normalize(u_spotLightDir.xyz));
+
+		float innerCutoff = u_spotLightParams.y;
+		float outerCutoff = u_spotLightParams.z;
+		float epsilon = innerCutoff - outerCutoff;
+
+		float spotIntensity = saturate((theta - outerCutoff) / epsilon);
+
+		float3 radiance_spot = u_spotLightColor.rgb * distanceAttenuation * spotIntensity;
+
+		if (spotIntensity > 0.0) {
+			Lo += CalculateLight(N, V, L_spot, radiance_spot, albedo, roughness, metalness);
+		}
+	}
 
 	// -- Ambient --
 	float3 ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
 	float3 color = ambient + Lo;
 
-	// -- Post Processing --
-	// HDR Tone Mapping
+	// -- HDR tone mapping and gamma correction --
 	color = color / (color + float3(1.0, 1.0, 1.0));
-	// Gamma Correction (Linear -> sRGB)
 	color = pow(color, 1.0 / 2.2);
-
-	// DEBUG
-	//float3 T = input.tbn[0];
-	//return float4(T * 0.5 + 0.5, 1.0);
 
 	return float4(color, 1.0);
 }

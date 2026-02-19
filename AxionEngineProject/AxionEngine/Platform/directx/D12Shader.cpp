@@ -9,6 +9,8 @@
 
 namespace Axion {
 
+	// TODO: split shader and pipeline
+
 	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {}
 
 	D12Shader::D12Shader(const ShaderSpecification& spec)
@@ -113,6 +115,7 @@ namespace Axion {
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[1]; // t0
 		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, m_specification.batchTextures, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC
 
+		// TODO: rework this and automate it
 		CD3DX12_ROOT_PARAMETER1 rootParameters[4];
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);		// b0 - slot 0, vertex shader CBV
 		rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);	// b1 - slot 1, vertex shader CBV
