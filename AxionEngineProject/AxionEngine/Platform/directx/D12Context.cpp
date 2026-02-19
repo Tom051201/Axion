@@ -160,15 +160,16 @@ namespace Axion {
 	void D12Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
 		auto* device = m_device.getDevice();
 
-		uint32_t batchStartOffset = m_gpuSrvHeap.allocateRange(count);
+		uint32_t tableSize = 16;
+		uint32_t batchStartOffset = m_gpuSrvHeap.allocateRange(tableSize);
 
-		for (uint32_t i = 0; i < count; i++) {
-			if (textures[i]) {
-				auto srcHandle = m_stagingSrvHeap.getCpuHandle(static_cast<D12Texture2D*>(textures[i].get())->getSrvHeapIndex());
-				auto destHandle = m_gpuSrvHeap.getCpuHandle(batchStartOffset + i);
+		for (uint32_t i = 0; i < tableSize; i++) {
+			Ref<Texture2D> tex = (i < count && textures[i]) ? textures[i] : textures[0];
 
-				device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-			}
+			auto srcHandle = m_stagingSrvHeap.getCpuHandle(static_cast<D12Texture2D*>(tex.get())->getSrvHeapIndex());
+			auto destHandle = m_gpuSrvHeap.getCpuHandle(batchStartOffset + i);
+
+			device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		}
 
 		auto gpuHandle = m_gpuSrvHeap.getGpuHandle(batchStartOffset);

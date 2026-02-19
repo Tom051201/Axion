@@ -121,7 +121,7 @@ namespace Axion {
 		//rootParameters[4].InitAsConstantBufferView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL);	// b3 - slot 3, pixel shader CBV
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
-		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;	// D3D12_FILTER_MIN_MAG_MIP_POINT
 		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP; // D3D12_TEXTURE_ADDRESS_MODE_BORDER
 		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP; // D3D12_TEXTURE_ADDRESS_MODE_BORDER
 		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP; // D3D12_TEXTURE_ADDRESS_MODE_BORDER
@@ -191,18 +191,19 @@ namespace Axion {
 
 		// TODO: make this configurable
 		// MAYBE SO:
-		//D3D12_RENDER_TARGET_BLEND_DESC blendDesc = {};
-		//blendDesc.BlendEnable = TRUE;
-		//blendDesc.LogicOpEnable = FALSE;
-		//blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-		//blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-		//blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-		//blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-		//blendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-		//blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		//blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-		//psoDesc.BlendState.RenderTarget[0] = blendDesc;
+		D3D12_RENDER_TARGET_BLEND_DESC blendDesc = {};
+		blendDesc.BlendEnable = TRUE;
+		blendDesc.LogicOpEnable = FALSE;
+		blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		blendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+		psoDesc.BlendState.RenderTarget[0] = blendDesc;
 
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 		psoDesc.DepthStencilState.DepthEnable = m_specification.depthTest ? TRUE : FALSE;

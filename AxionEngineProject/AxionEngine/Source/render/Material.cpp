@@ -54,7 +54,7 @@ namespace Axion {
 		// TODO: make this idependent
 		if (Renderer::getAPI() == RendererAPI::DirectX12) {
 			auto context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-			context->bindSrvTable(2, textureBatch, count);
+			context->bindSrvTable(2, textureBatch, count); // TODO: make this from renderer
 		}
 	}
 

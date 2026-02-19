@@ -1,32 +1,37 @@
 Scene: Base Scene
 Skybox: skybox\BlueSkybox.axsky
 Entities:
-  - Entity: a47b10a2f7ee7598c6917dbff64d0a7e
+  - Entity: fb69a07b71f1a31a73395a840deb43c4
     TagComponent:
-      Tag: Cube Entity
+      Tag: Sprite Entity
     TransformComponent:
-      Translation: [-1.31241107, 1.47902656, 0]
+      Translation: [0.43536374, 4.13137341, -0.4567132]
       Rotation: [-0, 0, -0]
-      Scale: [15.5100002, 0.999996066, 18.1000004]
-    MeshComponent:
-      Path: meshes\Cube.axmesh
-    MaterialComponent:
-      Path: materials\Green Metal.axmat
-    ConstantBufferComponent:
-      Has: TRUE
-  - Entity: 8aee4a344c5fe14ba2df3fd3cad8016d
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Path: None
+      Tint: [0, 0.0317461491, 1, 1]
+  - Entity: 9901deeaab40cd36ac39b79dd08cf660
     TagComponent:
-      Tag: Homer Entity
+      Tag: Music Entity
     TransformComponent:
-      Translation: [0.909387469, -0.142656326, -0.443987638]
-      Rotation: [-0, -3.5999999, -0]
-      Scale: [1.89998043, 1.90000105, 1.89998162]
-    MeshComponent:
-      Path: meshes\Homer.axmesh
-    MaterialComponent:
-      Path: materials\ColorMaterial.axmat
-    ConstantBufferComponent:
-      Has: TRUE
+      Translation: [2.15924978, 2.2032547, 3.58886743]
+      Rotation: [-0, 0, -0]
+      Scale: [1, 1, 1]
+    AudioComponent:
+      IsListener: false
+      IsSource: true
+      AudioSource:
+        AudioClip: audio\MusicClip.axaudio
+        Volume: 0.449999988
+        Pitch: 1
+        Pan: 0
+        IsSpatial: true
+        Position: [2.15924978, 2.2032547, 3.58886743]
+        Velocity: [0, 0, 0]
+        MinDistance: 1
+        MaxDistance: 100
+        DopplerFactor: 1
   - Entity: 1dc4b3d807108cc8032d565a855c9e60
     TagComponent:
       Tag: Wind Entity
@@ -54,34 +59,29 @@ Entities:
         MinDistance: 1
         MaxDistance: 100
         DopplerFactor: 1
-  - Entity: 9901deeaab40cd36ac39b79dd08cf660
+  - Entity: 8aee4a344c5fe14ba2df3fd3cad8016d
     TagComponent:
-      Tag: Music Entity
+      Tag: Homer Entity
     TransformComponent:
-      Translation: [2.15924978, 2.2032547, 3.58886743]
-      Rotation: [-0, 0, -0]
-      Scale: [1, 1, 1]
-    AudioComponent:
-      IsListener: false
-      IsSource: true
-      AudioSource:
-        AudioClip: audio\MusicClip.axaudio
-        Volume: 0.449999988
-        Pitch: 1
-        Pan: 0
-        IsSpatial: true
-        Position: [2.15924978, 2.2032547, 3.58886743]
-        Velocity: [0, 0, 0]
-        MinDistance: 1
-        MaxDistance: 100
-        DopplerFactor: 1
-  - Entity: fb69a07b71f1a31a73395a840deb43c4
+      Translation: [0.909387469, -0.142656326, -0.443987638]
+      Rotation: [-0, -3.5999999, -0]
+      Scale: [1.89998043, 1.90000105, 1.89998162]
+    MeshComponent:
+      Path: meshes\Homer.axmesh
+    MaterialComponent:
+      Path: materials\ColorMaterial.axmat
+    ConstantBufferComponent:
+      Has: TRUE
+  - Entity: a47b10a2f7ee7598c6917dbff64d0a7e
     TagComponent:
-      Tag: Sprite Entity
+      Tag: Cube Entity
     TransformComponent:
-      Translation: [0.43536374, 1.38732982, -0.4567132]
+      Translation: [-1.31241107, 1.47902656, 0]
       Rotation: [-0, 0, -0]
-      Scale: [1, 1, 1]
-    SpriteComponent:
-      Path: None
-      Tint: [0, 0.0317461491, 1, 1]
+      Scale: [15.5100002, 0.999996066, 18.1000004]
+    MeshComponent:
+      Path: meshes\Cube.axmesh
+    MaterialComponent:
+      Path: materials\Green Metal.axmat
+    ConstantBufferComponent:
+      Has: TRUE

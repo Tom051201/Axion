@@ -145,6 +145,20 @@ namespace Axion {
 		return s_sceneUploadBuffer;
 	}
 
+	void Renderer::bindTextures(const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex) {
+		if (s_api == RendererAPI::DirectX12) {
+			auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+			context->bindSrvTable(rootIndex, textures, count);
+		}
+		else if (s_api == RendererAPI::OpenGL3) {
+			// TODO: add opengl3 impl.
+			// maybe like this:
+			//for (uint32_t i = 0; i < count; i++) {
+			//	if (textures[i]) textures[i]->bind(i);
+			//}
+		}
+	}
+
 	const Ref<Texture2D>& Renderer::getWhiteFallbackTexture() {
 		return s_whiteFallbackTexture;
 	}

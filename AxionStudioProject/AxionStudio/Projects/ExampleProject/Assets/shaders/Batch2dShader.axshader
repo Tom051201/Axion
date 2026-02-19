@@ -14,7 +14,7 @@ Specification:
   SampleCount: 1
   CullMode: None
   Topology: TriangleList
-  BatchTextures: 1
+  BatchTextures: 16
   BufferLayout:
     - Name: POSITION
       Type: Float3

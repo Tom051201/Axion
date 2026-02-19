@@ -202,13 +202,23 @@ namespace Axion {
 			for (auto entity : spriteGroup) {
 				auto& transform = spriteGroup.get<TransformComponent>(entity);
 				auto& sprite = spriteGroup.get<SpriteComponent>(entity);
-
-				Renderer2D::drawQuad(
-					transform.position,
-					{ transform.scale.x, transform.scale.y },
-					transform.rotation.z,
-					sprite.tint
-				);
+				if (sprite.texture.isValid()) {
+					Renderer2D::drawQuad(
+						transform.position,
+						{ transform.scale.x, transform.scale.y },
+						transform.rotation.z,
+						AssetManager::get<Texture2D>(sprite.texture),
+						sprite.tint
+						);
+				}
+				else {
+					Renderer2D::drawQuad(
+						transform.position,
+						{ transform.scale.x, transform.scale.y },
+						transform.rotation.z,
+						sprite.tint
+					);
+				}
 			}
 
 			Renderer::endScene();
