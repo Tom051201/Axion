@@ -82,14 +82,6 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
-		// -- ConstantBufferComponent --
-		if (entity.hasComponent<ConstantBufferComponent>()) {
-			out << YAML::Key << "ConstantBufferComponent";
-			out << YAML::BeginMap;
-			out << YAML::Key << "Has" << YAML::Value << "TRUE";
-			out << YAML::EndMap;
-		}
-
 		// -- AudioComponent --
 		if (entity.hasComponent<AudioComponent>()) {
 			out << YAML::Key << "AudioComponent";
@@ -286,13 +278,6 @@ namespace Axion {
 					} else {
 						mc.handle = AssetHandle<Material>();
 					}
-				}
-
-				// -- ConstantBufferComponent --
-				auto cbComponent = entity["ConstantBufferComponent"];
-				if (cbComponent) {
-					auto& cbc = deserializedEntity.addComponent<ConstantBufferComponent>();
-					cbc.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
 				}
 
 				// -- AudioComponent --

@@ -118,16 +118,6 @@ namespace Axion {
 
 
 
-	struct ConstantBufferComponent {
-		Ref<ConstantBuffer> uploadBuffer;
-
-		ConstantBufferComponent() = default;
-		ConstantBufferComponent(const ConstantBufferComponent&) = default;
-		ConstantBufferComponent(const Ref<ConstantBuffer>& uploadBuffer) : uploadBuffer(uploadBuffer) {}
-	};
-
-
-
 	struct AudioComponent {
 		Ref<AudioSource> audio = nullptr;
 		bool isListener = false;

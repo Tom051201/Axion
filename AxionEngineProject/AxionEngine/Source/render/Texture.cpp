@@ -63,4 +63,19 @@ namespace Axion {
 		return nullptr;
 	}
 
+
+
+	Ref<Texture2D> DepthTexture::create(uint32_t width, uint32_t height) {
+
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12DepthTexture>(width, height); }
+			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "OpenGL is not supported yet!"); break; }
+
+		}
+
+		return nullptr;
+	}
+
 }

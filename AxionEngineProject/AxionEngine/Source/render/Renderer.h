@@ -48,6 +48,16 @@ namespace Axion {
 		std::vector<SpotLightData> spotLights;
 	};
 
+	struct RendererStats {
+		uint32_t drawCalls = 0;
+		uint32_t quadCount2D = 0;
+		uint32_t meshCount3D = 0; // unique meshes drawn
+		uint32_t instanceCount3D = 0; // total 3d objects drawn
+
+		uint32_t getTotalVertexCount2D() const { return quadCount2D * 4; }
+		uint32_t getTotalIndexCount2D() const { return quadCount2D * 6; }
+	};
+
 	class Renderer {
 	public:
 
@@ -73,6 +83,9 @@ namespace Axion {
 
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
+		static RendererStats& getStats();
+		static void resetStats();
+
 		inline static void setAPI(RendererAPI api) { s_api = api; }
 		inline static RendererAPI getAPI() { return s_api; }
 
@@ -80,9 +93,11 @@ namespace Axion {
 
 		static RendererAPI s_api;
 
+		static RendererStats s_stats;
 		static FrameTimer s_frameTimer;
 		static double s_lastFrameTimeMs;
 		static Ref<Texture2D> s_whiteFallbackTexture;
+		static std::function<void(Event&)> s_eventCallback;
 
 	};
 

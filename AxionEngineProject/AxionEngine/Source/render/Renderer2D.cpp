@@ -44,7 +44,6 @@ namespace Axion {
 		};
 		Ref<ConstantBuffer> cameraConstantBuffer;
 
-		Renderer2D::Statistics stats;
 	};
 
 	static Renderer2DData s_data;
@@ -122,6 +121,10 @@ namespace Axion {
 		s_data.cameraConstantBuffer->release();
 		if (s_data.quadMaterial) s_data.quadMaterial->release();
 
+		for (uint32_t i = 0; i < Renderer2DData::MaxTextureSlots; i++) {
+			s_data.textureSlots[i] = nullptr;
+		}
+
 		AX_CORE_LOG_TRACE("Renderer2D shutdown");
 	}
 
@@ -142,7 +145,6 @@ namespace Axion {
 
 	void Renderer2D::endScene() {
 		flush();
-		resetStats();
 	}
 
 	void Renderer2D::startBatch() {
@@ -172,7 +174,53 @@ namespace Axion {
 
 		RenderCommand::drawIndexed(s_data.quadIndexBuffer, s_data.quadIndexCount);
 
-		s_data.stats.drawCalls++;
+		Renderer::getStats().drawCalls++;
+	}
+
+	void Renderer2D::drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint) {
+		if (!s_initialized) return;
+
+		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices || s_data.textureSlotIndex >= Renderer2DData::MaxTextureSlots) {
+			nextBatch();
+		}
+
+		float texIndex = -1.0f;
+
+		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
+			if (s_data.textureSlots[i]->getHandle() == texture->getHandle()) {
+				texIndex = static_cast<float>(i);
+				break;
+			}
+		}
+
+		if (texIndex == -1) {
+			texIndex = static_cast<float>(s_data.textureSlotIndex);
+			s_data.textureSlots[s_data.textureSlotIndex] = texture;
+			s_data.textureSlotIndex++;
+		}
+
+		Vec3 camRight = { cameraView.data()[0], cameraView.data()[4], cameraView.data()[8] };
+		Vec3 camUp = { cameraView.data()[1], cameraView.data()[5], cameraView.data()[9] };
+
+		Vec3 halfSize = { size.x * 0.5f, size.y * 0.5f, 0.0f };
+
+		Vec3 vertices[4];
+		vertices[0] = position - (camRight * halfSize.x) - (camUp * halfSize.y); // BL
+		vertices[1] = position + (camRight * halfSize.x) - (camUp * halfSize.y); // BR
+		vertices[2] = position + (camRight * halfSize.x) + (camUp * halfSize.y); // TR
+		vertices[3] = position - (camRight * halfSize.x) + (camUp * halfSize.y); // TL
+
+		for (size_t i = 0; i < 4; i++) {
+			s_data.quadVertexBufferPtr->position = { vertices[i].x, vertices[i].y, vertices[i].z };
+			s_data.quadVertexBufferPtr->color = { tint.x, tint.y, tint.z, tint.w };
+			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
+			s_data.quadVertexBufferPtr->texIndex = texIndex;
+			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
+			s_data.quadVertexBufferPtr++;
+		}
+
+		s_data.quadIndexCount += 6;
+		Renderer::getStats().quadCount2D++;
 	}
 
 	void Renderer2D::drawQuad(const Vec2& position, const Vec2& size, const Vec4& color) {
@@ -209,7 +257,7 @@ namespace Axion {
 			}
 
 			s_data.quadIndexCount += 6;
-			s_data.stats.quadCount++;
+			Renderer::getStats().quadCount2D++;
 		}
 	}
 
@@ -255,17 +303,7 @@ namespace Axion {
 		}
 
 		s_data.quadIndexCount += 6;
-		s_data.stats.quadCount++;
-
-	}
-
-
-	Renderer2D::Statistics Renderer2D::getStats() {
-		return s_data.stats;
-	}
-
-	void Renderer2D::resetStats() {
-		memset(&s_data.stats, 0, sizeof(Statistics));
+		Renderer::getStats().quadCount2D++;
 	}
 
 }

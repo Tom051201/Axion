@@ -1,7 +1,7 @@
 StartupProject: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\ExampleProject\ExampleProject.axproj
 Panels:
   - Name: SystemInfoPanel
-    Visible: true
+    Visible: false
   - Name: SceneHierarchyPanel
     Visible: true
   - Name: EditorCameraPanel

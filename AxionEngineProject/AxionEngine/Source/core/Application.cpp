@@ -37,12 +37,16 @@ namespace Axion {
 
 	Application::~Application() {
 		removeOverlay(m_imGuiLayer);
-		Renderer::shutdown();
+		m_layerStack.clear();
+		delete m_imGuiLayer;
 
-		ProjectManager::shutdown();
 		SceneManager::shutdown();
+
 		AssetManager::shutdown();
+		ProjectManager::shutdown();
 		AudioManager::shutdown();
+
+		Renderer::shutdown();
 	}
 
 	void Application::onEvent(Event& e) {

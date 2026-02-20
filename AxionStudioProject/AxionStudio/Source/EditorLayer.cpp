@@ -169,7 +169,6 @@ namespace Axion {
 			Ref<Mesh> mesh = Mesh::createPBRCube();
 			AssetHandle<Mesh> meshHandle = AssetManager::insert(mesh);
 			e.addComponent<MeshComponent>(meshHandle);
-			e.addComponent<ConstantBufferComponent>();
 
 			AssetHandle<Material> matHandle = AssetManager::load<Material>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/materials/Green Metal.axmat").string());
 			Ref<Material> mat = AssetManager::get<Material>(matHandle);

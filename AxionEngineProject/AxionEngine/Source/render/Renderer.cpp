@@ -12,9 +12,11 @@
 
 namespace Axion {
 
+	RendererStats Renderer::s_stats;
 	FrameTimer Renderer::s_frameTimer;
 	double Renderer::s_lastFrameTimeMs = 0.0;
 	Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
+	std::function<void(Event&)> Renderer::s_eventCallback;
 
 	struct alignas(16) HLSLDirLight {
 		DirectX::XMFLOAT4 direction;
@@ -57,12 +59,6 @@ namespace Axion {
 	static SceneData* s_sceneData;
 	static Ref<ConstantBuffer> s_sceneUploadBuffer;
 
-	struct RendererData {
-		std::function<void(Event&)> eventCallback;
-	};
-
-	static RendererData* s_rendererData;
-
 	RendererAPI Renderer::s_api = RendererAPI::DirectX12;
 
 	void Renderer::initialize(Window* window, std::function<void(Event&)> eventCallback) {
@@ -79,9 +75,7 @@ namespace Axion {
 		s_sceneData = new SceneData();
 		s_sceneUploadBuffer = ConstantBuffer::create(sizeof(SceneData));
 
-		// setup renderer data
-		s_rendererData = new RendererData();
-		s_rendererData->eventCallback = eventCallback;
+		s_eventCallback = eventCallback;
 
 		// white texture creation
 		s_whiteFallbackTexture = Texture2D::create(32, 32, nullptr);
@@ -99,22 +93,20 @@ namespace Axion {
 
 		s_whiteFallbackTexture->release();
 
-		// TODO: why are there live obj when doing this???
-		// delete s_rendererData;
-
 		Renderer3D::shutdown();
 		Renderer2D::shutdown();
 
-		//GraphicsContext::get()->shutdown();	calling this here causes a crash on app termination!!!
+		GraphicsContext::get()->shutdown();
 		AX_CORE_LOG_INFO("Renderer shutdown");
 	}
 
 	void Renderer::prepareRendering() {
+		resetStats();
 		s_frameTimer.begin();
 		GraphicsContext::get()->prepareRendering();
 
 		RenderingPreparedEvent ev;
-		s_rendererData->eventCallback(ev);
+		s_eventCallback(ev);
 
 		RenderCommand::clear();
 	}
@@ -126,11 +118,18 @@ namespace Axion {
 		s_lastFrameTimeMs = s_frameTimer.getMilliseconds();
 
 		RenderingFinishedEvent ev;
-		s_rendererData->eventCallback(ev);
+		s_eventCallback(ev);
+	}
+
+	RendererStats& Renderer::getStats() {
+		return s_stats;
+	}
+
+	void Renderer::resetStats() {
+		memset(&s_stats, 0, sizeof(RendererStats));
 	}
 
 	void Renderer::beginScene(const Camera& camera, const LightingData& lightingData) {
-		RenderCommand::resetRenderStats();
 		// REVIEW: remove one option
 		// option 1: view and projection
 		s_sceneData->view = camera.getViewMatrix().transposed().toXM();

@@ -247,23 +247,6 @@ namespace Axion {
 				}
 			}
 
-			//auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
-			//for (auto entity : group) {
-			//	auto& transform = group.get<TransformComponent>(entity);
-			//	auto& mesh = group.get<MeshComponent>(entity);
-			//	auto& material = group.get<MaterialComponent>(entity);
-			//	auto& cb = group.get<ConstantBufferComponent>(entity);
-			//
-			//	if (mesh.handle.isValid() && material.handle.isValid() && cb.uploadBuffer != nullptr) {
-			//		Renderer3D::drawMesh(
-			//			transform.getTransform(),
-			//			AssetManager::get<Mesh>(mesh.handle),
-			//			AssetManager::get<Material>(material.handle),
-			//			cb.uploadBuffer
-			//		);
-			//	}
-			//}
-
 			Renderer2D::beginScene(cam);
 			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent>);
 			for (auto entity : spriteGroup) {

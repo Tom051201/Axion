@@ -186,7 +186,6 @@ namespace Axion {
 			m_selectedEntity.hasComponent<MeshComponent>() &&
 			m_selectedEntity.hasComponent<SpriteComponent>() &&
 			m_selectedEntity.hasComponent<MaterialComponent>() &&
-			m_selectedEntity.hasComponent<ConstantBufferComponent>() &&
 			m_selectedEntity.hasComponent<CameraComponent>() &&
 			m_selectedEntity.hasComponent<AudioComponent>() &&
 			m_selectedEntity.hasComponent<NativeScriptComponent>() &&
@@ -207,9 +206,6 @@ namespace Axion {
 			drawAddComponent<MeshComponent>("Mesh");
 			drawAddComponent<SpriteComponent>("Sprite");
 			drawAddComponent<MaterialComponent>("Material");
-			drawAddComponentWithFuncOnAdd<ConstantBufferComponent>("Upload Buffer", [](ConstantBufferComponent& comp) {
-				comp.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
-			});
 			drawAddComponent<CameraComponent>("Camera");
 			drawAddComponent<AudioComponent>("Audio");
 			drawAddComponent<NativeScriptComponent>("Native Script");
@@ -464,33 +460,6 @@ namespace Axion {
 
 			}
 			});
-
-		// ----- ConstantBufferComponent -----
-		drawComponentInfo<ConstantBufferComponent>("Upload Buffer", m_selectedEntity, [this]() {
-			auto& component = m_selectedEntity.getComponent<ConstantBufferComponent>();
-
-			if (component.uploadBuffer) {
-
-				if (ImGui::BeginTable("ConstantBufferTable", 2, ImGuiTableFlags_BordersInnerV)) {
-					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-
-					// -- Upload size --
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Upload size");
-					ImGui::TableSetColumnIndex(1);
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::Text("%s %s", std::to_string(component.uploadBuffer->getSize()).c_str(), " bytes");
-
-					ImGui::EndTable();
-				}
-			}
-			else {
-				component.uploadBuffer = ConstantBuffer::create(sizeof(ObjectBuffer));
-			}
-
-		});
 
 		// ----- CameraComponent -----
 		drawComponentInfo<CameraComponent>("Camera", m_selectedEntity, [this]() {

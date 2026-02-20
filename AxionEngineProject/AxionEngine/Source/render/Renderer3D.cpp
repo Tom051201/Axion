@@ -65,6 +65,11 @@ namespace Axion {
 
 		mesh->render();
 		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
+
+		auto& stats = Renderer::getStats();
+		stats.drawCalls++;
+		stats.meshCount3D++;
+		stats.instanceCount3D++;
 	}
 
 	void Renderer3D::drawMeshInstanced(Ref<Mesh>& mesh, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData) {
@@ -88,6 +93,11 @@ namespace Axion {
 		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer(), static_cast<uint32_t>(instanceData.size()));
 
 		s_instanceBufferOffset += dataSize;
+
+		auto& stats = Renderer::getStats();
+		stats.drawCalls++;
+		stats.meshCount3D++;
+		stats.instanceCount3D += static_cast<uint32_t>(instanceData.size());
 	}
 
 }

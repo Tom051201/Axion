@@ -98,7 +98,10 @@ namespace Axion {
 	}
 
 	void WindowsWindow::shutdown() {
-		GraphicsContext::get()->shutdown();
+		if (m_hwnd) {
+			DestroyWindow(m_hwnd);
+			m_hwnd = nullptr;
+		}
 		AX_CORE_LOG_INFO("Window shutdown");
 	}
 

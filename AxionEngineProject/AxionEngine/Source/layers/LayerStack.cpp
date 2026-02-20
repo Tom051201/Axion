@@ -6,10 +6,16 @@ namespace Axion {
 	LayerStack::LayerStack() {}
 
 	LayerStack::~LayerStack() {
+		clear();
+	}
+
+	void LayerStack::clear() {
 		for (Layer* layer : m_layers) {
 			layer->onDetach();
 			delete layer;
 		}
+		m_layers.clear();
+		m_layerInsertIndex = 0;
 	}
 
 	void LayerStack::pushLayer(Layer* layer) {

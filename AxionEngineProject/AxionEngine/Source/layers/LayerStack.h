@@ -13,6 +13,8 @@ namespace Axion {
 		LayerStack();
 		~LayerStack();
 
+		void clear();
+
 		void pushLayer(Layer* layer);
 		void pushOverlay(Layer* overlay);
 		void removeLayer(Layer* layer);

@@ -44,4 +44,12 @@ namespace Axion {
 
 	};
 
+
+	class DepthTexture {
+	public:
+
+		static Ref<Texture2D> create(uint32_t width, uint32_t height);
+
+	};
+
 }
