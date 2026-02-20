@@ -17,7 +17,7 @@ namespace Axion {
 
 		void release() override;
 
-		void bind() const override;
+		void bind(uint32_t slot = 0, uint32_t offset = 0) const override;
 		void unbind() const override;
 
 		void setLayout(const BufferLayout& layout) override { m_layout = layout; }

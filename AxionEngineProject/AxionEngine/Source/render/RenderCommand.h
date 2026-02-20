@@ -12,8 +12,8 @@ namespace Axion {
 		static void setClearColor(const Vec4& color);
 		static void clear();
 
-		static void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib);
-		static void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount);
+		static void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount = 1);
+		static void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount = 1);
 
 		static void resetRenderStats();
 		static uint32_t getDrawCallCount() { return s_drawCallCount; }

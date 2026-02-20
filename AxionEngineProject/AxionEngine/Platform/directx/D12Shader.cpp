@@ -175,10 +175,11 @@ namespace Axion {
 			desc.SemanticName = element.name.c_str();
 			desc.SemanticIndex = semanticCounts[element.name]++;
 			desc.Format = D12Helpers::ShaderDataTypeToDXGIFormat(element.type);
-			desc.InputSlot = 0;
-			desc.AlignedByteOffset = element.offset;
-			desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
-			desc.InstanceDataStepRate = 0;
+			desc.InputSlot = element.instanced ? 1 : 0;
+			desc.InputSlotClass = element.instanced ? D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA : D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+			desc.InstanceDataStepRate = element.instanced ? 1 : 0;
+			//desc.AlignedByteOffset = element.offset;
+			desc.AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 
 			inputElements.push_back(desc);
 		}

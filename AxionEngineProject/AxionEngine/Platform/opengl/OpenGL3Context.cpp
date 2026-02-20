@@ -114,7 +114,7 @@ namespace Axion {
 		glViewport(0, 0, width, height);
 	}
 
-	void OpenGL3Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {
+	void OpenGL3Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
 		auto glVB = static_cast<OpenGL3VertexBuffer*>(vb.get());
 
 		vb->bind();
@@ -123,7 +123,7 @@ namespace Axion {
 		glDrawElements(GL_TRIANGLES, ib->getIndexCount(), GL_UNSIGNED_INT, nullptr);
 	}
 
-	void OpenGL3Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount) {
+	void OpenGL3Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount) {
 		// TODO: Add this function
 		AX_CORE_ASSERT(false, "Add this function");
 	}

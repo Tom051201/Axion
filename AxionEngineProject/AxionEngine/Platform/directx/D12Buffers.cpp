@@ -103,9 +103,12 @@ namespace Axion {
 		m_mappedPtr = nullptr;
 	}
 
-	void D12VertexBuffer::bind() const {
+	void D12VertexBuffer::bind(uint32_t slot, uint32_t offset) const {
 		auto cmdList = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
-		cmdList->IASetVertexBuffers(0, 1, &m_view);
+		D3D12_VERTEX_BUFFER_VIEW view = m_view;
+		view.BufferLocation += offset;
+		view.SizeInBytes -= offset;
+		cmdList->IASetVertexBuffers(slot, 1, &view);
 	}
 
 	// Not required

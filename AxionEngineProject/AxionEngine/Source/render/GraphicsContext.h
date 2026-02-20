@@ -30,8 +30,8 @@ namespace Axion {
 		virtual void activateVsync() = 0;
 		virtual void deactivateVsync() = 0;
 
-		virtual void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) = 0;
-		virtual void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount) = 0;
+		virtual void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount = 1) = 0;
+		virtual void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount = 1) = 0;
 
 		virtual std::string getGpuName() const = 0;
 		virtual std::string getGpuDriverVersion() const = 0;

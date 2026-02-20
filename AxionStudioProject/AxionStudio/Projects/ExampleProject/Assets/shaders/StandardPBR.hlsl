@@ -33,10 +33,10 @@ cbuffer CameraBuffer : register(b0) {
 	SpotLight u_spotLights[16];
 }
 
-cbuffer ObjectBuffer : register(b1) {
-	float4 u_color;
-	float4x4 u_transform;
-}
+//cbuffer ObjectBuffer : register(b1) {
+//	float4 u_color;
+//	float4x4 u_transform;
+//}
 
 cbuffer MaterialBuffer : register(b2) {
 	float4 u_albedoColor;
@@ -64,10 +64,15 @@ SamplerState s_sampler : register(s0);
 static const float PI = 3.14159265359;
 
 struct VertexInput {
+	// Slot 0 (Per-Vertex)
 	float3 position : POSITION;
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
 	float2 texCoord : TEXCOORD;
+
+	// Slot 1 (Per-Instance)
+	float4 instanceColor : COLOR;
+	float4x4 instanceTransform : ROW;
 };
 
 struct PixelInput {
@@ -76,6 +81,7 @@ struct PixelInput {
 	float3 normal : NORMAL;
 	float2 texCoord : TEXCOORD;
 	float3x3 tbn : TANGENT;
+	float4 color : COLOR;
 };
 
 // Distribution: How many microfacets are aligned with the light?
@@ -155,13 +161,14 @@ float3 getNormalFromMap(PixelInput input, float2 uv) {
 PixelInput VSMain(VertexInput input) {
 	PixelInput output;
 
-	float4 worldPosition = mul(float4(input.position, 1.0f), u_transform);
+	float4 worldPosition = mul(float4(input.position, 1.0f), input.instanceTransform);
 	output.worldPos = worldPosition.xyz;
 	output.position = mul(worldPosition, u_viewProjection);
 	output.texCoord = input.texCoord;
+	output.color = input.instanceColor;
 
 	// Calculate TBN Matrix
-	float3x3 normalMatrix = (float3x3)u_transform;
+	float3x3 normalMatrix = (float3x3)input.instanceTransform;
 	float3 T = normalize(mul(input.tangent, normalMatrix));
 	float3 N = normalize(mul(input.normal, normalMatrix));
 
@@ -179,7 +186,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	float2 uv = input.texCoord * max(u_tiling, 1.0f);
 
 	float4 albedoSample = t_albedo.Sample(s_sampler, uv);
-	float3 albedo = pow(albedoSample.rgb, 2.2) * u_albedoColor.rgb;
+	float3 albedo = pow(albedoSample.rgb, 2.2) * input.color.rgb;
 
 	// -- Normal mapping --
 	float3 N = normalize(input.normal);

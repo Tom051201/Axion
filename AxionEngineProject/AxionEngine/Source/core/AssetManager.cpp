@@ -231,6 +231,7 @@ namespace Axion {
 
 				if (elemNode["Size"]) { elem.size = elemNode["Size"].as<uint32_t>(); }
 				if (elemNode["Offset"]) { elem.offset = elemNode["Offset"].as<uint32_t>(); }
+				if (elemNode["Instanced"]) { elem.instanced = elemNode["Instanced"].as<bool>(); }
 
 				elements.push_back(elem);
 			}

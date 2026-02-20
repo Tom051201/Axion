@@ -35,6 +35,7 @@ namespace Axion {
 		static void clear();
 
 		static void drawMesh(const Mat4& transform, Ref<Mesh>& mesh, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer);
+		static void drawMeshInstanced(Ref<Mesh>& mesh, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData);
 
 	};
 

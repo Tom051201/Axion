@@ -16,14 +16,14 @@ namespace Axion {
 		GraphicsContext::get()->clear();
 	}
 
-	void RenderCommand::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib) {
+	void RenderCommand::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
 		s_drawCallCount++;
-		GraphicsContext::get()->drawIndexed(vb, ib);
+		GraphicsContext::get()->drawIndexed(vb, ib, instanceCount);
 	}
 
-	void RenderCommand::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount) {
+	void RenderCommand::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount) {
 		s_drawCallCount++;
-		GraphicsContext::get()->drawIndexed(ib, indexCount);
+		GraphicsContext::get()->drawIndexed(ib, indexCount, instanceCount);
 	}
 
 	void RenderCommand::resetRenderStats() {

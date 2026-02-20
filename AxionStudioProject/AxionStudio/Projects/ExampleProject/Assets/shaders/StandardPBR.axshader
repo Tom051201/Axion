@@ -32,3 +32,18 @@ Specification:
       Type: Float2
       Size: 8
       Offset: 36
+    - Name: COLOR
+      Type: Float4
+      Instanced: true
+    - Name: ROW
+      Type: Float4
+      Instanced: true
+    - Name: ROW
+      Type: Float4
+      Instanced: true
+    - Name: ROW
+      Type: Float4
+      Instanced: true
+    - Name: ROW
+      Type: Float4
+      Instanced: true

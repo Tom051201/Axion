@@ -41,6 +41,7 @@ namespace Axion::AAP {
 			out << YAML::Key << "Type" << YAML::Value << EnumUtils::toString(elem.type);
 			out << YAML::Key << "Size" << YAML::Value << elem.size;
 			out << YAML::Key << "Offset" << YAML::Value << elem.offset;
+			out << YAML::Key << "Instanced" << YAML::Value << elem.instanced;
 			out << YAML::EndMap;
 		}
 		out << YAML::EndSeq;

@@ -15,11 +15,6 @@ namespace Axion {
 		Dynamic
 	};
 
-
-	////////////////////////////////////////////////////////////////////////////////
-	///// BufferElement ////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////
-
 	enum class ShaderDataType {
 		None = 0,
 		Float, Float2, Float3, Float4,
@@ -48,8 +43,11 @@ namespace Axion {
 		ShaderDataType type;
 		uint32_t size;
 		uint32_t offset;
+		bool normalized;
+		bool instanced;
 
-		BufferElement(const std::string& name, ShaderDataType type) : name(name), type(type), size(ShaderDataTypeSize(type)), offset(0) {}
+		BufferElement(const std::string& name, ShaderDataType type, bool normalized = false, bool instanced = false)
+			: name(name), type(type), size(ShaderDataTypeSize(type)), offset(0), normalized(normalized), instanced(instanced) {}
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +92,7 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind() const = 0;
+		virtual void bind(uint32_t slot = 0, uint32_t offset = 0) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual void setLayout(const BufferLayout& layout) = 0;

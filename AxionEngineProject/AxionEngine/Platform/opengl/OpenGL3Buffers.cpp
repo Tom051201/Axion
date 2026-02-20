@@ -43,7 +43,7 @@ namespace Axion {
 		m_rendererID = 0;
 	}
 
-	void OpenGL3VertexBuffer::bind() const {
+	void OpenGL3VertexBuffer::bind(uint32_t slot, uint32_t offset) const {
 		glBindBuffer(GL_ARRAY_BUFFER, m_rendererID);
 	}
 

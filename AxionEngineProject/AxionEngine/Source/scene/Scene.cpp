@@ -215,22 +215,54 @@ namespace Axion {
 
 
 			// ----- Render Meshes -----
-			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
+			std::unordered_map<AssetHandle<Mesh>, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>> renderBatches;
+
+			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent>();
 			for (auto entity : group) {
 				auto& transform = group.get<TransformComponent>(entity);
 				auto& mesh = group.get<MeshComponent>(entity);
 				auto& material = group.get<MaterialComponent>(entity);
-				auto& cb = group.get<ConstantBufferComponent>(entity);
 
-				if (mesh.handle.isValid() && material.handle.isValid() && cb.uploadBuffer != nullptr) {
-					Renderer3D::drawMesh(
-						transform.getTransform(),
-						AssetManager::get<Mesh>(mesh.handle),
-						AssetManager::get<Material>(material.handle),
-						cb.uploadBuffer
-					);
+				if (mesh.handle.isValid() && material.handle.isValid()) {
+					Ref<Material> matInstance = AssetManager::get<Material>(material.handle);
+
+					ObjectBuffer objData;
+					objData.color = matInstance->getAlbedoColor().toFloat4(); // Optional: Move color out of ObjectBuffer if it's strictly per-material
+					objData.modelMatrix = transform.getTransform().transposed().toXM();
+
+					renderBatches[mesh.handle][material.handle].push_back(objData);
 				}
 			}
+
+			// Flush the batches
+			for (auto& [meshHandle, materialMap] : renderBatches) {
+				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
+				if (!mesh) continue;
+
+				for (auto& [materialHandle, instanceData] : materialMap) {
+					Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+					if (!mat) continue;
+
+					Renderer3D::drawMeshInstanced(mesh, mat, instanceData);
+				}
+			}
+
+			//auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent, ConstantBufferComponent>();
+			//for (auto entity : group) {
+			//	auto& transform = group.get<TransformComponent>(entity);
+			//	auto& mesh = group.get<MeshComponent>(entity);
+			//	auto& material = group.get<MaterialComponent>(entity);
+			//	auto& cb = group.get<ConstantBufferComponent>(entity);
+			//
+			//	if (mesh.handle.isValid() && material.handle.isValid() && cb.uploadBuffer != nullptr) {
+			//		Renderer3D::drawMesh(
+			//			transform.getTransform(),
+			//			AssetManager::get<Mesh>(mesh.handle),
+			//			AssetManager::get<Material>(material.handle),
+			//			cb.uploadBuffer
+			//		);
+			//	}
+			//}
 
 			Renderer2D::beginScene(cam);
 			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent>);
