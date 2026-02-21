@@ -9,8 +9,8 @@
 
 namespace Axion {
 
-	Material::Material(const std::string& name, const AssetHandle<Shader>& shaderHandle, const MaterialProperties& properties)
-		: m_name(name), m_shaderHandle(shaderHandle), m_properties(properties) {
+	Material::Material(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties)
+		: m_name(name), m_pipelineHandle(pipelineHandle), m_properties(properties) {
 
 		m_materialBuffer = ConstantBuffer::create(sizeof(MaterialProperties));
 	}
@@ -24,10 +24,10 @@ namespace Axion {
 	}
 
 	void Material::bind() {
-		// -- Shader --
-		Ref<Shader> shader = AssetManager::get<Shader>(m_shaderHandle);
-		if (!shader) return;
-		shader->bind();
+		// -- Pipeline --
+		Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(m_pipelineHandle);
+		if (!pipeline) return;
+		pipeline->bind();
 
 		// -- ConstantBuffer --
 		if (m_dirty) {
@@ -56,6 +56,10 @@ namespace Axion {
 
 	void Material::unbind() {}
 
+	bool Material::isValid() const {
+		return AssetManager::get<Pipeline>(m_pipelineHandle) != nullptr;
+	}
+
 	void Material::setTexture(TextureSlot slot, const AssetHandle<Texture2D>& texture) {
 		m_textures[slot] = texture;
 
@@ -82,8 +86,8 @@ namespace Axion {
 		return AssetHandle<Texture2D>();
 	}
 
-	Ref<Material> Material::create(const std::string& name, const AssetHandle<Shader>& shaderHandle, const MaterialProperties& properties) {
-		return std::make_shared<Material>(name, shaderHandle, properties);
+	Ref<Material> Material::create(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties) {
+		return std::make_shared<Material>(name, pipelineHandle, properties);
 	}
 
 }

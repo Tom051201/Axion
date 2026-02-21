@@ -37,16 +37,16 @@ namespace Axion {
 		return Mesh::create(vertices, indices);
 	}
 
-	Skybox::Skybox(const std::string& crossPath, const std::string& shaderPath) {
+	Skybox::Skybox(const std::string& crossPath, const std::string& pipelinePath) {
 		m_mesh = createCubeMesh();
 		setTexture(crossPath);
-		setupShader(shaderPath);
+		setupPipeline(pipelinePath);
 	}
 
-	Skybox::Skybox(const std::array<std::string, 6>& facePaths, const std::string& shaderPath) {
+	Skybox::Skybox(const std::array<std::string, 6>& facePaths, const std::string& pipelinePath) {
 		m_mesh = createCubeMesh();
 		m_texture = TextureCube::create(facePaths);
-		setupShader(shaderPath);
+		setupPipeline(pipelinePath);
 	}
 
 	Skybox::~Skybox() {
@@ -59,12 +59,12 @@ namespace Axion {
 	}
 
 	void Skybox::onUpdate(Timestep ts) {
-		AssetManager::get<Shader>(m_shaderHandle)->bind();
+		AssetManager::get<Pipeline>(m_pipelineHandle)->bind();
 		Renderer::getSceneDataBuffer()->bind(0);
 		m_texture->bind();
 		m_mesh->render();
 		RenderCommand::drawIndexed(m_mesh->getVertexBuffer(), m_mesh->getIndexBuffer());
-		AssetManager::get<Shader>(m_shaderHandle)->unbind();
+		AssetManager::get<Pipeline>(m_pipelineHandle)->unbind();
 	}
 
 	void Skybox::setTexture(const std::string& crossPath) {
@@ -72,9 +72,9 @@ namespace Axion {
 		m_texturePath = crossPath;
 	}
 
-	void Skybox::setupShader(const std::string& filePath) {
-		AssetHandle<Shader> handle = AssetManager::load<Shader>(AssetManager::getAbsolute(filePath));
-		m_shaderHandle = handle;
+	void Skybox::setupPipeline(const std::string& filePath) {
+		AssetHandle<Pipeline> handle = AssetManager::load<Pipeline>(AssetManager::getAbsolute(filePath));
+		m_pipelineHandle = handle;
 	}
 
 }

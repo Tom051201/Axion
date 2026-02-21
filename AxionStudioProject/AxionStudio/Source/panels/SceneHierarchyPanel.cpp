@@ -406,12 +406,12 @@ namespace Axion {
 					ImGui::TableSetColumnIndex(1);
 					ImGui::Text(AssetManager::get<Material>(component.handle)->getName().c_str());
 					
-					// -- Shader --
+					// -- Pipeline --
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Shader");
+					ImGui::Text("Pipeline (Shader)");
 					ImGui::TableSetColumnIndex(1);
-					ImGui::Text(AssetManager::get<Shader>(AssetManager::get<Material>(component.handle)->getShaderHandle())->getName().c_str());
+					ImGui::Text(AssetManager::get<Pipeline>(AssetManager::get<Material>(component.handle)->getPipelineHandle())->getSpecification().shader->getName().c_str());
 					
 					// -- AlbedoColor --
 					ImGui::TableNextRow();

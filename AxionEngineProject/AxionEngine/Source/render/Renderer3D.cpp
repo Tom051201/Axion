@@ -52,6 +52,8 @@ namespace Axion {
 	}
 
 	void Renderer3D::drawMesh(const Mat4& transform, Ref<Mesh>& mesh, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
+		if (!material || !material->isValid()) return;
+
 		material->bind();
 
 		Renderer::getSceneDataBuffer()->bind(0);
@@ -74,6 +76,7 @@ namespace Axion {
 
 	void Renderer3D::drawMeshInstanced(Ref<Mesh>& mesh, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData) {
 		if (instanceData.empty()) return;
+		if (!material || !material->isValid()) return;
 
 		material->bind();
 		Renderer::getSceneDataBuffer()->bind(0);

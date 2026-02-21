@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Pipeline.h"
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/render/MaterialData.h"
 #include "AxionEngine/Source/render/Texture.h"
@@ -13,13 +14,15 @@ namespace Axion {
 	class Material {
 	public:
 
-		Material(const std::string& name, const AssetHandle<Shader>& shaderHandle, const MaterialProperties& properties);
+		Material(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties);
 		~Material();
 
 		void release();
 
 		void bind();
 		void unbind();
+
+		bool isValid() const;
 
 		void setAlbedoColor(const Vec4& color) { m_properties.albedoColor = color; m_dirty = true; }
 		Vec4 getAlbedoColor() const { return m_properties.albedoColor; }
@@ -34,14 +37,14 @@ namespace Axion {
 		AssetHandle<Texture2D> getTexture(TextureSlot slot) const;
 
 		const std::string& getName() const { return m_name; }
-		AssetHandle<Shader> getShaderHandle() const { return m_shaderHandle; }
+		AssetHandle<Pipeline> getPipelineHandle() const { return m_pipelineHandle; }
 
-		static Ref<Material> create(const std::string& name, const AssetHandle<Shader>& shaderHandle, const MaterialProperties& properties = {});
+		static Ref<Material> create(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties = {});
 
 	private:
 
 		std::string m_name = "Unknown Material";
-		AssetHandle<Shader> m_shaderHandle;
+		AssetHandle<Pipeline> m_pipelineHandle;
 
 		MaterialProperties m_properties;
 

@@ -28,8 +28,7 @@ namespace Axion {
 
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getPixelBlob() const { return m_pixelShaderBlob; }
-		const ID3D12RootSignature* getRootSignature() const { return m_rootSignature.Get(); }
-		const ID3D12PipelineState* getPipelineState() const { return m_pipelineState.Get(); }
+		ID3D12RootSignature* getRootSignature() const { return m_rootSignature.Get(); }
 
 	private:
 
@@ -37,7 +36,6 @@ namespace Axion {
 		std::string m_shaderFileLocation;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
-		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
 
 		Microsoft::WRL::ComPtr<ID3DBlob> m_vertexShaderBlob;
 		Microsoft::WRL::ComPtr<ID3DBlob> m_pixelShaderBlob;
@@ -45,7 +43,6 @@ namespace Axion {
 		void compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob);
 		
 		void createRootSignature();
-		void createPipelineState();
 	};
 
 }

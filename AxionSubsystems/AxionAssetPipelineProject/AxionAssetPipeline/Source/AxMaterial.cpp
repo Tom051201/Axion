@@ -48,7 +48,7 @@ namespace Axion::AAP {
 		}
 		out << YAML::EndMap;
 
-		out << YAML::Key << "Shader" << YAML::Value << data.shaderAsset;
+		out << YAML::Key << "Pipeline" << YAML::Value << data.pipelineAsset;
 
 		out << YAML::EndMap;
 

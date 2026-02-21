@@ -24,6 +24,7 @@ namespace Axion {
 		release<Material>();
 		release<AudioClip>();
 		release<Texture2D>();
+		release<Pipeline>();
 		AX_CORE_LOG_INFO("AssetManager shutdown");
 	}
 
@@ -34,6 +35,7 @@ namespace Axion {
 			processLoadQueue<Skybox>();
 			processLoadQueue<Mesh>();
 			processLoadQueue<Shader>();
+			processLoadQueue<Pipeline>();
 			processLoadQueue<Texture2D>();
 
 		}
@@ -137,7 +139,7 @@ namespace Axion {
 		}
 
 		std::string sourcePath = getAbsolute(data["Texture"].as<std::string>());
-		std::string shaderPath = getAbsolute(data["Shader"].as<std::string>());
+		std::string pipelinePath = getAbsolute(data["Pipeline"].as<std::string>());
 		UUID uuid = data["UUID"].as<UUID>();
 		AssetHandle<Skybox> handle(uuid);
 
@@ -148,8 +150,8 @@ namespace Axion {
 
 		storage<Skybox>().assets[handle] = nullptr;
 		storage<Skybox>().loadQueue.push_back({ handle,
-			[sourcePath, shaderPath]() {
-				return std::make_shared<Skybox>(sourcePath, shaderPath);
+			[sourcePath, pipelinePath]() {
+				return std::make_shared<Skybox>(sourcePath, pipelinePath);
 			}
 		});
 		storage<Skybox>().handleToPath[handle] = absolutePath;
@@ -207,39 +209,10 @@ namespace Axion {
 
 		// -- create shader specification --
 		YAML::Node specData = data["Specification"];
-		ShaderSpecification spec{};
+		ShaderSpecification spec = {};
 		spec.name = specData["Name"].as<std::string>();
-		spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
-		spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
-		spec.depthTest = specData["DepthTest"].as<bool>();
-		spec.depthWrite = specData["DepthWrite"].as<bool>();
-		spec.depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
-		spec.stencilEnabled = specData["StencilEnabled"].as<bool>();
-		spec.sampleCount = specData["SampleCount"].as<uint32_t>();
-		spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
-		spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
-		spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
-		YAML::Node layoutData = specData["BufferLayout"];
-		if (layoutData && layoutData.IsSequence()) {
-			std::vector<BufferElement> elements;
-			elements.reserve(layoutData.size());
-
-			for (const auto& elemNode : layoutData) {
-				std::string name = elemNode["Name"].as<std::string>();
-				ShaderDataType type = EnumUtils::shaderDataTypeFromString(elemNode["Type"].as<std::string>());
-				BufferElement elem(name, type);
-
-				if (elemNode["Size"]) { elem.size = elemNode["Size"].as<uint32_t>(); }
-				if (elemNode["Offset"]) { elem.offset = elemNode["Offset"].as<uint32_t>(); }
-				if (elemNode["Instanced"]) { elem.instanced = elemNode["Instanced"].as<bool>(); }
-
-				elements.push_back(elem);
-			}
-
-			BufferLayout layout(elements);
-			layout.calculateOffsetAndStride();
-			spec.vertexLayout = layout;
-
+		if (specData["BatchTextures"]) {
+			spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
 		}
 
 		Ref<Shader> shader = Shader::create(spec, sourcePath);
@@ -287,6 +260,74 @@ namespace Axion {
 		return handle;
 	}
 
+	template<>
+	AssetHandle<Pipeline> AssetManager::load<Pipeline>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Pipeline") {
+			AX_CORE_LOG_ERROR("Loading pipeline failed, file is not a pipeline asset file");
+			return {};
+		}
+
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<Pipeline> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<Pipeline>(handle)) {
+			return handle;
+		}
+
+		YAML::Node specData = data["Specification"];
+		std::string absShaderPath = getAbsolute(specData["Shader"].as<std::string>());
+		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(absShaderPath);
+
+		PipelineSpecification spec = {};
+		spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
+		spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
+		spec.depthTest = specData["DepthTest"].as<bool>();
+		spec.depthWrite = specData["DepthWrite"].as<bool>();
+		spec.depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
+		spec.stencilEnabled = specData["StencilEnabled"].as<bool>();
+		spec.sampleCount = specData["SampleCount"].as<uint32_t>();
+		spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
+		spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
+
+		YAML::Node layoutData = specData["BufferLayout"];
+		if (layoutData && layoutData.IsSequence()) {
+			std::vector<BufferElement> elements;
+			elements.reserve(layoutData.size());
+
+			for (const auto& elemNode : layoutData) {
+				std::string name = elemNode["Name"].as<std::string>();
+				ShaderDataType type = EnumUtils::shaderDataTypeFromString(elemNode["Type"].as<std::string>());
+				BufferElement elem(name, type);
+
+				if (elemNode["Size"]) { elem.size = elemNode["Size"].as<uint32_t>(); }
+				if (elemNode["Offset"]) { elem.offset = elemNode["Offset"].as<uint32_t>(); }
+				if (elemNode["Instanced"]) { elem.instanced = elemNode["Instanced"].as<bool>(); }
+
+				elements.push_back(elem);
+			}
+
+			BufferLayout layout(elements);
+			layout.calculateOffsetAndStride();
+			spec.vertexLayout = layout;
+		}
+
+		storage<Pipeline>().assets[handle] = nullptr;
+		storage<Pipeline>().loadQueue.push_back({ handle,
+			[shaderHandle, spec]() mutable {
+				spec.shader = AssetManager::get<Shader>(shaderHandle);
+				AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
+				return Pipeline::create(spec);
+			}
+			});
+		storage<Pipeline>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
 	// ----- Material Assets -----
 	template<>
 	AssetHandle<Material> AssetManager::load<Material>(const std::string& absolutePath) {
@@ -320,9 +361,9 @@ namespace Axion {
 		prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
 		prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
 
-		std::string absShaderPath = getAbsolute(data["Shader"].as<std::string>());
-		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(absShaderPath);
-		Ref<Material> material = Material::create(name, shaderHandle, prop);
+		std::string absPipelinePath = getAbsolute(data["Pipeline"].as<std::string>());
+		AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(absPipelinePath);
+		Ref<Material> material = Material::create(name, pipelineHandle, prop);
 
 		if (data["Textures"]) {
 			auto textures = data["Textures"];

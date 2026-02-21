@@ -1,14 +1,14 @@
-Name: BlueMetal
-UUID: 5c1b4d6a9b0bf876d660416da4fb5346
+Name: Gray_Metal
+UUID: ebdfc79674f6faaa9b4a5bc68f83018c
 Type: Material
-AlbedoColor: [0.247104228, 0.625005722, 1, 1]
-Metalness: 0.0
-Roughness: 0.0
+AlbedoColor: [0.405405402, 0.405405402, 0.405405402, 1]
+Metalness: 0.550000012
+Roughness: 0.300000012
 Emission: 0
 Tiling: 0
-UseNormalMap: 0
-UseMetalnessMap: 0
-UseRoughnessMap: 0
+UseNormalMap: 1
+UseMetalnessMap: 1
+UseRoughnessMap: 1
 UseOcclusionMap: 0
 Textures:
   Albedo: textures\colormap.axtex

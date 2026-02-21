@@ -225,18 +225,18 @@ namespace Axion {
 				}
 			}
 
-			// -- Shader path --
+			// -- Pipeline path --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Shader");
+			ImGui::Text("Pipeline");
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MatShaderPath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
+			ImGui::InputText("##MatPipelinePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##MatShaderFile_button")) {
-				std::filesystem::path matDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
-				std::string absPath = FileDialogs::openFile({ {"Axion Shader Asset", "*.axshader"} }, matDir.string());
+			if (ImGui::Button("Browse##MatPipelineFile_button")) {
+				std::filesystem::path matDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
+				std::string absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, matDir.string());
 				if (!absPath.empty()) {
 					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
 					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
@@ -288,7 +288,7 @@ namespace Axion {
 
 				AAP::MaterialAssetData data;
 				data.name = m_nameBuffer;
-				data.shaderAsset = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.pipelineAsset = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 
 				MaterialProperties prop;
 				prop.albedoColor = m_albedoColor;

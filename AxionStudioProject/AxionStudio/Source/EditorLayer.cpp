@@ -49,6 +49,7 @@ namespace Axion {
 		m_shaderImportModal		= m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
 		m_materialImportModal	= m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
 		m_tex2dImportModal		= m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
+		m_pipelineImportModal	= m_modalManager.addModal<PipelineImportModal>("PipelineImportModal");
 
 
 		// ----- Setup framebuffer for scene viewport -----
@@ -513,6 +514,7 @@ namespace Axion {
 					if (ImGui::MenuItem("Material")) { m_materialImportModal->open(); }
 					if (ImGui::MenuItem("Skybox")) { m_skyboxImportModal->open(); }
 					if (ImGui::MenuItem("Shader")) { m_shaderImportModal->open(); }
+					if (ImGui::MenuItem("Pipeline")) { m_pipelineImportModal->open(); }
 					if (ImGui::MenuItem("Audio")) { m_audioImportModal->open(); }
 
 					ImGui::EndMenu();

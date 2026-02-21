@@ -12,7 +12,7 @@ namespace Axion::AAP {
 	struct MaterialAssetData {
 		std::string name;
 		MaterialProperties properties;
-		std::string shaderAsset;
+		std::string pipelineAsset;
 		std::map<TextureSlot, std::string> textures;
 	};
 

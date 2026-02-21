@@ -1,0 +1,35 @@
+Name: Batch2dPipeline
+UUID: c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6
+Type: Pipeline
+Specification:
+  Shader: shaders\Batch2dShader.axshader
+  ColorFormat: RGBA8
+  DepthStencilFormat: DEPTH32F
+  DepthTest: true
+  DepthWrite: false
+  DepthFunction: Less
+  StencilEnabled: false
+  SampleCount: 1
+  CullMode: None
+  Topology: TriangleList
+  BufferLayout:
+    - Name: POSITION
+      Type: Float3
+      Size: 12
+      Offset: 0
+    - Name: COLOR
+      Type: Float4
+      Size: 16
+      Offset: 12
+    - Name: TEXCOORD
+      Type: Float2
+      Size: 8
+      Offset: 28
+    - Name: TEXINDEX
+      Type: Float
+      Size: 4
+      Offset: 36
+    - Name: TILING
+      Type: Float
+      Size: 4
+      Offset: 40

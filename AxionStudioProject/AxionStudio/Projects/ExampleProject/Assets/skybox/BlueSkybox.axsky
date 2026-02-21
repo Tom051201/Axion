@@ -2,4 +2,4 @@ Name: BlueSkybox
 UUID: 41ac1b0aaa2e1de83b610988793b9dc4
 Type: Skybox
 Texture: skybox\Skybox_1.png
-Shader: shaders\SkyboxShader.axshader
+Pipeline: pipelines\Skybox.axpso

@@ -2,7 +2,7 @@
 
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Texture.h"
-#include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Pipeline.h"
 #include "AxionEngine/Source/core/Timestep.h"
 
 namespace Axion {
@@ -10,8 +10,8 @@ namespace Axion {
 	class Skybox {
 	public:
 
-		Skybox(const std::string& crossPath, const std::string& shaderPath);
-		Skybox(const std::array<std::string, 6>& facePaths, const std::string& shaderPath);
+		Skybox(const std::string& crossPath, const std::string& pipelinePath);
+		Skybox(const std::array<std::string, 6>& facePaths, const std::string& pipelinePath);
 		~Skybox();
 
 		void release();
@@ -27,9 +27,9 @@ namespace Axion {
 		Ref<Mesh> m_mesh;
 		Ref<TextureCube> m_texture;
 		std::string m_texturePath;
-		AssetHandle<Shader> m_shaderHandle;
+		AssetHandle<Pipeline> m_pipelineHandle;
 
-		void setupShader(const std::string& filePath);
+		void setupPipeline(const std::string& filePath);
 
 	};
 

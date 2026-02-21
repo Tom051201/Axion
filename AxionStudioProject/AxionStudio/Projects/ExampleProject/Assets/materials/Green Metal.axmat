@@ -12,4 +12,4 @@ UseRoughnessMap: 0
 UseOcclusionMap: 0
 Textures:
   Albedo: textures\colormap.axtex
-Shader: shaders\StandardPBR.axshader
+Pipeline: pipelines\StandardPBR.axpso

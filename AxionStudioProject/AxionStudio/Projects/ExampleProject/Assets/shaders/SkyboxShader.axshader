@@ -5,18 +5,4 @@ Format: .hlsl
 Source: shaders\skyboxShader.hlsl
 Specification:
   Name: SkyboxShader
-  ColorFormat: RGBA8
-  DepthStencilFormat: DEPTH32F
-  DepthTest: true
-  DepthWrite: false
-  DepthFunction: LessEqual
-  StencilEnabled: false
-  SampleCount: 1
-  CullMode: Back
-  Topology: TriangleList
   BatchTextures: 1
-  BufferLayout:
-    - Name: POSITION
-      Type: Float3
-      Size: 12
-      Offset: 0

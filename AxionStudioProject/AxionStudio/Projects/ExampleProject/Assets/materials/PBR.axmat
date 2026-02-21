@@ -17,4 +17,4 @@ Textures:
   - Roughness: textures\roughnessmap.axtex
   - Occlusion: textures\occlusionmap.axtex
   - Emissive: 
-Shader: shaders\StandardPBR.axshader
+Pipeline: pipelines\StandardPBR.axpso

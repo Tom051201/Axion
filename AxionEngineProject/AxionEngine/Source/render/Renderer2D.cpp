@@ -130,8 +130,8 @@ namespace Axion {
 
 	void Renderer2D::onEvent(Event& e) {
 		if (e.getEventType() == EventType::ProjectChanged) {
-			AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(AssetManager::getAbsolute("shaders/Batch2dShader.axshader"));
-			s_data.quadMaterial = Material::create("Batch2DMat",/*{1.0f, 0.0f, 0.0f, 1.0f},*/ shaderHandle);
+			AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/Batch2dPipeline.axpso"));
+			s_data.quadMaterial = Material::create("Batch2DMat", pipelineHandle);
 		}
 	}
 
@@ -160,6 +160,8 @@ namespace Axion {
 
 	void Renderer2D::flush() {
 		if (s_data.quadIndexCount == 0) return;
+
+		if (!s_data.quadMaterial || !s_data.quadMaterial->isValid()) return;
 
 		uint32_t dataSize = (uint32_t)((uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase);
 		s_data.quadVertexBuffer->update(s_data.quadVertexBufferBase, dataSize);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/render/Formats.h"
-#include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/render/Pipeline.h"
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 
