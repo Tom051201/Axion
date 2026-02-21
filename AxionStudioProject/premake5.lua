@@ -57,3 +57,14 @@ project "AxionStudio"
 		defines "AX_DISTRIBUTION"
 		runtime "Release"
 		optimize "on"
+
+
+	filter "configurations:Debug"
+		postbuildcommands {
+			"{COPY} " .. PhysXDir .. "/lib/checked/*.dll %{cfg.buildtarget.directory}"
+		}
+
+	filter "configurations:Release or Distribution"
+		postbuildcommands {
+			"{COPY} " .. PhysXDir .. "/lib/release/*.dll %{cfg.buildtarget.directory}"
+		}

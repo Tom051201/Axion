@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
+#include "AxionEngine/Source/physics/PhysicsSystem.h"
 
 namespace Axion {
 
@@ -303,6 +304,22 @@ namespace Axion {
 				cc.camera.setViewportSize(width, height);
 			}
 		}
+	}
+
+	void Scene::onPhysicsStart() {
+		PhysicsSystem::onSceneStart(this);
+
+		auto group = m_registry.group<RigidBodyComponent>(entt::get<TransformComponent>);
+		for (auto entity : group) {
+			auto& [rb, transform] = group.get<RigidBodyComponent, TransformComponent>(entity);
+
+			// rb.runtimeActor = PhysicsSystem::createRigidBody(transform, rb);
+			// if (m_registry.all_of<BoxColliderComponent>(e)) { ... attach shape ... }
+		}
+	}
+
+	void Scene::onPhysicsStop() {
+
 	}
 
 }

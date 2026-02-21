@@ -28,6 +28,9 @@ namespace Axion {
 
 		void onEvent(Event& e);
 
+		void onPhysicsStart();
+		void onPhysicsStop();
+
 		Entity createEntity();
 		Entity createEntity(const std::string& tag);
 		Entity createEntityWithUUID(UUID id);

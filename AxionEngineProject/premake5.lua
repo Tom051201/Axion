@@ -30,6 +30,7 @@ project "AxionEngine"
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.GLAD}",
 		"%{IncludeDir.yaml_cpp}",
+		"%{IncludeDir.PhysX}",
 		"AxionEngine/Source",
 		"AxionEngine/Vendor/spdlog/include",
 		"AxionEngine/Vendor/d3d12",
@@ -42,7 +43,12 @@ project "AxionEngine"
 	links {
 		"ImGui",
 		"GLAD",
-		"yaml-cpp"
+		"yaml-cpp",
+		"PhysX_64",
+		"PhysXFoundation_64",
+		"PhysXCommon_64",
+		"PhysXExtensions_static_64",
+		"PhysXPvdSDK_static_64"
 	}
 
 	filter "files:AxionEngine/Vendor/ImGuizmo/**.cpp"
@@ -65,13 +71,16 @@ project "AxionEngine"
 		}
 		runtime "Debug"
 		symbols "on"
+		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/checked" }
 	
 	filter "configurations:Release"
 		defines "AX_RELEASE"
 		runtime "Release"
 		optimize "on"
+		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/release" }
 	
 	filter "configurations:Distribution"
 		defines "AX_DISTRIBUTION"
 		runtime "Release"
 		optimize "on"
+		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/release" }

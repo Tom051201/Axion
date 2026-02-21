@@ -158,4 +158,30 @@ namespace Axion {
 	};
 
 
+
+	struct RigidBodyComponent {
+		enum class BodyType { Static, Dynamic };
+		BodyType type = BodyType::Dynamic;
+
+		float mass = 1.0f;
+		bool isKinematic = false;
+
+		void* runtimeActor = nullptr;
+
+		RigidBodyComponent() = default;
+		RigidBodyComponent(const RigidBodyComponent&) = default;
+	};
+
+
+
+	struct BoxColliderComponent {
+		Vec3 halfExtens = { 0.5f, 0.5f, 0.5f };
+		Vec3 offset = { 0.0f, 0.0f, 0.0f };
+
+		void* runtimeShape = nullptr;
+
+		BoxColliderComponent() = default;
+		BoxColliderComponent(const BoxColliderComponent&) = default;
+	};
+
 }
