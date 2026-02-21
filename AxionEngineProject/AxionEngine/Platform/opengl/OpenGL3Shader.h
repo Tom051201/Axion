@@ -21,6 +21,9 @@ namespace Axion {
 		void compileFromFile(const std::string& filePath) override;
 		void recompile() override;
 
+		int getBindPoint(const std::string& name) const override;
+		uint32_t getTextureTableBindSlot() const override;
+
 	private:
 
 		uint32_t m_programID;

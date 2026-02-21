@@ -10,7 +10,7 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind() const = 0;
+		virtual void bind(uint32_t slot = 0) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual uint32_t getWidth() const = 0;
@@ -31,7 +31,7 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind() const = 0;
+		virtual void bind(uint32_t slot = 0) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual uint32_t getFaceWidth() const = 0;

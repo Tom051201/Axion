@@ -68,6 +68,10 @@ namespace Axion {
 			ImGui::Text("Mode: %s", EnumUtils::toString(clip->getMode()));
 		});
 
+		// -- Pipeline Assets --
+		ImGui::SeparatorText("");
+		drawAssetInfo<Pipeline>("Pipeline", [](Ref<Pipeline> pipeline) {});
+
 		ImGui::End();
 	}
 

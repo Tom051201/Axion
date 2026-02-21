@@ -13,7 +13,7 @@ namespace Axion {
 
 		void release() override;
 
-		void bind() const override;
+		void bind(uint32_t slot = 0) const override;
 		void unbind() const override;
 
 		uint32_t getWidth() const override { return m_width; }
@@ -42,7 +42,7 @@ namespace Axion {
 
 		void release() override;
 
-		void bind() const override;
+		void bind(uint32_t slot = 0) const override;
 		void unbind() const override;
 
 		uint32_t getFaceWidth() const override { AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!"); return 0; }

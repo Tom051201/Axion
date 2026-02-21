@@ -33,12 +33,7 @@ cbuffer CameraBuffer : register(b0) {
 	SpotLight u_spotLights[16];
 }
 
-//cbuffer ObjectBuffer : register(b1) {
-//	float4 u_color;
-//	float4x4 u_transform;
-//}
-
-cbuffer MaterialBuffer : register(b2) {
+cbuffer MaterialBuffer : register(b1) {
 	float4 u_albedoColor;
 
 	float u_metalness;

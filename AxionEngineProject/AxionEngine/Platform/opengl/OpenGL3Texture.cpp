@@ -47,7 +47,7 @@ namespace Axion {
 		}
 	}
 
-	void OpenGL3Texture2D::bind() const {
+	void OpenGL3Texture2D::bind(uint32_t slot) const {
 		glBindTexture(GL_TEXTURE_2D, m_rendererID);
 	}
 
@@ -80,7 +80,7 @@ namespace Axion {
 		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
 	}
 
-	void OpenGL3TextureCube::bind() const {
+	void OpenGL3TextureCube::bind(uint32_t slot) const {
 		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
 	}
 

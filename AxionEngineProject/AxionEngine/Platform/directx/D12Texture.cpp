@@ -234,7 +234,7 @@ namespace Axion {
 		m_uploadHeap.Reset();
 	}
 
-	void D12Texture2D::bind() const {
+	void D12Texture2D::bind(uint32_t slot) const {
 		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
 		auto* device = context->getDevice();
@@ -248,7 +248,7 @@ namespace Axion {
 		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		auto srvGpuHandle = gpuHeap.getGpuHandle(viewIndex);
-		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle);
+		cmdList->SetGraphicsRootDescriptorTable(slot, srvGpuHandle);
 	}
 
 	void D12Texture2D::unbind() const {
@@ -353,7 +353,7 @@ namespace Axion {
 		m_uploadHeap.Reset();
 	}
 
-	void D12TextureCube::bind() const {
+	void D12TextureCube::bind(uint32_t slot) const {
 		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
 		auto* device = context->getDevice();
@@ -368,7 +368,7 @@ namespace Axion {
 		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		auto srvGpuHandle = gpuHeap.getGpuHandle(viewIndex);
-		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle); // TODO Make 2 configurable
+		cmdList->SetGraphicsRootDescriptorTable(slot, srvGpuHandle);
 	}
 
 	void D12TextureCube::unbind() const {
@@ -538,7 +538,7 @@ namespace Axion {
 		m_textureResource.Reset();
 	}
 
-	void D12DepthTexture::bind() const {
+	void D12DepthTexture::bind(uint32_t slot) const {
 		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
 		auto* device = context->getDevice();
@@ -552,7 +552,7 @@ namespace Axion {
 		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		auto srvGpuHandle = gpuHeap.getGpuHandle(viewIndex);
-		cmdList->SetGraphicsRootDescriptorTable(2, srvGpuHandle);
+		cmdList->SetGraphicsRootDescriptorTable(slot, srvGpuHandle);
 	}
 
 	void D12DepthTexture::unbind() const {

@@ -27,7 +27,7 @@ namespace Axion {
 
 		Ref<VertexBuffer> quadVertexBuffer;
 		Ref<IndexBuffer> quadIndexBuffer;
-		Ref<Material> quadMaterial;
+		AssetHandle<Pipeline> quadPipelineHandle;
 
 		uint32_t quadIndexCount = 0;
 		QuadVertex* quadVertexBufferBase = nullptr;
@@ -119,7 +119,6 @@ namespace Axion {
 		s_data.quadVertexBuffer->release();
 		s_data.quadIndexBuffer->release();
 		s_data.cameraConstantBuffer->release();
-		if (s_data.quadMaterial) s_data.quadMaterial->release();
 
 		for (uint32_t i = 0; i < Renderer2DData::MaxTextureSlots; i++) {
 			s_data.textureSlots[i] = nullptr;
@@ -130,8 +129,7 @@ namespace Axion {
 
 	void Renderer2D::onEvent(Event& e) {
 		if (e.getEventType() == EventType::ProjectChanged) {
-			AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/Batch2dPipeline.axpso"));
-			s_data.quadMaterial = Material::create("Batch2DMat", pipelineHandle);
+			s_data.quadPipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/Batch2dPipeline.axpso"));
 		}
 	}
 
@@ -161,15 +159,15 @@ namespace Axion {
 	void Renderer2D::flush() {
 		if (s_data.quadIndexCount == 0) return;
 
-		if (!s_data.quadMaterial || !s_data.quadMaterial->isValid()) return;
+		Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(s_data.quadPipelineHandle);
+		if (!pipeline) return;
 
 		uint32_t dataSize = (uint32_t)((uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase);
 		s_data.quadVertexBuffer->update(s_data.quadVertexBufferBase, dataSize);
 
-		s_data.quadMaterial->bind();
+		pipeline->bind();
 		s_data.cameraConstantBuffer->bind(0);
-
-		Renderer::bindTextures(s_data.textureSlots, s_data.textureSlotIndex, 2);
+		Renderer::bindTextures(s_data.textureSlots, s_data.textureSlotIndex, 1);
 
 		s_data.quadVertexBuffer->bind();
 		s_data.quadIndexBuffer->bind();

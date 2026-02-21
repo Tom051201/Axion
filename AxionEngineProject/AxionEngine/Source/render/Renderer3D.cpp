@@ -54,24 +54,13 @@ namespace Axion {
 	void Renderer3D::drawMesh(const Mat4& transform, Ref<Mesh>& mesh, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
 		if (!material || !material->isValid()) return;
 
-		material->bind();
-
-		Renderer::getSceneDataBuffer()->bind(0);
-
+		std::vector<ObjectBuffer> singleInstance;
 		ObjectBuffer buffer;
 		buffer.color = material->getAlbedoColor().toFloat4();
 		buffer.modelMatrix = transform.transposed().toXM();
+		singleInstance.push_back(buffer);
 
-		uploadBuffer->update(&buffer, sizeof(ObjectBuffer));
-		uploadBuffer->bind(1);
-
-		mesh->render();
-		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
-
-		auto& stats = Renderer::getStats();
-		stats.drawCalls++;
-		stats.meshCount3D++;
-		stats.instanceCount3D++;
+		drawMeshInstanced(mesh, material, singleInstance);
 	}
 
 	void Renderer3D::drawMeshInstanced(Ref<Mesh>& mesh, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData) {
@@ -80,9 +69,6 @@ namespace Axion {
 
 		material->bind();
 		Renderer::getSceneDataBuffer()->bind(0);
-
-		// Dummy
-		Renderer::getSceneDataBuffer()->bind(1);
 
 		uint32_t dataSize = static_cast<uint32_t>(instanceData.size() * sizeof(ObjectBuffer));
 

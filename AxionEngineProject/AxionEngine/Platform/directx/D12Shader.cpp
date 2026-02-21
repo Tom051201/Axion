@@ -7,6 +7,8 @@
 #include "AxionEngine/Platform/directx/D12Context.h"
 #include "AxionEngine/Platform/directx/D12Helpers.h"
 
+#include <d3d12shader.h>
+
 namespace Axion {
 
 	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {}
@@ -103,22 +105,78 @@ namespace Axion {
 			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 		}
 
-		CD3DX12_DESCRIPTOR_RANGE1 ranges[1]; // t0
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, m_specification.batchTextures, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC
+		struct CbvInfo {
+			std::string name;
+			D3D12_SHADER_VISIBILITY visibility;
+		};
 
-		// TODO: rework this and automate it
-		CD3DX12_ROOT_PARAMETER1 rootParameters[4];
-		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);		// b0 - slot 0, vertex shader CBV
-		rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);	// b1 - slot 1, vertex shader CBV
-		rootParameters[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);								// t0 - texture descriptor table for pixel shader
-		rootParameters[3].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL);	// b2 - slot 2, pixel shader CBV
-		//rootParameters[4].InitAsConstantBufferView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL);	// b3 - slot 3, pixel shader CBV
+		std::map<UINT, CbvInfo> cbvRegisters;
+		UINT maxSrvRegister = 0;
+		bool hasSrvs = false;
 
+		// -- Reflect --
+		auto reflectStage = [&](Microsoft::WRL::ComPtr<ID3DBlob>& blob, D3D12_SHADER_VISIBILITY visibility) {
+			if (!blob) return;
+			Microsoft::WRL::ComPtr< ID3D12ShaderReflection> reflector;
+			HRESULT hr = D3DReflect(blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&reflector));
+			if (FAILED(hr)) return;
+
+			D3D12_SHADER_DESC desc;
+			reflector->GetDesc(&desc);
+
+			for (UINT i = 0; i < desc.BoundResources; i++) {
+				D3D12_SHADER_INPUT_BIND_DESC bindDesc;
+				reflector->GetResourceBindingDesc(i, &bindDesc);
+
+				if (bindDesc.Type == D3D_SIT_CBUFFER) {
+					if (cbvRegisters.find(bindDesc.BindPoint) != cbvRegisters.end()) {
+						cbvRegisters[bindDesc.BindPoint].visibility = D3D12_SHADER_VISIBILITY_ALL;
+					}
+					else {
+						cbvRegisters[bindDesc.BindPoint] = { bindDesc.Name, visibility };
+					}
+				}
+				else if (bindDesc.Type == D3D_SIT_TEXTURE) {
+					m_resourceMap[bindDesc.Name] = bindDesc.BindPoint;
+					maxSrvRegister = std::max(maxSrvRegister, bindDesc.BindPoint + bindDesc.BindCount - 1);
+					hasSrvs = true;
+				}
+			}
+		};
+
+		reflectStage(m_vertexShaderBlob, D3D12_SHADER_VISIBILITY_VERTEX);
+		reflectStage(m_pixelShaderBlob, D3D12_SHADER_VISIBILITY_PIXEL);
+
+		// -- Root params --
+		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
+
+		for (auto const& [reg, info] : cbvRegisters) {
+			CD3DX12_ROOT_PARAMETER1 param;
+			param.InitAsConstantBufferView(reg, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, info.visibility);
+
+			uint32_t rootParamIndex = static_cast<uint32_t>(rootParameters.size());
+			m_resourceMap[info.name] = rootParamIndex;
+			rootParameters.push_back(param);
+		}
+
+		UINT srvCount = std::max((UINT)m_specification.batchTextures, hasSrvs ? (maxSrvRegister + 1) : 0);
+		if (srvCount > 0) {
+			CD3DX12_DESCRIPTOR_RANGE1 srvRange;
+			srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, srvCount, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+
+			CD3DX12_ROOT_PARAMETER1 tableParam;
+			tableParam.InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+
+			m_textureTableSlot = static_cast<uint32_t>(rootParameters.size());
+			rootParameters.push_back(tableParam);
+		}
+
+		// -- Static sampler --
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
-		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;	// D3D12_FILTER_MIN_MAG_MIP_POINT
-		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP; // D3D12_TEXTURE_ADDRESS_MODE_BORDER
-		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP; // D3D12_TEXTURE_ADDRESS_MODE_BORDER
-		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP; // D3D12_TEXTURE_ADDRESS_MODE_BORDER
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		sampler.MipLODBias = 0;
 		sampler.MaxAnisotropy = 0;
 		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
@@ -129,18 +187,22 @@ namespace Axion {
 		sampler.RegisterSpace = 0;
 		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+		// -- Serialize --
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		rootSignatureDesc.Init_1_1(
+			static_cast<UINT>(rootParameters.size()),
+			rootParameters.data(),
+			1,
+			&sampler,
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+		);
 
 		Microsoft::WRL::ComPtr<ID3DBlob> signature;
 		Microsoft::WRL::ComPtr<ID3DBlob> error;
 
-		HRESULT hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error);	
-		if (error) {
-			AX_CORE_LOG_ERROR("Root signature error: {0}", (char*)error->GetBufferPointer());
-		}
+		HRESULT hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error);
+		if (error) { AX_CORE_LOG_ERROR("Root signature error: {0}", (char*)error->GetBufferPointer()); }
 		AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature");
-		
 
 		hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create root signature");
@@ -148,6 +210,15 @@ namespace Axion {
 		#ifdef AX_DEBUG
 		m_rootSignature->SetName(L"RootSignature");
 		#endif
+	}
+
+	int D12Shader::getBindPoint(const std::string& name) const {
+		auto it = m_resourceMap.find(name);
+		if (it != m_resourceMap.end()) {
+			return static_cast<int>(it->second);
+		}
+		AX_CORE_LOG_WARN("Shader resource '{}' not found in reflection data!", name);
+		return -1;
 	}
 
 }

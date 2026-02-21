@@ -26,6 +26,9 @@ namespace Axion {
 		void compileFromFile(const std::string& filePath) override;
 		void recompile() override;
 
+		int getBindPoint(const std::string& name) const override;
+		uint32_t getTextureTableBindSlot() const override { return m_textureTableSlot; }
+
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getPixelBlob() const { return m_pixelShaderBlob; }
 		ID3D12RootSignature* getRootSignature() const { return m_rootSignature.Get(); }
@@ -39,6 +42,9 @@ namespace Axion {
 
 		Microsoft::WRL::ComPtr<ID3DBlob> m_vertexShaderBlob;
 		Microsoft::WRL::ComPtr<ID3DBlob> m_pixelShaderBlob;
+
+		std::unordered_map<std::string, uint32_t> m_resourceMap;
+		uint32_t m_textureTableSlot = 0;
 
 		void compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob);
 		

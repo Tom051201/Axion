@@ -95,4 +95,14 @@ namespace Axion {
 
 	}
 
+	int OpenGL3Shader::getBindPoint(const std::string& name) const {
+		// TODO
+		return -1;
+	}
+
+	uint32_t OpenGL3Shader::getTextureTableBindSlot() const {
+		// TODO
+		return 0;
+	}
+
 }

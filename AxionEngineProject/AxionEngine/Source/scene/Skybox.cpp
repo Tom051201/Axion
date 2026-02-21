@@ -61,7 +61,7 @@ namespace Axion {
 	void Skybox::onUpdate(Timestep ts) {
 		AssetManager::get<Pipeline>(m_pipelineHandle)->bind();
 		Renderer::getSceneDataBuffer()->bind(0);
-		m_texture->bind();
+		m_texture->bind(1);
 		m_mesh->render();
 		RenderCommand::drawIndexed(m_mesh->getVertexBuffer(), m_mesh->getIndexBuffer());
 		AssetManager::get<Pipeline>(m_pipelineHandle)->unbind();
