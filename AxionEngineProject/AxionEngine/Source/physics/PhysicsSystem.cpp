@@ -23,6 +23,7 @@ namespace Axion {
 		// Maybe add PhysX Visual Debugger setup
 
 		s_physics = PxCreatePhysics(PX_PHYSICS_VERSION, *s_foundation, PxTolerancesScale(), true, nullptr);
+		PxInitExtensions(*s_physics, nullptr);
 		s_dispatcher = PxDefaultCpuDispatcherCreate(2); // num worker threads
 
 		AX_CORE_LOG_INFO("Physics system initialized");
@@ -30,6 +31,7 @@ namespace Axion {
 
 	void PhysicsSystem::shutdown() {
 		if (s_dispatcher) s_dispatcher->release();
+		PxCloseExtensions();
 		if (s_physics) s_physics->release();
 		if (s_foundation) s_foundation->release();
 		AX_CORE_LOG_INFO("Physics system shutdown");
@@ -37,7 +39,8 @@ namespace Axion {
 
 	void PhysicsSystem::onSceneStart(Scene* scene) {
 		PxSceneDesc sceneDesc(s_physics->getTolerancesScale());
-		sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f); // TODO: make gravity configurable
+		Vec3 gravity = scene->getGravity();
+		sceneDesc.gravity = PxVec3(gravity.x, gravity.y, gravity.z);
 		sceneDesc.cpuDispatcher = s_dispatcher;
 		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 		sceneDesc.flags |= PxSceneFlag::eENABLE_CCD;
@@ -63,8 +66,23 @@ namespace Axion {
 			if (rb.type == RigidBodyComponent::BodyType::Dynamic && rb.isKinematic && rb.runtimeActor) {
 				PxRigidDynamic* actor = static_cast<PxRigidDynamic*>(rb.runtimeActor);
 
-				Quat q = Quat::fromEulerAngles(transform.rotation);
-				PxTransform targetPose(PxVec3(transform.position.x, transform.position.y, transform.position.z), PxQuat(q.x, q.y, q.z, q.w));
+				float magSq = transform.rotation.x * transform.rotation.x +
+					transform.rotation.y * transform.rotation.y +
+					transform.rotation.z * transform.rotation.z +
+					transform.rotation.w * transform.rotation.w;
+
+				PxQuat pxQuat;
+				if (magSq < 0.0001f) {
+					pxQuat = PxQuat(physx::PxIdentity);
+				}
+				else {
+					pxQuat = PxQuat(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w).getNormalized();
+				}
+
+				PxTransform targetPose(
+					PxVec3(transform.position.x, transform.position.y, transform.position.z),
+					pxQuat.getNormalized()
+				);
 
 				actor->setKinematicTarget(targetPose);
 			}
@@ -83,7 +101,7 @@ namespace Axion {
 				transform.position = { physxTransform.p.x, physxTransform.p.y, physxTransform.p.z };
 
 				Quat q(physxTransform.q.x, physxTransform.q.y, physxTransform.q.z, physxTransform.q.w);
-				transform.rotation = q.toEulerAngles();
+				transform.rotation = q;
 			}
 		}
 

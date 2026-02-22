@@ -256,7 +256,7 @@ namespace Axion {
 				auto& scale = component.scale;
 
 				drawVec3Control("Position", position, 0.0f, 0.0f, 0.0f, 70.0f);
-				drawVec3Control("Rotation", rotation, 0.0f, 0.0f, 0.0f, 70.0f);
+				drawVec3Control("Rotation", rotation.toEulerAngles(), 0.0f, 0.0f, 0.0f, 70.0f);
 				drawVec3Control("Scale", scale, 1.0f, 1.0f, 1.0f, 70.0f);
 
 				ImGui::TreePop();

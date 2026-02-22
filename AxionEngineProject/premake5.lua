@@ -46,6 +46,7 @@ project "AxionEngine"
 		"yaml-cpp",
 		"PhysXFoundation_64",
 		"PhysX_64",
+		"PhysXCooking_64",
 		"PhysXCommon_64",
 		"PhysXExtensions_static_64",
 		"PhysXPvdSDK_static_64"

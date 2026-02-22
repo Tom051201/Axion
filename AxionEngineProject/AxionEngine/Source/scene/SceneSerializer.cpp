@@ -263,7 +263,16 @@ namespace Axion {
 				if (transformComponent) {
 					auto& tc = deserializedEntity.getComponent<TransformComponent>();
 					tc.position = transformComponent["Translation"].as<Vec3>();
-					tc.rotation = transformComponent["Rotation"].as<Vec3>();
+
+					auto rotationNode = transformComponent["Rotation"];
+					if (rotationNode.IsSequence() && rotationNode.size() == 3) {
+						Vec3 eulerRotation = rotationNode.as<Vec3>();
+						tc.setEulerAngles(eulerRotation);
+					}
+					else {
+						tc.rotation = rotationNode.as<Quat>();
+					}
+
 					tc.scale = transformComponent["Scale"].as<Vec3>();
 				}
 

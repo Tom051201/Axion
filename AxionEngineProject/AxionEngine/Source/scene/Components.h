@@ -36,15 +36,23 @@ namespace Axion {
 
 	struct TransformComponent {
 		Vec3 position = Vec3(0.0f, 0.0f, 0.0f);
-		Vec3 rotation = Vec3(0.0f, 0.0f, 0.0f); // euler in degrees
+		Quat rotation = Quat::identity();
 		Vec3 scale = Vec3(1.0f, 1.0f, 1.0f);
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
-		TransformComponent(const Vec3& pos, Vec3& rot, Vec3& sca) : position(pos), rotation(rot), scale(sca) {}
+		TransformComponent(const Vec3& pos, const Quat& rot, const Vec3& sca) : position(pos), rotation(rot), scale(sca) {}
 
 		Mat4 getTransform() const {
 			return Mat4::TRS(position, rotation, scale);
+		}
+
+		Vec3 getEulerAngles() const {
+			return rotation.toEulerAngles();
+		}
+
+		void setEulerAngles(const Vec3& eulerDegrees) {
+			rotation = Quat::fromEulerAngles(eulerDegrees);
 		}
 
 	};

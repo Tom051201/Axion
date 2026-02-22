@@ -57,6 +57,8 @@ namespace Axion {
 		bool hasSkybox() const { return m_skyboxHandle.isValid(); }
 		void removeSkybox();
 
+		const Vec3& getGravity() const { return m_gravity; }
+
 		void onViewportResized(uint32_t width, uint32_t height);
 
 	private:
@@ -71,6 +73,7 @@ namespace Axion {
 
 		float m_physicsAccumulator = 0.0f;
 		const float m_physicsTimeStep = 1.0f / 60.0f; // 60 FPS Physics
+		Vec3 m_gravity = Vec3(0.0f, -9.81f, 0.0f);
 
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();

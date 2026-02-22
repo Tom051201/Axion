@@ -467,13 +467,10 @@ namespace Axion {
 				TRSData trs = updated.decompose();
 
 				tc.position = trs.translation;
+				tc.rotation = trs.rotation;
 				tc.scale = trs.scale;
-				
-				tc.rotation.x = Math::toDegrees(trs.rotationEuler.x);
-				tc.rotation.y = Math::toDegrees(trs.rotationEuler.y);
-				tc.rotation.z = Math::toDegrees(trs.rotationEuler.z);
 
-				worldM = Mat4::TRS(tc.position, tc.rotation, tc.scale);
+				//worldM = Mat4::TRS(tc.position, tc.rotation, tc.scale);
 			}
 
 		}

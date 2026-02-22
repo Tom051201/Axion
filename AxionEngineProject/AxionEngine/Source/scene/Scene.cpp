@@ -324,10 +324,24 @@ namespace Axion {
 		for (auto entity : group) {
 			auto& [rb, transform] = group.get<RigidBodyComponent, TransformComponent>(entity);
 
-			Quat q = Quat::fromEulerAngles(transform.rotation);
+			float magSq = transform.rotation.x * transform.rotation.x +
+				transform.rotation.y * transform.rotation.y +
+				transform.rotation.z * transform.rotation.z +
+				transform.rotation.w * transform.rotation.w;
+
+			physx::PxQuat pxQuat;
+
+			if (magSq < 0.0001f) {
+				// Fallback to identity if quat is broken
+				pxQuat = physx::PxQuat(physx::PxIdentity);
+			}
+			else {
+				pxQuat = physx::PxQuat(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w).getNormalized();
+			}
+
 			physx::PxTransform physxTransform(
 				physx::PxVec3(transform.position.x, transform.position.y, transform.position.z),
-				physx::PxQuat(q.x, q.y, q.z, q.w)
+				pxQuat.getNormalized()
 			);
 
 			physx::PxRigidActor* actor = nullptr;
