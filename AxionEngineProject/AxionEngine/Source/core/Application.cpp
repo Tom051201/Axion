@@ -7,6 +7,7 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
+#include "AxionEngine/Source/physics/PhysicsSystem.h"
 
 namespace Axion {
 
@@ -25,6 +26,7 @@ namespace Axion {
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
 		AudioManager::initialize();
+		PhysicsSystem::initialize();
 
 		AssetManager::initialize();
 		SceneManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
@@ -45,6 +47,7 @@ namespace Axion {
 		AssetManager::shutdown();
 		ProjectManager::shutdown();
 		AudioManager::shutdown();
+		PhysicsSystem::shutdown();
 
 		Renderer::shutdown();
 	}

@@ -386,6 +386,43 @@ namespace Axion {
 
 	};
 
+	////////////////////////////////////////////////////////////////////////////////
+	///// Util functions ///////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	struct Math {
+
+		constexpr static float toRadians(float degrees) {
+			return degrees * (DirectX::XM_PI / 180.0f);
+		}
+
+		constexpr static float toDegrees(float radians) {
+			return radians * (180.0f / DirectX::XM_PI);
+		}
+
+		static float lerp(float a, float b, float t) {
+			return a + (b - a) * t;
+		}
+
+		static float clamp(float value, float minVal, float maxVal) {
+			return std::max(minVal, std::min(maxVal, value));
+		}
+
+		static float smoothstep(float edge0, float edge1, float x) {
+			x = clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+			return x * x * (3 - 2 * x);
+		}
+
+		static bool epsilonEquals(float a, float b, float epsilon = 1e-6f) {
+			return std::abs(a - b) < epsilon;
+		}
+
+		static bool epsilonEquals(const Vec3& a, const Vec3& b, float epsilon = 1e-6f) {
+			return epsilonEquals(a.x, b.x, epsilon) && epsilonEquals(a.y, b.y, epsilon) && epsilonEquals(a.z, b.z, epsilon);
+		}
+
+	};
+
 
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -444,43 +481,34 @@ namespace Axion {
 		float* data() { return &x; }
 		const float* data() const { return &x; }
 
-	};
+		static Quat fromEulerAngles(const Vec3& eulerDegrees) {
+			float pitch = Math::toRadians(eulerDegrees.x);
+			float yaw = Math::toRadians(eulerDegrees.y);
+			float roll = Math::toRadians(eulerDegrees.z);
 
-
-
-	////////////////////////////////////////////////////////////////////////////////
-	///// Util functions ///////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////
-
-	struct Math {
-
-		constexpr static float toRadians(float degrees) {
-			return degrees * (DirectX::XM_PI / 180.0f);
+			DirectX::XMVECTOR q = DirectX::XMQuaternionRotationRollPitchYaw(pitch, yaw, roll);
+			return fromXM(q);
 		}
 
-		constexpr static float toDegrees(float radians) {
-			return radians * (180.0f / DirectX::XM_PI);
-		}
+		Vec3 toEulerAngles() const {
+			float sinr_cosp = 2.0f * (w * z + x * y);
+			float cosr_cosp = 1.0f - 2.0f * (y * y + z * z);
+			float roll = std::atan2(sinr_cosp, cosr_cosp);
 
-		static float lerp(float a, float b, float t) {
-			return a + (b - a) * t;
-		}
+			float sinp = 2.0f * (w * x - y * z);
+			float pitch;
+			if (std::abs(sinp) >= 1.0f) {
+				pitch = std::copysign(DirectX::XM_PIDIV2, sinp);
+			}
+			else {
+				pitch = std::asin(sinp);
+			}
 
-		static float clamp(float value, float minVal, float maxVal) {
-			return std::max(minVal, std::min(maxVal, value));
-		}
+			float siny_cosp = 2.0f * (w * y + z * x);
+			float cosy_cosp = 1.0f - 2.0f * (x * x + y * y);
+			float yaw = std::atan2(siny_cosp, cosy_cosp);
 
-		static float smoothstep(float edge0, float edge1, float x) {
-			x = clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
-			return x * x * (3 - 2 * x);
-		}
-
-		static bool epsilonEquals(float a, float b, float epsilon = 1e-6f) {
-			return std::abs(a - b) < epsilon;
-		}
-
-		static bool epsilonEquals(const Vec3& a, const Vec3& b, float epsilon = 1e-6f) {
-			return epsilonEquals(a.x, b.x, epsilon) && epsilonEquals(a.y, b.y, epsilon) && epsilonEquals(a.z, b.z, epsilon);
+			return Vec3(Math::toDegrees(pitch), Math::toDegrees(yaw), Math::toDegrees(roll));
 		}
 
 	};

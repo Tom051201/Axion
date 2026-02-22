@@ -69,6 +69,9 @@ namespace Axion {
 
 		AssetHandle<Skybox> m_skyboxHandle;
 
+		float m_physicsAccumulator = 0.0f;
+		const float m_physicsTimeStep = 1.0f / 60.0f; // 60 FPS Physics
+
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();
 

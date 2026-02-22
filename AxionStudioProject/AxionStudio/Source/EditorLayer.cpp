@@ -600,8 +600,14 @@ namespace Axion {
 
 		void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
 		if (ImGui::ImageButton("play_icon", (ImTextureID)texID, { size, size }, { 0, 1 }, { 1, 0 })) {
-			if (m_sceneState == SceneState::Editing) { m_sceneState = SceneState::Playing; }
-			else { m_sceneState = SceneState::Editing; }
+			if (m_sceneState == SceneState::Editing) {
+				m_sceneState = SceneState::Playing;
+				m_activeScene->onPhysicsStart();
+			}
+			else {
+				m_sceneState = SceneState::Editing;
+				m_activeScene->onPhysicsStop();
+			}
 		}
 
 		ImGui::End();

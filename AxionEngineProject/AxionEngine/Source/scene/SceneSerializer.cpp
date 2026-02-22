@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
+#include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
 
@@ -151,6 +152,36 @@ namespace Axion {
 			out << YAML::Key << "Range" << YAML::Value << slc.range;
 			out << YAML::Key << "InnerConeAngle" << YAML::Value << slc.innerConeAngle;
 			out << YAML::Key << "OuterConeAngle" << YAML::Value << slc.outerConeAngle;
+			out << YAML::EndMap;
+		}
+
+		// -- RigidBodyComponent --
+		if (entity.hasComponent<RigidBodyComponent>()) {
+			out << YAML::Key << "RigidBodyComponent";
+			out << YAML::BeginMap;
+			auto& rbc = entity.getComponent<RigidBodyComponent>();
+			out << YAML::Key << "BodyType" << YAML::Value << EnumUtils::toString(rbc.type);
+			out << YAML::Key << "Mass" << YAML::Value << rbc.mass;
+			out << YAML::Key << "IsKinematic" << YAML::Value << rbc.isKinematic;
+			out << YAML::Key << "LinearDamping" << YAML::Value << rbc.linearDamping;
+			out << YAML::Key << "AngularDamping" << YAML::Value << rbc.angularDamping;
+			out << YAML::Key << "FixedRotationX" << YAML::Value << rbc.fixedRotationX;
+			out << YAML::Key << "FixedRotationY" << YAML::Value << rbc.fixedRotationY;
+			out << YAML::Key << "FixedRotationZ" << YAML::Value << rbc.fixedRotationZ;
+			out << YAML::Key << "EnableCCD" << YAML::Value << rbc.enableCCD;
+			out << YAML::EndMap;
+		}
+
+		// -- BoxColliderComponent --
+		if (entity.hasComponent<BoxColliderComponent>()) {
+			out << YAML::Key << "BoxColliderComponent";
+			out << YAML::BeginMap;
+			auto& bcc = entity.getComponent<BoxColliderComponent>();
+			out << YAML::Key << "HalfExtents" << YAML::Value << bcc.halfExtents;
+			out << YAML::Key << "Offset" << YAML::Value << bcc.offset;
+			out << YAML::Key << "StaticFriction" << YAML::Value << bcc.staticFriction;
+			out << YAML::Key << "DynamicFriction" << YAML::Value << bcc.dynamicFriction;
+			out << YAML::Key << "Restitution" << YAML::Value << bcc.restitution;
 			out << YAML::EndMap;
 		}
 
@@ -346,6 +377,32 @@ namespace Axion {
 					slc.range = spotLightComponent["Range"].as<float>();
 					slc.innerConeAngle = spotLightComponent["InnerConeAngle"].as<float>();
 					slc.outerConeAngle = spotLightComponent["OuterConeAngle"].as<float>();
+				}
+
+				// -- RigidBodyComponent --
+				auto rigidBodyComponent = entity["RigidBodyComponent"];
+				if (rigidBodyComponent) {
+					auto& rbc = deserializedEntity.addComponent<RigidBodyComponent>();
+					rbc.type = EnumUtils::rigidBodyTypeFromString(rigidBodyComponent["BodyType"].as<std::string>());
+					rbc.mass = rigidBodyComponent["Mass"].as<float>();
+					rbc.isKinematic = rigidBodyComponent["IsKinematic"].as<bool>();
+					rbc.linearDamping = rigidBodyComponent["LinearDamping"].as<float>();
+					rbc.angularDamping = rigidBodyComponent["AngularDamping"].as<float>();
+					rbc.fixedRotationX = rigidBodyComponent["FixedRotationX"].as<bool>();
+					rbc.fixedRotationY = rigidBodyComponent["FixedRotationY"].as<bool>();
+					rbc.fixedRotationZ = rigidBodyComponent["FixedRotationZ"].as<bool>();
+					rbc.enableCCD = rigidBodyComponent["EnableCCD"].as<bool>();
+				}
+
+				// -- BoxCollider --
+				auto boxColliderComponent = entity["BoxColliderComponent"];
+				if (boxColliderComponent) {
+					auto& bcc = deserializedEntity.addComponent<BoxColliderComponent>();
+					bcc.halfExtents = boxColliderComponent["HalfExtents"].as<Vec3>();
+					bcc.offset = boxColliderComponent["Offset"].as<Vec3>();
+					bcc.staticFriction = boxColliderComponent["StaticFriction"].as<float>();
+					bcc.dynamicFriction = boxColliderComponent["DynamicFriction"].as<float>();
+					bcc.restitution = boxColliderComponent["Restitution"].as<float>();
 				}
 
 			}

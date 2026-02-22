@@ -61,7 +61,7 @@ project "AxionStudio"
 
 	filter "configurations:Debug"
 		postbuildcommands {
-			"{COPY} " .. PhysXDir .. "/lib/checked/*.dll %{cfg.buildtarget.directory}"
+			"{COPY} " .. PhysXDir .. "/lib/debug/*.dll %{cfg.buildtarget.directory}"
 		}
 
 	filter "configurations:Release or Distribution"

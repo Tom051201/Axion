@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/render/Pipeline.h"
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
+#include "AxionEngine/Source/scene/Components.h"
 
 namespace Axion {
 
@@ -171,12 +172,28 @@ namespace Axion {
 			return "Unknown";
 		}
 
-		inline static AudioClip::Mode AudioClipModeFromString(const std::string& str) {
+		inline static AudioClip::Mode AudioClipModeFromString(const std::string& str) { // TODO fix Audio to lower case
 			if (str == "Memory") return AudioClip::Mode::Memory;
 			if (str == "Stream") return AudioClip::Mode::Stream;
 			throw std::invalid_argument("Invalid AudioClip::Mode string: " + str);
 		}
 
+
+
+		// --- Rigid Body Type --
+		inline static const char* toString(RigidBodyComponent::BodyType type) {
+			switch (type) {
+				case RigidBodyComponent::BodyType::Static: return "Static";
+				case RigidBodyComponent::BodyType::Dynamic: return "Dynamic";
+			}
+			return "Unknown";
+		}
+
+		inline static RigidBodyComponent::BodyType rigidBodyTypeFromString(const std::string& str) {
+			if (str == "Static") return RigidBodyComponent::BodyType::Static;
+			if (str == "Dynamic") return RigidBodyComponent::BodyType::Dynamic;
+			throw std::invalid_argument("Invalid RigidBodyComponent::BodyType string: " + str);
+		}
 	};
 
 }

@@ -44,8 +44,8 @@ project "AxionEngine"
 		"ImGui",
 		"GLAD",
 		"yaml-cpp",
-		"PhysX_64",
 		"PhysXFoundation_64",
+		"PhysX_64",
 		"PhysXCommon_64",
 		"PhysXExtensions_static_64",
 		"PhysXPvdSDK_static_64"
@@ -66,21 +66,29 @@ project "AxionEngine"
 	
 	filter "configurations:Debug"
 		defines {
+			"_DEBUG",
 			"AX_DEBUG",
 			"AX_ENABLE_ASSERTS"
 		}
 		runtime "Debug"
 		symbols "on"
-		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/checked" }
+		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/debug" }
+		linkoptions { "/IGNORE:4006" }
 	
 	filter "configurations:Release"
-		defines "AX_RELEASE"
+		defines {
+			"NDEBUG",
+			"AX_RELEASE"
+		}
 		runtime "Release"
 		optimize "on"
 		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/release" }
 	
 	filter "configurations:Distribution"
-		defines "AX_DISTRIBUTION"
+		defines {
+			"NDEBUG",
+			"AX_DISTRIBUTION"
+		}
 		runtime "Release"
 		optimize "on"
 		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/release" }

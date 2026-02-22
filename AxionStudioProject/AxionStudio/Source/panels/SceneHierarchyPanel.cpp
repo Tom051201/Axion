@@ -191,7 +191,9 @@ namespace Axion {
 			m_selectedEntity.hasComponent<NativeScriptComponent>() &&
 			m_selectedEntity.hasComponent<DirectionalLightComponent>() &&
 			m_selectedEntity.hasComponent<PointLightComponent>() &&
-			m_selectedEntity.hasComponent<SpotLightComponent>();
+			m_selectedEntity.hasComponent<SpotLightComponent>() &&
+			m_selectedEntity.hasComponent<RigidBodyComponent>() &&
+			m_selectedEntity.hasComponent<BoxColliderComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -212,6 +214,8 @@ namespace Axion {
 			drawAddComponent<DirectionalLightComponent>("Directional Light");
 			drawAddComponent<PointLightComponent>("Point Light");
 			drawAddComponent<SpotLightComponent>("Spot Light");
+			drawAddComponent<RigidBodyComponent>("Rigid Body");
+			drawAddComponent<BoxColliderComponent>("Box Collider");
 
 			ImGui::EndPopup();
 		}
@@ -795,6 +799,169 @@ namespace Axion {
 
 				ImGui::EndTable();
 			}
+		});
+
+		// ----- RigidBodyComponent -----
+		drawComponentInfo<RigidBodyComponent>("Rigid Body", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<RigidBodyComponent>();
+			if (ImGui::BeginTable("RigidBodyTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Static Dynamic --
+				ImGui::TableNextRow(); // TODO REWORK THIS ENTIRE THING
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Dynamic");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				RigidBodyComponent::BodyType type = component.type;
+				bool isDynamic = component.type == RigidBodyComponent::BodyType::Dynamic;
+				if (ImGui::Checkbox("##dynamic_check", &isDynamic)) {
+					if (component.type == RigidBodyComponent::BodyType::Dynamic) component.type = RigidBodyComponent::BodyType::Static;
+					else component.type = RigidBodyComponent::BodyType::Dynamic;
+				}
+
+				// -- Mass --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Mass");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##RBMassDrag", &component.mass, 0.5f, 0.0f, 200.0f);
+
+				// -- IsKinematic --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Kinematic");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				if (ImGui::Checkbox("##kinematic_check", &component.isKinematic)) {
+					//if (component.type == RigidBodyComponent::BodyType::Dynamic) component.type = RigidBodyComponent::BodyType::Static;
+					//else component.type = RigidBodyComponent::BodyType::Dynamic;
+				}
+
+				// -- LinearDamping --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Linear Damping");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##RBLDampingDrag", &component.linearDamping, 0.05f, 0.0f, 1.0f);
+
+				// -- AngularDamping --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Angular Damping");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##RBADampingDrag", &component.angularDamping, 0.05f, 0.0f, 1.0f);
+
+				// -- FixedRotationX --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Fixed Rotation X");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				if (ImGui::Checkbox("##fixedRotationX_check", &component.fixedRotationX)) {
+					//if (component.type == RigidBodyComponent::BodyType::Dynamic) component.type = RigidBodyComponent::BodyType::Static;
+					//else component.type = RigidBodyComponent::BodyType::Dynamic;
+				}
+
+				// -- FixedRotationY --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Fixed Rotation Y");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				if (ImGui::Checkbox("##fixedRotationY_check", &component.fixedRotationY)) {
+					//if (component.type == RigidBodyComponent::BodyType::Dynamic) component.type = RigidBodyComponent::BodyType::Static;
+					//else component.type = RigidBodyComponent::BodyType::Dynamic;
+				}
+
+				// -- FixedRotationZ --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Fixed Rotation Z");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				if (ImGui::Checkbox("##fixedRotationZ_check", &component.fixedRotationZ)) {
+					//if (component.type == RigidBodyComponent::BodyType::Dynamic) component.type = RigidBodyComponent::BodyType::Static;
+					//else component.type = RigidBodyComponent::BodyType::Dynamic;
+				}
+
+				// -- EnableCCD --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Enable CCD");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				if (ImGui::Checkbox("##enableCCD_check", &component.enableCCD)) {
+					//if (component.type == RigidBodyComponent::BodyType::Dynamic) component.type = RigidBodyComponent::BodyType::Static;
+					//else component.type = RigidBodyComponent::BodyType::Dynamic;
+				}
+
+				ImGui::EndTable();
+			}
+		});
+
+		// ----- BoxCollider -----
+		drawComponentInfo<BoxColliderComponent>("Box Collider", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<BoxColliderComponent>();
+			if (ImGui::BeginTable("BoxColliderTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- HalfExtents --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Half Extents");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				drawVec3Control("##halfExtentsVec", component.halfExtents, 0.0f, 0.0f, 0.0f);
+
+				// -- Offset --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Offset");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				drawVec3Control("##OffsetVec", component.offset, 0.0f, 0.0f, 0.0f);
+
+				// -- Static Friction --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Static Friction");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##StaticFrictionDrag", &component.staticFriction, 0.05f, 0.0f, 1.0f);
+
+				// -- Dynamic Friction --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Dynamic Friction");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##DynamicFrictionDrag", &component.dynamicFriction, 0.05f, 0.0f, 1.0f);
+
+				// -- Restitution --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Restitution");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##RestitutionDrag", &component.restitution, 0.05f, 0.0f, 1.0f);
+
+				ImGui::EndTable();
+			}
+
 		});
 
 	}

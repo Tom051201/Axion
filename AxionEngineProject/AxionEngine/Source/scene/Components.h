@@ -166,6 +166,15 @@ namespace Axion {
 		float mass = 1.0f;
 		bool isKinematic = false;
 
+		float linearDamping = 0.0f;
+		float angularDamping = 0.05f;
+
+		bool fixedRotationX = false;
+		bool fixedRotationY = false;
+		bool fixedRotationZ = false;
+
+		bool enableCCD = false;
+
 		void* runtimeActor = nullptr;
 
 		RigidBodyComponent() = default;
@@ -175,8 +184,12 @@ namespace Axion {
 
 
 	struct BoxColliderComponent {
-		Vec3 halfExtens = { 0.5f, 0.5f, 0.5f };
+		Vec3 halfExtents = { 0.5f, 0.5f, 0.5f };
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
+
+		float staticFriction = 0.5f;
+		float dynamicFriction = 0.5f;
+		float restitution = 0.05f;
 
 		void* runtimeShape = nullptr;
 
