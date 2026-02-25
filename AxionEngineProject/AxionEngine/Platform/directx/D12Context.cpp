@@ -195,6 +195,12 @@ namespace Axion {
 		m_commandList.getCommandList()->DrawIndexedInstanced(indexCount, instanceCount, 0, 0, 0);
 	}
 
+	void D12Context::draw(uint32_t vertexCount) {
+		m_commandList.getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+		m_commandList.getCommandList()->DrawInstanced(vertexCount, 1, 0, 0);
+		m_commandList.getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	}
+
 	std::string D12Context::getGpuName() const {
 		DXGI_ADAPTER_DESC1 desc;
 		m_device.getAdapter()->GetDesc1(&desc);

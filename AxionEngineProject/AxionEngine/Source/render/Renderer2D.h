@@ -34,6 +34,8 @@ namespace Axion {
 		static void drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 		static void drawQuad(const Vec3& position, const Vec2& size, float rotation, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 
+		static void drawLine(const Vec3& p0, const Vec3& p1, const Vec4& color);
+
 	private:
 
 		static void flush();

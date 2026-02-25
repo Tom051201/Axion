@@ -11,6 +11,11 @@
 
 namespace Axion {
 
+	struct LineVertex {
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT4 color;
+	};
+
 	struct QuadVertex {
 		DirectX::XMFLOAT3 position;
 		DirectX::XMFLOAT4 color;
@@ -32,6 +37,16 @@ namespace Axion {
 		uint32_t quadIndexCount = 0;
 		QuadVertex* quadVertexBufferBase = nullptr;
 		QuadVertex* quadVertexBufferPtr = nullptr;
+
+		static const uint32_t MaxLines = 10000;
+		static const uint32_t MaxLineVertices = MaxLines * 2;
+
+		Ref<VertexBuffer> lineVertexBuffer;
+		AssetHandle<Pipeline> linePipelineHandle;
+
+		uint32_t lineVertexCount = 0;
+		LineVertex* lineVertexBufferBase = nullptr;
+		LineVertex* lineVertexBufferPtr = nullptr;
 
 		std::array<Ref<Texture2D>, MaxTextureSlots> textureSlots;
 		uint32_t textureSlotIndex = 1; // 0 = white fallback
@@ -82,11 +97,19 @@ namespace Axion {
 			offset += 4;
 		}
 
-
 		// -- Create static IndexBuffer --
 		s_data.quadIndexBuffer = IndexBuffer::create(std::vector<uint32_t>(quadIndices, quadIndices + s_data.MaxIndices));
 		delete[] quadIndices;
 
+
+		s_data.lineVertexBuffer = VertexBuffer::createDynamic(s_data.MaxLineVertices * sizeof(LineVertex), sizeof(LineVertex));
+		s_data.lineVertexBuffer->setLayout({
+			{ "POSITION",	ShaderDataType::Float3},
+			{ "COLOR",		ShaderDataType::Float4 }
+		});
+
+		s_data.lineVertexBufferBase = new LineVertex[s_data.MaxLineVertices];
+		s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
 
 		// -- Create camera ConstantBuffer --
 		s_data.cameraConstantBuffer = ConstantBuffer::create(sizeof(Renderer2DData::CameraData));
@@ -118,6 +141,10 @@ namespace Axion {
 		delete[] s_data.quadVertexBufferBase;
 		s_data.quadVertexBuffer->release();
 		s_data.quadIndexBuffer->release();
+
+		delete[] s_data.lineVertexBufferBase;
+		s_data.lineVertexBuffer->release();
+
 		s_data.cameraConstantBuffer->release();
 
 		for (uint32_t i = 0; i < Renderer2DData::MaxTextureSlots; i++) {
@@ -130,6 +157,7 @@ namespace Axion {
 	void Renderer2D::onEvent(Event& e) {
 		if (e.getEventType() == EventType::ProjectChanged) {
 			s_data.quadPipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/Batch2dPipeline.axpso"));
+			s_data.linePipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/Line2dPipeline.axpso"));
 		}
 	}
 
@@ -149,6 +177,9 @@ namespace Axion {
 		s_data.quadIndexCount = 0;
 		s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
 		s_data.textureSlotIndex = 1;
+
+		s_data.lineVertexCount = 0;
+		s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
 	}
 
 	void Renderer2D::nextBatch() {
@@ -157,24 +188,42 @@ namespace Axion {
 	}
 
 	void Renderer2D::flush() {
-		if (s_data.quadIndexCount == 0) return;
+		// -- Flush quads --
+		if (s_data.quadIndexCount > 0) {
+			Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(s_data.quadPipelineHandle);
+			if (!pipeline) return;
 
-		Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(s_data.quadPipelineHandle);
-		if (!pipeline) return;
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase);
+			s_data.quadVertexBuffer->update(s_data.quadVertexBufferBase, dataSize);
 
-		uint32_t dataSize = (uint32_t)((uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase);
-		s_data.quadVertexBuffer->update(s_data.quadVertexBufferBase, dataSize);
+			pipeline->bind();
+			s_data.cameraConstantBuffer->bind(0);
+			Renderer::bindTextures(s_data.textureSlots, s_data.textureSlotIndex, 1);
 
-		pipeline->bind();
-		s_data.cameraConstantBuffer->bind(0);
-		Renderer::bindTextures(s_data.textureSlots, s_data.textureSlotIndex, 1);
+			s_data.quadVertexBuffer->bind();
+			s_data.quadIndexBuffer->bind();
 
-		s_data.quadVertexBuffer->bind();
-		s_data.quadIndexBuffer->bind();
+			RenderCommand::drawIndexed(s_data.quadIndexBuffer, s_data.quadIndexCount);
 
-		RenderCommand::drawIndexed(s_data.quadIndexBuffer, s_data.quadIndexCount);
+			Renderer::getStats().drawCalls++;
+		}
 
-		Renderer::getStats().drawCalls++;
+		// -- Flush lines --
+		if (s_data.lineVertexCount > 0) {
+			Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(s_data.linePipelineHandle);
+			if (!pipeline) return;
+
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.lineVertexBufferPtr - (uint8_t*)s_data.lineVertexBufferBase);
+			s_data.lineVertexBuffer->update(s_data.lineVertexBufferBase, dataSize);
+
+			pipeline->bind();
+			s_data.cameraConstantBuffer->bind(0);
+			s_data.lineVertexBuffer->bind();
+
+			RenderCommand::draw(s_data.lineVertexCount);
+
+			Renderer::getStats().drawCalls++;
+		}
 	}
 
 	void Renderer2D::drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint) {
@@ -304,6 +353,25 @@ namespace Axion {
 
 		s_data.quadIndexCount += 6;
 		Renderer::getStats().quadCount2D++;
+	}
+
+	void Renderer2D::drawLine(const Vec3& p0, const Vec3& p1, const Vec4& color) {
+		if (!s_initialized) return;
+
+		if (s_data.lineVertexCount >= Renderer2DData::MaxLineVertices) {
+			nextBatch();
+		}
+
+		s_data.lineVertexBufferPtr->position = { p0.x, p0.y, p0.z };
+		s_data.lineVertexBufferPtr->color = { color.x, color.y, color.z, color.w };
+		s_data.lineVertexBufferPtr++;
+
+		s_data.lineVertexBufferPtr->position = { p1.x, p1.y, p1.z };
+		s_data.lineVertexBufferPtr->color = { color.x, color.y, color.z, color.w };
+		s_data.lineVertexBufferPtr++;
+
+		s_data.lineVertexCount += 2;
+		Renderer::getStats().lineCount2D++;
 	}
 
 }

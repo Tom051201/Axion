@@ -51,10 +51,11 @@ namespace Axion {
 	struct RendererStats {
 		uint32_t drawCalls = 0;
 		uint32_t quadCount2D = 0;
+		uint32_t lineCount2D = 0;
 		uint32_t meshCount3D = 0; // unique meshes drawn
 		uint32_t instanceCount3D = 0; // total 3d objects drawn
 
-		uint32_t getTotalVertexCount2D() const { return quadCount2D * 4; }
+		uint32_t getTotalVertexCount2D() const { return quadCount2D * 4 + lineCount2D * 2; }
 		uint32_t getTotalIndexCount2D() const { return quadCount2D * 6; }
 	};
 

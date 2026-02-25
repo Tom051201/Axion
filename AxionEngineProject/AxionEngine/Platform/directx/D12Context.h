@@ -43,6 +43,8 @@ namespace Axion {
 		void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount = 1) override;
 		void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount = 1) override;
 
+		void draw(uint32_t vertexCount) override;
+
 		// ----- Util functions -----
 		std::string getGpuName() const override;
 		std::string getGpuDriverVersion() const override;

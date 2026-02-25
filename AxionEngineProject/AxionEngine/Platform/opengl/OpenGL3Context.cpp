@@ -128,6 +128,11 @@ namespace Axion {
 		AX_CORE_ASSERT(false, "Add this function");
 	}
 
+	void OpenGL3Context::draw(uint32_t vertexCount) {
+		// TODO: Add this function
+		AX_CORE_ASSERT(false, "Add this function");
+	}
+
 	void OpenGL3Context::activateVsync() {
 		if (wglSwapIntervalEXT) wglSwapIntervalEXT(1);
 	}

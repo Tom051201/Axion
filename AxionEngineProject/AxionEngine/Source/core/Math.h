@@ -500,6 +500,7 @@ namespace Axion {
 
 		Mat4 operator*(const Mat4& other) const { return Mat4(DirectX::XMMatrixMultiply(matrix, other.matrix)); }
 		Mat4& operator*=(const Mat4& other) { matrix = DirectX::XMMatrixMultiply(matrix, other.matrix); return *this; }
+		Vec3 operator*(const Vec3& vector) const { return Vec3::fromXM(DirectX::XMVector3Transform(vector.toXM(), matrix)); }
 
 	private:
 		mutable DirectX::XMFLOAT4X4 cachedF4x4 = {};

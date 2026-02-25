@@ -22,4 +22,8 @@ namespace Axion {
 		GraphicsContext::get()->drawIndexed(ib, indexCount, instanceCount);
 	}
 
+	void RenderCommand::draw(uint32_t vertexCount) {
+		GraphicsContext::get()->draw(vertexCount);
+	}
+
 }

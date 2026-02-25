@@ -33,6 +33,8 @@ namespace Axion {
 		virtual void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount = 1) = 0;
 		virtual void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount = 1) = 0;
 
+		virtual void draw(uint32_t vertexCount) = 0;
+
 		virtual std::string getGpuName() const = 0;
 		virtual std::string getGpuDriverVersion() const = 0;
 		virtual uint64_t getVramMB() const = 0;

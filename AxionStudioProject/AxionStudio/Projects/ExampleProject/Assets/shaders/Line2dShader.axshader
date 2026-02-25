@@ -1,0 +1,8 @@
+Name: Line2dShader
+UUID: eebe3c538d656270772e99f4a7675a9a
+Type: Shader
+Format: .hlsl
+Source: shaders\Line2dShader.hlsl
+Specification:
+  Name: Line2dShader
+  BatchTextures: 1

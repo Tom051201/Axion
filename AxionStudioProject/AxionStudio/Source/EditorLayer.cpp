@@ -148,6 +148,11 @@ namespace Axion {
 				default: { break; }
 			}
 
+			// -- Overlays --
+			Renderer2D::beginScene(m_editorCamera);
+			drawOverlay();
+			Renderer2D::endScene();
+
 			m_frameBuffer->unbind();
 		}
 
@@ -794,6 +799,63 @@ namespace Axion {
 		m_activeScene = m_editorScene;
 
 		m_sceneHierarchyPanel->setContext(m_activeScene);
+	}
+
+	void EditorLayer::drawOverlay() {
+		if (m_sceneState == SceneState::Pause) return;
+
+		Entity selectedEntity = m_sceneHierarchyPanel->getSelectedEntity();
+
+		if (selectedEntity) {
+
+			if (selectedEntity.hasComponent<BoxColliderComponent>()) {
+				auto& tc = selectedEntity.getComponent<TransformComponent>();
+				auto& bc = selectedEntity.getComponent<BoxColliderComponent>();
+
+				Vec3 scale = tc.scale;
+				scale.x = std::abs(scale.x);
+				scale.y = std::abs(scale.y);
+				scale.z = std::abs(scale.z);
+
+				Mat4 transform = Mat4::TRS(tc.position, tc.rotation, scale);
+				Mat4 colliderTransform = Mat4::scale(bc.halfExtents * 2.0f) * Mat4::translation(bc.offset) * transform;
+
+				drawWireframeBox(colliderTransform, { 0.0f, 1.0f, 0.0f, 1.0f });
+			}
+
+		}
+	}
+
+	void EditorLayer::drawWireframeBox(const Mat4& transform, const Vec4& color) {
+		Vec3 corners[8] = {
+			{ -0.5f, -0.5f, -0.5f }, {  0.5f, -0.5f, -0.5f },
+			{  0.5f,  0.5f, -0.5f }, { -0.5f,  0.5f, -0.5f },
+			{ -0.5f, -0.5f,  0.5f }, {  0.5f, -0.5f,  0.5f },
+			{  0.5f,  0.5f,  0.5f }, { -0.5f,  0.5f,  0.5f }
+		};
+
+		for (int i = 0; i < 8; i++) {
+			corners[i] = (transform * corners[i]);
+		}
+
+		// Bottom
+		Renderer2D::drawLine(corners[0], corners[1], color);
+		Renderer2D::drawLine(corners[1], corners[2], color);
+		Renderer2D::drawLine(corners[2], corners[3], color);
+		Renderer2D::drawLine(corners[3], corners[0], color);
+
+		// Top
+		Renderer2D::drawLine(corners[4], corners[5], color);
+		Renderer2D::drawLine(corners[5], corners[6], color);
+		Renderer2D::drawLine(corners[6], corners[7], color);
+		Renderer2D::drawLine(corners[7], corners[4], color);
+
+		// Sides
+		Renderer2D::drawLine(corners[0], corners[4], color);
+		Renderer2D::drawLine(corners[1], corners[5], color);
+		Renderer2D::drawLine(corners[2], corners[6], color);
+		Renderer2D::drawLine(corners[3], corners[7], color);
+
 	}
 
 }

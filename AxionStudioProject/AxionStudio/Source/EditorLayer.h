@@ -129,6 +129,9 @@ namespace Axion {
 		void onScenePlay();
 		void onSceneSimulate();
 		void onSceneStop();
+
+		void drawOverlay();
+		void drawWireframeBox(const Mat4& transform, const Vec4& color);
 	};
 
 }
