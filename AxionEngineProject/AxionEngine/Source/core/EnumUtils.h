@@ -180,7 +180,7 @@ namespace Axion {
 
 
 
-		// --- Rigid Body Type --
+		// --- Rigid Body Type ---
 		inline static const char* toString(RigidBodyComponent::BodyType type) {
 			switch (type) {
 				case RigidBodyComponent::BodyType::Static: return "Static";
@@ -194,6 +194,40 @@ namespace Axion {
 			if (str == "Dynamic") return RigidBodyComponent::BodyType::Dynamic;
 			throw std::invalid_argument("Invalid RigidBodyComponent::BodyType string: " + str);
 		}
+
+
+		// --- Camera Projection Type ---
+		inline static const char* toString(Camera::ProjectionType type) {
+			switch (type) {
+				case Camera::ProjectionType::Perspective: return "Perspective";
+				case Camera::ProjectionType::Orthographic: return "Orthographic";
+			}
+			return "Unknown";
+		}
+
+		inline static Camera::ProjectionType cameraProjectionTypeFromString(const std::string& str) {
+			if (str == "Perspective") return Camera::ProjectionType::Perspective;
+			if (str == "Orthographic") return Camera::ProjectionType::Orthographic;
+			throw std::invalid_argument("Invalid Camera::ProjectionType string: " + str);
+		}
+
+
+
+		// --- Gravity Source Type ---
+		inline static const char* toString(GravitySourceComponent::Type type) {
+			switch (type) {
+				case GravitySourceComponent::Type::Directional: return "Directional";
+				case GravitySourceComponent::Type::Point: return "Point";
+			}
+			return "Unknown";
+		}
+
+		inline static GravitySourceComponent::Type gravitySourceTypeFromString(const std::string& str) {
+			if (str == "Directional") return GravitySourceComponent::Type::Directional;
+			if (str == "Point") return GravitySourceComponent::Type::Point;
+			throw std::invalid_argument("Invalid GravitySourceComponent::Type string: " + str);
+		}
+
 	};
 
 }

@@ -182,6 +182,7 @@ namespace Axion {
 		bool fixedRotationZ = false;
 
 		bool enableCCD = false;
+		bool useGlobalGravity = true;
 
 		void* runtimeActor = nullptr;
 
@@ -203,6 +204,20 @@ namespace Axion {
 
 		BoxColliderComponent() = default;
 		BoxColliderComponent(const BoxColliderComponent&) = default;
+	};
+
+
+
+	struct GravitySourceComponent {
+		enum class Type { Directional, Point };
+		Type type = Type::Point;
+
+		float strength = 9.81f; // Acceleration magnitude
+		float radius = 100.0f;
+		bool affectKinematic = false;
+
+		GravitySourceComponent() = default;
+		GravitySourceComponent(const GravitySourceComponent&) = default;
 	};
 
 }

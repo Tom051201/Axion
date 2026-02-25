@@ -26,6 +26,8 @@ namespace Axion {
 		// for rendering through a custom camera
 		void onUpdate(Timestep ts, const Camera& cam);
 
+		void onUpdateSimulation(Timestep ts, const Camera& cam);
+
 		void onEvent(Event& e);
 
 		void onPhysicsStart();
@@ -58,6 +60,7 @@ namespace Axion {
 		void removeSkybox();
 
 		const Vec3& getGravity() const { return m_gravity; }
+		Vec3& getGravity() { return m_gravity; }
 
 		void onViewportResized(uint32_t width, uint32_t height);
 

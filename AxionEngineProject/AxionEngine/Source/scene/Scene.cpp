@@ -10,8 +10,6 @@
 #include "AxionEngine/Source/audio/AudioManager.h"
 #include "AxionEngine/Source/physics/PhysicsSystem.h"
 
-#include "AxionEngine/Vendor/physx/include/PxPhysicsAPI.h"
-
 namespace Axion {
 
 	Scene::Scene() {}
@@ -91,11 +89,22 @@ namespace Axion {
 		m_componentsPendingRemove.clear();
 	}
 
+	void Scene::onUpdateSimulation(Timestep ts, const Camera& cam) {
+		// Physics
+		m_physicsAccumulator += ts.getSeconds();
+		while (m_physicsAccumulator >= m_physicsTimeStep) {
+			PhysicsSystem::step(this, m_physicsTimeStep);
+			m_physicsAccumulator -= m_physicsTimeStep;
+		}
+
+		onUpdate(ts, cam);
+	}
+
 	void Scene::onUpdate(Timestep ts) {
 		// Physics
 		m_physicsAccumulator += ts.getSeconds();
 		while (m_physicsAccumulator >= m_physicsTimeStep) {
-			PhysicsSystem::simulate(this, m_physicsTimeStep);
+			PhysicsSystem::step(this, m_physicsTimeStep);
 			m_physicsAccumulator -= m_physicsTimeStep;
 		}
 
@@ -319,96 +328,10 @@ namespace Axion {
 
 	void Scene::onPhysicsStart() {
 		PhysicsSystem::onSceneStart(this);
-
-		auto group = m_registry.group<RigidBodyComponent>(entt::get<TransformComponent>);
-		for (auto entity : group) {
-			auto& [rb, transform] = group.get<RigidBodyComponent, TransformComponent>(entity);
-
-			float magSq = transform.rotation.x * transform.rotation.x +
-				transform.rotation.y * transform.rotation.y +
-				transform.rotation.z * transform.rotation.z +
-				transform.rotation.w * transform.rotation.w;
-
-			physx::PxQuat pxQuat;
-
-			if (magSq < 0.0001f) {
-				// Fallback to identity if quat is broken
-				pxQuat = physx::PxQuat(physx::PxIdentity);
-			}
-			else {
-				pxQuat = physx::PxQuat(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w).getNormalized();
-			}
-
-			physx::PxTransform physxTransform(
-				physx::PxVec3(transform.position.x, transform.position.y, transform.position.z),
-				pxQuat.getNormalized()
-			);
-
-			physx::PxRigidActor* actor = nullptr;
-
-			if (rb.type == RigidBodyComponent::BodyType::Static) {
-				actor = PhysicsSystem::getPhysics()->createRigidStatic(physxTransform);
-			}
-			else if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
-				physx::PxRigidDynamic* dynamicActor = PhysicsSystem::getPhysics()->createRigidDynamic(physxTransform);
-				dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, rb.isKinematic);
-				dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD, rb.enableCCD);
-
-				dynamicActor->setLinearDamping(rb.linearDamping);
-				dynamicActor->setAngularDamping(rb.angularDamping);
-
-				dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, rb.fixedRotationX);
-				dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, rb.fixedRotationY);
-				dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, rb.fixedRotationZ);
-
-				dynamicActor->setSolverIterationCounts(8, 2);
-				actor = dynamicActor;
-			}
-
-			if (m_registry.all_of<BoxColliderComponent>(entity)) {
-				auto& bc = m_registry.get<BoxColliderComponent>(entity);
-
-				physx::PxMaterial* defaultMaterial = PhysicsSystem::getPhysics()->createMaterial(bc.staticFriction, bc.dynamicFriction, bc.restitution);
-
-				physx::PxVec3 halfExtents(
-					bc.halfExtents.x * transform.scale.x,
-					bc.halfExtents.y * transform.scale.y,
-					bc.halfExtents.z * transform.scale.z
-				);
-				physx::PxBoxGeometry boxGeom(halfExtents);
-				physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor, boxGeom, *defaultMaterial);
-
-				shape->setLocalPose(physx::PxTransform(physx::PxVec3(
-					bc.offset.x * transform.scale.x,
-					bc.offset.y * transform.scale.y,
-					bc.offset.z * transform.scale.z
-				)));
-
-				bc.runtimeShape = shape;
-			}
-
-			if (actor) {
-				if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
-					physx::PxRigidBodyExt::updateMassAndInertia(*(physx::PxRigidDynamic*)actor, rb.mass);
-				}
-				PhysicsSystem::getScene()->addActor(*actor);
-				rb.runtimeActor = actor;
-			}
-
-		}
 	}
 
 	void Scene::onPhysicsStop() {
-		auto view = m_registry.view<RigidBodyComponent>();
-		for (auto entity : view) {
-			auto& rb = view.get<RigidBodyComponent>(entity);
-			if (rb.runtimeActor) {
-				static_cast<physx::PxRigidActor*>(rb.runtimeActor)->release();
-				rb.runtimeActor = nullptr;
-			}
-		}
-
-		PhysicsSystem::onSceneStop();
+		PhysicsSystem::onSceneStop(this);
 	}
 
 }

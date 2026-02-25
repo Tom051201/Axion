@@ -118,6 +118,17 @@ namespace Axion {
 			auto& cc = entity.getComponent<CameraComponent>();
 			out << YAML::Key << "Primary" << YAML::Value << cc.isPrimary;
 			out << YAML::Key << "FixedAspectRatio" << YAML::Value << cc.fixedAspectRatio;
+
+			auto& camera = cc.camera;
+			out << YAML::Key << "ProjectionType" << YAML::Value << EnumUtils::toString(camera.getProjectionType());
+			out << YAML::Key << "PerspectiveFOV" << YAML::Value << camera.getPerspectiveVerticalFOV();
+			out << YAML::Key << "PerspectiveNear" << YAML::Value << camera.getPerspectiveNearClip();
+			out << YAML::Key << "PerspectiveFar" << YAML::Value << camera.getPerspectiveFarClip();
+
+			out << YAML::Key << "OrthographicSize" << YAML::Value << camera.getOrthographicSize();
+			out << YAML::Key << "OrthographicNear" << YAML::Value << camera.getOrthographicNearClip();
+			out << YAML::Key << "OrthographicFar" << YAML::Value << camera.getOrthographicFarClip();
+
 			out << YAML::EndMap;
 		}
 
@@ -182,6 +193,18 @@ namespace Axion {
 			out << YAML::Key << "StaticFriction" << YAML::Value << bcc.staticFriction;
 			out << YAML::Key << "DynamicFriction" << YAML::Value << bcc.dynamicFriction;
 			out << YAML::Key << "Restitution" << YAML::Value << bcc.restitution;
+			out << YAML::EndMap;
+		}
+
+		// -- GravitySourceComponent --
+		if (entity.hasComponent<GravitySourceComponent>()) {
+			out << YAML::Key << "GravitySourceComponent";
+			out << YAML::BeginMap;
+			auto& gsc = entity.getComponent<GravitySourceComponent>();
+			out << YAML::Key << "Type" << YAML::Value << EnumUtils::toString(gsc.type);
+			out << YAML::Key << "Strength" << YAML::Value << gsc.strength;
+			out << YAML::Key << "Radius" << YAML::Value << gsc.radius;
+			out << YAML::Key << "AffectKinematic" << YAML::Value << gsc.affectKinematic;
 			out << YAML::EndMap;
 		}
 
@@ -358,6 +381,18 @@ namespace Axion {
 					auto& cc = deserializedEntity.addComponent<CameraComponent>();
 					cc.isPrimary = cameraComponent["Primary"].as<bool>();
 					cc.fixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
+
+					if (cameraComponent["ProjectionType"]) {
+						cc.camera.setProjectionType(EnumUtils::cameraProjectionTypeFromString(cameraComponent["ProjectionType"].as<std::string>()));
+
+						cc.camera.setPerspectiveVerticalFOV(cameraComponent["PerspectiveFOV"].as<float>());
+						cc.camera.setPerspectiveNearClip(cameraComponent["PerspectiveNear"].as<float>());
+						cc.camera.setPerspectiveFarClip(cameraComponent["PerspectiveFar"].as<float>());
+
+						cc.camera.setOrthographicSize(cameraComponent["OrthographicSize"].as<float>());
+						cc.camera.setOrthographicNearClip(cameraComponent["OrthographicNear"].as<float>());
+						cc.camera.setOrthographicFarClip(cameraComponent["OrthographicFar"].as<float>());
+					}
 				}
 
 				// -- DirectionalLightComponent --
@@ -403,7 +438,7 @@ namespace Axion {
 					rbc.enableCCD = rigidBodyComponent["EnableCCD"].as<bool>();
 				}
 
-				// -- BoxCollider --
+				// -- BoxColliderComponent --
 				auto boxColliderComponent = entity["BoxColliderComponent"];
 				if (boxColliderComponent) {
 					auto& bcc = deserializedEntity.addComponent<BoxColliderComponent>();
@@ -412,6 +447,16 @@ namespace Axion {
 					bcc.staticFriction = boxColliderComponent["StaticFriction"].as<float>();
 					bcc.dynamicFriction = boxColliderComponent["DynamicFriction"].as<float>();
 					bcc.restitution = boxColliderComponent["Restitution"].as<float>();
+				}
+
+				// -- GravitySourceComponent --
+				auto gravitySourceComponent = entity["GravitySourceComponent"];
+				if (gravitySourceComponent) {
+					auto& gsc = deserializedEntity.addComponent<GravitySourceComponent>();
+					gsc.type = EnumUtils::gravitySourceTypeFromString(gravitySourceComponent["Type"].as<std::string>());
+					gsc.strength = gravitySourceComponent["Strength"].as<float>();
+					gsc.radius = gravitySourceComponent["Radius"].as<float>();
+					gsc.affectKinematic = gravitySourceComponent["AffectKinematic"].as<bool>();
 				}
 
 			}

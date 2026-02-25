@@ -28,7 +28,7 @@ namespace Axion {
 		EditorResourceManager::initialize();
 
 		// ----- Set scene -----
-		m_sceneState = SceneState::Editing;
+		m_sceneState = SceneState::Edit;
 		m_activeScene = SceneManager::getScene();
 
 		// ----- Setup all panels -----
@@ -80,6 +80,9 @@ namespace Axion {
 		// ----- Load icons -----
 		EditorResourceManager::loadIcon("PlayButton", "AxionStudio/Resources/toolbar/PlayIcon.png");
 		EditorResourceManager::loadIcon("StopButton", "AxionStudio/Resources/toolbar/StopIcon.png");
+		EditorResourceManager::loadIcon("PauseButton", "AxionStudio/Resources/toolbar/PauseIcon.png");
+		EditorResourceManager::loadIcon("SimulateButton", "AxionStudio/Resources/toolbar/SimulateIcon.png");
+		EditorResourceManager::loadIcon("StepButton", "AxionStudio/Resources/toolbar/StepIcon.png");
 	}
 
 	void EditorLayer::onDetach() {
@@ -96,18 +99,50 @@ namespace Axion {
 
 		m_editorCamera.onUpdate(ts);
 
+		bool processLogic = true;
+		if (m_sceneState == SceneState::Pause) {
+			if (m_stepFrames > 0) {
+				m_stepFrames--;
+			}
+			else {
+				processLogic = false;
+			}
+		}
+
+		SceneState activeState = m_sceneState;
+		if (m_sceneState == SceneState::Pause) {
+			activeState = m_prePauseState;
+		}
+
 		if (m_viewportSize.x > 0 && m_viewportSize.y > 0) {
 
 			m_frameBuffer->bind();
 			m_frameBuffer->clear();
 
-			switch (m_sceneState) {
-				case Axion::SceneState::Editing: {
+			switch (activeState) {
+				case SceneState::Edit: {
 					m_activeScene->onUpdate(ts, m_editorCamera);
 					break;
 				}
-				case Axion::SceneState::Playing: {
-					m_activeScene->onUpdate(ts);
+				case SceneState::Play: {
+					if (processLogic) {
+						m_activeScene->onUpdate(ts);
+					}
+					else {
+						m_activeScene->onUpdate(Timestep(0.0f));
+					}
+					break;
+				}
+				case SceneState::Simulate: {
+					if (processLogic) {
+						m_activeScene->onUpdateSimulation(ts, m_editorCamera);
+					}
+					else {
+						m_activeScene->onUpdateSimulation(Timestep(0.0f), m_editorCamera);
+					}
+					break;
+				}
+				case SceneState::Pause: {
 					break;
 				}
 				default: { break; }
@@ -167,38 +202,40 @@ namespace Axion {
 		if (e.getKeyCode() == KeyCode::Enter) {
 			Entity e = m_activeScene->createEntity();
 
-			Ref<Mesh> mesh = Mesh::createPBRCube();
-			AssetHandle<Mesh> meshHandle = AssetManager::insert(mesh);
-			e.addComponent<MeshComponent>(meshHandle);
+			//Ref<Mesh> mesh = Mesh::createPBRCube();
+			//AssetHandle<Mesh> meshHandle = AssetManager::insert(mesh);
+			//e.addComponent<MeshComponent>(meshHandle);
 
-			AssetHandle<Material> matHandle = AssetManager::load<Material>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/materials/Green Metal.axmat").string());
-			Ref<Material> mat = AssetManager::get<Material>(matHandle);
+			//AssetHandle<Material> matHandle = AssetManager::load<Material>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/materials/Green Metal.axmat").string());
+			//Ref<Material> mat = AssetManager::get<Material>(matHandle);
 
-			e.addComponent<MaterialComponent>(matHandle);
-			e.addComponent<NativeScriptComponent>().bind<CameraController>();
-			e.addComponent<AudioComponent>();
-			AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
-			e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
-			e.getComponent<AudioComponent>().isSource = true;
+			//e.addComponent<MaterialComponent>(matHandle);
+			//e.addComponent<NativeScriptComponent>().bind<CameraController>();
+			//e.addComponent<AudioComponent>();
+			//AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
+			//e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
+			//e.getComponent<AudioComponent>().isSource = true;
 			e.addComponent<CameraComponent>();
 
-			e.addComponent<DirectionalLightComponent>();
+			//e.addComponent<DirectionalLightComponent>();
 		}
 
 		// -> Shortcuts only from here on
 		if (e.getRepeatCount() > 0) return false;
 		bool controlPressed = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
 		bool shiftPressed = Input::isKeyPressed(KeyCode::LeftShift) || Input::isKeyPressed(KeyCode::RightShift);
+		bool altPressed = Input::isKeyPressed(KeyCode::LeftAlt) || Input::isKeyPressed(KeyCode::RightAlt);
+
 		switch (e.getKeyCode()) {
 			case KeyCode::N: {
-				// -- Ctrl + N --
+				// -- Ctrl + N (New Scene) --
 				if (controlPressed) {
 					SceneManager::newScene();
 				}
 				break;
 			}
 			case KeyCode::O: {
-				// -- Ctrl + O --
+				// -- Ctrl + O (Open Scene) --
 				if (controlPressed) {
 					std::string path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
 					if (!path.empty()) SceneManager::loadScene(path);
@@ -206,19 +243,67 @@ namespace Axion {
 				break;
 			}
 			case KeyCode::S: {
-				// -- Ctrl + Shift + S --
+				// -- Ctrl + Shift + S (Save As) --
 				if (controlPressed && shiftPressed) {
 					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} });
 					if (!path.empty()) SceneManager::saveScene(path);
 				}
 
-				// -- Ctrl + S
+				// -- Ctrl + S (Save) --
 				else if (controlPressed && (!shiftPressed)) {
 					std::string path = SceneManager::getScenePath();
 					if (!path.empty()) SceneManager::saveScene(path);
 				}
+
+				// -- Alt + S (Simulate / Stop Simulate) --
+				else if (altPressed && !controlPressed && !shiftPressed) {
+					if (m_sceneState == SceneState::Edit) {
+						onSceneSimulate();
+					}
+					else {
+						onSceneStop();
+					}
+				}
 				break;
 			}
+			case KeyCode::P: {
+				// -- Ctrl + Shift + P (Pause / Resume) --
+				if (controlPressed && shiftPressed) {
+					if (m_sceneState == SceneState::Play || m_sceneState == SceneState::Simulate) {
+						m_prePauseState = m_sceneState;
+						m_sceneState = SceneState::Pause;
+					}
+					else if (m_sceneState == SceneState::Pause) {
+						m_sceneState = m_prePauseState;
+					}
+				}
+
+				// -- Ctrl + P (Play / Stop) --
+				else if (controlPressed && !shiftPressed && !altPressed) {
+					if (m_sceneState == SceneState::Edit) {
+						onScenePlay();
+					}
+					else if (m_sceneState == SceneState::Play || m_prePauseState == SceneState::Play) {
+						onSceneStop();
+					}
+				}
+				break;
+			}
+			case KeyCode::F10: {
+				// -- F10 (Step Frame) --
+				if (m_sceneState == SceneState::Pause) {
+					m_stepFrames = 1;
+				}
+				break;
+			}
+			case KeyCode::Escape: {
+				// -- Escape (Emergency Stop) --
+				if (m_sceneState != SceneState::Edit) {
+					onSceneStop();
+				}
+				break;
+			}
+
 			default: break;
 		}
 
@@ -438,9 +523,11 @@ namespace Axion {
 
 			// ----- Set Translate / Rotate / Scale -----
 			static ImGuizmo::OPERATION currentOp = ImGuizmo::TRANSLATE;
-			if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) currentOp = ImGuizmo::TRANSLATE;
-			if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) currentOp = ImGuizmo::ROTATE;
-			if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) currentOp = ImGuizmo::SCALE;
+			if (!ImGui::IsAnyItemActive() && !Input::isMouseButtonPressed(MouseButton::Right)) {
+				if (ImGui::IsKeyPressed(ImGuiKey_W)) currentOp = ImGuizmo::TRANSLATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_E)) currentOp = ImGuizmo::ROTATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_R)) currentOp = ImGuizmo::SCALE;
+			}
 
 			// ----- Snapping -----
 			bool snap = Input::isKeyPressed(KeyCode::LeftControl);
@@ -469,8 +556,6 @@ namespace Axion {
 				tc.position = trs.translation;
 				tc.rotation = trs.rotation;
 				tc.scale = trs.scale;
-
-				//worldM = Mat4::TRS(tc.position, tc.rotation, tc.scale);
 			}
 
 		}
@@ -592,25 +677,123 @@ namespace Axion {
 		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar);
 		float size = ImGui::GetContentRegionAvail().y - 4.0f;
 
-		Ref<Texture2D> icon = (m_sceneState == SceneState::Editing) ? EditorResourceManager::getIcon("PlayButton") : EditorResourceManager::getIcon("StopButton");
-		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+		int numButtons = 4;
+		float totalWidth = (size * numButtons) + (ImGui::GetStyle().ItemInnerSpacing.x * (numButtons - 1));
+		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (totalWidth * 0.5f));
 
-		void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
-		if (ImGui::ImageButton("play_icon", (ImTextureID)texID, { size, size }, { 0, 1 }, { 1, 0 })) {
-			if (m_sceneState == SceneState::Editing) {
-				m_sceneState = SceneState::Playing;
-				m_activeScene->onPhysicsStart();
+		bool isEdit = m_sceneState == SceneState::Edit;
+		bool isPlay = m_sceneState == SceneState::Play || (m_sceneState == SceneState::Pause && m_prePauseState == SceneState::Play);
+		bool isSim = m_sceneState == SceneState::Simulate || (m_sceneState == SceneState::Pause && m_prePauseState == SceneState::Simulate);
+		bool isPaused = m_sceneState == SceneState::Pause;
+
+
+		// ----- Simulate Button -----
+		ImGui::BeginDisabled(isPlay);
+		Ref<Texture2D> simIcon = isSim ? EditorResourceManager::getIcon("StopButton") : EditorResourceManager::getIcon("SimulateButton");
+		if (ImGui::ImageButton("sim_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(simIcon), { size, size }, { 0, 1 }, { 1, 0 })) {
+			if (isSim) {
+				onSceneStop();
 			}
 			else {
-				m_sceneState = SceneState::Editing;
-				m_activeScene->onPhysicsStop();
+				onSceneSimulate();
 			}
 		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+
+
+		// ----- Play Button -----
+		ImGui::BeginDisabled(isSim);
+		Ref<Texture2D> playIcon = isPlay ? EditorResourceManager::getIcon("StopButton") : EditorResourceManager::getIcon("PlayButton");
+		if (ImGui::ImageButton("play_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(playIcon), { size, size }, { 0, 1 }, { 1, 0 })) {
+			if (isPlay) {
+				onSceneStop();
+			}
+			else {
+				onScenePlay();
+			}
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+
+
+		// ----- Pause Button -----
+		ImGui::BeginDisabled(isEdit);
+		Ref<Texture2D> pauseIcon = isPaused ? EditorResourceManager::getIcon("PlayButton") : EditorResourceManager::getIcon("PauseButton");
+		if (ImGui::ImageButton("pause_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(pauseIcon), { size, size }, { 0, 1 }, { 1, 0 })) {
+			if (isPaused) {
+				m_sceneState = m_prePauseState;
+			}
+			else {
+				m_prePauseState = m_sceneState;
+				m_sceneState = SceneState::Pause;
+			}
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+
+
+		// ----- Step Button -----
+		ImGui::BeginDisabled(!isPaused);
+		if (ImGui::ImageButton("step_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("StepButton")), { size, size }, { 0, 1 }, { 1, 0 })) {
+			m_stepFrames = 1;
+		}
+		ImGui::EndDisabled();
+
 
 		ImGui::End();
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(3);
 
+	}
+
+	void EditorLayer::onScenePlay() {
+		m_sceneState = SceneState::Play;
+		m_editorScene = m_activeScene;
+
+		std::string tempPath = "AxionStudio/Config/TempScene.axscene";
+		SceneSerializer serializer(m_editorScene);
+		serializer.serializeText(tempPath);
+
+		m_activeScene = std::make_shared<Scene>();
+		SceneSerializer deserializer(m_activeScene);
+		deserializer.deserializeText(tempPath);
+
+		m_activeScene->onPhysicsStart();
+
+		m_sceneHierarchyPanel->setContext(m_activeScene);
+
+		m_activeScene->onViewportResized((uint32_t)m_viewportSize.x, (uint32_t)m_viewportSize.y);
+	}
+
+	void EditorLayer::onSceneSimulate() {
+		m_sceneState = SceneState::Simulate;
+		m_editorScene = m_activeScene;
+
+		std::string tempPath = "AxionStudio/Config/TempScene.axscene";
+		SceneSerializer serializer(m_editorScene);
+		serializer.serializeText(tempPath);
+
+		m_activeScene = std::make_shared<Scene>();
+		SceneSerializer deserializer(m_activeScene);
+		deserializer.deserializeText(tempPath);
+
+		m_activeScene->onPhysicsStart();
+
+		m_sceneHierarchyPanel->setContext(m_activeScene);
+
+		m_activeScene->onViewportResized((uint32_t)m_viewportSize.x, (uint32_t)m_viewportSize.y);
+	}
+
+	void EditorLayer::onSceneStop() {
+		m_sceneState = SceneState::Edit;
+		m_prePauseState = SceneState::Edit;
+
+		m_activeScene->onPhysicsStop();
+
+		m_activeScene = m_editorScene;
+
+		m_sceneHierarchyPanel->setContext(m_activeScene);
 	}
 
 }

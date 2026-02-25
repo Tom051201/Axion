@@ -117,6 +117,14 @@ namespace Axion {
 				ImGui::Text("No Skybox Loaded");
 			}
 
+			// -- GlobalGravity --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Global Gravity");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::DragFloat3("##GlobalGravDrag", m_activeScene->getGravity().data(), 0.0f);
+
 			ImGui::EndTable();
 		}
 

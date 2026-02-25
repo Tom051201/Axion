@@ -28,8 +28,10 @@
 namespace Axion {
 
 	enum class SceneState {
-		Editing,
-		Playing
+		Edit = 0,
+		Play,
+		Pause,
+		Simulate
 	};
 
 	class EditorLayer : public Layer {
@@ -83,8 +85,11 @@ namespace Axion {
 
 		// ----- Active scene -----
 		Ref<Scene> m_activeScene;
+		Ref<Scene> m_editorScene;
 		std::string m_activeSceneFilePath;
-		SceneState m_sceneState = SceneState::Editing;
+		SceneState m_sceneState = SceneState::Edit;
+		SceneState m_prePauseState = SceneState::Edit;
+		int m_stepFrames = 0;
 
 
 		// ----- Active project -----
@@ -121,6 +126,9 @@ namespace Axion {
 		void drawMenuBar();
 		void drawToolBar();
 
+		void onScenePlay();
+		void onSceneSimulate();
+		void onSceneStop();
 	};
 
 }

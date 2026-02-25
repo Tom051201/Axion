@@ -193,7 +193,8 @@ namespace Axion {
 			m_selectedEntity.hasComponent<PointLightComponent>() &&
 			m_selectedEntity.hasComponent<SpotLightComponent>() &&
 			m_selectedEntity.hasComponent<RigidBodyComponent>() &&
-			m_selectedEntity.hasComponent<BoxColliderComponent>();
+			m_selectedEntity.hasComponent<BoxColliderComponent>() &&
+			m_selectedEntity.hasComponent<GravitySourceComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -216,6 +217,7 @@ namespace Axion {
 			drawAddComponent<SpotLightComponent>("Spot Light");
 			drawAddComponent<RigidBodyComponent>("Rigid Body");
 			drawAddComponent<BoxColliderComponent>("Box Collider");
+			drawAddComponent<GravitySourceComponent>("Gravity Source");
 
 			ImGui::EndPopup();
 		}
@@ -903,6 +905,14 @@ namespace Axion {
 					//else component.type = RigidBodyComponent::BodyType::Dynamic;
 				}
 
+				// -- UseGlobalGravity --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Use Global Gravity");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Checkbox("##useGlobGrav_check", &component.useGlobalGravity);
+
 				ImGui::EndTable();
 			}
 		});
@@ -963,6 +973,56 @@ namespace Axion {
 			}
 
 		});
+
+		drawComponentInfo<GravitySourceComponent>("Gravity Source", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<GravitySourceComponent>();
+			if (ImGui::BeginTable("GravitySourceTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Directional Point --
+				ImGui::TableNextRow(); // TODO REWORK THIS ENTIRE THING
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Directional");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				GravitySourceComponent::Type type = component.type;
+				bool isDir = component.type == GravitySourceComponent::Type::Directional;
+				if (ImGui::Checkbox("##directionalGrav_check", &isDir)) {
+					if (component.type == GravitySourceComponent::Type::Directional) component.type = GravitySourceComponent::Type::Point;
+					else component.type = GravitySourceComponent::Type::Directional;
+				}
+
+				// -- Strength --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Strength");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##GravStrenDrag", &component.strength, 0.5f, 0.5f, 100.0f);
+
+				// -- Radius --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Radius");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##GravRadDrag", &component.radius, 10.0f, 0.0f, 1000.0f);
+
+				// -- AffectKinematic --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Affect Kinematic");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Checkbox("##affKinGrav_check", &component.affectKinematic);
+
+				ImGui::EndTable();
+			}
+
+			});
 
 	}
 

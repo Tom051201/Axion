@@ -60,7 +60,7 @@ namespace Axion {
 	protected:
 
 		ProjectionType m_projectionType = ProjectionType::Perspective;
-		float m_aspectRatio = 16 / 9;
+		float m_aspectRatio = 16.0f / 9.0f;
 		Mat4 m_viewMatrix = Mat4::identity();
 		Mat4 m_projectionMatrix = Mat4::identity();
 		Mat4 m_viewProjectionMatrix = Mat4::identity();

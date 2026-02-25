@@ -2,8 +2,6 @@
 
 #include "AxionEngine/Source/core/Timestep.h"
 
-#include "AxionEngine/Vendor/physx/include/PxPhysicsAPI.h"
-
 namespace Axion {
 
 	class Scene;
@@ -15,12 +13,9 @@ namespace Axion {
 		static void shutdown();
 
 		static void onSceneStart(Scene* scene);
-		static void onSceneStop();
+		static void onSceneStop(Scene* scene);
 
-		static void simulate(Scene* scene, Timestep ts);
-
-		static physx::PxPhysics* getPhysics();
-		static physx::PxScene* getScene();
+		static void step(Scene* scene, Timestep ts);
 
 	};
 
