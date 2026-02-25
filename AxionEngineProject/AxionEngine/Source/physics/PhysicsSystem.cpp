@@ -107,6 +107,29 @@ namespace Axion {
 				bc.runtimeShape = shape;
 			}
 
+			if (scene->getRegistry().all_of<SphereColliderComponent>(entity)) {
+				auto& sc = scene->getRegistry().get<SphereColliderComponent>(entity);
+
+				PxMaterial* material = s_physics->createMaterial(sc.staticFriction, sc.dynamicFriction, sc.restitution);
+
+				float maxScale = std::max(std::abs(transform.scale.x), std::max(std::abs(transform.scale.y), std::abs(transform.scale.z)));
+				float geometryRadius = sc.radius * maxScale;
+
+				PxVec3 offset = {
+					sc.offset.x * transform.scale.x,
+					sc.offset.y * transform.scale.y,
+					sc.offset.z * transform.scale.z
+				};
+
+				if (geometryRadius < 0.001f) geometryRadius = 0.001f;
+
+				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxSphereGeometry(geometryRadius), *material);
+				shape->setLocalPose(PxTransform(offset));
+
+				material->release();
+				sc.runtimeShape = shape;
+			}
+
 			if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
 				PxRigidBodyExt::updateMassAndInertia(*(PxRigidDynamic*)actor, rb.mass);
 			}

@@ -208,6 +208,21 @@ namespace Axion {
 
 
 
+	struct SphereColliderComponent {
+		float radius = 0.5f;
+		Vec3 offset = { 0.0f, 0.0f, 0.0f };
+
+		float staticFriction = 0.5f;
+		float dynamicFriction = 0.5f;
+		float restitution = 0.05f;
+
+		void* runtimeShape = nullptr;
+
+		SphereColliderComponent() = default;
+		SphereColliderComponent(const SphereColliderComponent&) = default;
+	};
+
+
 	struct GravitySourceComponent {
 		enum class Type { Directional, Point };
 		Type type = Type::Point;

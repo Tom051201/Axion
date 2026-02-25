@@ -194,6 +194,7 @@ namespace Axion {
 			m_selectedEntity.hasComponent<SpotLightComponent>() &&
 			m_selectedEntity.hasComponent<RigidBodyComponent>() &&
 			m_selectedEntity.hasComponent<BoxColliderComponent>() &&
+			m_selectedEntity.hasComponent<SphereColliderComponent>() &&
 			m_selectedEntity.hasComponent<GravitySourceComponent>();
 
 		ImGui::SameLine();
@@ -207,17 +208,35 @@ namespace Axion {
 
 			drawAddComponent<TransformComponent>("Transform");
 			drawAddComponent<MeshComponent>("Mesh");
-			drawAddComponent<SpriteComponent>("Sprite");
 			drawAddComponent<MaterialComponent>("Material");
+			drawAddComponent<SpriteComponent>("Sprite");
 			drawAddComponent<CameraComponent>("Camera");
 			drawAddComponent<AudioComponent>("Audio");
+			if (!m_selectedEntity.hasComponent<DirectionalLightComponent>() ||
+				!m_selectedEntity.hasComponent<PointLightComponent>() ||
+				!m_selectedEntity.hasComponent<SpotLightComponent>()) {
+				if (ImGui::BeginMenu("Lights##_menu")) {
+					drawAddComponent<DirectionalLightComponent>("Directional Light");
+					drawAddComponent<PointLightComponent>("Point Light");
+					drawAddComponent<SpotLightComponent>("Spot Light");
+					ImGui::EndMenu();
+				}
+			}
+			
+			if (!m_selectedEntity.hasComponent<RigidBodyComponent>() ||
+				!m_selectedEntity.hasComponent<BoxColliderComponent>() ||
+				!m_selectedEntity.hasComponent<SphereColliderComponent>() ||
+				!m_selectedEntity.hasComponent<GravitySourceComponent>()) {
+				if (ImGui::BeginMenu("Physics##_menu")) {
+					drawAddComponent<RigidBodyComponent>("Rigid Body");
+					drawAddComponent<BoxColliderComponent>("Box Collider");
+					drawAddComponent<SphereColliderComponent>("Sphere Collider");
+					drawAddComponent<GravitySourceComponent>("Gravity Source");
+					ImGui::EndMenu();
+				}
+			}
+
 			drawAddComponent<NativeScriptComponent>("Native Script");
-			drawAddComponent<DirectionalLightComponent>("Directional Light");
-			drawAddComponent<PointLightComponent>("Point Light");
-			drawAddComponent<SpotLightComponent>("Spot Light");
-			drawAddComponent<RigidBodyComponent>("Rigid Body");
-			drawAddComponent<BoxColliderComponent>("Box Collider");
-			drawAddComponent<GravitySourceComponent>("Gravity Source");
 
 			ImGui::EndPopup();
 		}
@@ -338,64 +357,6 @@ namespace Axion {
 			}
 		});
 
-		// ----- SpriteComponent -----
-		drawComponentInfo<SpriteComponent>("Sprite", m_selectedEntity, [this]() {
-			auto& component = m_selectedEntity.getComponent<SpriteComponent>();
-			if (component.texture.isValid()) {
-				if (ImGui::BeginTable("SpriteTable", 2, ImGuiTableFlags_BordersInnerV)) {
-					Ref<Texture2D> sprite = AssetManager::get<Texture2D>(component.texture);
-					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-
-					// -- UUID --
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("UUID");
-					ImGui::Separator();
-					ImGui::TableSetColumnIndex(1);
-					ImGui::Text(component.texture.uuid.toString().c_str());
-
-					// -- Options --
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Options");
-					ImGui::TableSetColumnIndex(1);
-					if (ImGui::Button("Remove")) {
-						component.texture.invalidate();
-					}
-
-					ImGui::EndTable();
-				}
-			}
-			else {
-				// -- Load Button --
-				if (ImGui::Button("Open Texture2D...")) {
-					std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-					std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
-					if (!absPath.empty()) {
-						AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-						component.texture = handle;
-					}
-				}
-
-				// -- Drag drop on button --
-				if (ImGui::BeginDragDropTarget()) {
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-						std::string relPath = static_cast<const char*>(payload->Data);
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						if (absPath.find(".axtex") != std::string::npos) {
-							AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-							component.texture = handle;
-						}
-					}
-					ImGui::EndDragDropTarget();
-				}
-			}
-
-			ImGui::ColorPicker4("##ColorPickerTint", component.tint.data());
-
-			});
-
 		// ----- MaterialComponent -----
 		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MaterialComponent>();
@@ -465,6 +426,64 @@ namespace Axion {
 				}
 
 			}
+			});
+
+		// ----- SpriteComponent -----
+		drawComponentInfo<SpriteComponent>("Sprite", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<SpriteComponent>();
+			if (component.texture.isValid()) {
+				if (ImGui::BeginTable("SpriteTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					Ref<Texture2D> sprite = AssetManager::get<Texture2D>(component.texture);
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- UUID --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("UUID");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(component.texture.uuid.toString().c_str());
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.texture.invalidate();
+					}
+
+					ImGui::EndTable();
+				}
+			}
+			else {
+				// -- Load Button --
+				if (ImGui::Button("Open Texture2D...")) {
+					std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+					std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
+					if (!absPath.empty()) {
+						AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+						component.texture = handle;
+					}
+				}
+
+				// -- Drag drop on button --
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::string relPath = static_cast<const char*>(payload->Data);
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.find(".axtex") != std::string::npos) {
+							AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+							component.texture = handle;
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+			}
+
+			ImGui::ColorPicker4("##ColorPickerTint", component.tint.data());
+
 			});
 
 		// ----- CameraComponent -----
@@ -673,11 +692,6 @@ namespace Axion {
 				}
 
 			}
-		});
-
-		// ----- NativeScriptComponent -----
-		drawComponentInfo<NativeScriptComponent>("Native Script", m_selectedEntity, [this]() {
-
 		});
 
 		// ----- DirectionalLightComponent -----
@@ -917,7 +931,7 @@ namespace Axion {
 			}
 		});
 
-		// ----- BoxCollider -----
+		// ----- BoxColliderComponent -----
 		drawComponentInfo<BoxColliderComponent>("Box Collider", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<BoxColliderComponent>();
 			if (ImGui::BeginTable("BoxColliderTable", 2, ImGuiTableFlags_BordersInnerV)) {
@@ -974,6 +988,64 @@ namespace Axion {
 
 		});
 
+		// ----- SphereColliderComponent -----
+		drawComponentInfo<SphereColliderComponent>("Sphere Collider", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<SphereColliderComponent>();
+			if (ImGui::BeginTable("SphereColliderTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Radius --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Radius");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("####radiusSphereFloat", &component.radius, 0.5f, 0.0f, 100.0f);
+
+				// -- Offset --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Offset");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				drawVec3Control("##OffsetVecSph", component.offset, 0.0f, 0.0f, 0.0f);
+
+				// -- Static Friction --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Static Friction");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##StaticFrictionDragSph", &component.staticFriction, 0.05f, 0.0f, 1.0f);
+
+				// -- Dynamic Friction --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Dynamic Friction");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##DynamicFrictionDragSph", &component.dynamicFriction, 0.05f, 0.0f, 1.0f);
+
+				// -- Restitution --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Restitution");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##RestitutionDragSph", &component.restitution, 0.05f, 0.0f, 1.0f);
+
+				ImGui::EndTable();
+			}
+
+			});
+
+		// ----- GravitySourceComponent -----
 		drawComponentInfo<GravitySourceComponent>("Gravity Source", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<GravitySourceComponent>();
 			if (ImGui::BeginTable("GravitySourceTable", 2, ImGuiTableFlags_BordersInnerV)) {
@@ -1023,6 +1095,11 @@ namespace Axion {
 			}
 
 			});
+
+		// ----- NativeScriptComponent -----
+		drawComponentInfo<NativeScriptComponent>("Native Script", m_selectedEntity, [this]() {
+
+		});
 
 	}
 

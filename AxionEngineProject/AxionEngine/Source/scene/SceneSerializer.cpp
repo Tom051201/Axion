@@ -196,6 +196,19 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
+		// -- SphereColliderComponent --
+		if (entity.hasComponent<SphereColliderComponent>()) {
+			out << YAML::Key << "SphereColliderComponent";
+			out << YAML::BeginMap;
+			auto& scc = entity.getComponent<SphereColliderComponent>();
+			out << YAML::Key << "Radius" << YAML::Value << scc.radius;
+			out << YAML::Key << "Offset" << YAML::Value << scc.offset;
+			out << YAML::Key << "StaticFriction" << YAML::Value << scc.staticFriction;
+			out << YAML::Key << "DynamicFriction" << YAML::Value << scc.dynamicFriction;
+			out << YAML::Key << "Restitution" << YAML::Value << scc.restitution;
+			out << YAML::EndMap;
+		}
+
 		// -- GravitySourceComponent --
 		if (entity.hasComponent<GravitySourceComponent>()) {
 			out << YAML::Key << "GravitySourceComponent";
@@ -447,6 +460,17 @@ namespace Axion {
 					bcc.staticFriction = boxColliderComponent["StaticFriction"].as<float>();
 					bcc.dynamicFriction = boxColliderComponent["DynamicFriction"].as<float>();
 					bcc.restitution = boxColliderComponent["Restitution"].as<float>();
+				}
+
+				// -- SphereColliderComponent --
+				auto sphereColliderComponent = entity["SphereColliderComponent"];
+				if (sphereColliderComponent) {
+					auto& scc = deserializedEntity.addComponent<SphereColliderComponent>();
+					scc.radius = sphereColliderComponent["Radius"].as<float>();
+					scc.offset = sphereColliderComponent["Offset"].as<Vec3>();
+					scc.staticFriction = sphereColliderComponent["StaticFriction"].as<float>();
+					scc.dynamicFriction = sphereColliderComponent["DynamicFriction"].as<float>();
+					scc.restitution = sphereColliderComponent["Restitution"].as<float>();
 				}
 
 				// -- GravitySourceComponent --

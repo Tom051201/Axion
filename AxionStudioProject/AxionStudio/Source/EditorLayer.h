@@ -132,6 +132,7 @@ namespace Axion {
 
 		void drawOverlay();
 		void drawWireframeBox(const Mat4& transform, const Vec4& color);
+		void drawWireframeSphere(const Mat4& transform, float radius, const Vec4& color);
 	};
 
 }

@@ -823,6 +823,19 @@ namespace Axion {
 				drawWireframeBox(colliderTransform, { 0.0f, 1.0f, 0.0f, 1.0f });
 			}
 
+			if (selectedEntity.hasComponent<SphereColliderComponent>()) {
+				auto& tc = selectedEntity.getComponent<TransformComponent>();
+				auto& sc = selectedEntity.getComponent<SphereColliderComponent>();
+
+				float maxScale = std::max(std::abs(tc.scale.x), std::max(std::abs(tc.scale.y), std::abs(tc.scale.z)));
+				float radius = sc.radius * maxScale;
+
+				Mat4 transform = Mat4::TRS(tc.position, tc.rotation, Vec3::one());
+				Mat4 colliderTransform = transform * Mat4::translation(sc.offset);
+
+				drawWireframeSphere(colliderTransform, radius, { 0.0f, 1.0f, 0.0f, 1.0f });
+			}
+
 		}
 	}
 
@@ -855,6 +868,37 @@ namespace Axion {
 		Renderer2D::drawLine(corners[1], corners[5], color);
 		Renderer2D::drawLine(corners[2], corners[6], color);
 		Renderer2D::drawLine(corners[3], corners[7], color);
+
+	}
+
+	void EditorLayer::drawWireframeSphere(const Mat4& transform, float radius, const Vec4& color) {
+		int segments = 24;
+		float step = 360.0f / segments;
+
+		for (int i = 0; i < segments; i++) {
+			float angle1 = Math::toRadians(i * step);
+			float angle2 = Math::toRadians((i + 1) * step);
+
+			float sin1 = std::sin(angle1) * radius;
+			float cos1 = std::cos(angle1) * radius;
+			float sin2 = std::sin(angle2) * radius;
+			float cos2 = std::cos(angle2) * radius;
+
+			// XY Circle
+			Vec3 p1_xy = transform * Vec3(cos1, sin1, 0.0f);
+			Vec3 p2_xy = transform * Vec3(cos2, sin2, 0.0f);
+			Renderer2D::drawLine(p1_xy, p2_xy, color);
+
+			// XZ Circle
+			Vec3 p1_xz = transform * Vec3(cos1, 0.0f, sin1);
+			Vec3 p2_xz = transform * Vec3(cos2, 0.0f, sin2);
+			Renderer2D::drawLine(p1_xz, p2_xz, color);
+
+			// YZ Circle
+			Vec3 p1_yz = transform * Vec3(0.0f, cos1, sin1);
+			Vec3 p2_yz = transform * Vec3(0.0f, cos2, sin2);
+			Renderer2D::drawLine(p1_yz, p2_yz, color);
+		}
 
 	}
 
