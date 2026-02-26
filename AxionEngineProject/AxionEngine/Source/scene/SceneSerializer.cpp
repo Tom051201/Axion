@@ -209,6 +209,20 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
+		// -- CapsuleColliderComponent --
+		if (entity.hasComponent<CapsuleColliderComponent>()) {
+			out << YAML::Key << "CapsuleColliderComponent";
+			out << YAML::BeginMap;
+			auto& ccc = entity.getComponent<CapsuleColliderComponent>();
+			out << YAML::Key << "Radius" << YAML::Value << ccc.radius;
+			out << YAML::Key << "HalfHeight" << YAML::Value << ccc.halfHeight;
+			out << YAML::Key << "Offset" << YAML::Value << ccc.offset;
+			out << YAML::Key << "StaticFriction" << YAML::Value << ccc.staticFriction;
+			out << YAML::Key << "DynamicFriction" << YAML::Value << ccc.dynamicFriction;
+			out << YAML::Key << "Restitution" << YAML::Value << ccc.restitution;
+			out << YAML::EndMap;
+		}
+
 		// -- GravitySourceComponent --
 		if (entity.hasComponent<GravitySourceComponent>()) {
 			out << YAML::Key << "GravitySourceComponent";
@@ -471,6 +485,18 @@ namespace Axion {
 					scc.staticFriction = sphereColliderComponent["StaticFriction"].as<float>();
 					scc.dynamicFriction = sphereColliderComponent["DynamicFriction"].as<float>();
 					scc.restitution = sphereColliderComponent["Restitution"].as<float>();
+				}
+
+				// -- CapsuleColliderComponent --
+				auto capsuleColliderComponent = entity["CapsuleColliderComponent"];
+				if (capsuleColliderComponent) {
+					auto& ccc = deserializedEntity.addComponent<CapsuleColliderComponent>();
+					ccc.radius = capsuleColliderComponent["Radius"].as<float>();
+					ccc.halfHeight = capsuleColliderComponent["HalfHeight"].as<float>();
+					ccc.offset = capsuleColliderComponent["Offset"].as<Vec3>();
+					ccc.staticFriction = capsuleColliderComponent["StaticFriction"].as<float>();
+					ccc.dynamicFriction = capsuleColliderComponent["DynamicFriction"].as<float>();
+					ccc.restitution = capsuleColliderComponent["Restitution"].as<float>();
 				}
 
 				// -- GravitySourceComponent --

@@ -26,7 +26,7 @@ Entities:
       Path: materials\Gray_Metal.axmat
     RigidBodyComponent:
       BodyType: Dynamic
-      Mass: 0.5
+      Mass: 42
       IsKinematic: false
       LinearDamping: 0
       AngularDamping: 0.0500000007
@@ -42,6 +42,13 @@ Entities:
       Restitution: 0.0500000007
     SphereColliderComponent:
       Radius: 1.5
+      Offset: [0, 0, 0]
+      StaticFriction: 0.5
+      DynamicFriction: 0.5
+      Restitution: 0.0500000007
+    CapsuleColliderComponent:
+      Radius: 2
+      HalfHeight: 4
       Offset: [0, 0, 0]
       StaticFriction: 0.5
       DynamicFriction: 0.5

@@ -836,6 +836,20 @@ namespace Axion {
 				drawWireframeSphere(colliderTransform, radius, { 0.0f, 1.0f, 0.0f, 1.0f });
 			}
 
+			if (selectedEntity.hasComponent<CapsuleColliderComponent>()) {
+				auto& tc = selectedEntity.getComponent<TransformComponent>();
+				auto& cc = selectedEntity.getComponent<CapsuleColliderComponent>();
+
+				float scaleXZ = std::max(std::abs(tc.scale.x), std::abs(tc.scale.z));
+				float radius = cc.radius * scaleXZ;
+				float halfHeight = cc.halfHeight * std::abs(tc.scale.y);
+
+				Mat4 transform = Mat4::TRS(tc.position, tc.rotation, Vec3::one());
+				Mat4 colliderTransform = transform * Mat4::translation(cc.offset);
+
+				drawWireframeCapsule(colliderTransform, radius, halfHeight, { 0.0f, 1.0f, 0.0f, 1.0f });
+			}
+
 		}
 	}
 
@@ -898,6 +912,59 @@ namespace Axion {
 			Vec3 p1_yz = transform * Vec3(0.0f, cos1, sin1);
 			Vec3 p2_yz = transform * Vec3(0.0f, cos2, sin2);
 			Renderer2D::drawLine(p1_yz, p2_yz, color);
+		}
+
+	}
+
+	void EditorLayer::drawWireframeCapsule(const Mat4& transform, float radius, float halfHeight, const Vec4& color) {
+		int segments = 24;
+		float step = 360.0f / segments;
+
+		// -- Cylindrical body --
+		for (int i = 0; i < segments; i++) {
+			float angle1 = Math::toRadians(i * step);
+			float angle2 = Math::toRadians((i + 1) * step);
+
+			float sin1 = std::sin(angle1) * radius;
+			float cos1 = std::cos(angle1) * radius;
+			float sin2 = std::sin(angle2) * radius;
+			float cos2 = std::cos(angle2) * radius;
+
+			// Top XZ Ring
+			Vec3 topRing1 = transform * Vec3(cos1, halfHeight, sin1);
+			Vec3 topRing2 = transform * Vec3(cos2, halfHeight, sin2);
+			Renderer2D::drawLine(topRing1, topRing2, color);
+
+			// Bottom XZ Ring
+			Vec3 bottomRing1 = transform * Vec3(cos1, -halfHeight, sin1);
+			Vec3 bottomRing2 = transform * Vec3(cos2, -halfHeight, sin2);
+			Renderer2D::drawLine(bottomRing1, bottomRing2, color);
+
+			// Vertical connecting lines (draw 4 evenly spaced lines to represent the cylinder walls)
+			if (i % (segments / 4) == 0) {
+				Renderer2D::drawLine(topRing1, bottomRing1, color);
+			}
+		}
+
+		// -- Hemispheres (Top and bottom) --
+		int halfSegments = segments / 2;
+		float halfStep = 180.0f / halfSegments;
+		for (int i = 0; i < halfSegments; i++) {
+			float angle1 = Math::toRadians(i * halfStep);
+			float angle2 = Math::toRadians((i + 1) * halfStep);
+
+			float cos1 = std::cos(angle1) * radius;
+			float sin1 = std::sin(angle1) * radius;
+			float cos2 = std::cos(angle2) * radius;
+			float sin2 = std::sin(angle2) * radius;
+
+			// Top Hemisphere
+			Renderer2D::drawLine(transform * Vec3(cos1, sin1 + halfHeight, 0.0f), transform * Vec3(cos2, sin2 + halfHeight, 0.0f), color); // XY plane
+			Renderer2D::drawLine(transform * Vec3(0.0f, sin1 + halfHeight, cos1), transform * Vec3(0.0f, sin2 + halfHeight, cos2), color); // YZ plane
+
+			// Bottom Hemisphere
+			Renderer2D::drawLine(transform * Vec3(cos1, -sin1 - halfHeight, 0.0f), transform * Vec3(cos2, -sin2 - halfHeight, 0.0f), color); // XY plane
+			Renderer2D::drawLine(transform * Vec3(0.0f, -sin1 - halfHeight, cos1), transform * Vec3(0.0f, -sin2 - halfHeight, cos2), color); // YZ plane
 		}
 
 	}

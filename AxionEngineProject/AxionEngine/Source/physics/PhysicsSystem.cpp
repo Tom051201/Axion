@@ -130,6 +130,34 @@ namespace Axion {
 				sc.runtimeShape = shape;
 			}
 
+			if (scene->getRegistry().all_of<CapsuleColliderComponent>(entity)) {
+				auto& cc = scene->getRegistry().get<CapsuleColliderComponent>(entity);
+
+				PxMaterial* material = s_physics->createMaterial(cc.staticFriction, cc.dynamicFriction, cc.restitution);
+
+				float scaleXZ = std::max(std::abs(transform.scale.x), std::abs(transform.scale.z));
+				float scaledRadius = cc.radius * scaleXZ;
+				float scaledHalfHeight = cc.halfHeight * std::abs(transform.scale.y);
+
+				if (scaledRadius < 0.001f) scaledRadius = 0.001f;
+				if (scaledHalfHeight < 0.001f) scaledHalfHeight = 0.001f;
+
+				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxCapsuleGeometry(scaledRadius, scaledHalfHeight), *material);
+
+				PxQuat relativeRotation(PxHalfPi, PxVec3(0.0f, 0.0f, 1.0f));
+
+				PxVec3 offset = {
+					cc.offset.x * transform.scale.x,
+					cc.offset.y * transform.scale.y,
+					cc.offset.z * transform.scale.z
+				};
+
+				shape->setLocalPose(PxTransform(offset, relativeRotation));
+
+				material->release();
+				cc.runtimeShape = shape;
+			}
+
 			if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
 				PxRigidBodyExt::updateMassAndInertia(*(PxRigidDynamic*)actor, rb.mass);
 			}

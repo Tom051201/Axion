@@ -195,6 +195,7 @@ namespace Axion {
 			m_selectedEntity.hasComponent<RigidBodyComponent>() &&
 			m_selectedEntity.hasComponent<BoxColliderComponent>() &&
 			m_selectedEntity.hasComponent<SphereColliderComponent>() &&
+			m_selectedEntity.hasComponent<CapsuleColliderComponent>() &&
 			m_selectedEntity.hasComponent<GravitySourceComponent>();
 
 		ImGui::SameLine();
@@ -226,11 +227,13 @@ namespace Axion {
 			if (!m_selectedEntity.hasComponent<RigidBodyComponent>() ||
 				!m_selectedEntity.hasComponent<BoxColliderComponent>() ||
 				!m_selectedEntity.hasComponent<SphereColliderComponent>() ||
+				!m_selectedEntity.hasComponent<CapsuleColliderComponent>() ||
 				!m_selectedEntity.hasComponent<GravitySourceComponent>()) {
 				if (ImGui::BeginMenu("Physics##_menu")) {
 					drawAddComponent<RigidBodyComponent>("Rigid Body");
 					drawAddComponent<BoxColliderComponent>("Box Collider");
 					drawAddComponent<SphereColliderComponent>("Sphere Collider");
+					drawAddComponent<CapsuleColliderComponent>("Capsule Collider");
 					drawAddComponent<GravitySourceComponent>("Gravity Source");
 					ImGui::EndMenu();
 				}
@@ -1043,7 +1046,73 @@ namespace Axion {
 				ImGui::EndTable();
 			}
 
-			});
+		});
+
+		// ----- CapsuleColliderComponent -----
+		drawComponentInfo<CapsuleColliderComponent>("Capsule Collider", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<CapsuleColliderComponent>();
+			if (ImGui::BeginTable("CapsuleColliderTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Radius --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Radius");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##radiusCapsuFloat", &component.radius, 0.5f, 0.0f, 100.0f);
+
+				// -- Half Height --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("half Height");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##halfHeightCapsuFloat", &component.halfHeight, 0.5f, 0.0f, 100.0f);
+
+				// -- Offset --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Offset");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				drawVec3Control("##OffsetVecCapsu", component.offset, 0.0f, 0.0f, 0.0f);
+
+				// -- Static Friction --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Static Friction");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##StaticFrictionDragCapsu", &component.staticFriction, 0.05f, 0.0f, 1.0f);
+
+				// -- Dynamic Friction --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Dynamic Friction");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##DynamicFrictionDragCapsu", &component.dynamicFriction, 0.05f, 0.0f, 1.0f);
+
+				// -- Restitution --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Restitution");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##RestitutionDragCapsu", &component.restitution, 0.05f, 0.0f, 1.0f);
+
+				ImGui::EndTable();
+			}
+
+		});
 
 		// ----- GravitySourceComponent -----
 		drawComponentInfo<GravitySourceComponent>("Gravity Source", m_selectedEntity, [this]() {

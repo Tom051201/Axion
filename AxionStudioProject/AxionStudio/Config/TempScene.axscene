@@ -1,23 +1,6 @@
 Scene: Base Scene
 Skybox: skybox\BlueSkybox.axsky
 Entities:
-  - Entity: c5abc1e49a995213687f84288774e583
-    TagComponent:
-      Tag: Camera
-    TransformComponent:
-      Translation: [0, 0, -11.0816879]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Primary: true
-      FixedAspectRatio: false
-      ProjectionType: Perspective
-      PerspectiveFOV: 0.785398185
-      PerspectiveNear: 0.00999999978
-      PerspectiveFar: 1000
-      OrthographicSize: 10
-      OrthographicNear: -1
-      OrthographicFar: 1
   - Entity: 9a3f71b44cb3b0fed1709990d5a8fde1
     TagComponent:
       Tag: Point Light Green
@@ -226,8 +209,8 @@ Entities:
     MaterialComponent:
       Path: materials\Gray_Metal.axmat
     RigidBodyComponent:
-      BodyType: Static
-      Mass: 0.5
+      BodyType: Dynamic
+      Mass: 42
       IsKinematic: false
       LinearDamping: 0
       AngularDamping: 0.0500000007
@@ -247,15 +230,27 @@ Entities:
       StaticFriction: 0.5
       DynamicFriction: 0.5
       Restitution: 0.0500000007
-  - Entity: 17dfcd92829e797ce5d298a4b3161094
+    CapsuleColliderComponent:
+      Radius: 2
+      HalfHeight: 4
+      Offset: [0, 0, 0]
+      StaticFriction: 0.5
+      DynamicFriction: 0.5
+      Restitution: 0.0500000007
+  - Entity: c5abc1e49a995213687f84288774e583
     TagComponent:
-      Tag: Gravity
+      Tag: Camera
     TransformComponent:
-      Translation: [-3.19012022, 0, 0]
+      Translation: [0, 0, -11.0816879]
       Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
-    GravitySourceComponent:
-      Type: Point
-      Strength: 48.8100014
-      Radius: 180
-      AffectKinematic: false
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      ProjectionType: Perspective
+      PerspectiveFOV: 0.785398185
+      PerspectiveNear: 0.00999999978
+      PerspectiveFar: 1000
+      OrthographicSize: 10
+      OrthographicNear: -1
+      OrthographicFar: 1
