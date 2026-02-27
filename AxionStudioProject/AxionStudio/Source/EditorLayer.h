@@ -24,6 +24,7 @@
 #include "AxionStudio/Source/modals/MaterialImportModal.h"
 #include "AxionStudio/Source/modals/Texture2DImportModal.h"
 #include "AxionStudio/Source/modals/PipelineImportModal.h"
+#include "AxionStudio/Source/modals/PhysicsMaterialImportModal.h"
 
 namespace Axion {
 
@@ -75,6 +76,7 @@ namespace Axion {
 		MaterialImportModal* m_materialImportModal;
 		Texture2DImportModal* m_tex2dImportModal;
 		PipelineImportModal* m_pipelineImportModal;
+		PhysicsMaterialImportModal* m_physicsMaterialImportModal;
 
 
 		// ----- Scene viewport -----

@@ -1,0 +1,6 @@
+Name: Ice
+UUID: 377f4e99cbc99a6e4180882365c9eb40
+Type: PhysicsMaterial
+StaticFriction: 1
+DynamicFriction: 1
+Restitution: 1

@@ -1,55 +1,20 @@
 Scene: Base Scene
 Skybox: skybox\BlueSkybox.axsky
 Entities:
-  - Entity: 9a3f71b44cb3b0fed1709990d5a8fde1
+  - Entity: 93876ad049ade14d469bf5d9814ba8fa
     TagComponent:
-      Tag: Point Light Green
+      Tag: Physics Entity
     TransformComponent:
-      Translation: [-3.72425437, 1.78415251, 6.66903448]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [0.772200823, 1, 0, 1]
-      Intensity: 20
-      Radius: 10
-      Falloff: 1
-  - Entity: 2db29d0105db04a1204c4807aacb5f38
-    TagComponent:
-      Tag: Spot Light
-    TransformComponent:
-      Translation: [4.03999996, 2.0276587, -4.02669716]
-      Rotation: [0, 0, 0, 1]
-      Scale: [0.999994993, 0.99999392, 0.999994338]
-    SpotLightComponent:
-      Color: [0.795366287, 0, 1, 1]
-      Intensity: 20
-      Range: 100
-      InnerConeAngle: 20
-      OuterConeAngle: 20
-  - Entity: df531452f1bfe37c33d564433e0960b4
-    TagComponent:
-      Tag: Pickaxe
-    TransformComponent:
-      Translation: [-3.29999995, 3.29999995, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    SpriteComponent:
-      Path: textures\Pickaxe.axtex
-      Tint: [1, 1, 1, 1]
-  - Entity: a47b10a2f7ee7598c6917dbff64d0a7e
-    TagComponent:
-      Tag: Floor
-    TransformComponent:
-      Translation: [-1.31241107, -2.64718151, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [15.5100002, 0.999996066, 18.1000004]
+      Translation: [0.414022714, 5.82856321, -0.580314815]
+      Rotation: [-0.08594767, -0.446343392, 0.168423325, 0.874656618]
+      Scale: [0.999994516, 0.999994636, 0.999995232]
     MeshComponent:
       Path: meshes\Cube.axmesh
     MaterialComponent:
-      Path: materials\Green Metal.axmat
+      Path: materials\Gray_Metal.axmat
     RigidBodyComponent:
-      BodyType: Static
-      Mass: 1
+      BodyType: Dynamic
+      Mass: 42
       IsKinematic: false
       LinearDamping: 0
       AngularDamping: 0.0500000007
@@ -57,23 +22,109 @@ Entities:
       FixedRotationY: false
       FixedRotationZ: false
       EnableCCD: false
-    BoxColliderComponent:
-      HalfExtents: [0.5, 0.5, 0.5]
+    CapsuleColliderComponent:
+      Radius: 0.5
+      HalfHeight: 0.5
       Offset: [0, 0, 0]
-      StaticFriction: 0.5
-      DynamicFriction: 0.5
-      Restitution: 0.0500000007
-  - Entity: 8aee4a344c5fe14ba2df3fd3cad8016d
+      Material: physics\Ice.axpmat
+  - Entity: 3a0b49b246b4c1c8e06dfd32cddc947f
     TagComponent:
-      Tag: Homer Entity
+      Tag: shadow cube
     TransformComponent:
-      Translation: [0.909387469, -0.142656326, -0.443987638]
+      Translation: [0, 0, 8.00150299]
       Rotation: [0, 0, 0, 1]
-      Scale: [1.89998043, 1.90000105, 1.89998162]
+      Scale: [0.300000012, 0.300000012, 0.300000012]
     MeshComponent:
-      Path: meshes\Homer.axmesh
+      Path: meshes\Cube.axmesh
     MaterialComponent:
       Path: materials\PBR.axmat
+  - Entity: 3a9c801cef6ac2e4ad6cff73e5687ec5
+    TagComponent:
+      Tag: Spot Light Yellow
+    TransformComponent:
+      Translation: [0, 0, 6.71999979]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    SpotLightComponent:
+      Color: [0.864864826, 1, 0, 1]
+      Intensity: 20
+      Range: 10
+      InnerConeAngle: 12.5
+      OuterConeAngle: 17.5
+  - Entity: e543dd225866997c04a952b3ea7eaa97
+    TagComponent:
+      Tag: Dir Light
+    TransformComponent:
+      Translation: [0, 0, 3.73582315]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 9.85497081e-07]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+  - Entity: 2f080c4af6b5eb34930179e24673f39a
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Translation: [-0.5, -0.75, 9.02999973]
+      Rotation: [0, 0, 0, 1]
+      Scale: [12.2479362, 7.6500001, 0.889999926]
+    MeshComponent:
+      Path: meshes\Cube.axmesh
+    MaterialComponent:
+      Path: materials\BlueMetal.axmat
+  - Entity: 38f548b05ff487c2689332ee9b9d747c
+    TagComponent:
+      Tag: Point Light
+    TransformComponent:
+      Translation: [4.710711, 1.72320366, 5.70191765]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0, 0, 1]
+      Intensity: 20
+      Radius: 6
+      Falloff: 6.5
+  - Entity: abdb8fe935834ba677951ad6c572c0df
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Translation: [6.24282312, 0.834379077, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1.13, 7.73000002, 18.9300003]
+    MeshComponent:
+      Path: meshes\Cube.axmesh
+    MaterialComponent:
+      Path: materials\BlueMetal.axmat
+  - Entity: fb69a07b71f1a31a73395a840deb43c4
+    TagComponent:
+      Tag: Sprite Entity
+    TransformComponent:
+      Translation: [0.43536374, 4.13137341, -0.4567132]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Path: textures\logo.axtex
+      Tint: [0, 0.0317461491, 1, 1]
+  - Entity: 9901deeaab40cd36ac39b79dd08cf660
+    TagComponent:
+      Tag: Music Entity
+    TransformComponent:
+      Translation: [2.15924978, 2.2032547, 3.58886743]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    AudioComponent:
+      IsListener: false
+      IsSource: true
+      AudioSource:
+        AudioClip: audio\MusicClip.axaudio
+        Volume: 0.449999988
+        Pitch: 1
+        Pan: 0
+        IsSpatial: true
+        Position: [2.15924978, 2.2032547, 3.58886743]
+        Velocity: [0, 0, 0]
+        MinDistance: 1
+        MaxDistance: 100
+        DopplerFactor: 1
   - Entity: 1dc4b3d807108cc8032d565a855c9e60
     TagComponent:
       Tag: Wind Entity
@@ -99,118 +150,31 @@ Entities:
         MinDistance: 1
         MaxDistance: 100
         DopplerFactor: 1
-  - Entity: 9901deeaab40cd36ac39b79dd08cf660
+  - Entity: 8aee4a344c5fe14ba2df3fd3cad8016d
     TagComponent:
-      Tag: Music Entity
+      Tag: Homer Entity
     TransformComponent:
-      Translation: [2.15924978, 2.2032547, 3.58886743]
+      Translation: [0.909387469, -0.142656326, -0.443987638]
       Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    AudioComponent:
-      IsListener: false
-      IsSource: true
-      AudioSource:
-        AudioClip: audio\MusicClip.axaudio
-        Volume: 0.449999988
-        Pitch: 1
-        Pan: 0
-        IsSpatial: true
-        Position: [2.15924978, 2.2032547, 3.58886743]
-        Velocity: [0, 0, 0]
-        MinDistance: 1
-        MaxDistance: 100
-        DopplerFactor: 1
-  - Entity: fb69a07b71f1a31a73395a840deb43c4
-    TagComponent:
-      Tag: Sprite Entity
-    TransformComponent:
-      Translation: [0.43536374, 4.13137341, -0.4567132]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    SpriteComponent:
-      Path: textures\logo.axtex
-      Tint: [0, 0.0317461491, 1, 1]
-  - Entity: abdb8fe935834ba677951ad6c572c0df
-    TagComponent:
-      Tag: Wall
-    TransformComponent:
-      Translation: [6.24282312, 0.834379077, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1.13, 7.73000002, 18.9300003]
+      Scale: [1.89998043, 1.90000105, 1.89998162]
     MeshComponent:
-      Path: meshes\Cube.axmesh
-    MaterialComponent:
-      Path: materials\BlueMetal.axmat
-  - Entity: 38f548b05ff487c2689332ee9b9d747c
-    TagComponent:
-      Tag: Point Light
-    TransformComponent:
-      Translation: [4.710711, 1.72320366, 5.70191765]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [1, 0, 0, 1]
-      Intensity: 20
-      Radius: 6
-      Falloff: 6.5
-  - Entity: 2f080c4af6b5eb34930179e24673f39a
-    TagComponent:
-      Tag: Wall
-    TransformComponent:
-      Translation: [-0.5, -0.75, 9.02999973]
-      Rotation: [0, 0, 0, 1]
-      Scale: [12.2479362, 7.6500001, 0.889999926]
-    MeshComponent:
-      Path: meshes\Cube.axmesh
-    MaterialComponent:
-      Path: materials\BlueMetal.axmat
-  - Entity: e543dd225866997c04a952b3ea7eaa97
-    TagComponent:
-      Tag: Dir Light
-    TransformComponent:
-      Translation: [0, 0, 3.73582315]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 9.85497081e-07]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-  - Entity: 3a9c801cef6ac2e4ad6cff73e5687ec5
-    TagComponent:
-      Tag: Spot Light Yellow
-    TransformComponent:
-      Translation: [0, 0, 6.71999979]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    SpotLightComponent:
-      Color: [0.864864826, 1, 0, 1]
-      Intensity: 20
-      Range: 10
-      InnerConeAngle: 12.5
-      OuterConeAngle: 17.5
-  - Entity: 3a0b49b246b4c1c8e06dfd32cddc947f
-    TagComponent:
-      Tag: shadow cube
-    TransformComponent:
-      Translation: [0, 0, 8.00150299]
-      Rotation: [0, 0, 0, 1]
-      Scale: [0.300000012, 0.300000012, 0.300000012]
-    MeshComponent:
-      Path: meshes\Cube.axmesh
+      Path: meshes\Homer.axmesh
     MaterialComponent:
       Path: materials\PBR.axmat
-  - Entity: 93876ad049ade14d469bf5d9814ba8fa
+  - Entity: a47b10a2f7ee7598c6917dbff64d0a7e
     TagComponent:
-      Tag: Physics Entity
+      Tag: Floor
     TransformComponent:
-      Translation: [0.414022714, 5.82856321, -0.580314815]
-      Rotation: [-0.08594767, -0.446343392, 0.168423325, 0.874656618]
-      Scale: [0.999994516, 0.999994636, 0.999995232]
+      Translation: [-1.31241107, -2.64718151, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [15.5100002, 0.999996066, 18.1000004]
     MeshComponent:
       Path: meshes\Cube.axmesh
     MaterialComponent:
-      Path: materials\Gray_Metal.axmat
+      Path: materials\Green Metal.axmat
     RigidBodyComponent:
-      BodyType: Dynamic
-      Mass: 42
+      BodyType: Static
+      Mass: 1
       IsKinematic: false
       LinearDamping: 0
       AngularDamping: 0.0500000007
@@ -221,22 +185,42 @@ Entities:
     BoxColliderComponent:
       HalfExtents: [0.5, 0.5, 0.5]
       Offset: [0, 0, 0]
-      StaticFriction: 0.5
-      DynamicFriction: 0.5
-      Restitution: 0.0500000007
-    SphereColliderComponent:
-      Radius: 1.5
-      Offset: [0, 0, 0]
-      StaticFriction: 0.5
-      DynamicFriction: 0.5
-      Restitution: 0.0500000007
-    CapsuleColliderComponent:
-      Radius: 2
-      HalfHeight: 4
-      Offset: [0, 0, 0]
-      StaticFriction: 0.5
-      DynamicFriction: 0.5
-      Restitution: 0.0500000007
+      Material: None
+  - Entity: df531452f1bfe37c33d564433e0960b4
+    TagComponent:
+      Tag: Pickaxe
+    TransformComponent:
+      Translation: [-3.29999995, 3.29999995, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Path: textures\Pickaxe.axtex
+      Tint: [1, 1, 1, 1]
+  - Entity: 2db29d0105db04a1204c4807aacb5f38
+    TagComponent:
+      Tag: Spot Light
+    TransformComponent:
+      Translation: [4.03999996, 2.0276587, -4.02669716]
+      Rotation: [0, 0, 0, 1]
+      Scale: [0.999994993, 0.99999392, 0.999994338]
+    SpotLightComponent:
+      Color: [0.795366287, 0, 1, 1]
+      Intensity: 20
+      Range: 100
+      InnerConeAngle: 20
+      OuterConeAngle: 20
+  - Entity: 9a3f71b44cb3b0fed1709990d5a8fde1
+    TagComponent:
+      Tag: Point Light Green
+    TransformComponent:
+      Translation: [-3.72425437, 1.78415251, 6.66903448]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.772200823, 1, 0, 1]
+      Intensity: 20
+      Radius: 10
+      Falloff: 1
   - Entity: c5abc1e49a995213687f84288774e583
     TagComponent:
       Tag: Camera

@@ -8,8 +8,9 @@
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
-#include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/render/Renderer.h"
+#include "AxionEngine/Source/audio/AudioClip.h"
+#include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
 namespace Axion {
 
@@ -25,6 +26,7 @@ namespace Axion {
 		release<AudioClip>();
 		release<Texture2D>();
 		release<Pipeline>();
+		release<PhysicsMaterial>();
 		AX_CORE_LOG_INFO("AssetManager shutdown");
 	}
 
@@ -435,6 +437,38 @@ namespace Axion {
 		storage<AudioClip>().assets[handle] = clip;
 		//storage<AudioClip>().loadQueue.push_back({ handle, sourcePath });
 		storage<AudioClip>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
+	// ----- PhysicsMaterial -----
+	template<>
+	AssetHandle<PhysicsMaterial> AssetManager::load<PhysicsMaterial>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "PhysicsMaterial") {
+			AX_CORE_LOG_ERROR("Loading physics material failed, file is not a physics material asset file");
+			return {};
+		}
+
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<PhysicsMaterial> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<PhysicsMaterial>(handle)) {
+			return handle;
+		}
+
+		Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
+
+		material->staticFriction = data["StaticFriction"].as<float>();
+		material->dynamicFriction = data["DynamicFriction"].as<float>();
+		material->restitution = data["Restitution"].as<float>();
+
+		storage<PhysicsMaterial>().assets[handle] = material;
+
+		storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}

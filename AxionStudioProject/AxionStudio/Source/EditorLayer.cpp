@@ -43,13 +43,14 @@ namespace Axion {
 
 
 		// ----- Setup all modals -----
-		m_skyboxImportModal		= m_modalManager.addModal<SkyboxImportModal>("SkyboxImportModal");
-		m_meshImportModal		= m_modalManager.addModal<MeshImportModal>("MeshImportModal");
-		m_audioImportModal		= m_modalManager.addModal<AudioImportModal>("AudioImportModal");
-		m_shaderImportModal		= m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
-		m_materialImportModal	= m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
-		m_tex2dImportModal		= m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
-		m_pipelineImportModal	= m_modalManager.addModal<PipelineImportModal>("PipelineImportModal");
+		m_skyboxImportModal				= m_modalManager.addModal<SkyboxImportModal>("SkyboxImportModal");
+		m_meshImportModal				= m_modalManager.addModal<MeshImportModal>("MeshImportModal");
+		m_audioImportModal				= m_modalManager.addModal<AudioImportModal>("AudioImportModal");
+		m_shaderImportModal				= m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
+		m_materialImportModal			= m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
+		m_tex2dImportModal				= m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
+		m_pipelineImportModal			= m_modalManager.addModal<PipelineImportModal>("PipelineImportModal");
+		m_physicsMaterialImportModal	= m_modalManager.addModal<PhysicsMaterialImportModal>("PhysicsMaterialImportModal");
 
 
 		// ----- Setup framebuffer for scene viewport -----
@@ -603,6 +604,7 @@ namespace Axion {
 					if (ImGui::MenuItem("Shader")) { m_shaderImportModal->open(); }
 					if (ImGui::MenuItem("Pipeline")) { m_pipelineImportModal->open(); }
 					if (ImGui::MenuItem("Audio")) { m_audioImportModal->open(); }
+					if (ImGui::MenuItem("Physics Material")) { m_physicsMaterialImportModal->open(); }
 
 					ImGui::EndMenu();
 				}

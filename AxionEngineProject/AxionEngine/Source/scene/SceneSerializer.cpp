@@ -190,9 +190,15 @@ namespace Axion {
 			auto& bcc = entity.getComponent<BoxColliderComponent>();
 			out << YAML::Key << "HalfExtents" << YAML::Value << bcc.halfExtents;
 			out << YAML::Key << "Offset" << YAML::Value << bcc.offset;
-			out << YAML::Key << "StaticFriction" << YAML::Value << bcc.staticFriction;
-			out << YAML::Key << "DynamicFriction" << YAML::Value << bcc.dynamicFriction;
-			out << YAML::Key << "Restitution" << YAML::Value << bcc.restitution;
+			//out << YAML::Key << "StaticFriction" << YAML::Value << bcc.staticFriction;
+			//out << YAML::Key << "DynamicFriction" << YAML::Value << bcc.dynamicFriction;
+			//out << YAML::Key << "Restitution" << YAML::Value << bcc.restitution;
+			if (bcc.material.isValid()) {
+				out << YAML::Key << "Material" << YAML::Value << AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<PhysicsMaterial>(bcc.material));
+			}
+			else {
+				out << YAML::Key << "Material" << YAML::Value << "None";
+			}
 			out << YAML::EndMap;
 		}
 
@@ -203,9 +209,15 @@ namespace Axion {
 			auto& scc = entity.getComponent<SphereColliderComponent>();
 			out << YAML::Key << "Radius" << YAML::Value << scc.radius;
 			out << YAML::Key << "Offset" << YAML::Value << scc.offset;
-			out << YAML::Key << "StaticFriction" << YAML::Value << scc.staticFriction;
-			out << YAML::Key << "DynamicFriction" << YAML::Value << scc.dynamicFriction;
-			out << YAML::Key << "Restitution" << YAML::Value << scc.restitution;
+			//out << YAML::Key << "StaticFriction" << YAML::Value << scc.staticFriction;
+			//out << YAML::Key << "DynamicFriction" << YAML::Value << scc.dynamicFriction;
+			//out << YAML::Key << "Restitution" << YAML::Value << scc.restitution;
+			if (scc.material.isValid()) {
+				out << YAML::Key << "Material" << YAML::Value << AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<PhysicsMaterial>(scc.material));
+			}
+			else {
+				out << YAML::Key << "Material" << YAML::Value << "None";
+			}
 			out << YAML::EndMap;
 		}
 
@@ -217,9 +229,15 @@ namespace Axion {
 			out << YAML::Key << "Radius" << YAML::Value << ccc.radius;
 			out << YAML::Key << "HalfHeight" << YAML::Value << ccc.halfHeight;
 			out << YAML::Key << "Offset" << YAML::Value << ccc.offset;
-			out << YAML::Key << "StaticFriction" << YAML::Value << ccc.staticFriction;
-			out << YAML::Key << "DynamicFriction" << YAML::Value << ccc.dynamicFriction;
-			out << YAML::Key << "Restitution" << YAML::Value << ccc.restitution;
+			//out << YAML::Key << "StaticFriction" << YAML::Value << ccc.staticFriction;
+			//out << YAML::Key << "DynamicFriction" << YAML::Value << ccc.dynamicFriction;
+			//out << YAML::Key << "Restitution" << YAML::Value << ccc.restitution;
+			if (ccc.material.isValid()) {
+				out << YAML::Key << "Material" << YAML::Value << AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<PhysicsMaterial>(ccc.material));
+			}
+			else {
+				out << YAML::Key << "Material" << YAML::Value << "None";
+			}
 			out << YAML::EndMap;
 		}
 
@@ -471,9 +489,18 @@ namespace Axion {
 					auto& bcc = deserializedEntity.addComponent<BoxColliderComponent>();
 					bcc.halfExtents = boxColliderComponent["HalfExtents"].as<Vec3>();
 					bcc.offset = boxColliderComponent["Offset"].as<Vec3>();
-					bcc.staticFriction = boxColliderComponent["StaticFriction"].as<float>();
-					bcc.dynamicFriction = boxColliderComponent["DynamicFriction"].as<float>();
-					bcc.restitution = boxColliderComponent["Restitution"].as<float>();
+					std::string relPath = boxColliderComponent["Material"].as<std::string>();
+					if (relPath != "None") {
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+						bcc.material = handle;
+					}
+					else {
+						bcc.material = AssetHandle<PhysicsMaterial>();
+					}
+					//bcc.staticFriction = boxColliderComponent["StaticFriction"].as<float>();
+					//bcc.dynamicFriction = boxColliderComponent["DynamicFriction"].as<float>();
+					//bcc.restitution = boxColliderComponent["Restitution"].as<float>();
 				}
 
 				// -- SphereColliderComponent --
@@ -482,9 +509,18 @@ namespace Axion {
 					auto& scc = deserializedEntity.addComponent<SphereColliderComponent>();
 					scc.radius = sphereColliderComponent["Radius"].as<float>();
 					scc.offset = sphereColliderComponent["Offset"].as<Vec3>();
-					scc.staticFriction = sphereColliderComponent["StaticFriction"].as<float>();
-					scc.dynamicFriction = sphereColliderComponent["DynamicFriction"].as<float>();
-					scc.restitution = sphereColliderComponent["Restitution"].as<float>();
+					std::string relPath = sphereColliderComponent["Material"].as<std::string>();
+					if (relPath != "None") {
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+						scc.material = handle;
+					}
+					else {
+						scc.material = AssetHandle<PhysicsMaterial>();
+					}
+					//scc.staticFriction = sphereColliderComponent["StaticFriction"].as<float>();
+					//scc.dynamicFriction = sphereColliderComponent["DynamicFriction"].as<float>();
+					//scc.restitution = sphereColliderComponent["Restitution"].as<float>();
 				}
 
 				// -- CapsuleColliderComponent --
@@ -494,9 +530,18 @@ namespace Axion {
 					ccc.radius = capsuleColliderComponent["Radius"].as<float>();
 					ccc.halfHeight = capsuleColliderComponent["HalfHeight"].as<float>();
 					ccc.offset = capsuleColliderComponent["Offset"].as<Vec3>();
-					ccc.staticFriction = capsuleColliderComponent["StaticFriction"].as<float>();
-					ccc.dynamicFriction = capsuleColliderComponent["DynamicFriction"].as<float>();
-					ccc.restitution = capsuleColliderComponent["Restitution"].as<float>();
+					std::string relPath = capsuleColliderComponent["Material"].as<std::string>();
+					if (relPath != "None") {
+						std::string absPath = AssetManager::getAbsolute(relPath);
+						AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+						ccc.material = handle;
+					}
+					else {
+						ccc.material = AssetHandle<PhysicsMaterial>();
+					}
+					//ccc.staticFriction = capsuleColliderComponent["StaticFriction"].as<float>();
+					//ccc.dynamicFriction = capsuleColliderComponent["DynamicFriction"].as<float>();
+					//ccc.restitution = capsuleColliderComponent["Restitution"].as<float>();
 				}
 
 				// -- GravitySourceComponent --

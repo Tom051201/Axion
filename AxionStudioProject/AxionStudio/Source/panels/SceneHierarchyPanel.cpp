@@ -959,32 +959,80 @@ namespace Axion {
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				drawVec3Control("##OffsetVec", component.offset, 0.0f, 0.0f, 0.0f);
 
-				// -- Static Friction --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Static Friction");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##StaticFrictionDrag", &component.staticFriction, 0.05f, 0.0f, 1.0f);
+				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(component.material);
 
-				// -- Dynamic Friction --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Dynamic Friction");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##DynamicFrictionDrag", &component.dynamicFriction, 0.05f, 0.0f, 1.0f);
+				if (material) {
+					// -- Static Friction --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Static Friction");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##StaticFrictionIn", &material->staticFriction);
+					ImGui::EndDisabled();
 
-				// -- Restitution --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Restitution");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##RestitutionDrag", &component.restitution, 0.05f, 0.0f, 1.0f);
+					// -- Dynamic Friction --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Dynamic Friction");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##DynamicFrictionIn", &material->dynamicFriction);
+					ImGui::EndDisabled();
+
+					// -- Restitution --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Restitution");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##RestitutionIn", &material->restitution);
+					ImGui::EndDisabled();
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.material.invalidate();
+					}
+
+					ImGui::EndTable();
+				}
+				else {
+					ImGui::EndTable();
+
+					// -- Load Button --
+					if (ImGui::Button("Load Material...")) {
+						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
+						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
+						if (!absPath.empty()) {
+							AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+							component.material = handle;
+						}
+					}
+
+					// -- Drag drop on button --
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+							std::string relPath = static_cast<const char*>(payload->Data);
+							std::string absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.find(".axpmat") != std::string::npos) {
+								AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+								component.material = handle;
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
+				
 
 				ImGui::EndTable();
 			}
@@ -1016,32 +1064,79 @@ namespace Axion {
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				drawVec3Control("##OffsetVecSph", component.offset, 0.0f, 0.0f, 0.0f);
 
-				// -- Static Friction --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Static Friction");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##StaticFrictionDragSph", &component.staticFriction, 0.05f, 0.0f, 1.0f);
+				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(component.material);
 
-				// -- Dynamic Friction --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Dynamic Friction");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##DynamicFrictionDragSph", &component.dynamicFriction, 0.05f, 0.0f, 1.0f);
+				if (material) {
+					// -- Static Friction --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Static Friction");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##StaticFrictionInSph", &material->staticFriction);
+					ImGui::EndDisabled();
 
-				// -- Restitution --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Restitution");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##RestitutionDragSph", &component.restitution, 0.05f, 0.0f, 1.0f);
+					// -- Dynamic Friction --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Dynamic Friction");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##DyanmicFrictionInSph", &material->dynamicFriction);
+					ImGui::EndDisabled();
+
+					// -- Restitution --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Restitution");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##RestitutionInSph", &material->restitution);
+					ImGui::EndDisabled();
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.material.invalidate();
+					}
+
+					ImGui::EndTable();
+				}
+				else {
+					ImGui::EndTable();
+
+					// -- Load Button --
+					if (ImGui::Button("Load Material...")) {
+						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
+						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
+						if (!absPath.empty()) {
+							AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+							component.material = handle;
+						}
+					}
+
+					// -- Drag drop on button --
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+							std::string relPath = static_cast<const char*>(payload->Data);
+							std::string absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.find(".axpmat") != std::string::npos) {
+								AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+								component.material = handle;
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
 
 				ImGui::EndTable();
 			}
@@ -1082,34 +1177,79 @@ namespace Axion {
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				drawVec3Control("##OffsetVecCapsu", component.offset, 0.0f, 0.0f, 0.0f);
 
-				// -- Static Friction --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Static Friction");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##StaticFrictionDragCapsu", &component.staticFriction, 0.05f, 0.0f, 1.0f);
+				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(component.material);
 
-				// -- Dynamic Friction --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Dynamic Friction");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##DynamicFrictionDragCapsu", &component.dynamicFriction, 0.05f, 0.0f, 1.0f);
+				if (material) {
+					// -- Static Friction --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Static Friction");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##StaticFrictionInCapsu", &material->staticFriction);
+					ImGui::EndDisabled();
 
-				// -- Restitution --
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Restitution");
-				ImGui::Separator();
-				ImGui::TableSetColumnIndex(1);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::DragFloat("##RestitutionDragCapsu", &component.restitution, 0.05f, 0.0f, 1.0f);
+					// -- Dynamic Friction --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Dynamic Friction");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##DyanmicFrictionInCapsu", &material->dynamicFriction);
+					ImGui::EndDisabled();
 
-				ImGui::EndTable();
+					// -- Restitution --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Restitution");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::BeginDisabled();
+					ImGui::InputFloat("##RestitutionInCapsu", &material->restitution);
+					ImGui::EndDisabled();
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove")) {
+						component.material.invalidate();
+					}
+
+					ImGui::EndTable();
+				}
+				else {
+					ImGui::EndTable();
+
+					// -- Load Button --
+					if (ImGui::Button("Load Material...")) {
+						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
+						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
+						if (!absPath.empty()) {
+							AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+							component.material = handle;
+						}
+					}
+
+					// -- Drag drop on button --
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+							std::string relPath = static_cast<const char*>(payload->Data);
+							std::string absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.find(".axpmat") != std::string::npos) {
+								AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+								component.material = handle;
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
 			}
 
 		});

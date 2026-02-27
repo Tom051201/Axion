@@ -10,6 +10,7 @@
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
+#include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
 namespace Axion {
 
@@ -196,9 +197,7 @@ namespace Axion {
 		Vec3 halfExtents = { 0.5f, 0.5f, 0.5f };
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
 
-		float staticFriction = 0.5f;
-		float dynamicFriction = 0.5f;
-		float restitution = 0.05f;
+		AssetHandle<PhysicsMaterial> material;
 
 		void* runtimeShape = nullptr;
 
@@ -212,9 +211,7 @@ namespace Axion {
 		float radius = 0.5f;
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
 
-		float staticFriction = 0.5f;
-		float dynamicFriction = 0.5f;
-		float restitution = 0.05f;
+		AssetHandle<PhysicsMaterial> material;
 
 		void* runtimeShape = nullptr;
 
@@ -229,9 +226,7 @@ namespace Axion {
 		float halfHeight = 1.0f;
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
 
-		float staticFriction = 0.5f;
-		float dynamicFriction = 0.5f;
-		float restitution = 0.05f;
+		AssetHandle<PhysicsMaterial> material;
 
 		void* runtimeShape = nullptr;
 

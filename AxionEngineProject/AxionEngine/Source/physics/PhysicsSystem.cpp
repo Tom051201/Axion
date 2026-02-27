@@ -3,6 +3,8 @@
 
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 #include "AxionEngine/Vendor/physx/include/PxPhysicsAPI.h"
 
@@ -16,6 +18,36 @@ namespace Axion {
 	static PxPhysics* s_physics = nullptr;
 	static PxDefaultCpuDispatcher* s_dispatcher = nullptr;
 	static PxScene* s_physXScene = nullptr;
+	static PxMaterial* s_defaultMaterial = nullptr;
+
+	PxMaterial* getOrCreatePhysXMaterial(AssetHandle<PhysicsMaterial> handle) {
+		Ref<PhysicsMaterial> phyMatAsset = AssetManager::get<PhysicsMaterial>(handle);
+
+		// -- Fallback --
+		if (!phyMatAsset) {
+			return s_defaultMaterial;
+		}
+
+		// -- Return cached --
+		if (phyMatAsset->runtimeMaterial) {
+			return static_cast<PxMaterial*>(phyMatAsset->runtimeMaterial);
+		}
+
+		// -- Create and cache it --
+		PxMaterial* newMaterial = s_physics->createMaterial(
+			phyMatAsset->staticFriction,
+			phyMatAsset->dynamicFriction,
+			phyMatAsset->restitution
+		);
+		phyMatAsset->runtimeMaterial = newMaterial;
+
+		// -- Cleanup callback --
+		phyMatAsset->releaseCallback = [](void* mat) {
+			static_cast<PxMaterial*>(mat)->release();
+		};
+
+		return newMaterial;
+	}
 
 	void PhysicsSystem::initialize() {
 		s_foundation = PxCreateFoundation(PX_PHYSICS_VERSION, s_allocator, s_errorCallbak);
@@ -26,10 +58,13 @@ namespace Axion {
 		PxInitExtensions(*s_physics, nullptr);
 		s_dispatcher = PxDefaultCpuDispatcherCreate(2); // num worker threads
 
+		s_defaultMaterial = s_physics->createMaterial(0.5f, 0.5f, 0.05f);
+
 		AX_CORE_LOG_INFO("Physics system initialized");
 	}
 
 	void PhysicsSystem::shutdown() {
+		if (s_defaultMaterial) s_defaultMaterial->release();
 		if (s_dispatcher) s_dispatcher->release();
 		PxCloseExtensions();
 		if (s_physics) s_physics->release();
@@ -82,7 +117,7 @@ namespace Axion {
 			if (scene->getRegistry().all_of<BoxColliderComponent>(entity)) {
 				auto& bc = scene->getRegistry().get<BoxColliderComponent>(entity);
 
-				PxMaterial* material = s_physics->createMaterial(bc.staticFriction, bc.dynamicFriction, bc.restitution);
+				PxMaterial* material = getOrCreatePhysXMaterial(bc.material);
 
 				PxVec3 offset = {
 					bc.offset.x * transform.scale.x,
@@ -103,14 +138,13 @@ namespace Axion {
 				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxBoxGeometry(halfExtents), *material);
 				shape->setLocalPose(PxTransform(offset));
 
-				material->release();
 				bc.runtimeShape = shape;
 			}
 
 			if (scene->getRegistry().all_of<SphereColliderComponent>(entity)) {
 				auto& sc = scene->getRegistry().get<SphereColliderComponent>(entity);
 
-				PxMaterial* material = s_physics->createMaterial(sc.staticFriction, sc.dynamicFriction, sc.restitution);
+				PxMaterial* material = getOrCreatePhysXMaterial(sc.material);
 
 				float maxScale = std::max(std::abs(transform.scale.x), std::max(std::abs(transform.scale.y), std::abs(transform.scale.z)));
 				float geometryRadius = sc.radius * maxScale;
@@ -126,14 +160,13 @@ namespace Axion {
 				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxSphereGeometry(geometryRadius), *material);
 				shape->setLocalPose(PxTransform(offset));
 
-				material->release();
 				sc.runtimeShape = shape;
 			}
 
 			if (scene->getRegistry().all_of<CapsuleColliderComponent>(entity)) {
 				auto& cc = scene->getRegistry().get<CapsuleColliderComponent>(entity);
 
-				PxMaterial* material = s_physics->createMaterial(cc.staticFriction, cc.dynamicFriction, cc.restitution);
+				PxMaterial* material = getOrCreatePhysXMaterial(cc.material);
 
 				float scaleXZ = std::max(std::abs(transform.scale.x), std::abs(transform.scale.z));
 				float scaledRadius = cc.radius * scaleXZ;
@@ -154,7 +187,6 @@ namespace Axion {
 
 				shape->setLocalPose(PxTransform(offset, relativeRotation));
 
-				material->release();
 				cc.runtimeShape = shape;
 			}
 
