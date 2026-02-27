@@ -74,7 +74,10 @@ project "AxionEngine"
 		runtime "Debug"
 		symbols "on"
 		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/debug" }
-		linkoptions { "/IGNORE:4006" }
+		linkoptions {
+			"/IGNORE:4006", 
+			"/IGNORE:4099"
+		}
 	
 	filter "configurations:Release"
 		defines {

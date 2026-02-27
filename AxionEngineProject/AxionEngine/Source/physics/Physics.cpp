@@ -68,7 +68,7 @@ namespace Axion {
 		}
 	}
 
-	const Vec3& Physics::getLinearVelocity(Entity entity) {
+	Vec3 Physics::getLinearVelocity(Entity entity) {
 		if (!entity.hasComponent<RigidBodyComponent>()) return Vec3::zero();
 
 		auto& rb = entity.getComponent<RigidBodyComponent>();
@@ -93,7 +93,7 @@ namespace Axion {
 		}
 	}
 
-	const Vec3& Physics::getAngularVelocity(Entity entity) {
+	Vec3 Physics::getAngularVelocity(Entity entity) {
 		if (!entity.hasComponent<RigidBodyComponent>()) return Vec3::zero();
 
 		auto& rb = entity.getComponent<RigidBodyComponent>();

@@ -1,6 +1,18 @@
 Scene: Base Scene
 Skybox: skybox\BlueSkybox.axsky
 Entities:
+  - Entity: 17dfcd92829e797ce5d298a4b3161094
+    TagComponent:
+      Tag: Gravity
+    TransformComponent:
+      Translation: [-3.19012022, 0, 0]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    GravitySourceComponent:
+      Type: Point
+      Strength: 9.81000042
+      Radius: 180
+      AffectKinematic: false
   - Entity: 93876ad049ade14d469bf5d9814ba8fa
     TagComponent:
       Tag: Physics Entity
