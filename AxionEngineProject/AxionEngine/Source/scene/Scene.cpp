@@ -7,6 +7,7 @@
 #include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
 #include "AxionEngine/Source/physics/PhysicsSystem.h"
 
@@ -97,6 +98,22 @@ namespace Axion {
 			m_physicsAccumulator -= m_physicsTimeStep;
 		}
 
+		// -- Sync hierarchy for kinematic children --
+		auto group = m_registry.group<RelationshipComponent, TransformComponent, RigidBodyComponent>();
+		for (auto entity : group) {
+			auto& [relationship, transform, rb] = group.get<RelationshipComponent, TransformComponent, RigidBodyComponent>(entity);
+
+			if (relationship.parent != entt::null && rb.isKinematic) {
+				Entity parentEntity = { relationship.parent, this };
+
+				if (parentEntity.hasComponent<TransformComponent>()) {
+					Mat4 worldTransform = getWorldTransform(Entity(entity, this));
+					transform.position = worldTransform.getTranslation();
+					transform.rotation = worldTransform.getRotation();
+				}
+			}
+		}
+
 		onUpdate(ts, cam);
 	}
 
@@ -145,12 +162,13 @@ namespace Axion {
 
 			// -- Directional lights --
 			auto dirLightGroup = m_registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
-			for (auto entity : dirLightGroup) {
+			for (auto e : dirLightGroup) {
 				if (lightData.directionalLights.size() >= MAX_DIR_LIGHTS) break;
 
-				auto& [transform, dlc] = dirLightGroup.get<TransformComponent, DirectionalLightComponent>(entity);
-				Mat4 transformMat = transform.getTransform();
-				Vec4 forward = transformMat * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+				auto& dlc = dirLightGroup.get<DirectionalLightComponent>(e);
+
+				Mat4 worldTransform = getWorldTransform({ e, this });
+				Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
 
 				lightData.directionalLights.push_back({
 					{ -forward.x, -forward.y, -forward.z },
@@ -160,13 +178,14 @@ namespace Axion {
 
 			// -- Point lights --
 			auto pointLightGroup = m_registry.group<PointLightComponent>(entt::get<TransformComponent>);
-			for (auto entity : pointLightGroup) {
+			for (auto e : pointLightGroup) {
 				if (lightData.pointLights.size() >= MAX_POINT_LIGHTS) break;
 
-				auto& [transform, plc] = pointLightGroup.get<TransformComponent, PointLightComponent>(entity);
+				auto& plc = pointLightGroup.get<PointLightComponent>(e);
+				Mat4 worldTransform = getWorldTransform({ e, this });
 
 				lightData.pointLights.push_back({
-					transform.position,
+					worldTransform.getTranslation(),
 					plc.color * plc.intensity,
 					plc.radius,
 					plc.falloff
@@ -175,15 +194,16 @@ namespace Axion {
 
 			// -- Spot lights --
 			auto spotLightGroup = m_registry.group<SpotLightComponent>(entt::get<TransformComponent>);
-			for (auto entity : spotLightGroup) {
+			for (auto e : spotLightGroup) {
 				if (lightData.spotLights.size() >= MAX_SPOT_LIGHTS) break;
 
-				auto& [transform, slc] = spotLightGroup.get<TransformComponent, SpotLightComponent>(entity);
-				Mat4 transformMat = transform.getTransform();
-				Vec4 forward = transformMat * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+				auto& slc = spotLightGroup.get<SpotLightComponent>(e);
+
+				Mat4 worldTransform = getWorldTransform({ e, this });
+				Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
 
 				lightData.spotLights.push_back({
-					transform.position,
+					worldTransform.getTranslation(),
 					{ forward.x, forward.y, forward.z },
 					slc.color * slc.intensity,
 					slc.range,
@@ -239,17 +259,20 @@ namespace Axion {
 			std::unordered_map<AssetHandle<Mesh>, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>> renderBatches;
 
 			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent>();
-			for (auto entity : group) {
-				auto& transform = group.get<TransformComponent>(entity);
-				auto& mesh = group.get<MeshComponent>(entity);
-				auto& material = group.get<MaterialComponent>(entity);
+			for (auto e : group) {
+				Entity entity = { e, this };
+
+				auto& mesh = group.get<MeshComponent>(e);
+				auto& material = group.get<MaterialComponent>(e);
 
 				if (mesh.handle.isValid() && material.handle.isValid()) {
 					Ref<Material> matInstance = AssetManager::get<Material>(material.handle);
 
+					Mat4 worldTransform = getWorldTransform(entity);
+
 					ObjectBuffer objData;
 					objData.color = matInstance->getAlbedoColor().toFloat4(); // Optional: Move color out of ObjectBuffer if it's strictly per-material
-					objData.modelMatrix = transform.getTransform().transposed().toXM();
+					objData.modelMatrix = worldTransform.transposed().toXM();
 
 					renderBatches[mesh.handle][material.handle].push_back(objData);
 				}
@@ -270,23 +293,28 @@ namespace Axion {
 
 			Renderer2D::beginScene(cam);
 			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent>);
-			for (auto entity : spriteGroup) {
-				auto& transform = spriteGroup.get<TransformComponent>(entity);
-				auto& sprite = spriteGroup.get<SpriteComponent>(entity);
+			for (auto e : spriteGroup) {
+				auto& sprite = spriteGroup.get<SpriteComponent>(e);
+
+				Mat4 worldTransform = getWorldTransform({ e, this });
+				Vec3 worldPos = worldTransform.getTranslation();
+				Vec3 worldScale = worldTransform.getScale();
+				float worldRotZ = worldTransform.getRotation().toEulerAngles().z;
+
 				if (sprite.texture.isValid()) {
 					Renderer2D::drawQuad(
-						transform.position,
-						{ transform.scale.x, transform.scale.y },
-						transform.rotation.z,
+						worldPos,
+						{ worldScale.x, worldScale.y },
+						worldRotZ,
 						AssetManager::get<Texture2D>(sprite.texture),
 						sprite.tint
 						);
 				}
 				else {
 					Renderer2D::drawQuad(
-						transform.position,
-						{ transform.scale.x, transform.scale.y },
-						transform.rotation.z,
+						worldPos,
+						{ worldScale.x, worldScale.y },
+						worldRotZ,
 						sprite.tint
 					);
 				}
@@ -332,6 +360,18 @@ namespace Axion {
 
 	void Scene::onPhysicsStop() {
 		PhysicsSystem::onSceneStop(this);
+	}
+
+	Mat4 Scene::getWorldTransform(Entity entity) {
+		Mat4 transform = entity.getComponent<TransformComponent>().getTransform();
+
+		Entity currentParent = entity.getParent();
+		while (currentParent) {
+			transform = currentParent.getComponent<TransformComponent>().getTransform() * transform;
+			currentParent = currentParent.getParent();
+		}
+
+		return transform;
 	}
 
 }

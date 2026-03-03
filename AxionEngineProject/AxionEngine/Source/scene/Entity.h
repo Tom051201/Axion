@@ -1,8 +1,10 @@
 #pragma once
 
 #include "AxionEngine/Source/scene/Scene.h"
+#include "AxionEngine/Source/scene/Components.h"
 
 #include "AxionEngine/Vendor/entt/entt.hpp"
+
 
 namespace Axion {
 
@@ -37,6 +39,26 @@ namespace Axion {
 			return m_scene->m_registry.all_of<T>(m_handle);
 		}
 
+		void setParent(Entity parent) {
+			auto& relationship = addOrGetComponent<RelationshipComponent>();
+			relationship.parent = parent.m_handle;
+
+			auto& parentRelationship = parent.addOrGetComponent<RelationshipComponent>();
+			parentRelationship.children.push_back(m_handle);
+		}
+
+		Entity getParent() {
+			if (hasComponent<RelationshipComponent>()) {
+				entt::entity parentHandle = getComponent<RelationshipComponent>().parent;
+				if (parentHandle != entt::null) {
+					return Entity(parentHandle, m_scene);
+				}
+			}
+			return Entity(entt::null, m_scene);
+		}
+
+		bool isValid() const { return m_handle != entt::null; }
+
 		operator bool() const { return m_handle != entt::null; }
 		operator uint32_t() const { return (uint32_t)m_handle; }
 		operator entt::entity() const { return m_handle; }
@@ -47,6 +69,12 @@ namespace Axion {
 
 		entt::entity m_handle{ entt::null };
 		Scene* m_scene = nullptr;
+
+		template<typename T>
+		T& addOrGetComponent() {
+			if (hasComponent<T>()) return getComponent<T>();
+			return addComponent<T>();
+		}
 
 	};
 

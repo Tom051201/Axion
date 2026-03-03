@@ -488,6 +488,18 @@ namespace Axion {
 			return Vec3(x.length(), y.length(), z.length());
 		}
 
+		Quat getRotation() const {
+			DirectX::XMVECTOR scale;
+			DirectX::XMVECTOR rotQuat;
+			DirectX::XMVECTOR translation;
+
+			if (DirectX::XMMatrixDecompose(&scale, &rotQuat, &translation, matrix)) {
+				return Quat::fromXM(rotQuat);
+			}
+
+			return Quat::identity();
+		}
+
 		float* data() {
 			DirectX::XMStoreFloat4x4(&cachedF4x4, matrix);
 			return reinterpret_cast<float*>(&cachedF4x4);

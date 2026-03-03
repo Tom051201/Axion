@@ -21,7 +21,7 @@ namespace Axion {
 
 		Ref<Scene> m_scene;
 
-		static void serializeEntity(YAML::Emitter& out, Entity entity);
+		void serializeEntity(YAML::Emitter& out, Entity entity);
 
 	};
 

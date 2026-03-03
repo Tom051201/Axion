@@ -517,7 +517,7 @@ namespace Axion {
 
 			// ----- Entity transform -----
 			auto& tc = selectedEntity.getComponent<TransformComponent>();
-			Mat4 worldM = tc.getTransform();
+			Mat4 worldM = m_activeScene->getWorldTransform(selectedEntity);
 
 
 			// ----- To float[16] for ImGuizmo -----
@@ -556,12 +556,24 @@ namespace Axion {
 			// ----- Apply changes -----
 			if (ImGuizmo::IsUsing()) {
 				DirectX::XMMATRIX newM = DirectX::XMLoadFloat4x4(reinterpret_cast<DirectX::XMFLOAT4X4*>(object));
-				Mat4 updated = Mat4::fromXM(newM);
-				TRSData trs = updated.decompose();
+				Mat4 updatedWorld = Mat4::fromXM(newM);
 
-				tc.position = trs.translation;
-				tc.rotation = trs.rotation;
-				tc.scale = trs.scale;
+				Entity parent = selectedEntity.getParent();
+				if (parent) {
+					Mat4 parentWorld = m_activeScene->getWorldTransform(parent);
+					Mat4 localM = parentWorld.inverse() * updatedWorld;
+
+					TRSData trs = localM.decompose();
+					tc.position = trs.translation;
+					tc.rotation = trs.rotation;
+					tc.scale = trs.scale;
+				}
+				else {
+					TRSData trs = updatedWorld.decompose();
+					tc.position = trs.translation;
+					tc.rotation = trs.rotation;
+					tc.scale = trs.scale;
+				}
 			}
 
 		}
@@ -811,43 +823,48 @@ namespace Axion {
 		if (selectedEntity) {
 
 			if (selectedEntity.hasComponent<BoxColliderComponent>()) {
-				auto& tc = selectedEntity.getComponent<TransformComponent>();
 				auto& bc = selectedEntity.getComponent<BoxColliderComponent>();
 
-				Vec3 scale = tc.scale;
-				scale.x = std::abs(scale.x);
-				scale.y = std::abs(scale.y);
-				scale.z = std::abs(scale.z);
+				Mat4 worldTransform = m_activeScene->getWorldTransform(selectedEntity);
+				Vec3 worldScale = worldTransform.getScale();
 
-				Mat4 transform = Mat4::TRS(tc.position, tc.rotation, scale);
-				Mat4 colliderTransform = Mat4::scale(bc.halfExtents * 2.0f) * Mat4::translation(bc.offset) * transform;
+				worldScale.x = std::abs(worldScale.x);
+				worldScale.y = std::abs(worldScale.y);
+				worldScale.z = std::abs(worldScale.z);
+
+				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), worldScale);
+				Mat4 colliderTransform = cleanWorldTransform * Mat4::translation(bc.offset) * Mat4::scale(bc.halfExtents * 2.0f);
 
 				drawWireframeBox(colliderTransform, { 0.0f, 1.0f, 0.0f, 1.0f });
 			}
 
 			if (selectedEntity.hasComponent<SphereColliderComponent>()) {
-				auto& tc = selectedEntity.getComponent<TransformComponent>();
 				auto& sc = selectedEntity.getComponent<SphereColliderComponent>();
 
-				float maxScale = std::max(std::abs(tc.scale.x), std::max(std::abs(tc.scale.y), std::abs(tc.scale.z)));
+				Mat4 worldTransform = m_activeScene->getWorldTransform(selectedEntity);
+				Vec3 worldScale = worldTransform.getScale();
+
+				float maxScale = std::max(std::abs(worldScale.x), std::max(std::abs(worldScale.y), std::abs(worldScale.z)));
 				float radius = sc.radius * maxScale;
 
-				Mat4 transform = Mat4::TRS(tc.position, tc.rotation, Vec3::one());
-				Mat4 colliderTransform = transform * Mat4::translation(sc.offset);
+				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), Vec3::one());
+				Mat4 colliderTransform = cleanWorldTransform * Mat4::translation(sc.offset);
 
 				drawWireframeSphere(colliderTransform, radius, { 0.0f, 1.0f, 0.0f, 1.0f });
 			}
 
 			if (selectedEntity.hasComponent<CapsuleColliderComponent>()) {
-				auto& tc = selectedEntity.getComponent<TransformComponent>();
 				auto& cc = selectedEntity.getComponent<CapsuleColliderComponent>();
 
-				float scaleXZ = std::max(std::abs(tc.scale.x), std::abs(tc.scale.z));
-				float radius = cc.radius * scaleXZ;
-				float halfHeight = cc.halfHeight * std::abs(tc.scale.y);
+				Mat4 worldTransform = m_activeScene->getWorldTransform(selectedEntity);
+				Vec3 worldScale = worldTransform.getScale();
 
-				Mat4 transform = Mat4::TRS(tc.position, tc.rotation, Vec3::one());
-				Mat4 colliderTransform = transform * Mat4::translation(cc.offset);
+				float scaleXZ = std::max(std::abs(worldScale.x), std::abs(worldScale.z));
+				float radius = cc.radius * scaleXZ;
+				float halfHeight = cc.halfHeight * std::abs(worldScale.y);
+
+				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), Vec3::one());
+				Mat4 colliderTransform = cleanWorldTransform * Mat4::translation(cc.offset);
 
 				drawWireframeCapsule(colliderTransform, radius, halfHeight, { 0.0f, 1.0f, 0.0f, 1.0f });
 			}

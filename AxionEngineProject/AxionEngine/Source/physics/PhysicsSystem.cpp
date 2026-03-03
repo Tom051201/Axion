@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 
@@ -19,6 +20,142 @@ namespace Axion {
 	static PxDefaultCpuDispatcher* s_dispatcher = nullptr;
 	static PxScene* s_physXScene = nullptr;
 	static PxMaterial* s_defaultMaterial = nullptr;
+
+	static PxFilterFlags AxionSimulatorFilterShader(
+		PxFilterObjectAttributes attributes0, PxFilterData filterData0,
+		PxFilterObjectAttributes attributes1, PxFilterData filterData1,
+		PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+	{
+		pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_CCD;
+		pairFlags |= PxPairFlag::eNOTIFY_CONTACT_POINTS;
+
+		return PxFilterFlag::eDEFAULT;
+	}
+
+	class PhysicsContactListener : public PxSimulationEventCallback {
+	public:
+
+		Scene* currentScene = nullptr;
+
+		void onConstraintBreak(PxConstraintInfo* constraints, PxU32 count) override {}
+		void onWake(PxActor** actors, PxU32 count) override {}
+		void onSleep(PxActor** actors, PxU32 count) override {}
+		void onAdvance(const PxRigidBody* const* bodyBuffer, const PxTransform* poseBuffer, const PxU32 count) override {}
+
+		void onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs) override {
+			if (!currentScene) return;
+
+			entt::entity handleA = (entt::entity)(uintptr_t)pairHeader.actors[0]->userData;
+			entt::entity handleB = (entt::entity)(uintptr_t)pairHeader.actors[1]->userData;
+
+			Entity entityA = { handleA, currentScene };
+			Entity entityB = { handleB, currentScene };
+
+			for (PxU32 i = 0; i < nbPairs; i++) {
+				const PxContactPair& cp = pairs[i];
+
+				Vec3 contactPoint = Vec3::zero();
+				Vec3 contactNormal = Vec3::zero();
+				Vec3 impulse = Vec3::zero();
+
+				if (cp.contactCount > 0) {
+					std::vector<PxContactPairPoint> contactPoints(cp.contactCount);
+					cp.extractContacts(contactPoints.data(), cp.contactCount);
+
+					// -- Only use the primary contact point --
+					contactPoint = { contactPoints[0].position.x, contactPoints[0].position.y, contactPoints[0].position.z };
+					contactNormal = { contactPoints[0].normal.x, contactPoints[0].normal.y, contactPoints[0].normal.z };
+					impulse = { contactPoints[0].impulse.x, contactPoints[0].impulse.y, contactPoints[0].impulse.z };
+				}
+
+				// -- Build collision struct --
+				Collision colA;
+				colA.other = entityB;
+				colA.contactPoint = contactPoint;
+				colA.contactNormal = contactNormal;
+				colA.impulse = impulse;
+
+				Collision colB;
+				colB.other = entityA;
+				colB.contactPoint = contactPoint;
+				colB.contactNormal = { -contactNormal.x, -contactNormal.y, -contactNormal.z };
+				colB.impulse = impulse;
+
+				// -- Dispatch events --
+				if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND) {
+					
+					// -- Notify Entity A that it hit Entity B --
+					if (entityA.hasComponent<NativeScriptComponent>()) {
+						auto& nsc = entityA.getComponent<NativeScriptComponent>();
+						if (nsc.instance) nsc.instance->onCollisionEnter(colA);
+					}
+
+					// -- Notify Entity B that it hit Entity A --
+					if (entityB.hasComponent<NativeScriptComponent>()) {
+						auto& nsc = entityB.getComponent<NativeScriptComponent>();
+						if (nsc.instance) nsc.instance->onCollisionEnter(colB);
+					}
+
+				}
+				else if (cp.events & PxPairFlag::eNOTIFY_TOUCH_LOST) {
+
+					// -- Notify Entity A that it stopped hitting Entity B --
+					if (entityA.hasComponent<NativeScriptComponent>()) {
+						auto& nsc = entityA.getComponent<NativeScriptComponent>();
+						if (nsc.instance) nsc.instance->onCollisionExit(colA);
+					}
+
+					// -- Notify Entity B that it stopped hitting Entity A --
+					if (entityB.hasComponent<NativeScriptComponent>()) {
+						auto& nsc = entityB.getComponent<NativeScriptComponent>();
+						if (nsc.instance) nsc.instance->onCollisionExit(colB);
+					}
+				}
+			}
+		}
+
+		void onTrigger(PxTriggerPair* pairs, PxU32 count) override {
+			if (!currentScene) return;
+
+			for (PxU32 i = 0; i < count; i++) {
+				const PxTriggerPair& tp = pairs[i];
+
+				// -- Ignore deleted shapes --
+				if (tp.flags & (PxTriggerPairFlag::eREMOVED_SHAPE_TRIGGER | PxTriggerPairFlag::eREMOVED_SHAPE_OTHER))
+					continue;
+
+				entt::entity triggerEntityHandle = (entt::entity)(uintptr_t)tp.triggerActor->userData;
+				entt::entity otherEntityHandle = (entt::entity)(uintptr_t)tp.otherActor->userData;
+
+				Entity triggerEntity = { triggerEntityHandle, currentScene };
+				Entity otherEntity = { otherEntityHandle, currentScene };
+
+				if (tp.status == PxPairFlag::eNOTIFY_TOUCH_FOUND) {
+					// -- Notify trigger entity that other entity triggered it --
+					if (triggerEntity.hasComponent<NativeScriptComponent>()) {
+						auto& nsc = triggerEntity.getComponent<NativeScriptComponent>();
+						nsc.instance->onTriggerEnter(otherEntity);
+					}
+				}
+				else if (tp.status == PxPairFlag::eNOTIFY_TOUCH_LOST) {
+					// -- Notify trigger entity that other entity stopped triggering it --
+					if (triggerEntity.hasComponent<NativeScriptComponent>()) {
+						auto& nsc = triggerEntity.getComponent<NativeScriptComponent>();
+						nsc.instance->onTriggerExit(otherEntity);
+					}
+				}
+
+			}
+
+		}
+
+	};
+
+	static PhysicsContactListener s_contactListener;
 
 	PxMaterial* getOrCreatePhysXMaterial(AssetHandle<PhysicsMaterial> handle) {
 		Ref<PhysicsMaterial> phyMatAsset = AssetManager::get<PhysicsMaterial>(handle);
@@ -73,11 +210,16 @@ namespace Axion {
 	}
 
 	void PhysicsSystem::onSceneStart(Scene* scene) {
+		s_contactListener.currentScene = scene;
+
 		PxSceneDesc sceneDesc(s_physics->getTolerancesScale());
 		Vec3 gravity = scene->getGravity();
 		sceneDesc.gravity = PxVec3(gravity.x, gravity.y, gravity.z);
 		sceneDesc.cpuDispatcher = s_dispatcher;
-		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+
+		sceneDesc.filterShader = AxionSimulatorFilterShader; // PxDefaultSimulationFilterShader
+		sceneDesc.simulationEventCallback = &s_contactListener;
+
 		sceneDesc.flags |= PxSceneFlag::eENABLE_CCD;
 
 		s_physXScene = s_physics->createScene(sceneDesc);
@@ -114,6 +256,11 @@ namespace Axion {
 				actor = dynamicActor;
 			}
 
+			// -- Store entt::entity inside for physx --
+			actor->userData = (void*)(uintptr_t)entity;
+
+
+			// -- Setup Box Colliders --
 			if (scene->getRegistry().all_of<BoxColliderComponent>(entity)) {
 				auto& bc = scene->getRegistry().get<BoxColliderComponent>(entity);
 
@@ -138,9 +285,17 @@ namespace Axion {
 				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxBoxGeometry(halfExtents), *material);
 				shape->setLocalPose(PxTransform(offset));
 
+				// -- Trigger setup --
+				if (bc.isTrigger) {
+					shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+					shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+				}
+
 				bc.runtimeShape = shape;
 			}
 
+
+			// -- Setup Sphere Colliders --
 			if (scene->getRegistry().all_of<SphereColliderComponent>(entity)) {
 				auto& sc = scene->getRegistry().get<SphereColliderComponent>(entity);
 
@@ -160,9 +315,17 @@ namespace Axion {
 				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxSphereGeometry(geometryRadius), *material);
 				shape->setLocalPose(PxTransform(offset));
 
+				// -- Trigger setup --
+				if (sc.isTrigger) {
+					shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+					shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+				}
+
 				sc.runtimeShape = shape;
 			}
 
+
+			// -- Setup Capsule Colliders --
 			if (scene->getRegistry().all_of<CapsuleColliderComponent>(entity)) {
 				auto& cc = scene->getRegistry().get<CapsuleColliderComponent>(entity);
 
@@ -187,9 +350,17 @@ namespace Axion {
 
 				shape->setLocalPose(PxTransform(offset, relativeRotation));
 
+				// -- Trigger setup --
+				if (cc.isTrigger) {
+					shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+					shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+				}
+
 				cc.runtimeShape = shape;
 			}
 
+
+			// -- Update Mass for Dynamic bodies --
 			if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
 				PxRigidBodyExt::updateMassAndInertia(*(PxRigidDynamic*)actor, rb.mass);
 			}

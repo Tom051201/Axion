@@ -62,6 +62,8 @@ namespace Axion {
 		const Vec3& getGravity() const { return m_gravity; }
 		Vec3& getGravity() { return m_gravity; }
 
+		Mat4 getWorldTransform(Entity entity);
+
 		void onViewportResized(uint32_t width, uint32_t height);
 
 	private:

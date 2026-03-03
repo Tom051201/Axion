@@ -1,6 +1,24 @@
 Scene: Base Scene
 Skybox: skybox\BlueSkybox.axsky
 Entities:
+  - Entity: dc1bf77799fd94b2fcbd43ec084da998
+    TagComponent:
+      Tag: Child
+    RelationshipComponent:
+      Parent: 4d0a918c5d477a12ebbe2cc93285476d
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+  - Entity: 4d0a918c5d477a12ebbe2cc93285476d
+    TagComponent:
+      Tag: Parent
+    RelationshipComponent:
+      Parent: None
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
   - Entity: c5abc1e49a995213687f84288774e583
     TagComponent:
       Tag: Camera
@@ -77,6 +95,7 @@ Entities:
     BoxColliderComponent:
       HalfExtents: [0.5, 0.5, 0.5]
       Offset: [0, 0, 0]
+      IsTrigger: false
       Material: None
   - Entity: 8aee4a344c5fe14ba2df3fd3cad8016d
     TagComponent:
@@ -216,13 +235,13 @@ Entities:
     TagComponent:
       Tag: Physics Entity
     TransformComponent:
-      Translation: [0.414022714, 5.82856321, -0.580314815]
-      Rotation: [-0.08594767, -0.446343392, 0.168423325, 0.874656618]
-      Scale: [0.999994516, 0.999994636, 0.999995232]
+      Translation: [-1.12089074, 4.29811907, 1.28787327]
+      Rotation: [-0.0859476775, -0.446343392, 0.168423325, 0.874656618]
+      Scale: [0.999994516, 0.999994576, 0.999995232]
     MeshComponent:
-      Path: meshes\Cube.axmesh
+      Path: meshes\Sphere.axmesh
     MaterialComponent:
-      Path: materials\Gray_Metal.axmat
+      Path: materials\PBR.axmat
     RigidBodyComponent:
       BodyType: Dynamic
       Mass: 42
@@ -233,11 +252,11 @@ Entities:
       FixedRotationY: false
       FixedRotationZ: false
       EnableCCD: false
-    CapsuleColliderComponent:
+    SphereColliderComponent:
       Radius: 0.5
-      HalfHeight: 0.5
       Offset: [0, 0, 0]
-      Material: physics\Ice.axpmat
+      IsTrigger: false
+      Material: None
   - Entity: 17dfcd92829e797ce5d298a4b3161094
     TagComponent:
       Tag: Gravity

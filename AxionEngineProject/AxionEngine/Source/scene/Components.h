@@ -9,10 +9,13 @@
 #include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
-#include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
+#include "AxionEngine/Vendor/entt/entt.hpp"
+
 namespace Axion {
+
+	class ScriptableEntity;
 
 	struct UUIDComponent {
 		UUID id;
@@ -21,6 +24,16 @@ namespace Axion {
 		UUIDComponent(const UUIDComponent&) = default;
 		UUIDComponent(UUID id) : id(id) {}
 		UUIDComponent(uint64_t high, uint64_t low) : id(high, low) {}
+	};
+
+
+
+	struct RelationshipComponent {
+		entt::entity parent = entt::null;
+		std::vector<entt::entity> children;
+
+		RelationshipComponent() = default;
+		RelationshipComponent(const RelationshipComponent&) = default;
 	};
 
 
@@ -196,6 +209,7 @@ namespace Axion {
 	struct BoxColliderComponent {
 		Vec3 halfExtents = { 0.5f, 0.5f, 0.5f };
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
+		bool isTrigger = false;
 
 		AssetHandle<PhysicsMaterial> material;
 
@@ -210,6 +224,7 @@ namespace Axion {
 	struct SphereColliderComponent {
 		float radius = 0.5f;
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
+		bool isTrigger = false;
 
 		AssetHandle<PhysicsMaterial> material;
 
@@ -225,6 +240,7 @@ namespace Axion {
 		float radius = 0.5f;
 		float halfHeight = 1.0f;
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
+		bool isTrigger = false;
 
 		AssetHandle<PhysicsMaterial> material;
 
