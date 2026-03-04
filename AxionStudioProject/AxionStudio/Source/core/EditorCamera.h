@@ -31,6 +31,7 @@ namespace Axion {
 		Vec3& getPosition() { return m_position; }
 
 		void setHoveringSceneViewport(bool hovering) { m_hoveringSceneViewport = hovering; }
+		bool isHoveringSceneViewport() const { return m_hoveringSceneViewport; }
 
 	private:
 

@@ -21,7 +21,7 @@ namespace Axion {
 
 		void setContext(const Ref<Scene>& context);
 
-
+		void setSelectedEntity(Entity entity) { m_selectedEntity = entity; }
 		Entity getSelectedEntity() const { return m_selectedEntity; }
 
 	private:

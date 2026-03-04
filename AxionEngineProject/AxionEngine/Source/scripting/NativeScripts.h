@@ -36,4 +36,17 @@ namespace Axion {
 
 	};
 
+	class PhysicsController : public ScriptableEntity {
+	public:
+
+		void onCreate() override {}
+		void onDestroy() override {}
+
+		void onCollisionEnter(const Collision& collision) override {
+			auto& audio = getComponent<AudioComponent>();
+			audio.audio->play();
+		}
+
+	};
+
 }

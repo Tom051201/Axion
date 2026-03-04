@@ -224,10 +224,16 @@ namespace Axion {
 			ImGui::EndDragDropTarget();
 		}
 
-		// ----- Delete and Entity on right click -----
+		// -- On right click --
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
+			// -- Delete entity --
 			if (ImGui::MenuItem("Delete Entity")) { entityDeleted = true; }
+			// -- Add an entity to it as a child --
+			if (ImGui::MenuItem("Add Child")) {
+				Entity child = m_context->createEntity("Child Entity");
+				child.setParent(entity);
+			}
 			ImGui::EndPopup();
 		}
 

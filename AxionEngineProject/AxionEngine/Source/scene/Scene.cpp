@@ -99,7 +99,7 @@ namespace Axion {
 		}
 
 		// -- Sync hierarchy for kinematic children --
-		auto group = m_registry.group<RelationshipComponent, TransformComponent, RigidBodyComponent>();
+		auto group = m_registry.group<RelationshipComponent>(entt::get<TransformComponent, RigidBodyComponent>);
 		for (auto entity : group) {
 			auto& [relationship, transform, rb] = group.get<RelationshipComponent, TransformComponent, RigidBodyComponent>(entity);
 

@@ -216,12 +216,12 @@ namespace Axion {
 			//Ref<Material> mat = AssetManager::get<Material>(matHandle);
 
 			//e.addComponent<MaterialComponent>(matHandle);
-			//e.addComponent<NativeScriptComponent>().bind<CameraController>();
-			//e.addComponent<AudioComponent>();
-			//AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
-			//e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
-			//e.getComponent<AudioComponent>().isSource = true;
-			e.addComponent<CameraComponent>();
+			e.addComponent<NativeScriptComponent>().bind<PhysicsController>();
+			e.addComponent<AudioComponent>();
+			AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
+			e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
+			e.getComponent<AudioComponent>().isSource = true;
+			//e.addComponent<CameraComponent>();
 
 			//e.addComponent<DirectionalLightComponent>();
 		}
@@ -835,7 +835,12 @@ namespace Axion {
 				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), worldScale);
 				Mat4 colliderTransform = cleanWorldTransform * Mat4::translation(bc.offset) * Mat4::scale(bc.halfExtents * 2.0f);
 
-				drawWireframeBox(colliderTransform, { 0.0f, 1.0f, 0.0f, 1.0f });
+				Vec4 color = { 0.0f, 1.0f, 0.0f, 1.0f };
+				if (bc.isTrigger) {
+					color = { 1.0f, 0.57f, 0.0f, 1.0f };
+				}
+
+				drawWireframeBox(colliderTransform, color);
 			}
 
 			if (selectedEntity.hasComponent<SphereColliderComponent>()) {
@@ -850,7 +855,12 @@ namespace Axion {
 				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), Vec3::one());
 				Mat4 colliderTransform = cleanWorldTransform * Mat4::translation(sc.offset);
 
-				drawWireframeSphere(colliderTransform, radius, { 0.0f, 1.0f, 0.0f, 1.0f });
+				Vec4 color = { 0.0f, 1.0f, 0.0f, 1.0f };
+				if (sc.isTrigger) {
+					color = { 1.0f, 0.57f, 0.0f, 1.0f };
+				}
+
+				drawWireframeSphere(colliderTransform, radius, color);
 			}
 
 			if (selectedEntity.hasComponent<CapsuleColliderComponent>()) {
@@ -866,7 +876,12 @@ namespace Axion {
 				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), Vec3::one());
 				Mat4 colliderTransform = cleanWorldTransform * Mat4::translation(cc.offset);
 
-				drawWireframeCapsule(colliderTransform, radius, halfHeight, { 0.0f, 1.0f, 0.0f, 1.0f });
+				Vec4 color = { 0.0f, 1.0f, 0.0f, 1.0f };
+				if (cc.isTrigger) {
+					color = { 1.0f, 0.57f, 0.0f, 1.0f };
+				}
+
+				drawWireframeCapsule(colliderTransform, radius, halfHeight, color);
 			}
 
 		}
