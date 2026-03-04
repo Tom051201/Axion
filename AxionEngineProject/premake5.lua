@@ -35,7 +35,8 @@ project "AxionEngine"
 		"AxionEngine/Vendor/spdlog/include",
 		"AxionEngine/Vendor/d3d12",
 		"AxionEngine/Vendor/yaml-cpp/include",
-		"AxionEngine/Vendor/ImGuizmo"
+		"AxionEngine/Vendor/ImGuizmo",
+		"AxionEngine/Vendor/dotnet/include"
 	}
 	
 	libdirs {}
@@ -49,11 +50,12 @@ project "AxionEngine"
 		"PhysXCooking_64",
 		"PhysXCommon_64",
 		"PhysXExtensions_static_64",
-		"PhysXPvdSDK_static_64"
+		"PhysXPvdSDK_static_64",
+		"AxionEngine/Vendor/dotnet/lib/nethost.lib"
 	}
 
 	filter "files:AxionEngine/Vendor/ImGuizmo/**.cpp"
-		flags { "NoPCH" }
+		enablepch "Off"
 	
 	filter "system:windows"
 		systemversion "latest"

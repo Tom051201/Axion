@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
 #include "AxionEngine/Source/physics/PhysicsSystem.h"
+#include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 namespace Axion {
 
@@ -20,6 +21,9 @@ namespace Axion {
 		m_window = Scope<Window>(Window::create(spec.windowProperties));
 		m_window->setEventCallback(AX_BIND_EVENT_FN(Application::onEvent));
 		m_cursor = Scope<Cursor>(Cursor::create(m_window.get()));
+
+		// -- Setup script engine --
+		ScriptEngine::initialize();
 
 		// Sets startup backend
 		Renderer::setAPI(RendererAPI::DirectX12);
@@ -50,6 +54,8 @@ namespace Axion {
 		PhysicsSystem::shutdown();
 
 		Renderer::shutdown();
+
+		ScriptEngine::shutdown();
 	}
 
 	void Application::onEvent(Event& e) {

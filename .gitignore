@@ -1,6 +1,8 @@
 # Binaries
 **/bin/
 bin-int/
+AxionScripting/AxionScriptCore/bin/
+AxionScripting/AxionScriptCore/obj/
 
 # Visual Studio
 .vs/

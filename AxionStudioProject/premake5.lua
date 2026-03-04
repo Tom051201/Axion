@@ -32,6 +32,10 @@ project "AxionStudio"
 		"AxionAssetPipeline"
 	}
 
+	prebuildcommands {
+		"dotnet build \"%{wks.location}/AxionScripting/AxionScriptCore/AxionScriptCore.csproj\" -c %{cfg.buildcfg}"
+	}
+
 	filter "system:windows"
 		systemversion "latest"
 		buildoptions { "/utf-8" }
@@ -61,10 +65,16 @@ project "AxionStudio"
 
 	filter "configurations:Debug"
 		postbuildcommands {
-			"{COPY} " .. PhysXDir .. "/lib/debug/*.dll %{cfg.buildtarget.directory}"
+			"{COPY} " .. PhysXDir .. "/lib/debug/*.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/dotnet/lib/nethost.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
+			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}"
 		}
 
 	filter "configurations:Release or Distribution"
 		postbuildcommands {
-			"{COPY} " .. PhysXDir .. "/lib/release/*.dll %{cfg.buildtarget.directory}"
+			"{COPY} " .. PhysXDir .. "/lib/release/*.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/dotnet/lib/nethost.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
+			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}"
 		}
