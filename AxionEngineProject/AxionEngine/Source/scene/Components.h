@@ -181,6 +181,19 @@ namespace Axion {
 
 
 
+	struct ScriptComponent {
+		std::string className = "AxionScriptCore.Player";
+
+		void* gcHandle = nullptr;
+		bool isInstantiated = false;
+
+		ScriptComponent() = default;
+		ScriptComponent(const ScriptComponent&) = default;
+		ScriptComponent(const std::string& className) : className(className) {}
+	};
+
+
+
 	struct RigidBodyComponent {
 		enum class BodyType { Static, Dynamic };
 		BodyType type = BodyType::Dynamic;

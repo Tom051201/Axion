@@ -1,6 +1,8 @@
 #include "axpch.h"
 #include "ScriptEngine.h"
 
+#include "AxionEngine/Source/scripting/ScriptGlue.h"
+
 #include <nethost.h>
 #include <coreclr_delegates.h>
 #include <hostfxr.h>
@@ -13,6 +15,16 @@ namespace Axion {
 
 	static hostfxr_handle s_context = nullptr;
 	static load_assembly_and_get_function_pointer_fn s_loadAssemblyAndGetFuncPtr = nullptr;
+
+	static ScriptAPI s_api;
+
+	typedef void*(*createScriptFunc)(uint64_t, uint64_t, const char*);
+	typedef void(*destroyScriptFunc)(void*);
+	typedef void(*updateScriptFunc)(void*, float);
+
+	static createScriptFunc s_createEntityScriptFunc = nullptr;
+	static destroyScriptFunc s_destroyEntityScriptFunc = nullptr;
+	static updateScriptFunc s_updateEntityScriptFunc = nullptr;
 
 	void ScriptEngine::initialize() {
 		bool loadHostSuccess = loadHostFxr();
@@ -47,9 +59,9 @@ namespace Axion {
 		}
 
 		const wchar_t* typeName = L"AxionScriptCore.CoreAPI, AxionScriptCore";	// Namespace.Class, AssemblyName
-		const wchar_t* methodName = L"Init";			// Matches the [UnmanagedCallersOnly] EntryPoint name
+		const wchar_t* methodName = L"Initialize";								// Matches the [UnmanagedCallersOnly] EntryPoint name
 
-		typedef void(*initFunc)();
+		typedef void(*initFunc)(ScriptAPI*);
 		initFunc initEngineFunc = nullptr;
 
 		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, typeName, methodName, UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&initEngineFunc);
@@ -58,8 +70,38 @@ namespace Axion {
 			return;
 		}
 
-		AX_CORE_LOG_INFO("[ScriptEngine] Executing C# Entry point");
-		initEngineFunc();
+		AX_CORE_LOG_INFO("[ScriptEngine] Passing API struct to C#...");
+
+		ScriptGlue::registerComponents(s_api);
+
+		initEngineFunc(&s_api);
+
+		AX_CORE_LOG_INFO("[ScriptEngine] Loading ScriptManager functions...");
+
+		const wchar_t* managerTypeName = L"AxionScriptCore.ScriptManager, AxionScriptCore";
+
+		// -- Load createEntityScript --
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"CreateEntityScript", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_createEntityScriptFunc);
+		if (rc != 0 || s_createEntityScriptFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load CreateEntityScript. Error code: {0:x}", rc);
+			return;
+		}
+
+		// -- Load destroyEntityScript --
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"DestroyEntityScript", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_destroyEntityScriptFunc);
+		if (rc != 0 || s_destroyEntityScriptFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load DestroyEntityScript.");
+			return;
+		}
+
+		// -- Load updateEntityScript --
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"UpdateEntityScript", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_updateEntityScriptFunc);
+		if (rc != 0 || s_updateEntityScriptFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load UpdateEntityScript. Error code: {0:x}", rc);
+			return;
+		}
+
+		AX_CORE_LOG_INFO("[ScriptEngine] ScriptManager loaded successfully!");
 
 	}
 
@@ -92,6 +134,25 @@ namespace Axion {
 		s_closeFnptr = (hostfxr_close_fn)GetProcAddress(lib, "hostfxr_close");
 
 		return s_initFnptr && s_getDelegateFnptr && s_closeFnptr;
+	}
+
+	void* ScriptEngine::createEntityScript(UUID entityID, const char* scriptName) {
+		if (s_createEntityScriptFunc) {
+			return s_createEntityScriptFunc(entityID.high, entityID.low, scriptName);
+		}
+		return nullptr;
+	}
+
+	void ScriptEngine::destroyEntityScript(void* gcHandle) {
+		if (s_destroyEntityScriptFunc && gcHandle != nullptr) {
+			s_destroyEntityScriptFunc(gcHandle);
+		}
+	}
+
+	void ScriptEngine::updateEntityScript(void* gcHandle, float timestep) {
+		if (s_updateEntityScriptFunc && gcHandle != nullptr) {
+			s_updateEntityScriptFunc(gcHandle, timestep);
+		}
 	}
 
 }

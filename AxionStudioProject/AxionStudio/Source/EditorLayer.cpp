@@ -216,12 +216,13 @@ namespace Axion {
 			//Ref<Material> mat = AssetManager::get<Material>(matHandle);
 
 			//e.addComponent<MaterialComponent>(matHandle);
-			e.addComponent<NativeScriptComponent>().bind<PhysicsController>();
+			//e.addComponent<NativeScriptComponent>().bind<PhysicsController>();
 			e.addComponent<AudioComponent>();
 			AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
 			e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
 			e.getComponent<AudioComponent>().isSource = true;
 			//e.addComponent<CameraComponent>();
+			e.addComponent<ScriptComponent>("AxionScriptCore.Player");
 
 			//e.addComponent<DirectionalLightComponent>();
 		}

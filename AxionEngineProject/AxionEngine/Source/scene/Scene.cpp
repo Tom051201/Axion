@@ -10,6 +10,7 @@
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
 #include "AxionEngine/Source/physics/PhysicsSystem.h"
+#include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 namespace Axion {
 
@@ -35,6 +36,17 @@ namespace Axion {
 				if (nsc.instance) {
 					nsc.instance->onDestroy();
 					nsc.destroyScript(&nsc);
+				}
+			}
+		}
+
+		{
+			auto view = m_registry.view<ScriptComponent>();
+			for (auto entity : view) {
+				auto& sc = view.get<ScriptComponent>(entity);
+				if (sc.gcHandle) {
+					ScriptEngine::destroyEntityScript(sc.gcHandle);
+					sc.gcHandle = nullptr;
 				}
 			}
 		}
@@ -73,6 +85,17 @@ namespace Axion {
 				if (nsc.instance) {
 					nsc.instance->onDestroy();
 					nsc.destroyScript(&nsc);
+				}
+			}
+		}
+
+		// -- Destroy C# scripts --
+		for (auto& e : m_entitiesPendingDestroy) {
+			if (m_registry.all_of<ScriptComponent>(e)) {
+				auto& sc = m_registry.get<ScriptComponent>(e);
+				if (sc.gcHandle) {
+					ScriptEngine::destroyEntityScript(sc.gcHandle);
+					sc.gcHandle = nullptr;
 				}
 			}
 		}
@@ -228,6 +251,25 @@ namespace Axion {
 
 					// -- Run the update --
 					nsc.instance->onUpdate(ts);
+				}
+			}
+
+			{
+				auto view = m_registry.view<ScriptComponent>();
+				for (auto e : view) {
+					auto& sc = view.get<ScriptComponent>(e);
+
+					if (!sc.isInstantiated) {
+						UUID entityID = m_registry.get<UUIDComponent>(e).id;
+
+						sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
+						sc.isInstantiated = true;
+					}
+
+					if (sc.gcHandle) {
+						ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
+					}
+
 				}
 			}
 
