@@ -15,6 +15,13 @@ namespace Axion {
 		Vec3 impulse;
 	};
 
+	struct RaycastHit {
+		Entity entity;
+		Vec3 position;
+		Vec3 normal;
+		float distance;
+	};
+
 	class PhysicsSystem {
 	public:
 
@@ -26,6 +33,8 @@ namespace Axion {
 
 		static void step(Scene* scene, Timestep ts);
 		static void destroyBody(Entity entity);
+
+		static bool raycast(Scene* scene, const Vec3& origin, const Vec3& direction, float maxDistance, RaycastHit* outHit);
 
 	};
 

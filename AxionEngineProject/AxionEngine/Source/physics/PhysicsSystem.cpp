@@ -612,4 +612,31 @@ namespace Axion {
 
 	}
 
+	bool PhysicsSystem::raycast(Scene* scene, const Vec3& origin, const Vec3& direction, float maxDistance, RaycastHit* outHit) {
+		if (!s_physXScene) return false;
+
+		PxVec3 pxOrigin(origin.x, origin.y, origin.z);
+		PxVec3 pxDir(direction.x, direction.y, direction.z);
+		pxDir.normalize();
+
+		PxRaycastBuffer hit;
+		if (s_physXScene->raycast(pxOrigin, pxDir, maxDistance, hit)) {
+			if (outHit) {
+				outHit->position = { hit.block.position.x, hit.block.position.y, hit.block.position.z };
+				outHit->normal = { hit.block.normal.x, hit.block.normal.y, hit.block.normal.z };
+				outHit->distance = hit.block.distance;
+
+				if (hit.block.actor) {
+					entt::entity handle = (entt::entity)(uintptr_t)hit.block.actor->userData;
+					outHit->entity = { handle, scene };
+				}
+				else {
+					outHit->entity = {};
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 }

@@ -30,6 +30,7 @@ namespace Axion {
 		void(*rigidbody_setAngularVelocity)(uint64_t, uint64_t, float*);
 		float(*rigidbody_getMass)(uint64_t, uint64_t);
 		void(*rigidbody_setMass)(uint64_t, uint64_t, float);
+		uint8_t(*physics_raycast)(float*, float*, float, uint64_t*, uint64_t*, float*, float*, float*);
 
 		// -- AUDIO --
 		void(*audio_play)(uint64_t, uint64_t);

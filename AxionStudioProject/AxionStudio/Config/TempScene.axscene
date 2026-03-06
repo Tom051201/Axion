@@ -54,6 +54,16 @@ Entities:
         MinDistance: 1
         MaxDistance: 100
         DopplerFactor: 1
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      ProjectionType: Perspective
+      PerspectiveFOV: 0.785398185
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 100
+      OrthographicSize: 10
+      OrthographicNear: -1
+      OrthographicFar: 1
     RigidBodyComponent:
       BodyType: Dynamic
       Mass: 1
@@ -91,7 +101,7 @@ Entities:
       Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
     CameraComponent:
-      Primary: true
+      Primary: false
       FixedAspectRatio: false
       ProjectionType: Perspective
       PerspectiveFOV: 0.785398185

@@ -26,6 +26,17 @@ namespace AxionScriptCore {
 				if (bullet != null) {
 					bullet.Transform.Position = new Vector3(Transform.Position.X, Transform.Position.Y, Transform.Position.Z + 2.0f);
 				}
+
+				Vector3 forward = new Vector3(0, 0, 1);
+
+				if (Physics.Raycast(Transform.Position, forward, 1000.0f, out RaycastHit hit)) {
+					Console.WriteLine($"[C#] Raycast Hit! Entity: {hit.Entity?.ID}");
+					Console.WriteLine($"[C#] Hit Distance: {hit.Distance}");
+					Console.WriteLine($"[C#] Hit Position: {hit.Position.X}, {hit.Position.Y}, {hit.Position.Z}");
+
+					// Optional: If you shot a rigidbody, launch it into the air!
+					hit.Entity?.RigidBody?.AddForce(new Vector3(0, 10.0f, 0), ForceMode.Impulse);
+				}
 			}
 
 		}

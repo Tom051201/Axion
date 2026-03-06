@@ -163,6 +163,35 @@ namespace Axion {
 			}
 		}
 
+		extern "C" uint8_t physics_raycast(float* origin, float* direction, float maxDistance, uint64_t* outIdHi, uint64_t* outIdLo, float* outPos, float* outNormal, float* outDistance) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene) return 0;
+
+			RaycastHit hit;
+			if (PhysicsSystem::raycast(scene, Vec3(origin[0], origin[1], origin[2]), Vec3(direction[0], direction[1], direction[2]), maxDistance, &hit)) {
+				if (hit.entity.isValid()) {
+					UUID id = hit.entity.getComponent<UUIDComponent>().id;
+					*outIdHi = id.high;
+					*outIdLo = id.low;
+				}
+				else {
+					*outIdHi = 0;
+					*outIdLo = 0;
+				}
+
+				outPos[0] = hit.position.x;
+				outPos[1] = hit.position.y;
+				outPos[2] = hit.position.z;
+				outNormal[0] = hit.normal.x;
+				outNormal[1] = hit.normal.y;
+				outNormal[2] = hit.normal.z;
+				*outDistance = hit.distance;
+
+				return 1;
+			}
+			return 0;
+		}
+
 
 		// -- AUDIO --
 		extern "C" void audio_play(uint64_t uuidHi, uint64_t uuidLo) {
@@ -325,6 +354,7 @@ namespace Axion {
 		REGISTER_API(apiStruct, rigidbody_setAngularVelocity);
 		REGISTER_API(apiStruct, rigidbody_getMass);
 		REGISTER_API(apiStruct, rigidbody_setMass);
+		REGISTER_API(apiStruct, physics_raycast);
 
 		// -- AUDIO --
 		REGISTER_API(apiStruct, audio_play);
