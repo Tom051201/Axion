@@ -15,7 +15,7 @@ namespace Axion {
 	public:
 
 		static void addForce(Entity entity, const Vec3& force, ForceMode mode = ForceMode::Force);
-		static void addTorgue(Entity entity, const Vec3& torgue, ForceMode mode = ForceMode::Force);
+		static void addTorque(Entity entity, const Vec3& torque, ForceMode mode = ForceMode::Force);
 		static void addRadialImpulse(Entity entity, const Vec3& origin, float radius, float strength);
 
 		static void setLinearVelocity(Entity entity, const Vec3& velocity);

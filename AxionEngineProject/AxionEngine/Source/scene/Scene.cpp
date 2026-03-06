@@ -51,6 +51,8 @@ namespace Axion {
 			}
 		}
 
+		m_entityMap.clear();
+
 	}
 
 	Entity Scene::createEntity() {
@@ -66,7 +68,9 @@ namespace Axion {
 	}
 
 	Entity Scene::createEntityWithUUID(const std::string& tag, UUID id) {
-		Entity entity = { m_registry.create(), this };
+		entt::entity handle = m_registry.create();
+		Entity entity = { handle, this };
+		m_entityMap[id] = handle;
 		entity.addComponent<UUIDComponent>(id);
 		entity.addComponent<TagComponent>(tag);
 		entity.addComponent<TransformComponent>();
@@ -100,6 +104,14 @@ namespace Axion {
 			}
 		}
 
+		// -- Remove from map --
+		for (auto& e : m_entitiesPendingDestroy) {
+			if (m_registry.all_of<UUIDComponent>(e)) {
+				auto& idc = m_registry.get<UUIDComponent>(e);
+				m_entityMap.erase(idc.id);
+			}
+		}
+
 		// -- Destroy entities --
 		for (auto& e : m_entitiesPendingDestroy) {
 			m_registry.destroy(e);
@@ -111,6 +123,7 @@ namespace Axion {
 			fn();
 		}
 		m_componentsPendingRemove.clear();
+
 	}
 
 	void Scene::onUpdateSimulation(Timestep ts, const Camera& cam) {
@@ -137,6 +150,35 @@ namespace Axion {
 			}
 		}
 
+		{
+			// -- Native Scripts --
+			auto nativeView = m_registry.view<NativeScriptComponent>();
+			for (auto entity : nativeView) {
+				auto& nsc = nativeView.get<NativeScriptComponent>(entity);
+				if (!nsc.instance) {
+					nsc.instance = nsc.instantiateScript();
+					nsc.instance->m_entity = Entity{ entity, this };
+					nsc.instance->onCreate();
+				}
+				nsc.instance->onUpdate(ts);
+			}
+
+			// -- C# Scripts --
+			ScriptEngine::setSceneContext(this);
+			auto scriptView = m_registry.view<ScriptComponent>();
+			for (auto e : scriptView) {
+				auto& sc = scriptView.get<ScriptComponent>(e);
+				if (!sc.isInstantiated) {
+					UUID entityID = m_registry.get<UUIDComponent>(e).id;
+					sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
+					sc.isInstantiated = true;
+				}
+				if (sc.gcHandle) {
+					ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
+				}
+			}
+		}
+
 		onUpdate(ts, cam);
 	}
 
@@ -148,7 +190,34 @@ namespace Axion {
 			m_physicsAccumulator -= m_physicsTimeStep;
 		}
 
-		
+		{
+			// -- Native Scripts --
+			auto nativeView = m_registry.view<NativeScriptComponent>();
+			for (auto entity : nativeView) {
+				auto& nsc = nativeView.get<NativeScriptComponent>(entity);
+				if (!nsc.instance) {
+					nsc.instance = nsc.instantiateScript();
+					nsc.instance->m_entity = Entity{ entity, this };
+					nsc.instance->onCreate();
+				}
+				nsc.instance->onUpdate(ts);
+			}
+
+			// -- C# Scripts --
+			ScriptEngine::setSceneContext(this);
+			auto scriptView = m_registry.view<ScriptComponent>();
+			for (auto e : scriptView) {
+				auto& sc = scriptView.get<ScriptComponent>(e);
+				if (!sc.isInstantiated) {
+					UUID entityID = m_registry.get<UUIDComponent>(e).id;
+					sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
+					sc.isInstantiated = true;
+				}
+				if (sc.gcHandle) {
+					ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
+				}
+			}
+		}
 
 		Camera* primaryCamera = nullptr;
 		Mat4 cameraTransform;
@@ -237,41 +306,7 @@ namespace Axion {
 
 			Renderer3D::beginScene(cam, lightData);
 
-			{
-				auto view = m_registry.view<NativeScriptComponent>();
-				for (auto entity : view) {
-					auto& nsc = view.get<NativeScriptComponent>(entity);
 
-					// -- Instantiate if it hasn't been yet --
-					if (!nsc.instance) {
-						nsc.instance = nsc.instantiateScript();
-						nsc.instance->m_entity = Entity{ entity, this };
-						nsc.instance->onCreate();
-					}
-
-					// -- Run the update --
-					nsc.instance->onUpdate(ts);
-				}
-			}
-
-			{
-				auto view = m_registry.view<ScriptComponent>();
-				for (auto e : view) {
-					auto& sc = view.get<ScriptComponent>(e);
-
-					if (!sc.isInstantiated) {
-						UUID entityID = m_registry.get<UUIDComponent>(e).id;
-
-						sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
-						sc.isInstantiated = true;
-					}
-
-					if (sc.gcHandle) {
-						ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
-					}
-
-				}
-			}
 
 			// ----- Spatial Audio Listener -----
 			DirectX::XMFLOAT4X4 m;
@@ -414,6 +449,13 @@ namespace Axion {
 		}
 
 		return transform;
+	}
+
+	Entity Scene::getEntityByUUID(UUID uuid) {
+		if (m_entityMap.find(uuid) != m_entityMap.end()) {
+			return { m_entityMap[uuid], this };
+		}
+		return {};
 	}
 
 }

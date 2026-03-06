@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 #include "AxionEngine/Vendor/physx/include/PxPhysicsAPI.h"
 
@@ -93,11 +94,19 @@ namespace Axion {
 						auto& nsc = entityA.getComponent<NativeScriptComponent>();
 						if (nsc.instance) nsc.instance->onCollisionEnter(colA);
 					}
+					if (entityA.hasComponent<ScriptComponent>()) {
+						auto& sc = entityA.getComponent<ScriptComponent>();
+						if (sc.isInstantiated) ScriptEngine::onCollisionEnter(sc.gcHandle, colA);
+					}
 
 					// -- Notify Entity B that it hit Entity A --
 					if (entityB.hasComponent<NativeScriptComponent>()) {
 						auto& nsc = entityB.getComponent<NativeScriptComponent>();
 						if (nsc.instance) nsc.instance->onCollisionEnter(colB);
+					}
+					if (entityB.hasComponent<ScriptComponent>()) {
+						auto& sc = entityB.getComponent<ScriptComponent>();
+						if (sc.isInstantiated) ScriptEngine::onCollisionEnter(sc.gcHandle, colB);
 					}
 
 				}
@@ -108,12 +117,21 @@ namespace Axion {
 						auto& nsc = entityA.getComponent<NativeScriptComponent>();
 						if (nsc.instance) nsc.instance->onCollisionExit(colA);
 					}
+					if (entityA.hasComponent<ScriptComponent>()) {
+						auto& sc = entityA.getComponent<ScriptComponent>();
+						if (sc.isInstantiated) ScriptEngine::onCollisionExit(sc.gcHandle, colA);
+					}
 
 					// -- Notify Entity B that it stopped hitting Entity A --
 					if (entityB.hasComponent<NativeScriptComponent>()) {
 						auto& nsc = entityB.getComponent<NativeScriptComponent>();
 						if (nsc.instance) nsc.instance->onCollisionExit(colB);
 					}
+					if (entityB.hasComponent<ScriptComponent>()) {
+						auto& sc = entityB.getComponent<ScriptComponent>();
+						if (sc.isInstantiated) ScriptEngine::onCollisionExit(sc.gcHandle, colB);
+					}
+
 				}
 			}
 		}

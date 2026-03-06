@@ -262,6 +262,15 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
+		// -- ScriptComponent --
+		if (entity.hasComponent<ScriptComponent>()) {
+			out << YAML::Key << "ScriptComponent";
+			out << YAML::BeginMap;
+			auto& sc = entity.getComponent<ScriptComponent>();
+			out << YAML::Key << "ClassName" << YAML::Value << sc.className;
+			out << YAML::EndMap;
+		}
+
 		out << YAML::EndMap; // Entity
 	}
 
@@ -570,6 +579,13 @@ namespace Axion {
 					gsc.strength = gravitySourceComponent["Strength"].as<float>();
 					gsc.radius = gravitySourceComponent["Radius"].as<float>();
 					gsc.affectKinematic = gravitySourceComponent["AffectKinematic"].as<bool>();
+				}
+
+				// -- ScriptComponent --
+				auto scriptComponent = entity["ScriptComponent"];
+				if (scriptComponent) {
+					auto& sc = deserializedEntity.addComponent<ScriptComponent>();
+					sc.className = scriptComponent["ClassName"].as<std::string>();
 				}
 
 			}

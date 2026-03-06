@@ -2,6 +2,7 @@
 #include "ScriptEngine.h"
 
 #include "AxionEngine/Source/scripting/ScriptGlue.h"
+#include "AxionEngine/Source/scene/Scene.h"
 
 #include <nethost.h>
 #include <coreclr_delegates.h>
@@ -9,6 +10,8 @@
 
 namespace Axion {
 	
+	Scene* ScriptEngine::s_sceneContext = nullptr;
+
 	static hostfxr_initialize_for_runtime_config_fn s_initFnptr = nullptr;
 	static hostfxr_get_runtime_delegate_fn s_getDelegateFnptr = nullptr;
 	static hostfxr_close_fn s_closeFnptr = nullptr;
@@ -22,9 +25,22 @@ namespace Axion {
 	typedef void(*destroyScriptFunc)(void*);
 	typedef void(*updateScriptFunc)(void*, float);
 
+	struct CSharpCollision {
+		uint64_t entityIdHigh;
+		uint64_t entityIdLow;
+		float contactPoint[3];
+		float contactNormal[3];
+		float impulse[3];
+	};
+
+	typedef void(*collisionFunc)(void*, CSharpCollision*);
+
 	static createScriptFunc s_createEntityScriptFunc = nullptr;
 	static destroyScriptFunc s_destroyEntityScriptFunc = nullptr;
 	static updateScriptFunc s_updateEntityScriptFunc = nullptr;
+
+	static collisionFunc s_onCollisionEnterFunc = nullptr;
+	static collisionFunc s_onCollisionExitFunc = nullptr;
 
 	void ScriptEngine::initialize() {
 		bool loadHostSuccess = loadHostFxr();
@@ -101,6 +117,18 @@ namespace Axion {
 			return;
 		}
 
+		// -- Load OnCollisionEnter --
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"OnCollisionEnterScript", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_onCollisionEnterFunc);
+		if (rc != 0 || s_onCollisionEnterFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load OnCollisionEnterScript.");
+		}
+
+		// -- Load OnCollisionExit --
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"OnCollisionExitScript", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_onCollisionExitFunc);
+		if (rc != 0 || s_onCollisionExitFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load OnCollisionExitScript.");
+		}
+
 		AX_CORE_LOG_INFO("[ScriptEngine] ScriptManager loaded successfully!");
 
 	}
@@ -153,6 +181,42 @@ namespace Axion {
 		if (s_updateEntityScriptFunc && gcHandle != nullptr) {
 			s_updateEntityScriptFunc(gcHandle, timestep);
 		}
+	}
+
+	void ScriptEngine::onCollisionEnter(void* gcHandle, Collision& collision) {
+		if (s_onCollisionEnterFunc && gcHandle != nullptr) {
+
+			CSharpCollision csharpCol;
+			csharpCol.entityIdHigh = collision.other.getComponent<UUIDComponent>().id.high;
+			csharpCol.entityIdLow = collision.other.getComponent<UUIDComponent>().id.low;
+			csharpCol.contactPoint[0] = collision.contactPoint.x; csharpCol.contactPoint[1] = collision.contactPoint.y; csharpCol.contactPoint[2] = collision.contactPoint.z;
+			csharpCol.contactNormal[0] = collision.contactNormal.x; csharpCol.contactNormal[1] = collision.contactNormal.y; csharpCol.contactNormal[2] = collision.contactNormal.z;
+			csharpCol.impulse[0] = collision.impulse.x; csharpCol.impulse[1] = collision.impulse.y; csharpCol.impulse[2] = collision.impulse.z;
+
+			s_onCollisionEnterFunc(gcHandle, &csharpCol);
+		}
+	}
+
+	void ScriptEngine::onCollisionExit(void* gcHandle, Collision& collision) {
+		if (s_onCollisionEnterFunc && gcHandle != nullptr) {
+
+			CSharpCollision csharpCol;
+			csharpCol.entityIdHigh = collision.other.getComponent<UUIDComponent>().id.high;
+			csharpCol.entityIdLow = collision.other.getComponent<UUIDComponent>().id.low;
+			csharpCol.contactPoint[0] = collision.contactPoint.x; csharpCol.contactPoint[1] = collision.contactPoint.y; csharpCol.contactPoint[2] = collision.contactPoint.z;
+			csharpCol.contactNormal[0] = collision.contactNormal.x; csharpCol.contactNormal[1] = collision.contactNormal.y; csharpCol.contactNormal[2] = collision.contactNormal.z;
+			csharpCol.impulse[0] = collision.impulse.x; csharpCol.impulse[1] = collision.impulse.y; csharpCol.impulse[2] = collision.impulse.z;
+
+			s_onCollisionExitFunc(gcHandle, &csharpCol);
+		}
+	}
+
+	void ScriptEngine::setSceneContext(Scene* scene) {
+		s_sceneContext = scene;
+	}
+
+	Scene* ScriptEngine::getSceneContext() {
+		return s_sceneContext;
 	}
 
 }

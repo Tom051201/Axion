@@ -29,7 +29,7 @@ namespace Axion {
 		}
 	}
 
-	void Physics::addTorgue(Entity entity, const Vec3& torgue, ForceMode mode) {
+	void Physics::addTorque(Entity entity, const Vec3& torque, ForceMode mode) {
 		if (!entity.hasComponent<RigidBodyComponent>()) return;
 
 		auto& rb = entity.getComponent<RigidBodyComponent>();
@@ -37,7 +37,7 @@ namespace Axion {
 		if (rb.type == RigidBodyComponent::BodyType::Dynamic && rb.runtimeActor) {
 			physx::PxRigidDynamic* actor = static_cast<physx::PxRigidDynamic*>(rb.runtimeActor);
 
-			actor->addTorque(physx::PxVec3(torgue.x, torgue.y, torgue.z), getPhysXForceMode(mode));
+			actor->addTorque(physx::PxVec3(torque.x, torque.y, torque.z), getPhysXForceMode(mode));
 		}
 	}
 

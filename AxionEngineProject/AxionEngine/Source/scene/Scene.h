@@ -66,10 +66,13 @@ namespace Axion {
 
 		void onViewportResized(uint32_t width, uint32_t height);
 
+		Entity getEntityByUUID(UUID id);
+
 	private:
 
 		std::string m_title = "Untitled";
 		entt::registry m_registry;
+		std::unordered_map<UUID, entt::entity> m_entityMap;
 
 		std::vector<Entity> m_entitiesPendingDestroy;
 		std::vector<std::function<void()>> m_componentsPendingRemove;

@@ -310,7 +310,8 @@ namespace Axion {
 			m_selectedEntity.hasComponent<BoxColliderComponent>() &&
 			m_selectedEntity.hasComponent<SphereColliderComponent>() &&
 			m_selectedEntity.hasComponent<CapsuleColliderComponent>() &&
-			m_selectedEntity.hasComponent<GravitySourceComponent>();
+			m_selectedEntity.hasComponent<GravitySourceComponent>() &&
+			m_selectedEntity.hasComponent<ScriptComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -354,6 +355,7 @@ namespace Axion {
 			}
 
 			drawAddComponent<NativeScriptComponent>("Native Script");
+			drawAddComponent<ScriptComponent>("C# Script");
 
 			ImGui::EndPopup();
 		}
@@ -1437,10 +1439,50 @@ namespace Axion {
 				ImGui::EndTable();
 			}
 
-			});
+		});
 
 		// ----- NativeScriptComponent -----
 		drawComponentInfo<NativeScriptComponent>("Native Script", m_selectedEntity, [this]() {
+
+		});
+
+		// -- C# ScriptComponent --
+		drawComponentInfo<ScriptComponent>("C# Script", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<ScriptComponent>();
+
+			if (ImGui::BeginTable("ScriptComponentTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Class Name --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Class Name");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+
+				char buffer[256];
+				memset(buffer, 0, sizeof(buffer));
+				strncpy_s(buffer, sizeof(buffer), component.className.c_str(), sizeof(buffer));
+
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				if (ImGui::InputText("##ScriptClassName", buffer, sizeof(buffer))) {
+					component.className = std::string(buffer);
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("State");
+				ImGui::TableSetColumnIndex(1);
+				if (component.isInstantiated) {
+					ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Running");
+				}
+				else {
+					ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Waiting to start");
+				}
+
+				ImGui::EndTable();
+			}
 
 		});
 
