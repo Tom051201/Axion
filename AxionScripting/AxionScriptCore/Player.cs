@@ -4,6 +4,9 @@ namespace AxionScriptCore {
 
 	public class Player : Entity {
 
+		public float MoveSpeed = 5.0f;
+		public Vector3 SpawnOffset = new Vector3(0, 0, 2.0f);
+
 		private float m_FireTimer = 0.0f;
 
 		public override void OnCreate() {
@@ -19,7 +22,7 @@ namespace AxionScriptCore {
 			}
 
 			// Shooting
-			if (Input.IsMouseButtonPressed(MouseButton.Left) && m_FireTimer >= 0.5f) {
+			if (Input.IsMouseButtonPressed(MouseButton.Right) && m_FireTimer >= 0.5f) {
 				m_FireTimer = 0.0f;
 
 				Entity bullet = Entity.InstantiatePrefab("prefabs/Bullet.axprefab");
@@ -28,15 +31,6 @@ namespace AxionScriptCore {
 				}
 
 				Vector3 forward = new Vector3(0, 0, 1);
-
-				if (Physics.Raycast(Transform.Position, forward, 1000.0f, out RaycastHit hit)) {
-					Console.WriteLine($"[C#] Raycast Hit! Entity: {hit.Entity?.ID}");
-					Console.WriteLine($"[C#] Hit Distance: {hit.Distance}");
-					Console.WriteLine($"[C#] Hit Position: {hit.Position.X}, {hit.Position.Y}, {hit.Position.Z}");
-
-					// Optional: If you shot a rigidbody, launch it into the air!
-					hit.Entity?.RigidBody?.AddForce(new Vector3(0, 10.0f, 0), ForceMode.Impulse);
-				}
 			}
 
 		}

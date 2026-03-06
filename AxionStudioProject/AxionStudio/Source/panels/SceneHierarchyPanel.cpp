@@ -11,6 +11,7 @@
 #include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 
@@ -1473,6 +1474,7 @@ namespace Axion {
 					component.className = std::string(buffer);
 				}
 
+				// -- State --
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
 				ImGui::Text("State");
@@ -1482,6 +1484,70 @@ namespace Axion {
 				}
 				else {
 					ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Waiting to start");
+				}
+
+				// -- Metadata --
+				const auto& fields = ScriptEngine::getScriptFields(component.className);
+
+				if (!fields.empty()) {
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "--- Script Variables ---");
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text("");
+
+					// -- PLAY MODE: Read and write live --
+					if (component.isInstantiated && component.gcHandle) {
+						for (const auto& field : fields) {
+							ImGui::TableNextRow();
+							ImGui::TableSetColumnIndex(0);
+							ImGui::Text(field.name.c_str());
+							ImGui::TableSetColumnIndex(1);
+
+							std::string id = "##" + field.name;
+
+							if (field.type == ScriptFieldType::Float) {
+								float value = ScriptEngine::getFieldValueFloat(component.gcHandle, field.name);
+								ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+								if (ImGui::DragFloat(id.c_str(), &value, 0.1f)) {
+									ScriptEngine::setFieldValueFloat(component.gcHandle, field.name, value);
+								}
+							}
+							else if (field.type == ScriptFieldType::Vector3) {
+								Vec3 value = ScriptEngine::getFieldValueVector3(component.gcHandle, field.name);
+								float valArray[3] = { value.x, value.y, value.z };
+								ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+								if (ImGui::DragFloat3(id.c_str(), valArray, 0.1f)) {
+									ScriptEngine::setFieldValueVector3(component.gcHandle, field.name, Vec3(valArray[0], valArray[1], valArray[2]));
+								}
+							}
+						}
+					}
+
+					// -- EDIT MODE: Show them, but disable editing --
+					else {
+						ImGui::BeginDisabled();
+						for (const auto& field : fields) {
+							ImGui::TableNextRow();
+							ImGui::TableSetColumnIndex(0);
+							ImGui::Text(field.name.c_str());
+							ImGui::TableSetColumnIndex(1);
+
+							std::string id = "##" + field.name;
+
+							if (field.type == ScriptFieldType::Float) {
+								float dummy = 0.0f;
+								ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+								ImGui::DragFloat(id.c_str(), &dummy);
+							}
+							else if (field.type == ScriptFieldType::Vector3) {
+								float dummy[3] = { 0.0f, 0.0f, 0.0f };
+								ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+								ImGui::DragFloat3(id.c_str(), dummy);
+							}
+						}
+						ImGui::EndDisabled();
+					}
 				}
 
 				ImGui::EndTable();

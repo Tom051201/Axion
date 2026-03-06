@@ -319,6 +319,12 @@ namespace Axion {
 			}
 		}
 
+
+		// -- REFLECTION --
+		extern "C" void script_registerField(const char* className, const char* fieldName, int type) {
+			ScriptEngine::registerScriptField(className, fieldName, static_cast<ScriptFieldType>(type));
+		}
+
 	}
 
 
@@ -370,6 +376,9 @@ namespace Axion {
 		REGISTER_API(apiStruct, entity_destroy);
 		REGISTER_API(apiStruct, entity_addComponent);
 		REGISTER_API(apiStruct, entity_addScript);
+
+		// -- REFLECTION --
+		REGISTER_API(apiStruct, script_registerField);
 
 
 		AX_CORE_LOG_TRACE("[ScriptGlue] All internal C++ functions registered to C#!");

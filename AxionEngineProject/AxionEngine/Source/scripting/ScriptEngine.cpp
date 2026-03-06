@@ -11,6 +11,7 @@
 namespace Axion {
 	
 	Scene* ScriptEngine::s_sceneContext = nullptr;
+	std::unordered_map<std::string, std::vector<ScriptField>> ScriptEngine::s_scriptMetadata;
 
 	static hostfxr_initialize_for_runtime_config_fn s_initFnptr = nullptr;
 	static hostfxr_get_runtime_delegate_fn s_getDelegateFnptr = nullptr;
@@ -33,7 +34,12 @@ namespace Axion {
 	typedef void(*destroyScriptFunc)(void*);
 	typedef void(*updateScriptFunc)(void*, float);
 	typedef void(*collisionFunc)(void*, CSharpCollision*);
-	typedef void (*updateTimeFunc)(float);
+	typedef void(*updateTimeFunc)(float);
+	typedef void(*generateMetadataFunc)();
+	typedef float(*getFloatFunc)(void*, const char*);
+	typedef void(*setFloatFunc)(void*, const char*, float);
+	typedef void(*getVec3Func)(void*, const char*, float*);
+	typedef void(*setVec3Func)(void*, const char*, float*);
 
 	static createScriptFunc s_createEntityScriptFunc = nullptr;
 	static destroyScriptFunc s_destroyEntityScriptFunc = nullptr;
@@ -41,6 +47,11 @@ namespace Axion {
 	static collisionFunc s_onCollisionEnterFunc = nullptr;
 	static collisionFunc s_onCollisionExitFunc = nullptr;
 	static updateTimeFunc s_updateTimeFunc = nullptr;
+	static generateMetadataFunc s_generateMetadataFunc = nullptr;
+	static getFloatFunc s_getFloatFunc = nullptr;
+	static setFloatFunc s_setFloatFunc = nullptr;
+	static getVec3Func s_getVec3Func = nullptr;
+	static setVec3Func s_setVec3Func = nullptr;
 
 	void ScriptEngine::initialize() {
 		bool loadHostSuccess = loadHostFxr();
@@ -135,6 +146,16 @@ namespace Axion {
 			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load UpdateDeltaTime.");
 		}
 
+		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"GenerateScriptMetadata", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_generateMetadataFunc);
+		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"GetFieldValue_Float", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_getFloatFunc);
+		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"SetFieldValue_Float", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_setFloatFunc);
+		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"GetFieldValue_Vector3", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_getVec3Func);
+		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"SetFieldValue_Vector3", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_setVec3Func);
+
+		if (s_generateMetadataFunc) {
+			s_generateMetadataFunc();
+		}
+
 		AX_CORE_LOG_INFO("[ScriptEngine] ScriptManager loaded successfully!");
 
 	}
@@ -221,6 +242,36 @@ namespace Axion {
 		if (s_updateTimeFunc) {
 			s_updateTimeFunc(deltaTime);
 		}
+	}
+
+	void ScriptEngine::registerScriptField(const std::string& className, const std::string& fieldName, ScriptFieldType type) {
+		s_scriptMetadata[className].push_back({ fieldName, type });
+	}
+
+	const std::vector<ScriptField>& ScriptEngine::getScriptFields(const std::string& className) {
+		static std::vector<ScriptField> empty;
+		auto it = s_scriptMetadata.find(className);
+		return it != s_scriptMetadata.end() ? it->second : empty;
+	}
+
+	float ScriptEngine::getFieldValueFloat(void* gcHandle, const std::string& fieldName) {
+		if (s_getFloatFunc) return s_getFloatFunc(gcHandle, fieldName.c_str());
+		return 0.0f;
+	}
+
+	void ScriptEngine::setFieldValueFloat(void* gcHandle, const std::string& fieldName, float value) {
+		if (s_setFloatFunc) s_setFloatFunc(gcHandle, fieldName.c_str(), value);
+	}
+
+	Vec3 ScriptEngine::getFieldValueVector3(void* gcHandle, const std::string& fieldName) {
+		Vec3 out = Vec3::zero();
+		if (s_getVec3Func) s_getVec3Func(gcHandle, fieldName.c_str(), &out.x);
+		return out;
+	}
+
+	void ScriptEngine::setFieldValueVector3(void* gcHandle, const std::string& fieldName, const Vec3& value) {
+		float val[3] = { value.x, value.y, value.z };
+		if (s_setVec3Func) s_setVec3Func(gcHandle, fieldName.c_str(), val);
 	}
 
 	void ScriptEngine::setSceneContext(Scene* scene) {

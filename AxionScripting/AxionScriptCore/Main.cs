@@ -54,6 +54,10 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, void> Entity_Destroy;
 		public delegate* unmanaged<ulong, ulong, int, void> Entity_AddComponent;
 		public delegate* unmanaged<ulong, ulong, IntPtr, void> Entity_AddScript;
+
+		// -- REFLECTION --
+		public delegate* unmanaged<IntPtr, IntPtr, int, void> Script_RegisterField;
+
 	}
 
 	public class CoreAPI {
@@ -190,6 +194,87 @@ namespace AxionScriptCore {
 		public static void UpdateDeltaTime(float deltaTime) {
 			Time.DeltaTime = deltaTime;
 		}
+
+		[UnmanagedCallersOnly(EntryPoint = "GenerateScriptMetadata")]
+		public static unsafe void GenerateScriptMetadata() {
+			var assembly = typeof(ScriptManager).Assembly;
+
+			foreach (var type in assembly.GetTypes()) {
+				if (type.IsSubclassOf(typeof(Entity))) {
+					IntPtr classNamePtr = Marshal.StringToHGlobalAnsi(type.FullName);
+
+					foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
+						int fieldType = -1;
+						if (field.FieldType == typeof(float)) fieldType = 0; // Float
+						else if (field.FieldType == typeof(Vector3)) fieldType = 1; // Vector3
+
+						if (fieldType != -1) {
+							IntPtr fieldNamePtr = Marshal.StringToHGlobalAnsi(field.Name);
+							CoreAPI.API.Script_RegisterField(classNamePtr, fieldNamePtr, fieldType);
+							Marshal.FreeHGlobal(fieldNamePtr);
+						}
+					}
+					Marshal.FreeHGlobal(classNamePtr);
+				}
+			}
+			Console.WriteLine("[C#] Reflection Metadata Generated!");
+		}
+
+		[UnmanagedCallersOnly(EntryPoint = "GetFieldValue_Float")]
+		public static float GetFieldValue_Float(IntPtr gcHandlePtr, IntPtr fieldNamePtr) {
+			GCHandle handle = GCHandle.FromIntPtr(gcHandlePtr);
+			if (handle.Target is Entity script) {
+				string? fieldName = Marshal.PtrToStringAnsi(fieldNamePtr);
+				if (string.IsNullOrEmpty(fieldName)) return 0.0f;
+				var field = script.GetType().GetField(fieldName);
+				if (field != null) {
+					object? value = field.GetValue(script);
+					if (value is float f) return f;
+				}
+			}
+			return 0.0f;
+		}
+
+		[UnmanagedCallersOnly(EntryPoint = "SetFieldValue_Float")]
+		public static void SetFieldValue_Float(IntPtr gcHandlePtr, IntPtr fieldNamePtr, float value) {
+			GCHandle handle = GCHandle.FromIntPtr(gcHandlePtr);
+			if (handle.Target is Entity script) {
+				string? fieldName = Marshal.PtrToStringAnsi(fieldNamePtr);
+				if (string.IsNullOrEmpty(fieldName)) return;
+				var field = script.GetType().GetField(fieldName);
+				field?.SetValue(script, value);
+			}
+		}
+
+		[UnmanagedCallersOnly(EntryPoint = "GetFieldValue_Vector3")]
+		public static unsafe void GetFieldValue_Vector3(IntPtr gcHandlePtr, IntPtr fieldNamePtr, float* outVal) {
+			GCHandle handle = GCHandle.FromIntPtr(gcHandlePtr);
+			if (handle.Target is Entity script) {
+				string? fieldName = Marshal.PtrToStringAnsi(fieldNamePtr);
+				if (!string.IsNullOrEmpty(fieldName)) {
+					var field = script.GetType().GetField(fieldName);
+					if (field != null) {
+						object? value = field.GetValue(script);
+						if (value is Vector3 val) {
+							outVal[0] = val.X; outVal[1] = val.Y; outVal[2] = val.Z;
+						}
+					}
+				}
+			}
+		}
+
+		[UnmanagedCallersOnly(EntryPoint = "SetFieldValue_Vector3")]
+		public static unsafe void SetFieldValue_Vector3(IntPtr gcHandlePtr, IntPtr fieldNamePtr, float* inVal) {
+			GCHandle handle = GCHandle.FromIntPtr(gcHandlePtr);
+			if (handle.Target is Entity script) {
+				string? fieldName = Marshal.PtrToStringAnsi(fieldNamePtr);
+				if (!string.IsNullOrEmpty(fieldName)) {
+					var field = script.GetType().GetField(fieldName);
+					field?.SetValue(script, new Vector3(inVal[0], inVal[1], inVal[2]));
+				}
+			}
+		}
+
 
 	}
 

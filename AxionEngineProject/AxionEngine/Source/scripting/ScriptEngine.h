@@ -6,6 +6,16 @@
 
 namespace Axion {
 
+	enum class ScriptFieldType {
+		Float = 0,
+		Vector3 = 1
+	};
+
+	struct ScriptField {
+		std::string name;
+		ScriptFieldType type;
+	};
+
 	struct ScriptAPI {
 		// -- INPUT --
 		uint8_t(*input_isKeyPressed)(uint16_t);
@@ -46,6 +56,9 @@ namespace Axion {
 		void(*entity_destroy)(uint64_t, uint64_t);
 		void(*entity_addComponent)(uint64_t, uint64_t, int);
 		void(*entity_addScript)(uint64_t, uint64_t, const char*);
+
+		// -- REFLECTION --
+		void(*script_registerField)(const char*, const char*, int);
 	};
 
 
@@ -68,9 +81,18 @@ namespace Axion {
 		static void onCollisionExit(void* gcHandle, Collision& collision);
 		static void updateTime(float deltaTime);
 
+		// -- Metadata reflection --
+		static void registerScriptField(const std::string& className, const std::string& fieldName, ScriptFieldType type);
+		static const std::vector<ScriptField>& getScriptFields(const std::string& className);
+		static float getFieldValueFloat(void* gcHandle, const std::string& fieldName);
+		static void setFieldValueFloat(void* gcHandle, const std::string& fieldName, float value);
+		static Vec3 getFieldValueVector3(void* gcHandle, const std::string& fieldName);
+		static void setFieldValueVector3(void* gcHandle, const std::string& fieldName, const Vec3& value);
+
 	private:
 
 		static Scene* s_sceneContext;
+		static std::unordered_map<std::string, std::vector<ScriptField>> s_scriptMetadata;
 
 		static bool loadHostFxr();
 

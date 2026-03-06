@@ -49,7 +49,7 @@ namespace AxionScriptCore {
 			CoreAPI.API.Entity_InstantiatePrefab(pathPtr, &hi, &lo);
 			Marshal.FreeHGlobal(pathPtr);
 
-			if (hi == 0 && lo == 0) return null;
+			if (hi == 0 && lo == 0) return null!;
 
 			return new Entity() { ID = new UUID { High = hi, Low = lo } };
 		}
