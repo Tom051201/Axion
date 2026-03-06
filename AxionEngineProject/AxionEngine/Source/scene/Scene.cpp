@@ -78,7 +78,9 @@ namespace Axion {
 	}
 
 	void Scene::destroyEntity(Entity entity) {
-		m_entitiesPendingDestroy.push_back(entity);
+		if (std::find(m_entitiesPendingDestroy.begin(), m_entitiesPendingDestroy.end(), entity) == m_entitiesPendingDestroy.end()) {
+			m_entitiesPendingDestroy.push_back(entity);
+		}
 	}
 
 	void Scene::flushDestroyedEntities() {
@@ -110,6 +112,12 @@ namespace Axion {
 				auto& idc = m_registry.get<UUIDComponent>(e);
 				m_entityMap.erase(idc.id);
 			}
+		}
+
+		// -- Remove physics actors --
+		for (auto& e : m_entitiesPendingDestroy) {
+			Entity entity = { e, this };
+			PhysicsSystem::destroyBody(entity);
 		}
 
 		// -- Destroy entities --
@@ -165,9 +173,14 @@ namespace Axion {
 
 			// -- C# Scripts --
 			ScriptEngine::setSceneContext(this);
+			ScriptEngine::updateTime(ts.getSeconds());
+			std::vector<entt::entity> scriptEntities;
 			auto scriptView = m_registry.view<ScriptComponent>();
-			for (auto e : scriptView) {
-				auto& sc = scriptView.get<ScriptComponent>(e);
+			for (auto e : scriptView) scriptEntities.push_back(e);
+			for (auto e : scriptEntities) {
+				if (!m_registry.valid(e) || !m_registry.all_of<ScriptComponent>(e)) continue;
+
+				auto& sc = m_registry.get<ScriptComponent>(e);
 				if (!sc.isInstantiated) {
 					UUID entityID = m_registry.get<UUIDComponent>(e).id;
 					sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
@@ -205,9 +218,14 @@ namespace Axion {
 
 			// -- C# Scripts --
 			ScriptEngine::setSceneContext(this);
+			ScriptEngine::updateTime(ts.getSeconds());
+			std::vector<entt::entity> scriptEntities;
 			auto scriptView = m_registry.view<ScriptComponent>();
-			for (auto e : scriptView) {
-				auto& sc = scriptView.get<ScriptComponent>(e);
+			for (auto e : scriptView) scriptEntities.push_back(e);
+			for (auto e : scriptEntities) {
+				if (!m_registry.valid(e) || !m_registry.all_of<ScriptComponent>(e)) continue;
+
+				auto& sc = m_registry.get<ScriptComponent>(e);
 				if (!sc.isInstantiated) {
 					UUID entityID = m_registry.get<UUIDComponent>(e).id;
 					sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());

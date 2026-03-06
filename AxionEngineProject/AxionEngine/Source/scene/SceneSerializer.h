@@ -17,6 +17,8 @@ namespace Axion {
 		bool deserializeText(const std::string& filePath);
 		bool deserializeBinary(const std::string& filePath);
 
+		static Entity deserializeEntityNode(Scene* scene, YAML::Node& entityNode, bool generateNewUUID = false);
+
 	private:
 
 		Ref<Scene> m_scene;

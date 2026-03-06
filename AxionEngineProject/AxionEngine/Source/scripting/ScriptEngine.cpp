@@ -21,10 +21,6 @@ namespace Axion {
 
 	static ScriptAPI s_api;
 
-	typedef void*(*createScriptFunc)(uint64_t, uint64_t, const char*);
-	typedef void(*destroyScriptFunc)(void*);
-	typedef void(*updateScriptFunc)(void*, float);
-
 	struct CSharpCollision {
 		uint64_t entityIdHigh;
 		uint64_t entityIdLow;
@@ -33,14 +29,18 @@ namespace Axion {
 		float impulse[3];
 	};
 
+	typedef void*(*createScriptFunc)(uint64_t, uint64_t, const char*);
+	typedef void(*destroyScriptFunc)(void*);
+	typedef void(*updateScriptFunc)(void*, float);
 	typedef void(*collisionFunc)(void*, CSharpCollision*);
+	typedef void (*updateTimeFunc)(float);
 
 	static createScriptFunc s_createEntityScriptFunc = nullptr;
 	static destroyScriptFunc s_destroyEntityScriptFunc = nullptr;
 	static updateScriptFunc s_updateEntityScriptFunc = nullptr;
-
 	static collisionFunc s_onCollisionEnterFunc = nullptr;
 	static collisionFunc s_onCollisionExitFunc = nullptr;
+	static updateTimeFunc s_updateTimeFunc = nullptr;
 
 	void ScriptEngine::initialize() {
 		bool loadHostSuccess = loadHostFxr();
@@ -129,6 +129,12 @@ namespace Axion {
 			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load OnCollisionExitScript.");
 		}
 
+		// -- Load UpdateDeltaTime --
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"UpdateDeltaTime", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_updateTimeFunc);
+		if (rc != 0 || s_updateTimeFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load UpdateDeltaTime.");
+		}
+
 		AX_CORE_LOG_INFO("[ScriptEngine] ScriptManager loaded successfully!");
 
 	}
@@ -208,6 +214,12 @@ namespace Axion {
 			csharpCol.impulse[0] = collision.impulse.x; csharpCol.impulse[1] = collision.impulse.y; csharpCol.impulse[2] = collision.impulse.z;
 
 			s_onCollisionExitFunc(gcHandle, &csharpCol);
+		}
+	}
+
+	void ScriptEngine::updateTime(float deltaTime) {
+		if (s_updateTimeFunc) {
+			s_updateTimeFunc(deltaTime);
 		}
 	}
 

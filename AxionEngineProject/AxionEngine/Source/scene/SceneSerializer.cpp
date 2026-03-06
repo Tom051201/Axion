@@ -336,22 +336,14 @@ namespace Axion {
 			std::unordered_map<std::string, Entity> uuidToEntityMap;
 			std::vector<std::pair<Entity, std::string>> relationshipsToBuild;
 
-			for (auto entity : entities) {
-				UUID uuid = UUID::fromString(entity["Entity"].as<std::string>());
+			for (auto entityNode : entities) {
+				Entity deserializedEntity = deserializeEntityNode(m_scene.get(), entityNode, false);
 
-				// -- TagComponent --
-				std::string name;
-				auto tagComponent = entity["TagComponent"];
-				if (tagComponent) {
-					name = tagComponent["Tag"].as<std::string>();
-				}
-
-				Entity deserializedEntity = m_scene->createEntityWithUUID(name, uuid);
-
-				uuidToEntityMap[uuid.toString()] = deserializedEntity;
+				std::string uuidStr = deserializedEntity.getComponent<UUIDComponent>().id.toString();
+				uuidToEntityMap[uuidStr] = deserializedEntity;
 
 				// -- RelationshipComponent --
-				auto relationshipComponent = entity["RelationshipComponent"];
+				auto relationshipComponent = entityNode["RelationshipComponent"];
 				if (relationshipComponent) {
 					std::string parentUUID = relationshipComponent["Parent"].as<std::string>();
 					if (parentUUID != "None") {
@@ -359,244 +351,14 @@ namespace Axion {
 					}
 				}
 
-				// -- TransformComponent --
-				auto transformComponent = entity["TransformComponent"];
-				if (transformComponent) {
-					auto& tc = deserializedEntity.getComponent<TransformComponent>();
-					tc.position = transformComponent["Translation"].as<Vec3>();
-
-					auto rotationNode = transformComponent["Rotation"];
-					if (rotationNode.IsSequence() && rotationNode.size() == 3) {
-						Vec3 eulerRotation = rotationNode.as<Vec3>();
-						tc.setEulerAngles(eulerRotation);
+				// -- Reconstruct hierarchy --
+				for (auto& pair : relationshipsToBuild) {
+					Entity child = pair.first;
+					std::string parentUUID = pair.second;
+					if (uuidToEntityMap.find(parentUUID) != uuidToEntityMap.end()) {
+						Entity parent = uuidToEntityMap[parentUUID];
+						child.setParent(parent);
 					}
-					else {
-						tc.rotation = rotationNode.as<Quat>();
-					}
-
-					tc.scale = transformComponent["Scale"].as<Vec3>();
-				}
-
-				// -- MeshComponent --
-				auto meshComponent = entity["MeshComponent"];
-				if (meshComponent) {
-					auto& mc = deserializedEntity.addComponent<MeshComponent>();
-					std::string relPath = meshComponent["Path"].as<std::string>();
-					if (relPath != "None") {
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
-						mc.handle = handle;
-					} else {
-						mc.handle = AssetHandle<Mesh>();
-					}
-				}
-
-				// -- SpriteComponent --
-				auto spriteComponent = entity["SpriteComponent"];
-				if (spriteComponent) {
-					auto& sc = deserializedEntity.addComponent<SpriteComponent>();
-					std::string relPath = spriteComponent["Path"].as<std::string>();
-					if (relPath != "None") {
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-						sc.texture = handle;
-					}
-					else {
-						sc.texture = AssetHandle<Texture2D>();
-					}
-					sc.tint = spriteComponent["Tint"].as<Vec4>();
-				}
-
-				// -- MaterialComponent --
-				auto materialComponent = entity["MaterialComponent"];
-				if (materialComponent) {
-					auto& mc = deserializedEntity.addComponent<MaterialComponent>();
-					std::string relPath = materialComponent["Path"].as<std::string>();
-					if (relPath != "None") {
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
-						mc.handle = handle;
-					} else {
-						mc.handle = AssetHandle<Material>();
-					}
-				}
-
-				// -- AudioComponent --
-				auto audioComponent = entity["AudioComponent"];
-				if (audioComponent) {
-					auto& ac = deserializedEntity.addComponent<AudioComponent>();
-					ac.isListener = audioComponent["IsListener"].as<bool>();
-					ac.isSource = audioComponent["IsSource"].as<bool>();
-
-					auto as = audioComponent["AudioSource"];
-					if (as && as.IsScalar() && as.as<std::string>() == "None") {
-						ac.audio = nullptr;
-					}
-					else {
-						auto as = audioComponent["AudioSource"];
-						std::string clipPath = AssetManager::getAbsolute(as["AudioClip"].as<std::string>());
-						AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(clipPath);
-						ac.audio = std::make_shared<AudioSource>(handle);
-						ac.audio->setVolume(as["Volume"].as<float>());
-						ac.audio->setPitch(as["Pitch"].as<float>());
-						ac.audio->setPan(as["Pan"].as<float>());
-						if (as["IsSpatial"].as<bool>()) {
-							ac.audio->enableSpatial();
-						} else {
-							ac.audio->disableSpatial();
-						}
-						ac.audio->setPosition(as["Position"].as<Vec3>());
-						ac.audio->setVelocity(as["Velocity"].as<Vec3>());
-						ac.audio->setMinDistance(as["MinDistance"].as<float>());
-						ac.audio->setMaxDistance(as["MaxDistance"].as<float>());
-						ac.audio->setDopplerFactor(as["DopplerFactor"].as<float>());
-					}
-				}
-
-				// -- CameraComponent --
-				auto cameraComponent = entity["CameraComponent"];
-				if (cameraComponent) {
-					auto& cc = deserializedEntity.addComponent<CameraComponent>();
-					cc.isPrimary = cameraComponent["Primary"].as<bool>();
-					cc.fixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
-
-					if (cameraComponent["ProjectionType"]) {
-						cc.camera.setProjectionType(EnumUtils::cameraProjectionTypeFromString(cameraComponent["ProjectionType"].as<std::string>()));
-
-						cc.camera.setPerspectiveVerticalFOV(cameraComponent["PerspectiveFOV"].as<float>());
-						cc.camera.setPerspectiveNearClip(cameraComponent["PerspectiveNear"].as<float>());
-						cc.camera.setPerspectiveFarClip(cameraComponent["PerspectiveFar"].as<float>());
-
-						cc.camera.setOrthographicSize(cameraComponent["OrthographicSize"].as<float>());
-						cc.camera.setOrthographicNearClip(cameraComponent["OrthographicNear"].as<float>());
-						cc.camera.setOrthographicFarClip(cameraComponent["OrthographicFar"].as<float>());
-					}
-				}
-
-				// -- DirectionalLightComponent --
-				auto directionalLightComponent = entity["DirectionalLightComponent"];
-				if (directionalLightComponent) {
-					auto& dlc = deserializedEntity.addComponent<DirectionalLightComponent>();
-					dlc.color = directionalLightComponent["Color"].as<Vec4>();
-				}
-
-				// -- PointLightComponent --
-				auto pointLightComponent = entity["PointLightComponent"];
-				if (pointLightComponent) {
-					auto& plc = deserializedEntity.addComponent<PointLightComponent>();
-					plc.color = pointLightComponent["Color"].as<Vec4>();
-					plc.intensity = pointLightComponent["Intensity"].as<float>();
-					plc.radius = pointLightComponent["Radius"].as<float>();
-					plc.falloff = pointLightComponent["Falloff"].as<float>();
-				}
-
-				// -- SpotLightComponent --
-				auto spotLightComponent = entity["SpotLightComponent"];
-				if (spotLightComponent) {
-					auto& slc = deserializedEntity.addComponent<SpotLightComponent>();
-					slc.color = spotLightComponent["Color"].as<Vec4>();
-					slc.intensity = spotLightComponent["Intensity"].as<float>();
-					slc.range = spotLightComponent["Range"].as<float>();
-					slc.innerConeAngle = spotLightComponent["InnerConeAngle"].as<float>();
-					slc.outerConeAngle = spotLightComponent["OuterConeAngle"].as<float>();
-				}
-
-				// -- RigidBodyComponent --
-				auto rigidBodyComponent = entity["RigidBodyComponent"];
-				if (rigidBodyComponent) {
-					auto& rbc = deserializedEntity.addComponent<RigidBodyComponent>();
-					rbc.type = EnumUtils::rigidBodyTypeFromString(rigidBodyComponent["BodyType"].as<std::string>());
-					rbc.mass = rigidBodyComponent["Mass"].as<float>();
-					rbc.isKinematic = rigidBodyComponent["IsKinematic"].as<bool>();
-					rbc.linearDamping = rigidBodyComponent["LinearDamping"].as<float>();
-					rbc.angularDamping = rigidBodyComponent["AngularDamping"].as<float>();
-					rbc.fixedRotationX = rigidBodyComponent["FixedRotationX"].as<bool>();
-					rbc.fixedRotationY = rigidBodyComponent["FixedRotationY"].as<bool>();
-					rbc.fixedRotationZ = rigidBodyComponent["FixedRotationZ"].as<bool>();
-					rbc.enableCCD = rigidBodyComponent["EnableCCD"].as<bool>();
-				}
-
-				// -- BoxColliderComponent --
-				auto boxColliderComponent = entity["BoxColliderComponent"];
-				if (boxColliderComponent) {
-					auto& bcc = deserializedEntity.addComponent<BoxColliderComponent>();
-					bcc.halfExtents = boxColliderComponent["HalfExtents"].as<Vec3>();
-					bcc.offset = boxColliderComponent["Offset"].as<Vec3>();
-					bcc.isTrigger = boxColliderComponent["IsTrigger"].as<bool>();
-					std::string relPath = boxColliderComponent["Material"].as<std::string>();
-					if (relPath != "None") {
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-						bcc.material = handle;
-					}
-					else {
-						bcc.material = AssetHandle<PhysicsMaterial>();
-					}
-				}
-
-				// -- SphereColliderComponent --
-				auto sphereColliderComponent = entity["SphereColliderComponent"];
-				if (sphereColliderComponent) {
-					auto& scc = deserializedEntity.addComponent<SphereColliderComponent>();
-					scc.radius = sphereColliderComponent["Radius"].as<float>();
-					scc.offset = sphereColliderComponent["Offset"].as<Vec3>();
-					scc.isTrigger = sphereColliderComponent["IsTrigger"].as<bool>();
-					std::string relPath = sphereColliderComponent["Material"].as<std::string>();
-					if (relPath != "None") {
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-						scc.material = handle;
-					}
-					else {
-						scc.material = AssetHandle<PhysicsMaterial>();
-					}
-				}
-
-				// -- CapsuleColliderComponent --
-				auto capsuleColliderComponent = entity["CapsuleColliderComponent"];
-				if (capsuleColliderComponent) {
-					auto& ccc = deserializedEntity.addComponent<CapsuleColliderComponent>();
-					ccc.radius = capsuleColliderComponent["Radius"].as<float>();
-					ccc.halfHeight = capsuleColliderComponent["HalfHeight"].as<float>();
-					ccc.offset = capsuleColliderComponent["Offset"].as<Vec3>();
-					ccc.isTrigger = capsuleColliderComponent["IsTrigger"].as<bool>();
-					std::string relPath = capsuleColliderComponent["Material"].as<std::string>();
-					if (relPath != "None") {
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-						ccc.material = handle;
-					}
-					else {
-						ccc.material = AssetHandle<PhysicsMaterial>();
-					}
-				}
-
-				// -- GravitySourceComponent --
-				auto gravitySourceComponent = entity["GravitySourceComponent"];
-				if (gravitySourceComponent) {
-					auto& gsc = deserializedEntity.addComponent<GravitySourceComponent>();
-					gsc.type = EnumUtils::gravitySourceTypeFromString(gravitySourceComponent["Type"].as<std::string>());
-					gsc.strength = gravitySourceComponent["Strength"].as<float>();
-					gsc.radius = gravitySourceComponent["Radius"].as<float>();
-					gsc.affectKinematic = gravitySourceComponent["AffectKinematic"].as<bool>();
-				}
-
-				// -- ScriptComponent --
-				auto scriptComponent = entity["ScriptComponent"];
-				if (scriptComponent) {
-					auto& sc = deserializedEntity.addComponent<ScriptComponent>();
-					sc.className = scriptComponent["ClassName"].as<std::string>();
-				}
-
-			}
-
-			// -- Reconstruct hierarchy --
-			for (auto& pair : relationshipsToBuild) {
-				Entity child = pair.first;
-				std::string parentUUID = pair.second;
-				if (uuidToEntityMap.find(parentUUID) != uuidToEntityMap.end()) {
-					Entity parent = uuidToEntityMap[parentUUID];
-					child.setParent(parent);
 				}
 			}
 		}
@@ -608,6 +370,255 @@ namespace Axion {
 		// TODO: create SceneSerializer::deserializeBinary
 		AX_CORE_ASSERT(false, "Not implemented yet!");
 		return false;
+	}
+
+	Entity SceneSerializer::deserializeEntityNode(Scene* scene, YAML::Node& entityNode, bool generateNewUUID) {
+		UUID originalUUID = UUID::fromString(entityNode["Entity"].as<std::string>());
+
+		UUID finalUUID = generateNewUUID ? UUID::generate() : originalUUID;
+
+		// -- TagComponent --
+		std::string name;
+		auto tagComponent = entityNode["TagComponent"];
+		if (tagComponent) {
+			name = tagComponent["Tag"].as<std::string>();
+		}
+
+		Entity deserializedEntity = scene->createEntityWithUUID(name, finalUUID);
+
+		// -- TransformComponent --
+		auto transformComponent = entityNode["TransformComponent"];
+		if (transformComponent) {
+			auto& tc = deserializedEntity.getComponent<TransformComponent>();
+			tc.position = transformComponent["Translation"].as<Vec3>();
+
+			auto rotationNode = transformComponent["Rotation"];
+			if (rotationNode.IsSequence() && rotationNode.size() == 3) {
+				Vec3 eulerRotation = rotationNode.as<Vec3>();
+				tc.setEulerAngles(eulerRotation);
+			}
+			else {
+				tc.rotation = rotationNode.as<Quat>();
+			}
+
+			tc.scale = transformComponent["Scale"].as<Vec3>();
+		}
+
+		// -- MeshComponent --
+		auto meshComponent = entityNode["MeshComponent"];
+		if (meshComponent) {
+			auto& mc = deserializedEntity.addComponent<MeshComponent>();
+			std::string relPath = meshComponent["Path"].as<std::string>();
+			if (relPath != "None") {
+				std::string absPath = AssetManager::getAbsolute(relPath);
+				AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
+				mc.handle = handle;
+			}
+			else {
+				mc.handle = AssetHandle<Mesh>();
+			}
+		}
+
+		// -- SpriteComponent --
+		auto spriteComponent = entityNode["SpriteComponent"];
+		if (spriteComponent) {
+			auto& sc = deserializedEntity.addComponent<SpriteComponent>();
+			std::string relPath = spriteComponent["Path"].as<std::string>();
+			if (relPath != "None") {
+				std::string absPath = AssetManager::getAbsolute(relPath);
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+				sc.texture = handle;
+			}
+			else {
+				sc.texture = AssetHandle<Texture2D>();
+			}
+			sc.tint = spriteComponent["Tint"].as<Vec4>();
+		}
+
+		// -- MaterialComponent --
+		auto materialComponent = entityNode["MaterialComponent"];
+		if (materialComponent) {
+			auto& mc = deserializedEntity.addComponent<MaterialComponent>();
+			std::string relPath = materialComponent["Path"].as<std::string>();
+			if (relPath != "None") {
+				std::string absPath = AssetManager::getAbsolute(relPath);
+				AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
+				mc.handle = handle;
+			}
+			else {
+				mc.handle = AssetHandle<Material>();
+			}
+		}
+
+		// -- AudioComponent --
+		auto audioComponent = entityNode["AudioComponent"];
+		if (audioComponent) {
+			auto& ac = deserializedEntity.addComponent<AudioComponent>();
+			ac.isListener = audioComponent["IsListener"].as<bool>();
+			ac.isSource = audioComponent["IsSource"].as<bool>();
+
+			auto as = audioComponent["AudioSource"];
+			if (as && as.IsScalar() && as.as<std::string>() == "None") {
+				ac.audio = nullptr;
+			}
+			else {
+				auto as = audioComponent["AudioSource"];
+				std::string clipPath = AssetManager::getAbsolute(as["AudioClip"].as<std::string>());
+				AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(clipPath);
+				ac.audio = std::make_shared<AudioSource>(handle);
+				ac.audio->setVolume(as["Volume"].as<float>());
+				ac.audio->setPitch(as["Pitch"].as<float>());
+				ac.audio->setPan(as["Pan"].as<float>());
+				if (as["IsSpatial"].as<bool>()) {
+					ac.audio->enableSpatial();
+				}
+				else {
+					ac.audio->disableSpatial();
+				}
+				ac.audio->setPosition(as["Position"].as<Vec3>());
+				ac.audio->setVelocity(as["Velocity"].as<Vec3>());
+				ac.audio->setMinDistance(as["MinDistance"].as<float>());
+				ac.audio->setMaxDistance(as["MaxDistance"].as<float>());
+				ac.audio->setDopplerFactor(as["DopplerFactor"].as<float>());
+			}
+		}
+
+		// -- CameraComponent --
+		auto cameraComponent = entityNode["CameraComponent"];
+		if (cameraComponent) {
+			auto& cc = deserializedEntity.addComponent<CameraComponent>();
+			cc.isPrimary = cameraComponent["Primary"].as<bool>();
+			cc.fixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
+
+			if (cameraComponent["ProjectionType"]) {
+				cc.camera.setProjectionType(EnumUtils::cameraProjectionTypeFromString(cameraComponent["ProjectionType"].as<std::string>()));
+
+				cc.camera.setPerspectiveVerticalFOV(cameraComponent["PerspectiveFOV"].as<float>());
+				cc.camera.setPerspectiveNearClip(cameraComponent["PerspectiveNear"].as<float>());
+				cc.camera.setPerspectiveFarClip(cameraComponent["PerspectiveFar"].as<float>());
+
+				cc.camera.setOrthographicSize(cameraComponent["OrthographicSize"].as<float>());
+				cc.camera.setOrthographicNearClip(cameraComponent["OrthographicNear"].as<float>());
+				cc.camera.setOrthographicFarClip(cameraComponent["OrthographicFar"].as<float>());
+			}
+		}
+
+		// -- DirectionalLightComponent --
+		auto directionalLightComponent = entityNode["DirectionalLightComponent"];
+		if (directionalLightComponent) {
+			auto& dlc = deserializedEntity.addComponent<DirectionalLightComponent>();
+			dlc.color = directionalLightComponent["Color"].as<Vec4>();
+		}
+
+		// -- PointLightComponent --
+		auto pointLightComponent = entityNode["PointLightComponent"];
+		if (pointLightComponent) {
+			auto& plc = deserializedEntity.addComponent<PointLightComponent>();
+			plc.color = pointLightComponent["Color"].as<Vec4>();
+			plc.intensity = pointLightComponent["Intensity"].as<float>();
+			plc.radius = pointLightComponent["Radius"].as<float>();
+			plc.falloff = pointLightComponent["Falloff"].as<float>();
+		}
+
+		// -- SpotLightComponent --
+		auto spotLightComponent = entityNode["SpotLightComponent"];
+		if (spotLightComponent) {
+			auto& slc = deserializedEntity.addComponent<SpotLightComponent>();
+			slc.color = spotLightComponent["Color"].as<Vec4>();
+			slc.intensity = spotLightComponent["Intensity"].as<float>();
+			slc.range = spotLightComponent["Range"].as<float>();
+			slc.innerConeAngle = spotLightComponent["InnerConeAngle"].as<float>();
+			slc.outerConeAngle = spotLightComponent["OuterConeAngle"].as<float>();
+		}
+
+		// -- RigidBodyComponent --
+		auto rigidBodyComponent = entityNode["RigidBodyComponent"];
+		if (rigidBodyComponent) {
+			auto& rbc = deserializedEntity.addComponent<RigidBodyComponent>();
+			rbc.type = EnumUtils::rigidBodyTypeFromString(rigidBodyComponent["BodyType"].as<std::string>());
+			rbc.mass = rigidBodyComponent["Mass"].as<float>();
+			rbc.isKinematic = rigidBodyComponent["IsKinematic"].as<bool>();
+			rbc.linearDamping = rigidBodyComponent["LinearDamping"].as<float>();
+			rbc.angularDamping = rigidBodyComponent["AngularDamping"].as<float>();
+			rbc.fixedRotationX = rigidBodyComponent["FixedRotationX"].as<bool>();
+			rbc.fixedRotationY = rigidBodyComponent["FixedRotationY"].as<bool>();
+			rbc.fixedRotationZ = rigidBodyComponent["FixedRotationZ"].as<bool>();
+			rbc.enableCCD = rigidBodyComponent["EnableCCD"].as<bool>();
+		}
+
+		// -- BoxColliderComponent --
+		auto boxColliderComponent = entityNode["BoxColliderComponent"];
+		if (boxColliderComponent) {
+			auto& bcc = deserializedEntity.addComponent<BoxColliderComponent>();
+			bcc.halfExtents = boxColliderComponent["HalfExtents"].as<Vec3>();
+			bcc.offset = boxColliderComponent["Offset"].as<Vec3>();
+			bcc.isTrigger = boxColliderComponent["IsTrigger"].as<bool>();
+			std::string relPath = boxColliderComponent["Material"].as<std::string>();
+			if (relPath != "None") {
+				std::string absPath = AssetManager::getAbsolute(relPath);
+				AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+				bcc.material = handle;
+			}
+			else {
+				bcc.material = AssetHandle<PhysicsMaterial>();
+			}
+		}
+
+		// -- SphereColliderComponent --
+		auto sphereColliderComponent = entityNode["SphereColliderComponent"];
+		if (sphereColliderComponent) {
+			auto& scc = deserializedEntity.addComponent<SphereColliderComponent>();
+			scc.radius = sphereColliderComponent["Radius"].as<float>();
+			scc.offset = sphereColliderComponent["Offset"].as<Vec3>();
+			scc.isTrigger = sphereColliderComponent["IsTrigger"].as<bool>();
+			std::string relPath = sphereColliderComponent["Material"].as<std::string>();
+			if (relPath != "None") {
+				std::string absPath = AssetManager::getAbsolute(relPath);
+				AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+				scc.material = handle;
+			}
+			else {
+				scc.material = AssetHandle<PhysicsMaterial>();
+			}
+		}
+
+		// -- CapsuleColliderComponent --
+		auto capsuleColliderComponent = entityNode["CapsuleColliderComponent"];
+		if (capsuleColliderComponent) {
+			auto& ccc = deserializedEntity.addComponent<CapsuleColliderComponent>();
+			ccc.radius = capsuleColliderComponent["Radius"].as<float>();
+			ccc.halfHeight = capsuleColliderComponent["HalfHeight"].as<float>();
+			ccc.offset = capsuleColliderComponent["Offset"].as<Vec3>();
+			ccc.isTrigger = capsuleColliderComponent["IsTrigger"].as<bool>();
+			std::string relPath = capsuleColliderComponent["Material"].as<std::string>();
+			if (relPath != "None") {
+				std::string absPath = AssetManager::getAbsolute(relPath);
+				AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
+				ccc.material = handle;
+			}
+			else {
+				ccc.material = AssetHandle<PhysicsMaterial>();
+			}
+		}
+
+		// -- GravitySourceComponent --
+		auto gravitySourceComponent = entityNode["GravitySourceComponent"];
+		if (gravitySourceComponent) {
+			auto& gsc = deserializedEntity.addComponent<GravitySourceComponent>();
+			gsc.type = EnumUtils::gravitySourceTypeFromString(gravitySourceComponent["Type"].as<std::string>());
+			gsc.strength = gravitySourceComponent["Strength"].as<float>();
+			gsc.radius = gravitySourceComponent["Radius"].as<float>();
+			gsc.affectKinematic = gravitySourceComponent["AffectKinematic"].as<bool>();
+		}
+
+		// -- ScriptComponent --
+		auto scriptComponent = entityNode["ScriptComponent"];
+		if (scriptComponent) {
+			auto& sc = deserializedEntity.addComponent<ScriptComponent>();
+			sc.className = scriptComponent["ClassName"].as<std::string>();
+		}
+
+		return deserializedEntity;
 	}
 
 }

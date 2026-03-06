@@ -4,6 +4,11 @@
 #include "AxionEngine/Source/input/Input.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/physics/Physics.h"
+#include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/scene/SceneSerializer.h"
+#include "AxionEngine/Source/scene/Prefab.h"
+
+#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
 namespace Axion {
 
@@ -102,6 +107,13 @@ namespace Axion {
 			}
 		}
 
+		extern "C" void rigidbody_addRadialImpulse(uint64_t uuidHi, uint64_t uuidLo, float* origin, float radius, float strength) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid()) {
+				Physics::addRadialImpulse(entity, Vec3(origin[0], origin[1], origin[2]), radius, strength);
+			}
+		}
+
 		extern "C" void rigidbody_getLinearVelocity(uint64_t uuidHi, uint64_t uuidLo, float* outVel) {
 			Entity entity = getEntityByUUID(uuidHi, uuidLo);
 			if (entity.isValid()) {
@@ -116,6 +128,23 @@ namespace Axion {
 			Entity entity = getEntityByUUID(uuidHi, uuidLo);
 			if (entity.isValid()) {
 				Physics::setLinearVelocity(entity, Vec3(inVel[0], inVel[1], inVel[2]));
+			}
+		}
+
+		extern "C" void rigidbody_getAngularVelocity(uint64_t uuidHi, uint64_t uuidLo, float* outVel) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid()) {
+				Vec3 vel = Physics::getAngularVelocity(entity);
+				outVel[0] = vel.x;
+				outVel[1] = vel.y;
+				outVel[2] = vel.z;
+			}
+		}
+
+		extern "C" void rigidbody_setAngularVelocity(uint64_t uuidHi, uint64_t uuidLo, float* inVel) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid()) {
+				Physics::setAngularVelocity(entity, Vec3(inVel[0], inVel[1], inVel[2]));
 			}
 		}
 
@@ -134,6 +163,133 @@ namespace Axion {
 			}
 		}
 
+
+		// -- AUDIO --
+		extern "C" void audio_play(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AudioComponent>()) {
+				auto& ac = entity.getComponent<AudioComponent>();
+				if (ac.audio) ac.audio->play();
+			}
+		}
+
+		extern "C" void audio_stop(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AudioComponent>()) {
+				auto& ac = entity.getComponent<AudioComponent>();
+				if (ac.audio) ac.audio->stop();
+			}
+		}
+
+		extern "C" void audio_setVolume(uint64_t uuidHi, uint64_t uuidLo, float vol) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AudioComponent>()) {
+				auto& ac = entity.getComponent<AudioComponent>();
+				if (ac.audio) ac.audio->setVolume(vol);
+			}
+		}
+
+		extern "C" float audio_getVolume(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AudioComponent>()) {
+				auto& ac = entity.getComponent<AudioComponent>();
+				if (ac.audio) return ac.audio->getVolume();
+			}
+			return 0.0f;
+		}
+
+		extern "C" void audio_setPitch(uint64_t uuidHi, uint64_t uuidLo, float pitch) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AudioComponent>()) {
+				auto& ac = entity.getComponent<AudioComponent>();
+				if (ac.audio) ac.audio->setPitch(pitch);
+			}
+		}
+
+		extern "C" float audio_getPitch(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AudioComponent>()) {
+				auto& ac = entity.getComponent<AudioComponent>();
+				if (ac.audio) return ac.audio->getPitch();
+			}
+			return 0.0f;
+		}
+
+
+		// -- ENTITY --
+		extern "C" void entity_instantiate(const char* name, uint64_t* outUuidHi, uint64_t* outUuidLo) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene) return;
+
+			std::string entityName = name ? name : "Instantiated Entity";
+
+			Entity newEntity = scene->createEntity(entityName);
+			UUID newID = newEntity.getComponent<UUIDComponent>().id;
+
+			*outUuidHi = newID.high;
+			*outUuidLo = newID.low;
+		}
+
+		extern "C" void entity_instantiatePrefab(const char* filePath, uint64_t* outUuidHi, uint64_t* outUuidLo) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene || !filePath) return;
+
+			std::string pathStr = filePath;
+			std::string absPath = AssetManager::getAbsolute(pathStr);
+
+			AssetHandle<Prefab> handle = AssetManager::load<Prefab>(absPath);
+			Ref<Prefab> prefab = AssetManager::get<Prefab>(handle);
+
+
+
+			if (prefab) {
+				YAML::Node node = prefab->getEntityNode();
+				Entity newEntity = SceneSerializer::deserializeEntityNode(scene, node, true);
+
+				if (newEntity.isValid()) {
+					UUID newID = newEntity.getComponent<UUIDComponent>().id;
+					*outUuidHi = newID.high;
+					*outUuidLo = newID.low;
+				}
+			}
+			else {
+				AX_CORE_LOG_ERROR("Failed to instantiate Prefab: {}", pathStr);
+			}
+
+		}
+
+		extern "C" void entity_destroy(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid()) {
+				ScriptEngine::getSceneContext()->destroyEntity(entity);
+			}
+		}
+
+		extern "C" void entity_addComponent(uint64_t uuidHi, uint64_t uuidLo, int type) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (!entity.isValid()) return;
+
+			switch (type) {
+
+				case 0: { if (!entity.hasComponent<RigidBodyComponent>()) entity.addComponent<RigidBodyComponent>(); break; }
+				case 1: { if (!entity.hasComponent<BoxColliderComponent>()) entity.addComponent<BoxColliderComponent>(); break; }
+				case 2: { if (!entity.hasComponent<SphereColliderComponent>()) entity.addComponent<SphereColliderComponent>(); break; }
+				case 3: { if (!entity.hasComponent<CapsuleColliderComponent>()) entity.addComponent<CapsuleColliderComponent>(); break; }
+				case 4: { if (!entity.hasComponent<AudioComponent>()) entity.addComponent<AudioComponent>(); break; }
+
+			}
+		}
+
+		extern "C" void entity_addScript(uint64_t uuidHi, uint64_t uuidLo, const char* scriptName) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && !entity.hasComponent<ScriptComponent>()) {
+				std::string nameStr = scriptName ? scriptName : "";
+				if (!nameStr.empty()) {
+					entity.addComponent<ScriptComponent>(nameStr);
+				}
+			}
+		}
+
 	}
 
 
@@ -146,10 +302,12 @@ namespace Axion {
 	// -- Binding function --
 	void ScriptGlue::registerComponents(ScriptAPI& apiStruct) {
 
+		// -- INPUT --
 		REGISTER_API(apiStruct, input_isKeyPressed);
 		REGISTER_API(apiStruct, input_isMouseButtonPressed);
 		REGISTER_API(apiStruct, input_getMousePosition);
 
+		// -- TRANSFORM --
 		REGISTER_API(apiStruct, transform_getPosition);
 		REGISTER_API(apiStruct, transform_setPosition);
 		REGISTER_API(apiStruct, transform_getRotation);
@@ -157,12 +315,32 @@ namespace Axion {
 		REGISTER_API(apiStruct, transform_getScale);
 		REGISTER_API(apiStruct, transform_setScale);
 
+		// -- PHYSICS --
 		REGISTER_API(apiStruct, rigidbody_addForce);
 		REGISTER_API(apiStruct, rigidbody_addTorque);
+		REGISTER_API(apiStruct, rigidbody_addRadialImpulse);
 		REGISTER_API(apiStruct, rigidbody_getLinearVelocity);
 		REGISTER_API(apiStruct, rigidbody_setLinearVelocity);
+		REGISTER_API(apiStruct, rigidbody_getAngularVelocity);
+		REGISTER_API(apiStruct, rigidbody_setAngularVelocity);
 		REGISTER_API(apiStruct, rigidbody_getMass);
 		REGISTER_API(apiStruct, rigidbody_setMass);
+
+		// -- AUDIO --
+		REGISTER_API(apiStruct, audio_play);
+		REGISTER_API(apiStruct, audio_stop);
+		REGISTER_API(apiStruct, audio_getVolume);
+		REGISTER_API(apiStruct, audio_setVolume);
+		REGISTER_API(apiStruct, audio_getPitch);
+		REGISTER_API(apiStruct, audio_setPitch);
+
+		// -- ENTITY --
+		REGISTER_API(apiStruct, entity_instantiate);
+		REGISTER_API(apiStruct, entity_instantiatePrefab);
+		REGISTER_API(apiStruct, entity_destroy);
+		REGISTER_API(apiStruct, entity_addComponent);
+		REGISTER_API(apiStruct, entity_addScript);
+
 
 		AX_CORE_LOG_TRACE("[ScriptGlue] All internal C++ functions registered to C#!");
 	}

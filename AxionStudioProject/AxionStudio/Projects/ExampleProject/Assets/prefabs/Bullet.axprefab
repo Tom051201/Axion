@@ -1,0 +1,31 @@
+Type: Prefab
+UUID: a10c608d5a456ae1f026924b1019793d
+Entity:
+  Entity: 24db9bcea47cc11290728d26e22c6932
+  TagComponent:
+    Tag: BulletPrefab
+  TransformComponent:
+    Translation: [0, 0, 0]
+    Rotation: [0, 0, 0, 1]
+    Scale: [0.5, 0.5, 0.5]
+  MeshComponent:
+    Path: meshes\Cube.axmesh
+  MaterialComponent:
+    Path: materials\PBR.axmat
+  RigidBodyComponent:
+    BodyType: Dynamic
+    Mass: 1
+    IsKinematic: false
+    LinearDamping: 0
+    AngularDamping: 0.05
+    FixedRotationX: false
+    FixedRotationY: false
+    FixedRotationZ: false
+    EnableCCD: false
+  BoxColliderComponent:
+    HalfExtents: [0.5, 0.5, 0.5]
+    Offset: [0, 0, 0]
+    IsTrigger: false
+    Material: physics/Ice.axpmat
+  ScriptComponent:
+    ClassName: AxionScriptCore.Bullet

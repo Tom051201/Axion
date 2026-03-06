@@ -57,9 +57,12 @@ namespace Axion {
 			return Entity(entt::null, m_scene);
 		}
 
-		bool isValid() const { return m_handle != entt::null; }
+		bool isValid() const {
+			if (m_handle == entt::null || m_scene == nullptr) return false;
+			return m_scene->getRegistry().valid(m_handle);
+		}
 
-		operator bool() const { return m_handle != entt::null; }
+		operator bool() const { return isValid(); }
 		operator uint32_t() const { return (uint32_t)m_handle; }
 		operator entt::entity() const { return m_handle; }
 		bool operator ==(const Entity& other) const { return m_handle == other.m_handle && m_scene == other.m_scene; }

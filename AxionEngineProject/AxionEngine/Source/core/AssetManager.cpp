@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/Skybox.h"
+#include "AxionEngine/Source/scene/Prefab.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
@@ -27,6 +28,7 @@ namespace Axion {
 		release<Texture2D>();
 		release<Pipeline>();
 		release<PhysicsMaterial>();
+		release<Prefab>();
 		AX_CORE_LOG_INFO("AssetManager shutdown");
 	}
 
@@ -469,6 +471,34 @@ namespace Axion {
 		storage<PhysicsMaterial>().assets[handle] = material;
 
 		storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
+
+		return handle;
+	}
+
+	// -- Prefab --
+	template<>
+	AssetHandle<Prefab> AssetManager::load<Prefab>(const std::string& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		if (data["Type"].as<std::string>() != "Prefab") {
+			AX_CORE_LOG_ERROR("Loading prefab failed, file is not a prefab asset file");
+			return {};
+		}
+
+		UUID uuid = data["UUID"].as<UUID>();
+		AssetHandle<Prefab> handle(uuid);
+
+		// -- Return if already registered --
+		if (has<Prefab>(handle)) {
+			return handle;
+		}
+
+		YAML::Node entityNode = data["Entity"];
+		Ref<Prefab> prefab = std::make_shared<Prefab>(entityNode);
+
+		storage<Prefab>().assets[handle] = prefab;
+		storage<Prefab>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}

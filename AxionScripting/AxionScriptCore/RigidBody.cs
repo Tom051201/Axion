@@ -16,6 +16,10 @@ namespace AxionScriptCore {
 			CoreAPI.API.RigidBody_AddTorque(m_Entity.ID.High, m_Entity.ID.Low, &torque, (int)mode);
 		}
 
+		public unsafe void AddRadialImpulse(Vector3 origin, float radius, float strength) {
+			CoreAPI.API.RigidBody_AddRadialImpulse(m_Entity.ID.High, m_Entity.ID.Low, &origin, radius, strength);
+		}
+
 		public unsafe Vector3 LinearVelocity {
 			get {
 				Vector3 result;
@@ -24,6 +28,17 @@ namespace AxionScriptCore {
 			}
 			set {
 				CoreAPI.API.RigidBody_SetLinearVelocity(m_Entity.ID.High, m_Entity.ID.Low, &value);
+			}
+		}
+
+		public unsafe Vector3 AngularVelocity {
+			get {
+				Vector3 result;
+				CoreAPI.API.RigidBody_GetAngularVelocity(m_Entity.ID.High, m_Entity.ID.Low, &result);
+				return result;
+			}
+			set {
+				CoreAPI.API.RigidBody_SetAngularVelocity(m_Entity.ID.High, m_Entity.ID.Low, &value);
 			}
 		}
 

@@ -61,6 +61,9 @@ namespace Axion {
 			if (m_selectedEntity) {
 				displayComponents(m_selectedEntity);
 			}
+			else {
+				m_selectedEntity = {};
+			}
 		}
 		ImGui::End();
 

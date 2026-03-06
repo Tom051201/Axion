@@ -25,6 +25,7 @@ namespace Axion {
 		static void onSceneStop(Scene* scene);
 
 		static void step(Scene* scene, Timestep ts);
+		static void destroyBody(Entity entity);
 
 	};
 
