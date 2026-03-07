@@ -27,6 +27,9 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, Vector3*, void> Transform_SetRotation;
 		public delegate* unmanaged<ulong, ulong, Vector3*, void> Transform_GetScale;
 		public delegate* unmanaged<ulong, ulong, Vector3*, void> Transform_SetScale;
+		public delegate* unmanaged<ulong, ulong, Vector3*, void> Transform_GetForward;
+		public delegate* unmanaged<ulong, ulong, Vector3*, void> Transform_GetRight;
+		public delegate* unmanaged<ulong, ulong, Vector3*, void> Transform_GetUp;
 
 		// -- PHYSICS --
 		public delegate* unmanaged<ulong, ulong, Vector3*, int, void> RigidBody_AddForce;
@@ -56,6 +59,7 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, IntPtr, void> Entity_AddScript;
 		public delegate* unmanaged<IntPtr, ulong*, ulong*, void> Entity_FindEntityByName;
 		public delegate* unmanaged<ulong, ulong, IntPtr> Entity_GetScriptInstance;
+		public delegate* unmanaged<ulong, ulong, int, void> Entity_EmitParticles;
 
 		// -- REFLECTION --
 		public delegate* unmanaged<IntPtr, IntPtr, int, void> Script_RegisterField;

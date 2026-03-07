@@ -8,7 +8,7 @@ namespace AxionScriptCore {
 		public override void OnCreate() {
 			Console.WriteLine($"[C#] Bullet {ID} initialized and ready!");
 
-			RigidBody.AddForce(new Vector3(0, 0, 1), ForceMode.Impulse);
+			RigidBody.AddForce(Transform.Forward * 2.0f, ForceMode.Impulse);
 		}
 
 		public override void OnUpdate(float timestep) {
@@ -21,7 +21,11 @@ namespace AxionScriptCore {
 		}
 
 		public override void OnCollisionEnter(Collision collision) {
-			Console.WriteLine($"[C#] Bullet Hit {collision.OtherEntity.ID}!");
+
+			Entity spark = Entity.InstantiatePrefab("prefabs/SparkEffect.axprefab");
+			if (spark != null) {
+				spark.Transform.Position = collision.ContactPoint;
+			}
 
 			Enemy? hitEnemy = collision.OtherEntity.As<Enemy>();
 

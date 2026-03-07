@@ -248,6 +248,10 @@ namespace Axion {
 			return epsilonEquals(a.x, b.x, epsilon) && epsilonEquals(a.y, b.y, epsilon) && epsilonEquals(a.z, b.z, epsilon);
 		}
 
+		static float randomFloat(float min, float max) {
+			return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
+		}
+
 	};
 
 	////////////////////////////////////////////////////////////////////////////////

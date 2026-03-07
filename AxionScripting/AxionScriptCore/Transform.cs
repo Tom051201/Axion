@@ -41,5 +41,29 @@ namespace AxionScriptCore {
 			}
 		}
 
+		public unsafe Vector3 Forward {
+			get {
+				Vector3 result;
+				CoreAPI.API.Transform_GetForward(m_Entity.ID.High, m_Entity.ID.Low, &result);
+				return result;
+			}
+		}
+
+		public unsafe Vector3 Right {
+			get {
+				Vector3 result;
+				CoreAPI.API.Transform_GetRight(m_Entity.ID.High, m_Entity.ID.Low, &result);
+				return result;
+			}
+		}
+
+		public unsafe Vector3 Up {
+			get {
+				Vector3 result;
+				CoreAPI.API.Transform_GetUp(m_Entity.ID.High, m_Entity.ID.Low, &result);
+				return result;
+			}
+		}
+
 	}
 }

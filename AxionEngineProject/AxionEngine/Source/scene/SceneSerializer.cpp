@@ -271,6 +271,27 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
+		// -- ParticleSystemComponent --
+		if (entity.hasComponent<ParticleSystemComponent>()) {
+			out << YAML::Key << "ParticleSystemComponent";
+			out << YAML::BeginMap;
+			auto& psc = entity.getComponent<ParticleSystemComponent>();
+			out << YAML::Key << "VelocityVariation" << YAML::Value << psc.velocityVariation;
+			out << YAML::Key << "ColorBegin" << YAML::Value << psc.colorBegin;
+			out << YAML::Key << "ColorEnd" << YAML::Value << psc.colorEnd;
+			out << YAML::Key << "SizeBegin" << YAML::Value << psc.sizeBegin;
+			out << YAML::Key << "SizeEnd" << YAML::Value << psc.sizeEnd;
+			out << YAML::Key << "LifeTime" << YAML::Value << psc.lifeTime;
+			if (psc.texture.isValid()) {
+				std::string relativePath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Texture2D>(psc.texture));
+				out << YAML::Key << "Texture" << YAML::Value << relativePath;
+			}
+			else {
+				out << YAML::Key << "Texture" << YAML::Value << "None";
+			}
+			out << YAML::EndMap;
+		}
+
 		out << YAML::EndMap; // Entity
 	}
 
@@ -616,6 +637,29 @@ namespace Axion {
 		if (scriptComponent) {
 			auto& sc = deserializedEntity.addComponent<ScriptComponent>();
 			sc.className = scriptComponent["ClassName"].as<std::string>();
+		}
+
+		// -- ParticleSystemComponent --
+		auto particleSystemComponent = entityNode["ParticleSystemComponent"];
+		if (particleSystemComponent) {
+			auto& psc = deserializedEntity.addComponent<ParticleSystemComponent>();
+
+			psc.velocityVariation = particleSystemComponent["VelocityVariation"].as<Vec3>();
+			psc.colorBegin = particleSystemComponent["ColorBegin"].as<Vec4>();
+			psc.colorEnd = particleSystemComponent["ColorEnd"].as<Vec4>();
+			psc.sizeBegin = particleSystemComponent["SizeBegin"].as<float>();
+			psc.sizeEnd = particleSystemComponent["SizeEnd"].as<float>();
+			psc.lifeTime = particleSystemComponent["LifeTime"].as<float>();
+
+			std::string relPath = particleSystemComponent["Texture"].as<std::string>();
+			if (relPath != "None") {
+				std::string absPath = AssetManager::getAbsolute(relPath);
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+				psc.texture = handle;
+			}
+			else {
+				psc.texture = AssetHandle<Texture2D>();
+			}
 		}
 
 		return deserializedEntity;

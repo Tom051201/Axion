@@ -91,6 +91,51 @@ namespace Axion {
 			}
 		}
 
+		extern "C" void transform_getForward(uint64_t uuidHi, uint64_t uuidLo, float* outForward) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (entity.isValid() && scene) {
+				Mat4 transform = scene->getWorldTransform(entity);
+				Vec4 forward = transform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+				Vec3 result = { forward.x, forward.y, forward.z };
+				result.normalized();
+
+				outForward[0] = result.x;
+				outForward[1] = result.y;
+				outForward[2] = result.z;
+			}
+		}
+
+		extern "C" void transform_getRight(uint64_t uuidHi, uint64_t uuidLo, float* outRight) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (entity.isValid() && scene) {
+				Mat4 transform = scene->getWorldTransform(entity);
+				Vec4 right = transform * Vec4(1.0f, 0.0f, 0.0f, 0.0f);
+				Vec3 result = { right.x, right.y, right.z };
+				result.normalized();
+
+				outRight[0] = result.x;
+				outRight[1] = result.y;
+				outRight[2] = result.z;
+			}
+		}
+
+		extern "C" void transform_getUp(uint64_t uuidHi, uint64_t uuidLo, float* outUp) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (entity.isValid() && scene) {
+				Mat4 transform = scene->getWorldTransform(entity);
+				Vec4 up = transform * Vec4(0.0f, 1.0f, 0.0f, 0.0f);
+				Vec3 result = { up.x, up.y, up.z };
+				result.normalized();
+
+				outUp[0] = result.x;
+				outUp[1] = result.y;
+				outUp[2] = result.z;
+			}
+		}
+
 
 		// -- PHYSICS --
 		extern "C" void rigidbody_addForce(uint64_t uuidHi, uint64_t uuidLo, float* force, int mode) {
@@ -305,6 +350,7 @@ namespace Axion {
 				case 2: { if (!entity.hasComponent<SphereColliderComponent>()) entity.addComponent<SphereColliderComponent>(); break; }
 				case 3: { if (!entity.hasComponent<CapsuleColliderComponent>()) entity.addComponent<CapsuleColliderComponent>(); break; }
 				case 4: { if (!entity.hasComponent<AudioComponent>()) entity.addComponent<AudioComponent>(); break; }
+				case 5: { if (!entity.hasComponent<ParticleSystemComponent>()) entity.addComponent<ParticleSystemComponent>(); break; }
 
 			}
 		}
@@ -353,6 +399,18 @@ namespace Axion {
 			return nullptr;
 		}
 
+		extern "C" void entity_emitParticles(uint64_t uuidHi, uint64_t uuidLo, int count) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<ParticleSystemComponent>()) {
+				auto& psc = entity.getComponent<ParticleSystemComponent>();
+				auto& transform = entity.getComponent<TransformComponent>();
+				for (int i = 0; i < count; i++) {
+					ParticleSystem::emitParticle(psc, transform.position);
+				}
+			}
+		}
+
+
 		// -- REFLECTION --
 		extern "C" void script_registerField(const char* className, const char* fieldName, int type) {
 			ScriptEngine::registerScriptField(className, fieldName, static_cast<ScriptFieldType>(type));
@@ -382,6 +440,9 @@ namespace Axion {
 		REGISTER_API(apiStruct, transform_setRotation);
 		REGISTER_API(apiStruct, transform_getScale);
 		REGISTER_API(apiStruct, transform_setScale);
+		REGISTER_API(apiStruct, transform_getForward);
+		REGISTER_API(apiStruct, transform_getRight);
+		REGISTER_API(apiStruct, transform_getUp);
 
 		// -- PHYSICS --
 		REGISTER_API(apiStruct, rigidbody_addForce);
@@ -411,6 +472,7 @@ namespace Axion {
 		REGISTER_API(apiStruct, entity_addScript);
 		REGISTER_API(apiStruct, entity_findEntityByName);
 		REGISTER_API(apiStruct, entity_getScriptInstance);
+		REGISTER_API(apiStruct, entity_emitParticles);
 
 		// -- REFLECTION --
 		REGISTER_API(apiStruct, script_registerField);

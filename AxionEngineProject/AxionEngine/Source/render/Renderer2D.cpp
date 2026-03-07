@@ -226,6 +226,37 @@ namespace Axion {
 		}
 	}
 
+	void Renderer2D::drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Vec4& color) {
+		if (!s_initialized) return;
+
+		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices) {
+			nextBatch();
+		}
+
+		Vec3 camRight = { cameraView.data()[0], cameraView.data()[4], cameraView.data()[8] };
+		Vec3 camUp = { cameraView.data()[1], cameraView.data()[5], cameraView.data()[9] };
+
+		Vec3 halfSize = { size.x * 0.5f, size.y * 0.5f, 0.0f };
+
+		Vec3 vertices[4];
+		vertices[0] = position - (camRight * halfSize.x) - (camUp * halfSize.y); // BL
+		vertices[1] = position + (camRight * halfSize.x) - (camUp * halfSize.y); // BR
+		vertices[2] = position + (camRight * halfSize.x) + (camUp * halfSize.y); // TR
+		vertices[3] = position - (camRight * halfSize.x) + (camUp * halfSize.y); // TL
+
+		for (size_t i = 0; i < 4; i++) {
+			s_data.quadVertexBufferPtr->position = { vertices[i].x, vertices[i].y, vertices[i].z };
+			s_data.quadVertexBufferPtr->color = { color.x, color.y, color.z, color.w };
+			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
+			s_data.quadVertexBufferPtr->texIndex = 0.0f; // 0 = White Fallback
+			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
+			s_data.quadVertexBufferPtr++;
+		}
+
+		s_data.quadIndexCount += 6;
+		Renderer::getStats().quadCount2D++;
+	}
+
 	void Renderer2D::drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint) {
 		if (!s_initialized) return;
 

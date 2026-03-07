@@ -23,6 +23,7 @@ namespace Axion {
 		static void beginScene(const Camera& camera);
 		static void endScene();
 
+		static void drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Vec4& color);
 		static void drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 
 		static void drawQuad(const Vec2& position, const Vec2& size, const Vec4& color);

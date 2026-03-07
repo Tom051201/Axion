@@ -347,7 +347,8 @@ namespace Axion {
 			m_selectedEntity.hasComponent<SphereColliderComponent>() &&
 			m_selectedEntity.hasComponent<CapsuleColliderComponent>() &&
 			m_selectedEntity.hasComponent<GravitySourceComponent>() &&
-			m_selectedEntity.hasComponent<ScriptComponent>();
+			m_selectedEntity.hasComponent<ScriptComponent>() &&
+			m_selectedEntity.hasComponent<ParticleSystemComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -392,6 +393,7 @@ namespace Axion {
 
 			drawAddComponent<NativeScriptComponent>("Native Script");
 			drawAddComponent<ScriptComponent>("C# Script");
+			drawAddComponent<ParticleSystemComponent>("Particle System");
 
 			ImGui::EndPopup();
 		}
@@ -1585,6 +1587,112 @@ namespace Axion {
 				ImGui::EndTable();
 			}
 
+		});
+
+		// -- ParticleSystemComponent --
+		drawComponentInfo<ParticleSystemComponent>("Particle System", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<ParticleSystemComponent>();
+
+			if (ImGui::BeginTable("ParticleSystemTable", 2, ImGuiTableFlags_BordersInnerV)) {
+				ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+				// -- Velocity Variation --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Velocity Var");
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				drawVec3Control("##VelocityVar", component.velocityVariation, 1.0f, 1.0f, 1.0f);
+
+				// -- Color Begin --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Start Color");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::ColorEdit4("##ColorBeginEdit", component.colorBegin.data());
+
+				// -- Color End --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("End Color");
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::ColorEdit4("##ColorEndEdit", component.colorEnd.data());
+
+				// -- Size Begin --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Start Size");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##SizeBeginDrag", &component.sizeBegin, 0.05f, 0.0f, 10.0f);
+
+				// -- Size End --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("End Size");
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##SizeEndDrag", &component.sizeEnd, 0.05f, 0.0f, 10.0f);
+
+				// -- Life Time --
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("Lifetime");
+				ImGui::Separator();
+				ImGui::TableSetColumnIndex(1);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::DragFloat("##LifeTimeDrag", &component.lifeTime, 0.05f, 0.0f, 10.0f);
+
+				// -- Texture --
+				if (component.texture.isValid()) {
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Texture UUID");
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(component.texture.uuid.toString().c_str());
+
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove Texture")) {
+						component.texture.invalidate();
+					}
+				}
+				else {
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Texture");
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Open Texture2D...")) {
+						std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+						std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
+						if (!absPath.empty()) {
+							AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+							component.texture = handle;
+						}
+					}
+
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+							std::string relPath = static_cast<const char*>(payload->Data);
+							std::string absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.find(".axtex") != std::string::npos) {
+								AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
+								component.texture = handle;
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
+
+				ImGui::EndTable();
+			}
 		});
 
 	}

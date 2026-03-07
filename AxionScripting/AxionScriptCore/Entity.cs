@@ -8,7 +8,8 @@ namespace AxionScriptCore {
 		BoxCollider = 1,
 		SphereCollider = 2,
 		CapuleCollider = 3,
-		Audio = 4
+		Audio = 4,
+		ParticleSystem = 5
 	}
 
 	public class Entity {
@@ -89,6 +90,10 @@ namespace AxionScriptCore {
 			}
 
 			return null;
+		}
+
+		public unsafe void EmitParticles(int count) {
+			CoreAPI.API.Entity_EmitParticles(ID.High, ID.Low, count);
 		}
 
 	}

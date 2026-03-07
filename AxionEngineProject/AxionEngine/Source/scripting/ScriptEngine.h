@@ -29,6 +29,9 @@ namespace Axion {
 		void(*transform_setRotation)(uint64_t, uint64_t, float*);
 		void(*transform_getScale)(uint64_t, uint64_t, float*);
 		void(*transform_setScale)(uint64_t, uint64_t, float*);
+		void(*transform_getForward)(uint64_t, uint64_t, float*);
+		void(*transform_getRight)(uint64_t, uint64_t, float*);
+		void(*transform_getUp)(uint64_t, uint64_t, float*);
 
 		// -- PHYSICS --
 		void(*rigidbody_addForce)(uint64_t, uint64_t, float*, int);
@@ -58,6 +61,7 @@ namespace Axion {
 		void(*entity_addScript)(uint64_t, uint64_t, const char*);
 		void(*entity_findEntityByName)(const char*, uint64_t*, uint64_t*);
 		void*(*entity_getScriptInstance)(uint64_t, uint64_t);
+		void(*entity_emitParticles)(uint64_t, uint64_t, int);
 
 		// -- REFLECTION --
 		void(*script_registerField)(const char*, const char*, int);

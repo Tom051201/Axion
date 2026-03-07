@@ -27,6 +27,7 @@ namespace AxionScriptCore {
 
 				Entity bullet = Entity.InstantiatePrefab("prefabs/BlueCube.axprefab");
 				if (bullet != null) {
+					bullet.Transform.Rotation = Transform.Rotation;
 					bullet.Transform.Position = new Vector3(Transform.Position.X, Transform.Position.Y, Transform.Position.Z + 2.0f);
 				}
 

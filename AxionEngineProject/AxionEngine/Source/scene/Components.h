@@ -10,6 +10,7 @@
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/scene/ParticleSystem.h"
 
 #include "AxionEngine/Vendor/entt/entt.hpp"
 
@@ -275,6 +276,26 @@ namespace Axion {
 
 		GravitySourceComponent() = default;
 		GravitySourceComponent(const GravitySourceComponent&) = default;
+	};
+
+
+
+	struct ParticleSystemComponent {
+		std::vector<ParticleProps> particlePool;
+		uint32_t poolIndex = 0;
+
+		Vec3 velocityVariation = Vec3::one();
+		Vec4 colorBegin = { 1.0f, 0.0f, 0.0f, 1.0f };
+		Vec4 colorEnd = { 1.0f, 0.5f, 0.0f, 0.0f };
+		float sizeBegin = 0.5f;
+		float sizeEnd = 0.1f;
+		float lifeTime = 1.0f;
+
+		AssetHandle<Texture2D> texture;
+
+		ParticleSystemComponent(uint32_t maxParticles = 1000) {
+			particlePool.resize(maxParticles);
+		}
 	};
 
 }

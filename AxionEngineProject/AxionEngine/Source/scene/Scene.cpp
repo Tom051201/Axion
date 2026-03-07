@@ -9,6 +9,7 @@
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
+#include "AxionEngine/Source/scene/ParticleSystem.h"
 #include "AxionEngine/Source/physics/PhysicsSystem.h"
 #include "AxionEngine/Source/scripting/ScriptEngine.h"
 
@@ -387,6 +388,46 @@ namespace Axion {
 			}
 
 			Renderer2D::beginScene(cam);
+
+			Mat4 viewMatrix = cam.getViewMatrix();
+
+			// ----- Update and render particles -----
+			auto particleGroup = m_registry.group<ParticleSystemComponent>(entt::get<TransformComponent>);
+			for (auto e : particleGroup) {
+				auto& [psc, transform] = particleGroup.get<ParticleSystemComponent, TransformComponent>(e);
+
+				for (ParticleProps& particle : psc.particlePool) {
+					if (!particle.active) continue;
+
+					if (particle.lifeRemaining <= 0.0f) {
+						particle.active = false;
+						continue;
+					}
+					particle.lifeRemaining -= ts.getSeconds();
+
+					particle.position += particle.velocity * ts.getSeconds();
+
+					float lifePercentage = particle.lifeRemaining / particle.lifeTime;
+
+					float currentSize = particle.sizeEnd + (particle.sizeBegin - particle.sizeEnd) * lifePercentage;
+
+					Vec4 currentColor{
+						particle.colorEnd.x + (particle.colorBegin.x - particle.colorEnd.x) * lifePercentage,
+						particle.colorEnd.y + (particle.colorBegin.y - particle.colorEnd.y) * lifePercentage,
+						particle.colorEnd.z + (particle.colorBegin.z - particle.colorEnd.z) * lifePercentage,
+						particle.colorEnd.w + (particle.colorBegin.w - particle.colorEnd.w) * lifePercentage
+					};
+
+					if (psc.texture.isValid()) {
+						Renderer2D::drawBillboard(particle.position, { currentSize, currentSize }, viewMatrix, AssetManager::get<Texture2D>(psc.texture), currentColor);
+					}
+					else {
+						Renderer2D::drawBillboard(particle.position, { currentSize, currentSize }, viewMatrix, currentColor);
+					}
+				}
+
+			}
+
 			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent>);
 			for (auto e : spriteGroup) {
 				auto& sprite = spriteGroup.get<SpriteComponent>(e);
