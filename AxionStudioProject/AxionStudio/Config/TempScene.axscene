@@ -337,7 +337,7 @@ Entities:
     TagComponent:
       Tag: BlueCube
     TransformComponent:
-      Translation: [0, 0, 0.840783834]
+      Translation: [0, 0, -2.47428656]
       Rotation: [-0, 0, -0, 1]
       Scale: [0.5, 0.5, 0.5]
     MeshComponent:
@@ -360,4 +360,4 @@ Entities:
       IsTrigger: false
       Material: None
     ScriptComponent:
-      ClassName: AxionScriptCore.Enemy
+      ClassName: AxionScriptCore.Bullet

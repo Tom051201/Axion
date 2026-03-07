@@ -10,6 +10,7 @@
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
+#include "AxionStudio/Source/core/EditorTheme.h"
 
 // -- Windows only --
 #if AX_WIN_USING_CUSTOM_TITLE_BAR
@@ -641,6 +642,22 @@ namespace Axion {
 				ImGui::MenuItem("Project Overview", nullptr, &m_projectPanel->isVisible());
 				ImGui::MenuItem("Scene Overview", nullptr, &m_sceneOverviewPanel->isVisible());
 				ImGui::MenuItem("Editor Camera Properties", nullptr, &m_editorCameraPanel->isVisible());
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Theme")) {
+					EditorTheme::Theme currentTheme = EditorTheme::loadTheme("AxionStudio/Config/Settings.yaml");
+
+					if (ImGui::MenuItem("RED BLACK (Release I)", nullptr, currentTheme == EditorTheme::Theme::RedBlack)) {
+						EditorTheme::setTheme(EditorTheme::Theme::RedBlack);
+						EditorTheme::saveTheme(EditorTheme::Theme::RedBlack, "AxionStudio/Config/Settings.yaml");
+					}
+
+					if (ImGui::MenuItem("PURPLE ACCENTS (Release II)", nullptr, currentTheme == EditorTheme::Theme::Purple)) {
+						EditorTheme::setTheme(EditorTheme::Theme::Purple);
+						EditorTheme::saveTheme(EditorTheme::Theme::Purple, "AxionStudio/Config/Settings.yaml");
+					}
+
+					ImGui::EndMenu();
+				}
 				ImGui::EndMenu();
 			}
 
