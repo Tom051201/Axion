@@ -17,13 +17,12 @@ namespace Axion {
 		bool deserializeText(const std::string& filePath);
 		bool deserializeBinary(const std::string& filePath);
 
+		void serializeEntity(YAML::Emitter& out, Entity entity);
 		static Entity deserializeEntityNode(Scene* scene, YAML::Node& entityNode, bool generateNewUUID = false);
 
 	private:
 
 		Ref<Scene> m_scene;
-
-		void serializeEntity(YAML::Emitter& out, Entity entity);
 
 	};
 

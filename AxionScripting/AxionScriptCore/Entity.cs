@@ -68,6 +68,29 @@ namespace AxionScriptCore {
 			Marshal.FreeHGlobal(namePtr);
 		}
 
+		public static unsafe Entity? FindEntityByName(string name) {
+			IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
+
+			ulong hi = 0, lo = 0;
+			CoreAPI.API.Entity_FindEntityByName(namePtr, &hi, &lo);
+			Marshal .FreeHGlobal(namePtr);
+
+			if (hi == 0 && lo == 0) return null;
+
+			return new Entity() { ID = new UUID { High = hi, Low = lo } };
+		}
+
+		public unsafe T? As<T>() where T : Entity {
+			IntPtr gcHandlePtr = CoreAPI.API.Entity_GetScriptInstance(ID.High, ID.Low);
+
+			if (gcHandlePtr != IntPtr.Zero) {
+				GCHandle handle = GCHandle.FromIntPtr(gcHandlePtr);
+				return handle.Target as T;
+			}
+
+			return null;
+		}
+
 	}
 
 }

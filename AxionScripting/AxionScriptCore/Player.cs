@@ -25,7 +25,7 @@ namespace AxionScriptCore {
 			if (Input.IsMouseButtonPressed(MouseButton.Right) && m_FireTimer >= 0.5f) {
 				m_FireTimer = 0.0f;
 
-				Entity bullet = Entity.InstantiatePrefab("prefabs/Bullet.axprefab");
+				Entity bullet = Entity.InstantiatePrefab("prefabs/BlueCube.axprefab");
 				if (bullet != null) {
 					bullet.Transform.Position = new Vector3(Transform.Position.X, Transform.Position.Y, Transform.Position.Z + 2.0f);
 				}

@@ -22,6 +22,13 @@ namespace AxionScriptCore {
 
 		public override void OnCollisionEnter(Collision collision) {
 			Console.WriteLine($"[C#] Bullet Hit {collision.OtherEntity.ID}!");
+
+			Enemy? hitEnemy = collision.OtherEntity.As<Enemy>();
+
+			if (hitEnemy != null) {
+				hitEnemy.TakeDamage(25.0f);
+			}
+
 			//Destroy();
 		}
 

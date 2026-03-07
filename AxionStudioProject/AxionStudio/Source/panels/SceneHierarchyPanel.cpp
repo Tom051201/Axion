@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
@@ -231,13 +232,44 @@ namespace Axion {
 		// -- On right click --
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
+
 			// -- Delete entity --
 			if (ImGui::MenuItem("Delete Entity")) { entityDeleted = true; }
+
 			// -- Add an entity to it as a child --
 			if (ImGui::MenuItem("Add Child")) {
 				Entity child = m_context->createEntity("Child Entity");
 				child.setParent(entity);
 			}
+
+			// -- Create prefab --
+			ImGui::Separator();
+			if (ImGui::MenuItem("Create Prefab")) {
+
+				std::filesystem::path prefabDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "prefabs";
+				std::filesystem::create_directories(prefabDir);
+
+				std::string defaultName = entity.getComponent<TagComponent>().tag + ".axprefab";
+
+				std::string savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", ".axprefab"} }, (prefabDir / defaultName).string());
+
+				if (!savePath.empty()) {
+					YAML::Emitter out;
+					out << YAML::BeginMap;
+					out << YAML::Key << "Type" << YAML::Value << "Prefab"; // TODO: move this to AAP
+					out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
+					out << YAML::Key << "Entity";
+					SceneSerializer serializer(m_context);
+					serializer.serializeEntity(out, entity);
+					out << YAML::EndMap;
+
+					std::ofstream fout(savePath);
+					fout << out.c_str();
+
+					AX_CORE_LOG_INFO("Prefab created successfully at: {}", savePath);
+				}
+			}
+
 			ImGui::EndPopup();
 		}
 

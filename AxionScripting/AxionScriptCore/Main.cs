@@ -54,6 +54,8 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, void> Entity_Destroy;
 		public delegate* unmanaged<ulong, ulong, int, void> Entity_AddComponent;
 		public delegate* unmanaged<ulong, ulong, IntPtr, void> Entity_AddScript;
+		public delegate* unmanaged<IntPtr, ulong*, ulong*, void> Entity_FindEntityByName;
+		public delegate* unmanaged<ulong, ulong, IntPtr> Entity_GetScriptInstance;
 
 		// -- REFLECTION --
 		public delegate* unmanaged<IntPtr, IntPtr, int, void> Script_RegisterField;

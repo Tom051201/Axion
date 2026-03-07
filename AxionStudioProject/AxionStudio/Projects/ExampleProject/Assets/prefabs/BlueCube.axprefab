@@ -1,0 +1,31 @@
+Type: Prefab
+UUID: 558aa0ca01d453303804b507f0f1b3a7
+Entity:
+  Entity: 84d662550a551db2f69ec93e7b25c25d
+  TagComponent:
+    Tag: BlueCube
+  TransformComponent:
+    Translation: [0, 0, -2.47428656]
+    Rotation: [-0, 0, -0, 1]
+    Scale: [0.5, 0.5, 0.5]
+  MeshComponent:
+    Path: meshes\Cube.axmesh
+  MaterialComponent:
+    Path: materials\BlueMetal.axmat
+  RigidBodyComponent:
+    BodyType: Dynamic
+    Mass: 1
+    IsKinematic: false
+    LinearDamping: 0
+    AngularDamping: 0.0500000007
+    FixedRotationX: false
+    FixedRotationY: false
+    FixedRotationZ: false
+    EnableCCD: false
+  BoxColliderComponent:
+    HalfExtents: [0.5, 0.5, 0.5]
+    Offset: [0, 0, 0]
+    IsTrigger: false
+    Material: None
+  ScriptComponent:
+    ClassName: AxionScriptCore.Bullet

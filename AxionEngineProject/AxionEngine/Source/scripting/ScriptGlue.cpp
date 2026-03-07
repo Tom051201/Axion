@@ -319,6 +319,39 @@ namespace Axion {
 			}
 		}
 
+		extern "C" void entity_findEntityByName(const char* name, uint64_t* outUuidHi, uint64_t* outUuidLo) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene || !name) {
+				*outUuidHi = 0;
+				*outUuidLo = 0;
+				return;
+			}
+
+			std::string searchName = name;
+
+			auto view = scene->getRegistry().view<TagComponent>();
+			for (auto e : view) {
+				if (view.get<TagComponent>(e).tag == searchName) {
+					Entity entity = { e, scene };
+					UUID id = entity.getComponent<UUIDComponent>().id;
+					*outUuidHi = id.high;
+					*outUuidLo = id.low;
+					return;
+				}
+			}
+
+			// Not found
+			*outUuidHi = 0;
+			*outUuidLo = 0;
+		}
+
+		extern "C" void* entity_getScriptInstance(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<ScriptComponent>()) {
+				return entity.getComponent<ScriptComponent>().gcHandle;
+			}
+			return nullptr;
+		}
 
 		// -- REFLECTION --
 		extern "C" void script_registerField(const char* className, const char* fieldName, int type) {
@@ -376,6 +409,8 @@ namespace Axion {
 		REGISTER_API(apiStruct, entity_destroy);
 		REGISTER_API(apiStruct, entity_addComponent);
 		REGISTER_API(apiStruct, entity_addScript);
+		REGISTER_API(apiStruct, entity_findEntityByName);
+		REGISTER_API(apiStruct, entity_getScriptInstance);
 
 		// -- REFLECTION --
 		REGISTER_API(apiStruct, script_registerField);

@@ -56,9 +56,12 @@ namespace Axion {
 		void(*entity_destroy)(uint64_t, uint64_t);
 		void(*entity_addComponent)(uint64_t, uint64_t, int);
 		void(*entity_addScript)(uint64_t, uint64_t, const char*);
+		void(*entity_findEntityByName)(const char*, uint64_t*, uint64_t*);
+		void*(*entity_getScriptInstance)(uint64_t, uint64_t);
 
 		// -- REFLECTION --
 		void(*script_registerField)(const char*, const char*, int);
+
 	};
 
 
