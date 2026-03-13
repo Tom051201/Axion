@@ -66,13 +66,13 @@ namespace Axion {
 				Vec3 impulse = Vec3::zero();
 
 				if (cp.contactCount > 0) {
-					std::vector<PxContactPairPoint> contactPoints(cp.contactCount);
-					cp.extractContacts(contactPoints.data(), cp.contactCount);
-
 					// -- Only use the primary contact point --
-					contactPoint = { contactPoints[0].position.x, contactPoints[0].position.y, contactPoints[0].position.z };
-					contactNormal = { contactPoints[0].normal.x, contactPoints[0].normal.y, contactPoints[0].normal.z };
-					impulse = { contactPoints[0].impulse.x, contactPoints[0].impulse.y, contactPoints[0].impulse.z };
+					PxContactPairPoint primaryContact;
+					cp.extractContacts(&primaryContact, 1);
+
+					contactPoint = { primaryContact.position.x, primaryContact.position.y, primaryContact.position.z };
+					contactNormal = { primaryContact.normal.x, primaryContact.normal.y, primaryContact.normal.z };
+					impulse = { primaryContact.impulse.x, primaryContact.impulse.y, primaryContact.impulse.z };
 				}
 
 				if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND) {
@@ -178,160 +178,24 @@ namespace Axion {
 		sceneDesc.gravity = PxVec3(gravity.x, gravity.y, gravity.z);
 		sceneDesc.cpuDispatcher = s_dispatcher;
 
-		sceneDesc.filterShader = AxionSimulatorFilterShader; // PxDefaultSimulationFilterShader
+		sceneDesc.filterShader = AxionSimulatorFilterShader;
 		sceneDesc.simulationEventCallback = &s_contactListener;
 
 		sceneDesc.flags |= PxSceneFlag::eENABLE_CCD;
 
 		s_physXScene = s_physics->createScene(sceneDesc);
 
-		auto group = scene->getRegistry().group<RigidBodyComponent>(entt::get<TransformComponent>);
-		for (auto entity : group) {
-			auto& [rb, transform] = group.get<RigidBodyComponent, TransformComponent>(entity);
+		auto rbView = scene->getRegistry().view<RigidBodyComponent, TransformComponent>();
+		for (auto [entityHandle, rb, transform] : rbView.each()) {
 
-			PxQuat pxQuat(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w);
-			if (pxQuat.magnitudeSquared() < 0.0001) {
-				pxQuat = PxQuat(PxIdentity);
-			}
-
-			PxTransform physxTransform(
-				PxVec3(transform.position.x, transform.position.y, transform.position.z),
-				pxQuat.getNormalized()
-			);
-
-			PxRigidActor* actor = nullptr;
-			if (rb.type == RigidBodyComponent::BodyType::Static) {
-				actor = s_physics->createRigidStatic(physxTransform);
-			}
-			else {
-				PxRigidDynamic* dynamicActor = s_physics->createRigidDynamic(physxTransform);
-				dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, rb.isKinematic);
-				dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, rb.enableCCD);
-				dynamicActor->setLinearDamping(rb.linearDamping);
-				dynamicActor->setAngularDamping(rb.angularDamping);
-
-				dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, rb.fixedRotationX);
-				dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, rb.fixedRotationY);
-				dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, rb.fixedRotationZ);
-
-				actor = dynamicActor;
-			}
-
-			// -- Store entt::entity inside for physx --
-			actor->userData = (void*)(uintptr_t)entity;
-
-
-			// -- Setup Box Colliders --
-			if (scene->getRegistry().all_of<BoxColliderComponent>(entity)) {
-				auto& bc = scene->getRegistry().get<BoxColliderComponent>(entity);
-
-				PxMaterial* material = getOrCreatePhysXMaterial(bc.material);
-
-				PxVec3 offset = {
-					bc.offset.x * transform.scale.x,
-					bc.offset.y * transform.scale.y,
-					bc.offset.z * transform.scale.z
-				};
-
-				PxVec3 halfExtents = {
-					std::abs(bc.halfExtents.x * transform.scale.x),
-					std::abs(bc.halfExtents.y * transform.scale.y),
-					std::abs(bc.halfExtents.z * transform.scale.z)
-				};
-
-				if (halfExtents.x < 0.001f) halfExtents.x = 0.001f;
-				if (halfExtents.y < 0.001f) halfExtents.y = 0.001f;
-				if (halfExtents.z < 0.001f) halfExtents.z = 0.001f;
-
-				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxBoxGeometry(halfExtents), *material);
-				shape->setLocalPose(PxTransform(offset));
-
-				// -- Trigger setup --
-				if (bc.isTrigger) {
-					shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-					shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-				}
-
-				bc.runtimeShape = shape;
-			}
-
-
-			// -- Setup Sphere Colliders --
-			if (scene->getRegistry().all_of<SphereColliderComponent>(entity)) {
-				auto& sc = scene->getRegistry().get<SphereColliderComponent>(entity);
-
-				PxMaterial* material = getOrCreatePhysXMaterial(sc.material);
-
-				float maxScale = std::max(std::abs(transform.scale.x), std::max(std::abs(transform.scale.y), std::abs(transform.scale.z)));
-				float geometryRadius = sc.radius * maxScale;
-
-				PxVec3 offset = {
-					sc.offset.x * transform.scale.x,
-					sc.offset.y * transform.scale.y,
-					sc.offset.z * transform.scale.z
-				};
-
-				if (geometryRadius < 0.001f) geometryRadius = 0.001f;
-
-				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxSphereGeometry(geometryRadius), *material);
-				shape->setLocalPose(PxTransform(offset));
-
-				// -- Trigger setup --
-				if (sc.isTrigger) {
-					shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-					shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-				}
-
-				sc.runtimeShape = shape;
-			}
-
-
-			// -- Setup Capsule Colliders --
-			if (scene->getRegistry().all_of<CapsuleColliderComponent>(entity)) {
-				auto& cc = scene->getRegistry().get<CapsuleColliderComponent>(entity);
-
-				PxMaterial* material = getOrCreatePhysXMaterial(cc.material);
-
-				float scaleXZ = std::max(std::abs(transform.scale.x), std::abs(transform.scale.z));
-				float scaledRadius = cc.radius * scaleXZ;
-				float scaledHalfHeight = cc.halfHeight * std::abs(transform.scale.y);
-
-				if (scaledRadius < 0.001f) scaledRadius = 0.001f;
-				if (scaledHalfHeight < 0.001f) scaledHalfHeight = 0.001f;
-
-				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxCapsuleGeometry(scaledRadius, scaledHalfHeight), *material);
-
-				PxQuat relativeRotation(PxHalfPi, PxVec3(0.0f, 0.0f, 1.0f));
-
-				PxVec3 offset = {
-					cc.offset.x * transform.scale.x,
-					cc.offset.y * transform.scale.y,
-					cc.offset.z * transform.scale.z
-				};
-
-				shape->setLocalPose(PxTransform(offset, relativeRotation));
-
-				// -- Trigger setup --
-				if (cc.isTrigger) {
-					shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-					shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-				}
-
-				cc.runtimeShape = shape;
-			}
-
-
-			// -- Update Mass for Dynamic bodies --
-			if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
-				PxRigidBodyExt::updateMassAndInertia(*(PxRigidDynamic*)actor, rb.mass);
-			}
-
-			s_physXScene->addActor(*actor);
-			rb.runtimeActor = actor;
+			Entity entity = { entityHandle, scene };
+			createPhysicsActor(entity, scene, rb, transform);
 		}
+
 	}
 
 	void PhysicsSystem::onSceneStop(Scene* scene) {
+		// -- Release physx actor --
 		auto view = scene->getRegistry().view<RigidBodyComponent>();
 		for (auto entity : view) {
 			auto& rb = view.get<RigidBodyComponent>(entity);
@@ -341,189 +205,126 @@ namespace Axion {
 			}
 		}
 
+		// -- Release physx scene --
 		if (s_physXScene) {
 			s_physXScene->release();
 			s_physXScene = nullptr;
 		}
 	}
 
+	struct ActiveGravitySource {
+		entt::entity entityHandle;
+		GravitySourceComponent::Type type;
+		PxVec3 position;
+		PxVec3 direction;
+		float strength;
+		float radius;
+	};
+
 	void PhysicsSystem::step(Scene* scene, Timestep ts) {
 		if (!s_physXScene) return;
 
 		auto& registry = scene->getRegistry();
+		auto rbView = registry.view<RigidBodyComponent, TransformComponent>();
+		auto gravityView = registry.view<GravitySourceComponent, TransformComponent>();
 
-		auto bodyGroup = registry.group<RigidBodyComponent>(entt::get<TransformComponent>);
-		auto gravityGroup = registry.group<GravitySourceComponent>(entt::get<TransformComponent>);
 
-		// -- Late initialization --
-		for (auto entityHandle : bodyGroup) {
-			auto& [rb, transform] = bodyGroup.get<RigidBodyComponent, TransformComponent>(entityHandle);
 
+		// ----- Pre-Calculate Gravity Sources -----
+		std::vector<ActiveGravitySource> activeGravitySources;
+		activeGravitySources.reserve(16);
+		for (auto [sourceEntity, source, sourceTransform] : gravityView.each()) {
+			ActiveGravitySource data;
+			data.entityHandle = sourceEntity;
+			data.type = source.type;
+			data.strength = source.strength;
+			data.radius = source.radius;
+			data.position = PxVec3(sourceTransform.position.x, sourceTransform.position.y, sourceTransform.position.z);
+
+			if (source.type == GravitySourceComponent::Type::Directional) {
+				PxVec3 defaultDir(0.0f, -1.0f, 0.0f);
+				PxQuat q(sourceTransform.rotation.x, sourceTransform.rotation.y, sourceTransform.rotation.z, sourceTransform.rotation.w);
+				data.direction = q.rotate(defaultDir);
+			}
+
+			activeGravitySources.push_back(data);
+		}
+
+
+
+		// ----- Pre-Simulation Pass -----
+		for (auto [entityHandle, rb, transform] : rbView.each()) {
+
+			// -- Late initialization --
 			if (rb.runtimeActor == nullptr) {
 				Entity entity = { entityHandle, scene };
-
-				PxQuat pxQuat(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w);
-				if (pxQuat.magnitudeSquared() < 0.0001) pxQuat = PxQuat(PxIdentity);
-
-				PxTransform physxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z), pxQuat.getNormalized());
-
-				PxRigidActor* actor = nullptr;
-				if (rb.type == RigidBodyComponent::BodyType::Static) {
-					actor = s_physics->createRigidStatic(physxTransform);
-				}
-				else {
-					PxRigidDynamic* dynamicActor = s_physics->createRigidDynamic(physxTransform);
-					dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, rb.isKinematic);
-					dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, rb.enableCCD);
-					dynamicActor->setLinearDamping(rb.linearDamping);
-					dynamicActor->setAngularDamping(rb.angularDamping);
-					dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, rb.fixedRotationX);
-					dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, rb.fixedRotationY);
-					dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, rb.fixedRotationZ);
-					actor = dynamicActor;
-				}
-
-				actor->userData = (void*)(uintptr_t)entityHandle;
-
-				// -- Setup Box Colliders --
-				if (entity.hasComponent<BoxColliderComponent>()) {
-					auto& bc = entity.getComponent<BoxColliderComponent>();
-					PxMaterial* material = getOrCreatePhysXMaterial(bc.material);
-					PxVec3 offset = { bc.offset.x * transform.scale.x, bc.offset.y * transform.scale.y, bc.offset.z * transform.scale.z };
-					PxVec3 halfExtents = { std::abs(bc.halfExtents.x * transform.scale.x), std::abs(bc.halfExtents.y * transform.scale.y), std::abs(bc.halfExtents.z * transform.scale.z) };
-
-					if (halfExtents.x < 0.001f) halfExtents.x = 0.001f;
-					if (halfExtents.y < 0.001f) halfExtents.y = 0.001f;
-					if (halfExtents.z < 0.001f) halfExtents.z = 0.001f;
-
-					PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxBoxGeometry(halfExtents), *material);
-					shape->setLocalPose(PxTransform(offset));
-					if (bc.isTrigger) {
-						shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-						shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-					}
-					bc.runtimeShape = shape;
-				}
-
-				// -- Setup Sphere Colliders --
-				if (entity.hasComponent<SphereColliderComponent>()) {
-					auto& sc = entity.getComponent<SphereColliderComponent>();
-					PxMaterial* material = getOrCreatePhysXMaterial(sc.material);
-					float maxScale = std::max(std::abs(transform.scale.x), std::max(std::abs(transform.scale.y), std::abs(transform.scale.z)));
-					float geometryRadius = sc.radius * maxScale;
-					if (geometryRadius < 0.001f) geometryRadius = 0.001f;
-
-					PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxSphereGeometry(geometryRadius), *material);
-					shape->setLocalPose(PxTransform(PxVec3(sc.offset.x * transform.scale.x, sc.offset.y * transform.scale.y, sc.offset.z * transform.scale.z)));
-					if (sc.isTrigger) {
-						shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-						shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-					}
-					sc.runtimeShape = shape;
-				}
-
-				// -- Setup Capsule Colliders --
-				if (entity.hasComponent<CapsuleColliderComponent>()) {
-					auto& cc = entity.getComponent<CapsuleColliderComponent>();
-					PxMaterial* material = getOrCreatePhysXMaterial(cc.material);
-					float scaleXZ = std::max(std::abs(transform.scale.x), std::abs(transform.scale.z));
-					float scaledRadius = cc.radius * scaleXZ;
-					float scaledHalfHeight = cc.halfHeight * std::abs(transform.scale.y);
-
-					if (scaledRadius < 0.001f) scaledRadius = 0.001f;
-					if (scaledHalfHeight < 0.001f) scaledHalfHeight = 0.001f;
-
-					PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxCapsuleGeometry(scaledRadius, scaledHalfHeight), *material);
-					PxQuat relativeRotation(PxHalfPi, PxVec3(0.0f, 0.0f, 1.0f));
-					PxVec3 offset = { cc.offset.x * transform.scale.x, cc.offset.y * transform.scale.y, cc.offset.z * transform.scale.z };
-					shape->setLocalPose(PxTransform(offset, relativeRotation));
-
-					if (cc.isTrigger) {
-						shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-						shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-					}
-					cc.runtimeShape = shape;
-				}
-
-				if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
-					PxRigidBodyExt::updateMassAndInertia(*(PxRigidDynamic*)actor, rb.mass);
-				}
-
-				s_physXScene->addActor(*actor);
-				rb.runtimeActor = actor;
+				createPhysicsActor(entity, scene, rb, transform);
 			}
 
-		}
+			// -- Safty check --
+			if (!rb.runtimeActor) continue;
 
-		for (auto entity : bodyGroup) {
-			auto& [rb, transform] = bodyGroup.get<RigidBodyComponent, TransformComponent>(entity);
-
-			if (rb.type != RigidBodyComponent::BodyType::Dynamic || rb.isKinematic || !rb.runtimeActor) {
-				continue;
-			}
-
-			PxRigidDynamic* actor = static_cast<PxRigidDynamic*>(rb.runtimeActor);
-			PxVec3 targetPos(transform.position.x, transform.position.y, transform.position.z);
-
-			PxVec3 totalForce(0.0f);
-			bool isAffectedByField = false;
-
-			for (auto sourceEntity : gravityGroup) {
-				if (entity == sourceEntity) continue;
-
-				auto& [source, sourceTransform] = gravityGroup.get<GravitySourceComponent, TransformComponent>(sourceEntity);
-				PxVec3 sourcePos(sourceTransform.position.x, sourceTransform.position.y, sourceTransform.position.z);
-
-				if (source.type == GravitySourceComponent::Type::Directional) {
-					PxVec3 defaultDir(0.0f, -1.0f, 0.0f);
-					PxQuat q(sourceTransform.rotation.x, sourceTransform.rotation.y, sourceTransform.rotation.z, sourceTransform.rotation.w);
-
-					totalForce += q.rotate(defaultDir) * source.strength * rb.mass;
-					isAffectedByField = true;
-				}
-				else if (source.type == GravitySourceComponent::Type::Point) {
-					PxVec3 direction = sourcePos - targetPos;
-					float distance = direction.magnitude();
-
-					if (distance < source.radius && distance > 0.01f) {
-						direction.normalize();
-
-						totalForce += direction * source.strength * rb.mass;
-						isAffectedByField = true;
-					}
-				}
-			}
-
-			if (isAffectedByField) {
-				actor->addForce(totalForce, PxForceMode::eFORCE);
-				actor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
-			}
-			else {
-				actor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !rb.useGlobalGravity);
-			}
-		}
-
-		for (auto entity : bodyGroup) {
-			auto& [rb, transform] = bodyGroup.get<RigidBodyComponent, TransformComponent>(entity);
-
-			if (rb.isKinematic && rb.runtimeActor) {
+			// -- Process Dynamic Bodies --
+			if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
 				PxRigidDynamic* actor = static_cast<PxRigidDynamic*>(rb.runtimeActor);
 
-				PxQuat q(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w);
-				PxTransform target(
-					PxVec3(transform.position.x, transform.position.y, transform.position.z),
-					q.getNormalized()
-				);
-				actor->setKinematicTarget(target);
+				// -- Update kinematic target --
+				if (rb.isKinematic) {
+					PxQuat q(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w);
+					PxTransform target(
+						PxVec3(transform.position.x, transform.position.y, transform.position.z),
+						q.getNormalized()
+					);
+					actor->setKinematicTarget(target);
+				}
+				else {
+					// -- Apply gravity fields / forces to standard dynamic bodies --
+					PxVec3 targetPos(transform.position.x, transform.position.y, transform.position.z);
+					PxVec3 totalForce(0.0f);
+					bool isAffectedByField = false;
+
+					for (const auto& source : activeGravitySources) {
+						if (entityHandle == source.entityHandle) continue;
+
+						if (source.type == GravitySourceComponent::Type::Directional) {
+							totalForce += source.direction * source.strength * rb.mass;
+							isAffectedByField = true;
+						}
+						else if (source.type == GravitySourceComponent::Type::Point) {
+							PxVec3 direction = source.position - targetPos;
+							float distance = direction.magnitude();
+
+							if (distance < source.radius && distance > 0.01f) {
+								direction.normalize();
+								totalForce += direction * source.strength * rb.mass;
+								isAffectedByField = true;
+							}
+						}
+
+					}
+
+					if (isAffectedByField) {
+						actor->addForce(totalForce, PxForceMode::eFORCE);
+						actor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
+					}
+					else {
+						actor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !rb.useGlobalGravity);
+					}
+
+				}
 			}
 		}
 
+
+
+		// ----- Simulate physx -----
 		s_physXScene->simulate(ts.getSeconds());
 		s_physXScene->fetchResults(true);
 
-		for (auto entity : bodyGroup) {
-			auto& [rb, transform] = bodyGroup.get<RigidBodyComponent, TransformComponent>(entity);
 
+
+		// ----- Post-Simulation Pass -----
+		for (auto [entity, rb, transform] : rbView.each()) {
 			if (rb.type == RigidBodyComponent::BodyType::Dynamic && !rb.isKinematic && rb.runtimeActor) {
 				PxRigidDynamic* actor = static_cast<PxRigidDynamic*>(rb.runtimeActor);
 				PxTransform pt = actor->getGlobalPose();
@@ -532,6 +333,7 @@ namespace Axion {
 				transform.rotation = { pt.q.x, pt.q.y, pt.q.z, pt.q.w };
 			}
 		}
+
 	}
 
 	void PhysicsSystem::destroyBody(Entity entity) {
@@ -551,6 +353,11 @@ namespace Axion {
 
 	bool PhysicsSystem::raycast(Scene* scene, const Vec3& origin, const Vec3& direction, float maxDistance, RaycastHit* outHit) {
 		if (!s_physXScene) return false;
+
+		if (direction.length() == 0.0f) {
+			AX_CORE_LOG_WARN("PhysicsSystem::raycast called with a zero-length direction vector!");
+			return false;
+		}
 
 		PxVec3 pxOrigin(origin.x, origin.y, origin.z);
 		PxVec3 pxDir(direction.x, direction.y, direction.z);
@@ -574,6 +381,98 @@ namespace Axion {
 			return true;
 		}
 		return false;
+	}
+
+	void PhysicsSystem::createPhysicsActor(Entity entity, Scene* scene, RigidBodyComponent& rb, TransformComponent& transform) {
+		PxQuat pxQuat(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w);
+		if (pxQuat.magnitudeSquared() < 0.0001) pxQuat = PxQuat(PxIdentity);
+
+		PxTransform physxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z), pxQuat.getNormalized());
+
+		PxRigidActor* actor = nullptr;
+		if (rb.type == RigidBodyComponent::BodyType::Static) {
+			actor = s_physics->createRigidStatic(physxTransform);
+		}
+		else {
+			PxRigidDynamic* dynamicActor = s_physics->createRigidDynamic(physxTransform);
+			dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, rb.isKinematic);
+			dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, rb.enableCCD);
+			dynamicActor->setLinearDamping(rb.linearDamping);
+			dynamicActor->setAngularDamping(rb.angularDamping);
+			dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, rb.fixedRotationX);
+			dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, rb.fixedRotationY);
+			dynamicActor->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, rb.fixedRotationZ);
+			actor = dynamicActor;
+		}
+
+		actor->userData = (void*)(uintptr_t)entity.getHandle();
+
+		// -- Setup Box Colliders --
+		if (entity.hasComponent<BoxColliderComponent>()) {
+			auto& bc = entity.getComponent<BoxColliderComponent>();
+			PxMaterial* material = getOrCreatePhysXMaterial(bc.material);
+			PxVec3 offset = { bc.offset.x * transform.scale.x, bc.offset.y * transform.scale.y, bc.offset.z * transform.scale.z };
+			PxVec3 halfExtents = { std::abs(bc.halfExtents.x * transform.scale.x), std::abs(bc.halfExtents.y * transform.scale.y), std::abs(bc.halfExtents.z * transform.scale.z) };
+
+			if (halfExtents.x < 0.001f) halfExtents.x = 0.001f;
+			if (halfExtents.y < 0.001f) halfExtents.y = 0.001f;
+			if (halfExtents.z < 0.001f) halfExtents.z = 0.001f;
+
+			PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxBoxGeometry(halfExtents), *material);
+			shape->setLocalPose(PxTransform(offset));
+			if (bc.isTrigger) {
+				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+			}
+			bc.runtimeShape = shape;
+		}
+
+		// -- Setup Sphere Colliders --
+		if (entity.hasComponent<SphereColliderComponent>()) {
+			auto& sc = entity.getComponent<SphereColliderComponent>();
+			PxMaterial* material = getOrCreatePhysXMaterial(sc.material);
+			float maxScale = std::max(std::abs(transform.scale.x), std::max(std::abs(transform.scale.y), std::abs(transform.scale.z)));
+			float geometryRadius = sc.radius * maxScale;
+			if (geometryRadius < 0.001f) geometryRadius = 0.001f;
+
+			PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxSphereGeometry(geometryRadius), *material);
+			shape->setLocalPose(PxTransform(PxVec3(sc.offset.x * transform.scale.x, sc.offset.y * transform.scale.y, sc.offset.z * transform.scale.z)));
+			if (sc.isTrigger) {
+				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+			}
+			sc.runtimeShape = shape;
+		}
+
+		// -- Setup Capsule Colliders --
+		if (entity.hasComponent<CapsuleColliderComponent>()) {
+			auto& cc = entity.getComponent<CapsuleColliderComponent>();
+			PxMaterial* material = getOrCreatePhysXMaterial(cc.material);
+			float scaleXZ = std::max(std::abs(transform.scale.x), std::abs(transform.scale.z));
+			float scaledRadius = cc.radius * scaleXZ;
+			float scaledHalfHeight = cc.halfHeight * std::abs(transform.scale.y);
+
+			if (scaledRadius < 0.001f) scaledRadius = 0.001f;
+			if (scaledHalfHeight < 0.001f) scaledHalfHeight = 0.001f;
+
+			PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxCapsuleGeometry(scaledRadius, scaledHalfHeight), *material);
+			PxQuat relativeRotation(PxHalfPi, PxVec3(0.0f, 0.0f, 1.0f));
+			PxVec3 offset = { cc.offset.x * transform.scale.x, cc.offset.y * transform.scale.y, cc.offset.z * transform.scale.z };
+			shape->setLocalPose(PxTransform(offset, relativeRotation));
+
+			if (cc.isTrigger) {
+				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+			}
+			cc.runtimeShape = shape;
+		}
+
+		if (rb.type == RigidBodyComponent::BodyType::Dynamic) {
+			PxRigidBodyExt::updateMassAndInertia(*(PxRigidDynamic*)actor, rb.mass);
+		}
+
+		s_physXScene->addActor(*actor);
+		rb.runtimeActor = actor;
 	}
 
 }

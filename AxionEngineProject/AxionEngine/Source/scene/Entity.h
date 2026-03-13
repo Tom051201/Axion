@@ -97,6 +97,8 @@ namespace Axion {
 			return m_scene->getRegistry().valid(m_handle);
 		}
 
+		entt::entity getHandle() const { return m_handle; }
+
 		operator bool() const { return isValid(); }
 		operator uint32_t() const { return (uint32_t)m_handle; }
 		operator entt::entity() const { return m_handle; }

@@ -22,39 +22,39 @@ namespace Axion {
 	}
 
 	void Scene::release() {
-		{
-			auto view = m_registry.view<AudioComponent>();
-			for (auto entity : view) {
-				auto& ac = view.get<AudioComponent>(entity);
-				if (ac.audio != nullptr) { ac.audio->release(); }
+
+		// -- Release Audio Components --
+		auto acView = m_registry.view<AudioComponent>();
+		for (auto entity : acView) {
+			auto& ac = acView.get<AudioComponent>(entity);
+			if (ac.audio != nullptr) { ac.audio->release(); }
+		}
+
+		// -- Release Native Script Components --
+		auto nscView = m_registry.view<NativeScriptComponent>();
+		for (auto entity : nscView) {
+			auto& nsc = nscView.get<NativeScriptComponent>(entity);
+			if (nsc.instance) {
+				nsc.instance->onDestroy();
+				nsc.destroyScript(&nsc);
 			}
 		}
 
-		{
-			auto view = m_registry.view<NativeScriptComponent>();
-			for (auto entity : view) {
-				auto& nsc = view.get<NativeScriptComponent>(entity);
-				if (nsc.instance) {
-					nsc.instance->onDestroy();
-					nsc.destroyScript(&nsc);
-				}
+		// -- Release C# Script Component --
+		auto scView = m_registry.view<ScriptComponent>();
+		for (auto entity : scView) {
+			auto& sc = scView.get<ScriptComponent>(entity);
+			if (sc.gcHandle) {
+				ScriptEngine::destroyEntityScript(sc.gcHandle);
+				sc.gcHandle = nullptr;
 			}
 		}
 
-		{
-			auto view = m_registry.view<ScriptComponent>();
-			for (auto entity : view) {
-				auto& sc = view.get<ScriptComponent>(entity);
-				if (sc.gcHandle) {
-					ScriptEngine::destroyEntityScript(sc.gcHandle);
-					sc.gcHandle = nullptr;
-				}
-			}
-		}
-
+		// -- Reset Map --
 		m_entityMap.clear();
-
 	}
+
+
 
 	Entity Scene::createEntity() {
 		return createEntityWithUUID("Unnamed Entity", UUID::generate());
@@ -79,14 +79,17 @@ namespace Axion {
 	}
 
 	void Scene::destroyEntity(Entity entity) {
-		if (std::find(m_entitiesPendingDestroy.begin(), m_entitiesPendingDestroy.end(), entity) == m_entitiesPendingDestroy.end()) {
-			m_entitiesPendingDestroy.push_back(entity);
+		if (!m_registry.all_of<PendingDestroyComponent>(entity)) {
+			m_registry.emplace<PendingDestroyComponent>(entity);
 		}
 	}
 
 	void Scene::flushDestroyedEntities() {
-		// -- Destroy native script --
-		for (auto& e : m_entitiesPendingDestroy) {
+		auto destroyView = m_registry.view<PendingDestroyComponent>();
+		for (auto e : destroyView) {
+			Entity entity = { e, this };
+
+			// -- Destroy Native Script --
 			if (m_registry.all_of<NativeScriptComponent>(e)) {
 				auto& nsc = m_registry.get<NativeScriptComponent>(e);
 				if (nsc.instance) {
@@ -94,10 +97,8 @@ namespace Axion {
 					nsc.destroyScript(&nsc);
 				}
 			}
-		}
 
-		// -- Destroy C# scripts --
-		for (auto& e : m_entitiesPendingDestroy) {
+			// -- Destroy C# Script --
 			if (m_registry.all_of<ScriptComponent>(e)) {
 				auto& sc = m_registry.get<ScriptComponent>(e);
 				if (sc.gcHandle) {
@@ -105,38 +106,31 @@ namespace Axion {
 					sc.gcHandle = nullptr;
 				}
 			}
-		}
 
-		// -- Remove from map --
-		for (auto& e : m_entitiesPendingDestroy) {
+			// -- Remove From Map --
 			if (m_registry.all_of<UUIDComponent>(e)) {
 				auto& idc = m_registry.get<UUIDComponent>(e);
 				m_entityMap.erase(idc.id);
 			}
-		}
 
-		// -- Remove physics actors --
-		for (auto& e : m_entitiesPendingDestroy) {
-			Entity entity = { e, this };
+			// -- Remove Physics Actor --
 			PhysicsSystem::destroyBody(entity);
 		}
 
-		// -- Destroy entities --
-		for (auto& e : m_entitiesPendingDestroy) {
-			m_registry.destroy(e);
-		}
-		m_entitiesPendingDestroy.clear();
+		// -- Destroy Entity --
+		m_registry.destroy(destroyView.begin(), destroyView.end());
 
 		// -- Remove components --
 		for (auto& fn : m_componentsPendingRemove) {
 			fn();
 		}
 		m_componentsPendingRemove.clear();
-
 	}
 
+
+
 	void Scene::onUpdateSimulation(Timestep ts, const Camera& cam) {
-		// Physics
+		// -- Physics --
 		m_physicsAccumulator += ts.getSeconds();
 		while (m_physicsAccumulator >= m_physicsTimeStep) {
 			PhysicsSystem::step(this, m_physicsTimeStep);
@@ -144,11 +138,10 @@ namespace Axion {
 		}
 		processPhysicsCallbacks();
 
-		// -- Sync hierarchy for kinematic children --
-		auto group = m_registry.group<RelationshipComponent>(entt::get<TransformComponent, RigidBodyComponent>);
-		for (auto entity : group) {
-			auto& [relationship, transform, rb] = group.get<RelationshipComponent, TransformComponent, RigidBodyComponent>(entity);
 
+		// -- Sync hierarchy for kinematic children --
+		auto relView = m_registry.view<RelationshipComponent, TransformComponent, RigidBodyComponent>();
+		for (auto [entity, relationship, transform, rb] : relView.each()) {
 			if (relationship.parent != entt::null && rb.isKinematic) {
 				Entity parentEntity = { relationship.parent, this };
 
@@ -160,39 +153,8 @@ namespace Axion {
 			}
 		}
 
-		{
-			// -- Native Scripts --
-			auto nativeView = m_registry.view<NativeScriptComponent>();
-			for (auto entity : nativeView) {
-				auto& nsc = nativeView.get<NativeScriptComponent>(entity);
-				if (!nsc.instance) {
-					nsc.instance = nsc.instantiateScript();
-					nsc.instance->m_entity = Entity{ entity, this };
-					nsc.instance->onCreate();
-				}
-				nsc.instance->onUpdate(ts);
-			}
 
-			// -- C# Scripts --
-			ScriptEngine::setSceneContext(this);
-			ScriptEngine::updateTime(ts.getSeconds());
-			std::vector<entt::entity> scriptEntities;
-			auto scriptView = m_registry.view<ScriptComponent>();
-			for (auto e : scriptView) scriptEntities.push_back(e);
-			for (auto e : scriptEntities) {
-				if (!m_registry.valid(e) || !m_registry.all_of<ScriptComponent>(e)) continue;
-
-				auto& sc = m_registry.get<ScriptComponent>(e);
-				if (!sc.isInstantiated) {
-					UUID entityID = m_registry.get<UUIDComponent>(e).id;
-					sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
-					sc.isInstantiated = true;
-				}
-				if (sc.gcHandle) {
-					ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
-				}
-			}
-		}
+		updateScripts(ts);
 
 		onUpdate(ts, cam);
 	}
@@ -206,57 +168,21 @@ namespace Axion {
 		}
 		processPhysicsCallbacks();
 
-		{
-			// -- Native Scripts --
-			auto nativeView = m_registry.view<NativeScriptComponent>();
-			for (auto entity : nativeView) {
-				auto& nsc = nativeView.get<NativeScriptComponent>(entity);
-				if (!nsc.instance) {
-					nsc.instance = nsc.instantiateScript();
-					nsc.instance->m_entity = Entity{ entity, this };
-					nsc.instance->onCreate();
-				}
-				nsc.instance->onUpdate(ts);
-			}
 
-			// -- C# Scripts --
-			ScriptEngine::setSceneContext(this);
-			ScriptEngine::updateTime(ts.getSeconds());
-			std::vector<entt::entity> scriptEntities;
-			auto scriptView = m_registry.view<ScriptComponent>();
-			for (auto e : scriptView) scriptEntities.push_back(e);
-			for (auto e : scriptEntities) {
-				if (!m_registry.valid(e) || !m_registry.all_of<ScriptComponent>(e)) continue;
-
-				auto& sc = m_registry.get<ScriptComponent>(e);
-				if (!sc.isInstantiated) {
-					UUID entityID = m_registry.get<UUIDComponent>(e).id;
-					sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
-					sc.isInstantiated = true;
-				}
-				if (sc.gcHandle) {
-					ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
-				}
-			}
-		}
+		updateScripts(ts);
 
 
 
+		// -- Setup Camera --
 		Camera* primaryCamera = nullptr;
 		Mat4 cameraTransform;
 
-		// camera setup
-		{
-			auto group = m_registry.group<CameraComponent>(entt::get<TransformComponent>);
-			for (auto entity : group) {
-				auto& [transform, camera] = group.get<TransformComponent, CameraComponent>(entity);
-
-				if (camera.isPrimary) {
-					primaryCamera = &camera.camera;
-					cameraTransform = getWorldTransform({ entity, this });
-					break;
-				}
-
+		auto cameraView = m_registry.view<CameraComponent, TransformComponent>();
+		for (auto [entity, camera, transform] : cameraView.each()) {
+			if (camera.isPrimary) {
+				primaryCamera = &camera.camera;
+				cameraTransform = getWorldTransform({ entity, this });
+				break;
 			}
 		}
 
@@ -270,199 +196,187 @@ namespace Axion {
 	}
 
 	void Scene::onUpdate(Timestep ts, const Camera& cam) {
-		if (&cam) {
 
-			LightingData lightData;
-			lightData.ambientColor = { 0.03f, 0.03f, 0.03f, 1.0f };
+		// ----- Setup Scene Lighting -----
+		LightingData lightData;
+		lightData.ambientColor = { 0.03f, 0.03f, 0.03f, 1.0f }; // TODO: make selectable
 
-			// -- Directional lights --
-			auto dirLightGroup = m_registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
-			for (auto e : dirLightGroup) {
-				if (lightData.directionalLights.size() >= MAX_DIR_LIGHTS) break;
+		// -- Directional lights --
+		auto dirLightView = m_registry.view<DirectionalLightComponent, TransformComponent>();
+		for (auto [entity, dirLight, transform] : dirLightView.each()) {
+			if (lightData.directionalLights.size() >= MAX_DIR_LIGHTS) break;
 
-				auto& dlc = dirLightGroup.get<DirectionalLightComponent>(e);
+			Mat4 worldTransform = getWorldTransform({ entity, this });
+			Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
 
-				Mat4 worldTransform = getWorldTransform({ e, this });
-				Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-
-				lightData.directionalLights.push_back({
-					{ -forward.x, -forward.y, -forward.z },
-					dlc.color
-				});
-			}
-
-			// -- Point lights --
-			auto pointLightGroup = m_registry.group<PointLightComponent>(entt::get<TransformComponent>);
-			for (auto e : pointLightGroup) {
-				if (lightData.pointLights.size() >= MAX_POINT_LIGHTS) break;
-
-				auto& plc = pointLightGroup.get<PointLightComponent>(e);
-				Mat4 worldTransform = getWorldTransform({ e, this });
-
-				lightData.pointLights.push_back({
-					worldTransform.getTranslation(),
-					plc.color * plc.intensity,
-					plc.radius,
-					plc.falloff
-				});
-			}
-
-			// -- Spot lights --
-			auto spotLightGroup = m_registry.group<SpotLightComponent>(entt::get<TransformComponent>);
-			for (auto e : spotLightGroup) {
-				if (lightData.spotLights.size() >= MAX_SPOT_LIGHTS) break;
-
-				auto& slc = spotLightGroup.get<SpotLightComponent>(e);
-
-				Mat4 worldTransform = getWorldTransform({ e, this });
-				Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-
-				lightData.spotLights.push_back({
-					worldTransform.getTranslation(),
-					{ forward.x, forward.y, forward.z },
-					slc.color * slc.intensity,
-					slc.range,
-					std::cos(slc.innerConeAngle * 3.14159265f / 180.0f),
-					std::cos(slc.outerConeAngle * 3.14159265f / 180.0f)
-				});
-			}
-
-			Renderer3D::beginScene(cam, lightData);
-
-
-
-			// ----- Spatial Audio Listener -----
-			DirectX::XMFLOAT4X4 m;
-			DirectX::XMStoreFloat4x4(&m, cam.getViewMatrix().inverse().toXM());
-			Vec3 listenerPos(m._41, m._42, m._43);
-			Vec3 listenerForward(-m._31, -m._32, -m._33);
-			AudioManager::setListener(listenerPos, listenerForward);
-
-
-			// ----- Spatial Audio Source ------
-			auto view = m_registry.view<TransformComponent, AudioComponent>();
-			view.each([&](auto entity, auto& transform, auto& audio) {
-				if (audio.isSource && audio.audio != nullptr) {
-					Ref<AudioSource> source = audio.audio;
-					if (source) source->setPosition(transform.position);
-				}
+			lightData.directionalLights.push_back({
+				{ -forward.x, -forward.y, -forward.z },
+				dirLight.color
 			});
+		}
+
+		// -- Point lights --
+		auto pointLightView = m_registry.view<PointLightComponent, TransformComponent>();
+		for (auto [entity, pointLight, transform] : pointLightView.each()) {
+			if (lightData.pointLights.size() >= MAX_POINT_LIGHTS) break;
+
+			Mat4 worldTransform = getWorldTransform({ entity, this });
+
+			lightData.pointLights.push_back({
+				worldTransform.getTranslation(),
+				pointLight.color * pointLight.intensity,
+				pointLight.radius,
+				pointLight.falloff
+			});
+		}
+
+		// -- Spot lights --
+		auto spotLightView = m_registry.view<SpotLightComponent, TransformComponent>();
+		for (auto [entity, spotLight, transform] : spotLightView.each()) {
+			if (lightData.spotLights.size() >= MAX_SPOT_LIGHTS) break;
+
+			Mat4 worldTransform = getWorldTransform({ entity, this });
+			Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+
+			lightData.spotLights.push_back({
+				worldTransform.getTranslation(),
+				{ forward.x, forward.y, forward.z },
+				spotLight.color * spotLight.intensity,
+				spotLight.range,
+				std::cos(spotLight.innerConeAngle * 3.14159265f / 180.0f),
+				std::cos(spotLight.outerConeAngle * 3.14159265f / 180.0f)
+			});
+		}
 
 
-			// ----- Render Skybox -----
-			if (m_skyboxHandle.isValid()) {
-				AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
+		// ----- Spatial Audio Listener -----
+		DirectX::XMFLOAT4X4 m;
+		DirectX::XMStoreFloat4x4(&m, cam.getViewMatrix().inverse().toXM());
+		Vec3 listenerPos(m._41, m._42, m._43);
+		Vec3 listenerForward(-m._31, -m._32, -m._33);
+		AudioManager::setListener(listenerPos, listenerForward);
+
+
+		// ----- Spatial Audio Source ------
+		auto view = m_registry.view<TransformComponent, AudioComponent>();
+		view.each([&](auto entity, auto& transform, auto& audio) {
+			if (audio.isSource && audio.audio != nullptr) {
+				Ref<AudioSource> source = audio.audio;
+				if (source) source->setPosition(transform.position);
 			}
+		});
+
+		// -- Begin Rendering 3D --
+		Renderer3D::beginScene(cam, lightData);
 
 
-			// ----- Render Meshes -----
-			std::unordered_map<AssetHandle<Mesh>, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>> renderBatches;
+		// ----- Render Skybox -----
+		if (m_skyboxHandle.isValid()) {
+			AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
+		}
 
-			auto group = m_registry.group<TransformComponent, MeshComponent, MaterialComponent>();
-			for (auto e : group) {
-				Entity entity = { e, this };
 
-				auto& mesh = group.get<MeshComponent>(e);
-				auto& material = group.get<MaterialComponent>(e);
+		// ----- Render Meshes -----
+		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>> renderBatches;
 
-				if (mesh.handle.isValid() && material.handle.isValid()) {
-					Ref<Material> matInstance = AssetManager::get<Material>(material.handle);
+		auto meshRenderView = m_registry.view<MeshComponent, TransformComponent, MaterialComponent>();
+		for (auto [entity, mesh, transform, material] : meshRenderView.each()) {
+			if (mesh.handle.isValid() && material.handle.isValid()) {
+				Ref<Material> matInstance = AssetManager::get<Material>(material.handle);
 
-					Mat4 worldTransform = getWorldTransform(entity);
+				Mat4 worldTransform = getWorldTransform({entity, this});
 
-					ObjectBuffer objData;
-					objData.color = matInstance->getAlbedoColor().toFloat4(); // Optional: Move color out of ObjectBuffer if it's strictly per-material
-					objData.modelMatrix = worldTransform.transposed().toXM();
+				ObjectBuffer objData;
+				objData.color = matInstance->getAlbedoColor().toFloat4(); // TODO: Move color out of ObjectBuffer if its strictly per material
+				objData.modelMatrix = worldTransform.transposed().toXM();
 
-					renderBatches[mesh.handle][material.handle].push_back(objData);
+				renderBatches[mesh.handle][material.handle].push_back(objData);
+			}
+		}
+
+		// -- Flush the batches --
+		for (auto& [meshHandle, materialMap] : renderBatches) {
+			Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
+			if (!mesh) continue;
+
+			for (auto& [materialHandle, instanceData] : materialMap) {
+				Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+				if (!mat) continue;
+
+				Renderer3D::drawMeshInstanced(mesh, mat, instanceData);
+			}
+		}
+
+		Renderer3D::endScene();
+		Renderer2D::beginScene(cam);
+
+		Mat4 viewMatrix = cam.getViewMatrix();
+
+		// ----- Update and Render Particles -----
+		auto particleView = m_registry.view<ParticleSystemComponent, TransformComponent>();
+		for (auto [entity, particleSystem, transform] : particleView.each()) {
+
+			for (ParticleProps& particle : particleSystem.particlePool) {
+				if (!particle.active) continue;
+
+				if (particle.lifeRemaining <= 0.0f) {
+					particle.active = false;
+					continue;
 				}
-			}
+				particle.lifeRemaining -= ts.getSeconds();
 
-			// Flush the batches
-			for (auto& [meshHandle, materialMap] : renderBatches) {
-				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
-				if (!mesh) continue;
+				particle.position += particle.velocity * ts.getSeconds();
 
-				for (auto& [materialHandle, instanceData] : materialMap) {
-					Ref<Material> mat = AssetManager::get<Material>(materialHandle);
-					if (!mat) continue;
+				float lifePercentage = particle.lifeRemaining / particle.lifeTime;
 
-					Renderer3D::drawMeshInstanced(mesh, mat, instanceData);
-				}
-			}
+				float currentSize = particle.sizeEnd + (particle.sizeBegin - particle.sizeEnd) * lifePercentage;
 
-			Renderer2D::beginScene(cam);
+				Vec4 currentColor{
+					particle.colorEnd.x + (particle.colorBegin.x - particle.colorEnd.x) * lifePercentage,
+					particle.colorEnd.y + (particle.colorBegin.y - particle.colorEnd.y) * lifePercentage,
+					particle.colorEnd.z + (particle.colorBegin.z - particle.colorEnd.z) * lifePercentage,
+					particle.colorEnd.w + (particle.colorBegin.w - particle.colorEnd.w) * lifePercentage
+				};
 
-			Mat4 viewMatrix = cam.getViewMatrix();
-
-			// ----- Update and render particles -----
-			auto particleGroup = m_registry.group<ParticleSystemComponent>(entt::get<TransformComponent>);
-			for (auto e : particleGroup) {
-				auto& [psc, transform] = particleGroup.get<ParticleSystemComponent, TransformComponent>(e);
-
-				for (ParticleProps& particle : psc.particlePool) {
-					if (!particle.active) continue;
-
-					if (particle.lifeRemaining <= 0.0f) {
-						particle.active = false;
-						continue;
-					}
-					particle.lifeRemaining -= ts.getSeconds();
-
-					particle.position += particle.velocity * ts.getSeconds();
-
-					float lifePercentage = particle.lifeRemaining / particle.lifeTime;
-
-					float currentSize = particle.sizeEnd + (particle.sizeBegin - particle.sizeEnd) * lifePercentage;
-
-					Vec4 currentColor{
-						particle.colorEnd.x + (particle.colorBegin.x - particle.colorEnd.x) * lifePercentage,
-						particle.colorEnd.y + (particle.colorBegin.y - particle.colorEnd.y) * lifePercentage,
-						particle.colorEnd.z + (particle.colorBegin.z - particle.colorEnd.z) * lifePercentage,
-						particle.colorEnd.w + (particle.colorBegin.w - particle.colorEnd.w) * lifePercentage
-					};
-
-					if (psc.texture.isValid()) {
-						Renderer2D::drawBillboard(particle.position, { currentSize, currentSize }, viewMatrix, AssetManager::get<Texture2D>(psc.texture), currentColor);
-					}
-					else {
-						Renderer2D::drawBillboard(particle.position, { currentSize, currentSize }, viewMatrix, currentColor);
-					}
-				}
-
-			}
-
-			auto spriteGroup = m_registry.group<SpriteComponent>(entt::get<TransformComponent>);
-			for (auto e : spriteGroup) {
-				auto& sprite = spriteGroup.get<SpriteComponent>(e);
-
-				Mat4 worldTransform = getWorldTransform({ e, this });
-				Vec3 worldPos = worldTransform.getTranslation();
-				Vec3 worldScale = worldTransform.getScale();
-				float worldRotZ = worldTransform.getRotation().toEulerAngles().z;
-
-				if (sprite.texture.isValid()) {
-					Renderer2D::drawQuad(
-						worldPos,
-						{ worldScale.x, worldScale.y },
-						worldRotZ,
-						AssetManager::get<Texture2D>(sprite.texture),
-						sprite.tint
-						);
+				if (particleSystem.texture.isValid()) {
+					Renderer2D::drawBillboard(particle.position, { currentSize, currentSize }, viewMatrix, AssetManager::get<Texture2D>(particleSystem.texture), currentColor);
 				}
 				else {
-					Renderer2D::drawQuad(
-						worldPos,
-						{ worldScale.x, worldScale.y },
-						worldRotZ,
-						sprite.tint
-					);
+					Renderer2D::drawBillboard(particle.position, { currentSize, currentSize }, viewMatrix, currentColor);
 				}
 			}
-
-			Renderer::endScene();
-
 		}
+
+		// ----- Render 2D sprites --
+		auto spriteView = m_registry.view<SpriteComponent, TransformComponent>();
+		for (auto [entity, sprite, transform] : spriteView.each()) {
+
+			Mat4 worldTransform = getWorldTransform({ entity, this });
+			Vec3 worldPos = worldTransform.getTranslation();
+			Vec3 worldScale = worldTransform.getScale();
+			float worldRotZ = worldTransform.getRotation().toEulerAngles().z;
+
+			if (sprite.texture.isValid()) {
+				Renderer2D::drawQuad(
+					worldPos,
+					{ worldScale.x, worldScale.y },
+					worldRotZ,
+					AssetManager::get<Texture2D>(sprite.texture),
+					sprite.tint
+				);
+			}
+			else {
+				Renderer2D::drawQuad(
+					worldPos,
+					{ worldScale.x, worldScale.y },
+					worldRotZ,
+					sprite.tint
+				);
+			}
+		}
+
+		Renderer2D::endScene();
+
 	}
 
 	void Scene::onEvent(Event& e) {
@@ -581,6 +495,40 @@ namespace Axion {
 		}
 		m_triggerQueue.clear();
 
+	}
+
+	void Scene::updateScripts(Timestep ts) {
+		// -- Native Scripts --
+		auto nativeView = m_registry.view<NativeScriptComponent>();
+		for (auto entity : nativeView) {
+			auto& nsc = nativeView.get<NativeScriptComponent>(entity);
+			if (!nsc.instance) {
+				nsc.instance = nsc.instantiateScript();
+				nsc.instance->m_entity = Entity{ entity, this };
+				nsc.instance->onCreate();
+			}
+			nsc.instance->onUpdate(ts);
+		}
+
+		// -- C# Scripts --
+		ScriptEngine::setSceneContext(this);
+		ScriptEngine::updateTime(ts.getSeconds());
+		m_scriptEntitiesCache.clear();
+		auto scriptView = m_registry.view<ScriptComponent>();
+		for (auto e : scriptView) m_scriptEntitiesCache.push_back(e);
+		for (auto e : m_scriptEntitiesCache) {
+			if (!m_registry.valid(e) || !m_registry.all_of<ScriptComponent>(e)) continue;
+
+			auto& sc = m_registry.get<ScriptComponent>(e);
+			if (!sc.isInstantiated) {
+				UUID entityID = m_registry.get<UUIDComponent>(e).id;
+				sc.gcHandle = ScriptEngine::createEntityScript(entityID, sc.className.c_str());
+				sc.isInstantiated = true;
+			}
+			if (sc.gcHandle) {
+				ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
+			}
+		}
 	}
 
 }

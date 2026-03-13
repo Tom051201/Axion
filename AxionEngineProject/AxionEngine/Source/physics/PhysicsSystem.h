@@ -36,6 +36,10 @@ namespace Axion {
 
 		static bool raycast(Scene* scene, const Vec3& origin, const Vec3& direction, float maxDistance, RaycastHit* outHit);
 
+	private:
+
+		static void createPhysicsActor(Entity entity, Scene* scene, RigidBodyComponent& rb, TransformComponent& transform);
+
 	};
 
 }

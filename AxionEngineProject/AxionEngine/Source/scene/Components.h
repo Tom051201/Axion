@@ -18,6 +18,12 @@ namespace Axion {
 
 	class ScriptableEntity;
 
+
+
+	struct PendingDestroyComponent {};
+
+
+
 	struct UUIDComponent {
 		UUID id;
 

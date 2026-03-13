@@ -77,7 +77,6 @@ namespace Axion {
 		entt::registry m_registry;
 		std::unordered_map<UUID, entt::entity> m_entityMap;
 
-		std::vector<Entity> m_entitiesPendingDestroy;
 		std::vector<std::function<void()>> m_componentsPendingRemove;
 
 		AssetHandle<Skybox> m_skyboxHandle;
@@ -104,9 +103,12 @@ namespace Axion {
 		std::vector<QueuedCollision> m_collisionQueue;
 		std::vector<QueuedTrigger> m_triggerQueue;
 
+		std::vector<entt::entity> m_scriptEntitiesCache;
+
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();
 		void processPhysicsCallbacks();
+		void updateScripts(Timestep ts);
 
 		friend class Entity;
 		friend class SceneSerializer;
