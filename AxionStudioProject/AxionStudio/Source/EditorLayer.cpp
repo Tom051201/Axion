@@ -99,8 +99,6 @@ namespace Axion {
 
 	void EditorLayer::onUpdate(Timestep ts) {
 
-		m_editorCamera.onUpdate(ts);
-
 		bool processLogic = true;
 		if (m_sceneState == SceneState::Pause) {
 			if (m_stepFrames > 0) {
@@ -123,6 +121,7 @@ namespace Axion {
 
 			switch (activeState) {
 				case SceneState::Edit: {
+					m_editorCamera.onUpdate(ts);
 					m_activeScene->onUpdate(ts, m_editorCamera);
 					break;
 				}
@@ -137,9 +136,11 @@ namespace Axion {
 				}
 				case SceneState::Simulate: {
 					if (processLogic) {
+						m_editorCamera.onUpdate(ts);
 						m_activeScene->onUpdateSimulation(ts, m_editorCamera);
 					}
 					else {
+						m_editorCamera.onUpdate(ts);
 						m_activeScene->onUpdateSimulation(Timestep(0.0f), m_editorCamera);
 					}
 					break;
@@ -152,7 +153,7 @@ namespace Axion {
 
 			// -- Overlays --
 			Renderer2D::beginScene(m_editorCamera);
-			drawOverlay();
+			if (m_sceneState == SceneState::Edit) drawOverlay();
 			Renderer2D::endScene();
 
 			m_frameBuffer->unbind();
@@ -162,7 +163,7 @@ namespace Axion {
 	}
 
 	void EditorLayer::onEvent(Event& e) {
-		m_editorCamera.onEvent(e);
+		if (m_sceneState == SceneState::Edit || m_sceneState == SceneState::Simulate) m_editorCamera.onEvent(e);
 		m_activeScene->onEvent(e);
 		m_panelManager.onEventAll(e);
 
@@ -197,35 +198,13 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
-		if (e.getKeyCode() == KeyCode::Tab) {
+		if (m_sceneState == SceneState::Edit && e.getKeyCode() == KeyCode::Tab) {
 			if (m_editorCamera.is2D()) {
 				m_editorCamera.set3D();
 			}
 			else {
 				m_editorCamera.set2D();
 			}
-		}
-
-		if (e.getKeyCode() == KeyCode::Enter) {
-			Entity e = m_activeScene->createEntity();
-
-			//Ref<Mesh> mesh = Mesh::createPBRCube();
-			//AssetHandle<Mesh> meshHandle = AssetManager::insert(mesh);
-			//e.addComponent<MeshComponent>(meshHandle);
-
-			//AssetHandle<Material> matHandle = AssetManager::load<Material>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/materials/Green Metal.axmat").string());
-			//Ref<Material> mat = AssetManager::get<Material>(matHandle);
-
-			//e.addComponent<MaterialComponent>(matHandle);
-			//e.addComponent<NativeScriptComponent>().bind<PhysicsController>();
-			e.addComponent<AudioComponent>();
-			AssetHandle<AudioClip> clip = AssetManager::load<AudioClip>(std::filesystem::absolute("AxionStudio/Projects/ExampleProject/Assets/audio/ping.axaudio").string());
-			e.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clip);
-			e.getComponent<AudioComponent>().isSource = true;
-			//e.addComponent<CameraComponent>();
-			e.addComponent<ScriptComponent>("AxionScriptCore.Player");
-
-			//e.addComponent<DirectionalLightComponent>();
 		}
 
 		// -> Shortcuts only from here on
@@ -498,7 +477,7 @@ namespace Axion {
 			}
 
 			// ----- Draw gizmo -----
-			drawGizmo();
+			if (m_sceneState == SceneState::Edit) drawGizmo();
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();

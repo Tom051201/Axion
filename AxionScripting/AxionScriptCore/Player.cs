@@ -5,51 +5,60 @@ namespace AxionScriptCore {
 	public class Player : Entity {
 
 		public float MoveSpeed = 5.0f;
-		public Vector3 SpawnOffset = new Vector3(0, 0, 2.0f);
+		public float TurnSpeed = 3.0f;
 
+		public float FireRate = 2.0f;
 		private float m_FireTimer = 0.0f;
 
 		public override void OnCreate() {
-			Console.WriteLine($"[C#] Player script created for Entity {ID}!"); ;
+
 		}
 
 		public override void OnUpdate(float timestep) {
-			m_FireTimer += Time.DeltaTime;
 
-			// Jumping
-			if (Input.IsKeyPressed(KeyCode.Space)) {
-				RigidBody.AddForce(new Vector3(0, 1.0f, 0), ForceMode.Impulse);
-			}
+			m_FireTimer += timestep;
 
-			// Shooting
-			if (Input.IsMouseButtonPressed(MouseButton.Right) && m_FireTimer >= 0.5f) {
+			if (Input.IsMouseButtonPressed(MouseButton.Right) && m_FireTimer >= FireRate) {
 				m_FireTimer = 0.0f;
 
-				Entity bullet = Entity.InstantiatePrefab("prefabs/BlueCube.axprefab");
+				Entity bullet = Entity.InstantiatePrefab("prefabs/Bullet.axprefab");
+
 				if (bullet != null) {
 					bullet.Transform.Rotation = Transform.Rotation;
-					bullet.Transform.Position = new Vector3(Transform.Position.X, Transform.Position.Y, Transform.Position.Z + 2.0f);
+					bullet.Transform.Position = Transform.Position + (Transform.Forward * 1.5f);
+					Audio.Play();
 				}
 
-				Vector3 forward = new Vector3(0, 0, 1);
+			}
+
+			Vector3 currentVel = RigidBody.LinearVelocity;
+			Vector3 targetVelocity = new Vector3(0.0f, currentVel.Y, 0.0f);
+
+			if (Input.IsKeyPressed(KeyCode.W)) targetVelocity += Transform.Forward * MoveSpeed;
+			if (Input.IsKeyPressed(KeyCode.S)) targetVelocity -= Transform.Forward * MoveSpeed;
+			if (Input.IsKeyPressed(KeyCode.A)) targetVelocity -= Transform.Right * MoveSpeed;
+			if (Input.IsKeyPressed(KeyCode.D)) targetVelocity += Transform.Right * MoveSpeed;
+
+			RigidBody.LinearVelocity = targetVelocity;
+
+			float turnInput = 0.0f;
+
+			if (Input.IsKeyPressed(KeyCode.Q)) {
+				turnInput = -TurnSpeed;
+			}
+			if (Input.IsKeyPressed(KeyCode.E)) {
+				turnInput = TurnSpeed;
+			}
+
+			RigidBody.AngularVelocity = new Vector3(0.0f, turnInput, 0.0f);
+
+			if (Input.IsKeyPressed(KeyCode.Space) && currentVel.Y <= 0.1f) {
+				RigidBody.AddForce(new Vector3(0, 5.0f, 0), ForceMode.Impulse);
 			}
 
 		}
 
 		public override void OnCollisionEnter(Collision collision) {
-			float impactForce = collision.Impulse.Y;
-
-			if (impactForce > 0.5f) {
-				float calculatedVol = Math.Clamp(impactForce / 50.0f, 0.1f, 1.0f);
-
-				Random rand = new Random();
-				Audio.Pitch = 0.8f + (float)rand.NextDouble() * 0.4f;
-
-				Audio.Volume = calculatedVol;
-				Audio.Play();
-
-				Console.WriteLine($"[C#] THUD! Volume: {calculatedVol}");
-			}
 
 		}
 

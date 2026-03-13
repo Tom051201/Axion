@@ -57,6 +57,32 @@ namespace Axion {
 		}
 	}
 
+	void Physics::setPosition(Entity entity, const Vec3& position) {
+		if (!entity.hasComponent<RigidBodyComponent>()) return;
+
+		auto& rb = entity.getComponent<RigidBodyComponent>();
+
+		if (rb.type == RigidBodyComponent::BodyType::Dynamic && rb.runtimeActor) {
+			physx::PxRigidDynamic* actor = static_cast<physx::PxRigidDynamic*>(rb.runtimeActor);
+			physx::PxTransform pose = actor->getGlobalPose();
+			pose.p = physx::PxVec3(position.x, position.y, position.z);
+			actor->setGlobalPose(pose);
+		}
+	}
+
+	void Physics::setRotation(Entity entity, const Quat& rotation) {
+		if (!entity.hasComponent<RigidBodyComponent>()) return;
+
+		auto& rb = entity.getComponent<RigidBodyComponent>();
+
+		if (rb.type == RigidBodyComponent::BodyType::Dynamic && rb.runtimeActor) {
+			physx::PxRigidDynamic* actor = static_cast<physx::PxRigidDynamic*>(rb.runtimeActor);
+			physx::PxTransform pose = actor->getGlobalPose();
+			pose.q = physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w);
+			actor->setGlobalPose(pose);
+		}
+	}
+
 	void Physics::setLinearVelocity(Entity entity, const Vec3& velocity) {
 		if (!entity.hasComponent<RigidBodyComponent>()) return;
 

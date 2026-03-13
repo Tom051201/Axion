@@ -6,16 +6,13 @@ namespace AxionScriptCore {
 		private float m_LifeTime = 0.0f;
 
 		public override void OnCreate() {
-			Console.WriteLine($"[C#] Bullet {ID} initialized and ready!");
-
-			RigidBody.AddForce(Transform.Forward * 2.0f, ForceMode.Impulse);
+			RigidBody.AddForce(Transform.Forward, ForceMode.Impulse);
 		}
 
 		public override void OnUpdate(float timestep) {
 			m_LifeTime += Time.DeltaTime;
 
-			if (m_LifeTime > 2.0f) {
-				Console.WriteLine($"[C#] Bullet {ID} destroyed!");
+			if (m_LifeTime > 5.0f) {
 				Destroy();
 			}
 		}
@@ -31,9 +28,9 @@ namespace AxionScriptCore {
 
 			if (hitEnemy != null) {
 				hitEnemy.TakeDamage(25.0f);
+				Destroy();
 			}
 
-			//Destroy();
 		}
 
 	}

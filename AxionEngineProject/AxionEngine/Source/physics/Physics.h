@@ -18,6 +18,9 @@ namespace Axion {
 		static void addTorque(Entity entity, const Vec3& torque, ForceMode mode = ForceMode::Force);
 		static void addRadialImpulse(Entity entity, const Vec3& origin, float radius, float strength);
 
+		static void setPosition(Entity entity, const Vec3& position);
+		static void setRotation(Entity entity, const Quat& rotation);
+
 		static void setLinearVelocity(Entity entity, const Vec3& velocity);
 		static Vec3 getLinearVelocity(Entity entity);
 

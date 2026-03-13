@@ -68,6 +68,9 @@ namespace Axion {
 
 		Entity getEntityByUUID(UUID id);
 
+		void queueCollision(entt::entity target, entt::entity other, const Vec3& contactPoint, const Vec3& contactNormal, const Vec3& impulse, bool isEnter);
+		void queueTrigger(entt::entity target, entt::entity other, bool isEnter);
+
 	private:
 
 		std::string m_title = "Untitled";
@@ -83,8 +86,27 @@ namespace Axion {
 		const float m_physicsTimeStep = 1.0f / 60.0f; // 60 FPS Physics
 		Vec3 m_gravity = Vec3(0.0f, -9.81f, 0.0f);
 
+		struct QueuedCollision {
+			entt::entity target;
+			entt::entity other;
+			Vec3 contactPoint;
+			Vec3 contactNormal;
+			Vec3 impulse;
+			bool isEnter;
+		};
+
+		struct QueuedTrigger {
+			entt::entity target;
+			entt::entity other;
+			bool isEnter;
+		};
+
+		std::vector<QueuedCollision> m_collisionQueue;
+		std::vector<QueuedTrigger> m_triggerQueue;
+
 		bool onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();
+		void processPhysicsCallbacks();
 
 		friend class Entity;
 		friend class SceneSerializer;

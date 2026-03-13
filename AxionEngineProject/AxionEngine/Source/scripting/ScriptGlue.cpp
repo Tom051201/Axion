@@ -53,7 +53,11 @@ namespace Axion {
 		extern "C" void transform_setPosition(uint64_t uuidHi, uint64_t uuidLo, float* inPos) {
 			Entity entity = getEntityByUUID(uuidHi, uuidLo);
 			if (entity.isValid() && entity.hasComponent<TransformComponent>()) {
-				entity.getComponent<TransformComponent>().position = Vec3(inPos[0], inPos[1], inPos[2]);
+				Vec3 newPos = Vec3(inPos[0], inPos[1], inPos[2]);
+				entity.getComponent<TransformComponent>().position = newPos;
+				if (entity.hasComponent<RigidBodyComponent>()) {
+					Physics::setPosition(entity, newPos);
+				}
 			}
 		}
 
@@ -70,7 +74,11 @@ namespace Axion {
 		extern "C" void transform_setRotation(uint64_t uuidHi, uint64_t uuidLo, float* inRot) {
 			Entity entity = getEntityByUUID(uuidHi, uuidLo);
 			if (entity.isValid() && entity.hasComponent<TransformComponent>()) {
-				entity.getComponent<TransformComponent>().setEulerAngles(Vec3(inRot[0], inRot[1], inRot[2]));
+				Vec3 newRot = Vec3(inRot[0], inRot[1], inRot[2]);
+				entity.getComponent<TransformComponent>().setEulerAngles(newRot);
+				if (entity.hasComponent<RigidBodyComponent>()) {
+					Physics::setRotation(entity, entity.getComponent<TransformComponent>().rotation);
+				}
 			}
 		}
 

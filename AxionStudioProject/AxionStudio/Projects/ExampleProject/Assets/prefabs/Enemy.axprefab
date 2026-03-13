@@ -1,0 +1,31 @@
+Type: Prefab
+UUID: 0137f8fe3c1620635cab7e4fc2f5b36a
+Entity:
+  Entity: 7d019f7e0c4ad6d0031cbb767eb1017f
+  TagComponent:
+    Tag: Enemy
+  TransformComponent:
+    Translation: [-6.69156599, 2.0872848, 0]
+    Rotation: [-0, 0, -0, 1]
+    Scale: [0.5, 3, 0.5]
+  MeshComponent:
+    Path: meshes\Cube.axmesh
+  MaterialComponent:
+    Path: materials\Gray_Metal.axmat
+  RigidBodyComponent:
+    BodyType: Dynamic
+    Mass: 1
+    IsKinematic: false
+    LinearDamping: 0
+    AngularDamping: 0.0500000007
+    FixedRotationX: false
+    FixedRotationY: false
+    FixedRotationZ: false
+    EnableCCD: false
+  BoxColliderComponent:
+    HalfExtents: [0.5, 0.5, 0.5]
+    Offset: [0, 0, 0]
+    IsTrigger: false
+    Material: None
+  ScriptComponent:
+    ClassName: AxionScriptCore.Enemy

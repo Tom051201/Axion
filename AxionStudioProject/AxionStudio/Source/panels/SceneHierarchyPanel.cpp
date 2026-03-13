@@ -72,7 +72,7 @@ namespace Axion {
 		// ----- Scene Hierarchy Panel -----
 		if (ImGui::Begin("Scene Hierarchy")) {
 
-			for (auto e : m_context->getRegistry().view<entt::entity>()) {
+			for (auto e : m_context->getRegistry().view<TagComponent>()) {
 				Entity entity{ e, m_context.get() };
 
 				bool isRoot = true;
@@ -1694,6 +1694,8 @@ namespace Axion {
 				ImGui::EndTable();
 			}
 		});
+
+
 
 	}
 

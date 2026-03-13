@@ -233,8 +233,13 @@ namespace Axion {
 			nextBatch();
 		}
 
-		Vec3 camRight = { cameraView.data()[0], cameraView.data()[4], cameraView.data()[8] };
-		Vec3 camUp = { cameraView.data()[1], cameraView.data()[5], cameraView.data()[9] };
+		Mat4 camTransform = cameraView.inverse();
+
+		Vec3 camRight = { camTransform.data()[0], camTransform.data()[1], camTransform.data()[2] };
+		Vec3 camUp = { camTransform.data()[4], camTransform.data()[5], camTransform.data()[6] };
+
+		camRight = camRight.normalized();
+		camUp = camUp.normalized();
 
 		Vec3 halfSize = { size.x * 0.5f, size.y * 0.5f, 0.0f };
 
@@ -281,6 +286,9 @@ namespace Axion {
 
 		Vec3 camRight = { cameraView.data()[0], cameraView.data()[4], cameraView.data()[8] };
 		Vec3 camUp = { cameraView.data()[1], cameraView.data()[5], cameraView.data()[9] };
+
+		camRight.normalized();
+		camUp.normalized();
 
 		Vec3 halfSize = { size.x * 0.5f, size.y * 0.5f, 0.0f };
 

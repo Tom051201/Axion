@@ -142,6 +142,7 @@ namespace Axion {
 			PhysicsSystem::step(this, m_physicsTimeStep);
 			m_physicsAccumulator -= m_physicsTimeStep;
 		}
+		processPhysicsCallbacks();
 
 		// -- Sync hierarchy for kinematic children --
 		auto group = m_registry.group<RelationshipComponent>(entt::get<TransformComponent, RigidBodyComponent>);
@@ -203,6 +204,7 @@ namespace Axion {
 			PhysicsSystem::step(this, m_physicsTimeStep);
 			m_physicsAccumulator -= m_physicsTimeStep;
 		}
+		processPhysicsCallbacks();
 
 		{
 			// -- Native Scripts --
@@ -238,6 +240,8 @@ namespace Axion {
 			}
 		}
 
+
+
 		Camera* primaryCamera = nullptr;
 		Mat4 cameraTransform;
 
@@ -249,7 +253,7 @@ namespace Axion {
 
 				if (camera.isPrimary) {
 					primaryCamera = &camera.camera;
-					cameraTransform = transform.getTransform();
+					cameraTransform = getWorldTransform({ entity, this });
 					break;
 				}
 
@@ -503,7 +507,7 @@ namespace Axion {
 
 		Entity currentParent = entity.getParent();
 		while (currentParent) {
-			transform = currentParent.getComponent<TransformComponent>().getTransform() * transform;
+			transform = transform * currentParent.getComponent<TransformComponent>().getTransform();
 			currentParent = currentParent.getParent();
 		}
 
@@ -515,6 +519,68 @@ namespace Axion {
 			return { m_entityMap[uuid], this };
 		}
 		return {};
+	}
+
+	void Scene::queueCollision(entt::entity target, entt::entity other, const Vec3& contactPoint, const Vec3& contactNormal, const Vec3& impulse, bool isEnter) {
+		m_collisionQueue.push_back({ target, other, contactPoint, contactNormal, impulse, isEnter });
+	}
+
+	void Scene::queueTrigger(entt::entity target, entt::entity other, bool isEnter) {
+		m_triggerQueue.push_back({ target, other, isEnter });
+	}
+
+	void Scene::processPhysicsCallbacks() {
+
+		// -- Process Collisions --
+		for (auto& qc : m_collisionQueue) {
+			Entity targetEntity = { qc.target, this };
+			Entity otherEntity = { qc.other, this };
+
+			Collision collisionData = { otherEntity, qc.contactPoint, qc.contactNormal, qc.impulse };
+
+			if (qc.isEnter) {
+				if (targetEntity.hasComponent<NativeScriptComponent>()) {
+					auto& nsc = targetEntity.getComponent<NativeScriptComponent>();
+					if (nsc.instance) nsc.instance->onCollisionEnter(collisionData);
+				}
+				if (targetEntity.hasComponent<ScriptComponent>()) {
+					auto& sc = targetEntity.getComponent<ScriptComponent>();
+					if (sc.isInstantiated) ScriptEngine::onCollisionEnter(sc.gcHandle, collisionData);
+				}
+			}
+			else {
+				if (targetEntity.hasComponent<NativeScriptComponent>()) {
+					auto& nsc = targetEntity.getComponent<NativeScriptComponent>();
+					if (nsc.instance) nsc.instance->onCollisionExit(collisionData);
+				}
+				if (targetEntity.hasComponent<ScriptComponent>()) {
+					auto& sc = targetEntity.getComponent<ScriptComponent>();
+					if (sc.isInstantiated) ScriptEngine::onCollisionExit(sc.gcHandle, collisionData);
+				}
+			}
+		}
+		m_collisionQueue.clear();
+
+		// -- Process Triggers --
+		for (auto& qt : m_triggerQueue) {
+			Entity targetEntity = { qt.target, this };
+			Entity otherEntity = { qt.other, this };
+
+			if (qt.isEnter) {
+				if (targetEntity.hasComponent<NativeScriptComponent>()) {
+					auto& nsc = targetEntity.getComponent<NativeScriptComponent>();
+					if (nsc.instance) nsc.instance->onTriggerEnter(otherEntity);
+				}
+			}
+			else {
+				if (targetEntity.hasComponent<NativeScriptComponent>()) {
+					auto& nsc = targetEntity.getComponent<NativeScriptComponent>();
+					if (nsc.instance) nsc.instance->onTriggerExit(otherEntity);
+				}
+			}
+		}
+		m_triggerQueue.clear();
+
 	}
 
 }

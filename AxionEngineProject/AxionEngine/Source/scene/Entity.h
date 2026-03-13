@@ -40,11 +40,46 @@ namespace Axion {
 		}
 
 		void setParent(Entity parent) {
+			if (parent.m_handle == m_handle) return;
+
 			auto& relationship = addOrGetComponent<RelationshipComponent>();
+			if (relationship.parent == parent.m_handle) return;
+
+			relationship.parent = parent.m_handle;
+
+			if (relationship.parent != entt::null) {
+				Entity oldParent = { relationship.parent, m_scene };
+				if (oldParent.hasComponent<RelationshipComponent>()) {
+					auto& oldRel = oldParent.getComponent<RelationshipComponent>();
+					auto it = std::find(oldRel.children.begin(), oldRel.children.end(), m_handle);
+					if (it != oldRel.children.end()) {
+						oldRel.children.erase(it);
+					}
+				}
+			}
+
 			relationship.parent = parent.m_handle;
 
 			auto& parentRelationship = parent.addOrGetComponent<RelationshipComponent>();
 			parentRelationship.children.push_back(m_handle);
+		}
+
+		void removeParent() {
+			if (!hasComponent<RelationshipComponent>()) return;
+
+			auto& relationship = getComponent<RelationshipComponent>();
+
+			if (relationship.parent != entt::null) {
+				Entity oldParent = { relationship.parent, m_scene };
+				if (oldParent.hasComponent<RelationshipComponent>()) {
+					auto& oldRel = oldParent.getComponent<RelationshipComponent>();
+					auto it = std::find(oldRel.children.begin(), oldRel.children.end(), m_handle);
+					if (it != oldRel.children.end()) {
+						oldRel.children.erase(it);
+					}
+				}
+				relationship.parent = entt::null;
+			}
 		}
 
 		Entity getParent() {

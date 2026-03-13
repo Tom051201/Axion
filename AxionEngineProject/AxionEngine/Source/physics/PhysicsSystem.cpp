@@ -56,9 +56,7 @@ namespace Axion {
 			Entity entityA = { handleA, currentScene };
 			Entity entityB = { handleB, currentScene };
 
-			bool validA = entityA.isValid();
-			bool validB = entityB.isValid();
-			if (!validA || !validB) return;
+			if (!entityA.isValid() || !entityB.isValid()) return;
 
 			for (PxU32 i = 0; i < nbPairs; i++) {
 				const PxContactPair& cp = pairs[i];
@@ -77,66 +75,15 @@ namespace Axion {
 					impulse = { contactPoints[0].impulse.x, contactPoints[0].impulse.y, contactPoints[0].impulse.z };
 				}
 
-				// -- Build collision struct --
-				Collision colA;
-				colA.other = entityB;
-				colA.contactPoint = contactPoint;
-				colA.contactNormal = contactNormal;
-				colA.impulse = impulse;
-
-				Collision colB;
-				colB.other = entityA;
-				colB.contactPoint = contactPoint;
-				colB.contactNormal = { -contactNormal.x, -contactNormal.y, -contactNormal.z };
-				colB.impulse = impulse;
-
-				// -- Dispatch events --
 				if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND) {
-					
-					// -- Notify Entity A that it hit Entity B --
-					if (entityA.hasComponent<NativeScriptComponent>()) {
-						auto& nsc = entityA.getComponent<NativeScriptComponent>();
-						if (nsc.instance) nsc.instance->onCollisionEnter(colA);
-					}
-					if (entityA.hasComponent<ScriptComponent>()) {
-						auto& sc = entityA.getComponent<ScriptComponent>();
-						if (sc.isInstantiated) ScriptEngine::onCollisionEnter(sc.gcHandle, colA);
-					}
-
-					// -- Notify Entity B that it hit Entity A --
-					if (entityB.hasComponent<NativeScriptComponent>()) {
-						auto& nsc = entityB.getComponent<NativeScriptComponent>();
-						if (nsc.instance) nsc.instance->onCollisionEnter(colB);
-					}
-					if (entityB.hasComponent<ScriptComponent>()) {
-						auto& sc = entityB.getComponent<ScriptComponent>();
-						if (sc.isInstantiated) ScriptEngine::onCollisionEnter(sc.gcHandle, colB);
-					}
-
+					currentScene->queueCollision(handleA, handleB, contactPoint, contactNormal, impulse, true);
+					currentScene->queueCollision(handleB, handleA, contactPoint, { -contactNormal.x, -contactNormal.y, -contactNormal.z }, impulse, true);
 				}
 				else if (cp.events & PxPairFlag::eNOTIFY_TOUCH_LOST) {
-
-					// -- Notify Entity A that it stopped hitting Entity B --
-					if (entityA.hasComponent<NativeScriptComponent>()) {
-						auto& nsc = entityA.getComponent<NativeScriptComponent>();
-						if (nsc.instance) nsc.instance->onCollisionExit(colA);
-					}
-					if (entityA.hasComponent<ScriptComponent>()) {
-						auto& sc = entityA.getComponent<ScriptComponent>();
-						if (sc.isInstantiated) ScriptEngine::onCollisionExit(sc.gcHandle, colA);
-					}
-
-					// -- Notify Entity B that it stopped hitting Entity A --
-					if (entityB.hasComponent<NativeScriptComponent>()) {
-						auto& nsc = entityB.getComponent<NativeScriptComponent>();
-						if (nsc.instance) nsc.instance->onCollisionExit(colB);
-					}
-					if (entityB.hasComponent<ScriptComponent>()) {
-						auto& sc = entityB.getComponent<ScriptComponent>();
-						if (sc.isInstantiated) ScriptEngine::onCollisionExit(sc.gcHandle, colB);
-					}
-
+					currentScene->queueCollision(handleA, handleB, contactPoint, contactNormal, impulse, false);
+					currentScene->queueCollision(handleB, handleA, contactPoint, { -contactNormal.x, -contactNormal.y, -contactNormal.z }, impulse, false);
 				}
+
 			}
 		}
 
@@ -150,27 +97,17 @@ namespace Axion {
 				if (tp.flags & (PxTriggerPairFlag::eREMOVED_SHAPE_TRIGGER | PxTriggerPairFlag::eREMOVED_SHAPE_OTHER))
 					continue;
 
-				entt::entity triggerEntityHandle = (entt::entity)(uintptr_t)tp.triggerActor->userData;
-				entt::entity otherEntityHandle = (entt::entity)(uintptr_t)tp.otherActor->userData;
+				entt::entity triggerHandle = (entt::entity)(uintptr_t)tp.triggerActor->userData;
+				entt::entity otherHandle = (entt::entity)(uintptr_t)tp.otherActor->userData;
 
-				Entity triggerEntity = { triggerEntityHandle, currentScene };
-				Entity otherEntity = { otherEntityHandle, currentScene };
-
+				Entity triggerEntity = { triggerHandle, currentScene };
 				if (!triggerEntity.isValid()) continue;
 
 				if (tp.status == PxPairFlag::eNOTIFY_TOUCH_FOUND) {
-					// -- Notify trigger entity that other entity triggered it --
-					if (triggerEntity.hasComponent<NativeScriptComponent>()) {
-						auto& nsc = triggerEntity.getComponent<NativeScriptComponent>();
-						nsc.instance->onTriggerEnter(otherEntity);
-					}
+					currentScene->queueTrigger(triggerHandle, otherHandle, true);
 				}
 				else if (tp.status == PxPairFlag::eNOTIFY_TOUCH_LOST) {
-					// -- Notify trigger entity that other entity stopped triggering it --
-					if (triggerEntity.hasComponent<NativeScriptComponent>()) {
-						auto& nsc = triggerEntity.getComponent<NativeScriptComponent>();
-						nsc.instance->onTriggerExit(otherEntity);
-					}
+					currentScene->queueTrigger(triggerHandle, otherHandle, false);
 				}
 
 			}
