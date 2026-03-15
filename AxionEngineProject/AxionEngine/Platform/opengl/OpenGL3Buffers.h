@@ -28,6 +28,8 @@ namespace Axion {
 
 		void update(const void* data, size_t size) override;
 		void update(const void* data, size_t size, size_t offset) override;
+		uint32_t append(const void* data, size_t size) override;
+		void resetOffset() override;
 
 		uint32_t getRendererID() const { return m_rendererID; }
 
@@ -96,6 +98,9 @@ namespace Axion {
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;
+		uint32_t append(const void* data, size_t size) override;
+		void resetOffset() override;
+
 		uint32_t getSize() const override { return m_size; }
 
 		uint32_t getRendererID() const { return m_rendererID; }

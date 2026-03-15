@@ -58,6 +58,7 @@ namespace Axion {
 			DirectX::XMFLOAT4X4 viewProjection;
 		};
 		Ref<ConstantBuffer> cameraConstantBuffer;
+		uint32_t cameraBufferOffset = 0;
 
 	};
 
@@ -112,7 +113,9 @@ namespace Axion {
 		s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
 
 		// -- Create camera ConstantBuffer --
-		s_data.cameraConstantBuffer = ConstantBuffer::create(sizeof(Renderer2DData::CameraData));
+		const uint32_t MaxCameraPasses = 100;
+		uint32_t alignedCameraDataSize = (sizeof(Renderer2DData::CameraData) + 255) & ~255;
+		s_data.cameraConstantBuffer = ConstantBuffer::create(alignedCameraDataSize * MaxCameraPasses);
 
 
 		// -- Setup quad positions --
@@ -162,15 +165,22 @@ namespace Axion {
 	}
 
 	void Renderer2D::beginScene(const Camera& camera) {
-		//Renderer::beginScene(camera);
 		Renderer2DData::CameraData camData;
 		camData.viewProjection = camera.getViewProjectionMatrix().transposed().toFloat4x4();
-		s_data.cameraConstantBuffer->update(&camData, sizeof(Renderer2DData::CameraData));
+		s_data.cameraBufferOffset = s_data.cameraConstantBuffer->append(&camData, sizeof(Renderer2DData::CameraData));
 		startBatch();
 	}
 
 	void Renderer2D::endScene() {
 		flush();
+	}
+
+	void Renderer2D::beginFrame() {
+		if (s_data.quadVertexBuffer) s_data.quadVertexBuffer->resetOffset();
+
+		if (s_data.lineVertexBuffer) s_data.lineVertexBuffer->resetOffset();
+
+		if (s_data.cameraConstantBuffer) s_data.cameraConstantBuffer->resetOffset();
 	}
 
 	void Renderer2D::startBatch() {
@@ -194,13 +204,13 @@ namespace Axion {
 			if (!pipeline) return;
 
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase);
-			s_data.quadVertexBuffer->update(s_data.quadVertexBufferBase, dataSize);
+			uint32_t bufferOffset = s_data.quadVertexBuffer->append(s_data.quadVertexBufferBase, dataSize);
 
 			pipeline->bind();
-			s_data.cameraConstantBuffer->bind(0);
+			s_data.cameraConstantBuffer->bind(0, s_data.cameraBufferOffset);
 			Renderer::bindTextures(s_data.textureSlots, s_data.textureSlotIndex, 1);
 
-			s_data.quadVertexBuffer->bind();
+			s_data.quadVertexBuffer->bind(0, bufferOffset);
 			s_data.quadIndexBuffer->bind();
 
 			RenderCommand::drawIndexed(s_data.quadIndexBuffer, s_data.quadIndexCount);
@@ -214,11 +224,11 @@ namespace Axion {
 			if (!pipeline) return;
 
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.lineVertexBufferPtr - (uint8_t*)s_data.lineVertexBufferBase);
-			s_data.lineVertexBuffer->update(s_data.lineVertexBufferBase, dataSize);
+			uint32_t bufferOffset = s_data.lineVertexBuffer->append(s_data.lineVertexBufferBase, dataSize);
 
 			pipeline->bind();
-			s_data.cameraConstantBuffer->bind(0);
-			s_data.lineVertexBuffer->bind();
+			s_data.cameraConstantBuffer->bind(0, s_data.cameraBufferOffset);
+			s_data.lineVertexBuffer->bind(0, bufferOffset);
 
 			RenderCommand::draw(s_data.lineVertexCount);
 

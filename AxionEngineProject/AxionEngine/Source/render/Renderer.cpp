@@ -17,6 +17,7 @@ namespace Axion {
 	double Renderer::s_lastFrameTimeMs = 0.0;
 	Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
 	std::function<void(Event&)> Renderer::s_eventCallback;
+	uint32_t Renderer::s_sceneDataOffset = 0;
 
 	struct alignas(16) HLSLDirLight {
 		DirectX::XMFLOAT4 direction;
@@ -73,7 +74,9 @@ namespace Axion {
 
 		// setup scene data
 		s_sceneData = new SceneData();
-		s_sceneUploadBuffer = ConstantBuffer::create(sizeof(SceneData));
+		const uint32_t MaxScenePasses = 100;
+		uint32_t alignedSceneDataSize = (sizeof(SceneData) + 255) & ~255;
+		s_sceneUploadBuffer = ConstantBuffer::create(alignedSceneDataSize * MaxScenePasses);
 
 		s_eventCallback = eventCallback;
 
@@ -104,6 +107,13 @@ namespace Axion {
 		resetStats();
 		s_frameTimer.begin();
 		GraphicsContext::get()->prepareRendering();
+
+		if (s_sceneUploadBuffer) {
+			s_sceneUploadBuffer->resetOffset();
+		}
+
+		Renderer2D::beginFrame();
+		Renderer3D::beginFrame();
 
 		RenderingPreparedEvent ev;
 		s_eventCallback(ev);
@@ -164,13 +174,13 @@ namespace Axion {
 			s_sceneData->spotLights[i].params = { lightingData.spotLights[i].range, lightingData.spotLights[i].innerCutoff, lightingData.spotLights[i].outerCutoff, 0.0f };
 		}
 
-		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
+		s_sceneDataOffset = s_sceneUploadBuffer->append(s_sceneData, sizeof(SceneData));
 	}
 
 	void Renderer::beginScene(const Mat4& projection, const Mat4& transform) {
 		Mat4 viewProj = projection * (transform.inverse());
 		s_sceneData->viewProjection = viewProj.transposed().toXM();
-		s_sceneUploadBuffer->update(s_sceneData, sizeof(SceneData));
+		s_sceneDataOffset = s_sceneUploadBuffer->append(s_sceneData, sizeof(SceneData));
 	}
 
 	void Renderer::endScene() {
@@ -191,6 +201,10 @@ namespace Axion {
 
 	const Ref<ConstantBuffer>& Renderer::getSceneDataBuffer() {
 		return s_sceneUploadBuffer;
+	}
+
+	uint32_t Renderer::getSceneDataOffset() {
+		return s_sceneDataOffset;
 	}
 
 	void Renderer::bindTextures(const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex) {

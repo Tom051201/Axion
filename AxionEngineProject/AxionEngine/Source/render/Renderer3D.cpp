@@ -7,7 +7,6 @@
 namespace Axion {
 
 	static Ref<VertexBuffer> s_instanceVertexBuffer;
-	static uint32_t s_instanceBufferOffset = 0;
 	constexpr uint32_t MAX_INSTANCES = 10000;
 
 	void Renderer3D::initialize() {
@@ -31,16 +30,20 @@ namespace Axion {
 
 	void Renderer3D::beginScene(const Camera& cam, const LightingData& lightData) {
 		Renderer::beginScene(cam, lightData);
-		s_instanceBufferOffset = 0;
 	}
 
 	void Renderer3D::beginScene(const Mat4& projection, const Mat4& transform) {
 		Renderer::beginScene(projection, transform);
-		s_instanceBufferOffset = 0;
 	}
 
 	void Renderer3D::endScene() {
 		// does nothing for now
+	}
+
+	void Renderer3D::beginFrame() {
+		if (s_instanceVertexBuffer) {
+			s_instanceVertexBuffer->resetOffset();
+		}
 	}
 
 	void Renderer3D::setClearColor(const Vec4& color) {
@@ -68,20 +71,15 @@ namespace Axion {
 		if (!material || !material->isValid()) return;
 
 		material->bind();
-		Renderer::getSceneDataBuffer()->bind(0);
+		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
 
 		uint32_t dataSize = static_cast<uint32_t>(instanceData.size() * sizeof(ObjectBuffer));
-
-		AX_CORE_ASSERT(s_instanceBufferOffset + dataSize <= s_instanceVertexBuffer->getSize(), "Instance buffer overflow!");
-
-		s_instanceVertexBuffer->update(instanceData.data(), dataSize, s_instanceBufferOffset);
+		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData.data(), dataSize);
 
 		mesh->render();
-		s_instanceVertexBuffer->bind(1, s_instanceBufferOffset);
+		s_instanceVertexBuffer->bind(1, bufferOffset);
 
 		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer(), static_cast<uint32_t>(instanceData.size()));
-
-		s_instanceBufferOffset += dataSize;
 
 		auto& stats = Renderer::getStats();
 		stats.drawCalls++;

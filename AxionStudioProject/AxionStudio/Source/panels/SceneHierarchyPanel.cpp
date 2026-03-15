@@ -251,12 +251,12 @@ namespace Axion {
 
 				std::string defaultName = entity.getComponent<TagComponent>().tag + ".axprefab";
 
-				std::string savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", ".axprefab"} }, (prefabDir / defaultName).string());
+				std::string savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", ".axprefab"} }, (std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "prefabs").string());
 
 				if (!savePath.empty()) {
 					YAML::Emitter out;
 					out << YAML::BeginMap;
-					out << YAML::Key << "Type" << YAML::Value << "Prefab"; // TODO: move this to AAP
+					out << YAML::Key << "Type" << YAML::Value << "Prefab";
 					out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
 					out << YAML::Key << "Entity";
 					SceneSerializer serializer(m_context);
@@ -801,9 +801,6 @@ namespace Axion {
 						if (spatial) component.audio->enableSpatial();
 						else component.audio->disableSpatial();
 					}
-
-					// -- Velocity --
-					// TODO: add velocity
 
 					// -- Min distance --
 					ImGui::TableNextRow();

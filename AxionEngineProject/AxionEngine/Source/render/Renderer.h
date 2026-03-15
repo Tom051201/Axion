@@ -77,6 +77,7 @@ namespace Axion {
 
 		static void renderToSwapChain();
 		static const Ref<ConstantBuffer>& getSceneDataBuffer();
+		static uint32_t getSceneDataOffset();
 		static double getFrameTimeMs() { return s_lastFrameTimeMs; }
 		static void bindTextures(const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex = 2);
 
@@ -99,6 +100,7 @@ namespace Axion {
 		static double s_lastFrameTimeMs;
 		static Ref<Texture2D> s_whiteFallbackTexture;
 		static std::function<void(Event&)> s_eventCallback;
+		static uint32_t s_sceneDataOffset;
 
 	};
 

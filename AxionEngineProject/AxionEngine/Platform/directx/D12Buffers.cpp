@@ -128,6 +128,17 @@ namespace Axion {
 		memcpy(static_cast<uint8_t*>(m_mappedPtr) + offset, data, size);
 	}
 
+	uint32_t D12VertexBuffer::append(const void* data, size_t size) {
+		uint32_t writeOffset = m_currentOffset;
+		memcpy(m_mappedPtr + writeOffset, data, size);
+		m_currentOffset += (uint32_t)size;
+		return writeOffset;
+	}
+
+	void D12VertexBuffer::resetOffset() {
+		m_currentOffset = 0;
+	}
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// D12IndexBuffer ///////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -281,11 +292,6 @@ namespace Axion {
 		m_mappedPtr = nullptr;
 	}
 
-	void D12ConstantBuffer::update(const void* data, size_t size) {
-		AX_CORE_ASSERT(size <= m_bufferSize, "ConstantBuffer overflow");
-		memcpy(m_mappedPtr, data, size);
-	}
-
 	void D12ConstantBuffer::bind(uint32_t slot) const {
 		auto cmdList = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress());
@@ -299,5 +305,26 @@ namespace Axion {
 
 	// Not required
 	void D12ConstantBuffer::unbind() const {}
+
+	void D12ConstantBuffer::update(const void* data, size_t size) {
+		AX_CORE_ASSERT(size <= m_bufferSize, "ConstantBuffer overflow");
+		memcpy(m_mappedPtr, data, size);
+	}
+
+	uint32_t D12ConstantBuffer::append(const void* data, size_t size) {
+		uint32_t alignedSize = (size + 255) & ~255;
+
+		AX_CORE_ASSERT(m_currentOffset + alignedSize <= m_bufferSize, "ConstantBuffer overflow");
+
+		uint32_t writeOffset = m_currentOffset;
+		memcpy(m_mappedPtr + writeOffset, data, size);
+		m_currentOffset += alignedSize;
+
+		return writeOffset;
+	}
+
+	void D12ConstantBuffer::resetOffset() {
+		m_currentOffset = 0;
+	}
 
 }

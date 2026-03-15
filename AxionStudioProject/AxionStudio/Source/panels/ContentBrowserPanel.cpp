@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/render/GraphicsContext.h"
+#include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
@@ -97,7 +98,7 @@ namespace Axion {
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			std::string uniqueID = "##" + path.string();
 			void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
-			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), (ImTextureID)texID, {m_thumbnailSize, m_thumbnailSize}, {0, 1}, {1, 0})) {
+			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), (ImTextureID)texID, {m_thumbnailSize, m_thumbnailSize})) {
 				if (item.isDir) {
 					// -- Clicked on folder --
 					m_pendingNavigate = m_currentDirectory / path.filename();
@@ -121,8 +122,9 @@ namespace Axion {
 				// -- Material only --
 				if (item.path.string().find(".axmat") != std::string::npos) {
 					if (ImGui::MenuItem("Reload")) {
-						AX_CORE_LOG_WARN("Reloading is not supported yet");
-						// TODO: Add reloading materials
+						item.path.string();
+						AssetHandle<Material> handle = AssetManager::load<Material>(item.path.string());
+						AssetManager::reload<Material>(handle);
 					}
 				}
 
@@ -402,7 +404,7 @@ namespace Axion {
 		// ----- Refresh button -----
 		ImGui::SameLine();
 		texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("RefreshIcon"));
-		if (ImGui::ImageButton("##Refresh_icon", (ImTextureID)texID, { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##Refresh_icon", (ImTextureID)texID, { iconSize, iconSize })) {
 			refresh();
 		}
 
@@ -410,7 +412,7 @@ namespace Axion {
 		// ----- Add folder button -----
 		ImGui::SameLine();
 		texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("AddFolderIcon"));
-		if (ImGui::ImageButton("##AddFolder_icon", (ImTextureID)texID, { iconSize, iconSize }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##AddFolder_icon", (ImTextureID)texID, { iconSize, iconSize })) {
 			std::string baseName = "New Folder";
 			std::filesystem::path newFolderPath = m_currentDirectory / baseName;
 
@@ -554,7 +556,7 @@ namespace Axion {
 
 			// -- Icon --
 			void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("FolderIcon"));
-			ImGui::Image((ImTextureID)texID, iconSize, { 0, 1 }, { 1, 0 });
+			ImGui::Image((ImTextureID)texID, iconSize);
 			ImGui::SameLine();
 
 			if (ImGui::TreeNodeEx(node.name.c_str(), ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth)) {
@@ -575,7 +577,7 @@ namespace Axion {
 		}
 		else {
 			void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("FileIcon"));
-			ImGui::Image((ImTextureID)texID, iconSize, { 0, 1 }, { 1, 0 });
+			ImGui::Image((ImTextureID)texID, iconSize);
 			ImGui::SameLine();
 			bool isTheSame = node.path.string() == SceneManager::getScenePath();
 			if (ImGui::Selectable(node.name.c_str(), isTheSame)) {

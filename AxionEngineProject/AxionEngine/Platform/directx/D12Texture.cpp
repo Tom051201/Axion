@@ -23,7 +23,7 @@ namespace Axion {
 
 		// ----- Texture loading from file -----
 		int texWidth, texHeight, texChannels;
-		stbi_set_flip_vertically_on_load(true);
+		stbi_set_flip_vertically_on_load(false);
 		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		std::string errorMsg = "Failed to load texture image: " + path;
 		AX_CORE_ASSERT(pixels, errorMsg);

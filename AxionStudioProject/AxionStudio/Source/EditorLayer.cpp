@@ -17,9 +17,6 @@
 #include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"
 #endif
 
-// TODO: REMOVE this
-#include "AxionEngine/Source/scripting/NativeScripts.h"
-
 namespace Axion {
 
 	EditorLayer::EditorLayer() : Layer("AxionStudioLayer"), m_editorCamera(1280, 720) {}
@@ -85,6 +82,8 @@ namespace Axion {
 		EditorResourceManager::loadIcon("PauseButton", "AxionStudio/Resources/toolbar/PauseIcon.png");
 		EditorResourceManager::loadIcon("SimulateButton", "AxionStudio/Resources/toolbar/SimulateIcon.png");
 		EditorResourceManager::loadIcon("StepButton", "AxionStudio/Resources/toolbar/StepIcon.png");
+		EditorResourceManager::loadIcon("CameraIcon", "AxionStudio/Resources/CameraIcon.png");
+		EditorResourceManager::loadIcon("LightIcon", "AxionStudio/Resources/LightIcon.png");
 	}
 
 	void EditorLayer::onDetach() {
@@ -310,12 +309,16 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onSceneChanged(SceneChangedEvent& e) {
+		if (m_sceneState != SceneState::Edit) {
+			onSceneStop();
+		}
+		m_sceneState = SceneState::Edit;
 		m_activeScene = SceneManager::getScene();
 		return false;
 	}
 
 	bool EditorLayer::onFileDrop(FileDropEvent& e) {
-		if (e.getPaths().empty() || !ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) { // TODO: set cursor when not droppable // TODO: add function for this
+		if (e.getPaths().empty() || !ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
 			return false;
 		}
 
@@ -340,11 +343,15 @@ namespace Axion {
 
 	void EditorLayer::drawNewProjectWindow() {
 		if (ImGui::BeginPopupModal("Create New Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			static bool validLocation;
+			static bool invalidName;
+			bool textChanged = false;
+
 			// ----- Name -----
-			ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));
+			textChanged |= ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));
 
 			// ----- Locatation -----
-			ImGui::InputText("Location", m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer));
+			textChanged |= ImGui::InputText("Location", m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer));
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...")) {
 				std::string folder = FileDialogs::openFolder();
@@ -374,10 +381,12 @@ namespace Axion {
 
 
 			// ----- Validate input -----
-			std::filesystem::path locPath(m_newLocationBuffer);
-			bool validLocation = std::filesystem::is_directory(locPath);
-			std::filesystem::path projecFolder = locPath / m_newNameBuffer;
-			bool invalidName = std::filesystem::exists(projecFolder);
+			if (textChanged) {
+				std::filesystem::path locPath(m_newLocationBuffer);
+				validLocation = std::filesystem::is_directory(locPath);
+				std::filesystem::path projecFolder = locPath / m_newNameBuffer;
+				invalidName = std::filesystem::exists(projecFolder);
+			}
 
 			bool disabled = (strlen(m_newNameBuffer) == 0 || strlen(m_newLocationBuffer) == 0 || !validLocation || invalidName);
 
@@ -706,7 +715,7 @@ namespace Axion {
 		// ----- Simulate Button -----
 		ImGui::BeginDisabled(isPlay);
 		Ref<Texture2D> simIcon = isSim ? EditorResourceManager::getIcon("StopButton") : EditorResourceManager::getIcon("SimulateButton");
-		if (ImGui::ImageButton("sim_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(simIcon), { size, size }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("sim_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(simIcon), { size, size })) {
 			if (isSim) {
 				onSceneStop();
 			}
@@ -721,7 +730,7 @@ namespace Axion {
 		// ----- Play Button -----
 		ImGui::BeginDisabled(isSim);
 		Ref<Texture2D> playIcon = isPlay ? EditorResourceManager::getIcon("StopButton") : EditorResourceManager::getIcon("PlayButton");
-		if (ImGui::ImageButton("play_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(playIcon), { size, size }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("play_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(playIcon), { size, size })) {
 			if (isPlay) {
 				onSceneStop();
 			}
@@ -736,7 +745,7 @@ namespace Axion {
 		// ----- Pause Button -----
 		ImGui::BeginDisabled(isEdit);
 		Ref<Texture2D> pauseIcon = isPaused ? EditorResourceManager::getIcon("PlayButton") : EditorResourceManager::getIcon("PauseButton");
-		if (ImGui::ImageButton("pause_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(pauseIcon), { size, size }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("pause_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(pauseIcon), { size, size })) {
 			if (isPaused) {
 				m_sceneState = m_prePauseState;
 			}
@@ -751,7 +760,7 @@ namespace Axion {
 
 		// ----- Step Button -----
 		ImGui::BeginDisabled(!isPaused);
-		if (ImGui::ImageButton("step_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("StepButton")), { size, size }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("step_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("StepButton")), { size, size })) {
 			m_stepFrames = 1;
 		}
 		ImGui::EndDisabled();
@@ -819,6 +828,7 @@ namespace Axion {
 
 		if (selectedEntity) {
 
+			// -- Draw Overlay for Box Collider --
 			if (selectedEntity.hasComponent<BoxColliderComponent>()) {
 				auto& bc = selectedEntity.getComponent<BoxColliderComponent>();
 
@@ -840,6 +850,7 @@ namespace Axion {
 				drawWireframeBox(colliderTransform, color);
 			}
 
+			// -- Draw Overlay for Sphere Collider --
 			if (selectedEntity.hasComponent<SphereColliderComponent>()) {
 				auto& sc = selectedEntity.getComponent<SphereColliderComponent>();
 
@@ -860,6 +871,7 @@ namespace Axion {
 				drawWireframeSphere(colliderTransform, radius, color);
 			}
 
+			// -- Draw Overlay for Capsule Collider --
 			if (selectedEntity.hasComponent<CapsuleColliderComponent>()) {
 				auto& cc = selectedEntity.getComponent<CapsuleColliderComponent>();
 
@@ -882,6 +894,37 @@ namespace Axion {
 			}
 
 		}
+
+		Mat4 cameraViewMatrix = m_editorCamera.getViewMatrix();
+
+		// -- Draw Camera Icons --
+		auto cameraView = m_activeScene->getRegistry().view<CameraComponent>();
+		for (auto [entity, camera] : cameraView.each()) {
+			Vec3 position = m_activeScene->getWorldTransform({ entity, m_activeScene.get() }).getTranslation();
+			Renderer2D::drawBillboard(position, Vec2::one(), cameraViewMatrix, EditorResourceManager::getIcon("CameraIcon"));
+		}
+
+		// -- Draw Directional Light Icons --
+		auto dirLightView = m_activeScene->getRegistry().view<DirectionalLightComponent>();
+		for (auto [entity, light] : dirLightView.each()) {
+			Vec3 position = m_activeScene->getWorldTransform({ entity, m_activeScene.get() }).getTranslation();
+			Renderer2D::drawBillboard(position, Vec2::one(), cameraViewMatrix, EditorResourceManager::getIcon("LightIcon"));
+		}
+
+		// -- Draw Point Light Icons --
+		auto pointLightView = m_activeScene->getRegistry().view<PointLightComponent>();
+		for (auto [entity, light] : pointLightView.each()) {
+			Vec3 position = m_activeScene->getWorldTransform({ entity, m_activeScene.get() }).getTranslation();
+			Renderer2D::drawBillboard(position, Vec2::one(), cameraViewMatrix, EditorResourceManager::getIcon("LightIcon"));
+		}
+
+		// -- Draw Spot Light Icons --
+		auto spotLightView = m_activeScene->getRegistry().view<SpotLightComponent>();
+		for (auto [entity, light] : spotLightView.each()) {
+			Vec3 position = m_activeScene->getWorldTransform({ entity, m_activeScene.get() }).getTranslation();
+			Renderer2D::drawBillboard(position, Vec2::one(), cameraViewMatrix, EditorResourceManager::getIcon("LightIcon"));
+		}
+
 	}
 
 	void EditorLayer::drawWireframeBox(const Mat4& transform, const Vec4& color) {
@@ -917,31 +960,43 @@ namespace Axion {
 	}
 
 	void EditorLayer::drawWireframeSphere(const Mat4& transform, float radius, const Vec4& color) {
-		int segments = 24;
-		float step = 360.0f / segments;
+		constexpr int segments = 24;
+
+		static std::array<Vec3, segments> unitCircleXY;
+		static std::array<Vec3, segments> unitCircleXZ;
+		static std::array<Vec3, segments> unitCircleYZ;
+		static bool initialized = false;
+
+		if (!initialized) {
+			float step = 360.0f / segments;
+			for (int i = 0; i < segments; i++) {
+				float angle = Math::toRadians(i * step);
+				float c = std::cos(angle);
+				float s = std::sin(angle);
+
+				unitCircleXY[i] = { c, s, 0.0f };
+				unitCircleXZ[i] = { c, 0.0f, s };
+				unitCircleYZ[i] = { 0.0f, c, s };
+			}
+			initialized = true;
+		}
 
 		for (int i = 0; i < segments; i++) {
-			float angle1 = Math::toRadians(i * step);
-			float angle2 = Math::toRadians((i + 1) * step);
+			int next = (i + 1) % segments;
 
-			float sin1 = std::sin(angle1) * radius;
-			float cos1 = std::cos(angle1) * radius;
-			float sin2 = std::sin(angle2) * radius;
-			float cos2 = std::cos(angle2) * radius;
-
-			// XY Circle
-			Vec3 p1_xy = transform * Vec3(cos1, sin1, 0.0f);
-			Vec3 p2_xy = transform * Vec3(cos2, sin2, 0.0f);
+			// -- XY Circle --
+			Vec3 p1_xy = transform * (unitCircleXY[i] * radius);
+			Vec3 p2_xy = transform * (unitCircleXY[next] * radius);
 			Renderer2D::drawLine(p1_xy, p2_xy, color);
 
-			// XZ Circle
-			Vec3 p1_xz = transform * Vec3(cos1, 0.0f, sin1);
-			Vec3 p2_xz = transform * Vec3(cos2, 0.0f, sin2);
+			// -- XZ Circle --
+			Vec3 p1_xz = transform * (unitCircleXZ[i] * radius);
+			Vec3 p2_xz = transform * (unitCircleXZ[next] * radius);
 			Renderer2D::drawLine(p1_xz, p2_xz, color);
 
-			// YZ Circle
-			Vec3 p1_yz = transform * Vec3(0.0f, cos1, sin1);
-			Vec3 p2_yz = transform * Vec3(0.0f, cos2, sin2);
+			// -- YZ Circle --
+			Vec3 p1_yz = transform * (unitCircleYZ[i] * radius);
+			Vec3 p2_yz = transform * (unitCircleYZ[next] * radius);
 			Renderer2D::drawLine(p1_yz, p2_yz, color);
 		}
 

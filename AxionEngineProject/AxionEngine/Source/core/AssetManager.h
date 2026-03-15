@@ -47,6 +47,9 @@ namespace Axion {
 		template<typename T>
 		static AssetHandle<T> load(const std::string& absolutePath);
 
+		template<typename T>
+		static void reload(const AssetHandle<T>& handle);
+
 		// -- Creating from code --
 		template<typename T, typename... Args>
 		static AssetHandle<T> create(Args&&... args) {

@@ -67,6 +67,14 @@ namespace Axion {
 		glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 	}
 
+	uint32_t OpenGL3VertexBuffer::append(const void* data, size_t size) {
+		return 0;
+	}
+
+	void OpenGL3VertexBuffer::resetOffset() {
+
+	}
+
 
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -149,13 +157,6 @@ namespace Axion {
 		m_rendererID = 0;
 	}
 
-	void OpenGL3ConstantBuffer::update(const void* data, size_t size) {
-		AX_CORE_ASSERT(size <= m_size, "OpenGL constant buffer overflow");
-
-		glBindBuffer(GL_UNIFORM_BUFFER, m_rendererID);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
-	}
-
 	void OpenGL3ConstantBuffer::bind(uint32_t slot) const {
 		glBindBufferBase(GL_UNIFORM_BUFFER, slot, m_rendererID);
 	}
@@ -168,6 +169,21 @@ namespace Axion {
 
 	void OpenGL3ConstantBuffer::unbind() const {
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	}
+
+	void OpenGL3ConstantBuffer::update(const void* data, size_t size) {
+		AX_CORE_ASSERT(size <= m_size, "OpenGL constant buffer overflow");
+
+		glBindBuffer(GL_UNIFORM_BUFFER, m_rendererID);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
+	}
+
+	uint32_t OpenGL3ConstantBuffer::append(const void* data, size_t size) {
+		return 0;
+	}
+
+	void OpenGL3ConstantBuffer::resetOffset() {
+
 	}
 
 }

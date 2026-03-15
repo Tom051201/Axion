@@ -411,6 +411,79 @@ namespace Axion {
 		return handle;
 	}
 
+	template<>
+	void AssetManager::reload<Material>(const AssetHandle<Material>& handle) {
+		if (!has<Material>(handle)) {
+			AX_CORE_LOG_WARN("Cannot reload material: Handle not found in registry");
+			return;
+		}
+
+		std::string absolutePath = getAssetFilePath(handle);
+		std::ifstream stream(absolutePath);
+		if (!stream.is_open()) {
+			AX_CORE_LOG_ERROR("Failed to open material file for reloading: {}", absolutePath);
+			return;
+		}
+
+		YAML::Node data = YAML::Load(stream);
+		if (data["Type"].as<std::string>() != "Material") {
+			AX_CORE_LOG_ERROR("Reloading material failed, file is not a material asset file");
+			return;
+		}
+
+		Ref<Material> material = get<Material>(handle);
+
+		MaterialProperties prop;
+		prop.albedoColor = data["AlbedoColor"].as<Vec4>();
+		prop.metalness = data["Metalness"].as<float>();
+		prop.roughness = data["Roughness"].as<float>();
+		prop.emissionStrength = data["Emission"].as<float>();
+		prop.tiling = data["Tiling"].as<float>();
+		prop.useNormalMap = data["UseNormalMap"].as<float>();
+		prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
+		prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
+		prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
+
+		material->setProperties(prop);
+		material->clearTextures();
+
+		if (data["Textures"]) {
+			auto textures = data["Textures"];
+
+			if (textures["Albedo"] && !textures["Albedo"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Albedo"].as<std::string>()));
+				material->setTexture(TextureSlot::Albedo, texHandle);
+			}
+
+			if (textures["Normal"] && !textures["Normal"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Normal"].as<std::string>()));
+				material->setTexture(TextureSlot::Normal, texHandle);
+			}
+
+			if (textures["Metalness"] && !textures["Metalness"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Metalness"].as<std::string>()));
+				material->setTexture(TextureSlot::Metalness, texHandle);
+			}
+
+			if (textures["Roughness"] && !textures["Roughness"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Roughness"].as<std::string>()));
+				material->setTexture(TextureSlot::Roughness, texHandle);
+			}
+
+			if (textures["Occlusion"] && !textures["Occlusion"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Occlusion"].as<std::string>()));
+				material->setTexture(TextureSlot::Occlusion, texHandle);
+			}
+
+			if (textures["Emissive"] && !textures["Emissive"].as<std::string>().empty()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Emissive"].as<std::string>()));
+				material->setTexture(TextureSlot::Emissive, texHandle);
+			}
+		}
+
+		AX_CORE_LOG_INFO("Reloaded Material: {}", data["Name"].as<std::string>());
+	}
+
 	// ----- AudioClip Assets -----
 	template<>
 	AssetHandle<AudioClip> AssetManager::load<AudioClip>(const std::string& absolutePath) {

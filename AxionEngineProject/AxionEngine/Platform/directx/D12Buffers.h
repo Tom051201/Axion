@@ -28,6 +28,8 @@ namespace Axion {
 
 		void update(const void* data, size_t size) override;
 		void update(const void* data, size_t size, size_t offset) override;
+		uint32_t append(const void* data, size_t size) override;
+		void resetOffset() override;
 
 		const D3D12_VERTEX_BUFFER_VIEW& getView() const { return m_view; }
 
@@ -42,6 +44,8 @@ namespace Axion {
 		uint32_t m_size = 0;
 		uint32_t m_stride = sizeof(Vertex);
 		BufferLayout m_layout;
+
+		uint32_t m_currentOffset = 0;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +99,8 @@ namespace Axion {
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;
+		uint32_t append(const void* data, size_t size) override;
+		void resetOffset() override;
 
 		uint32_t getSize() const override { return static_cast<uint32_t>(m_bufferSize); }
 
@@ -103,6 +109,8 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_buffer;
 		uint8_t* m_mappedPtr;
 		size_t m_bufferSize = 0;
+
+		uint32_t m_currentOffset = 0;
 
 	};
 

@@ -9,6 +9,7 @@
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
+#include "AxionEngine/Source/scripting/NativeScriptRegistry.h"
 
 namespace Axion {
 
@@ -268,6 +269,15 @@ namespace Axion {
 			out << YAML::BeginMap;
 			auto& sc = entity.getComponent<ScriptComponent>();
 			out << YAML::Key << "ClassName" << YAML::Value << sc.className;
+			out << YAML::EndMap;
+		}
+
+		// -- NativeScriptComponent --
+		if (entity.hasComponent<NativeScriptComponent>()) {
+			out << YAML::Key << "NativeScriptComponent";
+			out << YAML::BeginMap;
+			auto& nsc = entity.getComponent<NativeScriptComponent>();
+			out << YAML::Key << "ScriptName" << YAML::Value << nsc.scriptName;
 			out << YAML::EndMap;
 		}
 
@@ -637,6 +647,16 @@ namespace Axion {
 		if (scriptComponent) {
 			auto& sc = deserializedEntity.addComponent<ScriptComponent>();
 			sc.className = scriptComponent["ClassName"].as<std::string>();
+		}
+
+		// -- NativeScriptComponent --
+		auto nativeScriptComponent = entityNode["NativeScriptComponent"];
+		if (nativeScriptComponent) {
+			auto& nsc = deserializedEntity.addComponent<NativeScriptComponent>();
+			std::string scriptName = nativeScriptComponent["ScriptName"].as<std::string>();
+			if (scriptName != "None") {
+				NativeScriptRegistry::bind(deserializedEntity, scriptName);
+			}
 		}
 
 		// -- ParticleSystemComponent --

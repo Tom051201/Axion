@@ -103,6 +103,8 @@ namespace Axion {
 
 		virtual void update(const void* data, size_t size) = 0;
 		virtual void update(const void* data, size_t size, size_t offset) = 0;
+		virtual uint32_t append(const void* data, size_t size) = 0;
+		virtual void resetOffset() = 0;
 
 		static Ref<VertexBuffer> create(const std::vector<Vertex>& vertices);
 		static Ref<VertexBuffer> createDynamic(uint32_t size, uint32_t stride);
@@ -148,6 +150,8 @@ namespace Axion {
 		virtual void unbind() const = 0;
 
 		virtual void update(const void* data, size_t size) = 0;
+		virtual uint32_t append(const void* data, size_t size) = 0;
+		virtual void resetOffset() = 0;
 
 		virtual uint32_t getSize() const = 0;
 

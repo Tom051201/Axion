@@ -201,9 +201,9 @@ Entities:
     TagComponent:
       Tag: Spot Light
     TransformComponent:
-      Translation: [4.03999996, 2.0276587, -4.02669716]
-      Rotation: [0, 0, 0, 1]
-      Scale: [0.999994993, 0.99999392, 0.999994338]
+      Translation: [5.02213955, 2.0276587, -4.02669716]
+      Rotation: [-0, 0.307394058, -0, 0.951582313]
+      Scale: [0.999996424, 0.99999392, 0.999996424]
     SpotLightComponent:
       Color: [0.795366287, 0, 1, 1]
       Intensity: 20

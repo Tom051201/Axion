@@ -1,20 +1,18 @@
-Name: PBR
+Name: RedMetal
 UUID: e5831d6e21777878eb6da068041df3bc
 Type: Material
-AlbedoColor: [1, 0, 0, 1]
-Metalness: 1
-Roughness: 1
+AlbedoColor: [0.847104228, 0, 0, 1]
+Metalness: 1.0
+Roughness: 0.0
 Emission: 0
-Tiling: 1
+Tiling: 0
 UseNormalMap: 0
 UseMetalnessMap: 0
-UseRoughnessMap: 1
+UseRoughnessMap: 0
 UseOcclusionMap: 0
 Textures:
-  - Albedo: textures\albedomap.axtex
-  - Normal: textures\normalmap.axtex
-  - Metalness: textures\metalnessmap.axtex
-  - Roughness: textures\roughnessmap.axtex
-  - Occlusion: textures\occlusionmap.axtex
-  - Emissive: 
+  Albedo: textures\colormap.axtex
+  Normal: textures\normalmap.axtex
+  Metalness: textures\metalnessmap.axtex
+  Roughness: textures\roughnessmap.axtex
 Pipeline: pipelines\StandardPBR.axpso

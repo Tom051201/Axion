@@ -30,6 +30,7 @@ namespace Axion {
 		static void beginScene(const Camera& cam, const LightingData& lightingData);
 		static void beginScene(const Mat4& projection, const Mat4& transform);
 		static void endScene();
+		static void beginFrame();
 
 		static void setClearColor(const Vec4& color);
 		static void clear();

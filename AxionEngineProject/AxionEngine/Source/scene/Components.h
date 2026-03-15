@@ -172,14 +172,15 @@ namespace Axion {
 
 
 	struct NativeScriptComponent {
-		// TODO: add to scene serializer
+		std::string scriptName = "None";
 		ScriptableEntity* instance = nullptr;
 
-		ScriptableEntity* (*instantiateScript)();
-		void (*destroyScript)(NativeScriptComponent*);
+		ScriptableEntity* (*instantiateScript)() = nullptr;
+		void (*destroyScript)(NativeScriptComponent*) = nullptr;
 
 		template<typename T>
-		void bind() {
+		void bind(const std::string& name) {
+			scriptName = name;
 			instantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
 			destroyScript = [](NativeScriptComponent* nsc) { delete nsc->instance; nsc->instance = nullptr; };
 		}

@@ -39,6 +39,9 @@ namespace Axion {
 		const std::string& getName() const { return m_name; }
 		AssetHandle<Pipeline> getPipelineHandle() const { return m_pipelineHandle; }
 
+		void setProperties(const MaterialProperties& properties) { m_properties = properties; }
+		void clearTextures() { m_textures.clear(); m_dirty = true; }
+
 		static Ref<Material> create(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties = {});
 
 	private:
