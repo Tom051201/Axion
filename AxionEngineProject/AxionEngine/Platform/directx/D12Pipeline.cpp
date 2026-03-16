@@ -44,7 +44,8 @@ namespace Axion {
 		psoDesc.RasterizerState.CullMode = D12Helpers::toD12CullMode(m_specification.cullMode);
 
 		D3D12_RENDER_TARGET_BLEND_DESC blendDesc = {};
-		blendDesc.BlendEnable = TRUE;
+		bool isIntegerFormat = (m_specification.colorFormat == ColorFormat::RED_INTEGER);
+		blendDesc.BlendEnable = (m_specification.numRenderTargets > 0 && !isIntegerFormat) ? TRUE : FALSE;
 		blendDesc.LogicOpEnable = FALSE;
 		blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
 		blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;

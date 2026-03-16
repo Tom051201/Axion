@@ -1,35 +1,27 @@
-Name: StandardPBR
-UUID: a1b2c3d4e5f678901234567890abcdef
+Name: ShadowMap
+UUID: cbd443b0d13c74ab7d9b3524f230cd99
 Type: Pipeline
 Specification:
-  Shader: shaders\StandardPBR.axshader
-  NumRenderTargets: 1
-  ColorFormat: RGBA8
+  Shader: shaders\ShadowMap.axshader
+  NumRenderTargets: 0
+  ColorFormat: RED_INTEGER
   DepthStencilFormat: DEPTH32F
   DepthTest: true
   DepthWrite: true
   DepthFunction: Less
   StencilEnabled: false
   SampleCount: 1
-  CullMode: Back
+  CullMode: Front
   Topology: TriangleList
   BufferLayout:
     - Name: POSITION
       Type: Float3
-      Size: 12
-      Offset: 0
     - Name: NORMAL
       Type: Float3
-      Size: 12
-      Offset: 12
     - Name: TANGENT
       Type: Float3
-      Size: 12
-      Offset: 24
     - Name: TEXCOORD
       Type: Float2
-      Size: 8
-      Offset: 36
     - Name: COLOR
       Type: Float4
       Instanced: true

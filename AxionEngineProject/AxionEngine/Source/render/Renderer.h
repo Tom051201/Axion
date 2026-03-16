@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Texture.h"
+#include "AxionEngine/Source/render/FrameBuffer.h"
 
 namespace Axion {
 
@@ -75,6 +76,9 @@ namespace Axion {
 		static void setClearColor(const Vec4& color);
 		static void clear();
 
+		static void setRenderTarget(FrameBuffer* target);
+		static void restoreRenderTarget();
+
 		static void renderToSwapChain();
 		static const Ref<ConstantBuffer>& getSceneDataBuffer();
 		static uint32_t getSceneDataOffset();
@@ -82,6 +86,7 @@ namespace Axion {
 		static void bindTextures(const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex = 2);
 
 		static const Ref<Texture2D>& getWhiteFallbackTexture();
+		static Ref<Texture2D> getShadowMap();
 
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
@@ -101,6 +106,8 @@ namespace Axion {
 		static Ref<Texture2D> s_whiteFallbackTexture;
 		static std::function<void(Event&)> s_eventCallback;
 		static uint32_t s_sceneDataOffset;
+		static Ref<Texture2D> s_shadowMapTexture;
+		static FrameBuffer* s_currentRenderTarget;
 
 	};
 

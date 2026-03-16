@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
+#include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
@@ -74,6 +75,7 @@ namespace Axion {
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(Application::onKeyPressed));
 
 		Renderer2D::onEvent(e);
+		Renderer3D::onEvent(e);
 
 		SceneManager::onEvent(e);
 		ProjectManager::onEvent(e);

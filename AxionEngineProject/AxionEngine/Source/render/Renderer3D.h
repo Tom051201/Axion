@@ -27,6 +27,8 @@ namespace Axion {
 		static void initialize();
 		static void shutdown();
 
+		static void onEvent(Event& e);
+
 		static void beginScene(const Camera& cam, const LightingData& lightingData);
 		static void beginScene(const Mat4& projection, const Mat4& transform);
 		static void endScene();
@@ -37,7 +39,7 @@ namespace Axion {
 
 		static void drawMesh(const Mat4& transform, Ref<Mesh>& mesh, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer);
 		static void drawMeshInstanced(Ref<Mesh>& mesh, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData);
-
+		static void drawMeshInstancedShadow(Ref<Mesh>& mesh, const std::vector<ObjectBuffer>& instanceData);
 	};
 
 }

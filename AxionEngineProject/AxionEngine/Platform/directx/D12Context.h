@@ -31,6 +31,8 @@ namespace Axion {
 		void clear() override;
 
 		void bindSwapChainRenderTarget() override;
+		void bindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) override;
+		void unbindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) override;
 		void* getImGuiTextureID(const Ref<Texture2D>& texture) override;
 		void bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count);
 

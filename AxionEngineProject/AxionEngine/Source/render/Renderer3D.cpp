@@ -3,11 +3,13 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 namespace Axion {
 
 	static Ref<VertexBuffer> s_instanceVertexBuffer;
 	constexpr uint32_t MAX_INSTANCES = 10000;
+	static AssetHandle<Pipeline> s_shadowPipelineHandle;
 
 	void Renderer3D::initialize() {
 		s_instanceVertexBuffer = VertexBuffer::createDynamic(MAX_INSTANCES * sizeof(ObjectBuffer), sizeof(ObjectBuffer));
@@ -26,6 +28,12 @@ namespace Axion {
 		s_instanceVertexBuffer->release();
 
 		AX_CORE_LOG_TRACE("Renderer3D shutdown");
+	}
+
+	void Renderer3D::onEvent(Event& e) {
+		if (e.getEventType() == EventType::ProjectChanged) {
+			s_shadowPipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/ShadowMap.axpso"));
+		}
 	}
 
 	void Renderer3D::beginScene(const Camera& cam, const LightingData& lightData) {
@@ -85,6 +93,23 @@ namespace Axion {
 		stats.drawCalls++;
 		stats.meshCount3D++;
 		stats.instanceCount3D += static_cast<uint32_t>(instanceData.size());
+	}
+
+	void Renderer3D::drawMeshInstancedShadow(Ref<Mesh>& mesh, const std::vector<ObjectBuffer>& instanceData) {
+		if (instanceData.empty()) return;
+		Ref<Pipeline> shadowPipeline = AssetManager::get<Pipeline>(s_shadowPipelineHandle);
+		if (!shadowPipeline) return;
+
+		shadowPipeline->bind();
+		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
+
+		uint32_t dataSize = static_cast<uint32_t>(instanceData.size() * sizeof(ObjectBuffer));
+		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData.data(), dataSize);
+
+		mesh->render();
+		s_instanceVertexBuffer->bind(1, bufferOffset);
+
+		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer(), static_cast<uint32_t>(instanceData.size()));
 	}
 
 }

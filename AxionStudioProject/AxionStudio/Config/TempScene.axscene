@@ -5,9 +5,9 @@ Entities:
     TagComponent:
       Tag: Physics Entity
     TransformComponent:
-      Translation: [-1.12089074, 4.29811907, 1.28787327]
-      Rotation: [-0.0859476775, -0.446343392, 0.168423325, 0.874656618]
-      Scale: [0.999994516, 0.999994576, 0.999995232]
+      Translation: [0.27261886, -1.04767513, 4.40646744]
+      Rotation: [-0.0859476849, -0.446343571, 0.168423399, 0.874656439]
+      Scale: [0.999994278, 0.999994576, 0.999995172]
     MeshComponent:
       Path: meshes\Sphere.axmesh
     MaterialComponent:
@@ -31,9 +31,9 @@ Entities:
     TagComponent:
       Tag: shadow cube
     TransformComponent:
-      Translation: [0, 0, 8.00150299]
-      Rotation: [0, 0, 0, 1]
-      Scale: [0.300000012, 0.300000012, 0.300000012]
+      Translation: [1.43846464, 0.404867768, 5.908813]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1.17923224, 0.281817973, 0.596527994]
     MeshComponent:
       Path: meshes\Cube.axmesh
     MaterialComponent:
@@ -55,9 +55,9 @@ Entities:
     TagComponent:
       Tag: Dir Light
     TransformComponent:
-      Translation: [0, 0, 3.73582315]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 9.85497081e-07]
+      Translation: [-1.09605658, 0, -4.9159708]
+      Rotation: [-0.00334674492, 0.494273067, 0.0019026848, 0.86929822]
+      Scale: [0.999999821, 0.999999762, 9.85495717e-07]
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
   - Entity: 2f080c4af6b5eb34930179e24673f39a
@@ -201,9 +201,9 @@ Entities:
     TagComponent:
       Tag: Spot Light
     TransformComponent:
-      Translation: [4.03999996, 2.0276587, -4.02669716]
-      Rotation: [0, 0, 0, 1]
-      Scale: [0.999994993, 0.99999392, 0.999994338]
+      Translation: [5.02213955, 2.0276587, -4.02669716]
+      Rotation: [-0, 0.307394058, -0, 0.951582313]
+      Scale: [0.999996424, 0.99999392, 0.999996424]
     SpotLightComponent:
       Color: [0.795366287, 0, 1, 1]
       Intensity: 20

@@ -25,12 +25,12 @@ namespace Axion {
 		void bind(uint32_t slot = 0) const override;
 		void unbind() const override;
 
-		void* getHandle() const override;
-
 		uint32_t getWidth() const override { return m_width; }
 		uint32_t getHeight() const override { return m_height; }
 
-		uint32_t getSrvHeapIndex() const { return m_srvHeapIndex; }
+		void* getHandle() const override;
+		uint32_t getSrvHeapIndex() const override { return m_srvHeapIndex; }
+
 
 	private:
 
@@ -101,12 +101,12 @@ namespace Axion {
 		void bind(uint32_t slot = 0) const override;
 		void unbind() const override;
 
-		void* getHandle() const override;
-
 		uint32_t getWidth() const override { return m_width; }
 		uint32_t getHeight() const override { return m_height; }
 
-		uint32_t getSrvHeapIndex() const { return m_srvHeapIndex; }
+		void* getHandle() const override;
+		uint32_t getSrvHeapIndex() const override { return m_srvHeapIndex; }
+		ID3D12Resource* getResource() const { return m_textureResource.Get(); }
 
 		D3D12_CPU_DESCRIPTOR_HANDLE getDsvHandle() const { return m_dsvHandle; }
 

@@ -101,6 +101,14 @@ namespace Axion {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	void OpenGL3Context::bindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+
+	}
+
+	void OpenGL3Context::unbindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+
+	}
+
 	void* OpenGL3Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
 		return texture->getHandle();
 	}

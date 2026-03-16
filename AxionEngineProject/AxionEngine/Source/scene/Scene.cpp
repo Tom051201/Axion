@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
+#include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
@@ -266,24 +267,14 @@ namespace Axion {
 			}
 		});
 
-		// -- Begin Rendering 3D --
-		Renderer3D::beginScene(cam, lightData);
 
 
-		// ----- Render Skybox -----
-		if (m_skyboxHandle.isValid()) {
-			AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
-		}
-
-
-		// ----- Render Meshes -----
+		// ----- Pre-Calculate Batches -----
 		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>> renderBatches;
-
 		auto meshRenderView = m_registry.view<MeshComponent, TransformComponent, MaterialComponent>();
 		for (auto [entity, mesh, transform, material] : meshRenderView.each()) {
 			if (mesh.handle.isValid() && material.handle.isValid()) {
 				Ref<Material> matInstance = AssetManager::get<Material>(material.handle);
-
 				Mat4 worldTransform = getWorldTransform({entity, this});
 
 				ObjectBuffer objData;
@@ -294,7 +285,48 @@ namespace Axion {
 			}
 		}
 
-		// -- Flush the batches --
+		// -- Shadow Map Pass --
+		if (lightData.directionalLights.size() > 0) {
+			Vec3 lightDir = lightData.directionalLights[0].direction;
+			float lightDistance = 50.0f;
+			float orthoSize = 100.0f;
+
+			Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
+			Vec3 lightPos = lightDir * lightDistance;
+			Mat4 lightView = Mat4::lookAt(lightPos, Vec3(0.0f, 0.0f, 0.0f), lightUp);
+			Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
+
+			Renderer3D::beginScene(lightProjection, lightView.inverse());
+
+			GraphicsContext::get()->bindDepthOnlyRenderTarget(Renderer::getShadowMap());
+
+			for (auto& [meshHandle, materialMap] : renderBatches) {
+				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
+				if (!mesh) continue;
+
+				std::vector<ObjectBuffer> flatInstanceData;
+				for (auto& [matHandle, data] : materialMap) {
+					flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+				}
+
+				Renderer3D::drawMeshInstancedShadow(mesh, flatInstanceData);
+			}
+
+			GraphicsContext::get()->unbindDepthOnlyRenderTarget(Renderer::getShadowMap());
+			Renderer3D::endScene();
+		}
+
+		Renderer::restoreRenderTarget();
+
+		Renderer3D::beginScene(cam, lightData);
+
+
+		// ----- Render Skybox -----
+		if (m_skyboxHandle.isValid()) {
+			AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
+		}
+
+		// -- Main Scene Pass --
 		for (auto& [meshHandle, materialMap] : renderBatches) {
 			Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 			if (!mesh) continue;

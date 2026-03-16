@@ -2,6 +2,7 @@
 #include "D12Context.h"
 
 #include "AxionEngine/Source/render/SwapChainSpecification.h"
+#include "AxionEngine/Source/render/Renderer.h"
 
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
 
@@ -143,13 +144,45 @@ namespace Axion {
 		m_swapChain.setAsRenderTarget();
 	}
 
-	void* D12Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
-		auto* d12tex = static_cast<D12Texture2D*>(texture.get());
+	void D12Context::bindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+		auto* depthTex = static_cast<D12DepthTexture*>(depthTexture.get());
+		auto* cmd = m_commandList.getCommandList();
 
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			depthTex->getResource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE
+		);
+		cmd->ResourceBarrier(1, &barrier);
+
+		auto dsvHandle = depthTex->getDsvHandle();
+		cmd->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
+
+		cmd->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+		D3D12_VIEWPORT vp{ 0.0f, 0.0f, (float)depthTexture->getWidth(), (float)depthTexture->getHeight(), 0.0f, 1.0f };
+		D3D12_RECT sc{ 0, 0, (LONG)depthTexture->getWidth(), (LONG)depthTexture->getHeight() };
+		cmd->RSSetViewports(1, &vp);
+		cmd->RSSetScissorRects(1, &sc);
+	}
+
+	void D12Context::unbindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+		auto* depthTex = static_cast<D12DepthTexture*>(depthTexture.get());
+		auto* cmd = m_commandList.getCommandList();
+
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			depthTex->getResource(),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+		cmd->ResourceBarrier(1, &barrier);
+	}
+
+	void* D12Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
 		uint32_t viewIndex = m_gpuSrvHeap.allocate();
 
 		auto destHandle = m_gpuSrvHeap.getCpuHandle(viewIndex);
-		auto srcHandle = m_stagingSrvHeap.getCpuHandle(d12tex->getSrvHeapIndex());
+		auto srcHandle = m_stagingSrvHeap.getCpuHandle(texture->getSrvHeapIndex());
 
 		m_device.getDevice()->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -164,9 +197,12 @@ namespace Axion {
 		uint32_t batchStartOffset = m_gpuSrvHeap.allocateRange(tableSize);
 
 		for (uint32_t i = 0; i < tableSize; i++) {
-			Ref<Texture2D> tex = (i < count && textures[i]) ? textures[i] : textures[0];
+			Ref<Texture2D> tex = (i < count && textures[i]) ? textures[i] : nullptr;
 
-			auto srcHandle = m_stagingSrvHeap.getCpuHandle(static_cast<D12Texture2D*>(tex.get())->getSrvHeapIndex());
+			if (!tex && textures[0]) tex = textures[0];
+			if (!tex) tex = Renderer::getWhiteFallbackTexture();
+
+			auto srcHandle = m_stagingSrvHeap.getCpuHandle(tex->getSrvHeapIndex());
 			auto destHandle = m_gpuSrvHeap.getCpuHandle(batchStartOffset + i);
 
 			device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

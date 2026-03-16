@@ -20,6 +20,7 @@ cbuffer CameraBuffer : register(b0) {
 	float4x4 u_view;
 	float4x4 u_projection;
 	float4x4 u_viewProjection;
+	float4x4 u_lightSpaceMatrix;
 
 	int u_directionalLightsCount;
 	int u_pointLightsCount;
@@ -53,6 +54,7 @@ Texture2D t_metalness : register(t2);
 Texture2D t_roughness : register(t3);
 Texture2D t_occlusion : register(t4);
 Texture2D t_emissive : register(t5);
+Texture2D t_shadowMap : register(t6);
 
 SamplerState s_sampler : register(s0);
 
@@ -205,15 +207,50 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	float3 V = normalize(camPos - input.worldPos);
 	float3 Lo = float3(0.0, 0.0, 0.0);
 
+	// -- Shadow Mapping calculation --
+	float shadow = 0.0f;
+	float4 fragPosLightSpace = mul(float4(input.worldPos, 1.0), u_lightSpaceMatrix);
+
+	float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	projCoords.x = projCoords.x * 0.5 + 0.5;
+	projCoords.y = -projCoords.y * 0.5 + 0.5;
+
+	if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0) {
+		
+		float currentDepth = projCoords.z;
+		float3 L_dir = normalize(u_directionalLights[0].direction.xyz);
+		float bias = max(0.001 * (1.0 - dot(N, L_dir)), 0.0001);
+
+		float shadowSum = 0.0;
+		float2 texelSize = 1.0 / 2048.0; // 1.0 divided by your shadow map resolution!
+
+		for (int x = -1; x <= 1; ++x) {
+			for (int y = -1; y <= 1; ++y) {
+				float pcfDepth = t_shadowMap.Sample(s_sampler, projCoords.xy + float2(x, y) * texelSize).r;
+				shadowSum += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
+			}
+		}
+		
+		shadow = shadowSum / 9.0;
+	}
+
+
+
 	// -- Directional light --
 	for (int i = 0; i < u_directionalLightsCount; ++i) {
 		float3 L_dir = normalize(u_directionalLights[i].direction.xyz);
 		float3 radiance_dir = u_directionalLights[i].color.rgb * 2.0;
-		Lo += CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
+		float3 lightCalc = CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
+
+		if (i == 0) {
+			Lo += lightCalc * (1.0 - shadow);
+		} else {
+			Lo += lightCalc;
+		}
+
 	}
 
 	// -- Point light --
-
 	for (int j = 0; j < u_pointLightsCount; ++j) {
 		float3 lightVec = u_pointLights[j].position.xyz - input.worldPos;
 		float distance = length(lightVec);

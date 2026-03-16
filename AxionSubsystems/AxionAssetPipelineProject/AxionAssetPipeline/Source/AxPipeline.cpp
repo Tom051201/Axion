@@ -21,6 +21,7 @@ namespace Axion::AAP {
 
 		out << YAML::Key << "Specification" << YAML::BeginMap;
 		out << YAML::Key << "Shader" << YAML::Value << data.shaderFilePath;
+		out << YAML::Key << "NumRenderTargets" << YAML::Value << data.spec.numRenderTargets;
 		out << YAML::Key << "ColorFormat" << YAML::Value << EnumUtils::toString(data.spec.colorFormat);
 		out << YAML::Key << "DepthStencilFormat" << YAML::Value << EnumUtils::toString(data.spec.depthStencilFormat);
 		out << YAML::Key << "DepthTest" << YAML::Value << data.spec.depthTest;

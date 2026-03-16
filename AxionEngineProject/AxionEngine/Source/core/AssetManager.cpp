@@ -287,6 +287,7 @@ namespace Axion {
 		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(absShaderPath);
 
 		PipelineSpecification spec = {};
+		spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
 		spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
 		spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
 		spec.depthTest = specData["DepthTest"].as<bool>();

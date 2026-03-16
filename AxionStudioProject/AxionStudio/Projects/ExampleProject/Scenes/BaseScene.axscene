@@ -31,9 +31,9 @@ Entities:
     TagComponent:
       Tag: shadow cube
     TransformComponent:
-      Translation: [0, 0, 8.00150299]
-      Rotation: [0, 0, 0, 1]
-      Scale: [0.300000012, 0.300000012, 0.300000012]
+      Translation: [1.43846464, 0.404867768, 5.908813]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1.17923224, 0.281817973, 0.596527994]
     MeshComponent:
       Path: meshes\Cube.axmesh
     MaterialComponent:
@@ -56,8 +56,8 @@ Entities:
       Tag: Dir Light
     TransformComponent:
       Translation: [0, 0, 3.73582315]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 9.85497081e-07]
+      Rotation: [0, 0.0014796675, -0, 0.999998927]
+      Scale: [0.999999642, 0.999999285, 9.85496513e-07]
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
   - Entity: 2f080c4af6b5eb34930179e24673f39a

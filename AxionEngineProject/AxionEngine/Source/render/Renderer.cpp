@@ -18,6 +18,8 @@ namespace Axion {
 	Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
 	std::function<void(Event&)> Renderer::s_eventCallback;
 	uint32_t Renderer::s_sceneDataOffset = 0;
+	Ref<Texture2D> Renderer::s_shadowMapTexture = nullptr;
+	FrameBuffer* Renderer::s_currentRenderTarget = nullptr;
 
 	struct alignas(16) HLSLDirLight {
 		DirectX::XMFLOAT4 direction;
@@ -43,6 +45,7 @@ namespace Axion {
 		DirectX::XMMATRIX projection;
 
 		DirectX::XMMATRIX viewProjection;
+		DirectX::XMMATRIX lightSpaceMatrix;
 
 		int directionalLightsCount;
 		int pointLightsCount;
@@ -83,6 +86,9 @@ namespace Axion {
 		// white texture creation
 		s_whiteFallbackTexture = Texture2D::create(32, 32, nullptr);
 
+		// shadow map texture
+		s_shadowMapTexture = DepthTexture::create(2048, 2048);
+
 		// setup renderer
 		Renderer2D::initialize();
 		Renderer3D::initialize();
@@ -94,6 +100,7 @@ namespace Axion {
 		delete s_sceneData;
 		s_sceneUploadBuffer->release();
 
+		s_shadowMapTexture->release();
 		s_whiteFallbackTexture->release();
 
 		Renderer3D::shutdown();
@@ -157,6 +164,29 @@ namespace Axion {
 			s_sceneData->directionalLights[i].color = lightingData.directionalLights[i].color.toFloat4();
 		}
 
+		// -- Light Space Matrix for Shadows --
+		if (s_sceneData->directionalLightsCount > 0) {
+			Vec3 lightDir = {
+				s_sceneData->directionalLights[0].direction.x,
+				s_sceneData->directionalLights[0].direction.y,
+				s_sceneData->directionalLights[0].direction.z
+			};
+
+			float lightDistance = 50.0f;
+			Vec3 lightPos = lightDir * lightDistance;
+			Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
+			Mat4 lightView = Mat4::lookAt(lightPos, Vec3::zero(), lightUp);
+
+			float orthoSize = 20.0f;
+			Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
+
+			Mat4 lightSpace = lightProjection * lightView;
+			s_sceneData->lightSpaceMatrix = lightSpace.transposed().toXM();
+		}
+		else {
+			s_sceneData->lightSpaceMatrix = Mat4::identity().toXM();
+		}
+
 		// -- Point Lights --
 		s_sceneData->pointLightsCount = std::min((uint32_t)lightingData.pointLights.size(), MAX_POINT_LIGHTS);
 		for (int i = 0; i < s_sceneData->pointLightsCount; i++) {
@@ -195,6 +225,19 @@ namespace Axion {
 		RenderCommand::clear();
 	}
 
+	void Renderer::setRenderTarget(FrameBuffer* target) {
+		s_currentRenderTarget = target;
+	}
+
+	void Renderer::restoreRenderTarget() {
+		if (s_currentRenderTarget) {
+			s_currentRenderTarget->bind();
+		}
+		else {
+			renderToSwapChain();
+		}
+	}
+
 	void Renderer::renderToSwapChain() {
 		GraphicsContext::get()->bindSwapChainRenderTarget();
 	}
@@ -208,9 +251,16 @@ namespace Axion {
 	}
 
 	void Renderer::bindTextures(const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex) {
+		std::array<Ref<Texture2D>, 16> finalTextures = textures;
+
+		if (s_shadowMapTexture) {
+			finalTextures[6] = s_shadowMapTexture;
+			if (count < 7) count = 7;
+		}
+
 		if (s_api == RendererAPI::DirectX12) {
 			auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-			context->bindSrvTable(rootIndex, textures, count);
+			context->bindSrvTable(rootIndex, finalTextures, count);
 		}
 		else if (s_api == RendererAPI::OpenGL3) {
 			// TODO: add opengl3 impl.
@@ -223,6 +273,10 @@ namespace Axion {
 
 	const Ref<Texture2D>& Renderer::getWhiteFallbackTexture() {
 		return s_whiteFallbackTexture;
+	}
+
+	Ref<Texture2D> Renderer::getShadowMap() {
+		return s_shadowMapTexture;
 	}
 
 	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer) {

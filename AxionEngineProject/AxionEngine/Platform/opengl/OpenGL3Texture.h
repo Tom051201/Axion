@@ -20,6 +20,7 @@ namespace Axion {
 		uint32_t getHeight() const override { return m_height; }
 
 		void* getHandle() const override;
+		uint32_t getSrvHeapIndex() const override;
 
 	private:
 

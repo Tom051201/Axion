@@ -115,6 +115,7 @@ namespace Axion {
 
 		if (m_viewportSize.x > 0 && m_viewportSize.y > 0) {
 
+			Renderer::setRenderTarget(m_frameBuffer.get());
 			m_frameBuffer->bind();
 			m_frameBuffer->clear();
 
