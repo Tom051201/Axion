@@ -136,12 +136,25 @@ namespace Axion {
 				std::filesystem::path outDir = std::string(m_outputPathBuffer);
 				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axmesh");
 
+				UUID newAssetUUID = UUID::generate();
+
 				AAP::MeshAssetData data;
+				data.uuid = newAssetUUID;
 				data.name = m_nameBuffer;
 				data.fileFormat = m_types[m_importType];
 				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 
 				AAP::MeshParser::createAxMeshFile(data, outFile.string());
+
+				AssetMetadata metadata;
+				metadata.handle = newAssetUUID;
+				metadata.type = AssetType::Mesh;
+				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				registry->add(metadata);
+				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+
 				close();
 			}
 			ImGui::EndDisabled();

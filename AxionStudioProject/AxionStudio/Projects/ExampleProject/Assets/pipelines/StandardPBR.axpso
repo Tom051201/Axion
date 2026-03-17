@@ -1,8 +1,8 @@
 Name: StandardPBR
-UUID: a1b2c3d4e5f678901234567890abcdef
+UUID: 3f026dbc37322f449a7dc3e8ab25501c
 Type: Pipeline
 Specification:
-  Shader: shaders\StandardPBR.axshader
+  Shader: 8ae9e302548ffa53c7ced596eaa3ba82
   NumRenderTargets: 1
   ColorFormat: RGBA8
   DepthStencilFormat: DEPTH32F
@@ -18,30 +18,44 @@ Specification:
       Type: Float3
       Size: 12
       Offset: 0
+      Instanced: false
     - Name: NORMAL
       Type: Float3
       Size: 12
       Offset: 12
+      Instanced: false
     - Name: TANGENT
       Type: Float3
       Size: 12
       Offset: 24
+      Instanced: false
     - Name: TEXCOORD
       Type: Float2
       Size: 8
       Offset: 36
+      Instanced: false
     - Name: COLOR
       Type: Float4
+      Size: 16
+      Offset: 44
       Instanced: true
     - Name: ROW
       Type: Float4
+      Size: 16
+      Offset: 60
       Instanced: true
     - Name: ROW
       Type: Float4
+      Size: 16
+      Offset: 76
       Instanced: true
     - Name: ROW
       Type: Float4
+      Size: 16
+      Offset: 92
       Instanced: true
     - Name: ROW
       Type: Float4
+      Size: 16
+      Offset: 108
       Instanced: true

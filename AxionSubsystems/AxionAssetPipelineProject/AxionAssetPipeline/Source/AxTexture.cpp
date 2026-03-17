@@ -15,7 +15,7 @@ namespace Axion::AAP {
 		out << YAML::BeginMap;
 
 		out << YAML::Key << "Name" << YAML::Value << data.name;
-		out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
+		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Texture2D";
 		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
 		out << YAML::Key << "Source" << YAML::Value << data.filePath;

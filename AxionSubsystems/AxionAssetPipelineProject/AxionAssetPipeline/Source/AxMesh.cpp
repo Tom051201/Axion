@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/UUID.h"
+#include "AxionEngine/Source/core/YamlHelper.h"
 
 #include <fstream>
 
@@ -15,7 +16,7 @@ namespace Axion::AAP {
 		out << YAML::BeginMap;
 
 		out << YAML::Key << "Name" << YAML::Value << data.name;
-		out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
+		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Mesh";
 		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
 		out << YAML::Key << "Source" << YAML::Value << data.filePath;

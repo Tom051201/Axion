@@ -319,25 +319,27 @@ namespace Axion {
 			std::string pathStr = filePath;
 			std::string absPath = AssetManager::getAbsolute(pathStr);
 
-			AssetHandle<Prefab> handle = AssetManager::load<Prefab>(absPath);
-			Ref<Prefab> prefab = AssetManager::get<Prefab>(handle);
+			UUID prefabUUID = AssetManager::getAssetUUID(absPath);
+			if (prefabUUID.isValid()) {
+				AssetHandle<Prefab> handle = AssetManager::load<Prefab>(prefabUUID);
+				Ref<Prefab> prefab = AssetManager::get<Prefab>(handle);
 
+				if (prefab) {
+					YAML::Node node = prefab->getEntityNode();
+					Entity newEntity = SceneSerializer::deserializeEntityNode(scene, node, true);
 
-
-			if (prefab) {
-				YAML::Node node = prefab->getEntityNode();
-				Entity newEntity = SceneSerializer::deserializeEntityNode(scene, node, true);
-
-				if (newEntity.isValid()) {
-					UUID newID = newEntity.getComponent<UUIDComponent>().id;
-					*outUuidHi = newID.high;
-					*outUuidLo = newID.low;
+					if (newEntity.isValid()) {
+						UUID newID = newEntity.getComponent<UUIDComponent>().id;
+						*outUuidHi = newID.high;
+						*outUuidLo = newID.low;
+						return;
+					}
 				}
 			}
-			else {
-				AX_CORE_LOG_ERROR("Failed to instantiate Prefab: {}", pathStr);
-			}
 
+			AX_CORE_LOG_ERROR("Failed to instantiate Prefab: {}", pathStr);
+			*outUuidHi = 0;
+			*outUuidLo = 0;
 		}
 
 		extern "C" void entity_destroy(uint64_t uuidHi, uint64_t uuidLo) {

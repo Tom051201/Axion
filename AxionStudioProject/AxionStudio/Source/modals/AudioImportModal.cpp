@@ -159,13 +159,26 @@ namespace Axion {
 				std::filesystem::path outDir = std::string(m_outputPathBuffer);
 				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axaudio");
 
+				UUID newAssetUUID = UUID::generate();
+
 				AAP::AudioAssetData data;
+				data.uuid = newAssetUUID;
 				data.name = m_nameBuffer;
 				data.fileFormat = m_formatNames[m_importFormat];
 				data.audioFilePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 				data.mode = m_types[m_loadType];
 
 				AAP::AudioParser::createAxAudioFile(data, outFile.string());
+
+				AssetMetadata metadata;
+				metadata.handle = newAssetUUID;
+				metadata.type = AssetType::AudioClip;
+				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				registry->add(metadata);
+				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+
 				close();
 			}
 			ImGui::EndDisabled();

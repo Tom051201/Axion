@@ -10,8 +10,8 @@ namespace Axion {
 	class Skybox {
 	public:
 
-		Skybox(const std::string& crossPath, const std::string& pipelinePath);
-		Skybox(const std::array<std::string, 6>& facePaths, const std::string& pipelinePath);
+		Skybox(const std::string& crossPath, UUID pipelineHandle);
+		Skybox(const std::array<std::string, 6>& facePaths, UUID pipelineHandle);
 		~Skybox();
 
 		void release();
@@ -19,7 +19,6 @@ namespace Axion {
 		void onUpdate(Timestep ts);
 
 		void setTexture(const std::string& crossPath);
-
 		const std::string& getTexturePath() const { return m_texturePath; }
 
 	private:
@@ -29,7 +28,7 @@ namespace Axion {
 		std::string m_texturePath;
 		AssetHandle<Pipeline> m_pipelineHandle;
 
-		void setupPipeline(const std::string& filePath);
+		void setupPipeline(UUID handle);
 
 	};
 

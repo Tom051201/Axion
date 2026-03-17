@@ -30,6 +30,7 @@ namespace Axion {
 
 		virtual void compileFromFile(const std::string& filePath) = 0;
 		virtual void recompile() = 0;
+		virtual void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) = 0;
 
 		virtual int getBindPoint(const std::string& name) const = 0;
 		virtual uint32_t getTextureTableBindSlot() const = 0;

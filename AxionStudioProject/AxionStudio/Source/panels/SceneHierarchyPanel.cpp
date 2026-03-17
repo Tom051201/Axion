@@ -495,8 +495,8 @@ namespace Axion {
 					std::filesystem::path meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
 					std::string absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, meshDir.string());
 					if (!absPath.empty()) {
-						AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
-						component.handle = handle;
+						UUID assetUUID = AssetManager::getAssetUUID(absPath);
+						if (assetUUID.isValid()) component.handle = AssetManager::load<Mesh>(assetUUID);
 					}
 				}
 
@@ -506,8 +506,8 @@ namespace Axion {
 						std::string relPath = static_cast<const char*>(payload->Data);
 						std::string absPath = AssetManager::getAbsolute(relPath);
 						if (absPath.find(".axmesh") != std::string::npos) {
-							AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
-							component.handle = handle;
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.handle = AssetManager::load<Mesh>(assetUUID);
 						}
 					}
 					ImGui::EndDragDropTarget();
@@ -571,8 +571,8 @@ namespace Axion {
 					std::filesystem::path materialDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "materials";
 					std::string absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir.string());
 					if (!absPath.empty()) {
-						AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
-						component.handle = handle;
+						UUID assetUUID = AssetManager::getAssetUUID(absPath);
+						if (assetUUID.isValid()) component.handle = AssetManager::load<Material>(assetUUID);
 					}
 				}
 
@@ -582,8 +582,8 @@ namespace Axion {
 						std::string relPath = static_cast<const char*>(payload->Data);
 						std::string absPath = AssetManager::getAbsolute(relPath);
 						if (absPath.find(".axmat") != std::string::npos) {
-							AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
-							component.handle = handle;
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.handle = AssetManager::load<Material>(assetUUID);
 						}
 					}
 					ImGui::EndDragDropTarget();
@@ -637,8 +637,8 @@ namespace Axion {
 						std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
 						std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
 						if (!absPath.empty()) {
-							AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-							component.texture = handle;
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
 						}
 					}
 
@@ -648,8 +648,8 @@ namespace Axion {
 							std::string relPath = static_cast<const char*>(payload->Data);
 							std::string absPath = AssetManager::getAbsolute(relPath);
 							if (absPath.find(".axtex") != std::string::npos) {
-								AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-								component.texture = handle;
+								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+								if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -854,8 +854,11 @@ namespace Axion {
 					std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
 					std::string absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, audioDir.string());
 					if (!absPath.empty()) {
-						AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(absPath);
-						component.audio = std::make_shared<AudioSource>(handle);
+						UUID assetUUID = AssetManager::getAssetUUID(absPath);
+						if (assetUUID.isValid()) {
+							AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
+							component.audio = std::make_shared<AudioSource>(clipHandle);
+						}
 					}
 				}
 
@@ -865,8 +868,11 @@ namespace Axion {
 						std::string relPath = static_cast<const char*>(payload->Data);
 						std::string absPath = AssetManager::getAbsolute(relPath);
 						if (absPath.find(".axaudio") != std::string::npos) {
-							AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(absPath);
-							component.audio = std::make_shared<AudioSource>(handle);
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) {
+								AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
+								component.audio = std::make_shared<AudioSource>(clipHandle);
+							}
 						}
 					}
 					ImGui::EndDragDropTarget();
@@ -1178,8 +1184,8 @@ namespace Axion {
 						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
 						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
 						if (!absPath.empty()) {
-							AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-							component.material = handle;
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 						}
 					}
 
@@ -1189,8 +1195,8 @@ namespace Axion {
 							std::string relPath = static_cast<const char*>(payload->Data);
 							std::string absPath = AssetManager::getAbsolute(relPath);
 							if (absPath.find(".axpmat") != std::string::npos) {
-								AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-								component.material = handle;
+								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+								if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -1285,8 +1291,8 @@ namespace Axion {
 						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
 						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
 						if (!absPath.empty()) {
-							AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-							component.material = handle;
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 						}
 					}
 
@@ -1296,8 +1302,8 @@ namespace Axion {
 							std::string relPath = static_cast<const char*>(payload->Data);
 							std::string absPath = AssetManager::getAbsolute(relPath);
 							if (absPath.find(".axpmat") != std::string::npos) {
-								AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-								component.material = handle;
+								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+								if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -1400,8 +1406,8 @@ namespace Axion {
 						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
 						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
 						if (!absPath.empty()) {
-							AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-							component.material = handle;
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 						}
 					}
 
@@ -1411,8 +1417,8 @@ namespace Axion {
 							std::string relPath = static_cast<const char*>(payload->Data);
 							std::string absPath = AssetManager::getAbsolute(relPath);
 							if (absPath.find(".axpmat") != std::string::npos) {
-								AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-								component.material = handle;
+								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+								if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -1670,8 +1676,8 @@ namespace Axion {
 						std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
 						std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
 						if (!absPath.empty()) {
-							AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-							component.texture = handle;
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
 						}
 					}
 
@@ -1680,8 +1686,8 @@ namespace Axion {
 							std::string relPath = static_cast<const char*>(payload->Data);
 							std::string absPath = AssetManager::getAbsolute(relPath);
 							if (absPath.find(".axtex") != std::string::npos) {
-								AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-								component.texture = handle;
+								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+								if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
 							}
 						}
 						ImGui::EndDragDropTarget();

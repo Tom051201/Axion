@@ -125,12 +125,25 @@ namespace Axion {
 				spec.name = m_nameBuffer;
 				spec.batchTextures = m_batchTexturesCount;
 
+				UUID newAssetUUID = UUID::generate();
+
 				AAP::ShaderAssetData data;
+				data.uuid = newAssetUUID;
 				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 				data.fileFormat = m_formats[m_formatIndex];
 				data.spec = spec;
 
 				AAP::ShaderParser::createAxShaderFile(data, outFile.string());
+
+				AssetMetadata metadata;
+				metadata.handle = newAssetUUID;
+				metadata.type = AssetType::Shader;
+				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				registry->add(metadata);
+				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+
 				close();
 			}
 			ImGui::EndDisabled();

@@ -104,13 +104,26 @@ namespace Axion {
 				std::filesystem::path outDir = std::string(m_outputPathBuffer);
 				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axpmat");
 
+				UUID newAssetUUID = UUID::generate();
+
 				AAP::PhysicsMaterialAssetData data;
+				data.uuid = newAssetUUID;
 				data.name = m_nameBuffer;
 				data.staticFriction = m_staticFriction;
 				data.dynamicFriction = m_dynamicFriction;
 				data.restitution = m_restitution;
 
 				AAP::PhysicsMaterialParser::createAxPhyMatFile(data, outFile.string());
+
+				AssetMetadata metadata;
+				metadata.handle = newAssetUUID;
+				metadata.type = AssetType::PhysicsMaterial;
+				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				registry->add(metadata);
+				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+
 				close();
 			}
 			ImGui::EndDisabled();

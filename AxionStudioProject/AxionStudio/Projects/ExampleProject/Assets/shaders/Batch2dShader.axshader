@@ -1,8 +1,0 @@
-Name: Batch2dShader
-UUID: bdbe3c538d656270772e99f4a7675a9a
-Type: Shader
-Format: .hlsl
-Source: shaders\Batch2dShader.hlsl
-Specification:
-  Name: Batch2dShader
-  BatchTextures: 16

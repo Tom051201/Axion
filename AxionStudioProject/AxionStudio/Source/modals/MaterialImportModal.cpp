@@ -286,7 +286,10 @@ namespace Axion {
 				std::filesystem::path outDir = std::string(m_outputPathBuffer);
 				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axmat");
 
+				UUID newAssetUUID = UUID::generate();
+
 				AAP::MaterialAssetData data;
+				data.uuid = newAssetUUID;
 				data.name = m_nameBuffer;
 				data.pipelineAsset = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 
@@ -330,9 +333,17 @@ namespace Axion {
 				}
 
 				data.properties = prop;
-
-
 				AAP::MaterialParser::createAxMatFile(data, outFile.string());
+
+				AssetMetadata metadata;
+				metadata.handle = newAssetUUID;
+				metadata.type = AssetType::Material;
+				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				registry->add(metadata);
+				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+
 				close();
 			}
 			ImGui::EndDisabled();

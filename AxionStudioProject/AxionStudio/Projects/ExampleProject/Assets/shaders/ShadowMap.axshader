@@ -1,8 +1,0 @@
-Name: ShadowMap
-UUID: a4cb4caf1c6f6a4a70e5427158a85b84
-Type: Shader
-Format: .hlsl
-Source: shaders\ShadowMap.hlsl
-Specification:
-  Name: ShadowMap
-  BatchTextures: 0

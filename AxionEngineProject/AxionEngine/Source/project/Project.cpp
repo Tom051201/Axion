@@ -23,7 +23,10 @@ namespace Axion {
 	// LAYOUT
 
 	Project::Project(const std::string& name)
-		: m_name(name), m_projectPath("Unknown"), m_assetsPath("Unknown"), m_scenesPath("Unknown") {}
+		: m_name(name), m_projectPath("Unknown"), m_assetsPath("Unknown"), m_scenesPath("Unknown") {
+	
+		m_assetRegistry = std::make_shared<AssetRegistry>();
+	}
 
 	Ref<Project> Project::load(const std::string& path) {
 		// ----- Load file data -----
@@ -55,6 +58,9 @@ namespace Axion {
 		// ----- Default scene -----
 		if (data["DefaultScene"]) project->setDefaultScene(data["DefaultScene"].as<std::string>());
 
+		std::string registryPath = (std::filesystem::path(path).parent_path() / "AssetRegistry.yaml").string();
+		project->getAssetRegistry()->deserialize(registryPath);
+
 		return project;
 	}
 
@@ -80,6 +86,9 @@ namespace Axion {
 
 		std::ofstream fout(path);
 		fout << out.c_str();
+
+		std::string registryPath = (std::filesystem::path(path).parent_path() / "AssetRegistry.yaml").string();
+		m_assetRegistry->serialize(registryPath);
 	}
 
 	Ref<Project> Project::createNew(const ProjectSpecification& spec) {
@@ -119,6 +128,9 @@ namespace Axion {
 
 			// write the project file (.axproj)
 			result->save((projectDir / (projectName + ".axproj")).string());
+
+			std::string registryPath = (projectDir / "AssetRegistry.yaml").string();
+			result->getAssetRegistry()->serialize(registryPath);
 
 			return result;
 		}

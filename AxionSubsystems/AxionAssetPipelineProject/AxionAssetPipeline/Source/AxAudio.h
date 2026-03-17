@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 
 #include <string>
@@ -7,6 +8,7 @@
 namespace Axion::AAP {
 
 	struct AudioAssetData {
+		UUID uuid;
 		std::string name;
 		std::string audioFilePath;
 		std::string fileFormat;

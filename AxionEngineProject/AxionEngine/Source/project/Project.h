@@ -3,6 +3,8 @@
 #include <string>
 #include <filesystem>
 
+#include "AxionEngine/Source/core/AssetRegistry.h"
+
 namespace Axion {
 
 	struct ProjectSpecification {
@@ -40,9 +42,10 @@ namespace Axion {
 		const std::string& getVersion() const { return m_version; }
 		const std::string& getEngineVersion() const { return m_engineVersion; }
 
+		Ref<AssetRegistry> getAssetRegistry() { return m_assetRegistry; }
+
 		void save(const std::string& path);
 		static Ref<Project> load(const std::string& path);
-
 		static Ref<Project> createNew(const ProjectSpecification& spec);
 
 	private:
@@ -60,6 +63,8 @@ namespace Axion {
 		std::string m_company;
 		std::string m_description;
 		std::string m_defaultScene;
+
+		Ref<AssetRegistry> m_assetRegistry;
 	};
 
 }

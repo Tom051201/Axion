@@ -60,10 +60,9 @@ namespace Axion {
 			out << YAML::BeginMap;
 			auto& mesh = entity.getComponent<MeshComponent>();
 			if (mesh.handle.isValid()) {
-				std::string relativeMeshPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Mesh>(mesh.handle));
-				out << YAML::Key << "Path" << YAML::Value << relativeMeshPath;
+				out << YAML::Key << "UUID" << YAML::Value << mesh.handle.uuid;
 			} else {
-				out << YAML::Key << "Path" << YAML::Value << "None";
+				out << YAML::Key << "UUID" << YAML::Value << "0";
 			}
 			out << YAML::EndMap;
 		}
@@ -74,11 +73,10 @@ namespace Axion {
 			out << YAML::BeginMap;
 			auto& sprite = entity.getComponent<SpriteComponent>();
 			if (sprite.texture.isValid()) {
-				std::string relativeSpritePath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Texture2D>(sprite.texture));
-				out << YAML::Key << "Path" << YAML::Value << relativeSpritePath;
+				out << YAML::Key << "UUID" << YAML::Value << sprite.texture.uuid;
 			}
 			else {
-				out << YAML::Key << "Path" << YAML::Value << "None";
+				out << YAML::Key << "UUID" << YAML::Value << "0";
 			}
 			out << YAML::Key << "Tint" << YAML::Value << sprite.tint;
 			out << YAML::EndMap;
@@ -90,11 +88,10 @@ namespace Axion {
 			out << YAML::BeginMap;
 			auto& mat = entity.getComponent<MaterialComponent>();
 			if (mat.handle.isValid()) {
-				std::string relativeMatPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Material>(mat.handle));
-				out << YAML::Key << "Path" << YAML::Value << relativeMatPath;
+				out << YAML::Key << "UUID" << YAML::Value << mat.handle.uuid;
 			}
 			else {
-				out << YAML::Key << "Path" << YAML::Value << "None";
+				out << YAML::Key << "UUID" << YAML::Value << "0";
 			}
 			out << YAML::EndMap;
 		}
@@ -107,9 +104,8 @@ namespace Axion {
 			out << YAML::Key << "IsListener" << YAML::Value << ac.isListener;
 			out << YAML::Key << "IsSource" << YAML::Value << ac.isSource;
 			if (ac.audio) {
-				out << YAML::Key << "AudioSource" << YAML::BeginMap; // AudioSource
-				std::string clipPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<AudioClip>(ac.audio->getClipHandle()));
-				out << YAML::Key << "AudioClip" << YAML::Value << clipPath;
+				out << YAML::Key << "AudioSource" << YAML::BeginMap;
+				out << YAML::Key << "AudioClip" << YAML::Value << ac.audio->getClipHandle().uuid;
 				out << YAML::Key << "Volume" << YAML::Value << ac.audio->getVolume();
 				out << YAML::Key << "Pitch" << YAML::Value << ac.audio->getPitch();
 				out << YAML::Key << "Pan" << YAML::Value << ac.audio->getPan();
@@ -119,10 +115,10 @@ namespace Axion {
 				out << YAML::Key << "MinDistance" << YAML::Value << ac.audio->getMinDistance();
 				out << YAML::Key << "MaxDistance" << YAML::Value << ac.audio->getMaxDistance();
 				out << YAML::Key << "DopplerFactor" << YAML::Value << ac.audio->getDopplerFactor();
-				out << YAML::EndMap; // AudioSource
+				out << YAML::EndMap;
 			}
 			else {
-				out << YAML::Key << "AudioSource" << YAML::Value << "None";
+				out << YAML::Key << "AudioSource" << YAML::Value << "0";
 			}
 			out << YAML::EndMap;
 		}
@@ -140,7 +136,6 @@ namespace Axion {
 			out << YAML::Key << "PerspectiveFOV" << YAML::Value << camera.getPerspectiveVerticalFOV();
 			out << YAML::Key << "PerspectiveNear" << YAML::Value << camera.getPerspectiveNearClip();
 			out << YAML::Key << "PerspectiveFar" << YAML::Value << camera.getPerspectiveFarClip();
-
 			out << YAML::Key << "OrthographicSize" << YAML::Value << camera.getOrthographicSize();
 			out << YAML::Key << "OrthographicNear" << YAML::Value << camera.getOrthographicNearClip();
 			out << YAML::Key << "OrthographicFar" << YAML::Value << camera.getOrthographicFarClip();
@@ -208,10 +203,10 @@ namespace Axion {
 			out << YAML::Key << "Offset" << YAML::Value << bcc.offset;
 			out << YAML::Key << "IsTrigger" << YAML::Value << bcc.isTrigger;
 			if (bcc.material.isValid()) {
-				out << YAML::Key << "Material" << YAML::Value << AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<PhysicsMaterial>(bcc.material));
+				out << YAML::Key << "Material" << YAML::Value << bcc.material.uuid;
 			}
 			else {
-				out << YAML::Key << "Material" << YAML::Value << "None";
+				out << YAML::Key << "Material" << YAML::Value << "0";
 			}
 			out << YAML::EndMap;
 		}
@@ -225,10 +220,10 @@ namespace Axion {
 			out << YAML::Key << "Offset" << YAML::Value << scc.offset;
 			out << YAML::Key << "IsTrigger" << YAML::Value << scc.isTrigger;
 			if (scc.material.isValid()) {
-				out << YAML::Key << "Material" << YAML::Value << AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<PhysicsMaterial>(scc.material));
+				out << YAML::Key << "Material" << YAML::Value << scc.material.uuid;
 			}
 			else {
-				out << YAML::Key << "Material" << YAML::Value << "None";
+				out << YAML::Key << "Material" << YAML::Value << "0";
 			}
 			out << YAML::EndMap;
 		}
@@ -243,10 +238,10 @@ namespace Axion {
 			out << YAML::Key << "Offset" << YAML::Value << ccc.offset;
 			out << YAML::Key << "IsTrigger" << YAML::Value << ccc.isTrigger;
 			if (ccc.material.isValid()) {
-				out << YAML::Key << "Material" << YAML::Value << AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<PhysicsMaterial>(ccc.material));
+				out << YAML::Key << "Material" << YAML::Value << ccc.material.uuid;
 			}
 			else {
-				out << YAML::Key << "Material" << YAML::Value << "None";
+				out << YAML::Key << "Material" << YAML::Value << "0";
 			}
 			out << YAML::EndMap;
 		}
@@ -293,11 +288,10 @@ namespace Axion {
 			out << YAML::Key << "SizeEnd" << YAML::Value << psc.sizeEnd;
 			out << YAML::Key << "LifeTime" << YAML::Value << psc.lifeTime;
 			if (psc.texture.isValid()) {
-				std::string relativePath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Texture2D>(psc.texture));
-				out << YAML::Key << "Texture" << YAML::Value << relativePath;
+				out << YAML::Key << "Texture" << YAML::Value << psc.texture.uuid;
 			}
 			else {
-				out << YAML::Key << "Texture" << YAML::Value << "None";
+				out << YAML::Key << "Texture" << YAML::Value << "0";
 			}
 			out << YAML::EndMap;
 		}
@@ -314,11 +308,10 @@ namespace Axion {
 
 		// -- Skybox --
 		if (m_scene->m_skyboxHandle.isValid()) {
-			std::string relativeSkyboxPath = AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<Skybox>(m_scene->m_skyboxHandle));
-			out << YAML::Key << "Skybox" << YAML::Value << relativeSkyboxPath;
+			out << YAML::Key << "Skybox" << YAML::Value << m_scene->m_skyboxHandle.uuid;
 		}
 		else {
-			out << YAML::Key << "Skybox" << YAML::Value << "None";
+			out << YAML::Key << "Skybox" << YAML::Value << "0";
 		}
 
 		// -- Entities --
@@ -345,6 +338,8 @@ namespace Axion {
 		YAML::Node data = YAML::Load(stream);
 		if (!data["Scene"]) return false;
 
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+
 		// ----- Title -----
 		std::string sceneName = data["Scene"].as<std::string>();
 		m_scene->setTitle(sceneName);
@@ -352,12 +347,16 @@ namespace Axion {
 
 
 		// ----- Skybox -----
-		std::string sceneSkybox = data["Skybox"].as<std::string>();
-		if (sceneSkybox != "None") {
-			AssetHandle<Skybox> skyboxHandle = AssetManager::load<Skybox>(AssetManager::getAbsolute(sceneSkybox));
-			m_scene->setSkybox(skyboxHandle);
+		UUID skyboxUUID = data["Skybox"].as<UUID>();
+		if (skyboxUUID.isValid()) {
+			if (registry->contains(skyboxUUID)) {
+				AssetHandle<Skybox> skyboxHandle = AssetManager::load<Skybox>(skyboxUUID);
+				m_scene->setSkybox(skyboxHandle);
+			}
+			else {
+				AX_CORE_LOG_WARN("Skybox UUID not found in AssetRegistry!");
+			}
 		}
-		
 
 
 		// ----- Entities -----
@@ -405,8 +404,9 @@ namespace Axion {
 
 	Entity SceneSerializer::deserializeEntityNode(Scene* scene, YAML::Node& entityNode, bool generateNewUUID) {
 		UUID originalUUID = UUID::fromString(entityNode["Entity"].as<std::string>());
-
 		UUID finalUUID = generateNewUUID ? UUID::generate() : originalUUID;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
 
 		// -- TagComponent --
 		std::string name;
@@ -439,11 +439,15 @@ namespace Axion {
 		auto meshComponent = entityNode["MeshComponent"];
 		if (meshComponent) {
 			auto& mc = deserializedEntity.addComponent<MeshComponent>();
-			std::string relPath = meshComponent["Path"].as<std::string>();
-			if (relPath != "None") {
-				std::string absPath = AssetManager::getAbsolute(relPath);
-				AssetHandle<Mesh> handle = AssetManager::load<Mesh>(absPath);
-				mc.handle = handle;
+			UUID meshUUID = meshComponent["UUID"].as<UUID>();
+			if (meshUUID.isValid()) {
+				if (registry->contains(meshUUID)) {
+					AssetHandle<Mesh> handle = AssetManager::load<Mesh>(meshUUID);
+					mc.handle = handle;
+				}
+				else {
+					mc.handle = AssetHandle<Mesh>();
+				}
 			}
 			else {
 				mc.handle = AssetHandle<Mesh>();
@@ -454,11 +458,15 @@ namespace Axion {
 		auto spriteComponent = entityNode["SpriteComponent"];
 		if (spriteComponent) {
 			auto& sc = deserializedEntity.addComponent<SpriteComponent>();
-			std::string relPath = spriteComponent["Path"].as<std::string>();
-			if (relPath != "None") {
-				std::string absPath = AssetManager::getAbsolute(relPath);
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-				sc.texture = handle;
+			UUID spriteUUID = spriteComponent["UUID"].as<UUID>();
+			if (spriteUUID.isValid()) {
+				if (registry->contains(spriteUUID)) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(spriteUUID);
+					sc.texture = handle;
+				}
+				else {
+					sc.texture = AssetHandle<Texture2D>();
+				}
 			}
 			else {
 				sc.texture = AssetHandle<Texture2D>();
@@ -470,11 +478,15 @@ namespace Axion {
 		auto materialComponent = entityNode["MaterialComponent"];
 		if (materialComponent) {
 			auto& mc = deserializedEntity.addComponent<MaterialComponent>();
-			std::string relPath = materialComponent["Path"].as<std::string>();
-			if (relPath != "None") {
-				std::string absPath = AssetManager::getAbsolute(relPath);
-				AssetHandle<Material> handle = AssetManager::load<Material>(absPath);
-				mc.handle = handle;
+			UUID materialUUID = materialComponent["UUID"].as<UUID>();
+			if (materialUUID.isValid()) {
+				if (registry->contains(materialUUID)) {
+					AssetHandle<Material> handle = AssetManager::load<Material>(materialUUID);
+					mc.handle = handle;
+				}
+				else {
+					mc.handle = AssetHandle<Material>();
+				}
 			}
 			else {
 				mc.handle = AssetHandle<Material>();
@@ -493,24 +505,33 @@ namespace Axion {
 				ac.audio = nullptr;
 			}
 			else {
-				auto as = audioComponent["AudioSource"];
-				std::string clipPath = AssetManager::getAbsolute(as["AudioClip"].as<std::string>());
-				AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(clipPath);
-				ac.audio = std::make_shared<AudioSource>(handle);
-				ac.audio->setVolume(as["Volume"].as<float>());
-				ac.audio->setPitch(as["Pitch"].as<float>());
-				ac.audio->setPan(as["Pan"].as<float>());
-				if (as["IsSpatial"].as<bool>()) {
-					ac.audio->enableSpatial();
+				UUID clipUUID = as["AudioClip"].as<UUID>();
+				if (clipUUID.isValid()) {
+					if (registry->contains(clipUUID)) {
+						AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(clipUUID);
+						ac.audio = std::make_shared<AudioSource>(handle);
+						ac.audio->setVolume(as["Volume"].as<float>());
+						ac.audio->setPitch(as["Pitch"].as<float>());
+						ac.audio->setPan(as["Pan"].as<float>());
+						if (as["IsSpatial"].as<bool>()) {
+							ac.audio->enableSpatial();
+						}
+						else {
+							ac.audio->disableSpatial();
+						}
+						ac.audio->setPosition(as["Position"].as<Vec3>());
+						ac.audio->setVelocity(as["Velocity"].as<Vec3>());
+						ac.audio->setMinDistance(as["MinDistance"].as<float>());
+						ac.audio->setMaxDistance(as["MaxDistance"].as<float>());
+						ac.audio->setDopplerFactor(as["DopplerFactor"].as<float>());
+					}
+					else {
+						ac.audio = nullptr;
+					}
 				}
 				else {
-					ac.audio->disableSpatial();
+					ac.audio = nullptr;
 				}
-				ac.audio->setPosition(as["Position"].as<Vec3>());
-				ac.audio->setVelocity(as["Velocity"].as<Vec3>());
-				ac.audio->setMinDistance(as["MinDistance"].as<float>());
-				ac.audio->setMaxDistance(as["MaxDistance"].as<float>());
-				ac.audio->setDopplerFactor(as["DopplerFactor"].as<float>());
 			}
 		}
 
@@ -584,11 +605,15 @@ namespace Axion {
 			bcc.halfExtents = boxColliderComponent["HalfExtents"].as<Vec3>();
 			bcc.offset = boxColliderComponent["Offset"].as<Vec3>();
 			bcc.isTrigger = boxColliderComponent["IsTrigger"].as<bool>();
-			std::string relPath = boxColliderComponent["Material"].as<std::string>();
-			if (relPath != "None") {
-				std::string absPath = AssetManager::getAbsolute(relPath);
-				AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-				bcc.material = handle;
+			UUID materialUUID = boxColliderComponent["Material"].as<UUID>();
+			if (materialUUID.isValid()) {
+				if (registry->contains(materialUUID)) {
+					AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(materialUUID);
+					bcc.material = handle;
+				}
+				else {
+					bcc.material = AssetHandle<PhysicsMaterial>();
+				}
 			}
 			else {
 				bcc.material = AssetHandle<PhysicsMaterial>();
@@ -602,11 +627,15 @@ namespace Axion {
 			scc.radius = sphereColliderComponent["Radius"].as<float>();
 			scc.offset = sphereColliderComponent["Offset"].as<Vec3>();
 			scc.isTrigger = sphereColliderComponent["IsTrigger"].as<bool>();
-			std::string relPath = sphereColliderComponent["Material"].as<std::string>();
-			if (relPath != "None") {
-				std::string absPath = AssetManager::getAbsolute(relPath);
-				AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-				scc.material = handle;
+			UUID materialUUID = sphereColliderComponent["Material"].as<UUID>();
+			if (materialUUID.isValid()) {
+				if (registry->contains(materialUUID)) {
+					AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(materialUUID);
+					scc.material = handle;
+				}
+				else {
+					scc.material = AssetHandle<PhysicsMaterial>();
+				}
 			}
 			else {
 				scc.material = AssetHandle<PhysicsMaterial>();
@@ -621,11 +650,15 @@ namespace Axion {
 			ccc.halfHeight = capsuleColliderComponent["HalfHeight"].as<float>();
 			ccc.offset = capsuleColliderComponent["Offset"].as<Vec3>();
 			ccc.isTrigger = capsuleColliderComponent["IsTrigger"].as<bool>();
-			std::string relPath = capsuleColliderComponent["Material"].as<std::string>();
-			if (relPath != "None") {
-				std::string absPath = AssetManager::getAbsolute(relPath);
-				AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(absPath);
-				ccc.material = handle;
+			UUID materialUUID = capsuleColliderComponent["Material"].as<UUID>();
+			if (materialUUID.isValid()) {
+				if (registry->contains(materialUUID)) {
+					AssetHandle<PhysicsMaterial> handle = AssetManager::load<PhysicsMaterial>(materialUUID);
+					ccc.material = handle;
+				}
+				else {
+					ccc.material = AssetHandle<PhysicsMaterial>();
+				}
 			}
 			else {
 				ccc.material = AssetHandle<PhysicsMaterial>();
@@ -671,11 +704,15 @@ namespace Axion {
 			psc.sizeEnd = particleSystemComponent["SizeEnd"].as<float>();
 			psc.lifeTime = particleSystemComponent["LifeTime"].as<float>();
 
-			std::string relPath = particleSystemComponent["Texture"].as<std::string>();
-			if (relPath != "None") {
-				std::string absPath = AssetManager::getAbsolute(relPath);
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(absPath);
-				psc.texture = handle;
+			UUID textureUUID = particleSystemComponent["Texture"].as<UUID>();
+			if (textureUUID.isValid()) {
+				if (registry->contains(textureUUID)) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textureUUID);
+					psc.texture = handle;
+				}
+				else {
+					psc.texture = AssetHandle<Texture2D>();
+				}
 			}
 			else {
 				psc.texture = AssetHandle<Texture2D>();

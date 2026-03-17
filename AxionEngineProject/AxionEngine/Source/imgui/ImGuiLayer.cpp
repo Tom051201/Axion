@@ -207,48 +207,48 @@ namespace Axion {
 	}
 
 	bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& e) {
-		ImGuiIO& io = ImGui::GetIO();
-		io.MouseDown[ImGuiInputMapper::toImGuiMouseCode(e.getMouseButton())] = true;
+		//ImGuiIO& io = ImGui::GetIO();
+		//io.MouseDown[ImGuiInputMapper::toImGuiMouseCode(e.getMouseButton())] = true;
 		return false;
 	}
 
 	bool ImGuiLayer::onMouseButtonReleasedEvent(MouseButtonReleasedEvent& e) {
-		ImGuiIO& io = ImGui::GetIO();
-		io.MouseDown[ImGuiInputMapper::toImGuiMouseCode(e.getMouseButton())] = false;
+		//ImGuiIO& io = ImGui::GetIO();
+		//io.MouseDown[ImGuiInputMapper::toImGuiMouseCode(e.getMouseButton())] = false;
 		return false;
 	}
 
 	bool ImGuiLayer::onMouseMovedEvent(MouseMovedEvent& e) {
-		ImGuiIO& io = ImGui::GetIO();
-		io.MousePos = ImVec2(e.getX(), e.getY());
+		//ImGuiIO& io = ImGui::GetIO();
+		//io.MousePos = ImVec2(e.getX(), e.getY());
 		return false;
 	}
 
 	bool ImGuiLayer::onMouseScrolledEvent(MouseScrolledEvent& e) {
-		ImGuiIO& io = ImGui::GetIO();
-		io.MouseWheelH += e.getXOffset();
-		io.MouseWheel += e.getYOffset();
+		//ImGuiIO& io = ImGui::GetIO();
+		//io.MouseWheelH += e.getXOffset();
+		//io.MouseWheel += e.getYOffset();
 		return false;
 	}
 
 	bool ImGuiLayer::onKeyPressedEvent(KeyPressedEvent& e) {
-		ImGuiIO& io = ImGui::GetIO();
-		ImGuiKey key = ImGuiInputMapper::toImGuiKeyCode(e.getKeyCode());
-
-		if (key != ImGuiKey_None) {
-			io.AddKeyEvent(key, true);
-		}
+		//ImGuiIO& io = ImGui::GetIO();
+		//ImGuiKey key = ImGuiInputMapper::toImGuiKeyCode(e.getKeyCode());
+		//
+		//if (key != ImGuiKey_None) {
+		//	io.AddKeyEvent(key, true);
+		//}
 
 		return false;
 	}
 
 	bool ImGuiLayer::onKeyReleasedEvent(KeyReleasedEvent& e) {
-		ImGuiIO& io = ImGui::GetIO();
-		ImGuiKey key = ImGuiInputMapper::toImGuiKeyCode(e.getKeyCode());
-
-		if (key != ImGuiKey_None) {
-			io.AddKeyEvent(key, false);
-		}
+		//ImGuiIO& io = ImGui::GetIO();
+		//ImGuiKey key = ImGuiInputMapper::toImGuiKeyCode(e.getKeyCode());
+		//
+		//if (key != ImGuiKey_None) {
+		//	io.AddKeyEvent(key, false);
+		//}
 
 		return false;
 	}

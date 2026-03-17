@@ -55,6 +55,25 @@ namespace Axion {
 
 
 
+	void D12Shader::loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) {
+
+		HRESULT hr = D3DCreateBlob(vsSize, &m_vertexShaderBlob);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create Vertex Shader Blob for bytecode");
+		memcpy(m_vertexShaderBlob->GetBufferPointer(), vsData, vsSize);
+
+		if (psData != nullptr && psSize > 0) {
+			hr = D3DCreateBlob(psSize, &m_pixelShaderBlob);
+			AX_THROW_IF_FAILED_HR(hr, "Failed to create Pixel Shader Blob for bytecode");
+			memcpy(m_pixelShaderBlob->GetBufferPointer(), psData, psSize);
+		}
+
+		createRootSignature();
+
+		AX_CORE_LOG_TRACE("Shader '{}' loaded from bytecode", m_specification.name);
+	}
+
+
+
 	void D12Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob) {
 
 		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;

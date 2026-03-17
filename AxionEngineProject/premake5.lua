@@ -54,6 +54,11 @@ project "AxionEngine"
 		"AxionEngine/Vendor/dotnet/lib/nethost.lib"
 	}
 
+	prebuildcommands {
+		"echo Compiling 2D Core Shaders...",
+		"cd %{prj.location}/AxionEngine/Resources/shaders && call compile_shaders.bat"
+	}
+
 	filter "files:AxionEngine/Vendor/ImGuizmo/**.cpp"
 		enablepch "Off"
 	

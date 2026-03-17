@@ -1,10 +1,12 @@
 #pragma once
 
+#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/render/Pipeline.h"
 
 namespace Axion::AAP {
 
 	struct PipelineAssetData {
+		UUID uuid;
 		PipelineSpecification spec;
 		std::string name;
 		std::string shaderFilePath;

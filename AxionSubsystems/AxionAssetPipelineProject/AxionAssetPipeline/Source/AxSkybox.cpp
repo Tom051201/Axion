@@ -4,7 +4,8 @@
 
 #include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/core/Core.h"
-#include "AxionEngine/Source/core/UUID.h"
+#include "AxionEngine/Source/core/AssetManager.h"
+
 
 #include <fstream>
 
@@ -15,24 +16,27 @@ namespace Axion::AAP {
 		out << YAML::BeginMap;
 
 		out << YAML::Key << "Name" << YAML::Value << data.name;
-		out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
+		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Skybox";
 		
 		if (data.singleFileImport) {
 			// -- Only one file with all cube faces --
-			out << YAML::Key << "Texture" << YAML::Value << data.singleFilePath;
+			std::string texturePath = data.singleFilePath;
+			out << YAML::Key << "Texture" << YAML::Value << texturePath;
 		}
 		else {
 			// -- Six files for each face --
 			out << YAML::Key << "Textures" << YAML::Value;
 			out << YAML::BeginMap;
-			for (const auto& [key, path] : data.facesFilePaths) {
-				out << YAML::Key << key << YAML::Value << path;
+			for (const auto& [key, path] : data.facesFilePaths) { // TODO REWORK
+				UUID textureUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(path));
+				out << YAML::Key << key << YAML::Value << textureUUID.toString();
 			}
 			out << YAML::EndMap;
 		}
 
-		out << YAML::Key << "Shader" << YAML::Value << data.shaderPath;
+		UUID pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelinePath));
+		out << YAML::Key << "Pipeline" << YAML::Value << pipelineUUID.toString();
 
 		out << YAML::EndMap;
 

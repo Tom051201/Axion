@@ -87,8 +87,11 @@ namespace Axion {
 					std::filesystem::path skyDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "skybox";
 					std::string absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, skyDir.string());
 					if (!absolutePath.empty()) {
-						AssetHandle<Skybox> handle = AssetManager::load<Skybox>(absolutePath);
-						m_activeScene->setSkybox(handle);
+						UUID assetUUID = AssetManager::getAssetUUID(absolutePath);
+						if (assetUUID.isValid()) {
+							AssetHandle<Skybox> handle = AssetManager::load<Skybox>(assetUUID);
+							m_activeScene->setSkybox(handle);
+						}
 					}
 				}
 

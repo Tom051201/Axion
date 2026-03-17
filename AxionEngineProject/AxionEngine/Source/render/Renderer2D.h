@@ -18,8 +18,6 @@ namespace Axion {
 		static void initialize();
 		static void shutdown();
 
-		static void onEvent(Event& e);
-
 		static void beginScene(const Camera& camera);
 		static void endScene();
 		static void beginFrame();

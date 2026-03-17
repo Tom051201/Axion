@@ -99,25 +99,41 @@ namespace Axion {
 		return absPath.string();
 	}
 
+	UUID AssetManager::getAssetUUID(const std::string& absolutePath) {
+		try {
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				return {};
+			}
+
+			YAML::Node data = YAML::Load(stream);
+			if (data["UUID"]) {
+				return data["UUID"].as<UUID>();
+			}
+		}
+		catch (const std::exception& e) {
+			AX_CORE_LOG_WARN("Failed to read UUID from asset file '{0}': {1}", absolutePath, e.what());
+		}
+
+		return {};
+	}
+
 	// ----- Mesh Assets -----
 	template<>
-	AssetHandle<Mesh> AssetManager::load<Mesh>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<Mesh> AssetManager::load<Mesh>(UUID handle) {
+		if (has<Mesh>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "Mesh") {
-			AX_CORE_LOG_ERROR("Loading mesh failed, file is not a mesh asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Mesh UUID not found in AssetRegistry!");
 			return {};
 		}
 
-		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
-		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<Mesh> handle(uuid);
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
 
-		// -- Return if already registered --
-		if (has<Mesh>(handle)) {
-			return handle;
-		}
+		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
 
 		storage<Mesh>().assets[handle] = nullptr;
 		storage<Mesh>().loadQueue.push_back({ handle,
@@ -133,29 +149,27 @@ namespace Axion {
 
 	// ----- Skybox Assets -----
 	template<>
-	AssetHandle<Skybox> AssetManager::load<Skybox>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<Skybox> AssetManager::load<Skybox>(UUID handle) {
+		if (has<Skybox>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "Skybox") {
-			AX_CORE_LOG_ERROR("Loading skybox failed, file is not a skybox asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Skybox UUID not found in AssetRegistry!");
 			return {};
 		}
 
-		std::string sourcePath = getAbsolute(data["Texture"].as<std::string>());
-		std::string pipelinePath = getAbsolute(data["Pipeline"].as<std::string>());
-		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<Skybox> handle(uuid);
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
 
-		// -- Return if already registered --
-		if (has<Skybox>(handle)) {
-			return handle;
-		}
+		std::string texturePath = getAbsolute(data["Texture"].as<std::string>());
+		UUID pipelineUUID = data["Pipeline"].as<UUID>();
+		UUID uuid = data["UUID"].as<UUID>();
 
 		storage<Skybox>().assets[handle] = nullptr;
 		storage<Skybox>().loadQueue.push_back({ handle,
-			[sourcePath, pipelinePath]() {
-				return std::make_shared<Skybox>(sourcePath, pipelinePath);
+			[texturePath, pipelineUUID]() {
+				return std::make_shared<Skybox>(texturePath, pipelineUUID);
 			}
 		});
 		storage<Skybox>().handleToPath[handle] = absolutePath;
@@ -165,14 +179,18 @@ namespace Axion {
 
 	// ----- Shader Assets -----
 	template<>
-	AssetHandle<Shader> AssetManager::load<Shader>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<Shader> AssetManager::load<Shader>(UUID handle) {
+		if (has<Shader>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "Shader") {
-			AX_CORE_LOG_ERROR("Loading shader failed, file is not a shader asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Shader UUID not found in AssetRegistry!");
 			return {};
 		}
+
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
 
 		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
 		UUID uuid = data["UUID"].as<UUID>();
@@ -204,17 +222,11 @@ namespace Axion {
 			}
 		}
 
-		// -- Return if already registered --
-		AssetHandle<Shader> handle(uuid);
-		if (has<Shader>(handle)) {
-			return handle;
-		}
-
 
 		// -- create shader specification --
 		YAML::Node specData = data["Specification"];
 		ShaderSpecification spec = {};
-		spec.name = specData["Name"].as<std::string>();
+		spec.name = data["Name"].as<std::string>();
 		if (specData["BatchTextures"]) {
 			spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
 		}
@@ -235,56 +247,51 @@ namespace Axion {
 
 	// ----- Texture2D Assets -----
 	template<>
-	AssetHandle<Texture2D> AssetManager::load<Texture2D>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<Texture2D> AssetManager::load<Texture2D>(UUID handle) {
+		if (has<Texture2D>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "Texture2D") {
-			AX_CORE_LOG_ERROR("Loading texture2d failed, file is not a texture2d asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Texture2D UUID not found in AssetRegistry!");
 			return {};
 		}
 
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
 		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
 		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<Texture2D> handle(uuid);
-
-		// -- Return if already registered --
-		if (has<Texture2D>(handle)) {
-			return handle;
-		}
 
 		storage<Texture2D>().assets[handle] = nullptr;
 		storage<Texture2D>().loadQueue.push_back({ handle,
 			[sourcePath, handle]() {
 				return Texture2D::create(sourcePath);
 			}
-			});
+		});
 		storage<Texture2D>().handleToPath[handle] = absolutePath;
 
 		return handle;
 	}
 
 	template<>
-	AssetHandle<Pipeline> AssetManager::load<Pipeline>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<Pipeline> AssetManager::load<Pipeline>(UUID handle) {
+		if (has<Pipeline>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "Pipeline") {
-			AX_CORE_LOG_ERROR("Loading pipeline failed, file is not a pipeline asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Pipeline UUID not found in AssetRegistry!");
 			return {};
 		}
 
-		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<Pipeline> handle(uuid);
-
-		// -- Return if already registered --
-		if (has<Pipeline>(handle)) {
-			return handle;
-		}
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
 
 		YAML::Node specData = data["Specification"];
-		std::string absShaderPath = getAbsolute(specData["Shader"].as<std::string>());
-		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(absShaderPath);
+
+		UUID shaderUUID = specData["Shader"].as<UUID>();
+		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(shaderUUID);
 
 		PipelineSpecification spec = {};
 		spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
@@ -327,7 +334,7 @@ namespace Axion {
 				AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
 				return Pipeline::create(spec);
 			}
-			});
+		});
 		storage<Pipeline>().handleToPath[handle] = absolutePath;
 
 		return handle;
@@ -335,23 +342,18 @@ namespace Axion {
 
 	// ----- Material Assets -----
 	template<>
-	AssetHandle<Material> AssetManager::load<Material>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<Material> AssetManager::load<Material>(UUID handle) {
+		if (has<Material>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "Material") {
-			AX_CORE_LOG_ERROR("Loading material failed, file is not a material asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Material UUID not found in AssetRegistry!");
 			return {};
 		}
 
-		std::string sourcePath = "";
-		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<Material> handle(uuid);
-
-		// -- Return if already registered --
-		if (has<Material>(handle)) {
-			return handle;
-		}
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
 
 		std::string name = data["Name"].as<std::string>();
 
@@ -366,47 +368,46 @@ namespace Axion {
 		prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
 		prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
 
-		std::string absPipelinePath = getAbsolute(data["Pipeline"].as<std::string>());
-		AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(absPipelinePath);
+		UUID pipelineUUID = data["Pipeline"].as<UUID>();
+		AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(pipelineUUID);
 		Ref<Material> material = Material::create(name, pipelineHandle, prop);
 
 		if (data["Textures"]) {
 			auto textures = data["Textures"];
 
-			if (textures["Albedo"] && !textures["Albedo"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Albedo"].as<std::string>()));
+			if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Albedo"].as<UUID>());
 				material->setTexture(TextureSlot::Albedo, handle);
 			}
 
-			if (textures["Normal"] && !textures["Normal"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Normal"].as<std::string>()));
+			if (textures["Normal"] && textures["Normal"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Normal"].as<UUID>());
 				material->setTexture(TextureSlot::Normal, handle);
 			}
 
-			if (textures["Metalness"] && !textures["Metalness"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Metalness"].as<std::string>()));
+			if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Metalness"].as<UUID>());
 				material->setTexture(TextureSlot::Metalness, handle);
 			}
 
-			if (textures["Roughness"] && !textures["Roughness"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Roughness"].as<std::string>()));
+			if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Roughness"].as<UUID>());
 				material->setTexture(TextureSlot::Roughness, handle);
 			}
 
-			if (textures["Occlusion"] && !textures["Occlusion"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Occlusion"].as<std::string>()));
+			if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Occlusion"].as<UUID>());
 				material->setTexture(TextureSlot::Occlusion, handle);
 			}
 
-			if (textures["Emissive"] && !textures["Emissive"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(getAbsolute(textures["Emissive"].as<std::string>()));
+			if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Emissive"].as<UUID>());
 				material->setTexture(TextureSlot::Emissive, handle);
 			}
 
 		}
 
 		storage<Material>().assets[handle] = material;
-		//storage<Material>().loadQueue.push_back({ handle, sourcePath });
 		storage<Material>().handleToPath[handle] = absolutePath;
 
 		return handle;
@@ -451,33 +452,33 @@ namespace Axion {
 		if (data["Textures"]) {
 			auto textures = data["Textures"];
 
-			if (textures["Albedo"] && !textures["Albedo"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Albedo"].as<std::string>()));
+			if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Albedo"].as<UUID>());
 				material->setTexture(TextureSlot::Albedo, texHandle);
 			}
 
-			if (textures["Normal"] && !textures["Normal"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Normal"].as<std::string>()));
+			if (textures["Normal"] && textures["Normal"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Normal"].as<UUID>());
 				material->setTexture(TextureSlot::Normal, texHandle);
 			}
 
-			if (textures["Metalness"] && !textures["Metalness"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Metalness"].as<std::string>()));
+			if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Metalness"].as<UUID>());
 				material->setTexture(TextureSlot::Metalness, texHandle);
 			}
 
-			if (textures["Roughness"] && !textures["Roughness"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Roughness"].as<std::string>()));
+			if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Roughness"].as<UUID>());
 				material->setTexture(TextureSlot::Roughness, texHandle);
 			}
 
-			if (textures["Occlusion"] && !textures["Occlusion"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Occlusion"].as<std::string>()));
+			if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Occlusion"].as<UUID>());
 				material->setTexture(TextureSlot::Occlusion, texHandle);
 			}
 
-			if (textures["Emissive"] && !textures["Emissive"].as<std::string>().empty()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(getAbsolute(textures["Emissive"].as<std::string>()));
+			if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid()) {
+				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Emissive"].as<UUID>());
 				material->setTexture(TextureSlot::Emissive, texHandle);
 			}
 		}
@@ -487,31 +488,26 @@ namespace Axion {
 
 	// ----- AudioClip Assets -----
 	template<>
-	AssetHandle<AudioClip> AssetManager::load<AudioClip>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<AudioClip> AssetManager::load<AudioClip>(UUID handle) {
+		if (has<AudioClip>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "AudioClip") {
-			AX_CORE_LOG_ERROR("Loading audioclip failed, file is not a audioclip asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("AudioClip UUID not found in AssetRegistry!");
 			return {};
 		}
 
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
 		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
 		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<AudioClip> handle(uuid);
 
-		// -- Return if already registered --
-		if (has<AudioClip>(handle)) {
-			return handle;
-		}
-
-		// Load Audio clip instant
-		// Could check format here as well!
 		AudioClip::Mode mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
 		Ref<AudioClip> clip = std::make_shared<AudioClip>(sourcePath, mode);
 
 		storage<AudioClip>().assets[handle] = clip;
-		//storage<AudioClip>().loadQueue.push_back({ handle, sourcePath });
 		storage<AudioClip>().handleToPath[handle] = absolutePath;
 
 		return handle;
@@ -519,22 +515,20 @@ namespace Axion {
 
 	// ----- PhysicsMaterial -----
 	template<>
-	AssetHandle<PhysicsMaterial> AssetManager::load<PhysicsMaterial>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<PhysicsMaterial> AssetManager::load<PhysicsMaterial>(UUID handle) {
+		if (has<PhysicsMaterial>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "PhysicsMaterial") {
-			AX_CORE_LOG_ERROR("Loading physics material failed, file is not a physics material asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("PhysicsMaterial UUID not found in AssetRegistry!");
 			return {};
 		}
 
-		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<PhysicsMaterial> handle(uuid);
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
 
-		// -- Return if already registered --
-		if (has<PhysicsMaterial>(handle)) {
-			return handle;
-		}
+		UUID uuid = data["UUID"].as<UUID>();
 
 		Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
 
@@ -543,7 +537,6 @@ namespace Axion {
 		material->restitution = data["Restitution"].as<float>();
 
 		storage<PhysicsMaterial>().assets[handle] = material;
-
 		storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
 
 		return handle;
@@ -551,22 +544,21 @@ namespace Axion {
 
 	// -- Prefab --
 	template<>
-	AssetHandle<Prefab> AssetManager::load<Prefab>(const std::string& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+	AssetHandle<Prefab> AssetManager::load<Prefab>(UUID handle) {
+		if (has<Prefab>(handle)) return handle;
 
-		if (data["Type"].as<std::string>() != "Prefab") {
-			AX_CORE_LOG_ERROR("Loading prefab failed, file is not a prefab asset file");
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Prefab UUID not found in AssetRegistry!");
 			return {};
 		}
 
-		UUID uuid = data["UUID"].as<UUID>();
-		AssetHandle<Prefab> handle(uuid);
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
 
-		// -- Return if already registered --
-		if (has<Prefab>(handle)) {
-			return handle;
-		}
+
+		UUID uuid = data["UUID"].as<UUID>();
 
 		YAML::Node entityNode = data["Entity"];
 		Ref<Prefab> prefab = std::make_shared<Prefab>(entityNode);

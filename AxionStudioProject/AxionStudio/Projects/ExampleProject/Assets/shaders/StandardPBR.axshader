@@ -1,5 +1,5 @@
 Name: StandardPBR
-UUID: 550ae4e1aa9b50f4a29875f02156c607
+UUID: 8ae9e302548ffa53c7ced596eaa3ba82
 Type: Shader
 Format: .hlsl
 Source: shaders\StandardPBR.hlsl

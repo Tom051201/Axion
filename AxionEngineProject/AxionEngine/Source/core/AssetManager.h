@@ -44,8 +44,10 @@ namespace Axion {
 		static std::filesystem::path getRelativeToAssets(const std::filesystem::path& absolutePath);
 		static std::string getAbsolute(const std::string& relativePath);			// Returns the absolute path
 
+		static UUID getAssetUUID(const std::string& absolutePath);
+
 		template<typename T>
-		static AssetHandle<T> load(const std::string& absolutePath);
+		static AssetHandle<T> load(UUID handle);
 
 		template<typename T>
 		static void reload(const AssetHandle<T>& handle);

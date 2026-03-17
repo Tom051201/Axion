@@ -27,8 +27,6 @@ namespace Axion {
 		static void initialize();
 		static void shutdown();
 
-		static void onEvent(Event& e);
-
 		static void beginScene(const Camera& cam, const LightingData& lightingData);
 		static void beginScene(const Mat4& projection, const Mat4& transform);
 		static void endScene();

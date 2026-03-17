@@ -74,9 +74,6 @@ namespace Axion {
 		dispatcher.dispatch<WindowCloseEvent>(AX_BIND_EVENT_FN(Application::onWindowClose));
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(Application::onKeyPressed));
 
-		Renderer2D::onEvent(e);
-		Renderer3D::onEvent(e);
-
 		SceneManager::onEvent(e);
 		ProjectManager::onEvent(e);
 		AssetManager::onEvent(e);

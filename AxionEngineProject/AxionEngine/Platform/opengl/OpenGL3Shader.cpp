@@ -58,6 +58,10 @@ namespace Axion {
 		return;
 	}
 
+	void OpenGL3Shader::loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) {
+
+	}
+
 	uint32_t OpenGL3Shader::compileStage(uint32_t type, const std::string& source) {
 		uint32_t shader = glCreateShader(type);
 		const char* src = source.c_str();

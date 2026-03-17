@@ -1,10 +1,13 @@
 #pragma once
 
+#include "AxionEngine/Source/core/UUID.h"
+
 #include <string>
 
 namespace Axion::AAP {
 
 	struct MeshAssetData {
+		UUID uuid;
 		std::string name;
 		std::string fileFormat; // OBJ
 		std::string filePath;

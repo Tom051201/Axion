@@ -1,12 +1,14 @@
 #pragma once
 
 #include "AxionEngine/Source/core/AssetHandle.h"
+#include "AxionEngine/Source/core/UUID.h"
 
 #include <string>
 
 namespace Axion::AAP {
 
 	struct PhysicsMaterialAssetData {
+		UUID uuid;
 		std::string name;
 		float staticFriction;
 		float dynamicFriction;

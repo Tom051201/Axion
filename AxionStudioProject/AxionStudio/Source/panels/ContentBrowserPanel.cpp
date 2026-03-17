@@ -114,17 +114,17 @@ namespace Axion {
 				// -- Shader only --
 				if (item.path.string().find(".axshader") != std::string::npos) {
 					if (ImGui::MenuItem("Recompile")) {
-						AssetHandle<Shader> handle = AssetManager::load<Shader>(item.path.string());
-						AssetManager::get<Shader>(handle)->recompile();
+						//AssetHandle<Shader> handle = AssetManager::load<Shader>(item.path.string()); TODO fix this
+						//AssetManager::get<Shader>(handle)->recompile();
 					}
 				}
 
 				// -- Material only --
 				if (item.path.string().find(".axmat") != std::string::npos) {
-					if (ImGui::MenuItem("Reload")) {
-						item.path.string();
-						AssetHandle<Material> handle = AssetManager::load<Material>(item.path.string());
-						AssetManager::reload<Material>(handle);
+					if (ImGui::MenuItem("Reload")) { // TODO Fix this
+						//item.path.string();
+						//AssetHandle<Material> handle = AssetManager::load<Material>(item.path.string());
+						//AssetManager::reload<Material>(handle);
 					}
 				}
 

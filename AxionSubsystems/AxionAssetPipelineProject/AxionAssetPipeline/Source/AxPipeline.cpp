@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 #include <fstream>
 
@@ -16,11 +17,12 @@ namespace Axion::AAP {
 		out << YAML::BeginMap;
 
 		out << YAML::Key << "Name" << YAML::Value << data.name;
-		out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
+		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Pipeline";
 
 		out << YAML::Key << "Specification" << YAML::BeginMap;
-		out << YAML::Key << "Shader" << YAML::Value << data.shaderFilePath;
+		UUID shaderUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.shaderFilePath));
+		out << YAML::Key << "Shader" << YAML::Value << shaderUUID.toString();
 		out << YAML::Key << "NumRenderTargets" << YAML::Value << data.spec.numRenderTargets;
 		out << YAML::Key << "ColorFormat" << YAML::Value << EnumUtils::toString(data.spec.colorFormat);
 		out << YAML::Key << "DepthStencilFormat" << YAML::Value << EnumUtils::toString(data.spec.depthStencilFormat);

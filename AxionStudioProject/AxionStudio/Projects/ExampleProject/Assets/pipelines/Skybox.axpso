@@ -1,8 +1,8 @@
-Name: SkyboxPipeline
-UUID: b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5
+Name: Skybox
+UUID: 33383be1d7f0de5d82a6b9f9a6caf587
 Type: Pipeline
 Specification:
-  Shader: shaders\SkyboxShader.axshader
+  Shader: 929f34726644e650758c8e4f49b80a71
   NumRenderTargets: 1
   ColorFormat: RGBA8
   DepthStencilFormat: DEPTH32F
@@ -13,9 +13,9 @@ Specification:
   SampleCount: 1
   CullMode: Back
   Topology: TriangleList
-  BatchTextures: 1
   BufferLayout:
     - Name: POSITION
       Type: Float3
       Size: 12
       Offset: 0
+      Instanced: false

@@ -253,6 +253,7 @@ namespace Axion {
 				std::filesystem::path outDir = std::string(m_outputPathBuffer);
 				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axpso");
 
+
 				PipelineSpecification spec = {};
 				spec.colorFormat = m_colorFormats[m_colorFormatIndex];
 				spec.depthStencilFormat = m_depthFormats[m_depthFormatIndex];
@@ -267,12 +268,25 @@ namespace Axion {
 				BufferLayout layout(m_bufferElements);
 				spec.vertexLayout = layout;
 
+				UUID newAssetUUID = UUID::generate();
+
 				AAP::PipelineAssetData data;
+				data.uuid = newAssetUUID;
 				data.shaderFilePath = AssetManager::getRelativeToAssets(std::string(m_shaderPathBuffer));
 				data.name = m_nameBuffer;
 				data.spec = spec;
 
 				AAP::PipelineParser::createAxPipelineFile(data, outFile.string());
+
+				AssetMetadata metadata;
+				metadata.handle = newAssetUUID;
+				metadata.type = AssetType::Pipeline;
+				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				registry->add(metadata);
+				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+
 				close();
 			}
 			ImGui::EndDisabled();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/render/MaterialData.h"
 #include "AxionEngine/Source/render/Texture.h"
@@ -10,6 +11,7 @@
 namespace Axion::AAP {
 
 	struct MaterialAssetData {
+		UUID uuid;
 		std::string name;
 		MaterialProperties properties;
 		std::string pipelineAsset;

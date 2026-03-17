@@ -9,6 +9,11 @@
 #include "AxionEngine/Platform/directx/D12Context.h"
 #include "AxionEngine/Platform/directx/D12CommandList.h"
 
+#include "AxionEngine/Resources/shaders/Batch2DQuad_VS.h"
+#include "AxionEngine/Resources/shaders/Batch2DQuad_PS.h"
+#include "AxionEngine/Resources/shaders/Batch2DLine_VS.h"
+#include "AxionEngine/Resources/shaders/Batch2DLine_PS.h"
+
 namespace Axion {
 
 	struct LineVertex {
@@ -32,7 +37,8 @@ namespace Axion {
 
 		Ref<VertexBuffer> quadVertexBuffer;
 		Ref<IndexBuffer> quadIndexBuffer;
-		AssetHandle<Pipeline> quadPipelineHandle;
+		Ref<Pipeline> quadPipeline;
+		Ref<Shader> quadShader;
 
 		uint32_t quadIndexCount = 0;
 		QuadVertex* quadVertexBufferBase = nullptr;
@@ -42,7 +48,8 @@ namespace Axion {
 		static const uint32_t MaxLineVertices = MaxLines * 2;
 
 		Ref<VertexBuffer> lineVertexBuffer;
-		AssetHandle<Pipeline> linePipelineHandle;
+		Ref<Pipeline> linePipeline;
+		Ref<Shader> lineShader;
 
 		uint32_t lineVertexCount = 0;
 		LineVertex* lineVertexBufferBase = nullptr;
@@ -112,6 +119,63 @@ namespace Axion {
 		s_data.lineVertexBufferBase = new LineVertex[s_data.MaxLineVertices];
 		s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
 
+		// -- Setup Quad Shader and Pipeline --
+		ShaderSpecification qsSpec;
+		qsSpec.name = "Batch2DQuad";
+		qsSpec.batchTextures = Renderer2DData::MaxTextureSlots;
+		s_data.quadShader = Shader::create(qsSpec);
+		s_data.quadShader->loadFromBytecode(
+			g_Batch2DQuad_VS, sizeof(g_Batch2DQuad_VS),
+			g_Batch2DQuad_PS, sizeof(g_Batch2DQuad_PS)
+		);
+		PipelineSpecification qpSpec;
+		qpSpec.shader = s_data.quadShader;
+		qpSpec.numRenderTargets = 1;
+		qpSpec.colorFormat = ColorFormat::RGBA8;
+		qpSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		qpSpec.depthTest = true;
+		qpSpec.depthWrite = false;
+		qpSpec.depthFunction = DepthCompare::Less;
+		qpSpec.stencilEnabled = false;
+		qpSpec.sampleCount = 1;
+		qpSpec.cullMode = CullMode::None;
+		qpSpec.topology = PrimitiveTopology::TriangleList;
+		qpSpec.vertexLayout = {
+			{ "POSITION",	ShaderDataType::Float3 },
+			{ "COLOR",		ShaderDataType::Float4 },
+			{ "TEXCOORD",	ShaderDataType::Float2 },
+			{ "TEXINDEX",	ShaderDataType::Float  },
+			{ "TILING",		ShaderDataType::Float  }
+		};
+		s_data.quadPipeline = Pipeline::create(qpSpec);
+
+		// -- Setup Line Shader and Pipeline --
+		ShaderSpecification lsSpec;
+		lsSpec.name = "Batch2DLine";
+		lsSpec.batchTextures = 0;
+		s_data.lineShader = Shader::create(lsSpec);
+		s_data.lineShader->loadFromBytecode(
+			g_Batch2DLine_VS, sizeof(g_Batch2DLine_VS),
+			g_Batch2DLine_PS, sizeof(g_Batch2DLine_PS)
+		);
+		PipelineSpecification lpSpec;
+		lpSpec.shader = s_data.lineShader;
+		lpSpec.numRenderTargets = 1;
+		lpSpec.colorFormat = ColorFormat::RGBA8;
+		lpSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		lpSpec.depthTest = true;
+		lpSpec.depthWrite = false;
+		lpSpec.depthFunction = DepthCompare::Less;
+		lpSpec.stencilEnabled = false;
+		lpSpec.sampleCount = 1;
+		lpSpec.cullMode = CullMode::None;
+		lpSpec.topology = PrimitiveTopology::LineList;
+		lpSpec.vertexLayout = {
+			{ "POSITION",	ShaderDataType::Float3 },
+			{ "COLOR",		ShaderDataType::Float4 }
+		};
+		s_data.linePipeline = Pipeline::create(lpSpec);
+
 		// -- Create camera ConstantBuffer --
 		const uint32_t MaxCameraPasses = 100;
 		uint32_t alignedCameraDataSize = (sizeof(Renderer2DData::CameraData) + 255) & ~255;
@@ -144,9 +208,13 @@ namespace Axion {
 		delete[] s_data.quadVertexBufferBase;
 		s_data.quadVertexBuffer->release();
 		s_data.quadIndexBuffer->release();
+		s_data.quadPipeline->release();
+		s_data.quadShader->release();
 
 		delete[] s_data.lineVertexBufferBase;
 		s_data.lineVertexBuffer->release();
+		s_data.linePipeline->release();
+		s_data.lineShader->release();
 
 		s_data.cameraConstantBuffer->release();
 
@@ -155,13 +223,6 @@ namespace Axion {
 		}
 
 		AX_CORE_LOG_TRACE("Renderer2D shutdown");
-	}
-
-	void Renderer2D::onEvent(Event& e) {
-		if (e.getEventType() == EventType::ProjectChanged) {
-			s_data.quadPipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/Batch2dPipeline.axpso"));
-			s_data.linePipelineHandle = AssetManager::load<Pipeline>(AssetManager::getAbsolute("pipelines/Line2dPipeline.axpso"));
-		}
 	}
 
 	void Renderer2D::beginScene(const Camera& camera) {
@@ -200,7 +261,7 @@ namespace Axion {
 	void Renderer2D::flush() {
 		// -- Flush quads --
 		if (s_data.quadIndexCount > 0) {
-			Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(s_data.quadPipelineHandle);
+			Ref<Pipeline> pipeline = s_data.quadPipeline;
 			if (!pipeline) return;
 
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase);
@@ -220,7 +281,7 @@ namespace Axion {
 
 		// -- Flush lines --
 		if (s_data.lineVertexCount > 0) {
-			Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(s_data.linePipelineHandle);
+			Ref<Pipeline> pipeline = s_data.linePipeline;
 			if (!pipeline) return;
 
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.lineVertexBufferPtr - (uint8_t*)s_data.lineVertexBufferBase);

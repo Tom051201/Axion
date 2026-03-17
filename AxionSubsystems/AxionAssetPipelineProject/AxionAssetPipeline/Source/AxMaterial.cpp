@@ -4,8 +4,8 @@
 
 #include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/core/Core.h"
-#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 
 #include <fstream>
 
@@ -16,7 +16,7 @@ namespace Axion::AAP {
 		out << YAML::BeginMap;
 
 		out << YAML::Key << "Name" << YAML::Value << data.name;
-		out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
+		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Material";
 
 		out << YAML::Key << "AlbedoColor" << YAML::Value << data.properties.albedoColor;
@@ -43,12 +43,14 @@ namespace Axion::AAP {
 			}
 
 			if (!label.empty()) {
-				out << YAML::Key << label << YAML::Value << path;
+				UUID textureUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(path));
+				out << YAML::Key << label << YAML::Value << textureUUID.toString();
 			}
 		}
 		out << YAML::EndMap;
 
-		out << YAML::Key << "Pipeline" << YAML::Value << data.pipelineAsset;
+		UUID pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelineAsset));
+		out << YAML::Key << "Pipeline" << YAML::Value << pipelineUUID.toString();
 
 		out << YAML::EndMap;
 

@@ -1,0 +1,18 @@
+Name: GreenMetal
+UUID: a2a567b8611de9bbb73d2d694e7f79e3
+Type: Material
+AlbedoColor: [0.285714269, 1, 0, 1]
+Metalness: 1
+Roughness: 0
+Emission: 0
+Tiling: 0
+UseNormalMap: 1
+UseMetalnessMap: 1
+UseRoughnessMap: 1
+UseOcclusionMap: 0
+Textures:
+  Albedo: 1453c13a397d4b331875c59a8673b1e0
+  Normal: a9d4d3e0194aca7c9a7b1628c113d672
+  Metalness: f1b855db5cfac13e2527d81529938f59
+  Roughness: 1111a87c7c1b434c0827a71b65c4ab3d
+Pipeline: 3f026dbc37322f449a7dc3e8ab25501c
