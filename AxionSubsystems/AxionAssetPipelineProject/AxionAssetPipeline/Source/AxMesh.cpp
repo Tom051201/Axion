@@ -1,20 +1,14 @@
 #include "AxMesh.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
-
-#include "AxionEngine/Source/core/Logging.h"
-#include "AxionEngine/Source/core/Core.h"
-#include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/core/YamlHelper.h"
-
-#include <fstream>
+#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
 namespace Axion::AAP {
 
-	void MeshParser::createAxMeshFile(const MeshAssetData& data, const std::string& outputPath) {
+	void MeshParser::createTextFile(const MeshAssetData& data, const std::string& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
+		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_MESH;
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Mesh";
@@ -28,7 +22,7 @@ namespace Axion::AAP {
 		AX_CORE_LOG_TRACE("Created .axmesh file ({})", outputPath);
 	}
 
-	void MeshParser::createAxMeshBinary(const MeshAssetData& data, const std::string& outputPath) {
+	void MeshParser::createBinaryFile(const MeshAssetData& data, const std::string& outputPath) {
 		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
 	}
 

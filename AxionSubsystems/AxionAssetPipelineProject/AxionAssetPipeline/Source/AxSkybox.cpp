@@ -1,20 +1,16 @@
 #include "AxSkybox.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
-#include "AxionEngine/Source/core/Logging.h"
-#include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetManager.h"
-
-
-#include <fstream>
 
 namespace Axion::AAP {
 
-	void SkyboxParser::createAxSkyFile(const SkyboxAssetData& data, const std::string& outputPath) {
+	void SkyboxParser::createTextFile(const SkyboxAssetData& data, const std::string& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
+		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_SKYBOX;
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Skybox";
@@ -45,7 +41,7 @@ namespace Axion::AAP {
 		AX_CORE_LOG_TRACE("Created .axsky file ({})", outputPath);
 	}
 
-	void SkyboxParser::createAxSkyBinary(const SkyboxAssetData& data, const std::string& outputPath) {
+	void SkyboxParser::createBinaryFile(const SkyboxAssetData& data, const std::string& outputPath) {
 		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
 	}
 

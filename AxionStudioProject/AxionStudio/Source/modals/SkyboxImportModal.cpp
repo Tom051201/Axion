@@ -133,7 +133,7 @@ namespace Axion {
 				data.singleFilePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 				data.pipelinePath = AssetManager::getRelativeToAssets(std::string(m_pipelinePathBuffer));
 
-				AAP::SkyboxParser::createAxSkyFile(data, outFile.string());
+				AAP::SkyboxParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

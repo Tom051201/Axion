@@ -133,7 +133,7 @@ namespace Axion {
 				data.fileFormat = m_formats[m_formatIndex];
 				data.spec = spec;
 
-				AAP::ShaderParser::createAxShaderFile(data, outFile.string());
+				AAP::ShaderParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

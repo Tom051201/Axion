@@ -31,6 +31,7 @@ namespace Axion {
 	void AssetRegistry::serialize(const std::string& filepath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
+		out << YAML::Key << "Version" << YAML::Value << 1;
 		out << YAML::Key << "AssetRegistry" << YAML::Value << YAML::BeginSeq;
 
 		for (const auto& [uuid, metadata] : m_registry) {
@@ -66,13 +67,21 @@ namespace Axion {
 		auto registryNode = data["AssetRegistry"];
 		if (!registryNode) return;
 
-		for (auto asset : registryNode) {
-			AssetMetadata metadata;
-			metadata.handle = asset["Handle"].as<UUID>();
-			metadata.type = assetTypeFromString(asset["Type"].as<std::string>());
-			metadata.filePath = asset["FilePath"].as<std::string>();
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 
-			m_registry[metadata.handle] = metadata;
+		if (version == 1) {
+			for (auto asset : registryNode) {
+				AssetMetadata metadata;
+				metadata.handle = asset["Handle"].as<UUID>();
+				metadata.type = assetTypeFromString(asset["Type"].as<std::string>());
+				metadata.filePath = asset["FilePath"].as<std::string>();
+
+				m_registry[metadata.handle] = metadata;
+			}
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported AssetRegistry version: {}", version);
+			return;
 		}
 
 		AX_CORE_LOG_INFO("Loaded AssetRegistry with {} assets.", m_registry.size());

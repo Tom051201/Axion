@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/core/UUID.h"
 
 #include <string>
@@ -18,8 +17,8 @@ namespace Axion::AAP {
 	class PhysicsMaterialParser {
 	public:
 
-		static void createAxPhyMatFile(const PhysicsMaterialAssetData& data, const std::string& outputPath);
-		static void createAxPhyMatBinary(const PhysicsMaterialAssetData& data, const std::string& outputPath);
+		static void createTextFile(const PhysicsMaterialAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const PhysicsMaterialAssetData& data, const std::string& outputPath);
 
 	};
 

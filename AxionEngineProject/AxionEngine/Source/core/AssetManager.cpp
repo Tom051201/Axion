@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
@@ -133,18 +134,26 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_MESH) {
+			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
 
-		storage<Mesh>().assets[handle] = nullptr;
-		storage<Mesh>().loadQueue.push_back({ handle,
-			[sourcePath]() {
-				auto meshData = Mesh::loadOBJ(sourcePath);
-				return Mesh::create(meshData.vertices, meshData.indices);
-			} 
-		});
-		storage<Mesh>().handleToPath[handle] = absolutePath;
+			storage<Mesh>().assets[handle] = nullptr;
+			storage<Mesh>().loadQueue.push_back({ handle,
+				[sourcePath]() {
+					auto meshData = Mesh::loadOBJ(sourcePath);
+					return Mesh::create(meshData.vertices, meshData.indices);
+				}
+			});
+			storage<Mesh>().handleToPath[handle] = absolutePath;
 
-		return handle;
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Mesh Version: {} in file {}", version, absolutePath);
+			return {};
+		}
+
 	}
 
 	// ----- Skybox Assets -----
@@ -162,19 +171,27 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		std::string texturePath = getAbsolute(data["Texture"].as<std::string>());
-		UUID pipelineUUID = data["Pipeline"].as<UUID>();
-		UUID uuid = data["UUID"].as<UUID>();
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_SKYBOX) {
+			std::string texturePath = getAbsolute(data["Texture"].as<std::string>());
+			UUID pipelineUUID = data["Pipeline"].as<UUID>();
+			UUID uuid = data["UUID"].as<UUID>();
 
-		storage<Skybox>().assets[handle] = nullptr;
-		storage<Skybox>().loadQueue.push_back({ handle,
-			[texturePath, pipelineUUID]() {
-				return std::make_shared<Skybox>(texturePath, pipelineUUID);
-			}
-		});
-		storage<Skybox>().handleToPath[handle] = absolutePath;
+			storage<Skybox>().assets[handle] = nullptr;
+			storage<Skybox>().loadQueue.push_back({ handle,
+				[texturePath, pipelineUUID]() {
+					return std::make_shared<Skybox>(texturePath, pipelineUUID);
+				}
+			});
+			storage<Skybox>().handleToPath[handle] = absolutePath;
 
-		return handle;
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Skybox Version: {} in file {}", version, absolutePath);
+			return {};
+		}
+
 	}
 
 	// ----- Shader Assets -----
@@ -192,57 +209,65 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
-		UUID uuid = data["UUID"].as<UUID>();
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_SHADER) {
+			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			UUID uuid = data["UUID"].as<UUID>();
 
-		// -- Check format --
-		std::string format = data["Format"].as<std::string>();
-		RendererAPI api = Renderer::getAPI();
+			// -- Check format --
+			std::string format = data["Format"].as<std::string>();
+			RendererAPI api = Renderer::getAPI();
 
-		bool formatMatches =
-			(format == ".hlsl" && api == RendererAPI::DirectX12) ||
-			(format == ".glsl" && api == RendererAPI::OpenGL3);
+			bool formatMatches =
+				(format == ".hlsl" && api == RendererAPI::DirectX12) ||
+				(format == ".glsl" && api == RendererAPI::OpenGL3);
 
-		// -- Check extension --
-		std::filesystem::path srcPath(sourcePath);
-		std::string ext = srcPath.extension().string();
+			// -- Check extension --
+			std::filesystem::path srcPath(sourcePath);
+			std::string ext = srcPath.extension().string();
 
-		bool extensionMatches =
-			(api == RendererAPI::DirectX12 && ext == ".hlsl") ||
-			(api == RendererAPI::OpenGL3 && ext == ".glsl");
+			bool extensionMatches =
+				(api == RendererAPI::DirectX12 && ext == ".hlsl") ||
+				(api == RendererAPI::OpenGL3 && ext == ".glsl");
 
-		if (!formatMatches) {
-			if (extensionMatches) {
-				AX_CORE_LOG_WARN("Shader format '{}' in '{}' does not match current RendererAPI, but file extension '{}' is valid. Attempting to load anyway.",
-					format, absolutePath, ext);
-			} else {
-				AX_CORE_LOG_ERROR("Shader format '{}' in '{}' is not supported by current RendererAPI and file extension '{}' does not match expected format",
-					format, absolutePath, ext);
-				return {};
+			if (!formatMatches) {
+				if (extensionMatches) {
+					AX_CORE_LOG_WARN("Shader format '{}' in '{}' does not match current RendererAPI, but file extension '{}' is valid. Attempting to load anyway.",
+						format, absolutePath, ext);
+				} else {
+					AX_CORE_LOG_ERROR("Shader format '{}' in '{}' is not supported by current RendererAPI and file extension '{}' does not match expected format",
+						format, absolutePath, ext);
+					return {};
+				}
 			}
+
+
+			// -- create shader specification --
+			YAML::Node specData = data["Specification"];
+			ShaderSpecification spec = {};
+			spec.name = data["Name"].as<std::string>();
+			if (specData["BatchTextures"]) {
+				spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
+			}
+
+			Ref<Shader> shader = Shader::create(spec, sourcePath);
+			storage<Shader>().assets[handle] = shader;
+			storage<Shader>().loadQueue.push_back({ handle, 
+				[sourcePath, handle]() {
+					Ref<Shader> shader = AssetManager::get<Shader>(handle);
+					shader->compileFromFile(sourcePath);
+					return shader;
+				}
+			});
+			storage<Shader>().handleToPath[handle] = absolutePath;
+
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Shader Version: {} in file {}", version, absolutePath);
+			return {};
 		}
 
-
-		// -- create shader specification --
-		YAML::Node specData = data["Specification"];
-		ShaderSpecification spec = {};
-		spec.name = data["Name"].as<std::string>();
-		if (specData["BatchTextures"]) {
-			spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
-		}
-
-		Ref<Shader> shader = Shader::create(spec, sourcePath);
-		storage<Shader>().assets[handle] = shader;
-		storage<Shader>().loadQueue.push_back({ handle, 
-			[sourcePath, handle]() {
-				Ref<Shader> shader = AssetManager::get<Shader>(handle);
-				shader->compileFromFile(sourcePath);
-				return shader;
-			}
-		});
-		storage<Shader>().handleToPath[handle] = absolutePath;
-
-		return handle;
 	}
 
 	// ----- Texture2D Assets -----
@@ -260,20 +285,29 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
-		UUID uuid = data["UUID"].as<UUID>();
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_TEXTURE2D) {
+			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			UUID uuid = data["UUID"].as<UUID>();
 
-		storage<Texture2D>().assets[handle] = nullptr;
-		storage<Texture2D>().loadQueue.push_back({ handle,
-			[sourcePath, handle]() {
-				return Texture2D::create(sourcePath);
-			}
-		});
-		storage<Texture2D>().handleToPath[handle] = absolutePath;
+			storage<Texture2D>().assets[handle] = nullptr;
+			storage<Texture2D>().loadQueue.push_back({ handle,
+				[sourcePath, handle]() {
+					return Texture2D::create(sourcePath);
+				}
+			});
+			storage<Texture2D>().handleToPath[handle] = absolutePath;
 
-		return handle;
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath);
+			return {};
+		}
+
 	}
 
+	// ----- Pipeline Assets -----
 	template<>
 	AssetHandle<Pipeline> AssetManager::load<Pipeline>(UUID handle) {
 		if (has<Pipeline>(handle)) return handle;
@@ -288,56 +322,64 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		YAML::Node specData = data["Specification"];
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_PIPELINE) {
+			YAML::Node specData = data["Specification"];
 
-		UUID shaderUUID = specData["Shader"].as<UUID>();
-		AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(shaderUUID);
+			UUID shaderUUID = specData["Shader"].as<UUID>();
+			AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(shaderUUID);
 
-		PipelineSpecification spec = {};
-		spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
-		spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
-		spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
-		spec.depthTest = specData["DepthTest"].as<bool>();
-		spec.depthWrite = specData["DepthWrite"].as<bool>();
-		spec.depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
-		spec.stencilEnabled = specData["StencilEnabled"].as<bool>();
-		spec.sampleCount = specData["SampleCount"].as<uint32_t>();
-		spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
-		spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
+			PipelineSpecification spec = {};
+			spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
+			spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
+			spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
+			spec.depthTest = specData["DepthTest"].as<bool>();
+			spec.depthWrite = specData["DepthWrite"].as<bool>();
+			spec.depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
+			spec.stencilEnabled = specData["StencilEnabled"].as<bool>();
+			spec.sampleCount = specData["SampleCount"].as<uint32_t>();
+			spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
+			spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
 
-		YAML::Node layoutData = specData["BufferLayout"];
-		if (layoutData && layoutData.IsSequence()) {
-			std::vector<BufferElement> elements;
-			elements.reserve(layoutData.size());
+			YAML::Node layoutData = specData["BufferLayout"];
+			if (layoutData && layoutData.IsSequence()) {
+				std::vector<BufferElement> elements;
+				elements.reserve(layoutData.size());
 
-			for (const auto& elemNode : layoutData) {
-				std::string name = elemNode["Name"].as<std::string>();
-				ShaderDataType type = EnumUtils::shaderDataTypeFromString(elemNode["Type"].as<std::string>());
-				BufferElement elem(name, type);
+				for (const auto& elemNode : layoutData) {
+					std::string name = elemNode["Name"].as<std::string>();
+					ShaderDataType type = EnumUtils::shaderDataTypeFromString(elemNode["Type"].as<std::string>());
+					BufferElement elem(name, type);
 
-				if (elemNode["Size"]) { elem.size = elemNode["Size"].as<uint32_t>(); }
-				if (elemNode["Offset"]) { elem.offset = elemNode["Offset"].as<uint32_t>(); }
-				if (elemNode["Instanced"]) { elem.instanced = elemNode["Instanced"].as<bool>(); }
+					if (elemNode["Size"]) { elem.size = elemNode["Size"].as<uint32_t>(); }
+					if (elemNode["Offset"]) { elem.offset = elemNode["Offset"].as<uint32_t>(); }
+					if (elemNode["Instanced"]) { elem.instanced = elemNode["Instanced"].as<bool>(); }
 
-				elements.push_back(elem);
+					elements.push_back(elem);
+				}
+
+				BufferLayout layout(elements);
+				layout.calculateOffsetAndStride();
+				spec.vertexLayout = layout;
 			}
 
-			BufferLayout layout(elements);
-			layout.calculateOffsetAndStride();
-			spec.vertexLayout = layout;
+			storage<Pipeline>().assets[handle] = nullptr;
+			storage<Pipeline>().loadQueue.push_back({ handle,
+				[shaderHandle, spec]() mutable {
+					spec.shader = AssetManager::get<Shader>(shaderHandle);
+					AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
+					return Pipeline::create(spec);
+				}
+			});
+			storage<Pipeline>().handleToPath[handle] = absolutePath;
+
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Pipeline Version: {} in file {}", version, absolutePath);
+			return {};
 		}
 
-		storage<Pipeline>().assets[handle] = nullptr;
-		storage<Pipeline>().loadQueue.push_back({ handle,
-			[shaderHandle, spec]() mutable {
-				spec.shader = AssetManager::get<Shader>(shaderHandle);
-				AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
-				return Pipeline::create(spec);
-			}
-		});
-		storage<Pipeline>().handleToPath[handle] = absolutePath;
-
-		return handle;
 	}
 
 	// ----- Material Assets -----
@@ -355,62 +397,70 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		std::string name = data["Name"].as<std::string>();
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_MATERIAL) {
+			std::string name = data["Name"].as<std::string>();
 
-		MaterialProperties prop;
-		prop.albedoColor = data["AlbedoColor"].as<Vec4>();
-		prop.metalness = data["Metalness"].as<float>();
-		prop.roughness = data["Roughness"].as<float>();
-		prop.emissionStrength = data["Emission"].as<float>();
-		prop.tiling = data["Tiling"].as<float>();
-		prop.useNormalMap = data["UseNormalMap"].as<float>();
-		prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
-		prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
-		prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
+			MaterialProperties prop;
+			prop.albedoColor = data["AlbedoColor"].as<Vec4>();
+			prop.metalness = data["Metalness"].as<float>();
+			prop.roughness = data["Roughness"].as<float>();
+			prop.emissionStrength = data["Emission"].as<float>();
+			prop.tiling = data["Tiling"].as<float>();
+			prop.useNormalMap = data["UseNormalMap"].as<float>();
+			prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
+			prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
+			prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
 
-		UUID pipelineUUID = data["Pipeline"].as<UUID>();
-		AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(pipelineUUID);
-		Ref<Material> material = Material::create(name, pipelineHandle, prop);
+			UUID pipelineUUID = data["Pipeline"].as<UUID>();
+			AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(pipelineUUID);
+			Ref<Material> material = Material::create(name, pipelineHandle, prop);
 
-		if (data["Textures"]) {
-			auto textures = data["Textures"];
+			if (data["Textures"]) {
+				auto textures = data["Textures"];
 
-			if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Albedo"].as<UUID>());
-				material->setTexture(TextureSlot::Albedo, handle);
+				if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid()) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Albedo"].as<UUID>());
+					material->setTexture(TextureSlot::Albedo, handle);
+				}
+
+				if (textures["Normal"] && textures["Normal"].as<UUID>().isValid()) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Normal"].as<UUID>());
+					material->setTexture(TextureSlot::Normal, handle);
+				}
+
+				if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid()) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Metalness"].as<UUID>());
+					material->setTexture(TextureSlot::Metalness, handle);
+				}
+
+				if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid()) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Roughness"].as<UUID>());
+					material->setTexture(TextureSlot::Roughness, handle);
+				}
+
+				if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid()) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Occlusion"].as<UUID>());
+					material->setTexture(TextureSlot::Occlusion, handle);
+				}
+
+				if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid()) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Emissive"].as<UUID>());
+					material->setTexture(TextureSlot::Emissive, handle);
+				}
+
 			}
 
-			if (textures["Normal"] && textures["Normal"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Normal"].as<UUID>());
-				material->setTexture(TextureSlot::Normal, handle);
-			}
+			storage<Material>().assets[handle] = material;
+			storage<Material>().handleToPath[handle] = absolutePath;
 
-			if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Metalness"].as<UUID>());
-				material->setTexture(TextureSlot::Metalness, handle);
-			}
-
-			if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Roughness"].as<UUID>());
-				material->setTexture(TextureSlot::Roughness, handle);
-			}
-
-			if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Occlusion"].as<UUID>());
-				material->setTexture(TextureSlot::Occlusion, handle);
-			}
-
-			if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Emissive"].as<UUID>());
-				material->setTexture(TextureSlot::Emissive, handle);
-			}
-
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Material Version: {} in file {}", version, absolutePath);
+			return {};
 		}
 
-		storage<Material>().assets[handle] = material;
-		storage<Material>().handleToPath[handle] = absolutePath;
-
-		return handle;
 	}
 
 	template<>
@@ -501,16 +551,24 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
-		UUID uuid = data["UUID"].as<UUID>();
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_AUDIO) {
+			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			UUID uuid = data["UUID"].as<UUID>();
 
-		AudioClip::Mode mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
-		Ref<AudioClip> clip = std::make_shared<AudioClip>(sourcePath, mode);
+			AudioClip::Mode mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
+			Ref<AudioClip> clip = std::make_shared<AudioClip>(sourcePath, mode);
 
-		storage<AudioClip>().assets[handle] = clip;
-		storage<AudioClip>().handleToPath[handle] = absolutePath;
+			storage<AudioClip>().assets[handle] = clip;
+			storage<AudioClip>().handleToPath[handle] = absolutePath;
 
-		return handle;
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported AudioClip Version: {} in file {}", version, absolutePath);
+			return {};
+		}
+
 	}
 
 	// ----- PhysicsMaterial -----
@@ -528,18 +586,26 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
-		UUID uuid = data["UUID"].as<UUID>();
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_PHYSICS_MATERIAL) {
+			UUID uuid = data["UUID"].as<UUID>();
 
-		Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
+			Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
 
-		material->staticFriction = data["StaticFriction"].as<float>();
-		material->dynamicFriction = data["DynamicFriction"].as<float>();
-		material->restitution = data["Restitution"].as<float>();
+			material->staticFriction = data["StaticFriction"].as<float>();
+			material->dynamicFriction = data["DynamicFriction"].as<float>();
+			material->restitution = data["Restitution"].as<float>();
 
-		storage<PhysicsMaterial>().assets[handle] = material;
-		storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
+			storage<PhysicsMaterial>().assets[handle] = material;
+			storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
 
-		return handle;
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported PhysivsMaterial Version: {} in file {}", version, absolutePath);
+			return {};
+		}
+
 	}
 
 	// -- Prefab --
@@ -557,16 +623,23 @@ namespace Axion {
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_PREFAB) {
+			UUID uuid = data["UUID"].as<UUID>();
 
-		UUID uuid = data["UUID"].as<UUID>();
+			YAML::Node entityNode = data["Entity"];
+			Ref<Prefab> prefab = std::make_shared<Prefab>(entityNode);
 
-		YAML::Node entityNode = data["Entity"];
-		Ref<Prefab> prefab = std::make_shared<Prefab>(entityNode);
+			storage<Prefab>().assets[handle] = prefab;
+			storage<Prefab>().handleToPath[handle] = absolutePath;
 
-		storage<Prefab>().assets[handle] = prefab;
-		storage<Prefab>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Prefab Version: {} in file {}", version, absolutePath);
+			return {};
+		}
 
-		return handle;
 	}
 
 }

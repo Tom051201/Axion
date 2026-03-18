@@ -121,10 +121,10 @@ namespace Axion {
 
 				// -- Material only --
 				if (item.path.string().find(".axmat") != std::string::npos) {
-					if (ImGui::MenuItem("Reload")) { // TODO Fix this
-						//item.path.string();
-						//AssetHandle<Material> handle = AssetManager::load<Material>(item.path.string());
-						//AssetManager::reload<Material>(handle);
+					if (ImGui::MenuItem("Reload")) {
+						UUID uuid = AssetManager::getAssetUUID(item.path.string());
+						AssetHandle<Material> handle = uuid;
+						AssetManager::reload<Material>(handle);
 					}
 				}
 
@@ -375,7 +375,16 @@ namespace Axion {
 	bool ContentBrowserPanel::isEngineAssetExtension(const std::filesystem::path& path) {
 		auto ext = path.extension().string();
 		std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-		return ext == ".axmesh" || ext == ".axsky" || ext == ".axshader" || ext == ".axmat" || ext == ".axaudio" || ext == ".axtex" || ext == ".axpmat";
+		return
+			ext == ".axmesh" ||
+			ext == ".axsky" ||
+			ext == ".axshader" ||
+			ext == ".axmat" ||
+			ext == ".axaudio" ||
+			ext == ".axtex" ||
+			ext == ".axpmat" ||
+			ext == ".axprefab" ||
+			ext == ".axpso";
 	}
 
 	void ContentBrowserPanel::deletePath(const std::filesystem::path& path) {

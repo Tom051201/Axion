@@ -15,8 +15,8 @@ namespace Axion::AAP {
 	class PipelineParser {
 	public:
 
-		static void createAxPipelineFile(const PipelineAssetData& data, const std::string& outputPath);
-		static void createAxPipelineBinary(const PipelineAssetData& data, const std::string& outputPath);
+		static void createTextFile(const PipelineAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const PipelineAssetData& data, const std::string& outputPath);
 
 	};
 

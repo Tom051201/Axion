@@ -1,8 +1,6 @@
 #pragma once
 
-#include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/render/MaterialData.h"
 #include "AxionEngine/Source/render/Texture.h"
 
@@ -21,8 +19,8 @@ namespace Axion::AAP {
 	class MaterialParser {
 	public:
 
-		static void createAxMatFile(const MaterialAssetData& data, const std::string& outputPath);
-		static void createAxMatBinary(const MaterialAssetData& data, const std::string& outputPath);
+		static void createTextFile(const MaterialAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const MaterialAssetData& data, const std::string& outputPath);
 
 	};
 

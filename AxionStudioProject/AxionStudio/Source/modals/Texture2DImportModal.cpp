@@ -118,7 +118,7 @@ namespace Axion {
 				data.fileFormat = m_types[m_importType];
 				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 
-				AAP::Texture2DParser::createAxTexFile(data, outFile.string());
+				AAP::Texture2DParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

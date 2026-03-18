@@ -333,7 +333,7 @@ namespace Axion {
 				}
 
 				data.properties = prop;
-				AAP::MaterialParser::createAxMatFile(data, outFile.string());
+				AAP::MaterialParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

@@ -144,7 +144,7 @@ namespace Axion {
 				data.fileFormat = m_types[m_importType];
 				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 
-				AAP::MeshParser::createAxMeshFile(data, outFile.string());
+				AAP::MeshParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

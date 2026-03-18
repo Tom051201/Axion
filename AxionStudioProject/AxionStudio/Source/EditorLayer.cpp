@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/scene/Prefab.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
@@ -483,6 +484,26 @@ namespace Axion {
 						UUID assetUUID = AssetManager::getAssetUUID(absPath);
 						AssetHandle<Skybox> handle = AssetManager::load<Skybox>(assetUUID);
 						SceneManager::getScene()->setSkybox(handle);
+					}
+					// -- Try adding prefab --
+					if (path.find(".axprefab")) {
+						std::string absPath = AssetManager::getAbsolute(path);
+						UUID assetUUID = AssetManager::getAssetUUID(absPath);
+						if (assetUUID.isValid()) {
+							AssetHandle<Prefab> handle = AssetManager::load<Prefab>(assetUUID);
+							Ref<Prefab> prefab = AssetManager::get<Prefab>(handle);
+							if (prefab) {
+								YAML::Node node = prefab->getEntityNode();
+								Entity newEntity = SceneSerializer::deserializeEntityNode(m_activeScene.get(), node, true);
+								if (newEntity) {
+									auto& transform = newEntity.getComponent<TransformComponent>();
+									transform.position = m_editorCamera.getPosition();
+								}
+							}
+							else {
+								AX_CORE_LOG_WARN("Failed to load prefab!");
+							}
+						}
 					}
 				}
 				ImGui::EndDragDropTarget();

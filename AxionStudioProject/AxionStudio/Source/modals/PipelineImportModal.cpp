@@ -276,7 +276,7 @@ namespace Axion {
 				data.name = m_nameBuffer;
 				data.spec = spec;
 
-				AAP::PipelineParser::createAxPipelineFile(data, outFile.string());
+				AAP::PipelineParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

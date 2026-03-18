@@ -168,7 +168,7 @@ namespace Axion {
 				data.audioFilePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 				data.mode = m_types[m_loadType];
 
-				AAP::AudioParser::createAxAudioFile(data, outFile.string());
+				AAP::AudioParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

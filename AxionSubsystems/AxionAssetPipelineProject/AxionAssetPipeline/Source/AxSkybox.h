@@ -20,8 +20,8 @@ namespace Axion::AAP {
 	class SkyboxParser {
 	public:
 
-		static void createAxSkyFile(const SkyboxAssetData& data, const std::string& outputPath);
-		static void createAxSkyBinary(const SkyboxAssetData& data, const std::string& outputPath);
+		static void createTextFile(const SkyboxAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const SkyboxAssetData& data, const std::string& outputPath);
 
 	};
 

@@ -113,7 +113,7 @@ namespace Axion {
 				data.dynamicFriction = m_dynamicFriction;
 				data.restitution = m_restitution;
 
-				AAP::PhysicsMaterialParser::createAxPhyMatFile(data, outFile.string());
+				AAP::PhysicsMaterialParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;

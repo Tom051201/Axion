@@ -1,20 +1,14 @@
 #include "AxPhysicsMaterial.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
-
-#include "AxionEngine/Source/core/Logging.h"
-#include "AxionEngine/Source/core/Core.h"
-#include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/core/YamlHelper.h"
-
-#include <fstream>
+#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
 namespace Axion::AAP {
 
-	void PhysicsMaterialParser::createAxPhyMatFile(const PhysicsMaterialAssetData& data, const std::string& outputPath) {
+	void PhysicsMaterialParser::createTextFile(const PhysicsMaterialAssetData& data, const std::string& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
+		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_PHYSICS_MATERIAL;
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "PhysicsMaterial";
@@ -30,7 +24,7 @@ namespace Axion::AAP {
 		AX_CORE_LOG_TRACE("Create .axpmat file ({})", outputPath);
 	}
 
-	void PhysicsMaterialParser::createAxPhyMatBinary(const PhysicsMaterialAssetData& data, const std::string& outputPath) {
+	void PhysicsMaterialParser::createBinaryFile(const PhysicsMaterialAssetData& data, const std::string& outputPath) {
 		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
 	}
 

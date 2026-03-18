@@ -1,20 +1,16 @@
 #include "AxMaterial.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
-#include "AxionEngine/Source/core/Logging.h"
-#include "AxionEngine/Source/core/Core.h"
-#include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/core/AssetManager.h"
-
-#include <fstream>
 
 namespace Axion::AAP {
 
-	void MaterialParser::createAxMatFile(const MaterialAssetData& data, const std::string& outputPath) {
+	void MaterialParser::createTextFile(const MaterialAssetData& data, const std::string& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
+		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_MATERIAL;
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Material";
@@ -59,7 +55,7 @@ namespace Axion::AAP {
 		AX_CORE_LOG_TRACE("Created .axmat file ({})", outputPath);
 	}
 
-	void MaterialParser::createAxMatBinary(const MaterialAssetData& data, const std::string& outputPath) {
+	void MaterialParser::createBinaryFile(const MaterialAssetData& data, const std::string& outputPath) {
 		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
 	}
 

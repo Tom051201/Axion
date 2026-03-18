@@ -15,8 +15,8 @@ namespace Axion::AAP {
 	class ShaderParser {
 	public:
 
-		static void createAxShaderFile(const ShaderAssetData& data, const std::string& outputPath);
-		static void createAxShaderBinary(const ShaderAssetData& data, const std::string& outputPath);
+		static void createTextFile(const ShaderAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const ShaderAssetData& data, const std::string& outputPath);
 
 	};
 

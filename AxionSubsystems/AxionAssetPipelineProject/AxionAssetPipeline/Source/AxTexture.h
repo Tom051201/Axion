@@ -16,8 +16,8 @@ namespace Axion::AAP {
 	class Texture2DParser {
 	public:
 
-		static void createAxTexFile(const Texture2DAssetData& data, const std::string& outputPath);
-		static void createAxTexBinary(const Texture2DAssetData& data, const std::string& outputPath);
+		static void createTextFile(const Texture2DAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const Texture2DAssetData& data, const std::string& outputPath);
 
 	};
 

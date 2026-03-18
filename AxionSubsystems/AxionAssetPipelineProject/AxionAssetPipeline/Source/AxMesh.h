@@ -16,8 +16,8 @@ namespace Axion::AAP {
 	class MeshParser {
 	public:
 
-		static void createAxMeshFile(const MeshAssetData& data, const std::string& outputPath);
-		static void createAxMeshBinary(const MeshAssetData& data, const std::string& outputPath);
+		static void createTextFile(const MeshAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const MeshAssetData& data, const std::string& outputPath);
 
 	};
 

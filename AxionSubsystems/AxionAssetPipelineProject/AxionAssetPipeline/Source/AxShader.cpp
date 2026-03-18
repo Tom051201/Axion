@@ -1,20 +1,14 @@
 #include "AxShader.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
-
-#include "AxionEngine/Source/core/Logging.h"
-#include "AxionEngine/Source/core/Core.h"
-#include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/core/EnumUtils.h"
-
-#include <fstream>
+#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
 namespace Axion::AAP {
 
-	void ShaderParser::createAxShaderFile(const ShaderAssetData& data, const std::string& outputPath) {
+	void ShaderParser::createTextFile(const ShaderAssetData& data, const std::string& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
+		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_SHADER;
 		out << YAML::Key << "Name" << YAML::Value << data.spec.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Shader";
@@ -34,7 +28,7 @@ namespace Axion::AAP {
 		AX_CORE_LOG_TRACE("Created .axshader file ({})", outputPath);
 	}
 
-	void ShaderParser::createAxShaderBinary(const ShaderAssetData& data, const std::string& outputPath) {
+	void ShaderParser::createBinaryFile(const ShaderAssetData& data, const std::string& outputPath) {
 		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
 	}
 

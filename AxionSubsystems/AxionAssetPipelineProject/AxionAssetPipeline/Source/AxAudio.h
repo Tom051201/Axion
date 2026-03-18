@@ -18,8 +18,8 @@ namespace Axion::AAP {
 	class AudioParser {
 	public:
 
-		static void createAxAudioFile(const AudioAssetData& data, const std::string& outputPath);
-		static void createAxAudioBinary(const AudioAssetData& data, const std::string& outputPath);
+		static void createTextFile(const AudioAssetData& data, const std::string& outputPath);
+		static void createBinaryFile(const AudioAssetData& data, const std::string& outputPath);
 
 	};
 

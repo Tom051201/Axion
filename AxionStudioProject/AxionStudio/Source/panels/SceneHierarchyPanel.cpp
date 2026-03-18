@@ -16,6 +16,8 @@
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 
+#include "AxionAssetPipeline/Source/AxPrefab.h"
+
 namespace Axion {
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const std::string& name, const Ref<Scene>& activeScene) : Panel(name) {
@@ -249,24 +251,27 @@ namespace Axion {
 				std::filesystem::path prefabDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "prefabs";
 				std::filesystem::create_directories(prefabDir);
 
-				std::string defaultName = entity.getComponent<TagComponent>().tag + ".axprefab";
-
-				std::string savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", ".axprefab"} }, (std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "prefabs").string());
+				std::string savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", ".axprefab"} }, prefabDir.string());
 
 				if (!savePath.empty()) {
-					YAML::Emitter out;
-					out << YAML::BeginMap;
-					out << YAML::Key << "Type" << YAML::Value << "Prefab";
-					out << YAML::Key << "UUID" << YAML::Value << UUID::generate().toString();
-					out << YAML::Key << "Entity";
-					SceneSerializer serializer(m_context);
-					serializer.serializeEntity(out, entity);
-					out << YAML::EndMap;
+					UUID newAssetUUID = UUID::generate();
 
-					std::ofstream fout(savePath);
-					fout << out.c_str();
+					AAP::PrefabAssetData data;
+					data.uuid = newAssetUUID;
+					data.name = entity.getComponent<TagComponent>().tag;
+					data.scene = m_context;
+					data.entity = entity;
 
-					AX_CORE_LOG_INFO("Prefab created successfully at: {}", savePath);
+					AAP::PrefabParser::createTextFile(data, savePath);
+
+					AssetMetadata metadata;
+					metadata.handle = newAssetUUID;
+					metadata.type = AssetType::Prefab;
+					metadata.filePath = AssetManager::getRelativeToAssets(savePath);
+
+					auto registry = ProjectManager::getProject()->getAssetRegistry();
+					registry->add(metadata);
+					registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
 				}
 			}
 
