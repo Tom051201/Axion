@@ -29,7 +29,35 @@ namespace Axion::AAP {
 	}
 
 	void ShaderParser::createBinaryFile(const ShaderAssetData& data, const std::string& outputPath) {
-		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
+		ShaderBytecode bytecode = Shader::compileToBytecode(data.filePath);
+
+		if (!bytecode.isValid()) {
+			AX_CORE_LOG_ERROR("Failed to compile shader for packaging: {}", data.filePath);
+			return;
+		}
+
+		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+		if (!out) {
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			return;
+		}
+
+		// -- Write Header --
+		ShaderBinaryHeader header = {};
+		header.assetHeader.type = AssetType::Shader;
+		header.assetHeader.uuid = data.uuid;
+		header.assetHeader.version = ASSET_VERSION_SHADER;
+		header.batchTextures = data.spec.batchTextures;
+		header.vsSize = static_cast<uint64_t>(bytecode.vertex.size());
+		header.psSize = static_cast<uint64_t>(bytecode.pixel.size());
+		out.write(reinterpret_cast<const char*>(&header), sizeof(ShaderBinaryHeader));
+
+		// -- Write Bytecode --
+		out.write(reinterpret_cast<const char*>(bytecode.vertex.data()), header.vsSize);
+		out.write(reinterpret_cast<const char*>(bytecode.pixel.data()), header.psSize);
+
+		out.close();
+		AX_CORE_LOG_TRACE("Baked binary Shader to {}", outputPath);
 	}
 
 }

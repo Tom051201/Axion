@@ -14,6 +14,7 @@ namespace Axion {
 		enum class Mode { Memory, Stream };
 
 		AudioClip(const std::string& path, Mode mode);
+		AudioClip(std::vector<uint8_t>&& audioData, Mode mode);
 		~AudioClip();
 
 		void release();
@@ -29,6 +30,11 @@ namespace Axion {
 		Mode m_mode;
 		ma_sound m_sound{};
 		bool m_initialized = false;
+
+		// -- Runtime Memory loading --
+		std::vector<uint8_t> m_audioData;
+		ma_decoder m_decoder{};
+		bool m_fromMemory = false;
 
 	};
 

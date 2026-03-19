@@ -8,6 +8,8 @@
 
 #include "AxionStudio/Source/core/EditorConfig.h"
 
+#include "AxionAssetPipeline/Source/core/AssetPackager.h"
+
 namespace Axion {
 
 	ProjectPanel::ProjectPanel(const std::string& name) : Panel(name) {}
@@ -127,6 +129,13 @@ namespace Axion {
 			ImGui::SameLine();
 			if (ImGui::Button("Set As Startup")) {
 				EditorConfig::startupProjectPath = ProjectManager::getProjectFilePath();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Export")) {
+				std::string exportFolder = FileDialogs::openFolder();
+				if (!exportFolder.empty()) {
+					AAP::AssetPackager::packageProject(exportFolder);
+				}
 			}
 
 			ImGui::EndTable();

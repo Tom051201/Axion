@@ -240,4 +240,40 @@ namespace Axion {
 		return -1;
 	}
 
+	ShaderBytecode D12Shader::compileToBytecode(const std::string& filepath) {
+		ShaderBytecode result;
+		std::wstring wFilePath(filepath.begin(), filepath.end());
+
+		ID3DBlob* vsBlob = nullptr;
+		ID3DBlob* psBlob = nullptr;
+		ID3DBlob* errorBlob = nullptr;
+		UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
+
+		// -- Compile Vertex Shader --
+		HRESULT hr = D3DCompileFromFile(wFilePath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_0", flags, 0, &vsBlob, &errorBlob);
+		if (FAILED(hr)) {
+			if (errorBlob) AX_CORE_LOG_ERROR("VS Compile Error: {}", (char*)errorBlob->GetBufferPointer());
+			if (errorBlob) errorBlob->Release();
+			return result;
+		}
+
+		// -- Compile Pixel Shader --
+		hr = D3DCompileFromFile(wFilePath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_0", flags, 0, &psBlob, &errorBlob);
+		if (FAILED(hr)) {
+			if (errorBlob) AX_CORE_LOG_ERROR("PS Compile Error: {}", (char*)errorBlob->GetBufferPointer());
+			if (errorBlob) errorBlob->Release();
+			vsBlob->Release();
+			return result;
+		}
+
+		// --  Copy data into abstract vectors --
+		result.vertex.assign((uint8_t*)vsBlob->GetBufferPointer(), (uint8_t*)vsBlob->GetBufferPointer() + vsBlob->GetBufferSize());
+		result.pixel.assign((uint8_t*)psBlob->GetBufferPointer(), (uint8_t*)psBlob->GetBufferPointer() + psBlob->GetBufferSize());
+
+		vsBlob->Release();
+		psBlob->Release();
+
+		return result;
+	}
+
 }

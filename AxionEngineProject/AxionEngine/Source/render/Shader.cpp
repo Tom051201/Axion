@@ -29,9 +29,9 @@ namespace Axion {
 
 		switch (Renderer::getAPI()) {
 
-		case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-		case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(spec, filePath); }
-		case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(spec); }
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(spec, filePath); }
+			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(spec); }
 
 		}
 		return nullptr;
@@ -49,6 +49,18 @@ namespace Axion {
 		buffer << file.rdbuf();
 
 		return buffer.str();
+	}
+
+	ShaderBytecode Shader::compileToBytecode(const std::string& filePath) {
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::DirectX12: { return D12Shader::compileToBytecode(filePath); }
+			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "OpenGL compilation not implemented yet!"); break; }
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); break; }
+
+		}
+		return {};
+
 	}
 
 }

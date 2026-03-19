@@ -23,7 +23,7 @@ namespace Axion {
 
 	void AssetManagerPanel::shutdown() {}
 
-	void AssetManagerPanel::onGuiRender() {
+	void AssetManagerPanel::onGuiRender() { // TODO: add all assets and rework information shown
 		ImGui::Begin("Asset Manager Inspector");
 
 		// -- Mesh assets --
@@ -51,7 +51,8 @@ namespace Axion {
 		// -- Skybox Assets --
 		ImGui::SeparatorText("");
 		drawAssetInfo<Skybox>("Skybox", [](Ref<Skybox> skybox) {
-			ImGui::Text("Cubemap Path: %s", AssetManager::getRelativeToAssets(skybox->getTexturePath()).c_str());
+			ImGui::Text("Texture UUID: %s", AssetManager::getRelativeToAssets(skybox->getTextureHandle().uuid.toString()));
+			ImGui::Text("Pipeline UUID: %s", AssetManager::getRelativeToAssets(skybox->getPipelineHandle().uuid.toString()));
 		});
 
 

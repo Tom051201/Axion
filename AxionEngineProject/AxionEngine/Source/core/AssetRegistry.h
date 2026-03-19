@@ -10,7 +10,7 @@ namespace Axion {
 		None = 0,
 		Mesh,
 		Texture2D,
-		TextureCube,
+		TextureCube,	
 		Material,
 		Shader,
 		Pipeline,
@@ -18,7 +18,7 @@ namespace Axion {
 		AudioClip,
 		PhysicsMaterial,
 		Prefab,
-		Scene
+		Scene,
 	};
 
 
@@ -49,6 +49,9 @@ namespace Axion {
 
 		void serialize(const std::string& filepath);
 		void deserialize(const std::string& filepath);
+
+		void serializeBinary(const std::string& filepath);
+		void deserializeBinary(const std::string& filepath);
 
 		static AssetType assetTypeFromString(const std::string& assetType);
 		static std::string assetTypeToString(AssetType type);

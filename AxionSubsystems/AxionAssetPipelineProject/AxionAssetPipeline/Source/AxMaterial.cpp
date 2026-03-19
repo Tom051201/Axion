@@ -2,8 +2,6 @@
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
-#include "AxionEngine/Source/core/AssetManager.h"
-
 namespace Axion::AAP {
 
 	void MaterialParser::createTextFile(const MaterialAssetData& data, const std::string& outputPath) {
@@ -56,7 +54,33 @@ namespace Axion::AAP {
 	}
 
 	void MaterialParser::createBinaryFile(const MaterialAssetData& data, const std::string& outputPath) {
-		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
+		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+		if (!out) {
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			return;
+		}
+
+		// -- Write Header --
+		MaterialBinaryHeader header = {};
+		header.assetHeader.type = AssetType::Material;
+		header.assetHeader.uuid = data.uuid;
+		header.assetHeader.version = ASSET_VERSION_MATERIAL;
+		header.properties = data.properties;
+		header.pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelineAsset));
+		header.textureCount = static_cast<uint32_t>(data.textures.size());
+		out.write(reinterpret_cast<const char*>(&header), sizeof(MaterialBinaryHeader));
+
+		// -- Write Textures --
+		for (const auto& [slot, path] : data.textures) {
+			uint32_t slotInt = static_cast<uint32_t>(slot);
+			out.write(reinterpret_cast<const char*>(&slotInt), sizeof(uint32_t));
+
+			UUID textureUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(path));
+			out.write(reinterpret_cast<const char*>(&textureUUID), sizeof(UUID));
+		}
+
+		out.close();
+		AX_CORE_LOG_TRACE("Baked binary Material to {}", outputPath);
 	}
 
 }

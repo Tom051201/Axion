@@ -13,6 +13,7 @@ namespace Axion {
 	static Ref<VertexBuffer> s_instanceVertexBuffer;
 	constexpr uint32_t MAX_INSTANCES = 10000;
 	static Ref<Pipeline> s_shadowPipeline;
+	static Ref<Shader> s_shadowShader;
 
 	void Renderer3D::initialize() {
 		s_instanceVertexBuffer = VertexBuffer::createDynamic(MAX_INSTANCES * sizeof(ObjectBuffer), sizeof(ObjectBuffer));
@@ -28,13 +29,13 @@ namespace Axion {
 		ShaderSpecification shaderSpec;
 		shaderSpec.name = "ShadowMap";
 		shaderSpec.batchTextures = 0;
-		Ref<Shader> shader = Shader::create(shaderSpec);
-		shader->loadFromBytecode(
+		s_shadowShader = Shader::create(shaderSpec);
+		s_shadowShader->loadFromBytecode(
 			g_ShadowMap_VS, sizeof(g_ShadowMap_VS),
 			g_ShadowMap_PS, sizeof(g_ShadowMap_PS)
 		);
 		PipelineSpecification pipeSpec;
-		pipeSpec.shader = shader;
+		pipeSpec.shader = s_shadowShader;
 		pipeSpec.numRenderTargets = 0;
 		pipeSpec.colorFormat = ColorFormat::RED_INTEGER;
 		pipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
@@ -63,6 +64,8 @@ namespace Axion {
 
 	void Renderer3D::shutdown() {
 		s_instanceVertexBuffer->release();
+		s_shadowShader->release();
+		s_shadowPipeline->release();
 
 		AX_CORE_LOG_TRACE("Renderer3D shutdown");
 	}

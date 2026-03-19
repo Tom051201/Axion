@@ -99,6 +99,10 @@ namespace Axion {
 
 	}
 
+	ShaderBytecode OpenGL3Shader::compileToBytecode(const std::string& path) {
+		return {};
+	}
+
 	int OpenGL3Shader::getBindPoint(const std::string& name) const {
 		// TODO
 		return -1;

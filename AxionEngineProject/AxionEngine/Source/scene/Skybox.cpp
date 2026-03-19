@@ -37,16 +37,9 @@ namespace Axion {
 		return Mesh::create(vertices, indices);
 	}
 
-	Skybox::Skybox(const std::string& crossPath, UUID pipelineHandle) {
+	Skybox::Skybox(AssetHandle<TextureCube> textureHandle, AssetHandle<Pipeline> pipelineHandle)
+		: m_textureHandle(textureHandle), m_pipelineHandle(pipelineHandle) {
 		m_mesh = createCubeMesh();
-		setTexture(crossPath);
-		setupPipeline(pipelineHandle);
-	}
-
-	Skybox::Skybox(const std::array<std::string, 6>& facePaths, UUID pipelineHandle) {
-		m_mesh = createCubeMesh();
-		m_texture = TextureCube::create(facePaths);
-		setupPipeline(pipelineHandle);
 	}
 
 	Skybox::~Skybox() {
@@ -54,28 +47,25 @@ namespace Axion {
 	}
 
 	void Skybox::release() {
-		m_texture->release();
 		m_mesh->release();
 	}
 
 	void Skybox::onUpdate(Timestep ts) {
-		if (!m_pipelineHandle.isValid()) return;
-		AssetManager::get<Pipeline>(m_pipelineHandle)->bind();
+		if (!m_pipelineHandle.isValid() || !m_textureHandle.isValid()) return;
+
+		Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(m_pipelineHandle);
+		Ref<TextureCube> texture = AssetManager::get<TextureCube>(m_textureHandle);
+
+		if (!pipeline || !texture) return;
+
+		pipeline->bind();
 		Renderer::getSceneDataBuffer()->bind(0);
-		m_texture->bind(1);
+		texture->bind(1);
+
 		m_mesh->render();
 		RenderCommand::drawIndexed(m_mesh->getVertexBuffer(), m_mesh->getIndexBuffer());
-		AssetManager::get<Pipeline>(m_pipelineHandle)->unbind();
-	}
 
-	void Skybox::setTexture(const std::string& crossPath) {
-		m_texture = TextureCube::create(crossPath);
-		m_texturePath = crossPath;
-	}
-
-	void Skybox::setupPipeline(UUID handle) {
-		AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(handle);
-		m_pipelineHandle = pipeHandle;
+		pipeline->unbind();
 	}
 
 }

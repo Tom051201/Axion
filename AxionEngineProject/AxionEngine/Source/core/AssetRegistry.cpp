@@ -87,6 +87,101 @@ namespace Axion {
 		AX_CORE_LOG_INFO("Loaded AssetRegistry with {} assets.", m_registry.size());
 	}
 
+	void AssetRegistry::serializeBinary(const std::string& filepath) {
+		std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
+
+		std::ofstream out(filepath, std::ios::out | std::ios::binary);
+		if (!out.is_open()) {
+			AX_CORE_LOG_ERROR("Failed to open file for binary registry serialization: {}", filepath);
+			return;
+		}
+
+		// -- Write Header --
+		char magic[4] = { 'A', 'X', 'A', 'R' };
+		out.write(magic, 4);
+
+		uint32_t version = 1;
+		out.write(reinterpret_cast<const char*>(&version), sizeof(uint32_t));
+
+		// -- Write Asset Count --
+		uint32_t count = static_cast<uint32_t>(m_registry.size());
+		out.write(reinterpret_cast<const char*>(&count), sizeof(uint32_t));
+
+		// -- Write Entries --
+		for (auto const& [uuid, metadata] : m_registry) {
+			// -- Write UUID --
+			out.write(reinterpret_cast<const char*>(&metadata.handle), sizeof(UUID));
+
+			// -- Write Asset Type --
+			uint32_t type = static_cast<uint32_t>(metadata.type);
+			out.write(reinterpret_cast<const char*>(&type), sizeof(uint32_t));
+
+			// -- Write File Path --
+			std::string pathStr = metadata.filePath.string();
+			uint32_t pathLength = static_cast<uint32_t>(pathStr.size());
+			out.write(reinterpret_cast<const char*>(&pathLength), sizeof(uint32_t));
+			out.write(pathStr.data(), pathLength);
+		}
+
+		out.close();
+		AX_CORE_LOG_TRACE("Serialized binary AssetRegistry to {}", filepath);
+	}
+
+	void AssetRegistry::deserializeBinary(const std::string& filepath) {
+		std::ifstream in(filepath, std::ios::in | std::ios::binary);
+		if (!in.is_open()) {
+			AX_CORE_LOG_ERROR("Failed to open binary AssetRegistry: {}", filepath);
+			return;
+		}
+
+		// -- Validate Magic Header --
+		char magic[4];
+		in.read(magic, 4);
+		if (memcmp(magic, "AXAR", 4) != 0) {
+			AX_CORE_LOG_ERROR("Invalid binary registry file: {}", filepath);
+			return;
+		}
+
+		// -- Validate Version --
+		uint32_t version;
+		in.read(reinterpret_cast<char*>(&version), sizeof(uint32_t));
+		if (version != 1) {
+			AX_CORE_LOG_ERROR("Unsupported AssetRegistry binary version: {}", version);
+			return;
+		}
+
+		m_registry.clear();
+
+		// -- Read Asset Count --
+		uint32_t count;
+		in.read(reinterpret_cast<char*>(&count), sizeof(uint32_t));
+
+		// -- Read Entries --
+		for (uint32_t i = 0; i < count; i++) {
+			AssetMetadata metadata;
+
+			// -- Read UUID --
+			in.read(reinterpret_cast<char*>(&metadata.handle), sizeof(UUID));
+
+			// -- Read Type --
+			uint32_t typeInt;
+			in.read(reinterpret_cast<char*>(&typeInt), sizeof(uint32_t));
+			metadata.type = static_cast<AssetType>(typeInt);
+
+			// -- Read File Path --
+			uint32_t pathLength;
+			in.read(reinterpret_cast<char*>(&pathLength), sizeof(uint32_t));
+			std::string pathStr(pathLength, '\0');
+			in.read(&pathStr[0], pathLength);
+			metadata.filePath = pathStr;
+
+			m_registry[metadata.handle] = metadata;
+		}
+
+		in.close();
+		AX_CORE_LOG_INFO("Loaded Binary AssetRegistry with {} assets.", m_registry.size());
+	}
+
 	AssetType AssetRegistry::assetTypeFromString(const std::string& assetType) {
 		if (assetType == "Mesh")				return AssetType::Mesh;
 		if (assetType == "Texture2D")			return AssetType::Texture2D;

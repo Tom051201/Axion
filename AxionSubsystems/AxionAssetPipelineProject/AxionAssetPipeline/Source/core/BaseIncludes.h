@@ -9,6 +9,6 @@
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
-
-
-#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
+#include "AxionEngine/Source/core/AssetRegistry.h"
+#include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/BinaryHeaders.h"

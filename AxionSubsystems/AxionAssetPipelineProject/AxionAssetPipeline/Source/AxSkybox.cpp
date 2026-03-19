@@ -2,8 +2,6 @@
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
-#include "AxionEngine/Source/core/AssetManager.h"
-
 namespace Axion::AAP {
 
 	void SkyboxParser::createTextFile(const SkyboxAssetData& data, const std::string& outputPath) {
@@ -15,25 +13,11 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Skybox";
 		
-		if (data.singleFileImport) {
-			// -- Only one file with all cube faces --
-			std::string texturePath = data.singleFilePath;
-			out << YAML::Key << "Texture" << YAML::Value << texturePath;
-		}
-		else {
-			// -- Six files for each face --
-			out << YAML::Key << "Textures" << YAML::Value;
-			out << YAML::BeginMap;
-			for (const auto& [key, path] : data.facesFilePaths) { // TODO REWORK
-				UUID textureUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(path));
-				out << YAML::Key << key << YAML::Value << textureUUID.toString();
-			}
-			out << YAML::EndMap;
-		}
+		UUID textureUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.textureCubePath));
+		out << YAML::Key << "TextureCube" << YAML::Value << textureUUID.toString();
 
 		UUID pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelinePath));
 		out << YAML::Key << "Pipeline" << YAML::Value << pipelineUUID.toString();
-
 		out << YAML::EndMap;
 
 		std::ofstream fout(outputPath);
@@ -42,7 +26,18 @@ namespace Axion::AAP {
 	}
 
 	void SkyboxParser::createBinaryFile(const SkyboxAssetData& data, const std::string& outputPath) {
-		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
+		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+
+		SkyboxBinaryHeader header = {};
+		header.assetHeader.type = AssetType::Skybox;
+		header.assetHeader.uuid = data.uuid;
+		header.assetHeader.version = ASSET_VERSION_SKYBOX;
+		header.textureCubeUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.textureCubePath));
+		header.pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelinePath));
+		out.write(reinterpret_cast<const char*>(&header), sizeof(SkyboxBinaryHeader));
+
+		out.close();
+		AX_CORE_LOG_TRACE("Baked binary Skybox to {}", outputPath);
 	}
 
 }

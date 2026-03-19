@@ -12,6 +12,13 @@ namespace Axion {
 		uint32_t batchTextures = 1;
 	};
 
+	struct ShaderBytecode {
+		std::vector<uint8_t> vertex;
+		std::vector<uint8_t> pixel;
+
+		bool isValid() const { return !vertex.empty() && !pixel.empty(); }
+	};
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// Shader ///////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -39,6 +46,7 @@ namespace Axion {
 		static Ref<Shader> create(const ShaderSpecification& spec);
 		static Ref<Shader> create(const ShaderSpecification& spec, const std::string& filePath);
 		static std::string readShaderFile(const std::string& filePath);
+		static ShaderBytecode compileToBytecode(const std::string& filePath);
 	};
 
 }

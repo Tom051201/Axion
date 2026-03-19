@@ -6,7 +6,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-#include "AxionAssetPipeline/Source/AxTexture.h"
+#include "AxionAssetPipeline/Source/AxTexture2D.h"
 
 namespace Axion {
 

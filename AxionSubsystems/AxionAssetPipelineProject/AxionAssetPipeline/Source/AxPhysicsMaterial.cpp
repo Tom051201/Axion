@@ -25,7 +25,26 @@ namespace Axion::AAP {
 	}
 
 	void PhysicsMaterialParser::createBinaryFile(const PhysicsMaterialAssetData& data, const std::string& outputPath) {
-		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
+		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+		if (!out) {
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			return;
+		}
+
+		// -- Write Header --
+		BinaryAssetHeader header;
+		header.type = AssetType::PhysicsMaterial;
+		header.uuid = data.uuid;
+		header.version = ASSET_VERSION_PHYSICS_MATERIAL;
+		out.write(reinterpret_cast<const char*>(&header), sizeof(BinaryAssetHeader));
+
+		// -- Write Data --
+		out.write(reinterpret_cast<const char*>(&data.staticFriction), sizeof(float));
+		out.write(reinterpret_cast<const char*>(&data.dynamicFriction), sizeof(float));
+		out.write(reinterpret_cast<const char*>(&data.restitution), sizeof(float));
+
+		out.close();
+		AX_CORE_LOG_TRACE("Baked binary PhysicsMaterial to {}", outputPath);
 	}
 
 }

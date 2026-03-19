@@ -3,15 +3,25 @@
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
+#include "AxionEngine/Source/core/AssetRegistry.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 
 namespace Axion {
 
-	// ----- Usings for easier syntax -----
+	class Mesh;
+	class Texture2D;
+	class TextureCube;
+	class Material;
+	class Shader;
+	class Pipeline;
+	class Skybox;
+	class AudioClip;
+	class PhysicsMaterial;
+	class Prefab;
+
 	template<typename T>
 	using AssetMap = std::unordered_map<AssetHandle<T>, Ref<T>>;
 
-	// Stores the absolute path to the asset file (for example *.axsky)
 	template<typename T>
 	using HandleToPathMap = std::unordered_map<AssetHandle<T>, std::string>;
 
@@ -132,5 +142,16 @@ namespace Axion {
 		}
 
 	};
+
+	template<> AssetHandle<Mesh> AssetManager::load<Mesh>(UUID handle);
+	template<> AssetHandle<Texture2D> AssetManager::load<Texture2D>(UUID handle);
+	template<> AssetHandle<TextureCube> AssetManager::load<TextureCube>(UUID handle);
+	template<> AssetHandle<Material> AssetManager::load<Material>(UUID handle);
+	template<> AssetHandle<Shader> AssetManager::load<Shader>(UUID handle);
+	template<> AssetHandle<Pipeline> AssetManager::load<Pipeline>(UUID handle);
+	template<> AssetHandle<Skybox> AssetManager::load<Skybox>(UUID handle);
+	template<> AssetHandle<AudioClip> AssetManager::load<AudioClip>(UUID handle);
+	template<> AssetHandle<PhysicsMaterial> AssetManager::load<PhysicsMaterial>(UUID handle);
+	template<> AssetHandle<Prefab> AssetManager::load<Prefab>(UUID handle);
 
 }

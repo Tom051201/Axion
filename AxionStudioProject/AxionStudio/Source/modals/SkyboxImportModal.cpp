@@ -21,7 +21,7 @@ namespace Axion {
 		clearBuffers();
 	}
 
-	void SkyboxImportModal::renderContent() {
+	void SkyboxImportModal::renderContent() { // TODO: Rework ui
 
 		ImGui::SeparatorText("Import Skybox Asset");
 		ImGui::Spacing();
@@ -129,8 +129,7 @@ namespace Axion {
 				AAP::SkyboxAssetData data;
 				data.uuid = newAssetUUID;
 				data.name = m_nameBuffer;
-				data.singleFileImport = true;
-				data.singleFilePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.textureCubePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 				data.pipelinePath = AssetManager::getRelativeToAssets(std::string(m_pipelinePathBuffer));
 
 				AAP::SkyboxParser::createTextFile(data, outFile.string());

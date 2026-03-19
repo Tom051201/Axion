@@ -9,6 +9,7 @@
 namespace Axion {
 
 	struct ProjectManagerData {
+		bool isRuntime;
 		Ref<Project> project = nullptr;
 		std::string projectPath;
 		std::function<void(Event&)> eventCallback;
@@ -129,4 +130,13 @@ namespace Axion {
 		ProjectChangedEvent ev;
 		s_managerData->eventCallback(ev);
 	}
+
+	void ProjectManager::setRuntime() {
+		s_managerData->isRuntime = true;
+	}
+
+	bool ProjectManager::isRuntime() {
+		return s_managerData->isRuntime;
+	}
+
 }

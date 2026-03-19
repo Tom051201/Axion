@@ -18,6 +18,7 @@ namespace Axion {
 
 		D12Texture2D(const std::string& path);
 		D12Texture2D(uint32_t width, uint32_t height, void* data);
+		D12Texture2D(const uint8_t* data, size_t size);
 		~D12Texture2D() override;
 
 		void release() override;
@@ -55,6 +56,7 @@ namespace Axion {
 		// Order: +X, -X, +Y, -Y, +Z, -Z
 		D12TextureCube(const std::string& filePath);
 		D12TextureCube(const std::array<std::string, 6>& paths);
+		D12TextureCube(const uint8_t* data, size_t size);
 		~D12TextureCube() override;
 
 		void release() override;

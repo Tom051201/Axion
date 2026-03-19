@@ -35,6 +35,20 @@ namespace Axion {
 
 	}
 
+	Ref<Texture2D> Texture2D::create(const uint8_t* data, size_t size) {
+
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12Texture2D>(data, size); }
+			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "OpenGL is not supported yet!"); break; }
+
+		}
+
+		return nullptr;
+
+	}
+
 
 
 	Ref<TextureCube> TextureCube::create(const std::array<std::string, 6>& paths) {
@@ -57,6 +71,19 @@ namespace Axion {
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12TextureCube>(filePath); }
 			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3TextureCube>(filePath); }
+
+		}
+
+		return nullptr;
+	}
+
+	Ref<TextureCube> TextureCube::create(const uint8_t* data, size_t size) {
+
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
+			case RendererAPI::DirectX12: { return std::make_shared<D12TextureCube>(data, size); }
+			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "None is not supported yet!"); return nullptr; }
 
 		}
 

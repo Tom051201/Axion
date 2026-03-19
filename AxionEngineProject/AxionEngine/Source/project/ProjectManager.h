@@ -19,9 +19,13 @@ namespace Axion {
 		static void loadProject(const std::string& filePath);
 		static void saveProject(const std::string& filePath);
 		static void unloadProject();
+
 		static Ref<Project> getProject();
 		static bool hasProject();
 		static const std::string& getProjectFilePath();
+
+		static void setRuntime();
+		static bool isRuntime();
 
 	private:
 

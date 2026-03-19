@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
+#include "AxionEngine/Source/core/BinaryHeaders.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
@@ -22,6 +23,7 @@ namespace Axion {
 
 	void AssetManager::shutdown() {
 		release<Mesh>();
+		release<TextureCube>();
 		release<Skybox>();
 		release<Shader>();
 		release<Material>();
@@ -42,6 +44,7 @@ namespace Axion {
 			processLoadQueue<Shader>();
 			processLoadQueue<Pipeline>();
 			processLoadQueue<Texture2D>();
+			// TODO: add all queues
 
 		}
 	}
@@ -60,7 +63,7 @@ namespace Axion {
 			return relPath.string();
 		} catch (const std::exception& e) {
 			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
-			(void)e; // Prevents compiler warning
+			(void)e;
 			return {};
 		}
 	}
@@ -79,7 +82,7 @@ namespace Axion {
 		}
 		catch (const std::exception& e) {
 			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
-			(void)e; // Prevents compiler warning
+			(void)e;
 			return {};
 		}
 	}
@@ -131,6 +134,35 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<Mesh>().assets[handle] = nullptr;
+			storage<Mesh>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					BinaryAssetHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+					uint32_t vertexCount, indexCount;
+					in.read(reinterpret_cast<char*>(&vertexCount), sizeof(uint32_t));
+					in.read(reinterpret_cast<char*>(&indexCount), sizeof(uint32_t));
+
+					std::vector<Vertex> vertices(vertexCount);
+					std::vector<uint32_t> indices(indexCount);
+
+					in.read(reinterpret_cast<char*>(vertices.data()), vertexCount * sizeof(Vertex));
+					in.read(reinterpret_cast<char*>(indices.data()), indexCount * sizeof(uint32_t));
+
+					return Mesh::create(vertices, indices);
+				}
+			});
+			storage<Mesh>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
@@ -156,6 +188,68 @@ namespace Axion {
 
 	}
 
+	// ----- TextureCube Assets -----
+	template<>
+	AssetHandle<TextureCube> AssetManager::load<TextureCube>(UUID handle) {
+		if (has<TextureCube>(handle)) return handle;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("TextureCube UUID not found in AssetRegistry!");
+			return {};
+		}
+
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<TextureCube>().assets[handle] = nullptr;
+			storage<TextureCube>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					BinaryAssetHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+					uint64_t dataSize;
+					in.read(reinterpret_cast<char*>(&dataSize), sizeof(uint64_t));
+
+					std::vector<uint8_t> imageData(dataSize);
+					in.read(reinterpret_cast<char*>(imageData.data()), dataSize);
+
+					return TextureCube::create(imageData.data(), imageData.size());
+				}
+			});
+			storage<TextureCube>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_TEXTURE_CUBE) {
+			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			UUID uuid = data["UUID"].as<UUID>();
+
+			storage<TextureCube>().assets[handle] = nullptr;
+			storage<TextureCube>().loadQueue.push_back({ handle,
+				[sourcePath, handle]() {
+					return TextureCube::create(sourcePath);
+				}
+			});
+			storage<TextureCube>().handleToPath[handle] = absolutePath;
+
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported TextureCube Version: {} in file {}", version, absolutePath);
+			return {};
+		}
+
+	}
+
 	// ----- Skybox Assets -----
 	template<>
 	AssetHandle<Skybox> AssetManager::load<Skybox>(UUID handle) {
@@ -168,19 +262,43 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<Skybox>().assets[handle] = nullptr;
+			storage<Skybox>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					SkyboxBinaryHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(SkyboxBinaryHeader));
+
+					AssetHandle<TextureCube> texHandle = AssetManager::load<TextureCube>(header.textureCubeUUID);
+					AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(header.pipelineUUID);
+
+					return std::make_shared<Skybox>(texHandle, pipeHandle);
+				}
+				});
+			storage<Skybox>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 		if (version == ASSET_VERSION_SKYBOX) {
-			std::string texturePath = getAbsolute(data["Texture"].as<std::string>());
-			UUID pipelineUUID = data["Pipeline"].as<UUID>();
-			UUID uuid = data["UUID"].as<UUID>();
+
+			UUID texUUID = data["TextureCube"].as<UUID>();
+			UUID pipeUUID = data["Pipeline"].as<UUID>();
 
 			storage<Skybox>().assets[handle] = nullptr;
 			storage<Skybox>().loadQueue.push_back({ handle,
-				[texturePath, pipelineUUID]() {
-					return std::make_shared<Skybox>(texturePath, pipelineUUID);
+				[texUUID, pipeUUID]() {
+					AssetHandle<TextureCube> texHandle = AssetManager::load<TextureCube>(texUUID);
+					AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(pipeUUID);
+					return std::make_shared<Skybox>(texHandle, pipeHandle);
 				}
 			});
 			storage<Skybox>().handleToPath[handle] = absolutePath;
@@ -191,7 +309,6 @@ namespace Axion {
 			AX_CORE_LOG_ERROR("Unsupported Skybox Version: {} in file {}", version, absolutePath);
 			return {};
 		}
-
 	}
 
 	// ----- Shader Assets -----
@@ -206,6 +323,38 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<Shader>().assets[handle] = nullptr;
+			storage<Shader>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					ShaderBinaryHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(ShaderBinaryHeader));
+
+					ShaderSpecification spec = {};
+					spec.name = "RuntimeShader_" + header.assetHeader.uuid.toString();
+					spec.batchTextures = header.batchTextures;
+
+					Ref<Shader> shader = Shader::create(spec);
+
+					std::vector<uint8_t> vsData(header.vsSize);
+					in.read(reinterpret_cast<char*>(vsData.data()), header.vsSize);
+					std::vector<uint8_t> psData(header.psSize);
+					in.read(reinterpret_cast<char*>(psData.data()), header.psSize);
+
+					shader->loadFromBytecode(vsData.data(), header.vsSize, psData.data(), header.psSize);
+
+					return shader;
+				}
+			});
+			storage<Shader>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
@@ -270,43 +419,6 @@ namespace Axion {
 
 	}
 
-	// ----- Texture2D Assets -----
-	template<>
-	AssetHandle<Texture2D> AssetManager::load<Texture2D>(UUID handle) {
-		if (has<Texture2D>(handle)) return handle;
-
-		auto registry = ProjectManager::getProject()->getAssetRegistry();
-		if (!registry->contains(handle)) {
-			AX_CORE_LOG_ERROR("Texture2D UUID not found in AssetRegistry!");
-			return {};
-		}
-
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
-
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_TEXTURE2D) {
-			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
-			UUID uuid = data["UUID"].as<UUID>();
-
-			storage<Texture2D>().assets[handle] = nullptr;
-			storage<Texture2D>().loadQueue.push_back({ handle,
-				[sourcePath, handle]() {
-					return Texture2D::create(sourcePath);
-				}
-			});
-			storage<Texture2D>().handleToPath[handle] = absolutePath;
-
-			return handle;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath);
-			return {};
-		}
-
-	}
-
 	// ----- Pipeline Assets -----
 	template<>
 	AssetHandle<Pipeline> AssetManager::load<Pipeline>(UUID handle) {
@@ -319,6 +431,70 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<Pipeline>().assets[handle] = nullptr;
+			storage<Pipeline>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					PipelineBinaryHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(PipelineBinaryHeader));
+
+					PipelineSpecification spec = {};
+					spec.colorFormat = static_cast<ColorFormat>(header.colorFormat);
+					spec.depthStencilFormat = static_cast<DepthStencilFormat>(header.depthStencilFormat);
+					spec.depthTest = header.depthTest != 0;
+					spec.depthWrite = header.depthWrite != 0;
+					spec.depthFunction = static_cast<DepthCompare>(header.depthFunction);
+					spec.stencilEnabled = header.stencilEnabled != 0;
+					spec.sampleCount = header.sampleCount;
+					spec.cullMode = static_cast<CullMode>(header.cullMode);
+					spec.topology = static_cast<PrimitiveTopology>(header.topology);
+					spec.numRenderTargets = header.numRenderTargets;
+
+					std::vector<BufferElement> elements;
+					elements.reserve(header.bufferElementCount);
+
+					for (uint32_t i = 0; i < header.bufferElementCount; i++) {
+						uint32_t nameLen;
+						in.read(reinterpret_cast<char*>(&nameLen), sizeof(uint32_t));
+						std::string semanticName(nameLen, '\0');
+						in.read(&semanticName[0], nameLen);
+
+						uint32_t typeInt;
+						uint32_t size, offset;
+						uint8_t instanced;
+
+						in.read(reinterpret_cast<char*>(&typeInt), sizeof(uint32_t));
+						in.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+						in.read(reinterpret_cast<char*>(&offset), sizeof(uint32_t));
+						in.read(reinterpret_cast<char*>(&instanced), sizeof(uint8_t));
+
+						BufferElement elem(semanticName, static_cast<ShaderDataType>(typeInt));
+						elem.size = size;
+						elem.offset = offset;
+						elem.instanced = instanced != 0;
+						elements.push_back(elem);
+					}
+
+					BufferLayout layout(elements);
+					layout.calculateOffsetAndStride();
+					spec.vertexLayout = layout;
+
+					AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(header.shaderUUID);
+					spec.shader = AssetManager::get<Shader>(shaderHandle);
+
+					AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
+					return Pipeline::create(spec);
+				}
+				});
+			storage<Pipeline>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
@@ -370,7 +546,7 @@ namespace Axion {
 					AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
 					return Pipeline::create(spec);
 				}
-			});
+				});
 			storage<Pipeline>().handleToPath[handle] = absolutePath;
 
 			return handle;
@@ -394,6 +570,40 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<Material>().assets[handle] = nullptr;
+			storage<Material>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					MaterialBinaryHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(MaterialBinaryHeader));
+
+					AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(header.pipelineUUID);
+					Ref<Material> material = Material::create("", pipelineHandle, header.properties);
+
+					for (uint32_t i = 0; i < header.textureCount; i++) {
+						uint32_t slotInt;
+						in.read(reinterpret_cast<char*>(&slotInt), sizeof(uint32_t));
+						TextureSlot slot = static_cast<TextureSlot>(slotInt);
+
+						UUID textureUUID;
+						in.read(reinterpret_cast<char*>(&textureUUID), sizeof(UUID));
+
+						AssetHandle<Texture2D> textureHandle = AssetManager::load<Texture2D>(textureUUID);
+						material->setTexture(slot, textureHandle);
+					}
+
+					return material;
+				}
+			});
+			storage<Material>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
@@ -536,6 +746,68 @@ namespace Axion {
 		AX_CORE_LOG_INFO("Reloaded Material: {}", data["Name"].as<std::string>());
 	}
 
+	// ----- Texture2D Assets -----
+	template<>
+	AssetHandle<Texture2D> AssetManager::load<Texture2D>(UUID handle) {
+		if (has<Texture2D>(handle)) return handle;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Texture2D UUID not found in AssetRegistry!");
+			return {};
+		}
+
+		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<Texture2D>().assets[handle] = nullptr;
+			storage<Texture2D>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					BinaryAssetHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+					uint64_t dataSize;
+					in.read(reinterpret_cast<char*>(&dataSize), sizeof(uint64_t));
+
+					std::vector<uint8_t> imageData(dataSize);
+					in.read(reinterpret_cast<char*>(imageData.data()), dataSize);
+
+					return Texture2D::create(imageData.data(), imageData.size());
+				}
+				});
+			storage<Texture2D>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_TEXTURE2D) {
+			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			UUID uuid = data["UUID"].as<UUID>();
+
+			storage<Texture2D>().assets[handle] = nullptr;
+			storage<Texture2D>().loadQueue.push_back({ handle,
+				[sourcePath, handle]() {
+					return Texture2D::create(sourcePath);
+				}
+				});
+			storage<Texture2D>().handleToPath[handle] = absolutePath;
+
+			return handle;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath);
+			return {};
+		}
+
+	}
+
 	// ----- AudioClip Assets -----
 	template<>
 	AssetHandle<AudioClip> AssetManager::load<AudioClip>(UUID handle) {
@@ -548,6 +820,35 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<AudioClip>().assets[handle] = nullptr;
+			storage<AudioClip>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					BinaryAssetHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+					uint32_t modeInt;
+					in.read(reinterpret_cast<char*>(&modeInt), sizeof(uint32_t));
+					AudioClip::Mode mode = static_cast<AudioClip::Mode>(modeInt);
+
+					uint64_t dataSize;
+					in.read(reinterpret_cast<char*>(&dataSize), sizeof(uint64_t));
+
+					std::vector<uint8_t> audioData(dataSize);
+					in.read(reinterpret_cast<char*>(audioData.data()), dataSize);
+
+					return std::make_shared<AudioClip>(std::move(audioData), mode);
+				}
+			});
+			storage<AudioClip>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
@@ -583,6 +884,31 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<PhysicsMaterial>().assets[handle] = nullptr;
+			storage<PhysicsMaterial>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+					BinaryAssetHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+					Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
+
+					in.read(reinterpret_cast<char*>(&material->staticFriction), sizeof(float));
+					in.read(reinterpret_cast<char*>(&material->dynamicFriction), sizeof(float));
+					in.read(reinterpret_cast<char*>(&material->restitution), sizeof(float));
+
+					return material;
+				}
+			});
+			storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 

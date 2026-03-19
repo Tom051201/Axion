@@ -16,6 +16,24 @@ namespace Axion {
 		m_initialized = true;
 	}
 
+	AudioClip::AudioClip(std::vector<uint8_t>&& audioData, Mode mode)
+		: m_audioData(std::move(audioData)), m_mode(mode), m_fromMemory(true) {
+
+		ma_uint32 flags = (mode == Mode::Memory) ? MA_SOUND_FLAG_DECODE : MA_SOUND_FLAG_STREAM;
+
+		if (ma_decoder_init_memory(m_audioData.data(), m_audioData.size(), nullptr, &m_decoder) != MA_SUCCESS) {
+			AX_CORE_LOG_ERROR("Failed to init miniaudio decoder from memory!");
+			return;
+		}
+
+		if (ma_sound_init_from_data_source(AudioManager::getEngine(), &m_decoder, flags, nullptr, &m_sound) != MA_SUCCESS) {
+			AX_CORE_LOG_ERROR("Failed to init miniaudio sound from data source!");
+			return;
+		}
+
+		m_initialized = true;
+	}
+
 	AudioClip::~AudioClip() {
 		release();
 	}

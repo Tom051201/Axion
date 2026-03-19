@@ -22,6 +22,8 @@ namespace Axion {
 		void recompile() override;
 		void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) override;
 
+		static ShaderBytecode compileToBytecode(const std::string& filePath);
+
 		int getBindPoint(const std::string& name) const override;
 		uint32_t getTextureTableBindSlot() const override;
 

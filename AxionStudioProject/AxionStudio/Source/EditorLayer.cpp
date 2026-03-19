@@ -13,6 +13,8 @@
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
 #include "AxionStudio/Source/core/EditorTheme.h"
 
+#include "AxionAssetPipeline/Source/core/AssetPackager.h"
+
 // -- Windows only --
 #if AX_WIN_USING_CUSTOM_TITLE_BAR
 #include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"
@@ -688,6 +690,13 @@ namespace Axion {
 				if (ImGui::MenuItem("Close")) {
 					ProjectManager::unloadProject();
 					SceneManager::newScene();
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Export")) {
+					std::string exportFolder = FileDialogs::openFolder();
+					if (!exportFolder.empty()) {
+						AAP::AssetPackager::packageProject(exportFolder);
+					}
 				}
 				ImGui::EndMenu();
 			}

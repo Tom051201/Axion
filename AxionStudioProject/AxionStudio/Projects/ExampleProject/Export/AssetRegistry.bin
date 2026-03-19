@@ -1,0 +1,92 @@
+Version: 1
+AssetRegistry:
+  - Handle: f1b855db5cfac13e2527d81529938f59
+    Type: Texture2D
+    FilePath: textures\MetalnessMap.axbin
+  - Handle: de5d8a3e0e212bba41d8d538d0d0e561
+    Type: Mesh
+    FilePath: meshes\Sphere.axbin
+  - Handle: 103a4d00fee44729136cddb2ce852227
+    Type: Mesh
+    FilePath: meshes\Cube.axbin
+  - Handle: 3adacaf5c7cfdb35d4388e3185f0c051
+    Type: Pipeline
+    FilePath: pipelines\StandardPBR.axbin
+  - Handle: 1453c13a397d4b331875c59a8673b1e0
+    Type: Texture2D
+    FilePath: textures\AlbedoMap.axbin
+  - Handle: a9d4d3e0194aca7c9a7b1628c113d672
+    Type: Texture2D
+    FilePath: textures\NormalMap.axbin
+  - Handle: 1111a87c7c1b434c0827a71b65c4ab3d
+    Type: Texture2D
+    FilePath: textures\RoughnessMap.axbin
+  - Handle: d6ad7c3d09e4d81c46547db1c3d793dd
+    Type: Material
+    FilePath: materials\BlueMetal.axbin
+  - Handle: d85632ee31c27c32b9739604e0a7678e
+    Type: Material
+    FilePath: materials\BlueMetal.axbin
+  - Handle: 8147e2897c21c05a89fbef7a93af53e7
+    Type: Material
+    FilePath: materials\BlueMetal.axbin
+  - Handle: 8ae9e302548ffa53c7ced596eaa3ba82
+    Type: Shader
+    FilePath: shaders\StandardPBR.axbin
+  - Handle: 929f34726644e650758c8e4f49b80a71
+    Type: Shader
+    FilePath: shaders\SkyboxShader.axbin
+  - Handle: 30cf825b2a365bf6fcb59db4b393c74d
+    Type: Material
+    FilePath: materials\RedMetal.axbin
+  - Handle: 153564319a3f9debfded8572496a1c44
+    Type: Material
+    FilePath: materials\GreenMetal.axbin
+  - Handle: be9673ccdc7bc67cbe9395191a200f6d
+    Type: Pipeline
+    FilePath: pipelines\StandardPBR.axbin
+  - Handle: 285c5cc6f1b596eda5b452e71f9ce8e0
+    Type: Material
+    FilePath: materials\BlueMetal.axbin
+  - Handle: 3f026dbc37322f449a7dc3e8ab25501c
+    Type: Pipeline
+    FilePath: pipelines\StandardPBR.axbin
+  - Handle: 7373d6064686dc8cf3383d4c4d14dd1b
+    Type: Material
+    FilePath: materials\BlueMetal.axbin
+  - Handle: 4236e60c69fdd9f47213ec2f80f791a2
+    Type: Skybox
+    FilePath: skybox\BlueSky.axbin
+  - Handle: 4781116c821b91ede8e5d7a88b26a920
+    Type: Skybox
+    FilePath: skybox\BlueSky.axbin
+  - Handle: c0c53ef249d262a71712208e163d2874
+    Type: Skybox
+    FilePath: skybox\BlueSky.axbin
+  - Handle: daf9739609188c6c8afaf242c227095f
+    Type: Skybox
+    FilePath: skybox\BlueSky.axbin
+  - Handle: 4c08356a65f3585d1bcba1cf7bdedd84
+    Type: Skybox
+    FilePath: skybox\BlueSky.axbin
+  - Handle: 33383be1d7f0de5d82a6b9f9a6caf587
+    Type: Pipeline
+    FilePath: pipelines\Skybox.axbin
+  - Handle: 8c0468d41090d9f6a769c3804c3cbf28
+    Type: Skybox
+    FilePath: skybox\BlueSky.axbin
+  - Handle: 1278134f60df24ba2ae95bf642a74f2d
+    Type: Skybox
+    FilePath: skybox\BlueSky.axbin
+  - Handle: a2a567b8611de9bbb73d2d694e7f79e3
+    Type: Material
+    FilePath: materials\GreenMetal.axbin
+  - Handle: a929a9faabde04a8da151341d1fe6c29
+    Type: Material
+    FilePath: materials\RedMetal.axbin
+  - Handle: ce0127db818aa4800979192ab4f972d5
+    Type: PhysicsMaterial
+    FilePath: physics\Ground.axbin
+  - Handle: 2991cbc0ef8f36978a6dd2cbbc04f637
+    Type: Prefab
+    FilePath: prefabs\PhysicsCube.axbin

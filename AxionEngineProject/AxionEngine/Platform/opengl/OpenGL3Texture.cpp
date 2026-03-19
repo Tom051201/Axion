@@ -36,6 +36,11 @@ namespace Axion {
 		AX_CORE_ASSERT(false, "OpenGl3Texture2D from raw data is not supported yet!");
 	}
 
+	OpenGL3Texture2D::OpenGL3Texture2D(const uint8_t* data, size_t size) {
+		// TODO
+		AX_CORE_ASSERT(false, "OpenGl3Texture2D from raw memeory data is not supported yet!");
+	}
+
 	OpenGL3Texture2D::~OpenGL3Texture2D() {
 		release();
 	}
@@ -73,6 +78,10 @@ namespace Axion {
 	}
 
 	OpenGL3TextureCube::OpenGL3TextureCube(const std::array<std::string, 6>& paths) {
+		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
+	}
+
+	OpenGL3TextureCube::OpenGL3TextureCube(const uint8_t* data, size_t size) {
 		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
 	}
 

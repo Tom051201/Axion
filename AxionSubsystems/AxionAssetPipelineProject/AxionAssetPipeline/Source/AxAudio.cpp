@@ -25,7 +25,46 @@ namespace Axion::AAP {
 	}
 
 	void AudioParser::createBinaryFile(const AudioAssetData& data, const std::string& outputPath) {
-		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
+		std::ifstream audioFile(data.audioFilePath, std::ios::in | std::ios::binary);
+		if (!audioFile) {
+			AX_CORE_LOG_ERROR("Failed to open Source Audio File: {}", data.audioFilePath);
+			return;
+		}
+
+		audioFile.seekg(0, std::ios::end);
+		size_t audioFileSize = audioFile.tellg();
+		audioFile.seekg(0, std::ios::beg);
+
+		std::vector<uint8_t> audioData(audioFileSize);
+		audioFile.read(reinterpret_cast<char*>(audioData.data()), audioFileSize);
+		audioFile.close();
+
+		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+		if (!out) {
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			return;
+		}
+
+		// -- Write Header --
+		BinaryAssetHeader header;
+		header.type = AssetType::AudioClip;
+		header.uuid = data.uuid;
+		header.version = ASSET_VERSION_AUDIO;
+		out.write(reinterpret_cast<const char*>(&header), sizeof(BinaryAssetHeader));
+
+		// -- Write Metadata --
+		uint32_t mode = static_cast<uint32_t>(data.mode);
+		out.write(reinterpret_cast<const char*>(&mode), sizeof(uint32_t));
+
+		// -- Write Audio Data Size --
+		uint64_t dataSize = static_cast<uint64_t>(audioFileSize);
+		out.write(reinterpret_cast<const char*>(&dataSize), sizeof(uint64_t));
+
+		// -- Write Raw File Bytes --
+		out.write(reinterpret_cast<const char*>(audioData.data()), audioFileSize);
+
+		out.close();
+		AX_CORE_LOG_TRACE("Baked binary audio to {}", outputPath);
 	}
 
 }
