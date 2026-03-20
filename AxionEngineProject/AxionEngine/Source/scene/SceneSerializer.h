@@ -20,6 +20,9 @@ namespace Axion {
 		void serializeEntity(YAML::Emitter& out, Entity entity);
 		static Entity deserializeEntityNode(Scene* scene, YAML::Node& entityNode, bool generateNewUUID = false);
 
+		void serializeEntityBinary(std::ofstream& out, Entity entity);
+		static Entity deserializeEntityBinary(Scene* scene, std::istream& in, bool generateNewUUID, std::vector<std::pair<Entity, UUID>>& relationshipsToBuild);
+
 	private:
 
 		Ref<Scene> m_scene;

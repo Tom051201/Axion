@@ -325,13 +325,38 @@ namespace Axion {
 				Ref<Prefab> prefab = AssetManager::get<Prefab>(handle);
 
 				if (prefab) {
-					YAML::Node node = prefab->getEntityNode();
-					Entity newEntity = SceneSerializer::deserializeEntityNode(scene, node, true);
+					Entity newEntity;
+
+					// -- Load Binary if in Runtime Mode --
+					if (prefab->isBinary()) {
+						const std::vector<uint8_t>& binaryData = prefab->getBinaryData();
+
+						std::string dataStr(binaryData.begin(), binaryData.end());
+						std::istringstream in(dataStr);
+
+						std::vector<std::pair<Entity, UUID>> relationshipsToBuild;
+						newEntity = SceneSerializer::deserializeEntityBinary(scene, in, true, relationshipsToBuild);
+
+						for (auto& pair : relationshipsToBuild) {
+							Entity child = pair.first;
+							Entity parent = scene->getEntityByUUID(pair.second);
+							if (parent.isValid()) {
+								child.setParent(parent);
+							}
+						}
+					}
+					// -- Load YAML
+					else {
+						YAML::Node node = prefab->getEntityNode();
+						Entity newEntity = SceneSerializer::deserializeEntityNode(scene, node, true);
+					}
 
 					if (newEntity.isValid()) {
 						UUID newID = newEntity.getComponent<UUIDComponent>().id;
 						*outUuidHi = newID.high;
 						*outUuidLo = newID.low;
+
+						AX_CORE_LOG_TRACE("Instantiated Prefab successfully!");
 						return;
 					}
 				}

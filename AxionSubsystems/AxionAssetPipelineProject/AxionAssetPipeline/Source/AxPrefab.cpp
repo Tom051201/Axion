@@ -25,7 +25,25 @@ namespace Axion::AAP {
 	}
 
 	void PrefabParser::createBinaryFile(const PrefabAssetData& data, const std::string& outputPath) {
-		AX_CORE_ASSERT(false, "Creating a binary asset file is not supported yet");
+		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+		if (!out) {
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			return;
+		}
+
+		// -- Write Header --
+		BinaryAssetHeader header;
+		header.type = AssetType::Prefab;
+		header.uuid = data.uuid;
+		header.version = ASSET_VERSION_PREFAB;
+		out.write(reinterpret_cast<const char*>(&header), sizeof(BinaryAssetHeader));
+
+		// -- Write Entity Data --
+		SceneSerializer serializer(data.scene);
+		serializer.serializeEntityBinary(out, data.entity);
+
+		out.close();
+		AX_CORE_LOG_TRACE("Baked binary Prefab to {}", outputPath);
 	}
 
 }

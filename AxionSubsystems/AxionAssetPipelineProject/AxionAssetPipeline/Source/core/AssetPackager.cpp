@@ -3,6 +3,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/YAMLHelper.h"
+#include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
@@ -15,6 +16,7 @@
 #include "AxionAssetPipeline/Source/AxSkybox.h"
 #include "AxionAssetPipeline/Source/AxTextureCube.h"
 #include "AxionAssetPipeline/Source/AxTexture2D.h"
+#include "AxionAssetPipeline/Source/AxPrefab.h"
 
 namespace Axion::AAP {
 
@@ -211,6 +213,21 @@ namespace Axion::AAP {
 					texData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
 					Texture2DParser::createBinaryFile(texData, runtimeAbsolutePath.string());
+					break;
+				}
+				case AssetType::Prefab: {
+					std::ifstream stream(inPath);
+					YAML::Node data = YAML::Load(stream);
+
+					PrefabAssetData prefabData;
+					prefabData.uuid = uuid;
+					prefabData.name = data["Name"] ? data["Name"].as<std::string>() : "Prefab";
+					prefabData.scene = std::make_shared<Scene>();
+
+					YAML::Node entityNode = data["Entity"];
+					prefabData.entity = SceneSerializer::deserializeEntityNode(prefabData.scene.get(), entityNode, false);
+
+					PrefabParser::createBinaryFile(prefabData, runtimeAbsolutePath.string());
 					break;
 				}
 				default: {

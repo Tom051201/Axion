@@ -946,6 +946,32 @@ namespace Axion {
 		}
 
 		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+
+		// -- Load Binary if in Runtime Mode --
+		if (ProjectManager::isRuntime()) {
+			storage<Prefab>().assets[handle] = nullptr;
+			storage<Prefab>().loadQueue.push_back({ handle,
+				[absolutePath]() {
+					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+					BinaryAssetHeader header;
+					in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+					size_t currentPos = in.tellg();
+					in.seekg(0, std::ios::end);
+					size_t size = static_cast<size_t>(in.tellg()) - currentPos;
+					in.seekg(currentPos, std::ios::beg);
+
+					std::vector<uint8_t> binaryData(size);
+					in.read(reinterpret_cast<char*>(binaryData.data()), size);
+
+					return std::make_shared<Prefab>(std::move(binaryData));
+				}
+			});
+			storage<Prefab>().handleToPath[handle] = absolutePath;
+			return handle;
+		}
+
+		// -- Load YAML if not in Runtime Mode --
 		std::ifstream stream(absolutePath);
 		YAML::Node data = YAML::Load(stream);
 
