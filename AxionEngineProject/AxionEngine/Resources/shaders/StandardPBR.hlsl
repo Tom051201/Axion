@@ -117,7 +117,7 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness) {
 
 // Fresnel: Reflectivity at different viewing angles
 float3 FresnelSchlick(float cosTheta, float3 F0) {
-	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+	return F0 + (1.0 - F0) * pow(abs(clamp(1.0 - cosTheta, 0.0, 1.0)), 5.0);
 }
 
 float3 CalculateLight(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float roughness, float metalness) {
@@ -183,7 +183,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	float2 uv = input.texCoord * max(u_tiling, 1.0f);
 
 	float4 albedoSample = t_albedo.Sample(s_sampler, uv);
-	float3 albedo = pow(albedoSample.rgb, 2.2) * input.color.rgb;
+	float3 albedo = pow(abs(albedoSample.rgb), 2.2) * input.color.rgb;
 
 	// -- Normal mapping --
 	float3 N = normalize(input.normal);
@@ -226,7 +226,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 
 		for (int x = -1; x <= 1; ++x) {
 			for (int y = -1; y <= 1; ++y) {
-				float pcfDepth = t_shadowMap.Sample(s_sampler, projCoords.xy + float2(x, y) * texelSize).r;
+				float pcfDepth = t_shadowMap.SampleLevel(s_sampler, projCoords.xy + float2(x, y) * texelSize, 0).r;
 				shadowSum += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
 			}
 		}
@@ -307,7 +307,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 
 	// -- HDR tone mapping and gamma correction --
 	color = color / (color + float3(1.0, 1.0, 1.0));
-	color = pow(color, 1.0 / 2.2);
+	color = pow(abs(color), 1.0 / 2.2);
 
 	return float4(color, 1.0);
 }

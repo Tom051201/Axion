@@ -53,7 +53,7 @@ namespace Axion {
 
 		AssetHandle<AudioClip> getClipHandle() const { return m_clipHandle; }
 
-	public:
+	public: // TODO: make private
 
 		AssetHandle<AudioClip> m_clipHandle;
 		ma_sound m_memorySound{};

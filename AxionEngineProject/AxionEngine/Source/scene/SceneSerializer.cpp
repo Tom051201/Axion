@@ -7,11 +7,34 @@
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/scripting/NativeScriptRegistry.h"
 
 namespace Axion {
+
+	enum class ComponentID : uint16_t {
+		None = 0,
+		Tag, Relationship, Transform, Mesh, Sprite, Material, Audio, Camera,
+		DirectionalLight, PointLight, SpotLight,
+		RigidBody, BoxCollider, SphereCollider, CapsuleCollider, GravitySource,
+		Script, NativeScript, ParticleSystem
+	};
+
+	static void writeString(std::ofstream& out, const std::string& str) {
+		uint32_t len = static_cast<uint32_t>(str.size());
+		out.write(reinterpret_cast<const char*>(&len), sizeof(uint32_t));
+		out.write(str.data(), len);
+	}
+
+	static std::string readString(std::ifstream& in) {
+		uint32_t len;
+		in.read(reinterpret_cast<char*>(&len), sizeof(uint32_t));
+		std::string str(len, '\0');
+		in.read(&str[0], len);
+		return str;
+	}
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene) : m_scene(scene) {}
 
@@ -329,8 +352,280 @@ namespace Axion {
 	}
 
 	void SceneSerializer::serializeBinary(const std::string& filePath) {
-		// TODO: create SceneSerializer::serializeBinary
-		AX_CORE_ASSERT(false, "Not implemented yet!");
+		std::ofstream out(filePath, std::ios::out | std::ios::binary);
+		if (!out) {
+			AX_CORE_LOG_ERROR("Failed to open file for Scene binary serialization: {}", filePath);
+			return;
+		}
+
+		// -- Write Header and Scene Title --
+		char magic[4] = { 'A', 'X', 'S', 'N' };
+		out.write(magic, 4);
+		uint32_t version = ASSET_VERSION_SCENE;
+		out.write(reinterpret_cast<const char*>(&version), sizeof(uint32_t));
+		writeString(out, m_scene->getTitle());
+
+		// -- Write Skybox --
+		UUID skyboxUUID = m_scene->m_skyboxHandle.isValid() ? m_scene->m_skyboxHandle.uuid : UUID(0, 0);
+		out.write(reinterpret_cast<const char*>(&skyboxUUID), sizeof(UUID));
+
+		// -- Write Entity Count --
+		uint32_t entityCount = 0;
+		for (auto e : m_scene->getRegistry().view<TagComponent>()) {
+			entityCount++;
+		}
+		out.write(reinterpret_cast<const char*>(&entityCount), sizeof(uint32_t));
+
+		// -- Serializes Entities --
+		for (auto e : m_scene->m_registry.view<TagComponent>()) {
+			Entity entity = { e, m_scene.get() };
+			if (!entity) continue;
+
+			// -- Write Entity UUID --
+			UUID entityUUID = entity.getComponent<UUIDComponent>().id;
+			out.write(reinterpret_cast<const char*>(&entityUUID), sizeof(UUID));
+
+			// -- Write Transform Component --
+			if (entity.hasComponent<TransformComponent>()) {
+				ComponentID id = ComponentID::Transform;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<TransformComponent>();
+				out.write(reinterpret_cast<const char*>(&component.position), sizeof(Vec3));
+				out.write(reinterpret_cast<const char*>(&component.rotation), sizeof(Quat));
+				out.write(reinterpret_cast<const char*>(&component.scale), sizeof(Vec3));
+			}
+
+			// -- Write Tag Component --
+			if (entity.hasComponent<TagComponent>()) {
+				ComponentID id = ComponentID::Tag;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				writeString(out, entity.getComponent<TagComponent>().tag);
+			}
+
+			// -- Write Relationship Component --
+			if (entity.hasComponent<RelationshipComponent>()) {
+				ComponentID id = ComponentID::Relationship;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<RelationshipComponent>();
+				UUID parentUUID = (component.parent != entt::null) ? Entity{ component.parent, m_scene.get() }.getComponent<UUIDComponent>().id : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&parentUUID), sizeof(UUID));
+			}
+
+			// -- Write Mesh Component --
+			if (entity.hasComponent<MeshComponent>()) {
+				ComponentID id = ComponentID::Mesh;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				UUID meshUUID = entity.getComponent<MeshComponent>().handle.isValid() ? entity.getComponent<MeshComponent>().handle.uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&meshUUID), sizeof(UUID));
+			}
+
+			// -- Write Sprite Component --
+			if (entity.hasComponent<SpriteComponent>()) {
+				ComponentID id = ComponentID::Sprite;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<SpriteComponent>();
+				UUID textureUUID = component.texture.isValid() ? component.texture.uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&textureUUID), sizeof(UUID));
+				Vec4 tint = component.tint;
+				out.write(reinterpret_cast<const char*>(&tint), sizeof(Vec4));
+			}
+
+			// -- Write Material Component --
+			if (entity.hasComponent<MaterialComponent>()) {
+				ComponentID id = ComponentID::Material;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				UUID materialUUID = entity.getComponent<MaterialComponent>().handle.isValid() ? entity.getComponent<MaterialComponent>().handle.uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+			}
+
+			// -- Write Audio Component --
+			if (entity.hasComponent<AudioComponent>()) {
+				ComponentID id = ComponentID::Audio;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<AudioComponent>();
+				bool hasAudio = component.audio != nullptr;
+				uint8_t flags =
+					(component.isListener ? 1 : 0) |
+					((component.isSource ? 1 : 0) << 1) |
+					((hasAudio ? 1 : 0) << 1);
+				bool isListener = component.isListener;
+				bool isSource = component.isSource;
+				out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+				if (hasAudio) {
+					UUID clipUUID = component.audio->m_clipHandle.isValid() ? component.audio->m_clipHandle.uuid : UUID(0, 0);
+					out.write(reinterpret_cast<const char*>(&clipUUID), sizeof(UUID));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_volume), sizeof(float));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_pitch), sizeof(float));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_pan), sizeof(float));
+					bool isSpacial = component.audio->isSpatial();
+					out.write(reinterpret_cast<const char*>(&isSpacial), sizeof(bool));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_position), sizeof(Vec3));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_velocity), sizeof(Vec3));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_minDistance), sizeof(float));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_maxDistance), sizeof(float));
+					out.write(reinterpret_cast<const char*>(&component.audio->m_dopplerFactor), sizeof(float));
+				}
+			}
+
+			// -- Write Camera Component --
+			if (entity.hasComponent<CameraComponent>()) {
+				ComponentID id = ComponentID::Camera;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<CameraComponent>();
+				uint8_t flags =
+					(component.isPrimary ? 1 : 0) |
+					((component.fixedAspectRatio ? 1 : 0) << 1);
+				out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+				uint32_t projectionTypeInt = static_cast<uint32_t>(component.camera.getProjectionType());
+				float perspectiveFOV = component.camera.getPerspectiveVerticalFOV();
+				float perspectiveNear = component.camera.getPerspectiveNearClip();
+				float perspectiveFar = component.camera.getPerspectiveFarClip();
+				float orthoSize = component.camera.getOrthographicSize();
+				float orthoNear = component.camera.getOrthographicNearClip();
+				float orthoFar = component.camera.getOrthographicFarClip();
+				out.write(reinterpret_cast<const char*>(&projectionTypeInt), sizeof(uint32_t));
+				out.write(reinterpret_cast<const char*>(&perspectiveFOV), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&perspectiveNear), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&perspectiveFar), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&orthoSize), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&orthoNear), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&orthoFar), sizeof(float));
+			}
+
+			// -- Write Directional Light Component --
+			if (entity.hasComponent<DirectionalLightComponent>()) {
+				ComponentID id = ComponentID::DirectionalLight;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				Vec4 color = entity.getComponent<DirectionalLightComponent>().color;
+				out.write(reinterpret_cast<const char*>(&color), sizeof(Vec4));
+			}
+
+			// -- Write Point Light Component --
+			if (entity.hasComponent<PointLightComponent>()) {
+				ComponentID id = ComponentID::PointLight;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<PointLightComponent>();
+				out.write(reinterpret_cast<const char*>(&component.color), sizeof(Vec4));
+				out.write(reinterpret_cast<const char*>(&component.intensity), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.radius), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.falloff), sizeof(float));
+			}
+
+			// -- Write Spot Light Component --
+			if (entity.hasComponent<SpotLightComponent>()) {
+				ComponentID id = ComponentID::SpotLight;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<SpotLightComponent>();
+				out.write(reinterpret_cast<const char*>(&component.color), sizeof(Vec4));
+				out.write(reinterpret_cast<const char*>(&component.intensity), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.range), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.innerConeAngle), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.outerConeAngle), sizeof(float));
+			}
+
+			// -- Write Rigid Body Component --
+			if (entity.hasComponent<RigidBodyComponent>()) {
+				ComponentID id = ComponentID::RigidBody;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<RigidBodyComponent>();
+				uint32_t type = static_cast<uint32_t>(component.type);
+				out.write(reinterpret_cast<const char*>(&type), sizeof(uint32_t));
+				out.write(reinterpret_cast<const char*>(&component.mass), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.linearDamping), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.angularDamping), sizeof(float));
+				uint8_t flags =
+					(component.isKinematic ? 1 : 0) |
+					((component.fixedRotationX ? 1 : 0) << 1) |
+					((component.fixedRotationY ? 1 : 0) << 2) |
+					((component.fixedRotationZ ? 1 : 0) << 3) |
+					((component.enableCCD ? 1 : 0) << 4);
+				out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			}
+
+			// -- Write Box Collider Component --
+			if (entity.hasComponent<BoxColliderComponent>()) {
+				ComponentID id = ComponentID::BoxCollider;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<BoxColliderComponent>();
+				UUID materialUUID = component.material.isValid() ? component.material.uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+				out.write(reinterpret_cast<const char*>(&component.halfExtents), sizeof(Vec3));
+				out.write(reinterpret_cast<const char*>(&component.offset), sizeof(Vec3));
+				uint8_t flags = (component.isTrigger ? 1 : 0);
+				out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			}
+
+			// -- Write Sphere Collider Component --
+			if (entity.hasComponent<SphereColliderComponent>()) {
+				ComponentID id = ComponentID::SphereCollider;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<SphereColliderComponent>();
+				UUID materialUUID = component.material.isValid() ? component.material.uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+				out.write(reinterpret_cast<const char*>(&component.radius), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.offset), sizeof(Vec3));
+				uint8_t flags = (component.isTrigger ? 1 : 0);
+				out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			}
+
+			// -- Write Capsule Collider Component --
+			if (entity.hasComponent<CapsuleColliderComponent>()) {
+				ComponentID id = ComponentID::CapsuleCollider;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<CapsuleColliderComponent>();
+				UUID materialUUID = component.material.isValid() ? component.material.uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+				out.write(reinterpret_cast<const char*>(&component.radius), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.halfHeight), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.offset), sizeof(Vec3));
+				uint8_t flags = (component.isTrigger ? 1 : 0);
+				out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			}
+
+			// -- Write Gravity Source Component --
+			if (entity.hasComponent<GravitySourceComponent>()) {
+				ComponentID id = ComponentID::GravitySource;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<GravitySourceComponent>();
+				uint32_t typeInt = static_cast<uint32_t>(component.type);
+				out.write(reinterpret_cast<const char*>(&typeInt), sizeof(uint32_t));
+				out.write(reinterpret_cast<const char*>(&component.strength), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.radius), sizeof(float));
+				uint8_t flags = (component.affectKinematic ? 1 : 0);
+				out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			}
+
+			// -- Write C# Script Component --
+			if (entity.hasComponent<ScriptComponent>()) {
+				ComponentID id = ComponentID::Script;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				writeString(out, entity.getComponent<ScriptComponent>().className);
+			}
+
+			// -- Write Native Script Component --
+			if (entity.hasComponent<NativeScriptComponent>()) {
+				ComponentID id = ComponentID::NativeScript;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				writeString(out, entity.getComponent<NativeScriptComponent>().scriptName);
+			}
+
+			// -- Write Particle System Component --
+			if (entity.hasComponent<ParticleSystem>()) {
+				ComponentID id = ComponentID::ParticleSystem;
+				out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+				auto& component = entity.getComponent<ParticleSystemComponent>();
+				UUID textureUUID = component.texture.isValid() ? component.texture.uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&textureUUID), sizeof(UUID));
+				out.write(reinterpret_cast<const char*>(&component.sizeBegin), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.sizeEnd), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.lifeTime), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&component.velocityVariation), sizeof(Vec3));
+				out.write(reinterpret_cast<const char*>(&component.colorBegin), sizeof(Vec4));
+				out.write(reinterpret_cast<const char*>(&component.colorEnd), sizeof(Vec4));
+			}
+
+		}
+
 	}
 
 	bool SceneSerializer::deserializeText(const std::string& absoluteFilePath) {
@@ -397,9 +692,306 @@ namespace Axion {
 	}
 
 	bool SceneSerializer::deserializeBinary(const std::string& filePath) {
-		// TODO: create SceneSerializer::deserializeBinary
-		AX_CORE_ASSERT(false, "Not implemented yet!");
-		return false;
+		std::ifstream in(filePath, std::ios::in | std::ios::binary);
+		if (!in) {
+			AX_CORE_LOG_ERROR("Failed to open file for Scene binary deserialization: {}", filePath);
+			return false;
+		}
+
+		// -- Verify Header --
+		char magic[4];
+		in.read(magic, 4);
+		if (memcmp(magic, "AXSN", 4) != 0) {
+			AX_CORE_LOG_ERROR("Magic of Scene binary is wrong!");
+			return false;
+		}
+
+		uint32_t version;
+		in.read(reinterpret_cast<char*>(&version), sizeof(uint32_t));
+		if (version != ASSET_VERSION_SCENE) {
+			AX_CORE_LOG_ERROR("Scene version of Scene Binary is not supported");
+			return false;
+		}
+
+		// -- Read Title and Skybox --
+		m_scene->setTitle(readString(in));
+		UUID skyboxUUID;
+		in.read(reinterpret_cast<char*>(&skyboxUUID), sizeof(UUID));
+		if (skyboxUUID.isValid() && ProjectManager::getProject()->getAssetRegistry()->contains(skyboxUUID)) {
+			m_scene->setSkybox(AssetManager::load<Skybox>(skyboxUUID));
+		}
+
+		// -- Read Entities --
+		uint32_t entityCount;
+		in.read(reinterpret_cast<char*>(&entityCount), sizeof(uint32_t));
+
+		std::unordered_map<UUID, Entity> uuidToEntityMap;
+		std::vector<std::pair<Entity, UUID>> relationshipsToBuild;
+
+		for (uint32_t i = 0; i < entityCount; i++) {
+			UUID entityUUID;
+			in.read(reinterpret_cast<char*>(&entityUUID), sizeof(UUID));
+
+			Entity entity = m_scene->createEntityWithUUID("Unnamed", entityUUID);
+			uuidToEntityMap[entityUUID] = entity;
+
+			while (true) {
+				ComponentID id;
+				in.read(reinterpret_cast<char*>(&id), sizeof(uint16_t));
+
+				if (id == ComponentID::None) break;
+
+				switch (id) {
+				case ComponentID::Transform: {
+					// -- Read Transform Component --
+					auto& component = entity.getComponent<TransformComponent>();
+					in.read(reinterpret_cast<char*>(&component.position), sizeof(Vec3));
+					in.read(reinterpret_cast<char*>(&component.rotation), sizeof(Quat));
+					in.read(reinterpret_cast<char*>(&component.scale), sizeof(Vec3));
+					break;
+				}
+				case ComponentID::Tag: {
+					// -- Read Tag Component --
+					entity.getComponent<TagComponent>().tag = readString(in);
+					break;
+				}
+				case ComponentID::Relationship: {
+					// -- Read Relationship Component --
+					UUID parentUUID;
+					in.read(reinterpret_cast<char*>(&parentUUID), sizeof(UUID));
+					if (parentUUID.isValid()) {
+						relationshipsToBuild.push_back({ entity, parentUUID });
+					}
+					break;
+				}
+				case ComponentID::Mesh: {
+					// -- Read Mesh Component --
+					auto& component = entity.addComponent<MeshComponent>();
+					UUID meshUUID;
+					in.read(reinterpret_cast<char*>(&meshUUID), sizeof(UUID));
+					if (meshUUID.isValid()) component.handle = AssetManager::load<Mesh>(meshUUID);
+					break;
+				}
+				case ComponentID::Sprite: {
+					// -- Read Sprite Component --
+					auto& component = entity.addComponent<SpriteComponent>();
+					UUID textureUUID;
+					in.read(reinterpret_cast<char*>(&textureUUID), sizeof(UUID));
+					if (textureUUID.isValid()) component.texture = AssetManager::load<Texture2D>(textureUUID);
+					Vec4 tint;
+					in.read(reinterpret_cast<char*>(&tint), sizeof(Vec4));
+					component.tint = tint;
+					break;
+				}
+				case ComponentID::Material: {
+					// -- Read Material Component --
+					auto& component = entity.addComponent<MaterialComponent>();
+					UUID materialUUID;
+					in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+					if (materialUUID.isValid()) component.handle = AssetManager::load<Material>(materialUUID);
+					break;
+				}
+				case ComponentID::Audio: {
+					// -- Read Audio Component --
+					auto& component = entity.addComponent<AudioComponent>();
+					bool hasAudio;
+					uint8_t flags;
+					in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+					component.isListener = (flags & 1) != 0;
+					component.isSource = (flags & 2) != 0;
+					hasAudio = (flags & 4) != 0;
+					if (hasAudio) {
+						UUID clipUUID;
+						in.read(reinterpret_cast<char*>(&clipUUID), sizeof(UUID));
+						if (clipUUID.isValid()) {
+							AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(clipUUID);
+							component.audio = std::make_shared<AudioSource>(clipHandle);
+							in.read(reinterpret_cast<char*>(&component.audio->m_volume), sizeof(float));
+							in.read(reinterpret_cast<char*>(&component.audio->m_pitch), sizeof(float));
+							in.read(reinterpret_cast<char*>(&component.audio->m_pan), sizeof(float));
+							bool isSpatial;
+							in.read(reinterpret_cast<char*>(&isSpatial), sizeof(bool));
+							if (isSpatial) { component.audio->enableSpatial(); }
+							else { component.audio->disableSpatial(); }
+							in.read(reinterpret_cast<char*>(&component.audio->m_position), sizeof(Vec3));
+							in.read(reinterpret_cast<char*>(&component.audio->m_velocity), sizeof(Vec3));
+							in.read(reinterpret_cast<char*>(&component.audio->m_minDistance), sizeof(float));
+							in.read(reinterpret_cast<char*>(&component.audio->m_maxDistance), sizeof(float));
+							in.read(reinterpret_cast<char*>(&component.audio->m_dopplerFactor), sizeof(float));
+						}
+					}
+					break;
+				}
+				case ComponentID::Camera: {
+					// -- Read Camera Component --
+					auto& component = entity.addComponent<CameraComponent>();
+					uint8_t flags;
+					in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+					component.isPrimary = (flags & 1) != 0;
+					component.fixedAspectRatio = (flags & 2) != 0;
+					uint32_t projTypeInt;
+					in.read(reinterpret_cast<char*>(&projTypeInt), sizeof(uint32_t));
+					component.camera.setProjectionType(static_cast<Camera::ProjectionType>(projTypeInt));
+					float perspFOV;
+					float perspNear;
+					float perspFar;
+					float orthoSize;
+					float orthoNear;
+					float orthoFar;
+					in.read(reinterpret_cast<char*>(&perspFOV), sizeof(float));
+					in.read(reinterpret_cast<char*>(&perspNear), sizeof(float));
+					in.read(reinterpret_cast<char*>(&perspFar), sizeof(float));
+					in.read(reinterpret_cast<char*>(&orthoSize), sizeof(float));
+					in.read(reinterpret_cast<char*>(&orthoNear), sizeof(float));
+					in.read(reinterpret_cast<char*>(&orthoFar), sizeof(float));
+					component.camera.setPerspectiveVerticalFOV(perspFOV);
+					component.camera.setPerspectiveNearClip(perspNear);
+					component.camera.setPerspectiveFarClip(perspFar);
+					component.camera.setOrthographicSize(orthoSize);
+					component.camera.setOrthographicNearClip(orthoNear);
+					component.camera.setOrthographicFarClip(orthoFar);
+					break;
+				}
+				case ComponentID::DirectionalLight: {
+					// -- Read Directional Light Component --
+					auto& component = entity.addComponent<DirectionalLightComponent>();
+					in.read(reinterpret_cast<char*>(&component.color), sizeof(Vec4));
+					break;
+				}
+				case ComponentID::PointLight: {
+					// -- Read Point Light Component --
+					auto& component = entity.addComponent<PointLightComponent>();
+					in.read(reinterpret_cast<char*>(&component.color), sizeof(Vec4));
+					in.read(reinterpret_cast<char*>(&component.intensity), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.radius), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.falloff), sizeof(float));
+					break;
+				}
+				case ComponentID::SpotLight: {
+					// -- Read Spot Light Component --
+					auto& component = entity.addComponent<SpotLightComponent>();
+					in.read(reinterpret_cast<char*>(&component.color), sizeof(Vec4));
+					in.read(reinterpret_cast<char*>(&component.intensity), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.range), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.innerConeAngle), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.outerConeAngle), sizeof(float));
+					break;
+				}
+				case ComponentID::RigidBody: {
+					// -- Read Rigid Body Component --
+					auto& component = entity.addComponent<RigidBodyComponent>();
+					uint32_t typeInt;
+					in.read(reinterpret_cast<char*>(&typeInt), sizeof(uint32_t));
+					component.type = static_cast<RigidBodyComponent::BodyType>(typeInt);
+					in.read(reinterpret_cast<char*>(&component.mass), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.linearDamping), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.angularDamping), sizeof(float));
+					uint8_t flags;
+					in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+					component.isKinematic = (flags & 1) != 0;
+					component.fixedRotationX = (flags & 2) != 0;
+					component.fixedRotationY = (flags & 4) != 0;
+					component.fixedRotationZ = (flags & 8) != 0;
+					component.enableCCD = (flags & 16) != 0;
+					break;
+				}
+				case ComponentID::BoxCollider: {
+					// -- Read Box Collider Component --
+					auto& component = entity.addComponent<BoxColliderComponent>();
+					UUID materialUUID;
+					in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+					if (materialUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+					in.read(reinterpret_cast<char*>(&component.halfExtents), sizeof(Vec3));
+					in.read(reinterpret_cast<char*>(&component.offset), sizeof(Vec3));
+					uint8_t flags;
+					in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+					component.isTrigger = (flags & 1) != 0;
+					break;
+				}
+				case ComponentID::SphereCollider: {
+					// -- Read Sphere Collider Component --
+					auto& component = entity.addComponent<SphereColliderComponent>();
+					UUID materialUUID;
+					in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+					if (materialUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+					in.read(reinterpret_cast<char*>(&component.radius), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.offset), sizeof(Vec3));
+					uint8_t flags;
+					in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+					component.isTrigger = (flags & 1) != 0;
+					break;
+				}
+				case ComponentID::CapsuleCollider: {
+					// -- Read Capsule Collider Component --
+					auto& component = entity.addComponent<CapsuleColliderComponent>();
+					UUID materialUUID;
+					in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+					if (materialUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+					in.read(reinterpret_cast<char*>(&component.radius), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.halfHeight), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.offset), sizeof(Vec3));
+					uint8_t flags;
+					in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+					component.isTrigger = (flags & 1) != 0;
+					break;
+				}
+				case ComponentID::GravitySource: {
+					// -- Read GravitySource Component --
+					auto& component = entity.addComponent<GravitySourceComponent>();
+					uint32_t typeInt;
+					in.read(reinterpret_cast<char*>(&typeInt), sizeof(uint32_t));
+					component.type = static_cast<GravitySourceComponent::Type>(typeInt);
+					in.read(reinterpret_cast<char*>(&component.strength), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.radius), sizeof(float));
+					uint8_t flags;
+					in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+					component.affectKinematic = (flags & 1) != 0;
+					break;
+				}
+				case ComponentID::Script: {
+					// -- Read C# Script Component --
+					std::string className = readString(in);
+					auto& component = entity.addComponent<ScriptComponent>(className);
+					break;
+				}
+				case ComponentID::NativeScript: {
+					// -- Read Native Script Component --
+					std::string scriptName = readString(in);
+					auto& component = entity.addComponent<NativeScriptComponent>();
+					NativeScriptRegistry::bind(entity, scriptName);
+					break;
+				}
+				case ComponentID::ParticleSystem: {
+					// -- Read Particle System Component --
+					auto& component = entity.addComponent<ParticleSystemComponent>();
+					UUID textureUUID;
+					in.read(reinterpret_cast<char*>(&textureUUID), sizeof(UUID));
+					if (textureUUID.isValid()) component.texture = AssetManager::load<Texture2D>(textureUUID);
+					in.read(reinterpret_cast<char*>(&component.sizeBegin), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.sizeEnd), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.lifeTime), sizeof(float));
+					in.read(reinterpret_cast<char*>(&component.velocityVariation), sizeof(Vec3));
+					in.read(reinterpret_cast<char*>(&component.colorBegin), sizeof(Vec4));
+					in.read(reinterpret_cast<char*>(&component.colorEnd), sizeof(Vec4));
+					break;
+				}
+				}
+
+			}
+
+		}
+
+		// -- Reconstruct Hierarchy --
+		for (auto& pair : relationshipsToBuild) {
+			Entity child = pair.first;
+			UUID parentUUID = pair.second;
+			if (uuidToEntityMap.find(parentUUID) != uuidToEntityMap.end()) {
+				Entity parent = uuidToEntityMap[parentUUID];
+				child.setParent(parent);
+			}
+		}
+
+		return true;
 	}
 
 	Entity SceneSerializer::deserializeEntityNode(Scene* scene, YAML::Node& entityNode, bool generateNewUUID) {
