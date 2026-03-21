@@ -1,6 +1,0 @@
-Name: Ground
-UUID: ce0127db818aa4800979192ab4f972d5
-Type: PhysicsMaterial
-StaticFriction: 0.5
-DynamicFriction: 0.5
-Restitution: 0.0500000007

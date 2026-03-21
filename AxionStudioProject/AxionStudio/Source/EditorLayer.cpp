@@ -52,6 +52,7 @@ namespace Axion {
 		m_tex2dImportModal				= m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
 		m_pipelineImportModal			= m_modalManager.addModal<PipelineImportModal>("PipelineImportModal");
 		m_physicsMaterialImportModal	= m_modalManager.addModal<PhysicsMaterialImportModal>("PhysicsMaterialImportModal");
+		m_textureCubeImportModal		= m_modalManager.addModal<TextureCubeImportModal>("TextureCubeImportModal");
 
 
 		// ----- Setup framebuffer for scene viewport -----
@@ -478,7 +479,7 @@ namespace Axion {
 
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 					std::string path = static_cast<const char*>(payload->Data);
-					AX_CORE_LOG_WARN(path);
+					AX_CORE_LOG_TRACE("Dropped: {}", path);
 					// -- Try loading a skybox --
 					if (path.find(".axsky") != std::string::npos) {
 						std::string absPath = AssetManager::getAbsolute(path);
@@ -488,7 +489,7 @@ namespace Axion {
 						SceneManager::getScene()->setSkybox(handle);
 					}
 					// -- Try adding prefab --
-					if (path.find(".axprefab")) {
+					if (path.find(".axprefab") != std::string::npos) {
 						std::string absPath = AssetManager::getAbsolute(path);
 						UUID assetUUID = AssetManager::getAssetUUID(absPath);
 						if (assetUUID.isValid()) {
@@ -627,6 +628,7 @@ namespace Axion {
 				if (ImGui::BeginMenu("Import##_menu")) {
 					if (ImGui::MenuItem("Mesh")) { m_meshImportModal->open(); }
 					if (ImGui::MenuItem("2D Texture")) { m_tex2dImportModal->open(); }
+					if (ImGui::MenuItem("Cube Texture")) { m_textureCubeImportModal->open(); }
 					if (ImGui::MenuItem("Material")) { m_materialImportModal->open(); }
 					if (ImGui::MenuItem("Skybox")) { m_skyboxImportModal->open(); }
 					if (ImGui::MenuItem("Shader")) { m_shaderImportModal->open(); }

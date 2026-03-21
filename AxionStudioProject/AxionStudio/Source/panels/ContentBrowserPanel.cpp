@@ -117,6 +117,8 @@ namespace Axion {
 						//AssetHandle<Shader> handle = AssetManager::load<Shader>(item.path.string()); TODO fix this
 						//AssetManager::get<Shader>(handle)->recompile();
 					}
+					if (ImGui::MenuItem("Load")) {
+					}
 				}
 
 				// -- Material only --

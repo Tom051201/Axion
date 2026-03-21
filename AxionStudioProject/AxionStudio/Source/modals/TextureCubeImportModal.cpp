@@ -1,4 +1,4 @@
-#include "SkyboxImportModal.h"
+#include "TextureCubeImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
 
@@ -6,29 +6,29 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-#include "AxionAssetPipeline/Source/AxSkybox.h"
+#include "AxionAssetPipeline/Source/AxTextureCube.h"
 
 namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
 
-	SkyboxImportModal::SkyboxImportModal(const char* name) : Modal(name) {}
+	TextureCubeImportModal::TextureCubeImportModal(const char* name) : Modal(name) {}
 
-	SkyboxImportModal::~SkyboxImportModal() {}
+	TextureCubeImportModal::~TextureCubeImportModal() {}
 
-	void SkyboxImportModal::close() {
+	void TextureCubeImportModal::close() {
 		Modal::close();
 		clearBuffers();
 	}
 
-	void SkyboxImportModal::renderContent() { // TODO: Rework ui
-
-		ImGui::SeparatorText("Import Skybox Asset");
+	void TextureCubeImportModal::renderContent() {
+		ImGui::SeparatorText("Import Texture2D Asset");
 		ImGui::Spacing();
 
-		if (ImGui::BeginTable("##ImportSkyboxTable", 2, ImGuiTableFlags_BordersInnerV)) {
+		if (ImGui::BeginTable("##ImportTex2DTable", 2, ImGuiTableFlags_BordersInnerV)) {
 			ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
 			ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
 
 			// -- Name --
 			ImGui::TableNextRow();
@@ -37,39 +37,30 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##SkyboxName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##TexCubeName_input", m_nameBuffer, sizeof(m_nameBuffer));
 
 
-			// -- Pipeline path --
+			// -- Type --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Pipeline");
+			ImGui::Text("Type");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##SkyboxPipelinePath_input", m_pipelinePathBuffer, sizeof(m_pipelinePathBuffer));
-			ImGui::SameLine();
-			if (ImGui::Button("Browse##SkyboxPipelineFile_button")) {
-				std::filesystem::path skyDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
-				std::string absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, skyDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_pipelinePathBuffer, IM_ARRAYSIZE(m_pipelinePathBuffer), absPath.c_str());
-					m_pipelinePathBuffer[IM_ARRAYSIZE(m_pipelinePathBuffer) - 1] = '\0';
-				}
-			}
+			ImGui::Combo("##TexCubeType_combo", &m_importType, m_types, IM_ARRAYSIZE(m_types));
 
 
-			// -- Texture Cube path --
+			// -- Source path --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Texture File");
+			ImGui::Text("Source File");
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##SkyboxSourcePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
+			ImGui::InputText("##TexCubeSourcePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##SkyboxSourceFile_button")) {
-				std::filesystem::path skyDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtex"} }, skyDir.string());
+			if (ImGui::Button("Browse##TexCubeSourceFile_button")) {
+				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, tex2dDir.string());
 				if (!absPath.empty()) {
 					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
 					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
@@ -83,11 +74,11 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##SkyboxOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##TexCubeOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##SkyboxOutputDir_button")) {
-				std::filesystem::path skyDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "skybox";
-				std::string absPath = FileDialogs::openFolder(skyDir.string());
+			if (ImGui::Button("Browse##TexCubeOutputDir_button")) {
+				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath = FileDialogs::openFolder(tex2dDir.string());
 				if (!absPath.empty()) {
 					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
 					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
@@ -100,43 +91,38 @@ namespace Axion {
 			std::filesystem::path sourceFilePath = std::string(m_sourcePathBuffer);
 			bool validSource = std::filesystem::exists(sourceFilePath);
 
-			std::filesystem::path pipelineFilePath = std::string(m_pipelinePathBuffer);
-			bool validShader = std::filesystem::exists(pipelineFilePath);
-
 			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
 			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axsky"));
+			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axtex"));
 
 			bool disabled = (
 				strlen(m_nameBuffer) == 0 ||
 				strlen(m_sourcePathBuffer) == 0 ||
 				strlen(m_outputPathBuffer) == 0 ||
-				strlen(m_pipelinePathBuffer) == 0 ||
 				!validSource ||
 				!validOutputPath ||
-				!validOutputFile ||
-				!validShader
+				!validOutputFile
 			);
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
 				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axsky");
+				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axtex");
 
 				UUID newAssetUUID = UUID::generate();
 
-				AAP::SkyboxAssetData data;
+				AAP::TextureCubeAssetData data;
 				data.uuid = newAssetUUID;
 				data.name = m_nameBuffer;
-				data.textureCubePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
-				data.pipelinePath = AssetManager::getRelativeToAssets(std::string(m_pipelinePathBuffer));
+				data.fileFormat = m_types[m_importType];
+				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
 
-				AAP::SkyboxParser::createTextFile(data, outFile.string());
+				AAP::TextureCubeParser::createTextFile(data, outFile.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
-				metadata.type = AssetType::Skybox;
+				metadata.type = AssetType::Texture2D;
 				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
@@ -151,13 +137,13 @@ namespace Axion {
 				close();
 			}
 		}
-
 	}
 
-	void SkyboxImportModal::clearBuffers() {
+	void TextureCubeImportModal::clearBuffers() {
 		m_nameBuffer[0] = '\0';
 		m_sourcePathBuffer[0] = '\0';
 		m_outputPathBuffer[0] = '\0';
+		m_importType = 0;
 	}
 
 }

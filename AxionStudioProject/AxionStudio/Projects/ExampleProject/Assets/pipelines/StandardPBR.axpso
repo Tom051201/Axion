@@ -1,8 +1,9 @@
+Version: 1
 Name: StandardPBR
-UUID: 3f026dbc37322f449a7dc3e8ab25501c
+UUID: 0499145c03b941b2c6f7dc1d8587e3ba
 Type: Pipeline
 Specification:
-  Shader: 8ae9e302548ffa53c7ced596eaa3ba82
+  Shader: 488cdecd691e0cdd74992e9eefd86f27
   NumRenderTargets: 1
   ColorFormat: RGBA8
   DepthStencilFormat: DEPTH32F

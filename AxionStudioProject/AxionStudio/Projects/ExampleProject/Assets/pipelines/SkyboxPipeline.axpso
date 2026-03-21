@@ -1,8 +1,9 @@
-Name: Skybox
-UUID: 33383be1d7f0de5d82a6b9f9a6caf587
+Version: 1
+Name: SkyboxPipeline
+UUID: f181a34841f6575aa3121c63b9166d19
 Type: Pipeline
 Specification:
-  Shader: 929f34726644e650758c8e4f49b80a71
+  Shader: 74d6bf831e7f3b96f3068f3a99e82e79
   NumRenderTargets: 1
   ColorFormat: RGBA8
   DepthStencilFormat: DEPTH32F

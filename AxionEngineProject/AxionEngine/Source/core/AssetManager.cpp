@@ -12,6 +12,7 @@
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Renderer.h"
+#include "AxionEngine/Source/render/Texture.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
@@ -40,9 +41,10 @@ namespace Axion {
 		if (e.getEventType() == EventType::RenderingFinished) {
 
 			processLoadQueue<Skybox>();
-			processLoadQueue<Mesh>();
+			processLoadQueue<TextureCube>();
 			processLoadQueue<Shader>();
 			processLoadQueue<Pipeline>();
+			processLoadQueue<Mesh>();
 			processLoadQueue<Texture2D>();
 			// TODO: add all queues
 
@@ -489,7 +491,7 @@ namespace Axion {
 					AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
 					return Pipeline::create(spec);
 				}
-				});
+			});
 			storage<Pipeline>().handleToPath[handle] = absolutePath;
 			return handle;
 		}
@@ -546,9 +548,9 @@ namespace Axion {
 					AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
 					return Pipeline::create(spec);
 				}
-				});
+			});
 			storage<Pipeline>().handleToPath[handle] = absolutePath;
-
+			AX_CORE_LOG_INFO("LOADED PIPE");
 			return handle;
 		}
 		else {
