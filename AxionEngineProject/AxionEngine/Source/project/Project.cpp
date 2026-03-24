@@ -56,6 +56,7 @@ namespace Axion {
 
 		// ----- Default scene -----
 		if (data["DefaultScene"]) project->setDefaultScene(data["DefaultScene"].as<std::string>());
+		if (data["AppIcon"]) project->setAppIconPath(data["AppIcon"].as<std::string>());
 
 		std::string registryPath = (std::filesystem::path(path).parent_path() / "AssetRegistry.yaml").string();
 		project->getAssetRegistry()->deserialize(registryPath);
@@ -90,6 +91,14 @@ namespace Axion {
 		UUID defaultSceneUUID;
 		in.read(reinterpret_cast<char*>(&defaultSceneUUID), sizeof(UUID));
 
+		// -- Read App Icon Path --
+		uint32_t iconPathLength;
+		in.read(reinterpret_cast<char*>(&iconPathLength), sizeof(uint32_t));
+		std::string iconPath(iconPathLength, '\0');
+		if (iconPathLength > 0) {
+			in.read(&iconPath[0], iconPathLength);
+		}
+
 		in.close();
 		AX_CORE_LOG_INFO("Successfully Loaded GameConfig Binary");
 
@@ -100,6 +109,7 @@ namespace Axion {
 		project->setAssetsPath(".");
 		project->setDefaultSceneUUID(defaultSceneUUID);
 		project->getAssetRegistry()->deserializeBinary("AssetRegistry.bin");
+		project->setAppIconPath(iconPath);
 
 		return project;
 	}
@@ -120,6 +130,7 @@ namespace Axion {
 		out << YAML::Key << "AssetsPath" << YAML::Value << m_assetsPath;
 
 		if (!m_defaultScene.empty()) out << YAML::Key << "DefaultScene" << YAML::Value << m_defaultScene;
+		if (!m_appIconPath.empty()) out << YAML::Key << "AppIcon" << YAML::Value << m_appIconPath;
 
 		out << YAML::EndMap;
 

@@ -64,7 +64,7 @@ project "AxionRuntime"
 		defines "AX_DISTRIBUTION"
 		runtime "Release"
 		optimize "on"
-		targetdir ("%{wks.location}/bin/Distribution-windows-x86_64/AxionEditor/RuntimeData")
+		targetdir ("%{wks.location}/bin/" .. outputdir .. "/AxionStudio/RuntimeData")
 
 
 	filter "configurations:Debug"

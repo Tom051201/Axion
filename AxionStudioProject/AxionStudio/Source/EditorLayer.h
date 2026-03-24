@@ -26,6 +26,8 @@
 #include "AxionStudio/Source/modals/PipelineImportModal.h"
 #include "AxionStudio/Source/modals/PhysicsMaterialImportModal.h"
 #include "AxionStudio/Source/modals/TextureCubeImportModal.h"
+#include "AxionStudio/Source/modals/CreateProjectModal.h"
+#include "AxionStudio/Source/modals/ExportProjectModal.h"
 
 namespace Axion {
 
@@ -79,6 +81,8 @@ namespace Axion {
 		PipelineImportModal* m_pipelineImportModal;
 		PhysicsMaterialImportModal* m_physicsMaterialImportModal;
 		TextureCubeImportModal* m_textureCubeImportModal;
+		CreateProjectModal* m_createProjectModal;
+		ExportProjectModal* m_exportProjectModal;
 
 
 		// ----- Scene viewport -----
@@ -103,16 +107,6 @@ namespace Axion {
 		// ----- ImGui utils -----
 		ImGuiDockNodeFlags m_dockspaceFlags = 0;
 		ImGuiWindowFlags m_windowFlags = 0;
-
-
-		// ----- New project window -----
-		void drawNewProjectWindow();
-		bool m_openNewProjectPopup = false;
-		char m_newNameBuffer[128] = "";
-		char m_newLocationBuffer[512] = "";
-		char m_newProjectAuthor[128] = "";
-		char m_newProjectCompany[128] = "";
-		char m_newProjectDescription[128] = "";
 
 
 		// ----- Event functions -----

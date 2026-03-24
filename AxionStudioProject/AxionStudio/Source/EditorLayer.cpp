@@ -53,6 +53,8 @@ namespace Axion {
 		m_pipelineImportModal			= m_modalManager.addModal<PipelineImportModal>("PipelineImportModal");
 		m_physicsMaterialImportModal	= m_modalManager.addModal<PhysicsMaterialImportModal>("PhysicsMaterialImportModal");
 		m_textureCubeImportModal		= m_modalManager.addModal<TextureCubeImportModal>("TextureCubeImportModal");
+		m_createProjectModal			= m_modalManager.addModal<CreateProjectModal>("CreateProjectModal");
+		m_exportProjectModal			= m_modalManager.addModal<ExportProjectModal>("ExportProjectModal");
 
 
 		// ----- Setup framebuffer for scene viewport -----
@@ -190,11 +192,11 @@ namespace Axion {
 		m_modalManager.renderAll();
 
 		// -- New project popup --
-		if (m_openNewProjectPopup) {
-			ImGui::OpenPopup("Create New Project");
-			m_openNewProjectPopup = false;
-		}
-		drawNewProjectWindow();
+		//if (m_openNewProjectPopup) {
+		//	ImGui::OpenPopup("Create New Project");
+		//	m_openNewProjectPopup = false;
+		//}
+		//drawNewProjectWindow();
 
 		drawMenuBar();
 
@@ -345,89 +347,6 @@ namespace Axion {
 		}
 
 		return true;
-	}
-
-	void EditorLayer::drawNewProjectWindow() {
-		if (ImGui::BeginPopupModal("Create New Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-			static bool validLocation;
-			static bool invalidName;
-			bool textChanged = false;
-
-			// ----- Name -----
-			textChanged |= ImGui::InputText("Project Name", m_newNameBuffer, IM_ARRAYSIZE(m_newNameBuffer));
-
-			// ----- Locatation -----
-			textChanged |= ImGui::InputText("Location", m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer));
-			ImGui::SameLine();
-			if (ImGui::Button("Browse...")) {
-				std::string folder = FileDialogs::openFolder();
-				if (!folder.empty()) {
-					strcpy_s(m_newLocationBuffer, IM_ARRAYSIZE(m_newLocationBuffer), folder.c_str());
-					m_newLocationBuffer[IM_ARRAYSIZE(m_newLocationBuffer) - 1] = '\0';
-				}
-			}
-
-			ImGui::SeparatorText("Optional");
-
-			ImGui::InputText("Author", m_newProjectAuthor, IM_ARRAYSIZE(m_newProjectAuthor));
-			ImGui::InputText("Company", m_newProjectCompany, IM_ARRAYSIZE(m_newProjectCompany));
-			ImGui::InputText("Description", m_newProjectDescription, IM_ARRAYSIZE(m_newProjectDescription));
-
-			ImGui::Separator();
-
-
-			// ----- Clearing values function lambda -----
-			auto clearNewProjectsFields = [this]() {
-				m_newNameBuffer[0] = '\0';
-				m_newLocationBuffer[0] = '\0';
-				m_newProjectAuthor[0] = '\0';
-				m_newProjectCompany[0] = '\0';
-				m_newProjectDescription[0] = '\0';
-			};
-
-
-			// ----- Validate input -----
-			if (textChanged) {
-				std::filesystem::path locPath(m_newLocationBuffer);
-				validLocation = std::filesystem::is_directory(locPath);
-				std::filesystem::path projecFolder = locPath / m_newNameBuffer;
-				invalidName = std::filesystem::exists(projecFolder);
-			}
-
-			bool disabled = (strlen(m_newNameBuffer) == 0 || strlen(m_newLocationBuffer) == 0 || !validLocation || invalidName);
-
-			// ----- Create Project -----
-			ImGui::BeginDisabled(disabled);
-			if (ImGui::Button("Create Project")) {
-				ProjectSpecification spec;
-				spec.name = m_newNameBuffer;
-				spec.location = m_newLocationBuffer;
-				spec.author = m_newProjectAuthor;
-				spec.company = m_newProjectCompany;
-				spec.description = m_newProjectDescription;
-
-				if (!spec.name.empty() && !spec.location.empty()) {
-					ProjectManager::newProject(spec);
-					ImGui::CloseCurrentPopup();
-					clearNewProjectsFields();
-				}
-			}
-			ImGui::EndDisabled();
-
-
-			// ----- Cancel -----
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel")) {
-				ImGui::CloseCurrentPopup();
-				clearNewProjectsFields();
-			}
-			if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-				ImGui::CloseCurrentPopup();
-				clearNewProjectsFields();
-			}
-
-			ImGui::EndPopup();
-		}
 	}
 
 	void EditorLayer::beginDockspace() {
@@ -681,7 +600,9 @@ namespace Axion {
 
 			// ----- Project menu -----
 			if (ImGui::BeginMenu("  Project  ")) {
-				if (ImGui::MenuItem("New...")) { m_openNewProjectPopup = true; }
+				if (ImGui::MenuItem("New...")) {
+					m_createProjectModal->open();
+				}
 				if (ImGui::MenuItem("Open...")) {
 					std::string filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
 					if (!filePath.empty()) ProjectManager::loadProject(filePath);
@@ -696,10 +617,7 @@ namespace Axion {
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Export")) {
-					std::string exportFolder = FileDialogs::openFolder();
-					if (!exportFolder.empty()) {
-						AAP::AssetPackager::packageProject(exportFolder);
-					}
+					m_exportProjectModal->open();
 				}
 				ImGui::EndMenu();
 			}

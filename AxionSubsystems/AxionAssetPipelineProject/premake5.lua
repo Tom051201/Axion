@@ -12,7 +12,9 @@ project "AxionAssetPipeline"
 	
 	files {
 		"AxionAssetPipeline/Source/**.h",
-		"AxionAssetPipeline/Source/**.cpp"
+		"AxionAssetPipeline/Source/**.cpp",
+		"AxionAssetPipeline/Platform/**.h",
+		"AxionAssetPipeline/Platform/**.cpp"
 	}
 	
 	includedirs {

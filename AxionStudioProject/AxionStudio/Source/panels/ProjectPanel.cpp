@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
 
 #include "AxionStudio/Source/core/EditorConfig.h"
 
@@ -64,6 +65,45 @@ namespace Axion {
 			}
 
 
+			// -- Game Version --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Version");
+			ImGui::TableSetColumnIndex(1);
+			static char versionBuffer[64];
+			strcpy_s(versionBuffer, sizeof(versionBuffer), m_project->getVersion().c_str());
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			if (ImGui::InputText("##ProjectVersion", versionBuffer, sizeof(versionBuffer))) {
+				m_project->setVersion(versionBuffer);
+			}
+
+
+			// -- App Icon --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("App Icon (.ico)");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+
+			std::string currentIcon = m_project->getAppIconPath();
+			std::string iconDisplay = currentIcon.empty() ? "None" : std::filesystem::path(currentIcon).filename().string();
+
+			ImGui::Text(iconDisplay.c_str());
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - 65.0f);
+			if (ImGui::Button("Browse##Icon")) {
+				std::string path = FileDialogs::openFile({ {"Windows Icon", "*.ico"} });
+				if (!path.empty()) {
+					m_project->setAppIconPath(path);
+					ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("X##ClearIcon")) {
+				m_project->setAppIconPath("");
+				ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+			}
+
+
 			// -- Project file --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
@@ -86,9 +126,33 @@ namespace Axion {
 			ImGui::Text("Default Scene");
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
-			std::filesystem::path defaultScenePath = AssetManager::getRelativeToAssets(m_project->getDefaultScene());
-			std::string fileName = defaultScenePath.filename().string();
-			ImGui::Text(fileName.c_str());
+			std::string currentDefault = m_project->getDefaultScene();
+			std::string displayString = "None (Drag .axscene here)";
+			if (!currentDefault.empty()) {
+				std::filesystem::path defaultScenePath = AssetManager::getRelativeToAssets(currentDefault);
+				displayString = defaultScenePath.filename().string();
+			}
+
+			ImGui::Button(displayString.c_str(), ImVec2(ImGui::GetContentRegionAvail().x - 100.0f, 0.0f));
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+					std::string path = static_cast<const char*>(payload->Data);
+					if (path.find(".axscene") != std::string::npos) {
+						m_project->setDefaultScene(path);
+						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Set Current")) {
+				std::string currentScenePath = SceneManager::getScenePath();
+				if (!currentScenePath.empty()) {
+					m_project->setDefaultScene(currentScenePath);
+					ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+				}
+			}
 
 
 			// -- Show in Explorer --

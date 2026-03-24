@@ -30,6 +30,7 @@ namespace Axion {
 		void setDescription(const std::string& desc) { m_description = desc; }
 		void setVersion(const std::string& version) { m_version = version; }
 		void setEngineVersion(const std::string& version) { m_engineVersion = version; }
+		void setAppIconPath(const std::string& path) { m_appIconPath = path; }
 
 		const std::string& getName() const { return m_name; }
 		const std::string& getProjectPath() const { return m_projectPath; }
@@ -41,6 +42,7 @@ namespace Axion {
 		const std::string& getDescription() const { return m_description; }
 		const std::string& getVersion() const { return m_version; }
 		const std::string& getEngineVersion() const { return m_engineVersion; }
+		const std::string& getAppIconPath() const { return m_appIconPath; }
 
 		Ref<AssetRegistry> getAssetRegistry() { return m_assetRegistry; }
 
@@ -64,6 +66,7 @@ namespace Axion {
 		std::string m_description;
 		std::string m_defaultScene; // TODO: make those required
 		UUID m_defaultSceneUUID = UUID(0, 0);
+		std::string m_appIconPath;
 
 		Ref<AssetRegistry> m_assetRegistry;
 	};

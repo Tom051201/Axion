@@ -13,6 +13,9 @@ namespace Axion {
 		if (!project) return;
 
 		Application::get().setWindowTitle(project->getName());
+		if (!project->getAppIconPath().empty()) {
+			Application::get().setWindowIcon(project->getAppIconPath());
+		}
 
 		m_activeScene = std::make_shared<Scene>();
 		UUID sceneUUID = project->getDefaultSceneUUID();

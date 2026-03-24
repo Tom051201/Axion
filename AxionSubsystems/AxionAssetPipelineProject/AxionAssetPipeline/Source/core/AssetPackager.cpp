@@ -8,6 +8,7 @@
 
 #include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
+#include "AxionAssetPipeline/Source/platform/PlatformPackager.h"
 #include "AxionAssetPipeline/Source/AxMesh.h"
 #include "AxionAssetPipeline/Source/AxMaterial.h"
 #include "AxionAssetPipeline/Source/AxPhysicsMaterial.h"
@@ -17,6 +18,7 @@
 #include "AxionAssetPipeline/Source/AxTextureCube.h"
 #include "AxionAssetPipeline/Source/AxTexture2D.h"
 #include "AxionAssetPipeline/Source/AxPrefab.h"
+
 
 namespace Axion::AAP {
 
@@ -304,8 +306,46 @@ namespace Axion::AAP {
 			}
 			outConfig.write(reinterpret_cast<const char*>(&defaultSceneUUID), sizeof(UUID));
 
+			// -- Write App Icon Path --
+			std::string iconPath = project->getAppIconPath();
+			uint32_t iconPathLength = static_cast<uint32_t>(iconPath.size());
+			outConfig.write(reinterpret_cast<const char*>(&iconPathLength), sizeof(uint32_t));
+			if (iconPathLength > 0) {
+				outConfig.write(iconPath.data(), iconPathLength);
+			}
+
 			outConfig.close();
 			AX_CORE_LOG_INFO("Baked GameConfig.axbin");
+
+			// -- Copy and Setup the Runtime Executable --
+			std::string gameName = project->getName();
+			std::filesystem::path exportedExePath = std::filesystem::path(outputDirectory) / (gameName + ".exe");
+			std::filesystem::path sourceRuntimePath = "RuntimeData/AxionRuntime.exe";
+
+			if (std::filesystem::exists(sourceRuntimePath)) {
+				try {
+					std::filesystem::copy_file(sourceRuntimePath, exportedExePath, std::filesystem::copy_options::overwrite_existing);
+					AX_CORE_LOG_INFO("Copied Runtime Player to: {}", exportedExePath.string());
+
+					// -- Inject .ico file --
+					std::string iconPath = project->getAppIconPath();
+					if (!iconPath.empty()) {
+						std::string absIconPath = AssetManager::getAbsolute(iconPath);
+						if (PlatformPackager::injectIconIntoExecutable(exportedExePath.string(), absIconPath)) {
+							AX_CORE_LOG_INFO("Successfully injected custom executable icon!");
+						}
+						else {
+							AX_CORE_LOG_WARN("Failed to inject executable icon. Ensure the file is a valid .ico format.");
+						}
+					}
+				}
+				catch (const std::exception& e) {
+					AX_CORE_LOG_ERROR("Failed to copy Runtime Player: {}", e.what());
+				}
+			}
+			else {
+				AX_CORE_LOG_ERROR("Could not find the pre-compiled AxionRuntime.exe at {}", sourceRuntimePath.string());
+			}
 		}
 
 	}
