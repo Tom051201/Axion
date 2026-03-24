@@ -15,6 +15,7 @@ namespace Axion {
 		static void shutdown();
 		static void onEvent(Event& e);
 
+		static void setScene(const Ref<Scene>& scene);
 		static void newScene();
 		static void loadScene(const std::string& filePath);
 		static void saveScene(const std::string& filePath);
@@ -25,8 +26,6 @@ namespace Axion {
 		static const std::string& getScenePath();
 
 	private:
-
-		static void setScene(const Ref<Scene>& scene);
 
 	};
 

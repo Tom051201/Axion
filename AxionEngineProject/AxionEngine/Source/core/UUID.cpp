@@ -18,6 +18,7 @@ namespace Axion {
 	}
 
 	UUID UUID::fromString(const std::string& str) {
+		if (str == "0") { return UUID(0, 0); }
 		if (str.size() != 32) {
 			AX_CORE_ASSERT(false, "UUID string must be 32 hex characters");
 			throw std::invalid_argument("UUID string must be 32 hex characters");

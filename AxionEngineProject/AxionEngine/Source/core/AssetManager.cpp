@@ -46,7 +46,10 @@ namespace Axion {
 			processLoadQueue<Pipeline>();
 			processLoadQueue<Mesh>();
 			processLoadQueue<Texture2D>();
-			// TODO: add all queues
+			processLoadQueue<Material>();
+			processLoadQueue<AudioClip>();
+			processLoadQueue<PhysicsMaterial>();
+			processLoadQueue<Prefab>();
 
 		}
 	}
@@ -328,30 +331,25 @@ namespace Axion {
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
-			storage<Shader>().assets[handle] = nullptr;
-			storage<Shader>().loadQueue.push_back({ handle,
-				[absolutePath]() {
-					std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+			std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
 
-					ShaderBinaryHeader header;
-					in.read(reinterpret_cast<char*>(&header), sizeof(ShaderBinaryHeader));
+			ShaderBinaryHeader header;
+			in.read(reinterpret_cast<char*>(&header), sizeof(ShaderBinaryHeader));
 
-					ShaderSpecification spec = {};
-					spec.name = "RuntimeShader_" + header.assetHeader.uuid.toString();
-					spec.batchTextures = header.batchTextures;
+			ShaderSpecification spec = {};
+			spec.name = "RuntimeShader_" + header.assetHeader.uuid.toString();
+			spec.batchTextures = header.batchTextures;
 
-					Ref<Shader> shader = Shader::create(spec);
+			Ref<Shader> shader = Shader::create(spec);
 
-					std::vector<uint8_t> vsData(header.vsSize);
-					in.read(reinterpret_cast<char*>(vsData.data()), header.vsSize);
-					std::vector<uint8_t> psData(header.psSize);
-					in.read(reinterpret_cast<char*>(psData.data()), header.psSize);
+			std::vector<uint8_t> vsData(header.vsSize);
+			in.read(reinterpret_cast<char*>(vsData.data()), header.vsSize);
+			std::vector<uint8_t> psData(header.psSize);
+			in.read(reinterpret_cast<char*>(psData.data()), header.psSize);
 
-					shader->loadFromBytecode(vsData.data(), header.vsSize, psData.data(), header.psSize);
+			shader->loadFromBytecode(vsData.data(), header.vsSize, psData.data(), header.psSize);
 
-					return shader;
-				}
-			});
+			storage<Shader>().assets[handle] = shader;
 			storage<Shader>().handleToPath[handle] = absolutePath;
 			return handle;
 		}

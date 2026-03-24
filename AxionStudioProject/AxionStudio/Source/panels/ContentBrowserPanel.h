@@ -49,10 +49,6 @@ namespace Axion {
 		std::vector<DirItem> m_directoryEntries;
 		bool m_showFileExtensions = true;
 
-		// -- Scenes overview --
-		std::filesystem::path m_scenesDirectory;
-		SceneNode m_scenesRootNode;
-
 		// -- Search / filtering --
 		char m_searchBuffer[128] = "";
 		bool m_onlyEngineAssets = false;
@@ -83,11 +79,6 @@ namespace Axion {
 		bool matchesSearch(const std::string& name);
 		bool isEngineAssetExtension(const std::filesystem::path& path);
 		void deletePath(const std::filesystem::path& path);
-
-		// -- Helper functions for scenes overview --
-		void refreshScenes();
-		SceneNode scanSceneFolder(const std::filesystem::path& folderPath);
-		void drawSceneNode(const SceneNode& node);
 
 		void drawToolbar();
 

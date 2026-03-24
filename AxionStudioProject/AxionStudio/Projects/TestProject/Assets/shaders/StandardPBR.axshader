@@ -1,0 +1,9 @@
+Version: 1
+Name: StandardPBR
+UUID: d658f04522df8c9849572f747899eb1f
+Type: Shader
+Format: .hlsl
+Source: shaders\StandardPBR.hlsl
+Specification:
+  Name: StandardPBR
+  BatchTextures: 16

@@ -1,0 +1,6 @@
+Version: 1
+Name: MetalnessMap
+UUID: 7fcc07abd245c0d50197cb8eafca936c
+Type: Texture2D
+Format: PNG
+Source: textures\metalnessmap.png

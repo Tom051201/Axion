@@ -37,3 +37,8 @@
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/scene/SceneSerializer.h"
+
+#include "AxionEngine/Source/project/Project.h"
+#include "AxionEngine/Source/project/ProjectManager.h"

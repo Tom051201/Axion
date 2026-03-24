@@ -29,7 +29,6 @@ namespace Axion {
 
 			m_projectFileRelative = std::filesystem::relative(project->getProjectPath(), m_rootDirectory);
 			m_assetsRelative = std::filesystem::relative(project->getAssetsPath(), m_rootDirectory);
-			m_scenesRelative = std::filesystem::relative(project->getScenesPath(), m_rootDirectory);
 		}
 
 	}
@@ -81,14 +80,6 @@ namespace Axion {
 			ImGui::Text("%s", m_assetsRelative.string().c_str());
 
 
-			// -- Scenes folder --
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("Scenes");
-			ImGui::TableSetColumnIndex(1);
-			ImGui::Text("%s", m_scenesRelative.string().c_str());
-
-
 			// -- Default scene --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
@@ -111,10 +102,6 @@ namespace Axion {
 			ImGui::SameLine();
 			if (ImGui::Button("Assets")) {
 				PlatformUtils::openFolderInFileExplorer(m_project->getAssetsPath());
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Scenes")) {
-				PlatformUtils::openFolderInFileExplorer(m_project->getScenesPath());
 			}
 
 

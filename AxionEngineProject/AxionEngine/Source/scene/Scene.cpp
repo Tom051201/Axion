@@ -275,6 +275,7 @@ namespace Axion {
 		for (auto [entity, mesh, transform, material] : meshRenderView.each()) {
 			if (mesh.handle.isValid() && material.handle.isValid()) {
 				Ref<Material> matInstance = AssetManager::get<Material>(material.handle);
+				if (!matInstance) continue;
 				Mat4 worldTransform = getWorldTransform({entity, this});
 
 				ObjectBuffer objData;
@@ -323,7 +324,8 @@ namespace Axion {
 
 		// ----- Render Skybox -----
 		if (m_skyboxHandle.isValid()) {
-			AssetManager::get<Skybox>(m_skyboxHandle)->onUpdate(ts);
+			Ref<Skybox> skybox = AssetManager::get<Skybox>(m_skyboxHandle);
+			if (skybox) skybox->onUpdate(ts);
 		}
 
 		// -- Main Scene Pass --

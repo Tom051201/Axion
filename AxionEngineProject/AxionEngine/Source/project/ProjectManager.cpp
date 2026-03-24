@@ -109,6 +109,20 @@ namespace Axion {
 		s_managerData->loadProjectRequest = true;
 	}
 
+	void ProjectManager::loadRuntimeProject(const std::string& configFilePath) {
+		s_managerData->isRuntime = true;
+
+		Ref<Project> runtimeProject = Project::loadBinary(configFilePath);
+		if (runtimeProject) {
+			setProject(runtimeProject);
+			s_managerData->projectPath = configFilePath;
+			AX_CORE_LOG_INFO("Runtime Project Loaded: {}", runtimeProject->getName());
+		}
+		else {
+			AX_CORE_LOG_ERROR("Failed to bootstrap Runtime Project!");
+		}
+	}
+
 	void ProjectManager::saveProject(const std::string& filePath) {
 		s_managerData->toSaveProjectPath = filePath;
 		s_managerData->saveProjectRequest = true;

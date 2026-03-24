@@ -322,11 +322,42 @@ namespace Axion {
 		out << YAML::EndMap; // Entity
 	}
 
-	void SceneSerializer::serializeText(const std::string& absoluteFilePath) {
+	void SceneSerializer::serializeText(const std::string& absoluteFilePath, bool autoRegister) {
+		// ----- Register Scene to Asset Registry -----
+		UUID sceneUUID = UUID(0, 0);
+		if (autoRegister) {
+			std::string relPath = AssetManager::getRelativeToAssets(absoluteFilePath);
+			auto registry = ProjectManager::getProject()->getAssetRegistry();
+
+			for (const auto& [uuid, metadata] : registry->getMap()) {
+				if (metadata.filePath.string() == relPath) {
+					sceneUUID = uuid;
+					break;
+				}
+			}
+
+			// -- If not found --
+			if (!sceneUUID.isValid()) {
+				sceneUUID = UUID::generate();
+				AssetMetadata metadata;
+				metadata.handle = sceneUUID;
+				metadata.type = AssetType::Scene;
+				metadata.filePath = relPath;
+				registry->add(metadata);
+
+				std::string registryPath = (std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string();
+				registry->serialize(registryPath);
+				AX_CORE_LOG_INFO("Registered new Scene in AssetRegistry: {}", relPath);
+			}
+		}
+
+		// ----- Serialize to YAML -----
 		YAML::Emitter out;
 		out << YAML::BeginMap;
-
-		// -- Scene name --
+		
+		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_SCENE;
+		out << YAML::Key << "UUID" << YAML::Value << sceneUUID.toString();
+		out << YAML::Key << "Type" << YAML::Value << "Scene";
 		out << YAML::Key << "Scene" << YAML::Value << m_scene->getTitle();
 
 		// -- Skybox --
@@ -1058,7 +1089,7 @@ namespace Axion {
 		}
 
 		// -- Write Particle System Component --
-		if (entity.hasComponent<ParticleSystem>()) {
+		if (entity.hasComponent<ParticleSystemComponent>()) {
 			ComponentID id = ComponentID::ParticleSystem;
 			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
 			auto& component = entity.getComponent<ParticleSystemComponent>();
@@ -1071,6 +1102,9 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&component.colorBegin), sizeof(Vec4));
 			out.write(reinterpret_cast<const char*>(&component.colorEnd), sizeof(Vec4));
 		}
+
+		ComponentID endID = ComponentID::None;
+		out.write(reinterpret_cast<const char*>(&endID), sizeof(uint16_t));
 	}
 
 	Entity SceneSerializer::deserializeEntityBinary(Scene* scene, std::istream& in, bool generateNewUUID, std::vector<std::pair<Entity, UUID>>& relationshipsToBuild) {

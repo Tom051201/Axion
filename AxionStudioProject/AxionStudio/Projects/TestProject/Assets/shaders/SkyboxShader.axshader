@@ -1,0 +1,9 @@
+Version: 1
+Name: SkyboxShader
+UUID: 80e313b2e7e34d8c467ba4657babf273
+Type: Shader
+Format: .hlsl
+Source: shaders\SkyboxShader.hlsl
+Specification:
+  Name: SkyboxShader
+  BatchTextures: 1

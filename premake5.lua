@@ -31,4 +31,5 @@ group ""
 
 include "AxionEngineProject"
 include "AxionStudioProject"
+include "AxionRuntimeProject"
 include "SandboxProject"

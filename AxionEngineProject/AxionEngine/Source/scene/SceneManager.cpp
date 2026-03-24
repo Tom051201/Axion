@@ -125,7 +125,7 @@ namespace Axion {
 	const std::string& SceneManager::getScenePath() { return s_managerData->scenePath; }
 
 	void SceneManager::setScene(const Ref<Scene>& scene) {
-		s_managerData->scene = scene;
+		s_managerData->scene = scene; // TODO: add safety check like loading has maybe
 
 		AX_CORE_ASSERT(s_managerData->eventCallback, "Invalid event callback for scene manager");
 		SceneChangedEvent ev;

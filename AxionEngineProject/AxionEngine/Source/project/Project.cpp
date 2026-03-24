@@ -23,7 +23,7 @@ namespace Axion {
 	// LAYOUT
 
 	Project::Project(const std::string& name)
-		: m_name(name), m_projectPath("Unknown"), m_assetsPath("Unknown"), m_scenesPath("Unknown") {
+		: m_name(name), m_projectPath("Unknown"), m_assetsPath("Unknown") {
 	
 		m_assetRegistry = std::make_shared<AssetRegistry>();
 	}
@@ -53,13 +53,53 @@ namespace Axion {
 		// ----- Project-, Assets- and ScenesPath -----
 		project->setProjectPath(std::filesystem::path(path).parent_path().string());
 		if (data["AssetsPath"]) project->setAssetsPath(data["AssetsPath"].as<std::string>());
-		if (data["ScenesPath"]) project->setScenesPath(data["ScenesPath"].as<std::string>());
 
 		// ----- Default scene -----
 		if (data["DefaultScene"]) project->setDefaultScene(data["DefaultScene"].as<std::string>());
 
 		std::string registryPath = (std::filesystem::path(path).parent_path() / "AssetRegistry.yaml").string();
 		project->getAssetRegistry()->deserialize(registryPath);
+
+		return project;
+	}
+
+	Ref<Project> Project::loadBinary(const std::string& path) {
+		std::ifstream in(path, std::ios::in | std::ios::binary);
+		if (!in.is_open()) {
+			AX_CORE_LOG_ERROR("Failed to open binary project config file: {}", path);
+			return nullptr;
+		}
+
+		char magic[4];
+		in.read(magic, 4);
+		if (memcmp(magic, "AXCF", 4) != 0) {
+			AX_CORE_LOG_ERROR("Invalid GameConfig Binary Signature!");
+			return nullptr;
+		}
+
+		uint32_t version;
+		in.read(reinterpret_cast<char*>(&version), sizeof(uint32_t));
+
+		// -- Read Game Name --
+		uint32_t nameLength;
+		in.read(reinterpret_cast<char*>(&nameLength), sizeof(uint32_t));
+		std::string name(nameLength, '\0');
+		in.read(reinterpret_cast<char*>(&name[0]), nameLength);
+
+		// -- Read Default Scene UUID --
+		UUID defaultSceneUUID;
+		in.read(reinterpret_cast<char*>(&defaultSceneUUID), sizeof(UUID));
+
+		in.close();
+		AX_CORE_LOG_INFO("Successfully Loaded GameConfig Binary");
+
+		// -- Construct the Runtime Project --
+		Ref<Project> project = std::make_shared<Project>(name);
+
+		project->setProjectPath(".");
+		project->setAssetsPath(".");
+		project->setDefaultSceneUUID(defaultSceneUUID);
+		project->getAssetRegistry()->deserializeBinary("AssetRegistry.bin");
 
 		return project;
 	}
@@ -78,7 +118,6 @@ namespace Axion {
 
 		out << YAML::Key << "ProjectPath" << YAML::Value << m_projectPath;
 		out << YAML::Key << "AssetsPath" << YAML::Value << m_assetsPath;
-		out << YAML::Key << "ScenesPath" << YAML::Value << m_scenesPath;
 
 		if (!m_defaultScene.empty()) out << YAML::Key << "DefaultScene" << YAML::Value << m_defaultScene;
 
@@ -110,16 +149,11 @@ namespace Axion {
 			fs::path assetsDir = projectDir / "Assets";
 			fs::create_directories(assetsDir);
 
-			// create scenes dir
-			fs::path scenesDir = projectDir / "Scenes";
-			fs::create_directories(scenesDir);
-
 			// setup project
 			result->setName(spec.name);
-			result->setVersion("0.1.0");
+			result->setVersion("0.1.0"); // TODO: make project version configurable
 			result->setEngineVersion(AX_ENGINE_VERSION);
 			result->setProjectPath(projectDir.string());
-			result->setScenesPath(scenesDir.string());
 			result->setAssetsPath(assetsDir.string());
 
 			if (!spec.author.empty()) result->setAuthor(spec.author);

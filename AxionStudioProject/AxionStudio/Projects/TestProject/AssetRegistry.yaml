@@ -1,0 +1,41 @@
+Version: 1
+AssetRegistry:
+  - Handle: 5fadf97116be5f2b1c98f7ceab9d0e6d
+    Type: Mesh
+    FilePath: meshes\Cube.axmesh
+  - Handle: 10772ae23a23f9e599219445f959a875
+    Type: Pipeline
+    FilePath: pipelines\StandardPBR.axpso
+  - Handle: d658f04522df8c9849572f747899eb1f
+    Type: Shader
+    FilePath: shaders\StandardPBR.axshader
+  - Handle: 7fcc07abd245c0d50197cb8eafca936c
+    Type: Texture2D
+    FilePath: textures\MetalnessMap.axtex
+  - Handle: 75aec704c3c6978ab88353dde973d7a0
+    Type: Pipeline
+    FilePath: pipelines\SkyboxPipeline.axpso
+  - Handle: 80e313b2e7e34d8c467ba4657babf273
+    Type: Shader
+    FilePath: shaders\SkyboxShader.axshader
+  - Handle: 6680d61b99d17b237cdd60fc7dea4763
+    Type: Texture2D
+    FilePath: textures\BlueSkybox.axtex
+  - Handle: 0cdbb9426844f8653f6abb0a0456fa55
+    Type: Skybox
+    FilePath: skybox\BlueSkybox.axsky
+  - Handle: e0bdc0bb0491787acef9e9a7a368a19f
+    Type: Texture2D
+    FilePath: textures\RoughnessMap.axtex
+  - Handle: 4b521285aab87a184ba58d4902fe0080
+    Type: Texture2D
+    FilePath: textures\NormalMap.axtex
+  - Handle: f7d101cf298235faf376b28919cd25fd
+    Type: Texture2D
+    FilePath: textures\AlbedoMap.axtex
+  - Handle: d8e7846ca068eb85d5589647caca498e
+    Type: Material
+    FilePath: materials\BlueMetal.axmat
+  - Handle: 9aef0bf32ef1db92ea489cb3b1a938da
+    Type: Scene
+    FilePath: scenes\TestScene.axscene

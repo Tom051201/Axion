@@ -61,7 +61,7 @@ namespace Axion {
 
 		// ----- Draw ContentBrowser -----
 		float cellSize = m_thumbnailSize + padding;
-		float panelWidth = ImGui::GetContentRegionAvail().x - 200.0f;
+		float panelWidth = ImGui::GetContentRegionAvail().x;
 		panelWidth = std::max(0.0f, panelWidth);
 		int colCount = (int)(panelWidth / cellSize);
 		if (colCount < 1) { colCount = 1; }
@@ -105,12 +105,27 @@ namespace Axion {
 				}
 				else {
 					// -- Clicked on file --
+					// TODO: load scene
+				}
+			}
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+				if (item.isDir) {
+					m_pendingNavigate = m_currentDirectory / path.filename();
+				}
+				else if (path.extension() == ".axscene") {
+					SceneManager::loadScene(path.string());
 				}
 			}
 
-
 			// -- Draw options on right click --
 			if (ImGui::BeginPopupContextItem(filenameString.c_str())) {
+				// -- Scene only --
+				if (item.path.string().find(".axscene") != std::string::npos) {
+					if (ImGui::MenuItem("Set as Default Scene")) {
+						ProjectManager::getProject()->setDefaultScene(path.string());
+					}
+				}
+
 				// -- Shader only --
 				if (item.path.string().find(".axshader") != std::string::npos) {
 					if (ImGui::MenuItem("Recompile")) {
@@ -160,7 +175,7 @@ namespace Axion {
 				const std::string itemPath = rel.string();
 				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath.c_str(), itemPath.size() + 1);
 				void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
-				ImGui::Image((ImTextureID)texID, { 30.0f, 30.0f }, { 0, 1 }, { 1, 0 });
+				ImGui::Image((ImTextureID)texID, { 30.0f, 30.0f });
 				ImGui::EndDragDropSource();
 			}
 
@@ -230,31 +245,6 @@ namespace Axion {
 		}
 		ImGui::Columns(1);
 		ImGui::EndChild();	// ContentBrowserChild end
-
-
-		// ---- Vertical separator -----
-		ImGui::SameLine();
-		ImGui::InvisibleButton("vspe", ImVec2(1, ImGui::GetContentRegionAvail().y));
-		if (ImGui::IsItemVisible()) {
-			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			ImVec2 p0 = ImGui::GetItemRectMin();
-			ImVec2 p1 = ImGui::GetItemRectMax();
-			drawList->AddLine(p0, p1, ImGui::GetColorU32(ImGuiCol_Separator));
-		}
-		ImGui::SameLine();
-
-
-		// ----- Scenes overview -----
-		ImGui::SameLine();
-		ImGui::BeginChild("ScenesChild", ImVec2(200.0f, ImGui::GetContentRegionAvail().y));	// ScenesChild begin
-		ImGui::Text("Scenes");
-		ImGui::Separator();
-
-		for (const auto& child : m_scenesRootNode.children) {
-			drawSceneNode(child);
-		}
-
-		ImGui::EndChild();	// ScenesChild end
 
 
 		// ----- Execute renaming after the loop -----
@@ -386,7 +376,8 @@ namespace Axion {
 			ext == ".axtex" ||
 			ext == ".axpmat" ||
 			ext == ".axprefab" ||
-			ext == ".axpso";
+			ext == ".axpso" ||
+			ext == ".axscene";
 	}
 
 	void ContentBrowserPanel::deletePath(const std::filesystem::path& path) {
@@ -487,9 +478,6 @@ namespace Axion {
 			}
 			m_currentDirectory = m_rootDirectory;
 
-			// -- Scenes overview --
-			m_scenesDirectory = ProjectManager::getProject()->getScenesPath();
-
 			refresh();
 		}
 		else {
@@ -522,110 +510,8 @@ namespace Axion {
 		}
 	}
 
-	void ContentBrowserPanel::refreshScenes() {
-		if (std::filesystem::exists(m_scenesDirectory)) {
-			m_scenesRootNode = scanSceneFolder(m_scenesDirectory);
-		}
-		else {
-			m_scenesRootNode = {};
-		}
-	}
-
-	ContentBrowserPanel::SceneNode ContentBrowserPanel::scanSceneFolder(const std::filesystem::path& folderPath) {
-		SceneNode node;
-		node.name = folderPath.filename().string();
-		node.path = folderPath;
-		node.isFolder = true;
-
-		std::error_code ec;
-		for (auto& entry : std::filesystem::directory_iterator(folderPath, std::filesystem::directory_options::skip_permission_denied, ec)) {
-			if (ec) { ec.clear(); continue; }
-
-			SceneNode child;
-			if (entry.is_directory(ec)) {
-				child = scanSceneFolder(entry.path());
-			}
-			else if (entry.is_regular_file(ec) && entry.path().extension() == ".axscene") {
-				child.name = entry.path().filename().stem().string();
-				child.path = entry.path();
-				child.isFolder = false;
-			}
-			else continue;
-
-			node.children.push_back(std::move(child));
-		}
-
-		return node;
-	}
-
-	void ContentBrowserPanel::drawSceneNode(const SceneNode& node) {
-		ImVec2 iconSize{ 16, 16 };
-		float verticalSpacing = 2.0f;
-
-		if (node.isFolder) {
-			ImGui::PushID(node.path.string().c_str());
-
-			// -- Icon --
-			void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("FolderIcon"));
-			ImGui::Image((ImTextureID)texID, iconSize);
-			ImGui::SameLine();
-
-			if (ImGui::TreeNodeEx(node.name.c_str(), ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth)) {
-				// -- Spacing --
-				ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
-
-				// -- Draw children --
-				for (const auto& child : node.children) {
-					drawSceneNode(child);
-				}
-				ImGui::TreePop();
-			}
-
-			ImGui::PopID();
-
-			// -- Spacing --
-			ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
-		}
-		else {
-			void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("FileIcon"));
-			ImGui::Image((ImTextureID)texID, iconSize);
-			ImGui::SameLine();
-			bool isTheSame = node.path.string() == SceneManager::getScenePath();
-			if (ImGui::Selectable(node.name.c_str(), isTheSame)) {
-				if (!isTheSame) SceneManager::loadScene(node.path.string());
-			}
-
-
-			// -- Draw options on right click --
-			if (ImGui::BeginPopupContextItem(node.name.c_str())) {
-				// -- Show in explorer button --
-				if (ImGui::MenuItem("Show in Explorer")) {
-					PlatformUtils::showInFileExplorer(node.path.string());
-				}
-
-				if (ImGui::MenuItem("Set as default Scene")) {
-					ProjectManager::getProject()->setDefaultScene(node.path.string());
-				}
-
-				// -- Deleting --
-				ImGui::Separator();
-				if (ImGui::MenuItem("Delete")) {
-					m_pendingDelete = node.path;
-					m_openDeletePopup = true;
-				}
-
-				ImGui::EndPopup();
-			}
-
-
-			// -- Spacing --
-			ImGui::Dummy(ImVec2(0.0f, verticalSpacing));
-		}
-	}
-
 	void ContentBrowserPanel::refresh() {
 		refreshDirectory();
-		refreshScenes();
 	}
 
 }

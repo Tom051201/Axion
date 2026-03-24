@@ -17,6 +17,7 @@ namespace Axion {
 
 		static void newProject(const ProjectSpecification& spec);
 		static void loadProject(const std::string& filePath);
+		static void loadRuntimeProject(const std::string& configFilePath = "GameConfig.axbin");
 		static void saveProject(const std::string& filePath);
 		static void unloadProject();
 

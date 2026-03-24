@@ -236,7 +236,8 @@ namespace Axion {
 			case KeyCode::S: {
 				// -- Ctrl + Shift + S (Save As) --
 				if (controlPressed && shiftPressed) {
-					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} });
+					std::string defaultPath = ProjectManager::getProject()->getAssetsPath();
+					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, defaultPath);
 					if (!path.empty()) SceneManager::saveScene(path);
 				}
 
@@ -813,7 +814,7 @@ namespace Axion {
 
 		std::string tempPath = "AxionStudio/Config/TempScene.axscene";
 		SceneSerializer serializer(m_editorScene);
-		serializer.serializeText(tempPath);
+		serializer.serializeText(tempPath, false);
 
 		m_activeScene = std::make_shared<Scene>();
 		SceneSerializer deserializer(m_activeScene);
@@ -832,7 +833,7 @@ namespace Axion {
 
 		std::string tempPath = "AxionStudio/Config/TempScene.axscene";
 		SceneSerializer serializer(m_editorScene);
-		serializer.serializeText(tempPath);
+		serializer.serializeText(tempPath, false);
 
 		m_activeScene = std::make_shared<Scene>();
 		SceneSerializer deserializer(m_activeScene);

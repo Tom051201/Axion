@@ -1,0 +1,6 @@
+Version: 1
+Name: BlueSkybox
+UUID: 6680d61b99d17b237cdd60fc7dea4763
+Type: TextureCube
+Format: PNG
+Source: skybox\Skybox_1.png

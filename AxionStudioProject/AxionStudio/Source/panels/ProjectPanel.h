@@ -28,7 +28,6 @@ namespace Axion {
 		std::filesystem::path m_rootDirectory;
 		std::filesystem::path m_projectFileRelative;
 		std::filesystem::path m_assetsRelative;
-		std::filesystem::path m_scenesRelative;
 
 		bool onProjectChanged(ProjectChangedEvent& e);
 

@@ -128,6 +128,7 @@ namespace Axion {
 			ImGui::TableSetColumnIndex(1);
 			ImGui::DragFloat3("##GlobalGravDrag", m_activeScene->getGravity().data(), 0.0f);
 
+
 			ImGui::EndTable();
 		}
 

@@ -230,6 +230,17 @@ namespace Axion::AAP {
 					PrefabParser::createBinaryFile(prefabData, runtimeAbsolutePath.string());
 					break;
 				}
+				case AssetType::Scene: {
+					Ref<Scene> scene = std::make_shared<Scene>();
+					SceneSerializer serializer(scene);
+					if (serializer.deserializeText(inPath.string())) {
+						serializer.serializeBinary(runtimeAbsolutePath.string());
+					}
+					else {
+						AX_CORE_LOG_ERROR("Failed to bake scene {}", inPath.string());
+					}
+					break;
+				}
 				default: {
 					AX_CORE_LOG_WARN("Asset Type not supported for packaging yet: {}", AssetRegistry::assetTypeToString(metadata.type));
 					break;
@@ -248,6 +259,41 @@ namespace Axion::AAP {
 		runtimeRegistry.serializeBinary(registryOutputPath);
 
 		AX_CORE_LOG_INFO("Asset Packaging Complete!");
+
+		std::string configPath = (std::filesystem::path(outputDirectory) / "GameConfig.axbin").string();
+		std::ofstream outConfig(configPath, std::ios::out | std::ios::binary);
+
+		if (outConfig.is_open()) {
+			// -- Write Header --
+			char magic[4] = { 'A', 'X', 'C', 'F' };
+			outConfig.write(magic, 4);
+			uint32_t version = 1; // TODO: create central field
+			outConfig.write(reinterpret_cast<const char*>(&version), sizeof(uint32_t));
+
+			// -- Write Game Name --
+			std::string projectName = project->getName();
+			uint32_t nameLength = static_cast<uint32_t>(projectName.size());
+			outConfig.write(reinterpret_cast<const char*>(&nameLength), sizeof(uint32_t));
+			outConfig.write(projectName.data(), nameLength);
+
+			// -- Write Default Scene UUID --
+			UUID defaultSceneUUID = UUID(0, 0);
+			std::string defaultScenePath = project->getDefaultScene();
+			if (!defaultScenePath.empty()) {
+				std::string normalizedPath = AssetManager::getRelativeToAssets(AssetManager::getAbsolute(defaultScenePath));
+				for (const auto& [uuid, metadata] : inRegistry->getMap()) {
+					if (metadata.filePath.string() == normalizedPath) {
+						defaultSceneUUID = uuid;
+						break;
+					}
+				}
+			}
+			outConfig.write(reinterpret_cast<const char*>(&defaultSceneUUID), sizeof(UUID));
+
+			outConfig.close();
+			AX_CORE_LOG_INFO("Baked GameConfig.axbin");
+		}
+
 	}
 
 	std::filesystem::path AssetPackager::getRuntimePath(const std::filesystem::path& inPath) {

@@ -11,7 +11,7 @@ namespace Axion {
 
 		SceneSerializer(const Ref<Scene>& scene);
 
-		void serializeText(const std::string& filePath);
+		void serializeText(const std::string& filePath, bool autoRegister = true);
 		void serializeBinary(const std::string& filePath);
 		
 		bool deserializeText(const std::string& filePath);
