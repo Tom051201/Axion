@@ -2,6 +2,7 @@
 #include "Material.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/render/Renderer.h"
 
 // TODO: TEMP
@@ -9,9 +10,13 @@
 
 namespace Axion {
 
+	Material::Material(const std::string& name, const MaterialProperties& properties)
+		: m_name(name), m_properties(properties) {
+		m_materialBuffer = ConstantBuffer::create(sizeof(MaterialProperties));
+	}
+
 	Material::Material(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties)
 		: m_name(name), m_pipelineHandle(pipelineHandle), m_properties(properties) {
-
 		m_materialBuffer = ConstantBuffer::create(sizeof(MaterialProperties));
 	}
 
@@ -24,8 +29,13 @@ namespace Axion {
 	}
 
 	void Material::bind() {
-		// -- Pipeline --
-		Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(m_pipelineHandle);
+		Ref<Pipeline> pipeline;
+		if (m_pipelineHandle.isValid()) {
+			pipeline = AssetManager::get<Pipeline>(m_pipelineHandle);
+		}
+		else {
+			pipeline = EngineAssets::getStandardPBRPipeline();
+		}
 		if (!pipeline) return;
 
 		pipeline->bind();
@@ -55,7 +65,7 @@ namespace Axion {
 
 		// -- Textures --
 		std::array<Ref<Texture2D>, 16> textureBatch = {};
-		Ref<Texture2D> whiteTex = Renderer::getWhiteFallbackTexture();
+		Ref<Texture2D> whiteTex = EngineAssets::getWhiteTexture();
 
 		for (uint32_t i = 0; i < 16; i++) {
 			textureBatch[i] = whiteTex;
@@ -75,7 +85,10 @@ namespace Axion {
 	void Material::unbind() {}
 
 	bool Material::isValid() const {
-		return AssetManager::get<Pipeline>(m_pipelineHandle) != nullptr;
+		if (m_pipelineHandle.isValid()) {
+			return AssetManager::get<Pipeline>(m_pipelineHandle) != nullptr;
+		}
+		return EngineAssets::getStandardPBRPipeline() != nullptr;
 	}
 
 	void Material::setTexture(TextureSlot slot, const AssetHandle<Texture2D>& texture) {
@@ -109,6 +122,10 @@ namespace Axion {
 			return it->second;
 		}
 		return AssetHandle<Texture2D>();
+	}
+
+	Ref<Material> Material::create(const std::string& name, const MaterialProperties& properties) {
+		return std::make_shared<Material>(name, properties);
 	}
 
 	Ref<Material> Material::create(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties) {

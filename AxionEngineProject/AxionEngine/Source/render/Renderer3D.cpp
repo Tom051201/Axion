@@ -4,16 +4,12 @@
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/core/AssetManager.h"
-
-#include "AxionEngine/Resources/shaders/ShadowMap_VS.h"
-#include "AxionEngine/Resources/shaders/ShadowMap_PS.h"
+#include "AxionEngine/Source/core/EngineAssets.h"
 
 namespace Axion {
 
 	static Ref<VertexBuffer> s_instanceVertexBuffer;
 	constexpr uint32_t MAX_INSTANCES = 10000;
-	static Ref<Pipeline> s_shadowPipeline;
-	static Ref<Shader> s_shadowShader;
 
 	void Renderer3D::initialize() {
 		s_instanceVertexBuffer = VertexBuffer::createDynamic(MAX_INSTANCES * sizeof(ObjectBuffer), sizeof(ObjectBuffer));
@@ -25,47 +21,11 @@ namespace Axion {
 			{ "ROW", ShaderDataType::Float4, false, true }
 		});
 
-		// -- Setup Shadow Map Shader and Pipeline --
-		ShaderSpecification shaderSpec;
-		shaderSpec.name = "ShadowMap";
-		shaderSpec.batchTextures = 0;
-		s_shadowShader = Shader::create(shaderSpec);
-		s_shadowShader->loadFromBytecode(
-			g_ShadowMap_VS, sizeof(g_ShadowMap_VS),
-			g_ShadowMap_PS, sizeof(g_ShadowMap_PS)
-		);
-		PipelineSpecification pipeSpec;
-		pipeSpec.shader = s_shadowShader;
-		pipeSpec.numRenderTargets = 0;
-		pipeSpec.colorFormat = ColorFormat::RED_INTEGER;
-		pipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
-		pipeSpec.depthTest = true;
-		pipeSpec.depthWrite = true;
-		pipeSpec.depthFunction = DepthCompare::Less;
-		pipeSpec.stencilEnabled = false;
-		pipeSpec.sampleCount = 1;
-		pipeSpec.cullMode = CullMode::Front;
-		pipeSpec.topology = PrimitiveTopology::TriangleList;
-		pipeSpec.vertexLayout = {
-			{ "POSITION",	ShaderDataType::Float3 },
-			{ "NORMAL",		ShaderDataType::Float3 },
-			{ "TANGENT",	ShaderDataType::Float3 },
-			{ "TEXCOORD",	ShaderDataType::Float2 },
-			{ "COLOR",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true }
-		};
-		s_shadowPipeline = Pipeline::create(pipeSpec);
-
 		AX_CORE_LOG_TRACE("Renderer3D initialized");
 	}
 
 	void Renderer3D::shutdown() {
 		s_instanceVertexBuffer->release();
-		s_shadowShader->release();
-		s_shadowPipeline->release();
 
 		AX_CORE_LOG_TRACE("Renderer3D shutdown");
 	}
@@ -131,7 +91,7 @@ namespace Axion {
 
 	void Renderer3D::drawMeshInstancedShadow(Ref<Mesh>& mesh, const std::vector<ObjectBuffer>& instanceData) {
 		if (instanceData.empty()) return;
-		Ref<Pipeline> shadowPipeline = s_shadowPipeline;
+		Ref<Pipeline> shadowPipeline = EngineAssets::getShadowPipeline();
 		if (!shadowPipeline) return;
 
 		shadowPipeline->bind();

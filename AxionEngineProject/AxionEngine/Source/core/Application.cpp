@@ -2,6 +2,7 @@
 #include "Application.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
@@ -30,6 +31,11 @@ namespace Axion {
 		Renderer::setAPI(RendererAPI::DirectX12);
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
+		EngineAssets::initialize();
+
+		Renderer2D::initialize();
+		Renderer3D::initialize();
+
 		AudioManager::initialize();
 		PhysicsSystem::initialize();
 
@@ -54,6 +60,10 @@ namespace Axion {
 		AudioManager::shutdown();
 		PhysicsSystem::shutdown();
 
+		Renderer3D::shutdown();
+		Renderer2D::shutdown();
+
+		EngineAssets::shutdown();
 		Renderer::shutdown();
 
 		ScriptEngine::shutdown();

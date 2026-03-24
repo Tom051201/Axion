@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/core/BinaryHeaders.h"
+#include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
@@ -279,11 +280,17 @@ namespace Axion {
 					in.read(reinterpret_cast<char*>(&header), sizeof(SkyboxBinaryHeader));
 
 					AssetHandle<TextureCube> texHandle = AssetManager::load<TextureCube>(header.textureCubeUUID);
-					AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(header.pipelineUUID);
+					if (header.pipelineUUID.isValid()) {
+						AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(header.pipelineUUID);
+						return std::make_shared<Skybox>(texHandle, pipeHandle);
+					}
+					else {
+						return std::make_shared<Skybox>(texHandle);
+					}
 
-					return std::make_shared<Skybox>(texHandle, pipeHandle);
+					
 				}
-				});
+			});
 			storage<Skybox>().handleToPath[handle] = absolutePath;
 			return handle;
 		}
@@ -296,14 +303,22 @@ namespace Axion {
 		if (version == ASSET_VERSION_SKYBOX) {
 
 			UUID texUUID = data["TextureCube"].as<UUID>();
-			UUID pipeUUID = data["Pipeline"].as<UUID>();
+			UUID pipeUUID = UUID(0, 0);
+			if (data["Pipeline"]) {
+				pipeUUID = data["Pipeline"].as<UUID>();
+			}
 
 			storage<Skybox>().assets[handle] = nullptr;
 			storage<Skybox>().loadQueue.push_back({ handle,
 				[texUUID, pipeUUID]() {
 					AssetHandle<TextureCube> texHandle = AssetManager::load<TextureCube>(texUUID);
-					AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(pipeUUID);
-					return std::make_shared<Skybox>(texHandle, pipeHandle);
+					if (pipeUUID.isValid()) {
+						AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(pipeUUID);
+						return std::make_shared<Skybox>(texHandle, pipeHandle);
+					}
+					else {
+						return std::make_shared<Skybox>(texHandle);
+					}
 				}
 			});
 			storage<Skybox>().handleToPath[handle] = absolutePath;
@@ -581,8 +596,14 @@ namespace Axion {
 					MaterialBinaryHeader header;
 					in.read(reinterpret_cast<char*>(&header), sizeof(MaterialBinaryHeader));
 
-					AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(header.pipelineUUID);
-					Ref<Material> material = Material::create("", pipelineHandle, header.properties);
+					Ref<Material> material;
+					if (header.pipelineUUID.isValid()) {
+						AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(header.pipelineUUID);
+						material = Material::create("", pipelineHandle, header.properties);
+					}
+					else {
+						material = Material::create("", header.properties);
+					}
 
 					for (uint32_t i = 0; i < header.textureCount; i++) {
 						uint32_t slotInt;
@@ -622,9 +643,16 @@ namespace Axion {
 			prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
 			prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
 
-			UUID pipelineUUID = data["Pipeline"].as<UUID>();
-			AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(pipelineUUID);
-			Ref<Material> material = Material::create(name, pipelineHandle, prop);
+			Ref<Material> material;
+			UUID pipelineUUID = UUID(0, 0);
+			if (data["Pipeline"]) {
+				pipelineUUID = data["Pipeline"].as<UUID>();
+				AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(pipelineUUID);
+				material = Material::create(name, pipelineHandle, prop);
+			}
+			else {
+				material = Material::create(name, prop);
+			}
 
 			if (data["Textures"]) {
 				auto textures = data["Textures"];

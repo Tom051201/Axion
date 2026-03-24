@@ -85,7 +85,6 @@ namespace Axion {
 		static double getFrameTimeMs() { return s_lastFrameTimeMs; }
 		static void bindTextures(const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex = 2);
 
-		static const Ref<Texture2D>& getWhiteFallbackTexture();
 		static Ref<Texture2D> getShadowMap();
 
 		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
@@ -103,7 +102,6 @@ namespace Axion {
 		static RendererStats s_stats;
 		static FrameTimer s_frameTimer;
 		static double s_lastFrameTimeMs;
-		static Ref<Texture2D> s_whiteFallbackTexture;
 		static std::function<void(Event&)> s_eventCallback;
 		static uint32_t s_sceneDataOffset;
 		static Ref<Texture2D> s_shadowMapTexture;

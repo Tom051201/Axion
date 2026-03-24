@@ -2,6 +2,7 @@
 #include "Renderer2D.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Texture.h"
@@ -197,7 +198,7 @@ namespace Axion {
 
 
 		// -- Slot 0 = white fallback --
-		s_data.textureSlots[0] = Renderer::getWhiteFallbackTexture();
+		s_data.textureSlots[0] = EngineAssets::getWhiteTexture();
 
 
 		s_initialized = true;

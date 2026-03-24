@@ -1,0 +1,178 @@
+#include "axpch.h"
+#include "EngineAssets.h"
+
+#include "AxionEngine/Resources/shaders/ShadowMap_VS.h"
+#include "AxionEngine/Resources/shaders/ShadowMap_PS.h"
+#include "AxionEngine/Resources/shaders/Skybox_VS.h"
+#include "AxionEngine/Resources/shaders/Skybox_PS.h"
+#include "AxionEngine/Resources/shaders/StandardPBR_VS.h"
+#include "AxionEngine/Resources/shaders/StandardPBR_PS.h"
+
+namespace Axion {
+
+	Ref<Texture2D> EngineAssets::s_whiteTexture = nullptr;
+	Ref<Texture2D> EngineAssets::s_errorTexture = nullptr;
+	Ref<Mesh> EngineAssets::s_cubeMesh = nullptr;
+	Ref<Pipeline> EngineAssets::s_skyboxPipeline = nullptr;
+	Ref<Pipeline> EngineAssets::s_shadowPipeline = nullptr;
+	Ref<Pipeline> EngineAssets::s_standardPBRPipeline = nullptr;
+	Ref<Shader> EngineAssets::s_skyboxShader = nullptr;
+	Ref<Shader> EngineAssets::s_shadowShader = nullptr;
+	Ref<Shader> EngineAssets::s_standardPBRShader = nullptr;
+
+	void EngineAssets::initialize() {
+		// -- White Texture --
+		uint32_t whiteTextureData = 0xffffffff;
+		s_whiteTexture = Texture2D::create(1, 1, &whiteTextureData);
+
+		// -- Error Texture --
+		uint32_t errorTextureData[4] = { 0xffff00ff, 0xff000000, 0xff000000, 0xffff00ff };
+		s_errorTexture = Texture2D::create(2, 2, &errorTextureData);
+
+		// -- Cube Mesh --
+		std::vector<Vertex> vertices = {
+			{ -0.5,  0.5, -0.5 },
+			{ -0.5, -0.5, -0.5 },
+			{  0.5, -0.5, -0.5 },
+			{  0.5,  0.5, -0.5 },
+			{ -0.5,  0.5,  0.5 },
+			{ -0.5, -0.5,  0.5 },
+			{  0.5, -0.5,  0.5 },
+			{  0.5,  0.5,  0.5 }
+		};
+		std::vector<uint32_t> indices = {
+			// Back face		// Front face
+			0, 1, 2,			4, 7, 6,
+			2, 3, 0,			6, 5, 4,
+
+			// Left face		// Right face
+			4, 5, 1,			3, 2, 6,
+			1, 0, 4,			6, 7, 3,
+
+			// Top face			// Bottom face
+			4, 0, 3,			1, 5, 6,
+			3, 7, 4,			6, 2, 1
+		};
+		s_cubeMesh = Mesh::create(vertices, indices);
+
+		// -- Shadow Shader --
+		ShaderSpecification shadowShaderSpec;
+		shadowShaderSpec.name = "ShadowMap";
+		shadowShaderSpec.batchTextures = 0;
+		s_shadowShader = Shader::create(shadowShaderSpec);
+		s_shadowShader->loadFromBytecode(
+			g_ShadowMap_VS, sizeof(g_ShadowMap_VS),
+			g_ShadowMap_PS, sizeof(g_ShadowMap_PS)
+		);
+
+		// -- Shadow Pipeline --
+		PipelineSpecification shadowPipeSpec;
+		shadowPipeSpec.shader = s_shadowShader;
+		shadowPipeSpec.numRenderTargets = 0;
+		shadowPipeSpec.colorFormat = ColorFormat::RED_INTEGER;
+		shadowPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		shadowPipeSpec.depthTest = true;
+		shadowPipeSpec.depthWrite = true;
+		shadowPipeSpec.depthFunction = DepthCompare::Less;
+		shadowPipeSpec.stencilEnabled = false;
+		shadowPipeSpec.sampleCount = 1;
+		shadowPipeSpec.cullMode = CullMode::Front;
+		shadowPipeSpec.topology = PrimitiveTopology::TriangleList;
+		shadowPipeSpec.vertexLayout = {
+			{ "POSITION",	ShaderDataType::Float3 },
+			{ "NORMAL",		ShaderDataType::Float3 },
+			{ "TANGENT",	ShaderDataType::Float3 },
+			{ "TEXCOORD",	ShaderDataType::Float2 },
+			{ "COLOR",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true }
+		};
+		s_shadowPipeline = Pipeline::create(shadowPipeSpec);
+
+		// -- Skybox Shader --
+		ShaderSpecification skyboxShaderSpec;
+		skyboxShaderSpec.name = "SkyboxShader";
+		skyboxShaderSpec.batchTextures = 1;
+		s_skyboxShader = Shader::create(skyboxShaderSpec);
+		s_skyboxShader->loadFromBytecode(
+			g_Skybox_VS, sizeof(g_Skybox_VS),
+			g_Skybox_PS, sizeof(g_Skybox_PS)
+		);
+
+		// -- Skybox Pipeline --
+		PipelineSpecification skyboxPipeSpec;
+		skyboxPipeSpec.shader = s_skyboxShader;
+		skyboxPipeSpec.numRenderTargets = 1;
+		skyboxPipeSpec.colorFormat = ColorFormat::RGBA8;
+		skyboxPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		skyboxPipeSpec.depthTest = true;
+		skyboxPipeSpec.depthWrite = false;
+		skyboxPipeSpec.depthFunction = DepthCompare::LessEqual;
+		skyboxPipeSpec.stencilEnabled = false;
+		skyboxPipeSpec.sampleCount = 1;
+		skyboxPipeSpec.cullMode = CullMode::Back;
+		skyboxPipeSpec.topology = PrimitiveTopology::TriangleList;
+		skyboxPipeSpec.vertexLayout = {
+			{ "POSITION",	ShaderDataType::Float3 }
+		};
+		s_skyboxPipeline = Pipeline::create(skyboxPipeSpec);
+
+		// -- Standard PBR Shader --
+		ShaderSpecification standardPBRShaderSpec;
+		standardPBRShaderSpec.name = "StandardPBRShader";
+		standardPBRShaderSpec.batchTextures = 16;
+		s_standardPBRShader = Shader::create(standardPBRShaderSpec);
+		s_standardPBRShader->loadFromBytecode(
+			g_StandardPBR_VS, sizeof(g_StandardPBR_VS),
+			g_StandardPBR_PS, sizeof(g_StandardPBR_PS)
+		);
+
+		// -- Standard PBR Pipeline --
+		PipelineSpecification standardPBRPipeSpec;
+		standardPBRPipeSpec.shader = s_standardPBRShader;
+		standardPBRPipeSpec.numRenderTargets = 1;
+		standardPBRPipeSpec.colorFormat = ColorFormat::RGBA8;
+		standardPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		standardPBRPipeSpec.depthTest = true;
+		standardPBRPipeSpec.depthWrite = true;
+		standardPBRPipeSpec.depthFunction = DepthCompare::Less;
+		standardPBRPipeSpec.stencilEnabled = false;
+		standardPBRPipeSpec.sampleCount = 1;
+		standardPBRPipeSpec.cullMode = CullMode::Back;
+		standardPBRPipeSpec.topology = PrimitiveTopology::TriangleList;
+		standardPBRPipeSpec.vertexLayout = {
+			{ "POSITION",	ShaderDataType::Float3 },
+			{ "NORMAL",		ShaderDataType::Float3 },
+			{ "TANGENT",	ShaderDataType::Float3 },
+			{ "TEXCOORD",	ShaderDataType::Float2 },
+			{ "COLOR",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true },
+			{ "ROW",		ShaderDataType::Float4, false, true },
+		};
+		s_standardPBRPipeline = Pipeline::create(standardPBRPipeSpec);
+
+		AX_CORE_LOG_INFO("Engine Assets initialized");
+	}
+
+	void EngineAssets::shutdown() {
+		s_whiteTexture->release();
+		s_errorTexture->release();
+
+		s_cubeMesh->release();
+
+		s_skyboxShader->release();
+		s_shadowShader->release();
+		s_standardPBRShader->release();
+
+		s_skyboxPipeline->release();
+		s_shadowPipeline->release();
+		s_standardPBRPipeline->release();
+
+		AX_CORE_LOG_INFO("Engine Assets shutdown");
+	}
+
+}

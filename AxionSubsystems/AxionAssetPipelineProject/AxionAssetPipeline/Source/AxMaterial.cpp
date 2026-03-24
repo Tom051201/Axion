@@ -43,8 +43,10 @@ namespace Axion::AAP {
 		}
 		out << YAML::EndMap;
 
-		UUID pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelineAsset));
-		out << YAML::Key << "Pipeline" << YAML::Value << pipelineUUID.toString();
+		if (!data.pipelineAsset.empty()) {
+			UUID pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelineAsset));
+			out << YAML::Key << "Pipeline" << YAML::Value << pipelineUUID.toString();
+		}
 
 		out << YAML::EndMap;
 
@@ -66,7 +68,12 @@ namespace Axion::AAP {
 		header.assetHeader.uuid = data.uuid;
 		header.assetHeader.version = ASSET_VERSION_MATERIAL;
 		header.properties = data.properties;
-		header.pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelineAsset));
+		if (!data.pipelineAsset.empty()) {
+			header.pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelineAsset));
+		}
+		else {
+			header.pipelineUUID = UUID(0, 0);
+		}
 		header.textureCount = static_cast<uint32_t>(data.textures.size());
 		out.write(reinterpret_cast<const char*>(&header), sizeof(MaterialBinaryHeader));
 

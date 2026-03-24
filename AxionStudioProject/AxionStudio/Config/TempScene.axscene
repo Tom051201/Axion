@@ -1,3 +1,6 @@
+Version: 1
+UUID: 00000000000000000000000000000000
+Type: Scene
 Scene: TestScene
 Skybox: 0cdbb9426844f8653f6abb0a0456fa55
 Entities:

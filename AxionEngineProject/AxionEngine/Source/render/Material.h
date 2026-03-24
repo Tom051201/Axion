@@ -14,6 +14,7 @@ namespace Axion {
 	class Material {
 	public:
 
+		Material(const std::string& name, const MaterialProperties& properties);
 		Material(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties);
 		~Material();
 
@@ -37,11 +38,13 @@ namespace Axion {
 		AssetHandle<Texture2D> getTexture(TextureSlot slot) const;
 
 		const std::string& getName() const { return m_name; }
+		void setPipeline(const AssetHandle<Pipeline>& handle) { m_pipelineHandle = handle; }
 		AssetHandle<Pipeline> getPipelineHandle() const { return m_pipelineHandle; }
 
 		void setProperties(const MaterialProperties& properties) { m_properties = properties; }
 		void clearTextures() { m_textures.clear(); m_dirty = true; }
 
+		static Ref<Material> create(const std::string& name, const MaterialProperties& properties = {});
 		static Ref<Material> create(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties = {});
 
 	private:

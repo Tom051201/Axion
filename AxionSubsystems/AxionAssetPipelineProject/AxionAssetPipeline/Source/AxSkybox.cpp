@@ -16,8 +16,11 @@ namespace Axion::AAP {
 		UUID textureUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.textureCubePath));
 		out << YAML::Key << "TextureCube" << YAML::Value << textureUUID.toString();
 
-		UUID pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelinePath));
-		out << YAML::Key << "Pipeline" << YAML::Value << pipelineUUID.toString();
+		if (!data.pipelinePath.empty()) {
+			UUID pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelinePath));
+			out << YAML::Key << "Pipeline" << YAML::Value << pipelineUUID.toString();
+		}
+
 		out << YAML::EndMap;
 
 		std::ofstream fout(outputPath);
@@ -33,7 +36,12 @@ namespace Axion::AAP {
 		header.assetHeader.uuid = data.uuid;
 		header.assetHeader.version = ASSET_VERSION_SKYBOX;
 		header.textureCubeUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.textureCubePath));
-		header.pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelinePath));
+		if (!data.pipelinePath.empty()) {
+			header.pipelineUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.pipelinePath));
+		}
+		else {
+			header.pipelineUUID = UUID(0, 0);
+		}
 		out.write(reinterpret_cast<const char*>(&header), sizeof(SkyboxBinaryHeader));
 
 		out.close();

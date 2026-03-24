@@ -1,6 +1,7 @@
 #include "axpch.h"
 #include "D12Context.h"
 
+#include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/render/SwapChainSpecification.h"
 #include "AxionEngine/Source/render/Renderer.h"
 
@@ -200,7 +201,7 @@ namespace Axion {
 			Ref<Texture2D> tex = (i < count && textures[i]) ? textures[i] : nullptr;
 
 			if (!tex && textures[0]) tex = textures[0];
-			if (!tex) tex = Renderer::getWhiteFallbackTexture();
+			if (!tex) tex = EngineAssets::getWhiteTexture();
 
 			auto srcHandle = m_stagingSrvHeap.getCpuHandle(tex->getSrvHeapIndex());
 			auto destHandle = m_gpuSrvHeap.getCpuHandle(batchStartOffset + i);

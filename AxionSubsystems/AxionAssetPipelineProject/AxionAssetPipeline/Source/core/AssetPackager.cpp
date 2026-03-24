@@ -72,10 +72,16 @@ namespace Axion::AAP {
 					matData.properties.useRoughnessMap = data["UseRoughnessMap"].as<float>();
 					matData.properties.useOcclusionMap = data["UseOcclusionMap"].as<float>();
 					
-					UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
 					auto registry = ProjectManager::getProject()->getAssetRegistry();
-					if (registry->contains(pipeUUID)) {
-						matData.pipelineAsset = registry->get(pipeUUID).filePath.string();
+
+					if (data["Pipeline"]) {
+						UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
+						if (registry->contains(pipeUUID)) {
+							matData.pipelineAsset = registry->get(pipeUUID).filePath.string();
+						}
+					}
+					else {
+						matData.pipelineAsset = "";
 					}
 
 					if (data["Textures"]) {
@@ -180,8 +186,16 @@ namespace Axion::AAP {
 					skyData.name = data["Name"].as<std::string>();
 
 					auto registry = ProjectManager::getProject()->getAssetRegistry();
-					UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
-					if (registry->contains(pipeUUID)) skyData.pipelinePath = registry->get(pipeUUID).filePath.string();
+
+					if (data["Pipeline"]) {
+						UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
+						if (registry->contains(pipeUUID)) {
+							skyData.pipelinePath = registry->get(pipeUUID).filePath.string();
+						}
+					}
+					else {
+						skyData.pipelinePath = "";
+					}
 
 					UUID texUUID = UUID::fromString(data["TextureCube"].as<std::string>());
 					if (registry->contains(texUUID)) skyData.textureCubePath = registry->get(texUUID).filePath.string();

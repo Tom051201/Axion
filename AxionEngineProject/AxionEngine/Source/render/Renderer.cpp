@@ -15,7 +15,7 @@ namespace Axion {
 	RendererStats Renderer::s_stats;
 	FrameTimer Renderer::s_frameTimer;
 	double Renderer::s_lastFrameTimeMs = 0.0;
-	Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
+	//Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
 	std::function<void(Event&)> Renderer::s_eventCallback;
 	uint32_t Renderer::s_sceneDataOffset = 0;
 	Ref<Texture2D> Renderer::s_shadowMapTexture = nullptr;
@@ -83,15 +83,8 @@ namespace Axion {
 
 		s_eventCallback = eventCallback;
 
-		// white texture creation
-		s_whiteFallbackTexture = Texture2D::create(32, 32, nullptr);
-
 		// shadow map texture
 		s_shadowMapTexture = DepthTexture::create(2048, 2048);
-
-		// setup renderer
-		Renderer2D::initialize();
-		Renderer3D::initialize();
 
 		AX_CORE_LOG_INFO("Renderer initialized");
 	}
@@ -101,10 +94,6 @@ namespace Axion {
 		s_sceneUploadBuffer->release();
 
 		s_shadowMapTexture->release();
-		s_whiteFallbackTexture->release();
-
-		Renderer3D::shutdown();
-		Renderer2D::shutdown();
 
 		GraphicsContext::get()->shutdown();
 		AX_CORE_LOG_INFO("Renderer shutdown");
@@ -269,10 +258,6 @@ namespace Axion {
 			//	if (textures[i]) textures[i]->bind(i);
 			//}
 		}
-	}
-
-	const Ref<Texture2D>& Renderer::getWhiteFallbackTexture() {
-		return s_whiteFallbackTexture;
 	}
 
 	Ref<Texture2D> Renderer::getShadowMap() {
