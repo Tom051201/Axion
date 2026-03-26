@@ -1,6 +1,7 @@
 #include "Texture2DImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -11,15 +12,6 @@
 namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
-
-	Texture2DImportModal::Texture2DImportModal(const char* name) : Modal(name) {}
-
-	Texture2DImportModal::~Texture2DImportModal() {}
-
-	void Texture2DImportModal::close() {
-		Modal::close();
-		clearBuffers();
-	}
 
 	void Texture2DImportModal::renderContent() {
 		ImGui::SeparatorText("Import Texture2D Asset");
@@ -37,7 +29,7 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##Tex2DName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##Tex2DName_input", &m_name);
 
 
 			// -- Type --
@@ -56,15 +48,18 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##Tex2DSourcePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
+			ImGui::InputText("##Tex2DSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##Tex2DSourceFile_button")) {
+			if (ImGui::Button("Browse...##Tex2DSourceFile_button")) {
 				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, tex2dDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
-					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(tex2dDir)) {
+					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, tex2dDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_sourcePath = absPath;
 			}
 
 
@@ -74,56 +69,78 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##Tex2DOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##Tex2DOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##Tex2DOutputDir_button")) {
+			if (ImGui::Button("Browse...##Tex2DOutputDir_button")) {
 				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFolder(tex2dDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
-					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(tex2dDir)) {
+					absPath = FileDialogs::openFolder(tex2dDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_outputPath = absPath;
 			}
 
 			ImGui::EndTable();
 
 			// -- Validate input --
-			std::filesystem::path sourceFilePath = std::string(m_sourcePathBuffer);
-			bool validSource = std::filesystem::exists(sourceFilePath);
+			std::string finalName = m_name + ".axtex";
+			std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
-			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axtex"));
+			bool sourceExists = std::filesystem::exists(m_sourcePath);
+			bool sourceIsFile = std::filesystem::is_regular_file(m_sourcePath);
+			bool outputExists = std::filesystem::exists(m_outputPath);
+			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
+			bool invalidOutFileName = std::filesystem::exists(finalPath);
 
 			bool disabled = (
-				strlen(m_nameBuffer) == 0 ||
-				strlen(m_sourcePathBuffer) == 0 ||
-				strlen(m_outputPathBuffer) == 0 ||
-				!validSource ||
-				!validOutputPath ||
-				!validOutputFile
-			);
+				m_name.empty() ||
+				m_sourcePath.empty() ||
+				m_outputPath.empty() ||
+				!sourceExists ||
+				!sourceIsFile ||
+				!outputExists ||
+				!outputIsDirectory ||
+				invalidOutFileName
+				);
+
+			if (disabled) {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
+				if (m_name.empty()) ImGui::Text("No Name is set.");
+				else if (m_sourcePath.empty()) ImGui::Text("No source file is set.");
+				else if (m_outputPath.empty()) ImGui::Text("No output directory is set.");
+				else if (!sourceExists) ImGui::Text("Source file does not exist.");
+				else if (!sourceIsFile) ImGui::Text("Source is not a file.");
+				else if (!outputExists) ImGui::Text("Output directory does not exist.");
+				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
+				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				ImGui::PopStyleColor();
+			}
+			else {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255));
+				ImGui::Text("Ready to create asset.");
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
-				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axtex");
-
 				UUID newAssetUUID = UUID::generate();
 
 				AAP::Texture2DAssetData data;
 				data.uuid = newAssetUUID;
-				data.name = m_nameBuffer;
+				data.name = m_name;
 				data.fileFormat = m_types[m_importType];
-				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
-				AAP::Texture2DParser::createTextFile(data, outFile.string());
+				AAP::Texture2DParser::createTextFile(data, finalPath.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Texture2D;
-				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
@@ -139,10 +156,10 @@ namespace Axion {
 		}
 	}
 
-	void Texture2DImportModal::clearBuffers() {
-		m_nameBuffer[0] = '\0';
-		m_sourcePathBuffer[0] = '\0';
-		m_outputPathBuffer[0] = '\0';
+	void Texture2DImportModal::resetInputs() {
+		m_name.clear();
+		m_sourcePath.clear();
+		m_outputPath.clear();
 		m_importType = 0;
 	}
 

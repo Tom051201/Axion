@@ -1,6 +1,7 @@
 #include "MeshImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -12,38 +13,24 @@ namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
 
-	MeshImportModal::MeshImportModal(const char* name) : Modal(name) {}
-
-	MeshImportModal::~MeshImportModal() {}
-
-	void MeshImportModal::close() {
-		Modal::close();
-		clearBuffers();
-	}
-
 	void MeshImportModal::presetFromFile(const std::filesystem::path& sourceFile) {
-		clearBuffers();
+		resetInputs();
 
 		// -- Source Path --
-		std::string abs = sourceFile.string();
-		strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), abs.c_str());
+		m_sourcePath = sourceFile.string();
 
 		// -- Default output folder --
 		auto meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
-		strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), meshDir.string().c_str());
+		m_outputPath = meshDir.string();
 
 		// -- Default name --
-		std::string name = sourceFile.stem().string();
-		strcpy_s(m_nameBuffer, IM_ARRAYSIZE(m_nameBuffer), name.c_str());
+		m_name = sourceFile.stem().string();
 
 		// -- Type --
 		std::string typeStr = sourceFile.extension().string();
-		if (typeStr == ".obj") {
-			m_importType = 0;
-		}
-		else {
-			AX_CORE_LOG_WARN("Unable to identify automatically type of mesh");
-		}
+		std::transform(typeStr.begin(), typeStr.end(), typeStr.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (typeStr == ".obj") m_importType = 0;
+		else AX_CORE_LOG_WARN("Unable to identify automatically type of mesh");
 	}
 
 	void MeshImportModal::renderContent() {
@@ -63,7 +50,7 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MeshName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##MeshName_input", &m_name);
 
 
 			// -- Type --
@@ -82,15 +69,18 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MeshSourcePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
+			ImGui::InputText("##MeshSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##MeshSourceFile_button")) {
+			if (ImGui::Button("Browse...##MeshSourceFile_button")) {
 				std::filesystem::path meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
-				std::string absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, meshDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
-					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(meshDir)) {
+					absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, meshDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_sourcePath = absPath;
 			}
 
 
@@ -100,56 +90,78 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MeshOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##MeshOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##MeshOutputDir_button")) {
+			if (ImGui::Button("Browse...##MeshOutputDir_button")) {
 				std::filesystem::path meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
-				std::string absPath = FileDialogs::openFolder(meshDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
-					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(meshDir)) {
+					absPath = FileDialogs::openFolder(meshDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_outputPath = absPath;
 			}
 
 			ImGui::EndTable();
 
 			// -- Validate input --
-			std::filesystem::path sourceFilePath = std::string(m_sourcePathBuffer);
-			bool validSource = std::filesystem::exists(sourceFilePath);
+			std::string finalName = m_name + ".axmesh";
+			std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
-			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axmesh"));
+			bool sourceExists = std::filesystem::exists(m_sourcePath);
+			bool sourceIsFile = std::filesystem::is_regular_file(m_sourcePath);
+			bool outputExists = std::filesystem::exists(m_outputPath);
+			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
+			bool invalidOutFileName = std::filesystem::exists(finalPath);
 
 			bool disabled = (
-				strlen(m_nameBuffer) == 0 ||
-				strlen(m_sourcePathBuffer) == 0 ||
-				strlen(m_outputPathBuffer) == 0 ||
-				!validSource ||
-				!validOutputPath ||
-				!validOutputFile
+				m_name.empty() ||
+				m_sourcePath.empty() ||
+				m_outputPath.empty() ||
+				!sourceExists ||
+				!sourceIsFile ||
+				!outputExists ||
+				!outputIsDirectory ||
+				invalidOutFileName
 			);
+
+			if (disabled) {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
+				if (m_name.empty()) ImGui::Text("No Name is set.");
+				else if (m_sourcePath.empty()) ImGui::Text("No source file is set.");
+				else if (m_outputPath.empty()) ImGui::Text("No output directory is set.");
+				else if (!sourceExists) ImGui::Text("Source file does not exist.");
+				else if (!sourceIsFile) ImGui::Text("Source is not a file.");
+				else if (!outputExists) ImGui::Text("Output directory does not exist.");
+				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
+				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				ImGui::PopStyleColor();
+			}
+			else {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255));
+				ImGui::Text("Ready to create asset.");
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
-				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axmesh");
-
 				UUID newAssetUUID = UUID::generate();
 
 				AAP::MeshAssetData data;
 				data.uuid = newAssetUUID;
-				data.name = m_nameBuffer;
+				data.name = m_name;
 				data.fileFormat = m_types[m_importType];
-				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
-				AAP::MeshParser::createTextFile(data, outFile.string());
+				AAP::MeshParser::createTextFile(data, finalPath.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Mesh;
-				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
@@ -166,10 +178,10 @@ namespace Axion {
 
 	}
 
-	void MeshImportModal::clearBuffers() {
-		m_nameBuffer[0] = '\0';
-		m_sourcePathBuffer[0] = '\0';
-		m_outputPathBuffer[0] = '\0';
+	void MeshImportModal::resetInputs() {
+		m_name.clear();
+		m_sourcePath.clear();
+		m_outputPath.clear();
 		m_importType = 0;
 	}
 

@@ -4,28 +4,27 @@
 
 #include "AxionStudio/Source/core/Modal.h"
 
+#include <string>
+
 namespace Axion {
 
 	class ShaderImportModal : public Modal {
 	public:
 
-		ShaderImportModal(const char* name);
-		~ShaderImportModal() override;
-
-		void close() override;
+		ShaderImportModal(const char* name) : Modal(name) {}
+		~ShaderImportModal() override = default;
 
 	private:
 
 		void renderContent() override;
+		void resetInputs() override;
 
-		void clearBuffers();
-
-		char m_nameBuffer[128] = "";
-		char m_sourcePathBuffer[256] = "";
-		char m_outputPathBuffer[256] = "";
+		std::string m_name;
+		std::string m_sourcePath;
+		std::string m_outputPath;
 
 		int m_formatIndex = 0;
-		const char* m_formats[2] = { ".hlsl", ".glsl" };
+		const char* m_formats[2] = { "HLSL", "GLSL" };
 
 		int m_batchTexturesCount = 1;
 

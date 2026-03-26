@@ -2,27 +2,26 @@
 
 #include "AxionStudio/Source/core/Modal.h"
 
+#include <string>
+
 namespace Axion {
 
 	class CreateProjectModal : public Modal {
 	public:
 
-		CreateProjectModal(const char* name);
-		~CreateProjectModal();
-
-		void close() override;
+		CreateProjectModal(const char* name) : Modal(name) {}
+		~CreateProjectModal() override = default;
 
 	private:
 
 		void renderContent() override;
+		void resetInputs() override;
 
-		void clearBuffers();
-
-		char m_nameBuffer[256] = "";
-		char m_locationBuffer[256] = "";
-		char m_authorBuffer[256] = "";
-		char m_companyBuffer[256] = "";
-		char m_descriptionBuffer[256] = "";
+		std::string m_name;
+		std::string m_outputPath;
+		std::string m_author;
+		std::string m_company;
+		std::string m_description;
 
 	};
 

@@ -3,30 +3,29 @@
 #include "AxionStudio/Source/core/Modal.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 
+#include <string>
+
 namespace Axion {
 
 	class AudioImportModal : public Modal {
 	public:
 
-		AudioImportModal(const char* name);
-		~AudioImportModal() override;
-
-		void close() override;
+		AudioImportModal(const char* name) : Modal(name) {}
+		~AudioImportModal() override = default;
 
 		void presetFromFile(const std::filesystem::path& sourceFile);
 
 	private:
 
 		void renderContent() override;
+		void resetInputs() override;
 
-		void clearBuffers();
-
-		char m_nameBuffer[128] = "";
-		char m_sourcePathBuffer[256] = "";
-		char m_outputPathBuffer[256] = "";
+		std::string m_name;
+		std::string m_sourcePath;
+		std::string m_outputPath;
 
 		int m_importFormat = 0;
-		const char* m_formatNames[2] = { "MP3", "WAV" };
+		const char* m_formatNames[3] = { "MP3", "WAV", "OGG" };
 
 		int m_loadType = 0;
 		AudioClip::Mode m_types[2] = { AudioClip::Mode::Stream, AudioClip::Mode::Memory };

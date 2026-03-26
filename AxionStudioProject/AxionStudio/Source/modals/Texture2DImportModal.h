@@ -2,25 +2,25 @@
 
 #include "AxionStudio/Source/core/Modal.h"
 
+#include <string>
+
 namespace Axion {
 
 	class Texture2DImportModal : public Modal {
 	public:
 
-		Texture2DImportModal(const char* name);
-		~Texture2DImportModal() override;
-
-		void close() override;
+		Texture2DImportModal(const char* name) : Modal(name) {}
+		~Texture2DImportModal() override = default;
 
 	private:
 
 		void renderContent() override;
+		void resetInputs() override;
 
-		void clearBuffers();
 
-		char m_nameBuffer[128] = "";
-		char m_sourcePathBuffer[256] = "";
-		char m_outputPathBuffer[256] = "";
+		std::string m_name;
+		std::string m_sourcePath;
+		std::string m_outputPath;
 
 		int m_importType = 0;
 		const char* m_types[1] = { "PNG" };

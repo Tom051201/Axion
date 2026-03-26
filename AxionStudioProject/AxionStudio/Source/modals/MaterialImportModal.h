@@ -4,25 +4,24 @@
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/render/MaterialData.h"
 
+#include <string>
+
 namespace Axion {
 
 	class MaterialImportModal : public Modal {
 	public:
 
-		MaterialImportModal(const char* name);
-		~MaterialImportModal() override;
-
-		void close() override;
+		MaterialImportModal(const char* name) : Modal(name) {}
+		~MaterialImportModal() override = default;
 
 	private:
 
 		void renderContent() override;
+		void resetInputs() override;
 
-		void clearBuffers();
-
-		char m_nameBuffer[128] = "";
-		char m_sourcePathBuffer[256] = "";
-		char m_outputPathBuffer[256] = "";
+		std::string m_name;
+		std::string m_pipelinePath;
+		std::string m_outputPath;
 
 		Vec4 m_albedoColor = Vec4::one();
 		float m_metalness = 0.0f;
@@ -30,12 +29,12 @@ namespace Axion {
 		float m_emission = 0.0f;
 		float m_tiling = 0.0f;
 
-		char m_albedoMapPathBuffer[256] = "";
-		char m_normalMapPathBuffer[256] = "";
-		char m_metalnessMapPathBuffer[256] = "";
-		char m_roughnessMapPathBuffer[256] = "";
-		char m_occlusionMapPathBuffer[256] = "";
-		char m_emissiveMapPathBuffer[256] = "";
+		std::string m_albedoMapPath;
+		std::string m_normalMapPath;
+		std::string m_metalnessMapPath;
+		std::string m_roughnessMapPath;
+		std::string m_occlusionMapPath;
+		std::string m_emissiveMapPath;
 
 	};
 

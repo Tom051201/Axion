@@ -27,6 +27,8 @@ namespace Axion {
 		colors[ImGuiCol_MenuBarBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);
 		colors[ImGuiCol_TitleBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);
 		colors[ImGuiCol_TitleBgActive] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);
+		colors[ImGuiCol_PopupBg] = ImVec4(0.076f, 0.076f, 0.088f, 1.0f);
+		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.65f);
 
 		// -- RED BLACK RELEASE I THEME --
 		if (theme == Theme::RedBlack) {

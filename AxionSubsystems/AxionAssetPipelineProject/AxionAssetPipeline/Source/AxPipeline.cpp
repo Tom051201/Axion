@@ -34,6 +34,7 @@ namespace Axion::AAP {
 			out << YAML::Key << "Type" << YAML::Value << EnumUtils::toString(elem.type);
 			out << YAML::Key << "Size" << YAML::Value << elem.size;
 			out << YAML::Key << "Offset" << YAML::Value << elem.offset;
+			out << YAML::Key << "Normalized" << YAML::Value << elem.normalized;
 			out << YAML::Key << "Instanced" << YAML::Value << elem.instanced;
 			out << YAML::EndMap;
 		}
@@ -83,9 +84,11 @@ namespace Axion::AAP {
 
 			uint32_t type = static_cast<uint32_t>(elem.type);
 			uint8_t instanced = elem.instanced ? 1 : 0;
+			uint8_t normalized = elem.normalized ? 1 : 0;
 			out.write(reinterpret_cast<const char*>(&type), sizeof(uint32_t));
 			out.write(reinterpret_cast<const char*>(&elem.size), sizeof(uint32_t));
 			out.write(reinterpret_cast<const char*>(&elem.offset), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&normalized), sizeof(uint8_t));
 			out.write(reinterpret_cast<const char*>(&instanced), sizeof(uint8_t));
 		}
 

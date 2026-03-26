@@ -1,6 +1,7 @@
 #include "AudioImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -13,29 +14,18 @@ namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
 
-	AudioImportModal::AudioImportModal(const char* name) : Modal(name) {}
-
-	AudioImportModal::~AudioImportModal() {}
-
-	void AudioImportModal::close() {
-		Modal::close();
-		clearBuffers();
-	}
-
 	void AudioImportModal::presetFromFile(const std::filesystem::path& sourceFile) {
-		clearBuffers();
+		resetInputs();
 
 		// -- Source Path --
-		std::string abs = sourceFile.string();
-		strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), abs.c_str());
+		m_sourcePath = sourceFile.string();
 
 		// -- Default output folder --
 		auto audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
-		strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), audioDir.string().c_str());
+		m_outputPath = audioDir.string();
 
 		// -- Default name --
-		std::string name = sourceFile.stem().string();
-		strcpy_s(m_nameBuffer, IM_ARRAYSIZE(m_nameBuffer), name.c_str());
+		m_name = sourceFile.stem().string();
 
 		// -- Load type --
 		AudioFileInfo fileInfo;
@@ -50,15 +40,11 @@ namespace Axion {
 
 		// -- Format --
 		std::string formatStr = sourceFile.extension().string();
-		if (formatStr == ".mp3") {
-			m_importFormat = 0;
-		}
-		else if (formatStr == ".wav") {
-			m_importFormat = 1;
-		}
-		else {
-			AX_CORE_LOG_WARN("Unable to identify automatically format of audio");
-		}
+		std::transform(formatStr.begin(), formatStr.end(), formatStr.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (formatStr == ".mp3") m_importFormat = 0;
+		else if (formatStr == ".wav") m_importFormat = 1;
+		else if (formatStr == ".ogg") m_importFormat = 2;
+		else AX_CORE_LOG_WARN("Unable to identify automatically format of audio");
 	}
 
 	void AudioImportModal::renderContent() {
@@ -77,7 +63,7 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##AudioName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##AudioName_input", &m_name);
 
 
 			// -- Format --
@@ -105,15 +91,18 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##AudioSourcePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
+			ImGui::InputText("##AudioSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##AudioSourceFile_button")) {
+			if (ImGui::Button("Browse...##AudioSourceFile_button")) {
 				std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
-				std::string absPath = FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
-					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(audioDir)) {
+					absPath = FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_sourcePath = absPath;
 			}
 
 
@@ -123,57 +112,79 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##AudioOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##AudioOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##AudioOutputDir_button")) {
+			if (ImGui::Button("Browse...##AudioOutputDir_button")) {
 				std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
-				std::string absPath = FileDialogs::openFolder(audioDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
-					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(audioDir)) {
+					absPath = FileDialogs::openFolder(audioDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_outputPath = absPath;
 			}
 
 			ImGui::EndTable();
 
 			// -- Validate input --
-			std::filesystem::path sourceFilePath = std::string(m_sourcePathBuffer);
-			bool validSource = std::filesystem::exists(sourceFilePath);
+			std::string finalName = m_name + ".axaudio";
+			std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
-			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axaudio"));
+			bool sourceExists = std::filesystem::exists(m_sourcePath);
+			bool sourceIsFile = std::filesystem::is_regular_file(m_sourcePath);
+			bool outputExists = std::filesystem::exists(m_outputPath);
+			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
+			bool invalidOutFileName = std::filesystem::exists(finalPath);
 
 			bool disabled = (
-				strlen(m_nameBuffer) == 0 ||
-				strlen(m_sourcePathBuffer) == 0 ||
-				strlen(m_outputPathBuffer) == 0 ||
-				!validSource ||
-				!validOutputPath ||
-				!validOutputFile
+				m_name.empty() ||
+				m_sourcePath.empty() ||
+				m_outputPath.empty() ||
+				!sourceExists ||
+				!sourceIsFile ||
+				!outputExists ||
+				!outputIsDirectory ||
+				invalidOutFileName
 			);
+
+			if (disabled) {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
+				if (m_name.empty()) ImGui::Text("No Name is set.");
+				else if (m_sourcePath.empty()) ImGui::Text("No source file is set.");
+				else if (m_outputPath.empty()) ImGui::Text("No output directory is set.");
+				else if (!sourceExists) ImGui::Text("Source file does not exist.");
+				else if (!sourceIsFile) ImGui::Text("Source is not a file.");
+				else if (!outputExists) ImGui::Text("Output directory does not exist.");
+				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
+				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				ImGui::PopStyleColor();
+			}
+			else {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255));
+				ImGui::Text("Ready to create asset.");
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
-				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axaudio");
-
 				UUID newAssetUUID = UUID::generate();
 
 				AAP::AudioAssetData data;
 				data.uuid = newAssetUUID;
-				data.name = m_nameBuffer;
+				data.name = m_name;
 				data.fileFormat = m_formatNames[m_importFormat];
-				data.audioFilePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.audioFilePath = AssetManager::getRelativeToAssets(m_sourcePath);
 				data.mode = m_types[m_loadType];
 
-				AAP::AudioParser::createTextFile(data, outFile.string());
+				AAP::AudioParser::createTextFile(data, finalPath.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::AudioClip;
-				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
@@ -189,10 +200,10 @@ namespace Axion {
 		}
 	}
 
-	void AudioImportModal::clearBuffers() {
-		m_nameBuffer[0] = '\0';
-		m_sourcePathBuffer[0] = '\0';
-		m_outputPathBuffer[0] = '\0';
+	void AudioImportModal::resetInputs() {
+		m_name.clear();
+		m_sourcePath.clear();
+		m_outputPath.clear();
 		m_loadType = 0;
 		m_importFormat = 0;
 	}

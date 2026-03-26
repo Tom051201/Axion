@@ -1,6 +1,7 @@
 #include "PhysicsMaterialImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -11,15 +12,6 @@
 namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
-
-	PhysicsMaterialImportModal::PhysicsMaterialImportModal(const char* name) : Modal(name) {}
-
-	PhysicsMaterialImportModal::~PhysicsMaterialImportModal() {}
-
-	void PhysicsMaterialImportModal::close() {
-		Modal::close();
-		clearBuffers();
-	}
 
 	void PhysicsMaterialImportModal::renderContent() {
 		ImGui::SeparatorText("Import Physics Material Asset");
@@ -36,7 +28,7 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##PhyMatName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##PhyMatName_input", &m_name);
 
 
 			// -- Static Friction --
@@ -45,16 +37,16 @@ namespace Axion {
 			ImGui::Text("Static Friction");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::DragFloat("##staticFric_drag", &m_staticFriction, 0.05f, 0.0f, 1.0f);
+			ImGui::DragFloat("##staticFric_drag", &m_staticFriction, 0.05f, 0.0f, 10.0f);
 
 
-			// -- Dyanamic Friction --
+			// -- Dynamic Friction --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Dynamic Friction");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::DragFloat("##dynamicFric_drag", &m_dynamicFriction, 0.05f, 0.0f, 1.0f);
+			ImGui::DragFloat("##dynamicFric_drag", &m_dynamicFriction, 0.05f, 0.0f, 10.0f);
 
 
 			// -- Restitution --
@@ -73,52 +65,71 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##PhyMatOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##PhyMatOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##PhyMatOutputDir_button")) {
+			if (ImGui::Button("Browse...##PhyMatOutputDir_button")) {
 				std::filesystem::path phymatDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
-				std::string absPath = FileDialogs::openFolder(phymatDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
-					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(phymatDir)) {
+					absPath = FileDialogs::openFolder(phymatDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_outputPath = absPath;
 			}
 
 			ImGui::EndTable();
 
 			// -- Validate input --
-			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
-			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axpmat"));
+			std::string finalName = m_name + ".axpmat";
+			std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+
+			bool outputExists = std::filesystem::exists(m_outputPath);
+			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
+			bool invalidOutFileName = std::filesystem::exists(finalPath);
 
 			bool disabled = (
-				strlen(m_nameBuffer) == 0 ||
-				strlen(m_outputPathBuffer) == 0 ||
-				!validOutputPath ||
-				!validOutputFile
+				m_name.empty() ||
+				m_outputPath.empty() ||
+				!outputExists ||
+				!outputIsDirectory ||
+				invalidOutFileName
 			);
+
+			if (disabled) {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
+				if (m_name.empty())ImGui::Text("Name needs to be set.");
+				else if (m_outputPath.empty()) ImGui::Text("No output directory is set.");
+				else if (!outputExists) ImGui::Text("Output directory does not exist.");
+				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
+				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				ImGui::PopStyleColor();
+			}
+			else {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255));
+				ImGui::Text("Ready to create asset.");
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
-				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axpmat");
-
 				UUID newAssetUUID = UUID::generate();
 
 				AAP::PhysicsMaterialAssetData data;
 				data.uuid = newAssetUUID;
-				data.name = m_nameBuffer;
+				data.name = m_name;
 				data.staticFriction = m_staticFriction;
 				data.dynamicFriction = m_dynamicFriction;
 				data.restitution = m_restitution;
 
-				AAP::PhysicsMaterialParser::createTextFile(data, outFile.string());
+				AAP::PhysicsMaterialParser::createTextFile(data, finalPath.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::PhysicsMaterial;
-				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
@@ -135,9 +146,9 @@ namespace Axion {
 		}
 	}
 
-	void PhysicsMaterialImportModal::clearBuffers() {
-		m_nameBuffer[0] = '\0';
-		m_outputPathBuffer[0] = '\0';
+	void PhysicsMaterialImportModal::resetInputs() {
+		m_name.clear();
+		m_outputPath.clear();
 		m_staticFriction = 0.5f;
 		m_dynamicFriction = 0.5f;
 		m_restitution = 0.05f;

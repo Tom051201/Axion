@@ -39,6 +39,7 @@ namespace Axion {
 	void Modal::close() {
 		m_open = false;
 		ImGui::CloseCurrentPopup();
+		resetInputs();
 	}
 
 }

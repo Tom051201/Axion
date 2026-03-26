@@ -2,25 +2,24 @@
 
 #include "AxionStudio/Source/core/Modal.h"
 
+#include <string>
+
 namespace Axion {
 
 	class TextureCubeImportModal : public Modal {
 	public:
 
-		TextureCubeImportModal(const char* name);
-		~TextureCubeImportModal() override;
-
-		void close() override;
+		TextureCubeImportModal(const char* name) : Modal(name) {}
+		~TextureCubeImportModal() override = default;
 
 	private:
 
 		void renderContent() override;
+		void resetInputs() override;
 
-		void clearBuffers();
-
-		char m_nameBuffer[128] = "";
-		char m_sourcePathBuffer[256] = "";
-		char m_outputPathBuffer[256] = "";
+		std::string m_name;
+		std::string m_sourcePath;
+		std::string m_outputPath;
 
 		int m_importType = 0;
 		const char* m_types[1] = { "PNG" };

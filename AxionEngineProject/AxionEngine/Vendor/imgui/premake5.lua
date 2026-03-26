@@ -25,7 +25,9 @@ project "ImGui"
 		"backends/imgui_impl_opengl3_loader.h",
 		"backends/imgui_impl_win32.cpp",
 		"backends/imgui_impl_dx12.cpp",
-		"backends/imgui_impl_opengl3.cpp"
+		"backends/imgui_impl_opengl3.cpp",
+		"misc/cpp/imgui_stdlib.h",
+		"misc/cpp/imgui_stdlib.cpp"
 	}
 
 	includedirs {

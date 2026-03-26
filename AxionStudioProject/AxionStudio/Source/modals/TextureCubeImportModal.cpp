@@ -1,6 +1,7 @@
 #include "TextureCubeImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -12,20 +13,11 @@ namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
 
-	TextureCubeImportModal::TextureCubeImportModal(const char* name) : Modal(name) {}
-
-	TextureCubeImportModal::~TextureCubeImportModal() {}
-
-	void TextureCubeImportModal::close() {
-		Modal::close();
-		clearBuffers();
-	}
-
 	void TextureCubeImportModal::renderContent() {
-		ImGui::SeparatorText("Import Texture2D Asset");
+		ImGui::SeparatorText("Import TextureCube Asset");
 		ImGui::Spacing();
 
-		if (ImGui::BeginTable("##ImportTex2DTable", 2, ImGuiTableFlags_BordersInnerV)) {
+		if (ImGui::BeginTable("##ImportTexCubeTable", 2, ImGuiTableFlags_BordersInnerV)) {
 			ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
 			ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
 
@@ -37,7 +29,7 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##TexCubeName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##TexCubeName_input", &m_name);
 
 
 			// -- Type --
@@ -56,15 +48,18 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##TexCubeSourcePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
+			ImGui::InputText("##TexCubeSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse##TexCubeSourceFile_button")) {
-				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, tex2dDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
-					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, dir.string()); // TODO: add hdr later
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, ProjectManager::getProject()->getAssetsPath()); // TODO: add hdr later
+				}
+				if (!absPath.empty()) m_sourcePath = absPath;
 			}
 
 
@@ -74,56 +69,78 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##TexCubeOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##TexCubeOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse##TexCubeOutputDir_button")) {
-				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFolder(tex2dDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
-					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFolder(dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_outputPath = absPath;
 			}
 
 			ImGui::EndTable();
 
 			// -- Validate input --
-			std::filesystem::path sourceFilePath = std::string(m_sourcePathBuffer);
-			bool validSource = std::filesystem::exists(sourceFilePath);
+			std::string finalName = m_name + ".axtex"; // TODO: add an .axtcube file extension
+			std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
-			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axtex"));
+			bool sourceExists = std::filesystem::exists(m_sourcePath);
+			bool sourceIsFile = std::filesystem::is_regular_file(m_sourcePath);
+			bool outputExists = std::filesystem::exists(m_outputPath);
+			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
+			bool invalidOutFileName = std::filesystem::exists(finalPath);
 
 			bool disabled = (
-				strlen(m_nameBuffer) == 0 ||
-				strlen(m_sourcePathBuffer) == 0 ||
-				strlen(m_outputPathBuffer) == 0 ||
-				!validSource ||
-				!validOutputPath ||
-				!validOutputFile
-			);
+				m_name.empty() ||
+				m_sourcePath.empty() ||
+				m_outputPath.empty() ||
+				!sourceExists ||
+				!sourceIsFile ||
+				!outputExists ||
+				!outputIsDirectory ||
+				invalidOutFileName
+				);
+
+			if (disabled) {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
+				if (m_name.empty()) ImGui::Text("No Name is set.");
+				else if (m_sourcePath.empty()) ImGui::Text("No source file is set.");
+				else if (m_outputPath.empty()) ImGui::Text("No output directory is set.");
+				else if (!sourceExists) ImGui::Text("Source file does not exist.");
+				else if (!sourceIsFile) ImGui::Text("Source is not a file.");
+				else if (!outputExists) ImGui::Text("Output directory does not exist.");
+				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
+				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				ImGui::PopStyleColor();
+			}
+			else {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255));
+				ImGui::Text("Ready to create asset.");
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
-				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axtex");
-
 				UUID newAssetUUID = UUID::generate();
 
 				AAP::TextureCubeAssetData data;
 				data.uuid = newAssetUUID;
-				data.name = m_nameBuffer;
+				data.name = m_name;
 				data.fileFormat = m_types[m_importType];
-				data.filePath = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
-				AAP::TextureCubeParser::createTextFile(data, outFile.string());
+				AAP::TextureCubeParser::createTextFile(data, finalPath.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
-				metadata.type = AssetType::Texture2D;
-				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+				metadata.type = AssetType::TextureCube;
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
@@ -139,10 +156,10 @@ namespace Axion {
 		}
 	}
 
-	void TextureCubeImportModal::clearBuffers() {
-		m_nameBuffer[0] = '\0';
-		m_sourcePathBuffer[0] = '\0';
-		m_outputPathBuffer[0] = '\0';
+	void TextureCubeImportModal::resetInputs() {
+		m_name.clear();
+		m_sourcePath.clear();
+		m_outputPath.clear();
 		m_importType = 0;
 	}
 

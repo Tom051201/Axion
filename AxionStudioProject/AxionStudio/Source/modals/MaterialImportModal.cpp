@@ -1,6 +1,7 @@
 #include "MaterialImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -11,15 +12,6 @@
 namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
-
-	MaterialImportModal::MaterialImportModal(const char* name) : Modal(name) {}
-
-	MaterialImportModal::~MaterialImportModal() {}
-
-	void MaterialImportModal::close() {
-		Modal::close();
-		clearBuffers();
-	}
 
 	void MaterialImportModal::renderContent() {
 
@@ -37,7 +29,7 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MatName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##MatName_input", &m_name);
 
 
 			// -- AlbedoColor --
@@ -86,57 +78,24 @@ namespace Axion {
 			ImGui::DragFloat("##tiling_drag", &m_tiling, 0.05f, 0.0f, 1.0f);
 
 
-			//// -- Use normal map --
-			//ImGui::TableNextRow();
-			//ImGui::TableSetColumnIndex(0);
-			//ImGui::Text("Use Normal map");
-			//ImGui::TableSetColumnIndex(1);
-			//ImGui::SetNextItemWidth(inputFieldWidth);
-			//ImGui::Checkbox("##useNormal_check", &m_useNormalMap);
-			//
-			//
-			//// -- Use metalness map --
-			//ImGui::TableNextRow();
-			//ImGui::TableSetColumnIndex(0);
-			//ImGui::Text("Use Metalness map");
-			//ImGui::TableSetColumnIndex(1);
-			//ImGui::SetNextItemWidth(inputFieldWidth);
-			//ImGui::Checkbox("##useMetalness_check", &m_useMetalnessMap);
-			//
-			//
-			//// -- Use roughness map --
-			//ImGui::TableNextRow();
-			//ImGui::TableSetColumnIndex(0);
-			//ImGui::Text("Use Roughness map");
-			//ImGui::TableSetColumnIndex(1);
-			//ImGui::SetNextItemWidth(inputFieldWidth);
-			//ImGui::Checkbox("##useRoughness_check", &m_useRoughnessMap);
-			//
-			//
-			//// -- Use occlusion map --
-			//ImGui::TableNextRow();
-			//ImGui::TableSetColumnIndex(0);
-			//ImGui::Text("Use Occlusion map");
-			//ImGui::Separator();
-			//ImGui::TableSetColumnIndex(1);
-			//ImGui::SetNextItemWidth(inputFieldWidth);
-			//ImGui::Checkbox("##useOcclusion_check", &m_useOcclusionMap);
-
 			// -- Albedo Map --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Albedo Map");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##AlbedoMapPath_input", m_albedoMapPathBuffer, sizeof(m_albedoMapPathBuffer));
+			ImGui::InputText("##AlbedoMapPath_input", &m_albedoMapPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##AlbedoMapFile_button")) {
+			if (ImGui::Button("Browse...##AlbedoMapFile_button")) {
 				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_albedoMapPathBuffer, IM_ARRAYSIZE(m_albedoMapPathBuffer), absPath.c_str());
-					m_albedoMapPathBuffer[IM_ARRAYSIZE(m_albedoMapPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_albedoMapPath = absPath;
 			}
 
 			// -- Normal Map --
@@ -145,15 +104,18 @@ namespace Axion {
 			ImGui::Text("Normal Map");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##NormalMapPath_input", m_normalMapPathBuffer, sizeof(m_normalMapPathBuffer));
+			ImGui::InputText("##NormalMapPath_input", &m_normalMapPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##...File_button")) {
+			if (ImGui::Button("Browse...##NormalMapFile_button")) {
 				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_normalMapPathBuffer, IM_ARRAYSIZE(m_normalMapPathBuffer), absPath.c_str());
-					m_normalMapPathBuffer[IM_ARRAYSIZE(m_normalMapPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_normalMapPath = absPath;
 			}
 
 			// -- Metalness Map --
@@ -162,15 +124,18 @@ namespace Axion {
 			ImGui::Text("Metalness Map");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MetalnessMapPath_input", m_metalnessMapPathBuffer, sizeof(m_metalnessMapPathBuffer));
+			ImGui::InputText("##MetalnessMapPath_input", &m_metalnessMapPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##MetalnessMapFile_button")) {
+			if (ImGui::Button("Browse...##MetalnessMapFile_button")) {
 				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_metalnessMapPathBuffer, IM_ARRAYSIZE(m_metalnessMapPathBuffer), absPath.c_str());
-					m_metalnessMapPathBuffer[IM_ARRAYSIZE(m_metalnessMapPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_metalnessMapPath = absPath;
 			}
 
 			// -- Roughness Map --
@@ -179,15 +144,18 @@ namespace Axion {
 			ImGui::Text("Roughness Map");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##RoughnessMapPath_input", m_roughnessMapPathBuffer, sizeof(m_roughnessMapPathBuffer));
+			ImGui::InputText("##RoughnessMapPath_input", &m_roughnessMapPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##RoughnessMapFile_button")) {
+			if (ImGui::Button("Browse...##RoughnessMapFile_button")) {
 				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_roughnessMapPathBuffer, IM_ARRAYSIZE(m_roughnessMapPathBuffer), absPath.c_str());
-					m_roughnessMapPathBuffer[IM_ARRAYSIZE(m_roughnessMapPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_roughnessMapPath = absPath;
 			}
 
 			// -- Occlusion Map --
@@ -196,15 +164,18 @@ namespace Axion {
 			ImGui::Text("Occlusion Map");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##OcclusionMapPath_input", m_occlusionMapPathBuffer, sizeof(m_occlusionMapPathBuffer));
+			ImGui::InputText("##OcclusionMapPath_input", &m_occlusionMapPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##OcclusionMapFile_button")) {
+			if (ImGui::Button("Browse...##OcclusionMapFile_button")) {
 				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_occlusionMapPathBuffer, IM_ARRAYSIZE(m_occlusionMapPathBuffer), absPath.c_str());
-					m_occlusionMapPathBuffer[IM_ARRAYSIZE(m_occlusionMapPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_occlusionMapPath = absPath;
 			}
 
 			// -- Emissive Map --
@@ -214,15 +185,18 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##EmissiveMapPath_input", m_emissiveMapPathBuffer, sizeof(m_emissiveMapPathBuffer));
+			ImGui::InputText("##EmissiveMapPath_input", &m_emissiveMapPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##EmissiveMapFile_button")) {
+			if (ImGui::Button("Browse...##EmissiveMapFile_button")) {
 				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_emissiveMapPathBuffer, IM_ARRAYSIZE(m_emissiveMapPathBuffer), absPath.c_str());
-					m_emissiveMapPathBuffer[IM_ARRAYSIZE(m_emissiveMapPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_emissiveMapPath = absPath;
 			}
 
 			// -- Pipeline path --
@@ -232,15 +206,18 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MatPipelinePath_input", m_sourcePathBuffer, sizeof(m_sourcePathBuffer));
+			ImGui::InputText("##MatPipelinePath_input", &m_pipelinePath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##MatPipelineFile_button")) {
-				std::filesystem::path matDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
-				std::string absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, matDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_sourcePathBuffer, IM_ARRAYSIZE(m_sourcePathBuffer), absPath.c_str());
-					m_sourcePathBuffer[IM_ARRAYSIZE(m_sourcePathBuffer) - 1] = '\0';
+			if (ImGui::Button("Browse...##MatPipelineFile_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_pipelinePath = absPath;
 			}
 
 
@@ -250,48 +227,148 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##MatOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##MatOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##MatOutputDir_button")) {
-				std::filesystem::path matDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "materials";
-				std::string absPath = FileDialogs::openFolder(matDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
-					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
+			if (ImGui::Button("Browse...##MatOutputDir_button")) {
+				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "materials";
+				std::string absPath;
+				if (std::filesystem::exists(dir)) {
+					absPath = FileDialogs::openFolder(dir.string());
 				}
+				else {
+					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_outputPath = absPath;
 			}
 
 			ImGui::EndTable();
 
 			// -- Validate input --
-			std::filesystem::path sourceFilePath = std::string(m_sourcePathBuffer);
-			bool validSource = std::filesystem::exists(sourceFilePath);
+			std::string finalName = m_name + ".axmat";
+			std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
-			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axmat"));
+			bool hasPipeline = !m_pipelinePath.empty();
+			bool pipelineExists = true;
+			bool pipelineIsFile = true;
+			if (hasPipeline) {
+				pipelineExists = std::filesystem::exists(m_pipelinePath);
+				pipelineIsFile = std::filesystem::is_regular_file(m_pipelinePath);
+			}
+
+			bool hasTexAlbedo = !m_albedoMapPath.empty();
+			bool texAlbedoExists = true;
+			bool texAlbedoIsFile = true;
+			if (hasTexAlbedo) {
+				texAlbedoExists = std::filesystem::exists(m_albedoMapPath);
+				texAlbedoIsFile = std::filesystem::is_regular_file(m_albedoMapPath);
+			}
+
+			bool hasTexNormal = !m_normalMapPath.empty();
+			bool texNormalExists = true;
+			bool texNormalIsFile = true;
+			if (hasTexNormal) {
+				texNormalExists = std::filesystem::exists(m_normalMapPath);
+				texNormalIsFile = std::filesystem::is_regular_file(m_normalMapPath);
+			}
+
+			bool hasTexMetalness = !m_metalnessMapPath.empty();
+			bool texMetalnessExists = true;
+			bool texMetalnessIsFile = true;
+			if (hasTexMetalness) {
+				texMetalnessExists = std::filesystem::exists(m_metalnessMapPath);
+				texMetalnessIsFile = std::filesystem::is_regular_file(m_metalnessMapPath);
+			}
+
+			bool hasTexRoughness = !m_roughnessMapPath.empty();
+			bool texRoughnessExists = true;
+			bool texRoughnessIsFile = true;
+			if (hasTexRoughness) {
+				texRoughnessExists = std::filesystem::exists(m_roughnessMapPath);
+				texRoughnessIsFile = std::filesystem::is_regular_file(m_roughnessMapPath);
+			}
+
+			bool hasTexOcclusion = !m_occlusionMapPath.empty();
+			bool texOcclusionExists = true;
+			bool texOcclusionIsFile = true;
+			if (hasTexOcclusion) {
+				texOcclusionExists = std::filesystem::exists(m_occlusionMapPath);
+				texOcclusionIsFile = std::filesystem::is_regular_file(m_occlusionMapPath);
+			}
+
+			bool hasTexEmissive = !m_emissiveMapPath.empty();
+			bool texEmissiveExists = true;
+			bool texEmissiveIsFile = true;
+			if (hasTexEmissive) {
+				texEmissiveExists = std::filesystem::exists(m_emissiveMapPath);
+				texEmissiveIsFile = std::filesystem::is_regular_file(m_emissiveMapPath);
+			}
+
+			bool outputExists = std::filesystem::exists(m_outputPath);
+			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
+			bool invalidOutFileName = std::filesystem::exists(finalPath);
 
 			bool disabled = (
-				strlen(m_nameBuffer) == 0 ||
-				strlen(m_sourcePathBuffer) == 0 ||
-				strlen(m_outputPathBuffer) == 0 ||
-				!validSource ||
-				!validOutputPath ||
-				!validOutputFile
+				m_name.empty() ||
+				m_outputPath.empty() ||
+				!pipelineExists ||
+				!pipelineIsFile ||
+				!texAlbedoExists ||
+				!texAlbedoIsFile ||
+				!texNormalExists ||
+				!texNormalIsFile ||
+				!texMetalnessExists ||
+				!texMetalnessIsFile ||
+				!texRoughnessExists ||
+				!texRoughnessIsFile ||
+				!texOcclusionExists ||
+				!texOcclusionIsFile ||
+				!texEmissiveExists ||
+				!texEmissiveIsFile ||
+				!outputExists ||
+				!outputIsDirectory ||
+				invalidOutFileName
 			);
+
+			if (disabled) {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
+				if (m_name.empty()) ImGui::Text("No name is set.");
+				else if (m_outputPath.empty()) ImGui::Text("No output directory is set.");
+				else if (!pipelineExists) ImGui::Text("Pipeline file does not exist.");
+				else if (!pipelineIsFile) ImGui::Text("Pipeline path is not a file.");
+				else if (!texAlbedoExists) ImGui::Text("Albedo map file does not exist.");
+				else if (!texAlbedoIsFile) ImGui::Text("Albedo map is not a file.");
+				else if (!texNormalExists) ImGui::Text("Normal map file does not exist.");
+				else if (!texNormalIsFile) ImGui::Text("Normal map is not a file.");
+				else if (!texMetalnessExists) ImGui::Text("Metalness map file does not exist.");
+				else if (!texMetalnessIsFile) ImGui::Text("Metalness map is not a file.");
+				else if (!texRoughnessExists) ImGui::Text("Roughness map file does not exist.");
+				else if (!texRoughnessIsFile) ImGui::Text("Roughness map is not a file.");
+				else if (!texOcclusionExists) ImGui::Text("Occlusion map file does not exist.");
+				else if (!texOcclusionIsFile) ImGui::Text("Occlusion map is not a file.");
+				else if (!texEmissiveExists) ImGui::Text("Emissive map file does not exist.");
+				else if (!texEmissiveIsFile) ImGui::Text("Emissive map is not a file.");
+				else if (!outputExists) ImGui::Text("Output directory does not exist.");
+				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
+				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				ImGui::PopStyleColor();
+			}
+			else {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255));
+				ImGui::Text("Ready to create asset.");
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
-				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axmat");
-
 				UUID newAssetUUID = UUID::generate();
 
 				AAP::MaterialAssetData data;
 				data.uuid = newAssetUUID;
-				data.name = m_nameBuffer;
-				data.pipelineAsset = AssetManager::getRelativeToAssets(std::string(m_sourcePathBuffer));
+				data.name = m_name;
+				if (!m_pipelinePath.empty()) {
+					data.pipelineAsset = AssetManager::getRelativeToAssets(m_pipelinePath);
+				}
 
 				MaterialProperties prop;
 				prop.albedoColor = m_albedoColor;
@@ -304,41 +381,42 @@ namespace Axion {
 				prop.useRoughnessMap = 0.0f;
 				prop.useOcclusionMap = 0.0f;
 
-				if (strlen(m_albedoMapPathBuffer) != 0 && std::filesystem::exists(m_albedoMapPathBuffer)) {
-					data.textures[TextureSlot::Albedo] = AssetManager::getRelativeToAssets(std::string(m_albedoMapPathBuffer));
+				if (hasTexAlbedo && texAlbedoExists && texAlbedoIsFile) {
+					data.textures[TextureSlot::Albedo] = AssetManager::getRelativeToAssets(m_albedoMapPath);
 				}
 
-				if (strlen(m_normalMapPathBuffer) != 0 && std::filesystem::exists(m_normalMapPathBuffer)) {
-					data.textures[TextureSlot::Normal] = AssetManager::getRelativeToAssets(std::string(m_normalMapPathBuffer));
+				if (hasTexNormal && texNormalExists && texNormalIsFile) {
+					data.textures[TextureSlot::Normal] = AssetManager::getRelativeToAssets(m_normalMapPath);
 					prop.useNormalMap = 1.0f;
 				}
 
-				if (strlen(m_metalnessMapPathBuffer) != 0 && std::filesystem::exists(m_metalnessMapPathBuffer)) {
-					data.textures[TextureSlot::Metalness] = AssetManager::getRelativeToAssets(std::string(m_metalnessMapPathBuffer));
+				if (hasTexMetalness && texMetalnessExists && texMetalnessIsFile) {
+					data.textures[TextureSlot::Metalness] = AssetManager::getRelativeToAssets(m_metalnessMapPath);
 					prop.useMetalnessMap = 1.0f;
 				}
 
-				if (strlen(m_roughnessMapPathBuffer) != 0 && std::filesystem::exists(m_roughnessMapPathBuffer)) {
-					data.textures[TextureSlot::Roughness] = AssetManager::getRelativeToAssets(std::string(m_roughnessMapPathBuffer));
+				if (hasTexRoughness && texRoughnessExists && texRoughnessIsFile) {
+					data.textures[TextureSlot::Roughness] = AssetManager::getRelativeToAssets(m_roughnessMapPath);
 					prop.useRoughnessMap = 1.0f;
 				}
 
-				if (strlen(m_occlusionMapPathBuffer) != 0 && std::filesystem::exists(m_occlusionMapPathBuffer)) {
-					data.textures[TextureSlot::Occlusion] = AssetManager::getRelativeToAssets(std::string(m_occlusionMapPathBuffer));
+				if (hasTexOcclusion && texOcclusionExists && texOcclusionIsFile) {
+					data.textures[TextureSlot::Occlusion] = AssetManager::getRelativeToAssets(m_occlusionMapPath);
 					prop.useOcclusionMap = 1.0f;
 				}
 
-				if (strlen(m_emissiveMapPathBuffer) != 0 && std::filesystem::exists(m_emissiveMapPathBuffer)) {
-					data.textures[TextureSlot::Emissive] = AssetManager::getRelativeToAssets(std::string(m_emissiveMapPathBuffer));
+				if (hasTexEmissive && texEmissiveExists && texEmissiveIsFile) {
+					data.textures[TextureSlot::Emissive] = AssetManager::getRelativeToAssets(m_emissiveMapPath);
+					//prop.useEmissiveMap = 1.0f; // TODO: why no emissive map field?
 				}
 
 				data.properties = prop;
-				AAP::MaterialParser::createTextFile(data, outFile.string());
+				AAP::MaterialParser::createTextFile(data, finalPath.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Material;
-				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
@@ -356,21 +434,21 @@ namespace Axion {
 
 	}
 
-	void MaterialImportModal::clearBuffers() {
-		m_nameBuffer[0] = '\0';
-		m_sourcePathBuffer[0] = '\0';
-		m_outputPathBuffer[0] = '\0';
+	void MaterialImportModal::resetInputs() {
+		m_name.clear();
+		m_pipelinePath.clear();
+		m_outputPath.clear();
 		m_albedoColor = Vec4::one();
 		m_metalness = 0.0f;
 		m_roughness = 0.0f;
 		m_emission = 0.0f;
 		m_tiling = 0.0f;
-		m_albedoMapPathBuffer[0] = '\0';
-		m_normalMapPathBuffer[0] = '\0';
-		m_metalnessMapPathBuffer[0] = '\0';
-		m_roughnessMapPathBuffer[0] = '\0';
-		m_occlusionMapPathBuffer[0] = '\0';
-		m_emissiveMapPathBuffer[0] = '\0';
+		m_albedoMapPath.clear();
+		m_normalMapPath.clear();
+		m_metalnessMapPath.clear();
+		m_roughnessMapPath.clear();
+		m_occlusionMapPath.clear();
+		m_emissiveMapPath.clear();
 	}
 
 }

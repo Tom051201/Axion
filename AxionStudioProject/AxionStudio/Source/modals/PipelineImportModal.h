@@ -4,25 +4,24 @@
 
 #include "AxionStudio/Source/core/Modal.h"
 
+#include <string>
+
 namespace Axion {
 
 	class PipelineImportModal : public Modal {
 	public:
 
-		PipelineImportModal(const char* name);
-		~PipelineImportModal() override;
-
-		void close() override;
+		PipelineImportModal(const char* name) : Modal(name) {}
+		~PipelineImportModal() override = default;
 
 	private:
 
 		void renderContent() override;
+		void resetInputs() override;
 
-		void clearBuffers();
-
-		char m_nameBuffer[128] = "";
-		char m_shaderPathBuffer[256] = "";
-		char m_outputPathBuffer[256] = "";
+		std::string m_name;
+		std::string m_shaderPath;
+		std::string m_outputPath;
 
 		int m_colorFormatIndex = 1;
 		ColorFormat m_colorFormats[6] = { ColorFormat::None, ColorFormat::RGBA8, ColorFormat::RED_INTEGER, ColorFormat::RGBA16F, ColorFormat::BGRA8, ColorFormat::RGB10A2 };

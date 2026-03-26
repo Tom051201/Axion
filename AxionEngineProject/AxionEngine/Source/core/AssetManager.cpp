@@ -480,16 +480,18 @@ namespace Axion {
 
 						uint32_t typeInt;
 						uint32_t size, offset;
-						uint8_t instanced;
+						uint8_t normalized, instanced;
 
 						in.read(reinterpret_cast<char*>(&typeInt), sizeof(uint32_t));
 						in.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
 						in.read(reinterpret_cast<char*>(&offset), sizeof(uint32_t));
+						in.read(reinterpret_cast<char*>(&normalized), sizeof(uint8_t));
 						in.read(reinterpret_cast<char*>(&instanced), sizeof(uint8_t));
 
 						BufferElement elem(semanticName, static_cast<ShaderDataType>(typeInt));
 						elem.size = size;
 						elem.offset = offset;
+						elem.normalized = normalized != 0;
 						elem.instanced = instanced != 0;
 						elements.push_back(elem);
 					}
@@ -544,6 +546,7 @@ namespace Axion {
 
 					if (elemNode["Size"]) { elem.size = elemNode["Size"].as<uint32_t>(); }
 					if (elemNode["Offset"]) { elem.offset = elemNode["Offset"].as<uint32_t>(); }
+					if (elemNode["Normalized"]) { elem.normalized = elemNode["Normalized"].as<bool>(); }
 					if (elemNode["Instanced"]) { elem.instanced = elemNode["Instanced"].as<bool>(); }
 
 					elements.push_back(elem);
@@ -563,7 +566,6 @@ namespace Axion {
 				}
 			});
 			storage<Pipeline>().handleToPath[handle] = absolutePath;
-			AX_CORE_LOG_INFO("LOADED PIPE");
 			return handle;
 		}
 		else {

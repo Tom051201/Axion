@@ -1,6 +1,7 @@
 #include "PipelineImportModal.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -11,15 +12,6 @@
 namespace Axion {
 
 	constexpr float inputFieldWidth = 200.0f;
-
-	PipelineImportModal::PipelineImportModal(const char* name) : Modal(name) {}
-
-	PipelineImportModal::~PipelineImportModal() {}
-
-	void PipelineImportModal::close() {
-		Modal::close();
-		clearBuffers();
-	}
 
 	void PipelineImportModal::renderContent() {
 
@@ -37,7 +29,7 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##PipelineName_input", m_nameBuffer, sizeof(m_nameBuffer));
+			ImGui::InputText("##PipelineName_input", &m_name);
 
 
 			// -- Color format --
@@ -142,41 +134,48 @@ namespace Axion {
 
 			int elementToRemove = -1;
 
-			if (ImGui::BeginTable("##BufferLayoutTable", 3, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg)) {
+			if (ImGui::BeginTable("##BufferLayoutTable", 5, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg)) {
 				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 100.0f);
 				ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-				ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed, 20.0f);
+				ImGui::TableSetupColumn("Norm", ImGuiTableColumnFlags_WidthFixed, 40.0f);
+				ImGui::TableSetupColumn("Inst", ImGuiTableColumnFlags_WidthFixed, 40.0f);
+				ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed, 25.0f);
 
 				// Existing elements
 				for (size_t i = 0; i < m_bufferElements.size(); i++) {
 					auto& element = m_bufferElements[i];
+					ImGui::PushID((int)i);
 					ImGui::TableNextRow();
 
 					// -- Name --
 					ImGui::TableSetColumnIndex(0);
-					char buf[64];
-					strcpy_s(buf, element.name.c_str());
 					ImGui::SetNextItemWidth(100.0f);
-					if (ImGui::InputText(("##ElemName" + std::to_string(i)).c_str(), buf, sizeof(buf))) {
-						element.name = buf;
-					}
+					ImGui::InputText("##ElemName", &element.name);
 
 					// -- Type --
 					ImGui::TableSetColumnIndex(1);
 					int typeIndex = static_cast<int>(element.type);
 					ImGui::SetNextItemWidth(80.0f);
-					if (ImGui::Combo(("##ElemType" + std::to_string(i)).c_str(), &typeIndex, m_shaderDataTypeNames, IM_ARRAYSIZE(m_shaderDataTypeNames))) {
+					if (ImGui::Combo("##ElemType", &typeIndex, m_shaderDataTypeNames, IM_ARRAYSIZE(m_shaderDataTypeNames))) {
 						element.type = static_cast<ShaderDataType>(typeIndex);
 						element.size = ShaderDataTypeSize(element.type);
 					}
 
-					// -- Remove --
+					// -- Normalized --
 					ImGui::TableSetColumnIndex(2);
+					ImGui::Checkbox("##ElemNorm", &element.normalized);
+
+					// -- Instanced --
+					ImGui::TableSetColumnIndex(3);
+					ImGui::Checkbox("##ElemInst", &element.instanced);
+
+					// -- Remove --
+					ImGui::TableSetColumnIndex(4);
 					if (ImGui::Button(("X##RemoveElem" + std::to_string(i)).c_str())) {
-						//m_bufferElements.erase(m_bufferElements.begin() + i);
-						//i--;
 						elementToRemove = static_cast<int>(i);
 					}
+
+					ImGui::PopID();
 				}
 
 				ImGui::EndTable();
@@ -199,15 +198,18 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##ShaderPath_input", m_shaderPathBuffer, sizeof(m_shaderPathBuffer));
+			ImGui::InputText("##ShaderPath_input", &m_shaderPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##ShaderFile_button")) {
+			if (ImGui::Button("Browse...##ShaderFile_button")) {
 				std::filesystem::path shaderDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
-				std::string absPath = FileDialogs::openFile({ {"Shader Asset", "*.axshader"} }, shaderDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_shaderPathBuffer, IM_ARRAYSIZE(m_shaderPathBuffer), absPath.c_str());
-					m_shaderPathBuffer[IM_ARRAYSIZE(m_shaderPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(shaderDir)) {
+					absPath = FileDialogs::openFile({ {"Shader Asset", "*.axshader"} }, shaderDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFile({ {"Shader Asset", "*.axshader"} }, ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_shaderPath = absPath;
 			}
 
 
@@ -217,42 +219,64 @@ namespace Axion {
 			ImGui::Text("Output Location");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##PipelineOutputPath_input", m_outputPathBuffer, sizeof(m_outputPathBuffer));
+			ImGui::InputText("##PipelineOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
-			if (ImGui::Button("Browse##PipelineOutputDir_button")) {
+			if (ImGui::Button("Browse...##PipelineOutputDir_button")) {
 				std::filesystem::path pipelineDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
-				std::string absPath = FileDialogs::openFolder(pipelineDir.string());
-				if (!absPath.empty()) {
-					strcpy_s(m_outputPathBuffer, IM_ARRAYSIZE(m_outputPathBuffer), absPath.c_str());
-					m_outputPathBuffer[IM_ARRAYSIZE(m_outputPathBuffer) - 1] = '\0';
+				std::string absPath;
+				if (std::filesystem::exists(pipelineDir)) {
+					absPath = FileDialogs::openFolder(pipelineDir.string());
 				}
+				else {
+					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+				}
+				if (!absPath.empty()) m_outputPath = absPath;
 			}
 
 			ImGui::EndTable();
 
 			// -- Validate input --
-			std::filesystem::path shaderFilePath = std::string(m_shaderPathBuffer);
-			bool validShader = std::filesystem::exists(shaderFilePath);
+			std::string finalName = m_name + ".axpso";
+			std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-			std::filesystem::path outputDirPath = std::string(m_outputPathBuffer);
-			bool validOutputPath = std::filesystem::exists(outputDirPath);
-			bool validOutputFile = !std::filesystem::exists(outputDirPath / (std::string(m_nameBuffer) + ".axpso"));
+			bool shaderExists = std::filesystem::exists(m_shaderPath);
+			bool shaderIsFile = std::filesystem::is_regular_file(m_shaderPath);
+			bool outputExists = std::filesystem::exists(m_outputPath);
+			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
+			bool invalidOutFileName = std::filesystem::exists(finalPath);
 
 			bool disabled = (
-				strlen(m_nameBuffer) == 0 ||
-				strlen(m_shaderPathBuffer) == 0 ||
-				strlen(m_outputPathBuffer) == 0 ||
-				!validShader ||
-				!validOutputPath ||
-				!validOutputFile
+				m_name.empty() ||
+				m_shaderPath.empty() ||
+				m_outputPath.empty() ||
+				!shaderExists ||
+				!shaderIsFile ||
+				!outputExists ||
+				!outputIsDirectory ||
+				invalidOutFileName
 			);
+
+			if (disabled) {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
+				if (m_name.empty()) ImGui::Text("No Name is set.");
+				else if (m_shaderPath.empty()) ImGui::Text("No shader file is set.");
+				else if (m_outputPath.empty()) ImGui::Text("No output directory is set.");
+				else if (!shaderExists) ImGui::Text("Shader file does not exist.");
+				else if (!shaderIsFile) ImGui::Text("Shader is not a file.");
+				else if (!outputExists) ImGui::Text("Output directory does not exist.");
+				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
+				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				ImGui::PopStyleColor();
+			}
+			else {
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255));
+				ImGui::Text("Ready to create asset.");
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::Separator();
 			ImGui::BeginDisabled(disabled);
 			if (ImGui::Button("Create")) {
-				std::filesystem::path outDir = std::string(m_outputPathBuffer);
-				std::filesystem::path outFile = outDir / (std::string(m_nameBuffer) + ".axpso");
-
 
 				PipelineSpecification spec = {};
 				spec.colorFormat = m_colorFormats[m_colorFormatIndex];
@@ -272,16 +296,16 @@ namespace Axion {
 
 				AAP::PipelineAssetData data;
 				data.uuid = newAssetUUID;
-				data.shaderFilePath = AssetManager::getRelativeToAssets(std::string(m_shaderPathBuffer));
-				data.name = m_nameBuffer;
+				data.shaderFilePath = AssetManager::getRelativeToAssets(m_shaderPath);
+				data.name = m_name;
 				data.spec = spec;
 
-				AAP::PipelineParser::createTextFile(data, outFile.string());
+				AAP::PipelineParser::createTextFile(data, finalPath.string());
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Pipeline;
-				metadata.filePath = AssetManager::getRelativeToAssets(outFile.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
@@ -299,10 +323,10 @@ namespace Axion {
 
 	}
 
-	void PipelineImportModal::clearBuffers() {
-		m_nameBuffer[0] = '\0';
-		m_shaderPathBuffer[0] = '\0';
-		m_outputPathBuffer[0] = '\0';
+	void PipelineImportModal::resetInputs() {
+		m_name.clear();
+		m_shaderPath.clear();
+		m_outputPath.clear();
 		m_colorFormatIndex = 1;
 		m_depthFormatIndex = 2;
 		m_depthTest = true;
