@@ -54,17 +54,19 @@ namespace Axion {
 
 	void AudioSource::play() {
 		if (!m_instance) return;
+		m_paused = false;
 		ma_sound_start(m_instance);
 	}
 
 	void AudioSource::stop() {
 		if (!m_instance) return;
 		ma_sound_stop(m_instance);
+		ma_sound_seek_to_pcm_frame(m_instance, 0);
+		m_paused = false;
 	}
 
 	void AudioSource::pause() {
 		if (!m_instance) return;
-		ma_sound_get_cursor_in_pcm_frames(m_instance, &m_pausePosition);
 		ma_sound_stop(m_instance);
 		m_paused = true;
 	}
@@ -72,8 +74,8 @@ namespace Axion {
 	void AudioSource::resume() {
 		if (!m_instance) return;
 		if (m_paused) {
-			ma_sound_seek_to_pcm_frame(m_instance, m_pausePosition);
 			ma_sound_start(m_instance);
+			m_paused = false;
 		}
 	}
 

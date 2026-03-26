@@ -90,6 +90,8 @@ namespace Axion {
 		EditorResourceManager::loadIcon("StepButton", "AxionStudio/Resources/toolbar/StepIcon.png");
 		EditorResourceManager::loadIcon("CameraIcon", "AxionStudio/Resources/CameraIcon.png");
 		EditorResourceManager::loadIcon("LightIcon", "AxionStudio/Resources/LightIcon.png");
+		EditorResourceManager::loadIcon("2DCamIcon", "AxionStudio/Resources/toolbar/2dIcon.png");
+		EditorResourceManager::loadIcon("3DCamIcon", "AxionStudio/Resources/toolbar/3dIcon.png");
 	}
 
 	void EditorLayer::onDetach() {
@@ -638,7 +640,7 @@ namespace Axion {
 		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar);
 		float size = ImGui::GetContentRegionAvail().y - 4.0f;
 
-		int numButtons = 4;
+		int numButtons = 5;
 		float totalWidth = (size * numButtons) + (ImGui::GetStyle().ItemInnerSpacing.x * (numButtons - 1));
 		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (totalWidth * 0.5f));
 
@@ -647,6 +649,22 @@ namespace Axion {
 		bool isSim = m_sceneState == SceneState::Simulate || (m_sceneState == SceneState::Pause && m_prePauseState == SceneState::Simulate);
 		bool isPaused = m_sceneState == SceneState::Pause;
 
+		// ----- 2D / 3D Toggle Button -----
+		ImGui::BeginDisabled(!isEdit);
+		Ref<Texture2D> camIcon = m_editorCamera.is2D() ? EditorResourceManager::getIcon("2DCamIcon") : EditorResourceManager::getIcon("3DCamIcon");
+		if (ImGui::ImageButton("cam_btn", (ImTextureID)GraphicsContext::get()->getImGuiTextureID(camIcon), { size, size })) {
+			if (m_editorCamera.is2D()) {
+				m_editorCamera.set3D();
+			}
+			else {
+				m_editorCamera.set2D();
+			}
+		}
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+			ImGui::SetTooltip("Toggle 2D/3D Editor Camera (Tab)");
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
 
 		// ----- Simulate Button -----
 		ImGui::BeginDisabled(isPlay);

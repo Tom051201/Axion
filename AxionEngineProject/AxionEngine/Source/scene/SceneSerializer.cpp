@@ -931,18 +931,26 @@ namespace Axion {
 			bool isSource = component.isSource;
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
 			if (hasAudio) {
-				UUID clipUUID = component.audio->m_clipHandle.isValid() ? component.audio->m_clipHandle.uuid : UUID(0, 0);
+				UUID clipUUID = component.audio->getClipHandle().isValid() ? component.audio->getClipHandle().uuid : UUID(0, 0);
 				out.write(reinterpret_cast<const char*>(&clipUUID), sizeof(UUID));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_volume), sizeof(float));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_pitch), sizeof(float));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_pan), sizeof(float));
+				float vol = component.audio->getVolume();
+				float pitch = component.audio->getPitch();
+				float pan = component.audio->getPan();
 				bool isSpacial = component.audio->isSpatial();
+				Vec3 pos = component.audio->getPosition();
+				Vec3 vel = component.audio->getVelocity();
+				float minDis = component.audio->getMinDistance();
+				float maxDis = component.audio->getMaxDistance();
+				float doppler = component.audio->getDopplerFactor();
+				out.write(reinterpret_cast<const char*>(&vol), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&pitch), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&pan), sizeof(float));
 				out.write(reinterpret_cast<const char*>(&isSpacial), sizeof(bool));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_position), sizeof(Vec3));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_velocity), sizeof(Vec3));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_minDistance), sizeof(float));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_maxDistance), sizeof(float));
-				out.write(reinterpret_cast<const char*>(&component.audio->m_dopplerFactor), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&pos), sizeof(Vec3));
+				out.write(reinterpret_cast<const char*>(&vel), sizeof(Vec3));
+				out.write(reinterpret_cast<const char*>(&minDis), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&maxDis), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&doppler), sizeof(float));
 			}
 		}
 
@@ -1185,18 +1193,34 @@ namespace Axion {
 					if (clipUUID.isValid()) {
 						AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(clipUUID);
 						component.audio = std::make_shared<AudioSource>(clipHandle);
-						in.read(reinterpret_cast<char*>(&component.audio->m_volume), sizeof(float));
-						in.read(reinterpret_cast<char*>(&component.audio->m_pitch), sizeof(float));
-						in.read(reinterpret_cast<char*>(&component.audio->m_pan), sizeof(float));
+						float vol;
+						float pitch;
+						float pan;
 						bool isSpatial;
+						Vec3 pos;
+						Vec3 vel;
+						float minDis;
+						float maxDis;
+						float doppler;
+						in.read(reinterpret_cast<char*>(&vol), sizeof(float));
+						in.read(reinterpret_cast<char*>(&pitch), sizeof(float));
+						in.read(reinterpret_cast<char*>(&pan), sizeof(float));
 						in.read(reinterpret_cast<char*>(&isSpatial), sizeof(bool));
+						in.read(reinterpret_cast<char*>(&pos), sizeof(Vec3));
+						in.read(reinterpret_cast<char*>(&vel), sizeof(Vec3));
+						in.read(reinterpret_cast<char*>(&minDis), sizeof(float));
+						in.read(reinterpret_cast<char*>(&maxDis), sizeof(float));
+						in.read(reinterpret_cast<char*>(&doppler), sizeof(float));
+						component.audio->setVolume(vol);
+						component.audio->setPitch(pitch);
+						component.audio->setPan(pan);
 						if (isSpatial) { component.audio->enableSpatial(); }
 						else { component.audio->disableSpatial(); }
-						in.read(reinterpret_cast<char*>(&component.audio->m_position), sizeof(Vec3));
-						in.read(reinterpret_cast<char*>(&component.audio->m_velocity), sizeof(Vec3));
-						in.read(reinterpret_cast<char*>(&component.audio->m_minDistance), sizeof(float));
-						in.read(reinterpret_cast<char*>(&component.audio->m_maxDistance), sizeof(float));
-						in.read(reinterpret_cast<char*>(&component.audio->m_dopplerFactor), sizeof(float));
+						component.audio->setPosition(pos);
+						component.audio->setVelocity(vel);
+						component.audio->setMinDistance(minDis);
+						component.audio->setMaxDistance(maxDis);
+						component.audio->setDopplerFactor(doppler);
 					}
 				}
 				break;

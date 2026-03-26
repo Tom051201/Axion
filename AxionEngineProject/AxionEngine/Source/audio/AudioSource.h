@@ -53,7 +53,7 @@ namespace Axion {
 
 		AssetHandle<AudioClip> getClipHandle() const { return m_clipHandle; }
 
-	public: // TODO: make private
+	private:
 
 		AssetHandle<AudioClip> m_clipHandle;
 		ma_sound m_memorySound{};
@@ -62,7 +62,6 @@ namespace Axion {
 		bool m_initialized = false;
 
 		std::function<void()> m_onEndCallback;
-		ma_uint64 m_pausePosition = 0;
 		bool m_paused = false;
 		float m_volume = 1.0f;
 		float m_pitch = 1.0f;
