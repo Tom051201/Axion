@@ -183,7 +183,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	float2 uv = input.texCoord * max(u_tiling, 1.0f);
 
 	float4 albedoSample = t_albedo.Sample(s_sampler, uv);
-	float3 albedo = pow(albedoSample.rgb, 2.2) * input.color.rgb;
+	float3 albedo = pow(max(albedoSample.rgb, 0.0), 2.2) * input.color.rgb;
 
 	// -- Normal mapping --
 	float3 N = normalize(input.normal);
@@ -226,7 +226,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 
 		for (int x = -1; x <= 1; ++x) {
 			for (int y = -1; y <= 1; ++y) {
-				float pcfDepth = t_shadowMap.Sample(s_sampler, projCoords.xy + float2(x, y) * texelSize).r;
+				float pcfDepth = t_shadowMap.SampleLevel(s_sampler, projCoords.xy + float2(x, y) * texelSize, 0).r;
 				shadowSum += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
 			}
 		}
@@ -262,7 +262,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 			float3 L_point = lightVec / distance;
 			float invSquare = 1.0 / (distance * distance + 0.0001);
 			float distanceRatio = distance / radius;
-			float window = saturate(1.0 - pow(distanceRatio, falloffExponent));
+			float window = saturate(1.0 - pow(abs(distanceRatio), falloffExponent));
 
 			float attenuation = invSquare * (window * window);
 			float3 radiance_point = u_pointLights[j].color.rgb * attenuation;
@@ -307,7 +307,7 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 
 	// -- HDR tone mapping and gamma correction --
 	color = color / (color + float3(1.0, 1.0, 1.0));
-	color = pow(color, 1.0 / 2.2);
+	color = pow(max(color, 0.0), 1.0 / 2.2);
 
 	return float4(color, 1.0);
 }

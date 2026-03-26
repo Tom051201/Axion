@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/AxMesh.h"
@@ -41,7 +42,6 @@ namespace Axion {
 		if (ImGui::BeginTable("##ImportMeshTable", 2, ImGuiTableFlags_BordersInnerV)) {
 			ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
 			ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-
 
 			// -- Name --
 			ImGui::TableNextRow();
@@ -174,6 +174,14 @@ namespace Axion {
 			if (ImGui::Button("Cancel")) {
 				close();
 			}
+
+			// -- Version --
+			std::string versionText = "v" + std::to_string(ASSET_VERSION_MESH);
+			float textWidth = ImGui::CalcTextSize(versionText.c_str()).x;
+			float windowWidth = ImGui::GetWindowWidth();
+			ImGui::SameLine(windowWidth - textWidth - ImGui::GetStyle().WindowPadding.x);
+			ImGui::TextDisabled("%s", versionText.c_str());
+
 		}
 
 	}

@@ -19,7 +19,7 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axtex file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axtcube file ({})", outputPath);
 	}
 
 	void TextureCubeParser::createBinaryFile(const TextureCubeAssetData& data, const std::string& outputPath) {

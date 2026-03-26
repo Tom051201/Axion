@@ -2,21 +2,31 @@ Version: 1
 UUID: 00000000000000000000000000000000
 Type: Scene
 Scene: TestScene
-Skybox: 0cdbb9426844f8653f6abb0a0456fa55
+Skybox: d86bf91a02b4d62666c3187d521c3a77
 Entities:
-  - Entity: ea253d4719151501a10b7ed3f0c9f94d
+  - Entity: 0a71bfa293475f62ebd5b8eb5906d2cd
     TagComponent:
-      Tag: Red Light
+      Tag: TestEntity
     TransformComponent:
-      Translation: [-1.86957526, 0, 0.0565609299]
-      Rotation: [0, 0.772133946, 0, 0.63545984]
-      Scale: [1.00000012, 1, 1.00000012]
-    SpotLightComponent:
-      Color: [1, 0, 0, 1]
-      Intensity: 20
-      Range: 10
-      InnerConeAngle: 12.5
-      OuterConeAngle: 17.5
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
+    MaterialComponent:
+      UUID: d8e7846ca068eb85d5589647caca498e
+  - Entity: 92721182be594963461f0299d746068e
+    TagComponent:
+      Tag: Light Entity
+    TransformComponent:
+      Translation: [0, 0, -0.91685915]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
+      Radius: 10
+      Falloff: 1
   - Entity: ff1562b996d22b5e23ea43f2a05bfb1a
     TagComponent:
       Tag: Camera
@@ -34,26 +44,16 @@ Entities:
       OrthographicSize: 10
       OrthographicNear: -1
       OrthographicFar: 1
-  - Entity: 92721182be594963461f0299d746068e
+  - Entity: ea253d4719151501a10b7ed3f0c9f94d
     TagComponent:
-      Tag: Light Entity
+      Tag: Red Light
     TransformComponent:
-      Translation: [0, 0, -0.91685915]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
-      Radius: 10
-      Falloff: 1
-  - Entity: 0a71bfa293475f62ebd5b8eb5906d2cd
-    TagComponent:
-      Tag: TestEntity
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    MeshComponent:
-      UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
-    MaterialComponent:
-      UUID: d8e7846ca068eb85d5589647caca498e
+      Translation: [-1.86957526, 0, 0.0565609299]
+      Rotation: [0, 0.772133946, 0, 0.63545984]
+      Scale: [1.00000012, 1, 1.00000012]
+    SpotLightComponent:
+      Color: [1, 0, 0, 1]
+      Intensity: 20
+      Range: 10
+      InnerConeAngle: 12.5
+      OuterConeAngle: 17.5

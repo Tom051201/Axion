@@ -109,6 +109,10 @@ namespace Axion {
 		ImGuiWindowFlags m_windowFlags = 0;
 
 
+		// ----- Utils -----
+		std::filesystem::path m_pendingDropPath = {};
+
+
 		// ----- Event functions -----
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onRenderingFinished(RenderingFinishedEvent& e);
@@ -123,6 +127,7 @@ namespace Axion {
 		void drawGizmo();
 		void drawMenuBar();
 		void drawToolBar();
+		void processPendingDroppedFiles();
 
 		void onScenePlay();
 		void onSceneSimulate();

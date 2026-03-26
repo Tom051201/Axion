@@ -5,13 +5,14 @@
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/AxPipeline.h"
 
 namespace Axion {
 
-	constexpr float inputFieldWidth = 200.0f;
+	constexpr float inputFieldWidth = 260.0f;
 
 	void PipelineImportModal::renderContent() {
 
@@ -134,12 +135,12 @@ namespace Axion {
 
 			int elementToRemove = -1;
 
-			if (ImGui::BeginTable("##BufferLayoutTable", 5, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg)) {
-				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-				ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-				ImGui::TableSetupColumn("Norm", ImGuiTableColumnFlags_WidthFixed, 40.0f);
-				ImGui::TableSetupColumn("Inst", ImGuiTableColumnFlags_WidthFixed, 40.0f);
-				ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed, 25.0f);
+			if (ImGui::BeginTable("##BufferLayoutTable", 5, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg, ImVec2(inputFieldWidth, 0.0f))) {
+				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+				ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 75.0f);
+				ImGui::TableSetupColumn("Norm", ImGuiTableColumnFlags_WidthFixed, 20.0f);
+				ImGui::TableSetupColumn("Inst", ImGuiTableColumnFlags_WidthFixed, 20.0f);
+				ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed, 20.0f);
 
 				// Existing elements
 				for (size_t i = 0; i < m_bufferElements.size(); i++) {
@@ -149,13 +150,13 @@ namespace Axion {
 
 					// -- Name --
 					ImGui::TableSetColumnIndex(0);
-					ImGui::SetNextItemWidth(100.0f);
+					ImGui::SetNextItemWidth(-FLT_MIN);
 					ImGui::InputText("##ElemName", &element.name);
 
 					// -- Type --
 					ImGui::TableSetColumnIndex(1);
 					int typeIndex = static_cast<int>(element.type);
-					ImGui::SetNextItemWidth(80.0f);
+					ImGui::SetNextItemWidth(-FLT_MIN);
 					if (ImGui::Combo("##ElemType", &typeIndex, m_shaderDataTypeNames, IM_ARRAYSIZE(m_shaderDataTypeNames))) {
 						element.type = static_cast<ShaderDataType>(typeIndex);
 						element.size = ShaderDataTypeSize(element.type);
@@ -164,14 +165,16 @@ namespace Axion {
 					// -- Normalized --
 					ImGui::TableSetColumnIndex(2);
 					ImGui::Checkbox("##ElemNorm", &element.normalized);
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("Normalized");
 
 					// -- Instanced --
 					ImGui::TableSetColumnIndex(3);
 					ImGui::Checkbox("##ElemInst", &element.instanced);
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("Instanced (Per-Instance Data)");
 
 					// -- Remove --
 					ImGui::TableSetColumnIndex(4);
-					if (ImGui::Button(("X##RemoveElem" + std::to_string(i)).c_str())) {
+					if (ImGui::Button(("X##" + std::to_string(i)).c_str())) {
 						elementToRemove = static_cast<int>(i);
 					}
 
@@ -318,6 +321,13 @@ namespace Axion {
 			if (ImGui::Button("Cancel")) {
 				close();
 			}
+
+			// -- Version --
+			std::string versionText = "v" + std::to_string(ASSET_VERSION_PIPELINE);
+			float textWidth = ImGui::CalcTextSize(versionText.c_str()).x;
+			float windowWidth = ImGui::GetWindowWidth();
+			ImGui::SameLine(windowWidth - textWidth - ImGui::GetStyle().WindowPadding.x);
+			ImGui::TextDisabled("%s", versionText.c_str());
 
 		}
 

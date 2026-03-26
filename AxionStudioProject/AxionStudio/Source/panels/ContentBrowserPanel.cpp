@@ -377,7 +377,8 @@ namespace Axion {
 			ext == ".axpmat" ||
 			ext == ".axprefab" ||
 			ext == ".axpso" ||
-			ext == ".axscene";
+			ext == ".axscene" ||
+			ext == ".axtcube";
 	}
 
 	void ContentBrowserPanel::deletePath(const std::filesystem::path& path) {

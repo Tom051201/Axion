@@ -287,8 +287,6 @@ namespace Axion {
 					else {
 						return std::make_shared<Skybox>(texHandle);
 					}
-
-					
 				}
 			});
 			storage<Skybox>().handleToPath[handle] = absolutePath;
@@ -383,16 +381,16 @@ namespace Axion {
 			RendererAPI api = Renderer::getAPI();
 
 			bool formatMatches =
-				(format == ".hlsl" && api == RendererAPI::DirectX12) ||
-				(format == ".glsl" && api == RendererAPI::OpenGL3);
+				(format == "HLSL" && api == RendererAPI::DirectX12) ||
+				(format == "GLSL" && api == RendererAPI::OpenGL3);
 
 			// -- Check extension --
 			std::filesystem::path srcPath(sourcePath);
 			std::string ext = srcPath.extension().string();
 
 			bool extensionMatches =
-				(api == RendererAPI::DirectX12 && ext == ".hlsl") ||
-				(api == RendererAPI::OpenGL3 && ext == ".glsl");
+				(api == RendererAPI::DirectX12 && ext == "HLSL") ||
+				(api == RendererAPI::OpenGL3 && ext == "GLSL");
 
 			if (!formatMatches) {
 				if (extensionMatches) {

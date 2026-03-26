@@ -183,6 +183,8 @@ namespace Axion {
 	void EditorLayer::onGuiRender() {
 		beginDockspace();
 
+		processPendingDroppedFiles();
+
 		drawToolBar();
 
 		drawSceneViewport();
@@ -190,13 +192,6 @@ namespace Axion {
 		m_panelManager.renderAll();
 
 		m_modalManager.renderAll();
-
-		// -- New project popup --
-		//if (m_openNewProjectPopup) {
-		//	ImGui::OpenPopup("Create New Project");
-		//	m_openNewProjectPopup = false;
-		//}
-		//drawNewProjectWindow();
 
 		drawMenuBar();
 
@@ -326,25 +321,12 @@ namespace Axion {
 	}
 
 	bool EditorLayer::onFileDrop(FileDropEvent& e) {
-		if (e.getPaths().empty() || !ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
+		if (e.getPaths().empty()) {
+			AX_CORE_LOG_WARN("File drop event did not contain any paths!");
 			return false;
 		}
 
-		const auto& paths = e.getPaths();
-		const auto& path = paths[0];
-		std::string ext = path.extension().string();
-
-		if (ext == ".obj") {
-			m_meshImportModal->presetFromFile(path);
-			m_meshImportModal->open();
-		}
-		else if (ext == ".mp3" || ext == ".wav") {
-			m_audioImportModal->presetFromFile(path);
-			m_audioImportModal->open();
-		}
-		else {
-			AX_CORE_LOG_WARN("Unsupported dropped file: {}", path.string());
-		}
+		m_pendingDropPath = e.getPaths()[0];
 
 		return true;
 	}
@@ -1007,6 +989,27 @@ namespace Axion {
 			Renderer2D::drawLine(transform * Vec3(0.0f, -sin1 - halfHeight, cos1), transform * Vec3(0.0f, -sin2 - halfHeight, cos2), color); // YZ plane
 		}
 
+	}
+
+	void EditorLayer::processPendingDroppedFiles() {
+		if (!m_pendingDropPath.empty()) {
+			std::string ext = m_pendingDropPath.extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return std::tolower(c); });
+
+			if (ext == ".obj") {
+				m_meshImportModal->presetFromFile(m_pendingDropPath);
+				m_meshImportModal->open();
+			}
+			else if (ext == ".mp3" || ext == ".wav" || ext == ".ogg") {
+				m_audioImportModal->presetFromFile(m_pendingDropPath);
+				m_audioImportModal->open();
+			}
+			else {
+				AX_CORE_LOG_WARN("Unsupported dropped file: {}", m_pendingDropPath.string());
+			}
+
+			m_pendingDropPath.clear();
+		}
 	}
 
 }

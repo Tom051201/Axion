@@ -1,29 +1,29 @@
 Version: 1
 AssetRegistry:
-  - Handle: d8e7846ca068eb85d5589647caca498e
-    Type: Material
-    FilePath: materials\BlueMetal.axmat
   - Handle: 5fadf97116be5f2b1c98f7ceab9d0e6d
     Type: Mesh
     FilePath: meshes\Cube.axmesh
-  - Handle: f7d101cf298235faf376b28919cd25fd
-    Type: Texture2D
-    FilePath: textures\AlbedoMap.axtex
+  - Handle: d8e7846ca068eb85d5589647caca498e
+    Type: Material
+    FilePath: materials\BlueMetal.axmat
   - Handle: 7fcc07abd245c0d50197cb8eafca936c
     Type: Texture2D
     FilePath: textures\MetalnessMap.axtex
-  - Handle: 6680d61b99d17b237cdd60fc7dea4763
+  - Handle: f7d101cf298235faf376b28919cd25fd
     Type: Texture2D
-    FilePath: textures\BlueSkybox.axtex
+    FilePath: textures\AlbedoMap.axtex
   - Handle: 4b521285aab87a184ba58d4902fe0080
     Type: Texture2D
     FilePath: textures\NormalMap.axtex
-  - Handle: 0cdbb9426844f8653f6abb0a0456fa55
-    Type: Skybox
-    FilePath: skybox\BlueSkybox.axsky
   - Handle: e0bdc0bb0491787acef9e9a7a368a19f
     Type: Texture2D
     FilePath: textures\RoughnessMap.axtex
+  - Handle: db39f2f2f2856197a16b16ba204d4779
+    Type: TextureCube
+    FilePath: textures\BlueSkybox.axtcube
   - Handle: 9aef0bf32ef1db92ea489cb3b1a938da
     Type: Scene
     FilePath: scenes\TestScene.axscene
+  - Handle: d86bf91a02b4d62666c3187d521c3a77
+    Type: Skybox
+    FilePath: skybox\BlueSky.axsky

@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
 
@@ -197,6 +198,13 @@ namespace Axion {
 			if (ImGui::Button("Cancel")) {
 				close();
 			}
+
+			// -- Version --
+			std::string versionText = "v" + std::to_string(ASSET_VERSION_AUDIO);
+			float textWidth = ImGui::CalcTextSize(versionText.c_str()).x;
+			float windowWidth = ImGui::GetWindowWidth();
+			ImGui::SameLine(windowWidth - textWidth - ImGui::GetStyle().WindowPadding.x);
+			ImGui::TextDisabled("%s", versionText.c_str());
 		}
 	}
 

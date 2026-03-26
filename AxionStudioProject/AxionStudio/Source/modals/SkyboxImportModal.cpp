@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/AxSkybox.h"
@@ -44,10 +45,10 @@ namespace Axion {
 				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
 				std::string absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtex"} }, dir.string()); // TODO: add .axtcube
+					absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtcube"} }, dir.string());
 				}
 				else {
-					absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath()); // TODO: add .axtcube
+					absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtcube"} }, ProjectManager::getProject()->getAssetsPath());
 				}
 				if (!absPath.empty()) m_texturePath = absPath;
 			}
@@ -179,6 +180,14 @@ namespace Axion {
 			if (ImGui::Button("Cancel")) {
 				close();
 			}
+
+			// -- Version --
+			std::string versionText = "v" + std::to_string(ASSET_VERSION_SKYBOX);
+			float textWidth = ImGui::CalcTextSize(versionText.c_str()).x;
+			float windowWidth = ImGui::GetWindowWidth();
+			ImGui::SameLine(windowWidth - textWidth - ImGui::GetStyle().WindowPadding.x);
+			ImGui::TextDisabled("%s", versionText.c_str());
+
 		}
 
 	}
