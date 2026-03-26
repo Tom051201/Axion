@@ -3,47 +3,8 @@ UUID: 00000000000000000000000000000000
 Type: Scene
 Scene: TestScene
 Skybox: d86bf91a02b4d62666c3187d521c3a77
+AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
 Entities:
-  - Entity: 0a71bfa293475f62ebd5b8eb5906d2cd
-    TagComponent:
-      Tag: TestEntity
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    MeshComponent:
-      UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
-    MaterialComponent:
-      UUID: d8e7846ca068eb85d5589647caca498e
-  - Entity: 92721182be594963461f0299d746068e
-    TagComponent:
-      Tag: Light Entity
-    TransformComponent:
-      Translation: [0, 0, -0.91685915]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
-      Radius: 10
-      Falloff: 1
-  - Entity: ff1562b996d22b5e23ea43f2a05bfb1a
-    TagComponent:
-      Tag: Camera
-    TransformComponent:
-      Translation: [-3.35108042, 0, -1.65011752]
-      Rotation: [-0, 0.492645979, -0, 0.87022984]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Primary: true
-      FixedAspectRatio: false
-      ProjectionType: Perspective
-      PerspectiveFOV: 0.785398185
-      PerspectiveNear: 0.100000001
-      PerspectiveFar: 100
-      OrthographicSize: 10
-      OrthographicNear: -1
-      OrthographicFar: 1
   - Entity: ea253d4719151501a10b7ed3f0c9f94d
     TagComponent:
       Tag: Red Light
@@ -57,3 +18,43 @@ Entities:
       Range: 10
       InnerConeAngle: 12.5
       OuterConeAngle: 17.5
+  - Entity: ff1562b996d22b5e23ea43f2a05bfb1a
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [-2.09530973, 0, -1.61189651]
+      Rotation: [-0, 0.492645979, -0, 0.87022984]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      ProjectionType: Perspective
+      PerspectiveFOV: 0.785398185
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 100
+      OrthographicSize: 10
+      OrthographicNear: -1
+      OrthographicFar: 1
+  - Entity: 92721182be594963461f0299d746068e
+    TagComponent:
+      Tag: Light Entity
+    TransformComponent:
+      Translation: [0, 0, -0.91685915]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
+      Radius: 10
+      Falloff: 1
+  - Entity: 0a71bfa293475f62ebd5b8eb5906d2cd
+    TagComponent:
+      Tag: TestEntity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
+    MaterialComponent:
+      UUID: d8e7846ca068eb85d5589647caca498e

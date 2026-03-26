@@ -41,6 +41,14 @@ namespace Axion {
 				if (!folder.empty()) m_outputPath = folder;
 			}
 
+			// -- Version --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Version");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::SetNextItemWidth(inputFieldWidth);
+			ImGui::InputText("##ProjVersion", &m_version);
+
 			// -- Author --
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
@@ -115,6 +123,7 @@ namespace Axion {
 		m_author.clear();
 		m_company.clear();
 		m_description.clear();
+		m_version = "1.0.0";
 	}
 
 }

@@ -23,6 +23,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UseMetalnessMap" << YAML::Value << data.properties.useMetalnessMap;
 		out << YAML::Key << "UseRoughnessMap" << YAML::Value << data.properties.useRoughnessMap;
 		out << YAML::Key << "UseOcclusionMap" << YAML::Value << data.properties.useOcclusionMap;
+		out << YAML::Key << "UseEmissiveMap" << YAML::Value << data.properties.useEmissiveMap;
 
 		out << YAML::Key << "Textures" << YAML::BeginMap;
 		for (auto const& [slot, path] : data.textures) {

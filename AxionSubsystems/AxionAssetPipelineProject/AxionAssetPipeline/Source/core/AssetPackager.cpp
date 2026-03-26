@@ -18,6 +18,7 @@
 #include "AxionAssetPipeline/Source/AxTextureCube.h"
 #include "AxionAssetPipeline/Source/AxTexture2D.h"
 #include "AxionAssetPipeline/Source/AxPrefab.h"
+#include "AxionAssetPipeline/Source/AxAudio.h"
 
 
 namespace Axion::AAP {
@@ -55,6 +56,20 @@ namespace Axion::AAP {
 					meshData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
 					MeshParser::createBinaryFile(meshData, runtimeAbsolutePath.string());
+					break;
+				}
+				case AssetType::AudioClip: {
+					std::ifstream stream(inPath);
+					YAML::Node data = YAML::Load(stream);
+
+					AudioAssetData audioData;
+					audioData.uuid = uuid;
+					audioData.name = data["Name"].as<std::string>();
+					audioData.audioFilePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					audioData.fileFormat = data["Format"].as<std::string>();
+					audioData.mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
+
+					AudioParser::createBinaryFile(audioData, runtimeAbsolutePath.string());
 					break;
 				}
 				case AssetType::Material: {

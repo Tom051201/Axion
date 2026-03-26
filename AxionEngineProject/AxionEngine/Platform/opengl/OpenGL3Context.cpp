@@ -132,13 +132,11 @@ namespace Axion {
 	}
 
 	void OpenGL3Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount) {
-		// TODO: Add this function
-		AX_CORE_ASSERT(false, "Add this function");
+		AX_CORE_ASSERT(false, "OpenGL3Context::drawIndexed is not implemented yet");
 	}
 
 	void OpenGL3Context::draw(uint32_t vertexCount) {
-		// TODO: Add this function
-		AX_CORE_ASSERT(false, "Add this function");
+		AX_CORE_ASSERT(false, "OpenGL3Context::draw is not implemented yet");
 	}
 
 	void OpenGL3Context::activateVsync() {

@@ -172,7 +172,7 @@ namespace Axion {
 			return "Unknown";
 		}
 
-		inline static AudioClip::Mode AudioClipModeFromString(const std::string& str) { // TODO fix Audio to lower case
+		inline static AudioClip::Mode AudioClipModeFromString(const std::string& str) {
 			if (str == "Memory") return AudioClip::Mode::Memory;
 			if (str == "Stream") return AudioClip::Mode::Stream;
 			throw std::invalid_argument("Invalid AudioClip::Mode string: " + str);

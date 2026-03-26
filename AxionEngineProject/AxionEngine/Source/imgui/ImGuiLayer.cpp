@@ -1,6 +1,7 @@
 #include "axpch.h"
 #include "ImGuiLayer.h"
 
+#include "AxionEngine/Source/AxionSettings.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/render/GraphicsContext.h"
@@ -147,7 +148,7 @@ namespace Axion {
 		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
 		ImGui_ImplDX12_Init(
 			m_d12Context->getDevice(),
-			3, // TODO get from somewhere
+			AX_IMGUI_FRAMES_IN_FLIGHT,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
 			srvHeap.getHeap(),
 			srvHeap.getCpuHandle(m_srvHeapIndex),

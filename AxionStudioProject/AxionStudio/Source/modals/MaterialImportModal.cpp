@@ -408,7 +408,7 @@ namespace Axion {
 
 				if (hasTexEmissive && texEmissiveExists && texEmissiveIsFile) {
 					data.textures[TextureSlot::Emissive] = AssetManager::getRelativeToAssets(m_emissiveMapPath);
-					//prop.useEmissiveMap = 1.0f; // TODO: why no emissive map field?
+					prop.useEmissiveMap = 1.0f;
 				}
 
 				data.properties = prop;

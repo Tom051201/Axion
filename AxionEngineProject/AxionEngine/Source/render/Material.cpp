@@ -5,9 +5,6 @@
 #include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/render/Renderer.h"
 
-// TODO: TEMP
-#include "AxionEngine/Platform/directx/D12Context.h"
-
 namespace Axion {
 
 	Material::Material(const std::string& name, const MaterialProperties& properties)

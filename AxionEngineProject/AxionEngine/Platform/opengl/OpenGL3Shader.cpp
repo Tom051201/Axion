@@ -59,7 +59,7 @@ namespace Axion {
 	}
 
 	void OpenGL3Shader::loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) {
-
+		AX_CORE_ASSERT(false, "OpenGL3Shader::loadFromBytecode is not implemented yet");
 	}
 
 	uint32_t OpenGL3Shader::compileStage(uint32_t type, const std::string& source) {
@@ -100,16 +100,17 @@ namespace Axion {
 	}
 
 	ShaderBytecode OpenGL3Shader::compileToBytecode(const std::string& path) {
+		AX_CORE_ASSERT(false, "OpenGL3Shader::compileToBytecode is not implemented yet");
 		return {};
 	}
 
 	int OpenGL3Shader::getBindPoint(const std::string& name) const {
-		// TODO
+		AX_CORE_ASSERT(false, "OpenGL3Shader::getBindPoint is not implemented yet");
 		return -1;
 	}
 
 	uint32_t OpenGL3Shader::getTextureTableBindSlot() const {
-		// TODO
+		AX_CORE_ASSERT(false, "OpenGL3Shader::getTextureTableBindSlot is not implemented yet");
 		return 0;
 	}
 

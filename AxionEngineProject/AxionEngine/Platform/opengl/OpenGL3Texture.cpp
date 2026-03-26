@@ -32,12 +32,10 @@ namespace Axion {
 	}
 
 	OpenGL3Texture2D::OpenGL3Texture2D(uint32_t width, uint32_t height, void* data) {
-		// TODO
 		AX_CORE_ASSERT(false, "OpenGl3Texture2D from raw data is not supported yet!");
 	}
 
 	OpenGL3Texture2D::OpenGL3Texture2D(const uint8_t* data, size_t size) {
-		// TODO
 		AX_CORE_ASSERT(false, "OpenGl3Texture2D from raw memeory data is not supported yet!");
 	}
 
@@ -61,11 +59,12 @@ namespace Axion {
 	}
 
 	void* OpenGL3Texture2D::getHandle() const {
-		// TODO : add this function
+		AX_CORE_ASSERT(false, "OpenGL3Texture2D::getHandle is not implemented yet");
 		return nullptr;
 	}
 
 	uint32_t OpenGL3Texture2D::getSrvHeapIndex() const {
+		AX_CORE_ASSERT(false, "OpenGL3Texture2D::getSrvHeapIndex is not implemented yet");
 		return 0;
 	}
 

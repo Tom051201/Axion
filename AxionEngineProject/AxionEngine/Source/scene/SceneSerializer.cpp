@@ -368,6 +368,9 @@ namespace Axion {
 			out << YAML::Key << "Skybox" << YAML::Value << "0";
 		}
 
+		// -- Ambient Color --
+		out << YAML::Key << "AmbientColor" << YAML::Value << m_scene->getAmbientColor();
+
 		// -- Entities --
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto e : m_scene->m_registry.view<entt::entity>()) {
@@ -399,6 +402,9 @@ namespace Axion {
 		// -- Write Skybox --
 		UUID skyboxUUID = m_scene->m_skyboxHandle.isValid() ? m_scene->m_skyboxHandle.uuid : UUID(0, 0);
 		out.write(reinterpret_cast<const char*>(&skyboxUUID), sizeof(UUID));
+
+		// -- Write Ambient Color --
+		out.write(reinterpret_cast<const char*>(&m_scene->m_sceneAmbientColor), sizeof(Vec4));
 
 		// -- Write Entity Count --
 		uint32_t entityCount = 0;
@@ -442,6 +448,9 @@ namespace Axion {
 				AX_CORE_LOG_WARN("Skybox UUID not found in AssetRegistry!");
 			}
 		}
+
+		// ----- Ambient Color -----
+		if (data["AmbientColor"]) m_scene->m_sceneAmbientColor = data["AmbientColor"].as<Vec4>();
 
 
 		// ----- Entities -----
@@ -503,13 +512,20 @@ namespace Axion {
 			return false;
 		}
 
-		// -- Read Title and Skybox --
+		// -- Read Title --
 		m_scene->setTitle(readString(in));
+
+		// -- Read Skybox --
 		UUID skyboxUUID;
 		in.read(reinterpret_cast<char*>(&skyboxUUID), sizeof(UUID));
 		if (skyboxUUID.isValid() && ProjectManager::getProject()->getAssetRegistry()->contains(skyboxUUID)) {
 			m_scene->setSkybox(AssetManager::load<Skybox>(skyboxUUID));
 		}
+
+		// -- Read Ambient color --
+		Vec4 ambientCol;
+		in.read(reinterpret_cast<char*>(&ambientCol), sizeof(Vec4));
+		m_scene->m_sceneAmbientColor = ambientCol;
 
 		// -- Read Entities --
 		uint32_t entityCount;

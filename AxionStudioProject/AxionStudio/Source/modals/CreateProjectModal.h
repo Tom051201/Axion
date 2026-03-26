@@ -22,6 +22,7 @@ namespace Axion {
 		std::string m_author;
 		std::string m_company;
 		std::string m_description;
+		std::string m_version = "1.0.0";
 
 	};
 

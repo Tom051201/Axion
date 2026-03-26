@@ -16,3 +16,7 @@
 
 // ----- Win32 -----
 #define AX_WIN_USING_CUSTOM_TITLE_BAR 0
+
+
+// ----- ImGui -----
+#define AX_IMGUI_FRAMES_IN_FLIGHT 3

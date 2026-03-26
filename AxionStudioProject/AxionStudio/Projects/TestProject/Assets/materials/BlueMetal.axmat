@@ -11,6 +11,7 @@ UseNormalMap: 1
 UseMetalnessMap: 1
 UseRoughnessMap: 1
 UseOcclusionMap: 0
+UseEmissiveMap: 0
 Textures:
   Albedo: f7d101cf298235faf376b28919cd25fd
   Normal: 4b521285aab87a184ba58d4902fe0080

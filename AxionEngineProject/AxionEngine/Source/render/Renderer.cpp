@@ -40,7 +40,6 @@ namespace Axion {
 	};
 
 	struct alignas(16) SceneData {
-		// TODO: only upload one option! - ViewProjection OR View and Projection
 		DirectX::XMMATRIX view;
 		DirectX::XMMATRIX projection;
 
@@ -252,11 +251,7 @@ namespace Axion {
 			context->bindSrvTable(rootIndex, finalTextures, count);
 		}
 		else if (s_api == RendererAPI::OpenGL3) {
-			// TODO: add opengl3 impl.
-			// maybe like this:
-			//for (uint32_t i = 0; i < count; i++) {
-			//	if (textures[i]) textures[i]->bind(i);
-			//}
+			AX_CORE_ASSERT(false, "Binding textures for opengl is not supported yet");
 		}
 	}
 

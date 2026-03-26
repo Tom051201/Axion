@@ -61,6 +61,8 @@ namespace Axion {
 
 		const Vec3& getGravity() const { return m_gravity; }
 		Vec3& getGravity() { return m_gravity; }
+		const Vec4& getAmbientColor() const { return m_sceneAmbientColor; }
+		Vec4& getAmbientColor() { return m_sceneAmbientColor; }
 
 		Mat4 getWorldTransform(Entity entity);
 
@@ -84,6 +86,7 @@ namespace Axion {
 		float m_physicsAccumulator = 0.0f;
 		const float m_physicsTimeStep = 1.0f / 60.0f; // 60 FPS Physics
 		Vec3 m_gravity = Vec3(0.0f, -9.81f, 0.0f);
+		Vec4 m_sceneAmbientColor = { 0.03f, 0.03f, 0.03f, 1.0f };
 
 		struct QueuedCollision {
 			entt::entity target;

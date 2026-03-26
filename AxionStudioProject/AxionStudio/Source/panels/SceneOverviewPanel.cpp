@@ -128,6 +128,14 @@ namespace Axion {
 			ImGui::TableSetColumnIndex(1);
 			ImGui::DragFloat3("##GlobalGravDrag", m_activeScene->getGravity().data(), 0.0f);
 
+			// -- Ambient color --
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Ambient Color");
+			ImGui::Separator();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::ColorEdit4("##AmbientColEdit", m_activeScene->getAmbientColor().data());
+
 
 			ImGui::EndTable();
 		}

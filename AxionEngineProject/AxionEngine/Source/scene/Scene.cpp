@@ -200,7 +200,7 @@ namespace Axion {
 
 		// ----- Setup Scene Lighting -----
 		LightingData lightData;
-		lightData.ambientColor = { 0.03f, 0.03f, 0.03f, 1.0f }; // TODO: make selectable
+		lightData.ambientColor = m_sceneAmbientColor;
 
 		// -- Directional lights --
 		auto dirLightView = m_registry.view<DirectionalLightComponent, TransformComponent>();
@@ -279,7 +279,7 @@ namespace Axion {
 				Mat4 worldTransform = getWorldTransform({entity, this});
 
 				ObjectBuffer objData;
-				objData.color = matInstance->getAlbedoColor().toFloat4(); // TODO: Move color out of ObjectBuffer if its strictly per material
+				objData.color = matInstance->getAlbedoColor().toFloat4();
 				objData.modelMatrix = worldTransform.transposed().toXM();
 
 				renderBatches[mesh.handle][material.handle].push_back(objData);

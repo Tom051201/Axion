@@ -13,6 +13,7 @@ namespace Axion {
 		std::string author;
 		std::string company;
 		std::string description;
+		std::string version;
 	};
 
 	class Project {
@@ -59,13 +60,13 @@ namespace Axion {
 		std::string m_engineVersion;
 		std::string m_projectPath;
 		std::string m_assetsPath;
+		std::string m_defaultScene;
+		UUID m_defaultSceneUUID = UUID(0, 0);
 
 		// ----- Optional -----
 		std::string m_author;
 		std::string m_company;
 		std::string m_description;
-		std::string m_defaultScene; // TODO: make those required
-		UUID m_defaultSceneUUID = UUID(0, 0);
 		std::string m_appIconPath;
 
 		Ref<AssetRegistry> m_assetRegistry;

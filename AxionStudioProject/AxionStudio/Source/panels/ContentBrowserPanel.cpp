@@ -105,7 +105,6 @@ namespace Axion {
 				}
 				else {
 					// -- Clicked on file --
-					// TODO: load scene
 				}
 			}
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
@@ -123,16 +122,6 @@ namespace Axion {
 				if (item.path.string().find(".axscene") != std::string::npos) {
 					if (ImGui::MenuItem("Set as Default Scene")) {
 						ProjectManager::getProject()->setDefaultScene(path.string());
-					}
-				}
-
-				// -- Shader only --
-				if (item.path.string().find(".axshader") != std::string::npos) {
-					if (ImGui::MenuItem("Recompile")) {
-						//AssetHandle<Shader> handle = AssetManager::load<Shader>(item.path.string()); TODO fix this
-						//AssetManager::get<Shader>(handle)->recompile();
-					}
-					if (ImGui::MenuItem("Load")) {
 					}
 				}
 

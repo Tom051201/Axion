@@ -162,7 +162,7 @@ namespace Axion {
 
 			// setup project
 			result->setName(spec.name);
-			result->setVersion("0.1.0"); // TODO: make project version configurable
+			result->setVersion(spec.version);
 			result->setEngineVersion(AX_ENGINE_VERSION);
 			result->setProjectPath(projectDir.string());
 			result->setAssetsPath(assetsDir.string());

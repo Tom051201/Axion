@@ -642,6 +642,7 @@ namespace Axion {
 			prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
 			prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
 			prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
+			prop.useEmissiveMap = data["UseEmissiveMap"].as<float>();
 
 			Ref<Material> material;
 			UUID pipelineUUID = UUID(0, 0);
@@ -733,6 +734,7 @@ namespace Axion {
 		prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
 		prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
 		prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
+		prop.useEmissiveMap = data["UseEmissiveMap"].as<float>();
 
 		material->setProperties(prop);
 		material->clearTextures();

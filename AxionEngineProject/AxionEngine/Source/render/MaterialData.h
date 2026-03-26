@@ -16,6 +16,7 @@ namespace Axion {
 		float useMetalnessMap = 0.0f;
 		float useRoughnessMap = 0.0f;
 		float useOcclusionMap = 0.0f;
+		float useEmissiveMap = 0.0f;
 
 	};
 
