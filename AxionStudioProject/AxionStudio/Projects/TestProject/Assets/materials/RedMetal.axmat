@@ -1,0 +1,19 @@
+Version: 1
+Name: RedMetal
+UUID: bdd54239500d5c3bf9b47e90277290fd
+Type: Material
+AlbedoColor: [1, 0, 0, 1]
+Metalness: 1
+Roughness: 0
+Emission: 0
+Tiling: 0
+UseNormalMap: 1
+UseMetalnessMap: 1
+UseRoughnessMap: 1
+UseOcclusionMap: 0
+UseEmissiveMap: 0
+Textures:
+  Albedo: f7d101cf298235faf376b28919cd25fd
+  Normal: 4b521285aab87a184ba58d4902fe0080
+  Metalness: 7fcc07abd245c0d50197cb8eafca936c
+  Roughness: e0bdc0bb0491787acef9e9a7a368a19f

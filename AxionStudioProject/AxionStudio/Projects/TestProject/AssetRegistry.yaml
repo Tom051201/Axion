@@ -15,18 +15,27 @@ AssetRegistry:
   - Handle: 4b521285aab87a184ba58d4902fe0080
     Type: Texture2D
     FilePath: textures\NormalMap.axtex
+  - Handle: 5242324b66ed5b200ce1b98fbf3e6c22
+    Type: PhysicsMaterial
+    FilePath: physics\DefaultMaterial.axpmat
   - Handle: e0bdc0bb0491787acef9e9a7a368a19f
     Type: Texture2D
     FilePath: textures\RoughnessMap.axtex
-  - Handle: db39f2f2f2856197a16b16ba204d4779
-    Type: TextureCube
-    FilePath: textures\BlueSkybox.axtcube
   - Handle: 9aef0bf32ef1db92ea489cb3b1a938da
     Type: Scene
     FilePath: scenes\TestScene.axscene
+  - Handle: db39f2f2f2856197a16b16ba204d4779
+    Type: TextureCube
+    FilePath: textures\BlueSkybox.axtcube
   - Handle: d86bf91a02b4d62666c3187d521c3a77
     Type: Skybox
     FilePath: skybox\BlueSky.axsky
   - Handle: 09959f0a8e3c3ca9894844526b4cd80b
     Type: AudioClip
     FilePath: audio\Music.axaudio
+  - Handle: bdd54239500d5c3bf9b47e90277290fd
+    Type: Material
+    FilePath: materials\RedMetal.axmat
+  - Handle: 4fe291875bed290e9a96ef50e74e4b57
+    Type: Scene
+    FilePath: scenes\BlanScene.axscene

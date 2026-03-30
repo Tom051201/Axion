@@ -339,6 +339,7 @@ namespace Axion::AAP {
 
 			if (std::filesystem::exists(sourceRuntimePath)) {
 				try {
+					// -- Copy Runtime Executable --
 					std::filesystem::copy_file(sourceRuntimePath, exportedExePath, std::filesystem::copy_options::overwrite_existing);
 					AX_CORE_LOG_INFO("Copied Runtime Player to: {}", exportedExePath.string());
 
@@ -353,6 +354,33 @@ namespace Axion::AAP {
 							AX_CORE_LOG_WARN("Failed to inject executable icon. Ensure the file is a valid .ico format.");
 						}
 					}
+
+					// -- Copy Dependencies --
+					const char* requiredFiles[] = {
+						"AxionScriptCore.dll",
+						"AxionScriptCore.runtimeconfig.json",
+						"freeglutd.dll",
+						"nethost.dll",
+						"PhysX_64.dll",
+						"PhysXCommon_64.dll",
+						"PhysXCooking_64.dll",
+						"PhysXFoundation_64.dll",
+						"PVDRuntime_64.dll"
+					};
+
+					for (const char* fileName : requiredFiles) {
+						std::filesystem::path sourceFile = std::filesystem::path("RuntimeData") / fileName;
+						std::filesystem::path destFile = std::filesystem::path(outputDirectory) / fileName;
+
+						if (std::filesystem::exists(sourceFile)) {
+							std::filesystem::copy_file(sourceFile, destFile, std::filesystem::copy_options::overwrite_existing);
+							AX_CORE_LOG_INFO("Copied dependency: {}", fileName);
+						}
+						else {
+							AX_CORE_LOG_ERROR("Failed to copy {}. Source not found at: {}", fileName, sourceFile.string());
+						}
+					}
+
 				}
 				catch (const std::exception& e) {
 					AX_CORE_LOG_ERROR("Failed to copy Runtime Player: {}", e.what());
@@ -366,8 +394,12 @@ namespace Axion::AAP {
 	}
 
 	std::filesystem::path AssetPackager::getRuntimePath(const std::filesystem::path& inPath) {
+		std::string stem = inPath.stem().string();
+		std::string ext = inPath.extension().string();
+		if (!ext.empty() && ext[0] == '.') ext = ext.substr(1);
+		std::string newFileName = stem + "_" + ext + ".axbin";
 		std::filesystem::path newPath = inPath;
-		newPath.replace_extension(".axbin");
+		newPath.replace_filename(newFileName);
 		return newPath;
 	}
 

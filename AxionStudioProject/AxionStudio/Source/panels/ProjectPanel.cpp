@@ -138,7 +138,8 @@ namespace Axion {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 					std::string path = static_cast<const char*>(payload->Data);
 					if (path.find(".axscene") != std::string::npos) {
-						m_project->setDefaultScene(path);
+						std::string absPath = AssetManager::getAbsolute(path);
+						m_project->setDefaultScene(absPath);
 						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 					}
 				}
@@ -149,7 +150,8 @@ namespace Axion {
 			if (ImGui::Button("Set Current")) {
 				std::string currentScenePath = SceneManager::getScenePath();
 				if (!currentScenePath.empty()) {
-					m_project->setDefaultScene(currentScenePath);
+					std::string absPath = AssetManager::getAbsolute(currentScenePath);
+					m_project->setDefaultScene(absPath);
 					ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 				}
 			}
@@ -183,9 +185,8 @@ namespace Axion {
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Export")) {
-				std::string exportFolder = FileDialogs::openFolder();
-				if (!exportFolder.empty()) {
-					AAP::AssetPackager::packageProject(exportFolder);
+				if (m_openExportModalCallback) {
+					m_openExportModalCallback();
 				}
 			}
 

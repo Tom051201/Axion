@@ -108,7 +108,7 @@ namespace Axion {
 		project->setProjectPath(".");
 		project->setAssetsPath(".");
 		project->setDefaultSceneUUID(defaultSceneUUID);
-		project->getAssetRegistry()->deserializeBinary("AssetRegistry.bin");
+		project->getAssetRegistry()->deserializeBinary("AssetRegistry.bin"); // TODO: maybe move this inside the assets folder or a config folder
 		project->setAppIconPath(iconPath);
 
 		return project;

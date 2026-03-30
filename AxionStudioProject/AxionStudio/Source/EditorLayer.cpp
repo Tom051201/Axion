@@ -32,6 +32,19 @@ namespace Axion {
 		m_sceneState = SceneState::Edit;
 		m_activeScene = SceneManager::getScene();
 
+		// ----- Setup all modals -----
+		m_skyboxImportModal = m_modalManager.addModal<SkyboxImportModal>("SkyboxImportModal");
+		m_meshImportModal = m_modalManager.addModal<MeshImportModal>("MeshImportModal");
+		m_audioImportModal = m_modalManager.addModal<AudioImportModal>("AudioImportModal");
+		m_shaderImportModal = m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
+		m_materialImportModal = m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
+		m_tex2dImportModal = m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
+		m_pipelineImportModal = m_modalManager.addModal<PipelineImportModal>("PipelineImportModal");
+		m_physicsMaterialImportModal = m_modalManager.addModal<PhysicsMaterialImportModal>("PhysicsMaterialImportModal");
+		m_textureCubeImportModal = m_modalManager.addModal<TextureCubeImportModal>("TextureCubeImportModal");
+		m_createProjectModal = m_modalManager.addModal<CreateProjectModal>("CreateProjectModal");
+		m_exportProjectModal = m_modalManager.addModal<ExportProjectModal>("ExportProjectModal");
+
 		// ----- Setup all panels -----
 		m_systemInfoPanel		= m_panelManager.addPanel<SystemInfoPanel>("SystemInfoPanel");
 		m_sceneHierarchyPanel	= m_panelManager.addPanel<SceneHierarchyPanel>("SceneHierarchyPanel", SceneManager::getScene());
@@ -41,20 +54,7 @@ namespace Axion {
 		m_sceneOverviewPanel	= m_panelManager.addPanel<SceneOverviewPanel>("SceneOverviewPanel");
 		m_assetManagerPanel		= m_panelManager.addPanel<AssetManagerPanel>("AssetManagerPanel");
 		m_panelManager.setupAll();
-
-
-		// ----- Setup all modals -----
-		m_skyboxImportModal				= m_modalManager.addModal<SkyboxImportModal>("SkyboxImportModal");
-		m_meshImportModal				= m_modalManager.addModal<MeshImportModal>("MeshImportModal");
-		m_audioImportModal				= m_modalManager.addModal<AudioImportModal>("AudioImportModal");
-		m_shaderImportModal				= m_modalManager.addModal<ShaderImportModal>("ShaderImportModal");
-		m_materialImportModal			= m_modalManager.addModal<MaterialImportModal>("MaterialImportModal");
-		m_tex2dImportModal				= m_modalManager.addModal<Texture2DImportModal>("Texture2DImportModal");
-		m_pipelineImportModal			= m_modalManager.addModal<PipelineImportModal>("PipelineImportModal");
-		m_physicsMaterialImportModal	= m_modalManager.addModal<PhysicsMaterialImportModal>("PhysicsMaterialImportModal");
-		m_textureCubeImportModal		= m_modalManager.addModal<TextureCubeImportModal>("TextureCubeImportModal");
-		m_createProjectModal			= m_modalManager.addModal<CreateProjectModal>("CreateProjectModal");
-		m_exportProjectModal			= m_modalManager.addModal<ExportProjectModal>("ExportProjectModal");
+		m_projectPanel->setOpenExportModalCallback([this]() { m_exportProjectModal->open(); });
 
 
 		// ----- Setup framebuffer for scene viewport -----
@@ -235,15 +235,42 @@ namespace Axion {
 			case KeyCode::S: {
 				// -- Ctrl + Shift + S (Save As) --
 				if (controlPressed && shiftPressed) {
-					std::string defaultPath = ProjectManager::getProject()->getAssetsPath();
-					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, defaultPath);
-					if (!path.empty()) SceneManager::saveScene(path);
+					std::filesystem::path scenesPath = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "scenes";
+					std::string absPath;
+					if (std::filesystem::exists(scenesPath)) {
+						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath.string());
+					}
+					else {
+						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, ProjectManager::getProject()->getAssetsPath());
+					}
+					
+					if (!absPath.empty()) {
+						SceneManager::saveScene(absPath);
+						m_contentBrowserPanel->refresh();
+					}
 				}
 
 				// -- Ctrl + S (Save) --
 				else if (controlPressed && (!shiftPressed)) {
 					std::string path = SceneManager::getScenePath();
-					if (!path.empty()) SceneManager::saveScene(path);
+					if (!path.empty()) {
+						SceneManager::saveScene(path);
+					}
+					else {
+						std::filesystem::path scenesPath = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "scenes";
+						std::string absPath;
+						if (std::filesystem::exists(scenesPath)) {
+							absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath.string());
+						}
+						else {
+							absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, ProjectManager::getProject()->getAssetsPath());
+						}
+
+						if (!absPath.empty()) {
+							SceneManager::saveScene(absPath);
+							m_contentBrowserPanel->refresh();
+						}
+					}
 				}
 
 				// -- Alt + S (Simulate / Stop Simulate) --
@@ -514,16 +541,27 @@ namespace Axion {
 					if (!path.empty()) SceneManager::loadScene(path);
 				}
 				ImGui::Separator();
+				bool isNewScene = SceneManager::isNewScene();
 				ImGui::BeginDisabled(SceneManager::isNewScene());
 				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {
 					std::string path = SceneManager::getScenePath();
 					if (!path.empty()) SceneManager::saveScene(path);
 				}
+				if (isNewScene && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+					ImGui::SetTooltip("Cannot save a new scene.\nUse 'Save Scene As...' to save it to disk first.");
+				}
 				ImGui::EndDisabled();
 				if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) {
-					std::string path = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} });
-					if (!path.empty()) {
-						SceneManager::saveScene(path);
+					std::filesystem::path scenesPath = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "scenes";
+					std::string absPath;
+					if (std::filesystem::exists(scenesPath)) {
+						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath.string());
+					}
+					else {
+						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, ProjectManager::getProject()->getAssetsPath());
+					}
+					if (!absPath.empty()) {
+						SceneManager::saveScene(absPath);
 						m_contentBrowserPanel->refresh();
 					}
 				}

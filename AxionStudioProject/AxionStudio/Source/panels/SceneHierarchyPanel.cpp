@@ -47,16 +47,15 @@ namespace Axion {
 	void SceneHierarchyPanel::onGuiRender() {
 		// ----- Draw info when no project is selected -----
 		if (!ProjectManager::hasProject()) {
-			if (ImGui::Begin("Properties")) {
-				ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
-				ImGui::End();
-			}
-			if (ImGui::Begin("Scene Hierarchy")) {
-				ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
-				ImGui::End();
-				return;
-			}
+			ImGui::Begin("Properties");
+			ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
+			ImGui::End();
 
+			ImGui::Begin("Scene Hierarchy");
+			ImGui::TextWrapped("No Project Loaded. \nPlease load or create a project first.");
+			ImGui::End();
+
+			return;
 		}
 
 
@@ -547,8 +546,13 @@ namespace Axion {
 					ImGui::TableSetColumnIndex(0);
 					ImGui::Text("Pipeline (Shader)");
 					ImGui::TableSetColumnIndex(1);
-					ImGui::Text(pipeline->getSpecification().shader->getName().c_str());
-					
+					if (pipeline != nullptr) {
+						ImGui::Text(pipeline->getSpecification().shader->getName().c_str());
+					}
+					else {
+						ImGui::Text("Internal Default Pipeline");
+					}
+
 					// -- AlbedoColor --
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);

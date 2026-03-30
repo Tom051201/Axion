@@ -5,25 +5,52 @@ Scene: TestScene
 Skybox: d86bf91a02b4d62666c3187d521c3a77
 AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
 Entities:
-  - Entity: ea253d4719151501a10b7ed3f0c9f94d
+  - Entity: 0a71bfa293475f62ebd5b8eb5906d2cd
     TagComponent:
-      Tag: Red Light
+      Tag: Cube
     TransformComponent:
-      Translation: [-1.86957526, 0, 0.0565609299]
-      Rotation: [0, 0.772133946, 0, 0.63545984]
-      Scale: [1.00000012, 1, 1.00000012]
-    SpotLightComponent:
-      Color: [1, 0, 0, 1]
-      Intensity: 20
-      Range: 10
-      InnerConeAngle: 12.5
-      OuterConeAngle: 17.5
+      Translation: [0, 2.34848499, 0]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
+    MaterialComponent:
+      UUID: bdd54239500d5c3bf9b47e90277290fd
+    RigidBodyComponent:
+      BodyType: Dynamic
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Material: 5242324b66ed5b200ce1b98fbf3e6c22
+  - Entity: 92721182be594963461f0299d746068e
+    TagComponent:
+      Tag: Light Entity
+    TransformComponent:
+      Translation: [0, 0.994234324, -0.91685915]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
+      Radius: 10
+      Falloff: 1
   - Entity: ff1562b996d22b5e23ea43f2a05bfb1a
     TagComponent:
       Tag: Camera
+    RelationshipComponent:
+      Parent: c033d03f953b3d6d3d9aa371eb2e9969
     TransformComponent:
-      Translation: [-2.09530973, 0, -1.61189651]
-      Rotation: [-0, 0.492645979, -0, 0.87022984]
+      Translation: [0, 0, 0]
+      Rotation: [-0, 0, -0, 0]
       Scale: [1, 1, 1]
     CameraComponent:
       Primary: true
@@ -35,26 +62,68 @@ Entities:
       OrthographicSize: 10
       OrthographicNear: -1
       OrthographicFar: 1
-  - Entity: 92721182be594963461f0299d746068e
+  - Entity: ea253d4719151501a10b7ed3f0c9f94d
     TagComponent:
-      Tag: Light Entity
+      Tag: Red Light
     TransformComponent:
-      Translation: [0, 0, -0.91685915]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
-      Radius: 10
-      Falloff: 1
-  - Entity: 0a71bfa293475f62ebd5b8eb5906d2cd
+      Translation: [-1.86957526, 1.32811427, 0.0565609299]
+      Rotation: [0, 0.772133946, 0, 0.63545984]
+      Scale: [1.00000012, 1, 1.00000012]
+    SpotLightComponent:
+      Color: [1, 0, 0, 1]
+      Intensity: 20
+      Range: 10
+      InnerConeAngle: 12.5
+      OuterConeAngle: 17.5
+  - Entity: 640dd5a278c8ea459fac2f45a85cba07
     TagComponent:
-      Tag: TestEntity
+      Tag: Floor
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [6.40524101, 1, 4.44427395]
     MeshComponent:
       UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
     MaterialComponent:
       UUID: d8e7846ca068eb85d5589647caca498e
+    RigidBodyComponent:
+      BodyType: Static
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Material: 5242324b66ed5b200ce1b98fbf3e6c22
+  - Entity: c033d03f953b3d6d3d9aa371eb2e9969
+    TagComponent:
+      Tag: Player
+    RelationshipComponent:
+      Parent: None
+    TransformComponent:
+      Translation: [-2.02435327, 1.26502991, -1.32982802]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [0.600000024, 0.600000024, 0.600000024]
+    RigidBodyComponent:
+      BodyType: Dynamic
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Material: 5242324b66ed5b200ce1b98fbf3e6c22
+    ScriptComponent:
+      ClassName: AxionScriptCore.Player

@@ -122,6 +122,7 @@ namespace Axion {
 				if (item.path.string().find(".axscene") != std::string::npos) {
 					if (ImGui::MenuItem("Set as Default Scene")) {
 						ProjectManager::getProject()->setDefaultScene(path.string());
+						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 					}
 				}
 

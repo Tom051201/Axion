@@ -21,13 +21,15 @@ namespace Axion {
 
 		void setProject(const Ref<Project>& project);
 
+		void setOpenExportModalCallback(const std::function<void()>& callback) { m_openExportModalCallback = callback; }
+
 	private:
 
 		Ref<Project> m_project;
-
 		std::filesystem::path m_rootDirectory;
 		std::filesystem::path m_projectFileRelative;
 		std::filesystem::path m_assetsRelative;
+		std::function<void()> m_openExportModalCallback;
 
 		bool onProjectChanged(ProjectChangedEvent& e);
 
