@@ -7,21 +7,6 @@
 
 namespace Axion {
 
-	// LAYOUT
-	//
-	// Project: NAME
-	// Version: VERSION
-	// EngineVersion: VERSION
-	// Author: AUTHOR
-	// Company: COMPANY
-	// Description: DESC
-	// ProjectPath: PATH
-	// AssetsPath: PATH
-	// ScenesPath: PATH
-	// DefaultScene: PATH
-	//
-	// LAYOUT
-
 	Project::Project(const std::string& name)
 		: m_name(name), m_projectPath("Unknown"), m_assetsPath("Unknown") {
 	
@@ -151,16 +136,18 @@ namespace Axion {
 		try {
 			fs::path projectDir = fs::path(spec.location) / projectName;
 
-			// create project dir
+			// -- Create Project Directory --
 			if (!fs::exists(projectDir)) {
 				fs::create_directories(projectDir);
 			}
 
-			// create assets dir
+
+			// -- Create Assets Directory --
 			fs::path assetsDir = projectDir / "Assets";
 			fs::create_directories(assetsDir);
 
-			// setup project
+
+			// -- Setup Project --
 			result->setName(spec.name);
 			result->setVersion(spec.version);
 			result->setEngineVersion(AX_ENGINE_VERSION);

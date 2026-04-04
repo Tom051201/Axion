@@ -1,7 +1,0 @@
-Version: 1
-Name: DefaultMaterial
-UUID: 5242324b66ed5b200ce1b98fbf3e6c22
-Type: PhysicsMaterial
-StaticFriction: 0.5
-DynamicFriction: 0.5
-Restitution: 0.0500000007

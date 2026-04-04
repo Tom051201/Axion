@@ -1,7 +1,0 @@
-Version: 1
-Name: Music
-UUID: 09959f0a8e3c3ca9894844526b4cd80b
-Type: AudioClip
-Format: MP3
-Mode: Stream
-Source: audio\music.mp3
