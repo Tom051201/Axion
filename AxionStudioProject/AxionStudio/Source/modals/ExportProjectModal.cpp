@@ -31,14 +31,14 @@ namespace Axion {
 		ImGui::Text("Version: %s", project->getVersion().c_str());
 		ImGui::TextDisabled("Powered by Axion Engine v%s", AX_ENGINE_VERSION);
 		if (!project->getAppIconPath().empty()) {
-			std::string iconName = std::filesystem::path(project->getAppIconPath()).stem().string();
+			std::string iconName = project->getAppIconPath().stem().string();
 			ImGui::Text("Custom Icon: %s", iconName.c_str());
 		}
 		else {
 			ImGui::TextDisabled("No Custom Icon (Using Default)");
 		}
 		if (!project->getDefaultScene().empty()) {
-			std::string fileName = std::filesystem::path(project->getDefaultScene()).stem().string();
+			std::string fileName = project->getDefaultScene().stem().string();
 			ImGui::Text("Default Scene: %s", fileName.c_str());
 		}
 		else {
@@ -64,8 +64,8 @@ namespace Axion {
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##ExpLoc")) {
 				std::filesystem::path exportDir = ProjectManager::getProject()->getProjectPath();
-				std::string absPath = FileDialogs::openFolder(exportDir.string());
-				if (!absPath.empty()) m_exportPath = absPath;
+				std::filesystem::path absPath = FileDialogs::openFolder(exportDir);
+				if (!absPath.empty()) m_exportPath = absPath.string();
 			}
 
 			// -- Options --

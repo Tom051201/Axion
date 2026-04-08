@@ -23,7 +23,7 @@ namespace Axion {
 		}
 		// -- Streaming sounds --
 		else {
-			if (ma_sound_init_from_file(AudioManager::getEngine(), clip->getPath().c_str(), MA_SOUND_FLAG_STREAM, nullptr, nullptr, &m_streamSound) != MA_SUCCESS) {
+			if (ma_sound_init_from_file(AudioManager::getEngine(), clip->getPath().string().c_str(), MA_SOUND_FLAG_STREAM, nullptr, nullptr, &m_streamSound) != MA_SUCCESS) {
 				AX_CORE_LOG_ERROR("Failed to init streaming sound for source");
 				m_instance = nullptr;
 				m_initialized = false;

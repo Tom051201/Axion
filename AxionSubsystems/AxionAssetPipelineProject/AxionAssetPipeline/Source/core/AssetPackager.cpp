@@ -23,8 +23,8 @@
 
 namespace Axion::AAP {
 
-	void AssetPackager::packageProject(const std::string& outputDirectory) {
-		AX_CORE_LOG_INFO("Starting Asset Packaging to: {}", outputDirectory);
+	void AssetPackager::packageProject(const std::filesystem::path& outputDirectory) {
+		AX_CORE_LOG_INFO("Starting Asset Packaging to: {}", outputDirectory.string());
 
 		std::filesystem::create_directories(outputDirectory);
 
@@ -38,9 +38,9 @@ namespace Axion::AAP {
 		AssetRegistry runtimeRegistry;
 
 		for (const auto& [uuid, metadata] : inRegistry->getMap()) {
-			std::filesystem::path inPath = AssetManager::getAbsolute(metadata.filePath.string());
+			std::filesystem::path inPath = AssetManager::getAbsolute(metadata.filePath);
 			std::filesystem::path runtimeRelativePath = getRuntimePath(metadata.filePath);
-			std::filesystem::path runtimeAbsolutePath = std::filesystem::path(outputDirectory) / runtimeRelativePath;
+			std::filesystem::path runtimeAbsolutePath = outputDirectory / runtimeRelativePath;
 
 			std::filesystem::create_directories(runtimeAbsolutePath.parent_path());
 
@@ -55,7 +55,7 @@ namespace Axion::AAP {
 					meshData.fileFormat = data["Format"].as<std::string>();
 					meshData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
-					MeshParser::createBinaryFile(meshData, runtimeAbsolutePath.string());
+					MeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::AudioClip: {
@@ -69,7 +69,7 @@ namespace Axion::AAP {
 					audioData.fileFormat = data["Format"].as<std::string>();
 					audioData.mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
 
-					AudioParser::createBinaryFile(audioData, runtimeAbsolutePath.string());
+					AudioParser::createBinaryFile(audioData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::Material: {
@@ -111,7 +111,7 @@ namespace Axion::AAP {
 						if (texturesNode["Emissive"]) matData.textures[TextureSlot::Emissive] = registry->get(UUID::fromString(texturesNode["Emissive"].as<std::string>())).filePath.string();
 					}
 
-					MaterialParser::createBinaryFile(matData, runtimeAbsolutePath.string());
+					MaterialParser::createBinaryFile(matData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::PhysicsMaterial: {
@@ -125,7 +125,7 @@ namespace Axion::AAP {
 					pmatData.dynamicFriction = data["DynamicFriction"].as<float>();
 					pmatData.restitution = data["Restitution"].as<float>();
 
-					PhysicsMaterialParser::createBinaryFile(pmatData, runtimeAbsolutePath.string());
+					PhysicsMaterialParser::createBinaryFile(pmatData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::Pipeline: {
@@ -173,7 +173,7 @@ namespace Axion::AAP {
 						pipeData.spec.vertexLayout = layout;
 					}
 
-					PipelineParser::createBinaryFile(pipeData, runtimeAbsolutePath.string());
+					PipelineParser::createBinaryFile(pipeData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::Shader: {
@@ -191,7 +191,7 @@ namespace Axion::AAP {
 						shaderData.spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
 					}
 
-					ShaderParser::createBinaryFile(shaderData, runtimeAbsolutePath.string());
+					ShaderParser::createBinaryFile(shaderData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::Skybox: {
@@ -217,7 +217,7 @@ namespace Axion::AAP {
 					UUID texUUID = UUID::fromString(data["TextureCube"].as<std::string>());
 					if (registry->contains(texUUID)) skyData.textureCubePath = registry->get(texUUID).filePath.string();
 
-					SkyboxParser::createBinaryFile(skyData, runtimeAbsolutePath.string());
+					SkyboxParser::createBinaryFile(skyData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::TextureCube: {
@@ -230,7 +230,7 @@ namespace Axion::AAP {
 					texData.fileFormat = data["Format"].as<std::string>();
 					texData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
-					TextureCubeParser::createBinaryFile(texData, runtimeAbsolutePath.string());
+					TextureCubeParser::createBinaryFile(texData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::Texture2D: {
@@ -243,7 +243,7 @@ namespace Axion::AAP {
 					texData.fileFormat = data["Format"].as<std::string>();
 					texData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
-					Texture2DParser::createBinaryFile(texData, runtimeAbsolutePath.string());
+					Texture2DParser::createBinaryFile(texData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::Prefab: {
@@ -258,14 +258,14 @@ namespace Axion::AAP {
 					YAML::Node entityNode = data["Entity"];
 					prefabData.entity = SceneSerializer::deserializeEntityNode(prefabData.scene.get(), entityNode, false);
 
-					PrefabParser::createBinaryFile(prefabData, runtimeAbsolutePath.string());
+					PrefabParser::createBinaryFile(prefabData, runtimeAbsolutePath);
 					break;
 				}
 				case AssetType::Scene: {
 					Ref<Scene> scene = std::make_shared<Scene>();
 					SceneSerializer serializer(scene);
-					if (serializer.deserializeText(inPath.string())) {
-						serializer.serializeBinary(runtimeAbsolutePath.string());
+					if (serializer.deserializeText(inPath)) {
+						serializer.serializeBinary(runtimeAbsolutePath);
 					}
 					else {
 						AX_CORE_LOG_ERROR("Failed to bake scene {}", inPath.string());
@@ -286,12 +286,12 @@ namespace Axion::AAP {
 			runtimeRegistry.add(runtimeMetadata);
 		}
 
-		std::string registryOutputPath = (std::filesystem::path(outputDirectory) / "AssetRegistry.bin").string();
+		std::filesystem::path registryOutputPath = outputDirectory / "AssetRegistry.bin";
 		runtimeRegistry.serializeBinary(registryOutputPath);
 
 		AX_CORE_LOG_INFO("Asset Packaging Complete!");
 
-		std::string configPath = (std::filesystem::path(outputDirectory) / "GameConfig.axbin").string();
+		std::filesystem::path configPath = outputDirectory / "GameConfig.axbin";
 		std::ofstream outConfig(configPath, std::ios::out | std::ios::binary);
 
 		if (outConfig.is_open()) {
@@ -309,11 +309,10 @@ namespace Axion::AAP {
 
 			// -- Write Default Scene UUID --
 			UUID defaultSceneUUID = UUID(0, 0);
-			std::string defaultScenePath = project->getDefaultScene();
-			if (!defaultScenePath.empty()) {
-				std::string normalizedPath = AssetManager::getRelativeToAssets(AssetManager::getAbsolute(defaultScenePath));
+			if (!project->getDefaultScene().empty()) {
+				std::filesystem::path normalizedPath = AssetManager::getRelativeToAssets(AssetManager::getAbsolute(project->getDefaultScene()));
 				for (const auto& [uuid, metadata] : inRegistry->getMap()) {
-					if (metadata.filePath.string() == normalizedPath) {
+					if (metadata.filePath == normalizedPath) {
 						defaultSceneUUID = uuid;
 						break;
 					}
@@ -322,7 +321,7 @@ namespace Axion::AAP {
 			outConfig.write(reinterpret_cast<const char*>(&defaultSceneUUID), sizeof(UUID));
 
 			// -- Write App Icon Path --
-			std::string iconPath = project->getAppIconPath();
+			std::string iconPath = project->getAppIconPath().generic_string();
 			uint32_t iconPathLength = static_cast<uint32_t>(iconPath.size());
 			outConfig.write(reinterpret_cast<const char*>(&iconPathLength), sizeof(uint32_t));
 			if (iconPathLength > 0) {
@@ -334,7 +333,7 @@ namespace Axion::AAP {
 
 			// -- Copy and Setup the Runtime Executable --
 			std::string gameName = project->getName();
-			std::filesystem::path exportedExePath = std::filesystem::path(outputDirectory) / (gameName + ".exe");
+			std::filesystem::path exportedExePath = outputDirectory / (gameName + ".exe");
 			std::filesystem::path sourceRuntimePath = "RuntimeData/AxionRuntime.exe";
 
 			if (std::filesystem::exists(sourceRuntimePath)) {
@@ -344,10 +343,10 @@ namespace Axion::AAP {
 					AX_CORE_LOG_INFO("Copied Runtime Player to: {}", exportedExePath.string());
 
 					// -- Inject .ico file --
-					std::string iconPath = project->getAppIconPath();
+					std::filesystem::path iconPath = project->getAppIconPath();
 					if (!iconPath.empty()) {
-						std::string absIconPath = AssetManager::getAbsolute(iconPath);
-						if (PlatformPackager::injectIconIntoExecutable(exportedExePath.string(), absIconPath)) {
+						std::filesystem::path absIconPath = AssetManager::getAbsolute(iconPath);
+						if (PlatformPackager::injectIconIntoExecutable(exportedExePath, absIconPath)) {
 							AX_CORE_LOG_INFO("Successfully injected custom executable icon!");
 						}
 						else {
@@ -370,7 +369,7 @@ namespace Axion::AAP {
 
 					for (const char* fileName : requiredFiles) {
 						std::filesystem::path sourceFile = std::filesystem::path("RuntimeData") / fileName;
-						std::filesystem::path destFile = std::filesystem::path(outputDirectory) / fileName;
+						std::filesystem::path destFile = outputDirectory / fileName;
 
 						if (std::filesystem::exists(sourceFile)) {
 							std::filesystem::copy_file(sourceFile, destFile, std::filesystem::copy_options::overwrite_existing);

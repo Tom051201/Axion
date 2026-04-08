@@ -42,15 +42,15 @@ namespace Axion {
 			ImGui::InputText("##SkyboxSourcePath_input", &m_texturePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##SkyboxSourceFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtcube"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtcube"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtcube"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_texturePath = absPath;
+				if (!absPath.empty()) m_texturePath = absPath.string();
 			}
 
 
@@ -64,15 +64,15 @@ namespace Axion {
 			ImGui::InputText("##SkyboxPipelinePath_input", &m_pipelinePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##SkyboxPipelineFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "pipelines";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_pipelinePath = absPath;
+				if (!absPath.empty()) m_pipelinePath = absPath.string();
 			}
 
 
@@ -85,15 +85,15 @@ namespace Axion {
 			ImGui::InputText("##SkyboxOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##SkyboxOutputDir_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "skybox";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "skybox";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFolder(dir.string());
+					absPath = FileDialogs::openFolder(dir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -162,16 +162,16 @@ namespace Axion {
 					data.pipelinePath = AssetManager::getRelativeToAssets(m_pipelinePath);
 				}
 
-				AAP::SkyboxParser::createTextFile(data, finalPath.string());
+				AAP::SkyboxParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Skybox;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

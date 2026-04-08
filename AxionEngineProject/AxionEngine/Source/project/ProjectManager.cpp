@@ -11,7 +11,7 @@ namespace Axion {
 	struct ProjectManagerData {
 		bool isRuntime;
 		Ref<Project> project = nullptr;
-		std::string projectPath;
+		std::filesystem::path projectPath;
 		std::function<void(Event&)> eventCallback;
 		std::function<bool(RenderingFinishedEvent&)> onRenderingFinished;
 		// -- New project --
@@ -19,10 +19,10 @@ namespace Axion {
 		ProjectSpecification newProjectSpecification;
 		// -- Load project --
 		bool loadProjectRequest = false;
-		std::string toLoadProjectPath;
+		std::filesystem::path toLoadProjectPath;
 		// -- Save project --
 		bool saveProjectRequest = false;
-		std::string toSaveProjectPath;
+		std::filesystem::path toSaveProjectPath;
 		// -- Unload project --
 		bool unloadProjectRequest = false;
 	};
@@ -35,8 +35,8 @@ namespace Axion {
 		s_managerData->onRenderingFinished = [&](RenderingFinishedEvent& e) {
 			// -- Save project --
 			if (s_managerData->saveProjectRequest) {
-				std::string filePath = s_managerData->toSaveProjectPath;
-				if (!filePath.empty() && std::filesystem::exists(std::filesystem::path(filePath))) {
+				std::filesystem::path filePath = s_managerData->toSaveProjectPath;
+				if (!filePath.empty() && std::filesystem::exists(filePath)) {
 					s_managerData->project->save(filePath);
 					AX_CORE_LOG_INFO("Project saved");
 				}
@@ -49,13 +49,13 @@ namespace Axion {
 
 			// -- Load project --
 			if (s_managerData->loadProjectRequest) {
-				std::string filePath = s_managerData->toLoadProjectPath;
-				if (!filePath.empty() && std::filesystem::exists(std::filesystem::path(filePath))) {
+				std::filesystem::path filePath = s_managerData->toLoadProjectPath;
+				if (!filePath.empty() && std::filesystem::exists(filePath)) {
 					setProject(Project::load(filePath));
 					s_managerData->projectPath = filePath;
 
 					if (!s_managerData->project->getDefaultScene().empty()) {
-						SceneManager::loadScene(s_managerData->project->getDefaultScene());
+						SceneManager::loadScene(s_managerData->project->getDefaultScene().string()); // TODO: remove .string
 					}
 					else {
 						SceneManager::newScene();
@@ -104,14 +104,15 @@ namespace Axion {
 		s_managerData->newProjectRequest = true;
 	}
 
-	void ProjectManager::loadProject(const std::string& filePath) {
+	void ProjectManager::loadProject(const std::filesystem::path& filePath) {
 		s_managerData->toLoadProjectPath = filePath;
 		s_managerData->loadProjectRequest = true;
 	}
 
-	void ProjectManager::loadRuntimeProject(const std::string& configFilePath) {
+	void ProjectManager::loadRuntimeProject(const std::filesystem::path& configFilePath) {
 		s_managerData->isRuntime = true;
 
+		// -- Load Runtime Project --
 		Ref<Project> runtimeProject = Project::loadBinary(configFilePath);
 		if (runtimeProject) {
 			setProject(runtimeProject);
@@ -123,7 +124,7 @@ namespace Axion {
 		}
 	}
 
-	void ProjectManager::saveProject(const std::string& filePath) {
+	void ProjectManager::saveProject(const std::filesystem::path& filePath) {
 		s_managerData->toSaveProjectPath = filePath;
 		s_managerData->saveProjectRequest = true;
 	}
@@ -136,7 +137,7 @@ namespace Axion {
 
 	bool ProjectManager::hasProject() { return s_managerData && s_managerData->project != nullptr; }
 
-	const std::string& ProjectManager::getProjectFilePath() { return s_managerData->projectPath; }
+	const std::filesystem::path& ProjectManager::getProjectFilePath() { return s_managerData->projectPath; }
 
 	void ProjectManager::setProject(const Ref<Project>& project) {
 		s_managerData->project = project;

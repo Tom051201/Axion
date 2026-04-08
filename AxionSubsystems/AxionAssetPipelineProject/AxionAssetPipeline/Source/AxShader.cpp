@@ -4,7 +4,7 @@
 
 namespace Axion::AAP {
 
-	void ShaderParser::createTextFile(const ShaderAssetData& data, const std::string& outputPath) {
+	void ShaderParser::createTextFile(const ShaderAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -13,7 +13,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Shader";
 		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
-		out << YAML::Key << "Source" << YAML::Value << data.filePath;
+		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
 		
 		out << YAML::Key << "Specification" << YAML::BeginMap;
 		out << YAML::Key << "Name" << YAML::Value << data.spec.name;
@@ -25,20 +25,20 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axshader file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axshader file ({})", outputPath.string());
 	}
 
-	void ShaderParser::createBinaryFile(const ShaderAssetData& data, const std::string& outputPath) {
+	void ShaderParser::createBinaryFile(const ShaderAssetData& data, const std::filesystem::path& outputPath) {
 		ShaderBytecode bytecode = Shader::compileToBytecode(data.filePath);
 
 		if (!bytecode.isValid()) {
-			AX_CORE_LOG_ERROR("Failed to compile shader for packaging: {}", data.filePath);
+			AX_CORE_LOG_ERROR("Failed to compile shader for packaging: {}", data.filePath.string());
 			return;
 		}
 
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
 		if (!out) {
-			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath.string());
 			return;
 		}
 
@@ -57,7 +57,7 @@ namespace Axion::AAP {
 		out.write(reinterpret_cast<const char*>(bytecode.pixel.data()), header.psSize);
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary Shader to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary Shader to {}", outputPath.string());
 	}
 
 }

@@ -3,6 +3,7 @@
 #include "AxionEngine/Source/core/UUID.h"
 
 #include <string>
+#include <filesystem>
 
 namespace Axion::AAP {
 
@@ -17,8 +18,8 @@ namespace Axion::AAP {
 	class PhysicsMaterialParser {
 	public:
 
-		static void createTextFile(const PhysicsMaterialAssetData& data, const std::string& outputPath);
-		static void createBinaryFile(const PhysicsMaterialAssetData& data, const std::string& outputPath);
+		static void createTextFile(const PhysicsMaterialAssetData& data, const std::filesystem::path& outputPath);
+		static void createBinaryFile(const PhysicsMaterialAssetData& data, const std::filesystem::path& outputPath);
 
 	};
 

@@ -47,11 +47,11 @@ namespace Axion {
 
 		const std::unordered_map<UUID, AssetMetadata>& getMap() const { return m_registry; }
 
-		void serialize(const std::string& filepath);
-		void deserialize(const std::string& filepath);
+		void serialize(const std::filesystem::path& filepath); // TODO: rename to serializeText
+		void deserialize(const std::filesystem::path& filepath); // TODO: rename to deserializeText
 
-		void serializeBinary(const std::string& filepath);
-		void deserializeBinary(const std::string& filepath);
+		void serializeBinary(const std::filesystem::path& filepath);
+		void deserializeBinary(const std::filesystem::path& filepath);
 
 		static AssetType assetTypeFromString(const std::string& assetType);
 		static std::string assetTypeToString(AssetType type);

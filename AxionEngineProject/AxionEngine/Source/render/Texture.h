@@ -20,7 +20,7 @@ namespace Axion {
 		virtual uint32_t getSrvHeapIndex() const = 0;
 
 
-		static Ref<Texture2D> create(const std::string& path);
+		static Ref<Texture2D> create(const std::filesystem::path& path);
 		static Ref<Texture2D> create(uint32_t width, uint32_t height, void* data = nullptr);
 		static Ref<Texture2D> create(const uint8_t* data, size_t size);
 
@@ -41,8 +41,8 @@ namespace Axion {
 
 		virtual void* getHandle() const = 0;
 
-		static Ref<TextureCube> create(const std::string& filePath);
-		static Ref<TextureCube> create(const std::array<std::string, 6>& filePaths);
+		static Ref<TextureCube> create(const std::filesystem::path& filePath);
+		static Ref<TextureCube> create(const std::array<std::filesystem::path, 6>& filePaths);
 		static Ref<TextureCube> create(const uint8_t* data, size_t size);
 
 	};

@@ -4,7 +4,7 @@
 
 namespace Axion::AAP {
 
-	void TextureCubeParser::createTextFile(const TextureCubeAssetData& data, const std::string& outputPath) {
+	void TextureCubeParser::createTextFile(const TextureCubeAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -13,19 +13,19 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "TextureCube";
 		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
-		out << YAML::Key << "Source" << YAML::Value << data.filePath;
+		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
 
 		out << YAML::EndMap;
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axtcube file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axtcube file ({})", outputPath.string());
 	}
 
-	void TextureCubeParser::createBinaryFile(const TextureCubeAssetData& data, const std::string& outputPath) {
+	void TextureCubeParser::createBinaryFile(const TextureCubeAssetData& data, const std::filesystem::path& outputPath) {
 		std::ifstream imageFile(data.filePath, std::ios::in | std::ios::binary);
 		if (!imageFile) {
-			AX_CORE_LOG_ERROR("Failed to open source image: {}", data.filePath);
+			AX_CORE_LOG_ERROR("Failed to open source image: {}", data.filePath.string());
 			return;
 		}
 
@@ -52,7 +52,7 @@ namespace Axion::AAP {
 		out.write(reinterpret_cast<const char*>(fileData.data()), fileSize);
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary TextureCube to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary TextureCube to {}", outputPath.string());
 	}
 
 }

@@ -26,7 +26,7 @@ namespace Axion {
 	void ProjectPanel::setProject(const Ref<Project>& project) {
 		m_project = project;
 		if (ProjectManager::hasProject()) {
-			m_rootDirectory = std::filesystem::path(m_project->getProjectPath()).parent_path();
+			m_rootDirectory = m_project->getProjectPath().parent_path();
 
 			m_projectFileRelative = std::filesystem::relative(project->getProjectPath(), m_rootDirectory);
 			m_assetsRelative = std::filesystem::relative(project->getAssetsPath(), m_rootDirectory);
@@ -85,13 +85,13 @@ namespace Axion {
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
 
-			std::string currentIcon = m_project->getAppIconPath();
-			std::string iconDisplay = currentIcon.empty() ? "None" : std::filesystem::path(currentIcon).filename().string();
+			std::filesystem::path currentIcon = m_project->getAppIconPath();
+			std::string iconDisplay = currentIcon.empty() ? "None" : currentIcon.filename().string();
 
 			ImGui::Text(iconDisplay.c_str());
 			ImGui::SameLine(ImGui::GetContentRegionAvail().x - 65.0f);
 			if (ImGui::Button("Browse##Icon")) {
-				std::string path = FileDialogs::openFile({ {"Windows Icon", "*.ico"} });
+				std::filesystem::path path = FileDialogs::openFile({ {"Windows Icon", "*.ico"} });
 				if (!path.empty()) {
 					m_project->setAppIconPath(path);
 					ProjectManager::saveProject(ProjectManager::getProjectFilePath());
@@ -126,7 +126,7 @@ namespace Axion {
 			ImGui::Text("Default Scene");
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
-			std::string currentDefault = m_project->getDefaultScene();
+			std::filesystem::path currentDefault = m_project->getDefaultScene();
 			std::string displayString = "None (Drag .axscene here)";
 			if (!currentDefault.empty()) {
 				std::filesystem::path defaultScenePath = AssetManager::getRelativeToAssets(currentDefault);
@@ -136,9 +136,9 @@ namespace Axion {
 			ImGui::Button(displayString.c_str(), ImVec2(ImGui::GetContentRegionAvail().x - 100.0f, 0.0f));
 			if (ImGui::BeginDragDropTarget()) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-					std::string path = static_cast<const char*>(payload->Data);
-					if (path.find(".axscene") != std::string::npos) {
-						std::string absPath = AssetManager::getAbsolute(path);
+					std::filesystem::path path = static_cast<const char*>(payload->Data);
+					if (path.extension() == ".axscene") {
+						std::filesystem::path absPath = AssetManager::getAbsolute(path);
 						m_project->setDefaultScene(absPath);
 						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 					}
@@ -148,9 +148,9 @@ namespace Axion {
 
 			ImGui::SameLine();
 			if (ImGui::Button("Set Current")) {
-				std::string currentScenePath = SceneManager::getScenePath();
+				std::filesystem::path currentScenePath = SceneManager::getScenePath();
 				if (!currentScenePath.empty()) {
-					std::string absPath = AssetManager::getAbsolute(currentScenePath);
+					std::filesystem::path absPath = AssetManager::getAbsolute(currentScenePath);
 					m_project->setDefaultScene(absPath);
 					ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 				}

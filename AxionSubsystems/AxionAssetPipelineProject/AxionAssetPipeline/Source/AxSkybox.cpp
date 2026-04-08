@@ -4,7 +4,7 @@
 
 namespace Axion::AAP {
 
-	void SkyboxParser::createTextFile(const SkyboxAssetData& data, const std::string& outputPath) {
+	void SkyboxParser::createTextFile(const SkyboxAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -25,10 +25,10 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axsky file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axsky file ({})", outputPath.string());
 	}
 
-	void SkyboxParser::createBinaryFile(const SkyboxAssetData& data, const std::string& outputPath) {
+	void SkyboxParser::createBinaryFile(const SkyboxAssetData& data, const std::filesystem::path& outputPath) {
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
 
 		SkyboxBinaryHeader header = {};
@@ -45,7 +45,7 @@ namespace Axion::AAP {
 		out.write(reinterpret_cast<const char*>(&header), sizeof(SkyboxBinaryHeader));
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary Skybox to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary Skybox to {}", outputPath.string());
 	}
 
 }

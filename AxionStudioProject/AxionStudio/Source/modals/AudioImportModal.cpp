@@ -22,7 +22,7 @@ namespace Axion {
 		m_sourcePath = sourceFile.string();
 
 		// -- Default output folder --
-		auto audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
+		std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
 		m_outputPath = audioDir.string();
 
 		// -- Default name --
@@ -95,15 +95,15 @@ namespace Axion {
 			ImGui::InputText("##AudioSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##AudioSourceFile_button")) {
-				std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
-				std::string absPath;
+				std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(audioDir)) {
-					absPath = FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir.string());
+					absPath = FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_sourcePath = absPath;
+				if (!absPath.empty()) m_sourcePath = absPath.string();
 			}
 
 
@@ -116,15 +116,15 @@ namespace Axion {
 			ImGui::InputText("##AudioOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##AudioOutputDir_button")) {
-				std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
-				std::string absPath;
+				std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(audioDir)) {
-					absPath = FileDialogs::openFolder(audioDir.string());
+					absPath = FileDialogs::openFolder(audioDir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -180,16 +180,16 @@ namespace Axion {
 				data.audioFilePath = AssetManager::getRelativeToAssets(m_sourcePath);
 				data.mode = m_types[m_loadType];
 
-				AAP::AudioParser::createTextFile(data, finalPath.string());
+				AAP::AudioParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::AudioClip;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

@@ -317,7 +317,7 @@ namespace Axion {
 			if (!scene || !filePath) return;
 
 			std::string pathStr = filePath;
-			std::string absPath = AssetManager::getAbsolute(pathStr);
+			std::string absPath = AssetManager::getAbsolute(pathStr).string();
 
 			UUID prefabUUID = AssetManager::getAssetUUID(absPath);
 			if (prefabUUID.isValid()) {

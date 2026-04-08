@@ -16,7 +16,7 @@ namespace Axion {
 	class D12Texture2D : public Texture2D {
 	public:
 
-		D12Texture2D(const std::string& path);
+		D12Texture2D(const std::filesystem::path& path);
 		D12Texture2D(uint32_t width, uint32_t height, void* data);
 		D12Texture2D(const uint8_t* data, size_t size);
 		~D12Texture2D() override;
@@ -54,8 +54,8 @@ namespace Axion {
 	public:
 
 		// Order: +X, -X, +Y, -Y, +Z, -Z
-		D12TextureCube(const std::string& filePath);
-		D12TextureCube(const std::array<std::string, 6>& paths);
+		D12TextureCube(const std::filesystem::path& filePath);
+		D12TextureCube(const std::array<std::filesystem::path, 6>& paths);
 		D12TextureCube(const uint8_t* data, size_t size);
 		~D12TextureCube() override;
 

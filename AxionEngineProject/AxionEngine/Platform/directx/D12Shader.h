@@ -13,7 +13,7 @@ namespace Axion {
 
 		D12Shader();
 		D12Shader(const ShaderSpecification& spec);
-		D12Shader(const ShaderSpecification& spec, const std::string& filePath);
+		D12Shader(const ShaderSpecification& spec, const std::filesystem::path& filePath);
 		~D12Shader() override;
 
 		void release() override;
@@ -23,11 +23,11 @@ namespace Axion {
 
 		const std::string& getName() const override { return m_specification.name; }
 
-		void compileFromFile(const std::string& filePath) override;
+		void compileFromFile(const std::filesystem::path& filePath) override;
 		void recompile() override;
 		void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) override;
 
-		static ShaderBytecode compileToBytecode(const std::string& filePath);
+		static ShaderBytecode compileToBytecode(const std::filesystem::path& filePath);
 
 		int getBindPoint(const std::string& name) const override;
 		uint32_t getTextureTableBindSlot() const override { return m_textureTableSlot; }
@@ -39,7 +39,7 @@ namespace Axion {
 	private:
 
 		ShaderSpecification m_specification;
-		std::string m_shaderFileLocation;
+		std::filesystem::path m_shaderFileLocation;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
 

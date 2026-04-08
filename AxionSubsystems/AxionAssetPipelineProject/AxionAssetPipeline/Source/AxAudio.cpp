@@ -4,7 +4,7 @@
 
 namespace Axion::AAP {
 
-	void AudioParser::createTextFile(const AudioAssetData& data, const std::string& outputPath) {
+	void AudioParser::createTextFile(const AudioAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -15,19 +15,19 @@ namespace Axion::AAP {
 
 		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
 		out << YAML::Key << "Mode" << YAML::Value << EnumUtils::toString(data.mode);
-		out << YAML::Key << "Source" << YAML::Value << data.audioFilePath;
+		out << YAML::Key << "Source" << YAML::Value << data.audioFilePath.generic_string();
 
 		out << YAML::EndMap;
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axaudio file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axaudio file ({})", outputPath.string());
 	}
 
-	void AudioParser::createBinaryFile(const AudioAssetData& data, const std::string& outputPath) {
+	void AudioParser::createBinaryFile(const AudioAssetData& data, const std::filesystem::path& outputPath) {
 		std::ifstream audioFile(data.audioFilePath, std::ios::in | std::ios::binary);
 		if (!audioFile) {
-			AX_CORE_LOG_ERROR("Failed to open Source Audio File: {}", data.audioFilePath);
+			AX_CORE_LOG_ERROR("Failed to open Source Audio File: {}", data.audioFilePath.string());
 			return;
 		}
 
@@ -41,7 +41,7 @@ namespace Axion::AAP {
 
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
 		if (!out) {
-			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath.string());
 			return;
 		}
 
@@ -64,7 +64,7 @@ namespace Axion::AAP {
 		out.write(reinterpret_cast<const char*>(audioData.data()), audioFileSize);
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary audio to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary audio to {}", outputPath.string());
 	}
 
 }

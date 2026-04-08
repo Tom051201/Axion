@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace Axion {
 
@@ -16,9 +17,9 @@ namespace Axion {
 		using FilterList = std::vector<FileDialogFilter>;
 
 		// These return empty strings if canceled
-		static std::string openFile(const FilterList& filters, const std::string& initialPath = "");
-		static std::string saveFile(const FilterList& filters, const std::string& initialPath = "");
-		static std::string openFolder(const std::string& initialPath = "");
+		static std::filesystem::path openFile(const FilterList& filters, const std::filesystem::path &initialPath = "");
+		static std::filesystem::path saveFile(const FilterList& filters, const std::filesystem::path& initialPath = "");
+		static std::filesystem::path openFolder(const std::filesystem::path& initialPath = "");
 
 	};
 
@@ -40,8 +41,9 @@ namespace Axion {
 	class PlatformUtils {
 	public:
 
-		static void showInFileExplorer(const std::string& path);
-		static void openFolderInFileExplorer(const std::string& path);
+		static void showInFileExplorer(const std::filesystem::path& path);
+		static void openFolderInFileExplorer(const std::filesystem::path& path);
+		static std::filesystem::path getExecutableDirectory();
 
 	};
 

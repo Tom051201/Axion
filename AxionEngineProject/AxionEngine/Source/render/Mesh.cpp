@@ -28,15 +28,15 @@ namespace Axion {
 
 
 	// ----- Loading OBJ Files -----
-	MeshData Mesh::loadOBJ(const std::string& path) {
+	MeshData Mesh::loadOBJ(const std::filesystem::path& path) {
 		tinyobj::ObjReader reader;
 
 		if (!reader.Warning().empty()) {
 			AX_CORE_LOG_WARN("OBJ warning: {}", reader.Warning());
 		}
 
-		if (!reader.ParseFromFile(path)) {
-			AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", path);
+		if (!reader.ParseFromFile(path.string())) {
+			AX_CORE_LOG_ERROR("Failed to load OBJ file: {}", path.string());
 			if (!reader.Error().empty()) {
 				AX_CORE_LOG_ERROR("OBJ error: {}", reader.Error());
 			}

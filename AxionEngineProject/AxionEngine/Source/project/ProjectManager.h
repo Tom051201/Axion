@@ -16,14 +16,14 @@ namespace Axion {
 		static void onEvent(Event& e);
 
 		static void newProject(const ProjectSpecification& spec);
-		static void loadProject(const std::string& filePath);
-		static void loadRuntimeProject(const std::string& configFilePath = "GameConfig.axbin"); // TODO: create an config folder for those
-		static void saveProject(const std::string& filePath);
+		static void loadProject(const std::filesystem::path& filePath);
+		static void loadRuntimeProject(const std::filesystem::path& configFilePath = "GameConfig.axbin"); // TODO: create an config folder for those
+		static void saveProject(const std::filesystem::path& filePath);
 		static void unloadProject();
 
 		static Ref<Project> getProject();
 		static bool hasProject();
-		static const std::string& getProjectFilePath();
+		static const std::filesystem::path& getProjectFilePath();
 
 		static void setRuntime();
 		static bool isRuntime();

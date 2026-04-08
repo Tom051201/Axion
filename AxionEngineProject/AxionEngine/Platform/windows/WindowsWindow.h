@@ -20,7 +20,7 @@ namespace Axion {
 		void setTitle(const std::string& title) override;
 		uint32_t getWidth() const override { return m_data.width; }
 		uint32_t getHeight() const override { return m_data.height; }
-		void setIcon(const std::string& path) const override;
+		void setIcon(const std::filesystem::path& path) const override;
 
 		void minimize() const override;
 		void maximizeOrRestore() const override;

@@ -322,15 +322,15 @@ namespace Axion {
 		out << YAML::EndMap; // Entity
 	}
 
-	void SceneSerializer::serializeText(const std::string& absoluteFilePath, bool autoRegister) {
+	void SceneSerializer::serializeText(const std::filesystem::path& absoluteFilePath, bool autoRegister) {
 		// ----- Register Scene to Asset Registry -----
 		UUID sceneUUID = UUID(0, 0);
 		if (autoRegister) {
-			std::string relPath = AssetManager::getRelativeToAssets(absoluteFilePath);
+			std::filesystem::path relPath = AssetManager::getRelativeToAssets(absoluteFilePath);
 			auto registry = ProjectManager::getProject()->getAssetRegistry();
 
 			for (const auto& [uuid, metadata] : registry->getMap()) {
-				if (metadata.filePath.string() == relPath) {
+				if (metadata.filePath == relPath) {
 					sceneUUID = uuid;
 					break;
 				}
@@ -345,9 +345,9 @@ namespace Axion {
 				metadata.filePath = relPath;
 				registry->add(metadata);
 
-				std::string registryPath = (std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string();
+				std::filesystem::path registryPath = ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml";
 				registry->serialize(registryPath);
-				AX_CORE_LOG_INFO("Registered new Scene in AssetRegistry: {}", relPath);
+				AX_CORE_LOG_INFO("Registered new Scene in AssetRegistry: {}", relPath.string());
 			}
 		}
 
@@ -385,10 +385,10 @@ namespace Axion {
 		fout << out.c_str();
 	}
 
-	void SceneSerializer::serializeBinary(const std::string& filePath) {
+	void SceneSerializer::serializeBinary(const std::filesystem::path& filePath) {
 		std::ofstream out(filePath, std::ios::out | std::ios::binary);
 		if (!out) {
-			AX_CORE_LOG_ERROR("Failed to open file for Scene binary serialization: {}", filePath);
+			AX_CORE_LOG_ERROR("Failed to open file for Scene binary serialization: {}", filePath.string());
 			return;
 		}
 
@@ -424,7 +424,7 @@ namespace Axion {
 
 	}
 
-	bool SceneSerializer::deserializeText(const std::string& absoluteFilePath) {
+	bool SceneSerializer::deserializeText(const std::filesystem::path& absoluteFilePath) {
 		std::ifstream stream(absoluteFilePath);
 		YAML::Node data = YAML::Load(stream);
 		if (!data["Scene"]) return false;
@@ -490,10 +490,10 @@ namespace Axion {
 		return true;
 	}
 
-	bool SceneSerializer::deserializeBinary(const std::string& filePath) {
+	bool SceneSerializer::deserializeBinary(const std::filesystem::path& filePath) {
 		std::ifstream in(filePath, std::ios::in | std::ios::binary);
 		if (!in) {
-			AX_CORE_LOG_ERROR("Failed to open file for Scene binary deserialization: {}", filePath);
+			AX_CORE_LOG_ERROR("Failed to open file for Scene binary deserialization: {}", filePath.string());
 			return false;
 		}
 

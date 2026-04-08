@@ -204,15 +204,15 @@ namespace Axion {
 			ImGui::InputText("##ShaderPath_input", &m_shaderPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##ShaderFile_button")) {
-				std::filesystem::path shaderDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
-				std::string absPath;
+				std::filesystem::path shaderDir = ProjectManager::getProject()->getAssetsPath() / "shaders";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(shaderDir)) {
-					absPath = FileDialogs::openFile({ {"Shader Asset", "*.axshader"} }, shaderDir.string());
+					absPath = FileDialogs::openFile({ {"Shader Asset", "*.axshader"} }, shaderDir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Shader Asset", "*.axshader"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_shaderPath = absPath;
+				if (!absPath.empty()) m_shaderPath = absPath.string();
 			}
 
 
@@ -225,15 +225,15 @@ namespace Axion {
 			ImGui::InputText("##PipelineOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##PipelineOutputDir_button")) {
-				std::filesystem::path pipelineDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
-				std::string absPath;
+				std::filesystem::path pipelineDir = ProjectManager::getProject()->getAssetsPath() / "pipelines";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(pipelineDir)) {
-					absPath = FileDialogs::openFolder(pipelineDir.string());
+					absPath = FileDialogs::openFolder(pipelineDir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -303,16 +303,16 @@ namespace Axion {
 				data.name = m_name;
 				data.spec = spec;
 
-				AAP::PipelineParser::createTextFile(data, finalPath.string());
+				AAP::PipelineParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Pipeline;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

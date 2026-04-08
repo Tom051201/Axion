@@ -6,7 +6,7 @@
 
 namespace Axion::AAP {
 
-	void PrefabParser::createTextFile(const PrefabAssetData& data, const std::string& outputPath) {
+	void PrefabParser::createTextFile(const PrefabAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -21,13 +21,13 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axprefab file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axprefab file ({})", outputPath.string());
 	}
 
-	void PrefabParser::createBinaryFile(const PrefabAssetData& data, const std::string& outputPath) {
+	void PrefabParser::createBinaryFile(const PrefabAssetData& data, const std::filesystem::path& outputPath) {
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
 		if (!out) {
-			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath.string());
 			return;
 		}
 
@@ -43,7 +43,7 @@ namespace Axion::AAP {
 		serializer.serializeEntityBinary(out, data.entity);
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary Prefab to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary Prefab to {}", outputPath.string());
 	}
 
 }

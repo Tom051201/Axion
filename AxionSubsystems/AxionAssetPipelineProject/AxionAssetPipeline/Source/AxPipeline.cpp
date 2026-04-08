@@ -4,7 +4,7 @@
 
 namespace Axion::AAP {
 
-	void PipelineParser::createTextFile(const PipelineAssetData& data, const std::string& outputPath) {
+	void PipelineParser::createTextFile(const PipelineAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -46,13 +46,13 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axpso file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axpso file ({})", outputPath.string());
 	}
 
-	void PipelineParser::createBinaryFile(const PipelineAssetData& data, const std::string& outputPath) {
+	void PipelineParser::createBinaryFile(const PipelineAssetData& data, const std::filesystem::path& outputPath) {
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
 		if (!out) {
-			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath.string());
 			return;
 		}
 
@@ -93,7 +93,7 @@ namespace Axion::AAP {
 		}
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary Pipeline to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary Pipeline to {}", outputPath.string());
 	}
 
 }

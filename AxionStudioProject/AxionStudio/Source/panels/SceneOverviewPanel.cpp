@@ -52,7 +52,7 @@ namespace Axion {
 			ImGui::Text("Title");
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
-			strcpy_s(m_titleBuffer, sizeof(m_titleBuffer), m_activeScene->getTitle().c_str());
+			strcpy_s(m_titleBuffer, sizeof(m_titleBuffer), m_activeScene->getTitle().c_str()); // TODO: remove char buffer and replace w string
 			m_titleBuffer[sizeof(m_titleBuffer) - 1] = '\0';
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 			if (ImGui::InputText("##SceneTitle_input", m_titleBuffer, sizeof(m_titleBuffer))) {
@@ -84,8 +84,8 @@ namespace Axion {
 				ImGui::Text("Options");
 				ImGui::TableSetColumnIndex(1);
 				if (ImGui::Button("Select Skybox")) {
-					std::filesystem::path skyDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "skybox";
-					std::string absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, skyDir.string());
+					std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox"; // TODO: add fallback
+					std::filesystem::path absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, skyDir);
 					if (!absolutePath.empty()) {
 						UUID assetUUID = AssetManager::getAssetUUID(absolutePath);
 						if (assetUUID.isValid()) {

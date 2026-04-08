@@ -13,7 +13,7 @@ namespace Axion {
 		uint32_t width;
 		uint32_t height;
 		bool dragAcceptFiles;
-		std::string iconFilePath;
+		std::filesystem::path iconFilePath;
 
 		WindowProperties(const std::string& title = "Axion Engine", uint32_t width = 1280, uint32_t height = 720, bool dragAcceptFiles = false, const std::string& iconFilePath = "")
 			: title(title), width(width), height(height), dragAcceptFiles(dragAcceptFiles), iconFilePath(iconFilePath) {}
@@ -35,7 +35,7 @@ namespace Axion {
 		virtual void setTitle(const std::string& title) = 0;
 		virtual uint32_t getWidth() const = 0;
 		virtual uint32_t getHeight() const = 0;
-		virtual void setIcon(const std::string& path) const = 0;
+		virtual void setIcon(const std::filesystem::path& path) const = 0;
 
 		virtual void minimize() const = 0;
 		virtual void maximizeOrRestore() const = 0;

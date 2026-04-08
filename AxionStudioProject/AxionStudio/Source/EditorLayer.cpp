@@ -227,7 +227,7 @@ namespace Axion {
 			case KeyCode::O: {
 				// -- Ctrl + O (Open Scene) --
 				if (controlPressed) {
-					std::string path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
+					std::filesystem::path path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
 					if (!path.empty()) SceneManager::loadScene(path);
 				}
 				break;
@@ -235,10 +235,10 @@ namespace Axion {
 			case KeyCode::S: {
 				// -- Ctrl + Shift + S (Save As) --
 				if (controlPressed && shiftPressed) {
-					std::filesystem::path scenesPath = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "scenes";
-					std::string absPath;
+					std::filesystem::path scenesPath = ProjectManager::getProject()->getAssetsPath() / "scenes";
+					std::filesystem::path absPath;
 					if (std::filesystem::exists(scenesPath)) {
-						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath.string());
+						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath);
 					}
 					else {
 						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, ProjectManager::getProject()->getAssetsPath());
@@ -252,15 +252,15 @@ namespace Axion {
 
 				// -- Ctrl + S (Save) --
 				else if (controlPressed && (!shiftPressed)) {
-					std::string path = SceneManager::getScenePath();
+					std::filesystem::path path = SceneManager::getScenePath();
 					if (!path.empty()) {
 						SceneManager::saveScene(path);
 					}
 					else {
-						std::filesystem::path scenesPath = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "scenes";
-						std::string absPath;
+						std::filesystem::path scenesPath = ProjectManager::getProject()->getAssetsPath() / "scenes";
+						std::filesystem::path absPath;
 						if (std::filesystem::exists(scenesPath)) {
-							absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath.string());
+							absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath);
 						}
 						else {
 							absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, ProjectManager::getProject()->getAssetsPath());
@@ -409,19 +409,21 @@ namespace Axion {
 			if (ImGui::BeginDragDropTarget()) {
 
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-					std::string path = static_cast<const char*>(payload->Data);
-					AX_CORE_LOG_TRACE("Dropped: {}", path);
+					std::filesystem::path payloadPath = static_cast<const char*>(payload->Data);
+					AX_CORE_LOG_TRACE("Dropped: {}", payloadPath.string());
+
 					// -- Try loading a skybox --
-					if (path.find(".axsky") != std::string::npos) {
-						std::string absPath = AssetManager::getAbsolute(path);
+					if (payloadPath.extension() == ".axsky") {
+						std::filesystem::path absPath = AssetManager::getAbsolute(payloadPath);
 
 						UUID assetUUID = AssetManager::getAssetUUID(absPath);
 						AssetHandle<Skybox> handle = AssetManager::load<Skybox>(assetUUID);
 						SceneManager::getScene()->setSkybox(handle);
 					}
+
 					// -- Try adding prefab --
-					if (path.find(".axprefab") != std::string::npos) {
-						std::string absPath = AssetManager::getAbsolute(path);
+					if (payloadPath.extension() == ".axprefab") {
+						std::filesystem::path absPath = AssetManager::getAbsolute(payloadPath);
 						UUID assetUUID = AssetManager::getAssetUUID(absPath);
 						if (assetUUID.isValid()) {
 							AssetHandle<Prefab> handle = AssetManager::load<Prefab>(assetUUID);
@@ -537,14 +539,14 @@ namespace Axion {
 					SceneManager::newScene();
 				}
 				if (ImGui::MenuItem("Open Scene...", "Ctrl+O")) {
-					std::string path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
+					std::filesystem::path path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} });
 					if (!path.empty()) SceneManager::loadScene(path);
 				}
 				ImGui::Separator();
 				bool isNewScene = SceneManager::isNewScene();
 				ImGui::BeginDisabled(SceneManager::isNewScene());
 				if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {
-					std::string path = SceneManager::getScenePath();
+					std::filesystem::path path = SceneManager::getScenePath();
 					if (!path.empty()) SceneManager::saveScene(path);
 				}
 				if (isNewScene && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
@@ -552,10 +554,10 @@ namespace Axion {
 				}
 				ImGui::EndDisabled();
 				if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) {
-					std::filesystem::path scenesPath = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "scenes";
-					std::string absPath;
+					std::filesystem::path scenesPath = ProjectManager::getProject()->getAssetsPath() / "scenes";
+					std::filesystem::path absPath;
 					if (std::filesystem::exists(scenesPath)) {
-						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath.string());
+						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, scenesPath);
 					}
 					else {
 						absPath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, ProjectManager::getProject()->getAssetsPath());
@@ -626,11 +628,11 @@ namespace Axion {
 					m_createProjectModal->open();
 				}
 				if (ImGui::MenuItem("Open...")) {
-					std::string filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
+					std::filesystem::path filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
 					if (!filePath.empty()) ProjectManager::loadProject(filePath);
 				}
 				if (ImGui::MenuItem("Save")) {
-					std::string filePath = FileDialogs::saveFile({ {"Axion Project", "*.axproj"} });
+					std::filesystem::path filePath = FileDialogs::saveFile({ {"Axion Project", "*.axproj"} });
 					if (!filePath.empty()) ProjectManager::saveProject(filePath);
 				}
 				if (ImGui::MenuItem("Close")) {
@@ -768,7 +770,7 @@ namespace Axion {
 		m_sceneState = SceneState::Play;
 		m_editorScene = m_activeScene;
 
-		std::string tempPath = "AxionStudio/Config/TempScene.axscene";
+		std::filesystem::path tempPath = "AxionStudio/Config/TempScene.axscene";
 		SceneSerializer serializer(m_editorScene);
 		serializer.serializeText(tempPath, false);
 
@@ -787,7 +789,7 @@ namespace Axion {
 		m_sceneState = SceneState::Simulate;
 		m_editorScene = m_activeScene;
 
-		std::string tempPath = "AxionStudio/Config/TempScene.axscene";
+		std::filesystem::path tempPath = "AxionStudio/Config/TempScene.axscene";
 		SceneSerializer serializer(m_editorScene);
 		serializer.serializeText(tempPath, false);
 

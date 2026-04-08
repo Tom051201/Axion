@@ -120,7 +120,7 @@ namespace Axion {
 		ImGui::SeparatorText("");
 		drawAssetInfo<AudioClip>("AudioClip", [&](Ref<AudioClip> clip) {
 			BEGIN_ASSET_TABLE("AudioTable")
-				drawRow("File", clip->getPath());
+				drawRow("File", clip->getPath().string());
 				drawRow("Load Mode", EnumUtils::toString(clip->getMode()));
 			END_ASSET_TABLE()
 		});

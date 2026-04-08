@@ -4,7 +4,7 @@
 
 namespace Axion::AAP {
 
-	void MaterialParser::createTextFile(const MaterialAssetData& data, const std::string& outputPath) {
+	void MaterialParser::createTextFile(const MaterialAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -53,13 +53,13 @@ namespace Axion::AAP {
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axmat file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axmat file ({})", outputPath.string());
 	}
 
-	void MaterialParser::createBinaryFile(const MaterialAssetData& data, const std::string& outputPath) {
+	void MaterialParser::createBinaryFile(const MaterialAssetData& data, const std::filesystem::path& outputPath) {
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
 		if (!out) {
-			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath.string());
 			return;
 		}
 
@@ -88,7 +88,7 @@ namespace Axion::AAP {
 		}
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary Material to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary Material to {}", outputPath.string());
 	}
 
 }

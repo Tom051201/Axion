@@ -33,7 +33,7 @@ namespace Axion {
 					bool open = ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_SpanAvailWidth, "%s [%s]", name, handle.uuid.toString().c_str());
 
 					if (open) {
-						ImGui::Text("Asset File: %s", AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<T>(handle)).c_str());
+						ImGui::Text("Asset File: %s", AssetManager::getRelativeToAssets(AssetManager::getAssetFilePath<T>(handle)).string().c_str());
 
 						if (asset) { elementFunc(asset); }
 						else { ImGui::TextDisabled("%s data not loaded", name); }

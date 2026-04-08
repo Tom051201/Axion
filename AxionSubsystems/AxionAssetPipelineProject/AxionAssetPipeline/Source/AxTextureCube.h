@@ -1,8 +1,9 @@
 #pragma once
 
-#include "AxionEngine/Source/core/UUID.h"
-
 #include <string>
+#include <filesystem>
+
+#include "AxionEngine/Source/core/UUID.h"
 
 namespace Axion::AAP {
 
@@ -10,14 +11,14 @@ namespace Axion::AAP {
 		UUID uuid;
 		std::string name;
 		std::string fileFormat;
-		std::string filePath;
+		std::filesystem::path filePath;
 	};
 
 	class TextureCubeParser {
 	public:
 
-		static void createTextFile(const TextureCubeAssetData& data, const std::string& outputPath);
-		static void createBinaryFile(const TextureCubeAssetData& data, const std::string& outputPath);
+		static void createTextFile(const TextureCubeAssetData& data, const std::filesystem::path& outputPath);
+		static void createBinaryFile(const TextureCubeAssetData& data, const std::filesystem::path& outputPath);
 
 	};
 

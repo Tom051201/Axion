@@ -136,10 +136,10 @@ namespace Axion {
 		SetWindowTextA(m_hwnd, title.c_str());
 	}
 
-	void WindowsWindow::setIcon(const std::string& path) const {
+	void WindowsWindow::setIcon(const std::filesystem::path& path) const {
 		HICON hIcon = (HICON)LoadImage(
 			NULL,
-			WindowsHelper::StringToWString(path).c_str(),
+			path.c_str(),
 			IMAGE_ICON,
 			0, 0,
 			LR_LOADFROMFILE | LR_DEFAULTSIZE

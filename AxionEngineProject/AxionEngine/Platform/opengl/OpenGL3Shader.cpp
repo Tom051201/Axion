@@ -28,14 +28,14 @@ namespace Axion {
 		glUseProgram(0);
 	}
 
-	void OpenGL3Shader::compileFromFile(const std::string& filePath) {
+	void OpenGL3Shader::compileFromFile(const std::filesystem::path& filePath) {
 		std::string source = Shader::readShaderFile(filePath);
 
 		auto vsStart = source.find("#type vertex");
 		auto psStart = source.find("#type fragment");
 
 		if (vsStart == std::string::npos || psStart == std::string::npos) {
-			AX_CORE_LOG_ERROR("Shader file does not contain both vertex and fragment shaders: {0}", filePath);
+			AX_CORE_LOG_ERROR("Shader file does not contain both vertex and fragment shaders: {0}", filePath.string());
 			return;
 		}
 
@@ -50,7 +50,7 @@ namespace Axion {
 		glDeleteShader(vs);
 		glDeleteShader(ps);
 
-		AX_CORE_LOG_TRACE("Shader '{0}' compiled and linked successfully ({1})", m_name, filePath);
+		AX_CORE_LOG_TRACE("Shader '{0}' compiled and linked successfully ({1})", m_name, filePath.string());
 	}
 
 	void OpenGL3Shader::recompile() {
@@ -99,7 +99,7 @@ namespace Axion {
 
 	}
 
-	ShaderBytecode OpenGL3Shader::compileToBytecode(const std::string& path) {
+	ShaderBytecode OpenGL3Shader::compileToBytecode(const std::filesystem::path& path) {
 		AX_CORE_ASSERT(false, "OpenGL3Shader::compileToBytecode is not implemented yet");
 		return {};
 	}

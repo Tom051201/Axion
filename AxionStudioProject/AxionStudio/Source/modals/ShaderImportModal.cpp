@@ -62,15 +62,15 @@ namespace Axion {
 			ImGui::InputText("##ShaderSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##ShaderSourceFile_button")) {
-				std::filesystem::path shaderDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
-				std::string absPath;
+				std::filesystem::path shaderDir = ProjectManager::getProject()->getAssetsPath() / "shaders";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(shaderDir)) {
-					absPath = FileDialogs::openFile({ {"Shader Source", "*.hlsl;*.glsl"} }, shaderDir.string());
+					absPath = FileDialogs::openFile({ {"Shader Source", "*.hlsl;*.glsl"} }, shaderDir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Shader Source", "*.hlsl;*.glsl"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_sourcePath = absPath;
+				if (!absPath.empty()) m_sourcePath = absPath.string();
 			}
 
 
@@ -83,15 +83,15 @@ namespace Axion {
 			ImGui::InputText("##ShaderOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##ShaderOutputDir_button")) {
-				std::filesystem::path shaderDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "shaders";
-				std::string absPath;
+				std::filesystem::path shaderDir = ProjectManager::getProject()->getAssetsPath() / "shaders";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(shaderDir)) {
-					absPath = FileDialogs::openFolder(shaderDir.string());
+					absPath = FileDialogs::openFolder(shaderDir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -151,16 +151,16 @@ namespace Axion {
 				data.fileFormat = m_formats[m_formatIndex];
 				data.spec = spec;
 
-				AAP::ShaderParser::createTextFile(data, finalPath.string());
+				AAP::ShaderParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Shader;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

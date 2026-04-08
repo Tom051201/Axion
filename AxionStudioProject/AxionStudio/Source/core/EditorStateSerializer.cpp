@@ -18,7 +18,7 @@ namespace Axion {
 		out << YAML::BeginMap;
 
 		// -- Startup project --
-		out << YAML::Key << "StartupProject" << YAML::Value << EditorConfig::startupProjectPath;
+		out << YAML::Key << "StartupProject" << YAML::Value << EditorConfig::startupProjectPath.generic_string();
 
 		// -- Panels --
 		out << YAML::Key << "Panels" << YAML::Value << YAML::BeginSeq;

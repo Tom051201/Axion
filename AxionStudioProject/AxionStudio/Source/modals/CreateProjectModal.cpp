@@ -37,8 +37,8 @@ namespace Axion {
 			ImGui::InputText("##ProjLoc", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##Loc")) {
-				std::string folder = FileDialogs::openFolder();
-				if (!folder.empty()) m_outputPath = folder;
+				std::filesystem::path folder = FileDialogs::openFolder(); // TODO: add hint
+				if (!folder.empty()) m_outputPath = folder.string();
 			}
 
 			// -- Version --
@@ -105,6 +105,7 @@ namespace Axion {
 			spec.author = m_author;
 			spec.company = m_company;
 			spec.description = m_description;
+			spec.version = m_version;
 
 			ProjectManager::newProject(spec);
 			close();

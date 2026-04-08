@@ -5,13 +5,13 @@
 
 namespace Axion {
 
-	AudioClip::AudioClip(const std::string& path, Mode mode)
+	AudioClip::AudioClip(const std::filesystem::path& path, Mode mode)
 		: m_path(path), m_mode(mode) {
 
 		ma_uint32 flags = (mode == Mode::Memory) ? MA_SOUND_FLAG_DECODE : MA_SOUND_FLAG_STREAM;
 
-		if (ma_sound_init_from_file(AudioManager::getEngine(), path.c_str(), flags, nullptr, nullptr, &m_sound) != MA_SUCCESS) {
-			AX_CORE_LOG_ERROR("Failed to load audio: {}", path);
+		if (ma_sound_init_from_file(AudioManager::getEngine(), path.string().c_str(), flags, nullptr, nullptr, &m_sound) != MA_SUCCESS) {
+			AX_CORE_LOG_ERROR("Failed to load audio: {}", path.string());
 		}
 		m_initialized = true;
 	}

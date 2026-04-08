@@ -2,6 +2,6 @@
 
 namespace Axion {
 
-	std::string EditorConfig::startupProjectPath = "None";
+	std::filesystem::path EditorConfig::startupProjectPath = "None";
 
 }

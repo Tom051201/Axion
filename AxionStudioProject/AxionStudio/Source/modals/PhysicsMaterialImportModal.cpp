@@ -69,15 +69,15 @@ namespace Axion {
 			ImGui::InputText("##PhyMatOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##PhyMatOutputDir_button")) {
-				std::filesystem::path phymatDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
-				std::string absPath;
+				std::filesystem::path phymatDir = ProjectManager::getProject()->getAssetsPath() / "physics";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(phymatDir)) {
-					absPath = FileDialogs::openFolder(phymatDir.string());
+					absPath = FileDialogs::openFolder(phymatDir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -125,16 +125,16 @@ namespace Axion {
 				data.dynamicFriction = m_dynamicFriction;
 				data.restitution = m_restitution;
 
-				AAP::PhysicsMaterialParser::createTextFile(data, finalPath.string());
+				AAP::PhysicsMaterialParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::PhysicsMaterial;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

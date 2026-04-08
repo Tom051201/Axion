@@ -247,10 +247,10 @@ namespace Axion {
 			ImGui::Separator();
 			if (ImGui::MenuItem("Create Prefab")) {
 
-				std::filesystem::path prefabDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "prefabs";
+				std::filesystem::path prefabDir = ProjectManager::getProject()->getAssetsPath() / "prefabs";
 				std::filesystem::create_directories(prefabDir);
 
-				std::string savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", ".axprefab"} }, prefabDir.string());
+				std::filesystem::path savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", ".axprefab"} }, prefabDir);
 
 				if (!savePath.empty()) {
 					UUID newAssetUUID = UUID::generate();
@@ -270,7 +270,7 @@ namespace Axion {
 
 					auto registry = ProjectManager::getProject()->getAssetRegistry();
 					registry->add(metadata);
-					registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+					registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 				}
 			}
 
@@ -329,7 +329,7 @@ namespace Axion {
 			memset(buffer, 0, sizeof(buffer));
 			strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
 
-			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
+			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) { // TODO: make this with string and remove char buffer
 				tag = std::string(buffer);
 			}
 		}
@@ -496,8 +496,8 @@ namespace Axion {
 			else {
 				// -- Load Button --
 				if (ImGui::Button("Open Mesh...")) {
-					std::filesystem::path meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
-					std::string absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, meshDir.string());
+					std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes"; // TODO: add fallback if no mesh dir
+					std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, meshDir);
 					if (!absPath.empty()) {
 						UUID assetUUID = AssetManager::getAssetUUID(absPath);
 						if (assetUUID.isValid()) component.handle = AssetManager::load<Mesh>(assetUUID);
@@ -507,9 +507,9 @@ namespace Axion {
 				// -- Drag drop on button --
 				if (ImGui::BeginDragDropTarget()) {
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-						std::string relPath = static_cast<const char*>(payload->Data);
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						if (absPath.find(".axmesh") != std::string::npos) {
+						std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+						std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.extension() == ".axmesh") {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) component.handle = AssetManager::load<Mesh>(assetUUID);
 						}
@@ -577,8 +577,8 @@ namespace Axion {
 			else {
 				// -- Load Button --
 				if (ImGui::Button("Open Material...")) {
-					std::filesystem::path materialDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "materials";
-					std::string absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir.string());
+					std::filesystem::path materialDir = ProjectManager::getProject()->getAssetsPath() / "materials"; // TODO: add fallback
+					std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir);
 					if (!absPath.empty()) {
 						UUID assetUUID = AssetManager::getAssetUUID(absPath);
 						if (assetUUID.isValid()) component.handle = AssetManager::load<Material>(assetUUID);
@@ -588,9 +588,9 @@ namespace Axion {
 				// -- Drag drop on button --
 				if (ImGui::BeginDragDropTarget()) {
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-						std::string relPath = static_cast<const char*>(payload->Data);
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						if (absPath.find(".axmat") != std::string::npos) {
+						std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+						std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.extension() == ".axmat") {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) component.handle = AssetManager::load<Material>(assetUUID);
 						}
@@ -643,8 +643,8 @@ namespace Axion {
 
 					// -- Load Button --
 					if (ImGui::Button("Open Texture2D...")) {
-						std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-						std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
+						std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / "textures"; // TODO: add fallback
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir);
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
@@ -654,9 +654,9 @@ namespace Axion {
 					// -- Drag drop on button --
 					if (ImGui::BeginDragDropTarget()) {
 						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-							std::string relPath = static_cast<const char*>(payload->Data);
-							std::string absPath = AssetManager::getAbsolute(relPath);
-							if (absPath.find(".axtex") != std::string::npos) {
+							std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+							std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.extension() == ".axtex") {
 								UUID assetUUID = AssetManager::getAssetUUID(absPath);
 								if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
 							}
@@ -860,8 +860,8 @@ namespace Axion {
 			else {
 				// -- Load Button --
 				if (ImGui::Button("Load Audio Clip...")) {
-					std::filesystem::path audioDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "audio";
-					std::string absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, audioDir.string());
+					std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio"; // TODO: add fallback
+					std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, audioDir);
 					if (!absPath.empty()) {
 						UUID assetUUID = AssetManager::getAssetUUID(absPath);
 						if (assetUUID.isValid()) {
@@ -874,9 +874,9 @@ namespace Axion {
 				// -- Drag drop on button --
 				if (ImGui::BeginDragDropTarget()) {
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-						std::string relPath = static_cast<const char*>(payload->Data);
-						std::string absPath = AssetManager::getAbsolute(relPath);
-						if (absPath.find(".axaudio") != std::string::npos) {
+						std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+						std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.extension() == ".axaudio") {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
 								AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
@@ -1190,8 +1190,8 @@ namespace Axion {
 
 					// -- Load Button --
 					if (ImGui::Button("Load Material...")) {
-						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
-						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
+						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics"; // add fallback
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir);
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
@@ -1201,9 +1201,9 @@ namespace Axion {
 					// -- Drag drop on button --
 					if (ImGui::BeginDragDropTarget()) {
 						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-							std::string relPath = static_cast<const char*>(payload->Data);
-							std::string absPath = AssetManager::getAbsolute(relPath);
-							if (absPath.find(".axpmat") != std::string::npos) {
+							std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+							std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.extension() == ".axpmat") {
 								UUID assetUUID = AssetManager::getAssetUUID(absPath);
 								if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 							}
@@ -1297,8 +1297,8 @@ namespace Axion {
 
 					// -- Load Button --
 					if (ImGui::Button("Load Material...")) {
-						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
-						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
+						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics"; // TODO: add fallback
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir);
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
@@ -1308,9 +1308,9 @@ namespace Axion {
 					// -- Drag drop on button --
 					if (ImGui::BeginDragDropTarget()) {
 						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-							std::string relPath = static_cast<const char*>(payload->Data);
-							std::string absPath = AssetManager::getAbsolute(relPath);
-							if (absPath.find(".axpmat") != std::string::npos) {
+							std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+							std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.extension() == ".axpmat") {
 								UUID assetUUID = AssetManager::getAssetUUID(absPath);
 								if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 							}
@@ -1412,8 +1412,8 @@ namespace Axion {
 
 					// -- Load Button --
 					if (ImGui::Button("Load Material...")) {
-						std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "physics";
-						std::string absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir.string());
+						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics"; // TODO: add fallback
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir);
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
@@ -1423,9 +1423,9 @@ namespace Axion {
 					// -- Drag drop on button --
 					if (ImGui::BeginDragDropTarget()) {
 						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-							std::string relPath = static_cast<const char*>(payload->Data);
-							std::string absPath = AssetManager::getAbsolute(relPath);
-							if (absPath.find(".axpmat") != std::string::npos) {
+							std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+							std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.extension() == ".axpmat") {
 								UUID assetUUID = AssetManager::getAssetUUID(absPath);
 								if (assetUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(assetUUID);
 							}
@@ -1512,7 +1512,7 @@ namespace Axion {
 				ImGui::TableSetColumnIndex(1);
 
 				char buffer[256];
-				memset(buffer, 0, sizeof(buffer));
+				memset(buffer, 0, sizeof(buffer)); // TODO: remove buffer and replace with string
 				strncpy_s(buffer, sizeof(buffer), component.className.c_str(), sizeof(buffer));
 
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
@@ -1682,8 +1682,8 @@ namespace Axion {
 					ImGui::Text("Texture");
 					ImGui::TableSetColumnIndex(1);
 					if (ImGui::Button("Open Texture2D...")) {
-						std::filesystem::path texDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-						std::string absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir.string());
+						std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / "textures"; // TODO: add fallback
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir);
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
@@ -1692,9 +1692,9 @@ namespace Axion {
 
 					if (ImGui::BeginDragDropTarget()) {
 						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-							std::string relPath = static_cast<const char*>(payload->Data);
-							std::string absPath = AssetManager::getAbsolute(relPath);
-							if (absPath.find(".axtex") != std::string::npos) {
+							std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+							std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.extension() == ".axtex") {
 								UUID assetUUID = AssetManager::getAssetUUID(absPath);
 								if (assetUUID.isValid()) component.texture = AssetManager::load<Texture2D>(assetUUID);
 							}

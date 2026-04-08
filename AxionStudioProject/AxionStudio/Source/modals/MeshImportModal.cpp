@@ -21,7 +21,7 @@ namespace Axion {
 		m_sourcePath = sourceFile.string();
 
 		// -- Default output folder --
-		auto meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
+		std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
 		m_outputPath = meshDir.string();
 
 		// -- Default name --
@@ -72,15 +72,15 @@ namespace Axion {
 			ImGui::InputText("##MeshSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##MeshSourceFile_button")) {
-				std::filesystem::path meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
-				std::string absPath;
+				std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(meshDir)) {
-					absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, meshDir.string());
+					absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, meshDir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_sourcePath = absPath;
+				if (!absPath.empty()) m_sourcePath = absPath.string();
 			}
 
 
@@ -93,15 +93,15 @@ namespace Axion {
 			ImGui::InputText("##MeshOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##MeshOutputDir_button")) {
-				std::filesystem::path meshDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "meshes";
-				std::string absPath;
+				std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(meshDir)) {
-					absPath = FileDialogs::openFolder(meshDir.string());
+					absPath = FileDialogs::openFolder(meshDir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -156,16 +156,16 @@ namespace Axion {
 				data.fileFormat = m_types[m_importType];
 				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
-				AAP::MeshParser::createTextFile(data, finalPath.string());
+				AAP::MeshParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Mesh;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

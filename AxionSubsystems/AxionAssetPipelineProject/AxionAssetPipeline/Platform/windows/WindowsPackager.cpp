@@ -35,15 +35,15 @@ namespace Axion::AAP {
 #pragma pack(pop)
 
 
-	bool PlatformPackager::injectIconIntoExecutable(const std::string& exePath, const std::string& iconPath) {
+	bool PlatformPackager::injectIconIntoExecutable(const std::filesystem::path& exePath, const std::filesystem::path& iconPath) {
 		if (iconPath.empty() || !std::filesystem::exists(iconPath)) {
-			AX_CORE_LOG_ERROR("Invalid Icon Path: {}", iconPath);
+			AX_CORE_LOG_ERROR("Invalid Icon Path: {}", iconPath.string());
 			return false;
 		}
 
 		std::ifstream icoFile(iconPath, std::ios::binary | std::ios::ate);
 		if (!icoFile) {
-			AX_CORE_LOG_ERROR("Failed to Open Icon File: {}", iconPath);
+			AX_CORE_LOG_ERROR("Failed to Open Icon File: {}", iconPath.string());
 			return false;
 		}
 
@@ -58,9 +58,9 @@ namespace Axion::AAP {
 			return false;
 		}
 
-		HANDLE hUpdateRes = BeginUpdateResourceA(exePath.c_str(), FALSE);
+		HANDLE hUpdateRes = BeginUpdateResourceW(exePath.c_str(), FALSE);
 		if (hUpdateRes == NULL) {
-			AX_CORE_LOG_ERROR("Failed to begin resource update on {}. Is it in use?", exePath);
+			AX_CORE_LOG_ERROR("Failed to begin resource update on {}. Is it in use?", exePath.string());
 			return false;
 		}
 
@@ -83,14 +83,26 @@ namespace Axion::AAP {
 			grpEntry[i].dwBytesInRes = icoEntry[i].dwBytesInRes;
 			grpEntry[i].nID = i + 1;
 
-			UpdateResourceA(hUpdateRes, (LPCSTR)RT_ICON, MAKEINTRESOURCEA(grpEntry[i].nID), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-				icoData.data() + icoEntry[i].dwImageOffset, icoEntry[i].dwBytesInRes);
+			UpdateResourceW(
+				hUpdateRes,
+				(LPCWSTR)RT_ICON,
+				MAKEINTRESOURCEW(grpEntry[i].nID),
+				MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+				icoData.data() + icoEntry[i].dwImageOffset,
+				icoEntry[i].dwBytesInRes
+			);
 		}
 
-		UpdateResourceA(hUpdateRes, (LPCSTR)RT_GROUP_ICON, MAKEINTRESOURCEA(1), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-			groupIconData.data(), (DWORD)groupIconData.size());
+		UpdateResourceW(
+			hUpdateRes,
+			(LPCWSTR)RT_GROUP_ICON,
+			MAKEINTRESOURCEW(1),
+			MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+			groupIconData.data(),
+			(DWORD)groupIconData.size()
+		);
 
-		return EndUpdateResourceA(hUpdateRes, FALSE);
+		return EndUpdateResourceW(hUpdateRes, FALSE);
 
 	}
 

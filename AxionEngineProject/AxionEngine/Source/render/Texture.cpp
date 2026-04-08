@@ -8,7 +8,7 @@
 
 namespace Axion {
 
-	Ref<Texture2D> Texture2D::create(const std::string& path) {
+	Ref<Texture2D> Texture2D::create(const std::filesystem::path& path) {
 
 		switch (Renderer::getAPI()) {
 
@@ -51,7 +51,7 @@ namespace Axion {
 
 
 
-	Ref<TextureCube> TextureCube::create(const std::array<std::string, 6>& paths) {
+	Ref<TextureCube> TextureCube::create(const std::array<std::filesystem::path, 6>& paths) {
 
 		switch (Renderer::getAPI()) {
 
@@ -64,7 +64,7 @@ namespace Axion {
 		return nullptr;
 	}
 
-	Ref<TextureCube> TextureCube::create(const std::string& filePath) {
+	Ref<TextureCube> TextureCube::create(const std::filesystem::path& filePath) {
 
 		switch (Renderer::getAPI()) {
 

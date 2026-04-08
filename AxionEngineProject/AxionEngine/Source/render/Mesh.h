@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
@@ -31,7 +33,7 @@ namespace Axion {
 
 		static Ref<Mesh> createPBRCube();
 
-		static MeshData loadOBJ(const std::string& path);
+		static MeshData loadOBJ(const std::filesystem::path& path);
 
 	private:
 

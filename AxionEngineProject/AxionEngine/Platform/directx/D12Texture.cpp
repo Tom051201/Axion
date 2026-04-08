@@ -13,7 +13,7 @@ namespace Axion {
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	D12Texture2D::D12Texture2D(const std::string& path) {
+	D12Texture2D::D12Texture2D(const std::filesystem::path& path) {
 
 		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = context->getDevice();
@@ -24,8 +24,8 @@ namespace Axion {
 		// ----- Texture loading from file -----
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(false);
-		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		std::string errorMsg = "Failed to load texture image: " + path;
+		stbi_uc* pixels = stbi_load(path.string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		std::string errorMsg = "Failed to load texture image: " + path.string();
 		AX_CORE_ASSERT(pixels, errorMsg);
 
 		m_width = static_cast<uint32_t>(texWidth);
@@ -367,11 +367,11 @@ namespace Axion {
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	D12TextureCube::D12TextureCube(const std::string& filePath) {
+	D12TextureCube::D12TextureCube(const std::filesystem::path& filePath) {
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(false);
-		stbi_uc* fullImage = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		AX_CORE_ASSERT(fullImage, "Failed to load cubemap image: {0}", filePath);
+		stbi_uc* fullImage = stbi_load(filePath.string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		AX_CORE_ASSERT(fullImage, "Failed to load cubemap image: {0}", filePath.string());
 
 		// ----- Determine Single Face Size -----
 		m_faceWidth = texWidth / 4;
@@ -418,7 +418,7 @@ namespace Axion {
 		}
 	}
 
-	D12TextureCube::D12TextureCube(const std::array<std::string, 6>& paths) {
+	D12TextureCube::D12TextureCube(const std::array<std::filesystem::path, 6>& paths) {
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(false);
 		std::array<stbi_uc*, 6> pixels = {};
@@ -426,8 +426,8 @@ namespace Axion {
 
 		// ----- Load Cubemap Faces -----
 		for (int i = 0; i < 6; i++) {
-			pixels[i] = stbi_load(paths[i].c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-			AX_CORE_ASSERT(pixels[i], "Failed to load cubemap face: {0}", paths[i]);
+			pixels[i] = stbi_load(paths[i].string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+			AX_CORE_ASSERT(pixels[i], "Failed to load cubemap face: {0}", paths[i].string());
 		}
 
 		m_faceWidth = static_cast<uint32_t>(texWidth);

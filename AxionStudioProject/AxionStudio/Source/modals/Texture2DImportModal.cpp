@@ -52,15 +52,15 @@ namespace Axion {
 			ImGui::InputText("##Tex2DSourcePath_input", &m_sourcePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##Tex2DSourceFile_button")) {
-				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path tex2dDir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(tex2dDir)) {
-					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, tex2dDir.string());
+					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, tex2dDir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_sourcePath = absPath;
+				if (!absPath.empty()) m_sourcePath = absPath.string();
 			}
 
 
@@ -73,15 +73,15 @@ namespace Axion {
 			ImGui::InputText("##Tex2DOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##Tex2DOutputDir_button")) {
-				std::filesystem::path tex2dDir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path tex2dDir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(tex2dDir)) {
-					absPath = FileDialogs::openFolder(tex2dDir.string());
+					absPath = FileDialogs::openFolder(tex2dDir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -105,7 +105,7 @@ namespace Axion {
 				!outputExists ||
 				!outputIsDirectory ||
 				invalidOutFileName
-				);
+			);
 
 			if (disabled) {
 				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
@@ -136,16 +136,16 @@ namespace Axion {
 				data.fileFormat = m_types[m_importType];
 				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
-				AAP::Texture2DParser::createTextFile(data, finalPath.string());
+				AAP::Texture2DParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Texture2D;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

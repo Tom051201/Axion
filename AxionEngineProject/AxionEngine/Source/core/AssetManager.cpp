@@ -55,25 +55,6 @@ namespace Axion {
 		}
 	}
 
-	std::string AssetManager::getRelativeToAssets(const std::string& absolutePath) {
-		if (!ProjectManager::hasProject()) {
-			AX_CORE_LOG_WARN("Unable converting absolute path to relative assets path: no project loaded");
-			return {};
-		}
-
-		std::filesystem::path absPath(absolutePath);
-		std::filesystem::path assetsDir = ProjectManager::getProject()->getAssetsPath();
-
-		try {
-			std::filesystem::path relPath = std::filesystem::relative(absPath, assetsDir);
-			return relPath.string();
-		} catch (const std::exception& e) {
-			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
-			(void)e;
-			return {};
-		}
-	}
-
 	std::filesystem::path AssetManager::getRelativeToAssets(const std::filesystem::path& absolutePath) {
 		if (!ProjectManager::hasProject()) {
 			AX_CORE_LOG_WARN("Unable converting absolute path to relative assets path: no project loaded");
@@ -83,8 +64,7 @@ namespace Axion {
 		std::filesystem::path assetsDir = ProjectManager::getProject()->getAssetsPath();
 
 		try {
-			std::filesystem::path relPath = std::filesystem::relative(absolutePath, assetsDir);
-			return relPath;
+			return std::filesystem::relative(absolutePath, assetsDir);
 		}
 		catch (const std::exception& e) {
 			AX_CORE_LOG_WARN("Failed to convert absolute path to relative: {}", e.what());
@@ -93,23 +73,23 @@ namespace Axion {
 		}
 	}
 
-	std::string AssetManager::getAbsolute(const std::string& relativePath) {
+	std::filesystem::path AssetManager::getAbsolute(const std::filesystem::path& relativePath) {
 		if (!ProjectManager::hasProject()) {
 			AX_CORE_LOG_WARN("Unable converting relative path to absolute assets path: no project loaded");
 			return {};
 		}
 
-		std::filesystem::path absPath = ProjectManager::getProject()->getAssetsPath();
-		absPath /= relativePath;
+		std::filesystem::path absPath = ProjectManager::getProject()->getAssetsPath() / relativePath;
+
 		if (!std::filesystem::exists(absPath)) {
 			AX_CORE_LOG_WARN("Unable converting relative path to absolute assets path: path does not exist");
 			return {};
 		}
 
-		return absPath.string();
+		return absPath;
 	}
 
-	UUID AssetManager::getAssetUUID(const std::string& absolutePath) {
+	UUID AssetManager::getAssetUUID(const std::filesystem::path& absolutePath) {
 		try {
 			std::ifstream stream(absolutePath);
 			if (!stream.is_open()) {
@@ -122,7 +102,7 @@ namespace Axion {
 			}
 		}
 		catch (const std::exception& e) {
-			AX_CORE_LOG_WARN("Failed to read UUID from asset file '{0}': {1}", absolutePath, e.what());
+			AX_CORE_LOG_WARN("Failed to read UUID from asset file '{0}': {1}", absolutePath.string(), e.what());
 		}
 
 		return {};
@@ -139,7 +119,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -174,7 +154,7 @@ namespace Axion {
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 		if (version == ASSET_VERSION_MESH) {
-			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			std::filesystem::path sourcePath = getAbsolute(data["Source"].as<std::string>());
 
 			storage<Mesh>().assets[handle] = nullptr;
 			storage<Mesh>().loadQueue.push_back({ handle,
@@ -188,7 +168,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported Mesh Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported Mesh Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -205,7 +185,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -236,7 +216,7 @@ namespace Axion {
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 		if (version == ASSET_VERSION_TEXTURE_CUBE) {
-			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			std::filesystem::path sourcePath = getAbsolute(data["Source"].as<std::string>());
 			UUID uuid = data["UUID"].as<UUID>();
 
 			storage<TextureCube>().assets[handle] = nullptr;
@@ -250,7 +230,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported TextureCube Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported TextureCube Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -267,7 +247,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -324,7 +304,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported Skybox Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported Skybox Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 	}
@@ -340,7 +320,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -373,7 +353,7 @@ namespace Axion {
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 		if (version == ASSET_VERSION_SHADER) {
-			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			std::filesystem::path sourcePath = getAbsolute(data["Source"].as<std::string>());
 			UUID uuid = data["UUID"].as<UUID>();
 
 			// -- Check format --
@@ -385,8 +365,7 @@ namespace Axion {
 				(format == "GLSL" && api == RendererAPI::OpenGL3);
 
 			// -- Check extension --
-			std::filesystem::path srcPath(sourcePath);
-			std::string ext = srcPath.extension().string();
+			std::string ext = sourcePath.extension().string();
 
 			bool extensionMatches =
 				(api == RendererAPI::DirectX12 && ext == "HLSL") ||
@@ -394,11 +373,9 @@ namespace Axion {
 
 			if (!formatMatches) {
 				if (extensionMatches) {
-					AX_CORE_LOG_WARN("Shader format '{}' in '{}' does not match current RendererAPI, but file extension '{}' is valid. Attempting to load anyway.",
-						format, absolutePath, ext);
+					AX_CORE_LOG_WARN("Shader format '{}' in '{}' does not match current RendererAPI, but file extension '{}' is valid. Attempting to load anyway.", format, absolutePath.string(), ext);
 				} else {
-					AX_CORE_LOG_ERROR("Shader format '{}' in '{}' is not supported by current RendererAPI and file extension '{}' does not match expected format",
-						format, absolutePath, ext);
+					AX_CORE_LOG_ERROR("Shader format '{}' in '{}' is not supported by current RendererAPI and file extension '{}' does not match expected format", format, absolutePath.string(), ext);
 					return {};
 				}
 			}
@@ -414,7 +391,7 @@ namespace Axion {
 
 			Ref<Shader> shader = Shader::create(spec, sourcePath);
 			storage<Shader>().assets[handle] = shader;
-			storage<Shader>().loadQueue.push_back({ handle, 
+			storage<Shader>().loadQueue.push_back({ handle,
 				[sourcePath, handle]() {
 					Ref<Shader> shader = AssetManager::get<Shader>(handle);
 					shader->compileFromFile(sourcePath);
@@ -426,7 +403,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported Shader Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported Shader Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -443,7 +420,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -567,7 +544,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported Pipeline Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported Pipeline Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -584,7 +561,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 		
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -696,7 +673,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported Material Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported Material Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -709,10 +686,10 @@ namespace Axion {
 			return;
 		}
 
-		std::string absolutePath = getAssetFilePath(handle);
+		std::filesystem::path absolutePath = getAssetFilePath(handle);
 		std::ifstream stream(absolutePath);
 		if (!stream.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open material file for reloading: {}", absolutePath);
+			AX_CORE_LOG_ERROR("Failed to open material file for reloading: {}", absolutePath.string());
 			return;
 		}
 
@@ -787,7 +764,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -807,7 +784,7 @@ namespace Axion {
 
 					return Texture2D::create(imageData.data(), imageData.size());
 				}
-				});
+			});
 			storage<Texture2D>().handleToPath[handle] = absolutePath;
 			return handle;
 		}
@@ -818,7 +795,7 @@ namespace Axion {
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 		if (version == ASSET_VERSION_TEXTURE2D) {
-			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			std::filesystem::path sourcePath = getAbsolute(data["Source"].as<std::string>());
 			UUID uuid = data["UUID"].as<UUID>();
 
 			storage<Texture2D>().assets[handle] = nullptr;
@@ -826,13 +803,13 @@ namespace Axion {
 				[sourcePath, handle]() {
 					return Texture2D::create(sourcePath);
 				}
-				});
+			});
 			storage<Texture2D>().handleToPath[handle] = absolutePath;
 
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -849,7 +826,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -884,7 +861,7 @@ namespace Axion {
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 		if (version == ASSET_VERSION_AUDIO) {
-			std::string sourcePath = getAbsolute(data["Source"].as<std::string>());
+			std::filesystem::path sourcePath = getAbsolute(data["Source"].as<std::string>());
 			UUID uuid = data["UUID"].as<UUID>();
 
 			AudioClip::Mode mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
@@ -896,7 +873,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported AudioClip Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported AudioClip Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -913,7 +890,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -958,7 +935,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported PhysivsMaterial Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported PhysivsMaterial Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 
@@ -975,7 +952,7 @@ namespace Axion {
 			return {};
 		}
 
-		std::string absolutePath = getAbsolute(registry->get(handle).filePath.string());
+		std::filesystem::path absolutePath = getAbsolute(registry->get(handle).filePath);
 
 		// -- Load Binary if in Runtime Mode --
 		if (ProjectManager::isRuntime()) {
@@ -1018,7 +995,7 @@ namespace Axion {
 			return handle;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported Prefab Version: {} in file {}", version, absolutePath);
+			AX_CORE_LOG_ERROR("Unsupported Prefab Version: {} in file {}", version, absolutePath.string());
 			return {};
 		}
 

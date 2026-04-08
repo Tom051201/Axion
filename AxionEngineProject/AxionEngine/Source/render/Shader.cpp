@@ -25,7 +25,7 @@ namespace Axion {
 
 	}
 
-	Ref<Shader> Shader::create(const ShaderSpecification& spec, const std::string& filePath) {
+	Ref<Shader> Shader::create(const ShaderSpecification& spec, const std::filesystem::path& filePath) {
 
 		switch (Renderer::getAPI()) {
 
@@ -38,10 +38,10 @@ namespace Axion {
 
 	}
 
-	std::string Shader::readShaderFile(const std::string& filePath) {
+	std::string Shader::readShaderFile(const std::filesystem::path& filePath) {
 		std::ifstream file(filePath);
 		if (!file.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open Shader file: {0}", filePath);
+			AX_CORE_LOG_ERROR("Failed to open Shader file: {0}", filePath.string());
 			return 0;
 		}
 
@@ -51,7 +51,7 @@ namespace Axion {
 		return buffer.str();
 	}
 
-	ShaderBytecode Shader::compileToBytecode(const std::string& filePath) {
+	ShaderBytecode Shader::compileToBytecode(const std::filesystem::path& filePath) {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::DirectX12: { return D12Shader::compileToBytecode(filePath); }

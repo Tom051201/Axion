@@ -4,13 +4,14 @@
 #include "AxionEngine/Source/audio/AudioClip.h"
 
 #include <string>
+#include <filesystem>
 
 namespace Axion::AAP {
 
 	struct AudioAssetData {
 		UUID uuid;
 		std::string name;
-		std::string audioFilePath;
+		std::filesystem::path audioFilePath;
 		std::string fileFormat;
 		AudioClip::Mode mode;
 	};
@@ -18,8 +19,8 @@ namespace Axion::AAP {
 	class AudioParser {
 	public:
 
-		static void createTextFile(const AudioAssetData& data, const std::string& outputPath);
-		static void createBinaryFile(const AudioAssetData& data, const std::string& outputPath);
+		static void createTextFile(const AudioAssetData& data, const std::filesystem::path& outputPath);
+		static void createBinaryFile(const AudioAssetData& data, const std::filesystem::path& outputPath);
 
 	};
 

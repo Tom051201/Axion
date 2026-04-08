@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/core/Window.h"
@@ -19,7 +21,7 @@ namespace Axion {
 	struct ApplicationSpecification {
 		WindowProperties windowProperties;
 		std::function<void()> guiSyleSetter = nullptr;
-		std::string guiLayoutFilePath;
+		std::filesystem::path guiLayoutFilePath;
 	};
 
 	class Application {
@@ -42,7 +44,7 @@ namespace Axion {
 		void setGraphicsBackend(RendererAPI api);
 
 		void setWindowTitle(const std::string& title);
-		void setWindowIcon(const std::string& path);
+		void setWindowIcon(const std::filesystem::path& path);
 		void minimizeWindow();
 		void maximizeOrRestoreWindow();
 

@@ -8,20 +8,23 @@
 namespace Axion {
 
 	Project::Project(const std::string& name)
-		: m_name(name), m_projectPath("Unknown"), m_assetsPath("Unknown") {
+		: m_name(name) {
 	
 		m_assetRegistry = std::make_shared<AssetRegistry>();
 	}
 
-	Ref<Project> Project::load(const std::string& path) {
+	Ref<Project> Project::load(const std::filesystem::path& path) {
 		// ----- Load file data -----
 		std::ifstream stream(path);
 		if (!stream.is_open()) {
-			AX_CORE_LOG_WARN("Failed to open project file: {}", path);
+			AX_CORE_LOG_WARN("Failed to open project file: {}", path.string());
 			return nullptr;
 		}
 		YAML::Node data = YAML::Load(stream);
-		if (!data["Project"]) { AX_CORE_LOG_WARN("Loading project file failed"); return nullptr; }
+		if (!data["Project"]) {
+			AX_CORE_LOG_WARN("Loading project file failed");
+			return nullptr;
+		}
 
 		Ref<Project> project = std::make_shared<Project>("");
 
@@ -35,24 +38,24 @@ namespace Axion {
 		if (data["Company"]) project->setCompany(data["Company"].as<std::string>());
 		if (data["Description"]) project->setDescription(data["Description"].as<std::string>());
 
-		// ----- Project-, Assets- and ScenesPath -----
-		project->setProjectPath(std::filesystem::path(path).parent_path().string());
+		// ----- Project-, Assetspath -----
+		project->setProjectPath(path.parent_path());
 		if (data["AssetsPath"]) project->setAssetsPath(data["AssetsPath"].as<std::string>());
 
 		// ----- Default scene -----
 		if (data["DefaultScene"]) project->setDefaultScene(data["DefaultScene"].as<std::string>());
 		if (data["AppIcon"]) project->setAppIconPath(data["AppIcon"].as<std::string>());
 
-		std::string registryPath = (std::filesystem::path(path).parent_path() / "AssetRegistry.yaml").string();
-		project->getAssetRegistry()->deserialize(registryPath);
+		std::filesystem::path registryPath = path.parent_path() / "AssetRegistry.yaml";
+		project->getAssetRegistry()->deserialize(registryPath.string()); // TODO: remove .string
 
 		return project;
 	}
 
-	Ref<Project> Project::loadBinary(const std::string& path) {
+	Ref<Project> Project::loadBinary(const std::filesystem::path& path) {
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (!in.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open binary project config file: {}", path);
+			AX_CORE_LOG_ERROR("Failed to open binary project config file: {}", path.string());
 			return nullptr;
 		}
 
@@ -99,7 +102,7 @@ namespace Axion {
 		return project;
 	}
 
-	void Project::save(const std::string& path) {
+	void Project::save(const std::filesystem::path& path) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -111,19 +114,19 @@ namespace Axion {
 		if (!m_company.empty()) out << YAML::Key << "Company" << YAML::Value << m_company;
 		if (!m_description.empty()) out << YAML::Key << "Description" << YAML::Value << m_description;
 
-		out << YAML::Key << "ProjectPath" << YAML::Value << m_projectPath;
-		out << YAML::Key << "AssetsPath" << YAML::Value << m_assetsPath;
+		out << YAML::Key << "ProjectPath" << YAML::Value << m_projectPath.generic_string();
+		out << YAML::Key << "AssetsPath" << YAML::Value << m_assetsPath.generic_string();
 
-		if (!m_defaultScene.empty()) out << YAML::Key << "DefaultScene" << YAML::Value << m_defaultScene;
-		if (!m_appIconPath.empty()) out << YAML::Key << "AppIcon" << YAML::Value << m_appIconPath;
+		if (!m_defaultScene.empty()) out << YAML::Key << "DefaultScene" << YAML::Value << m_defaultScene.generic_string();
+		if (!m_appIconPath.empty()) out << YAML::Key << "AppIcon" << YAML::Value << m_appIconPath.generic_string();
 
 		out << YAML::EndMap;
 
 		std::ofstream fout(path);
 		fout << out.c_str();
 
-		std::string registryPath = (std::filesystem::path(path).parent_path() / "AssetRegistry.yaml").string();
-		m_assetRegistry->serialize(registryPath);
+		std::filesystem::path registryPath = path.parent_path() / "AssetRegistry.yaml";
+		m_assetRegistry->serialize(registryPath.string()); // TODO: remove .string
 	}
 
 	Ref<Project> Project::createNew(const ProjectSpecification& spec) {
@@ -134,7 +137,7 @@ namespace Axion {
 		Ref<Project> result = std::make_shared<Project>(spec.name);
 
 		try {
-			fs::path projectDir = fs::path(spec.location) / projectName;
+			fs::path projectDir = spec.location / projectName;
 
 			// -- Create Project Directory --
 			if (!fs::exists(projectDir)) {
@@ -147,22 +150,27 @@ namespace Axion {
 			fs::create_directories(assetsDir);
 
 
+			// -- Create Export Directory --
+			fs::path exportDir = projectDir / "Export";
+			fs::create_directories(exportDir);
+
+
 			// -- Setup Project --
 			result->setName(spec.name);
 			result->setVersion(spec.version);
 			result->setEngineVersion(AX_ENGINE_VERSION);
-			result->setProjectPath(projectDir.string());
-			result->setAssetsPath(assetsDir.string());
+			result->setProjectPath(projectDir);
+			result->setAssetsPath(assetsDir);
 
 			if (!spec.author.empty()) result->setAuthor(spec.author);
 			if (!spec.company.empty()) result->setCompany(spec.company);
 			if (!spec.description.empty()) result->setDescription(spec.description);
 
-			// write the project file (.axproj)
-			result->save((projectDir / (projectName + ".axproj")).string());
+			// -- Write the .axproj File --
+			result->save(projectDir / (projectName + ".axproj"));
 
-			std::string registryPath = (projectDir / "AssetRegistry.yaml").string();
-			result->getAssetRegistry()->serialize(registryPath);
+			std::filesystem::path registryPath = (projectDir / "AssetRegistry.yaml");
+			result->getAssetRegistry()->serialize(registryPath.string()); // TODO: remove .string
 
 			return result;
 		}

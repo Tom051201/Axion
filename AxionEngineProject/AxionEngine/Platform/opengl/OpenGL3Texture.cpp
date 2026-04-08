@@ -6,12 +6,12 @@
 
 namespace Axion {
 
-	OpenGL3Texture2D::OpenGL3Texture2D(const std::string& path) {
+	OpenGL3Texture2D::OpenGL3Texture2D(const std::filesystem::path& path) {
 		stbi_set_flip_vertically_on_load(true);
 
 		int texWidth, texHeight, texChannels;
-		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		AX_CORE_ASSERT(pixels, "Failed to load texture image: {0}", path);
+		stbi_uc* pixels = stbi_load(path.string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		AX_CORE_ASSERT(pixels, "Failed to load texture image: {0}", path.string());
 
 		m_width = static_cast<uint32_t>(texWidth);
 		m_height = static_cast<uint32_t>(texHeight);
@@ -72,11 +72,11 @@ namespace Axion {
 	//-----------------------------------------------------------------------------------------------------------------------//
 	//-----------------------------------------------------------------------------------------------------------------------//
 
-	OpenGL3TextureCube::OpenGL3TextureCube(const std::string& filePath) {
+	OpenGL3TextureCube::OpenGL3TextureCube(const std::filesystem::path& filePath) {
 		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
 	}
 
-	OpenGL3TextureCube::OpenGL3TextureCube(const std::array<std::string, 6>& paths) {
+	OpenGL3TextureCube::OpenGL3TextureCube(const std::array<std::filesystem::path, 6>& paths) {
 		AX_CORE_ASSERT(false, "OpenGl3TextureCubes are not supported yet!");
 	}
 

@@ -16,7 +16,7 @@ namespace Axion {
 	D12Shader::D12Shader(const ShaderSpecification& spec)
 		: m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec), m_shaderFileLocation("") {}
 
-	D12Shader::D12Shader(const ShaderSpecification& spec, const std::string& filePath)
+	D12Shader::D12Shader(const ShaderSpecification& spec, const std::filesystem::path& filePath)
 		: m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec), m_shaderFileLocation(filePath) {}
 
 	D12Shader::~D12Shader() {
@@ -31,7 +31,7 @@ namespace Axion {
 
 
 
-	void D12Shader::compileFromFile(const std::string& filePath) {
+	void D12Shader::compileFromFile(const std::filesystem::path& filePath) {
 		std::string source = Shader::readShaderFile(filePath);
 
 		compileStage(source, "VSMain", SHADER_MODEL_VS, m_vertexShaderBlob);
@@ -240,9 +240,9 @@ namespace Axion {
 		return -1;
 	}
 
-	ShaderBytecode D12Shader::compileToBytecode(const std::string& filepath) {
+	ShaderBytecode D12Shader::compileToBytecode(const std::filesystem::path& filepath) {
 		ShaderBytecode result;
-		std::wstring wFilePath(filepath.begin(), filepath.end());
+		std::wstring wFilePath = filepath.wstring();
 
 		ID3DBlob* vsBlob = nullptr;
 		ID3DBlob* psBlob = nullptr;

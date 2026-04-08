@@ -23,7 +23,7 @@ namespace Axion {
 	using AssetMap = std::unordered_map<AssetHandle<T>, Ref<T>>;
 
 	template<typename T>
-	using HandleToPathMap = std::unordered_map<AssetHandle<T>, std::string>;
+	using HandleToPathMap = std::unordered_map<AssetHandle<T>, std::filesystem::path>;
 
 	template<typename T>
 	using LoadQueue = std::vector<std::pair<AssetHandle<T>, std::function<Ref<T>()>>>;
@@ -50,11 +50,10 @@ namespace Axion {
 		static void shutdown();
 		static void onEvent(Event& e);
 
-		static std::string getRelativeToAssets(const std::string& absolutePath);	// Returns the relative path to the Assets directory
 		static std::filesystem::path getRelativeToAssets(const std::filesystem::path& absolutePath);
-		static std::string getAbsolute(const std::string& relativePath);			// Returns the absolute path
+		static std::filesystem::path getAbsolute(const std::filesystem::path& relativePath);
 
-		static UUID getAssetUUID(const std::string& absolutePath);
+		static UUID getAssetUUID(const std::filesystem::path& absolutePath);
 
 		template<typename T>
 		static AssetHandle<T> load(UUID handle);
@@ -84,7 +83,7 @@ namespace Axion {
 
 		// -- Templated asset file path function --
 		template<typename T>
-		static const std::string& getAssetFilePath(const AssetHandle<T>& handle) {
+		static const std::filesystem::path& getAssetFilePath(const AssetHandle<T>& handle) {
 			return storage<T>().handleToPath.at(handle);
 		}
 

@@ -2,6 +2,8 @@
 
 #include "Axion.h"
 
+#include <filesystem>
+
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/entt/entt.hpp"
 
@@ -94,14 +96,14 @@ namespace Axion {
 		// ----- Active scene -----
 		Ref<Scene> m_activeScene;
 		Ref<Scene> m_editorScene;
-		std::string m_activeSceneFilePath;
+		std::filesystem::path m_activeSceneFilePath;
 		SceneState m_sceneState = SceneState::Edit;
 		SceneState m_prePauseState = SceneState::Edit;
 		int m_stepFrames = 0;
 
 
 		// ----- Active project -----
-		std::string m_activeProjectFilePath;
+		std::filesystem::path m_activeProjectFilePath;
 
 
 		// ----- ImGui utils -----

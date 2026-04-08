@@ -1,13 +1,13 @@
 #pragma once
 
-#include <string>
+#include <filesystem>
 
 namespace Axion {
 
 	class EditorConfig {
 	public:
 
-		static std::string startupProjectPath;
+		static std::filesystem::path startupProjectPath;
 
 	};
 

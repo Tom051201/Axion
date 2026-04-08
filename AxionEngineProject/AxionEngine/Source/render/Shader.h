@@ -35,7 +35,7 @@ namespace Axion {
 
 		virtual const std::string& getName() const = 0;
 
-		virtual void compileFromFile(const std::string& filePath) = 0;
+		virtual void compileFromFile(const std::filesystem::path& filePath) = 0;
 		virtual void recompile() = 0;
 		virtual void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) = 0;
 
@@ -44,9 +44,9 @@ namespace Axion {
 
 
 		static Ref<Shader> create(const ShaderSpecification& spec);
-		static Ref<Shader> create(const ShaderSpecification& spec, const std::string& filePath);
-		static std::string readShaderFile(const std::string& filePath);
-		static ShaderBytecode compileToBytecode(const std::string& filePath);
+		static Ref<Shader> create(const ShaderSpecification& spec, const std::filesystem::path& filePath);
+		static std::string readShaderFile(const std::filesystem::path& filePath);
+		static ShaderBytecode compileToBytecode(const std::filesystem::path& filePath);
 	};
 
 }

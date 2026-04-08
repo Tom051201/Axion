@@ -9,7 +9,7 @@ namespace Axion {
 
 	struct SceneManagerData {
 		Ref<Scene> scene;
-		std::string scenePath;
+		std::filesystem::path scenePath;
 		bool isNewScene = false;
 		std::function<void(Event&)> eventCallback;
 		std::function<bool(RenderingFinishedEvent&)> onRenderingFinished;
@@ -17,10 +17,10 @@ namespace Axion {
 		bool newSceneRequest = false;
 		// -- Load scene --
 		bool loadSceneRequest = false;
-		std::string toLoadScenePath;
+		std::filesystem::path toLoadScenePath;
 		// -- Save scene --
 		bool saveSceneRequest = false;
-		std::string toSaveScenePath;
+		std::filesystem::path toSaveScenePath;
 		// -- Unload scene --
 		bool unloadSceneRequest = false;
 	};
@@ -34,7 +34,7 @@ namespace Axion {
 		s_managerData->onRenderingFinished = [&](RenderingFinishedEvent& e) {
 			// -- Save scene --
 			if (s_managerData->saveSceneRequest) {
-				std::string filePath = s_managerData->toSaveScenePath;
+				std::filesystem::path filePath = s_managerData->toSaveScenePath;
 				if (!filePath.empty()) {
 					SceneSerializer serializer(s_managerData->scene);
 					serializer.serializeText(filePath);
@@ -50,8 +50,8 @@ namespace Axion {
 
 			// -- Load scene --
 			if (s_managerData->loadSceneRequest) {
-				std::string filePath = s_managerData->toLoadScenePath;
-				if (!filePath.empty() && std::filesystem::exists(std::filesystem::path(filePath))) {
+				std::filesystem::path filePath = s_managerData->toLoadScenePath;
+				if (!filePath.empty() && std::filesystem::exists(filePath)) {
 					Ref<Scene> scene = std::make_shared<Scene>();
 					SceneSerializer serializer(scene);
 					serializer.deserializeText(filePath);
@@ -102,12 +102,12 @@ namespace Axion {
 
 	void SceneManager::newScene() { s_managerData->newSceneRequest = true; }
 
-	void SceneManager::loadScene(const std::string& filePath) {
+	void SceneManager::loadScene(const std::filesystem::path& filePath) {
 		s_managerData->toLoadScenePath = filePath;
 		s_managerData->loadSceneRequest = true;
 	}
 
-	void SceneManager::saveScene(const std::string& filePath) {
+	void SceneManager::saveScene(const std::filesystem::path& filePath) {
 		s_managerData->toSaveScenePath = filePath;
 		s_managerData->saveSceneRequest = true;
 	}
@@ -122,7 +122,7 @@ namespace Axion {
 
 	bool SceneManager::isNewScene() { return s_managerData->isNewScene; }
 
-	const std::string& SceneManager::getScenePath() { return s_managerData->scenePath; }
+	const std::filesystem::path& SceneManager::getScenePath() { return s_managerData->scenePath; }
 
 	void SceneManager::setScene(const Ref<Scene>& scene) {
 		s_managerData->scene = scene;

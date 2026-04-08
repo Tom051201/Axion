@@ -7,7 +7,7 @@ namespace Axion {
 	class OpenGL3Texture2D : public Texture2D {
 	public:
 
-		OpenGL3Texture2D(const std::string& path);
+		OpenGL3Texture2D(const std::filesystem::path& path);
 		OpenGL3Texture2D(uint32_t width, uint32_t height, void* data);
 		OpenGL3Texture2D(const uint8_t* data, size_t size);
 		~OpenGL3Texture2D() override;
@@ -38,8 +38,8 @@ namespace Axion {
 	class OpenGL3TextureCube : public TextureCube {
 	public:
 
-		OpenGL3TextureCube(const std::string& filePath);
-		OpenGL3TextureCube(const std::array<std::string, 6>& paths);
+		OpenGL3TextureCube(const std::filesystem::path& filePath);
+		OpenGL3TextureCube(const std::array<std::filesystem::path, 6>& paths);
 		OpenGL3TextureCube(const uint8_t* data, size_t size);
 		~OpenGL3TextureCube() override;
 

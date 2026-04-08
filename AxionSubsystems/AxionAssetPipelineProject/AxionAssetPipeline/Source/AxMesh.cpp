@@ -4,7 +4,7 @@
 
 namespace Axion::AAP {
 
-	void MeshParser::createTextFile(const MeshAssetData& data, const std::string& outputPath) {
+	void MeshParser::createTextFile(const MeshAssetData& data, const std::filesystem::path& outputPath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -13,22 +13,22 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Mesh";
 		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
-		out << YAML::Key << "Source" << YAML::Value << data.filePath;
+		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
 
 		out << YAML::EndMap;
 
 		std::ofstream fout(outputPath);
 		fout << out.c_str();
-		AX_CORE_LOG_TRACE("Created .axmesh file ({})", outputPath);
+		AX_CORE_LOG_TRACE("Created .axmesh file ({})", outputPath.string());
 	}
 
-	void MeshParser::createBinaryFile(const MeshAssetData& data, const std::string& outputPath) {
+	void MeshParser::createBinaryFile(const MeshAssetData& data, const std::filesystem::path& outputPath) {
 		auto meshData = Mesh::loadOBJ(data.filePath);
 
 		// -- Open Binary File --
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
 		if (!out) {
-			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath);
+			AX_CORE_LOG_ERROR("Failed to create binary file: {}", outputPath.string());
 			return;
 		}
 
@@ -50,7 +50,7 @@ namespace Axion::AAP {
 		out.write(reinterpret_cast<const char*>(meshData.indices.data()), indexCount * sizeof(uint32_t));
 
 		out.close();
-		AX_CORE_LOG_TRACE("Baked binary mesh to {}", outputPath);
+		AX_CORE_LOG_TRACE("Baked binary mesh to {}", outputPath.string());
 	}
 
 }

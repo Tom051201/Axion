@@ -88,15 +88,15 @@ namespace Axion {
 			ImGui::InputText("##AlbedoMapPath_input", &m_albedoMapPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##AlbedoMapFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_albedoMapPath = absPath;
+				if (!absPath.empty()) m_albedoMapPath = absPath.string();
 			}
 
 			// -- Normal Map --
@@ -108,15 +108,15 @@ namespace Axion {
 			ImGui::InputText("##NormalMapPath_input", &m_normalMapPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##NormalMapFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_normalMapPath = absPath;
+				if (!absPath.empty()) m_normalMapPath = absPath.string();
 			}
 
 			// -- Metalness Map --
@@ -128,15 +128,15 @@ namespace Axion {
 			ImGui::InputText("##MetalnessMapPath_input", &m_metalnessMapPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##MetalnessMapFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_metalnessMapPath = absPath;
+				if (!absPath.empty()) m_metalnessMapPath = absPath.string();
 			}
 
 			// -- Roughness Map --
@@ -148,15 +148,15 @@ namespace Axion {
 			ImGui::InputText("##RoughnessMapPath_input", &m_roughnessMapPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##RoughnessMapFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_roughnessMapPath = absPath;
+				if (!absPath.empty()) m_roughnessMapPath = absPath.string();
 			}
 
 			// -- Occlusion Map --
@@ -168,15 +168,15 @@ namespace Axion {
 			ImGui::InputText("##OcclusionMapPath_input", &m_occlusionMapPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##OcclusionMapFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_occlusionMapPath = absPath;
+				if (!absPath.empty()) m_occlusionMapPath = absPath.string();
 			}
 
 			// -- Emissive Map --
@@ -189,15 +189,15 @@ namespace Axion {
 			ImGui::InputText("##EmissiveMapPath_input", &m_emissiveMapPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##EmissiveMapFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "textures";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_emissiveMapPath = absPath;
+				if (!absPath.empty()) m_emissiveMapPath = absPath.string();
 			}
 
 			// -- Pipeline path --
@@ -210,15 +210,15 @@ namespace Axion {
 			ImGui::InputText("##MatPipelinePath_input", &m_pipelinePath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##MatPipelineFile_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "pipelines";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "pipelines";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, dir.string());
+					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, dir);
 				}
 				else {
 					absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_pipelinePath = absPath;
+				if (!absPath.empty()) m_pipelinePath = absPath.string();
 			}
 
 
@@ -231,15 +231,15 @@ namespace Axion {
 			ImGui::InputText("##MatOutputPath_input", &m_outputPath);
 			ImGui::SameLine();
 			if (ImGui::Button("Browse...##MatOutputDir_button")) {
-				std::filesystem::path dir = std::filesystem::path(ProjectManager::getProject()->getAssetsPath()) / "materials";
-				std::string absPath;
+				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "materials";
+				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFolder(dir.string());
+					absPath = FileDialogs::openFolder(dir);
 				}
 				else {
 					absPath = FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
 				}
-				if (!absPath.empty()) m_outputPath = absPath;
+				if (!absPath.empty()) m_outputPath = absPath.string();
 			}
 
 			ImGui::EndTable();
@@ -412,16 +412,16 @@ namespace Axion {
 				}
 
 				data.properties = prop;
-				AAP::MaterialParser::createTextFile(data, finalPath.string());
+				AAP::MaterialParser::createTextFile(data, finalPath);
 
 				AssetMetadata metadata;
 				metadata.handle = newAssetUUID;
 				metadata.type = AssetType::Material;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath.string());
+				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				registry->add(metadata);
-				registry->serialize((std::filesystem::path(ProjectManager::getProject()->getProjectPath()) / "AssetRegistry.yaml").string());
+				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 
 				close();
 			}

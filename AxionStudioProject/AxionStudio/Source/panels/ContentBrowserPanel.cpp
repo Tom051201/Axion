@@ -112,24 +112,24 @@ namespace Axion {
 					m_pendingNavigate = m_currentDirectory / path.filename();
 				}
 				else if (path.extension() == ".axscene") {
-					SceneManager::loadScene(path.string());
+					SceneManager::loadScene(path);
 				}
 			}
 
 			// -- Draw options on right click --
 			if (ImGui::BeginPopupContextItem(filenameString.c_str())) {
 				// -- Scene only --
-				if (item.path.string().find(".axscene") != std::string::npos) {
+				if (path.extension() == ".axscene") {
 					if (ImGui::MenuItem("Set as Default Scene")) {
-						ProjectManager::getProject()->setDefaultScene(path.string());
+						ProjectManager::getProject()->setDefaultScene(path);
 						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 					}
 				}
 
 				// -- Material only --
-				if (item.path.string().find(".axmat") != std::string::npos) {
+				if (path.extension() == ".axmat") {
 					if (ImGui::MenuItem("Reload")) {
-						UUID uuid = AssetManager::getAssetUUID(item.path.string());
+						UUID uuid = AssetManager::getAssetUUID(item.path);
 						AssetHandle<Material> handle = uuid;
 						AssetManager::reload<Material>(handle);
 					}
@@ -137,7 +137,7 @@ namespace Axion {
 
 				// -- Show in explorer button --
 				if (ImGui::MenuItem("Show in Explorer")) {
-					PlatformUtils::showInFileExplorer(path.string());
+					PlatformUtils::showInFileExplorer(path);
 				}
 
 				// -- Renaming --
@@ -162,7 +162,7 @@ namespace Axion {
 			// -- Drag and drop source --
 			if (ImGui::BeginDragDropSource()) {
 				auto rel = path.lexically_relative(m_rootDirectory);
-				const std::string itemPath = rel.string();
+				const std::string itemPath = rel.generic_string();
 				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath.c_str(), itemPath.size() + 1);
 				void* texID = GraphicsContext::get()->getImGuiTextureID(icon);
 				ImGui::Image((ImTextureID)texID, { 30.0f, 30.0f });

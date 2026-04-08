@@ -15,8 +15,8 @@ namespace Axion {
 
 	namespace FileDialogsInternal {
 
-		std::string openFileImpl(const FileDialogs::FilterList& filters, const std::string& initialPath) {
-			std::string result;
+		std::filesystem::path openFileImpl(const FileDialogs::FilterList& filters, const std::filesystem::path& initialPath) {
+			std::filesystem::path result;
 
 			IFileDialog* pfd = nullptr;
 			HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
@@ -43,9 +43,8 @@ namespace Axion {
 
 			// ----- Set initial path -----
 			if (!initialPath.empty()) {
-				std::wstring wInitial(initialPath.begin(), initialPath.end());
 				IShellItem* pItem = nullptr;
-				if (SUCCEEDED(SHCreateItemFromParsingName(wInitial.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+				if (SUCCEEDED(SHCreateItemFromParsingName(initialPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
 					pfd->SetFolder(pItem);
 					pItem->Release();
 				}
@@ -60,9 +59,7 @@ namespace Axion {
 					PWSTR pszFilePath = nullptr;
 					hr = psi->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
 					if (SUCCEEDED(hr)) {
-						char path[MAX_PATH];
-						WideCharToMultiByte(CP_ACP, 0, pszFilePath, -1, path, MAX_PATH, nullptr, nullptr);
-						result = path;
+						result = pszFilePath;
 						CoTaskMemFree(pszFilePath);
 					}
 					psi->Release();
@@ -73,8 +70,8 @@ namespace Axion {
 			return result;
 		}
 
-		std::string saveFileImpl(const FileDialogs::FilterList& filters, const std::string& initialPath) {
-			std::string result;
+		std::filesystem::path saveFileImpl(const FileDialogs::FilterList& filters, const std::filesystem::path& initialPath) {
+			std::filesystem::path result;
 
 			IFileDialog* pfd = nullptr;
 			HRESULT hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
@@ -101,9 +98,8 @@ namespace Axion {
 
 			// ----- Set initial path -----
 			if (!initialPath.empty()) {
-				std::wstring wInitial(initialPath.begin(), initialPath.end());
 				IShellItem* pItem = nullptr;
-				if (SUCCEEDED(SHCreateItemFromParsingName(wInitial.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+				if (SUCCEEDED(SHCreateItemFromParsingName(initialPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
 					pfd->SetFolder(pItem);
 					pItem->Release();
 				}
@@ -118,9 +114,7 @@ namespace Axion {
 					PWSTR pszFilePath = nullptr;
 					hr = psi->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
 					if (SUCCEEDED(hr)) {
-						char path[MAX_PATH];
-						WideCharToMultiByte(CP_ACP, 0, pszFilePath, -1, path, MAX_PATH, nullptr, nullptr);
-						result = path;
+						result = pszFilePath;
 						CoTaskMemFree(pszFilePath);
 					}
 					psi->Release();
@@ -131,8 +125,8 @@ namespace Axion {
 			return result;
 		}
 
-		std::string openFolderImpl(const std::string& initialPath) {
-			std::string result;
+		std::filesystem::path openFolderImpl(const std::filesystem::path& initialPath) {
+			std::filesystem::path result;
 			IFileDialog* pfd = nullptr;
 
 			HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_IFileDialog, reinterpret_cast<void**>(&pfd));
@@ -146,9 +140,8 @@ namespace Axion {
 			pfd->SetOptions(options | FOS_PICKFOLDERS);
 
 			if (!initialPath.empty()) {
-				std::wstring wInitial(initialPath.begin(), initialPath.end());
 				IShellItem* pItem = nullptr;
-				if (SUCCEEDED(SHCreateItemFromParsingName(wInitial.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+				if (SUCCEEDED(SHCreateItemFromParsingName(initialPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
 					pfd->SetFolder(pItem);
 					pItem->Release();
 				}
@@ -162,9 +155,7 @@ namespace Axion {
 					PWSTR pszFilePath = nullptr;
 					hr = psi->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
 					if (SUCCEEDED(hr)) {
-						char path[MAX_PATH];
-						WideCharToMultiByte(CP_ACP, 0, pszFilePath, -1, path, MAX_PATH, nullptr, nullptr);
-						result = path;
+						result = pszFilePath;
 						CoTaskMemFree(pszFilePath);
 					}
 					psi->Release();
@@ -177,33 +168,46 @@ namespace Axion {
 
 		// Helper: ensure STA thread
 		template<typename Fn>
-		std::string runSTA(Fn&& fn) {
-			// REMOVE the thread creation entirely
-			std::string result;
+		auto runSTA(Fn&& fn) -> decltype(fn()) {
+			decltype(fn()) result;
 			HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 			if (SUCCEEDED(hr)) {
-				result = fn();           // Run directly on the current thread
+				result = fn();
 				CoUninitialize();
 			}
 			else if (hr == RPC_E_CHANGED_MODE) {
-				// COM is already initialized in MTA; you can log a warning
-				// Or just try running fn() anyway, but some COM features may fail
 				result = fn();
 			}
 			return result;
 		}
+		//template<typename Fn>
+		//std::string runSTA(Fn&& fn) {
+		//	// REMOVE the thread creation entirely
+		//	std::string result;
+		//	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+		//	if (SUCCEEDED(hr)) {
+		//		result = fn();           // Run directly on the current thread
+		//		CoUninitialize();
+		//	}
+		//	else if (hr == RPC_E_CHANGED_MODE) {
+		//		// COM is already initialized in MTA; you can log a warning
+		//		// Or just try running fn() anyway, but some COM features may fail
+		//		result = fn();
+		//	}
+		//	return result;
+		//}
 
 	}
 
-	std::string FileDialogs::openFile(const FilterList& filters, const std::string& initialPath) {
+	std::filesystem::path FileDialogs::openFile(const FilterList& filters, const std::filesystem::path &initialPath) {
 		return FileDialogsInternal::runSTA([&] { return FileDialogsInternal::openFileImpl(filters, initialPath); });
 	}
 
-	std::string FileDialogs::saveFile(const FilterList& filters, const std::string& initialPath) {
+	std::filesystem::path FileDialogs::saveFile(const FilterList& filters, const std::filesystem::path& initialPath) {
 		return FileDialogsInternal::runSTA([&] { return FileDialogsInternal::saveFileImpl(filters, initialPath); });
 	}
 
-	std::string FileDialogs::openFolder(const std::string& initialPath) {
+	std::filesystem::path FileDialogs::openFolder(const std::filesystem::path& initialPath) {
 		return FileDialogsInternal::runSTA([&] { return FileDialogsInternal::openFolderImpl(initialPath); });
 	}
 
@@ -240,7 +244,7 @@ namespace Axion {
 			return cpuBrand;
 		}
 
-		return "Unkown";
+		return "Unknown";
 	}
 
 	uint32_t PlatformInfo::getCpuCores() {
@@ -259,23 +263,25 @@ namespace Axion {
 		return 0;
 	}
 
-	void PlatformUtils::showInFileExplorer(const std::string& path) {
-		std::wstring wpath(path.begin(), path.end());
-		std::wstring command = L"explorer.exe /select,\"" + wpath + L"\"";
+	void PlatformUtils::showInFileExplorer(const std::filesystem::path& path) {
+		std::wstring command = L"explorer.exe /select,\"" + path.wstring() + L"\"";
 		_wsystem(command.c_str());
 	}
 
-	void PlatformUtils::openFolderInFileExplorer(const std::string& path) {
-		std::filesystem::path fsPath(path);
-		if (!std::filesystem::exists(fsPath) || !std::filesystem::is_directory(fsPath)) {
-			AX_CORE_LOG_WARN("Path is not a folder: {}", path);
+	void PlatformUtils::openFolderInFileExplorer(const std::filesystem::path& path) {
+		if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
+			AX_CORE_LOG_WARN("Path is not a folder: {}", path.string());
 			return;
 		}
 
-		std::wstring wpath = fsPath.wstring();
-		std::wstring command = L"explorer.exe \"" + wpath + L"\"";
-
+		std::wstring command = L"explorer.exe \"" + path.wstring() + L"\"";
 		_wsystem(command.c_str());
+	}
+
+	std::filesystem::path PlatformUtils::getExecutableDirectory() {
+		wchar_t path[MAX_PATH];
+		GetModuleFileNameW(nullptr, path, MAX_PATH);
+		return std::filesystem::path(path).parent_path();
 	}
 
 }

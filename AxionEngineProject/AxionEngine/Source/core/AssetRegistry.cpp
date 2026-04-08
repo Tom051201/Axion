@@ -28,7 +28,7 @@ namespace Axion {
 		m_registry.clear();
 	}
 
-	void AssetRegistry::serialize(const std::string& filepath) {
+	void AssetRegistry::serialize(const std::filesystem::path& filepath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Version" << YAML::Value << 1;
@@ -38,7 +38,7 @@ namespace Axion {
 			out << YAML::BeginMap;
 			out << YAML::Key << "Handle" << YAML::Value << uuid.toString();
 			out << YAML::Key << "Type" << YAML::Value << assetTypeToString(metadata.type);
-			out << YAML::Key << "FilePath" << YAML::Value << metadata.filePath.string();
+			out << YAML::Key << "FilePath" << YAML::Value << metadata.filePath.generic_string();
 			out << YAML::EndMap;
 		}
 
@@ -49,7 +49,7 @@ namespace Axion {
 		fout << out.c_str();
 	}
 
-	void AssetRegistry::deserialize(const std::string& filepath) {
+	void AssetRegistry::deserialize(const std::filesystem::path& filepath) {
 		m_registry.clear();
 
 		std::ifstream stream(filepath);
@@ -87,12 +87,12 @@ namespace Axion {
 		AX_CORE_LOG_INFO("Loaded AssetRegistry with {} assets.", m_registry.size());
 	}
 
-	void AssetRegistry::serializeBinary(const std::string& filepath) {
-		std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
+	void AssetRegistry::serializeBinary(const std::filesystem::path& filepath) {
+		std::filesystem::create_directories(filepath.parent_path());
 
 		std::ofstream out(filepath, std::ios::out | std::ios::binary);
 		if (!out.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open file for binary registry serialization: {}", filepath);
+			AX_CORE_LOG_ERROR("Failed to open file for binary registry serialization: {}", filepath.string());
 			return;
 		}
 
@@ -117,20 +117,20 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&type), sizeof(uint32_t));
 
 			// -- Write File Path --
-			std::string pathStr = metadata.filePath.string();
+			std::string pathStr = metadata.filePath.generic_string();
 			uint32_t pathLength = static_cast<uint32_t>(pathStr.size());
 			out.write(reinterpret_cast<const char*>(&pathLength), sizeof(uint32_t));
 			out.write(pathStr.data(), pathLength);
 		}
 
 		out.close();
-		AX_CORE_LOG_TRACE("Serialized binary AssetRegistry to {}", filepath);
+		AX_CORE_LOG_TRACE("Serialized binary AssetRegistry to {}", filepath.string());
 	}
 
-	void AssetRegistry::deserializeBinary(const std::string& filepath) {
+	void AssetRegistry::deserializeBinary(const std::filesystem::path& filepath) {
 		std::ifstream in(filepath, std::ios::in | std::ios::binary);
 		if (!in.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open binary AssetRegistry: {}", filepath);
+			AX_CORE_LOG_ERROR("Failed to open binary AssetRegistry: {}", filepath.string());
 			return;
 		}
 
@@ -138,7 +138,7 @@ namespace Axion {
 		char magic[4];
 		in.read(magic, 4);
 		if (memcmp(magic, "AXAR", 4) != 0) {
-			AX_CORE_LOG_ERROR("Invalid binary registry file: {}", filepath);
+			AX_CORE_LOG_ERROR("Invalid binary registry file: {}", filepath.string());
 			return;
 		}
 
