@@ -1,9 +1,8 @@
 #pragma once
 
-#include "AxionEngine/Source/AxionSettings.h"
+#ifdef AX_PLATFORM_WINDOWS
 
-#if AX_WIN_USING_CUSTOM_TITLE_BAR
-
+#include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/Application.h"
 
 namespace Axion {

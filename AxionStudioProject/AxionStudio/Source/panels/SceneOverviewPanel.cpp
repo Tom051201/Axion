@@ -1,6 +1,7 @@
 #include "SceneOverviewPanel.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -52,11 +53,10 @@ namespace Axion {
 			ImGui::Text("Title");
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
-			strcpy_s(m_titleBuffer, sizeof(m_titleBuffer), m_activeScene->getTitle().c_str()); // TODO: remove char buffer and replace w string
-			m_titleBuffer[sizeof(m_titleBuffer) - 1] = '\0';
+			std::string sceneTitle = m_activeScene->getTitle();
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-			if (ImGui::InputText("##SceneTitle_input", m_titleBuffer, sizeof(m_titleBuffer))) {
-				m_activeScene->setTitle(m_titleBuffer);
+			if (ImGui::InputText("##SceneTitle_input", &sceneTitle)) {
+				m_activeScene->setTitle(sceneTitle);
 			}
 
 			if (m_activeScene->hasSkybox()) {
@@ -84,8 +84,16 @@ namespace Axion {
 				ImGui::Text("Options");
 				ImGui::TableSetColumnIndex(1);
 				if (ImGui::Button("Select Skybox")) {
-					std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox"; // TODO: add fallback
-					std::filesystem::path absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, skyDir);
+					std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox";
+					std::filesystem::path absolutePath;
+
+					if (std::filesystem::exists(skyDir)) {
+						absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, skyDir);
+					}
+					else {
+						absolutePath = FileDialogs::openFile({ {"Axion Skybox Asset", "*.axsky"} }, ProjectManager::getProject()->getAssetsPath());
+					}
+
 					if (!absolutePath.empty()) {
 						UUID assetUUID = AssetManager::getAssetUUID(absolutePath);
 						if (assetUUID.isValid()) {
@@ -93,6 +101,7 @@ namespace Axion {
 							m_activeScene->setSkybox(handle);
 						}
 					}
+
 				}
 
 				// -- Remove skybox button --

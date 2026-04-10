@@ -1,6 +1,7 @@
 #include "ContentBrowserPanel.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -143,8 +144,7 @@ namespace Axion {
 				// -- Renaming --
 				if (ImGui::MenuItem("Rename")) {
 					m_itemBeingRenamed = path;
-					std::string fn = path.filename().string();
-					strncpy_s(m_itemRenameBuffer, sizeof(m_itemRenameBuffer), fn.c_str(), _TRUNCATE);
+					m_itemRenameString = path.filename().string();
 					m_startRenaming = true;
 				}
 
@@ -182,10 +182,9 @@ namespace Axion {
 					}
 
 					// -- Draw input field --
-					if (ImGui::InputText("##RenameInput", m_itemRenameBuffer, IM_ARRAYSIZE(m_itemRenameBuffer), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
-						std::string newName(m_itemRenameBuffer);
-						if (!newName.empty()) {
-							auto newPath = path.parent_path() / newName;
+					if (ImGui::InputText("##RenameInput", &m_itemRenameString, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
+						if (!m_itemBeingRenamed.empty()) {
+							std::filesystem::path newPath = path.parent_path() / m_itemRenameString;
 
 							// -- Check if name is valid --
 							std::error_code ec;
@@ -341,17 +340,17 @@ namespace Axion {
 
 	void ContentBrowserPanel::resetRenaming() {
 		m_itemBeingRenamed.clear();
-		m_itemRenameBuffer[0] = '\0';
+		m_itemRenameString.clear();
 		m_startRenaming = false;
 	}
 
 	bool ContentBrowserPanel::matchesSearch(const std::string& name) {
-		if (m_searchBuffer[0] == '\0') return true;
+		if (m_searchString.empty()) return true;
 		auto lower = [](std::string s) {
 			std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 			return s;
 		};
-		return lower(name).find(lower(m_searchBuffer)) != std::string::npos;
+		return lower(name).find(lower(m_searchString)) != std::string::npos;
 	}
 
 	bool ContentBrowserPanel::isEngineAssetExtension(const std::filesystem::path& path) {
@@ -421,8 +420,7 @@ namespace Axion {
 				// -- Allowing instant renaming of new folders --
 				refreshDirectory();
 				m_itemBeingRenamed = newFolderPath;
-				std::string fn = newFolderPath.filename().string();
-				strncpy_s(m_itemRenameBuffer, sizeof(m_itemRenameBuffer), fn.c_str(), _TRUNCATE);
+				m_itemRenameString = newFolderPath.filename().string();
 				m_startRenaming = true;
 			}
 			else {
@@ -434,10 +432,10 @@ namespace Axion {
 		// ----- Draw search bar -----
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(200.0f);
-		ImGui::InputTextWithHint("##Search", "Search...", m_searchBuffer, IM_ARRAYSIZE(m_searchBuffer));
+		ImGui::InputTextWithHint("##Search", "Search...", &m_searchString);
 		ImGui::SameLine();
-		ImGui::BeginDisabled(m_searchBuffer[0] == '\0');
-		if (ImGui::Button("X")) { m_searchBuffer[0] = '\0'; }
+		ImGui::BeginDisabled(m_searchString.empty());
+		if (ImGui::Button("X")) { m_searchString.clear(); }
 		ImGui::EndDisabled();
 
 

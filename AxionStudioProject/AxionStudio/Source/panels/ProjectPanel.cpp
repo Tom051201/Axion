@@ -1,7 +1,9 @@
 #include "ProjectPanel.h"
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
+#include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -56,12 +58,10 @@ namespace Axion {
 			ImGui::Text("Name");
 			ImGui::Separator();
 			ImGui::TableSetColumnIndex(1);
-			static char titleBuffer[256];
-			strcpy_s(titleBuffer, sizeof(titleBuffer), m_project->getName().c_str());
-			titleBuffer[sizeof(titleBuffer) - 1] = '\0';
+			std::string projectName = m_project->getName();
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-			if (ImGui::InputText("Project Name", titleBuffer, sizeof(titleBuffer))) {
-				m_project->setName(titleBuffer);
+			if (ImGui::InputText("Project Name", &projectName)) {
+				m_project->setName(projectName);
 			}
 
 
@@ -70,11 +70,14 @@ namespace Axion {
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("Version");
 			ImGui::TableSetColumnIndex(1);
-			static char versionBuffer[64];
-			strcpy_s(versionBuffer, sizeof(versionBuffer), m_project->getVersion().c_str());
+			Version projectVersion = m_project->getVersion();
+			int versionArr[3] = { (int)projectVersion.major, (int)projectVersion.minor, (int)projectVersion.patch };
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-			if (ImGui::InputText("##ProjectVersion", versionBuffer, sizeof(versionBuffer))) {
-				m_project->setVersion(versionBuffer);
+			if (ImGui::InputInt3("##ProjectVersion", versionArr)) {
+				projectVersion.major = std::max(0, versionArr[0]);
+				projectVersion.minor = std::max(0, versionArr[1]);
+				projectVersion.patch = std::max(0, versionArr[2]);
+				m_project->setVersion(projectVersion);
 			}
 
 

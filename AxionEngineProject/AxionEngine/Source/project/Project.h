@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "AxionEngine/Source/core/AssetRegistry.h"
+#include "AxionEngine/Source/core/Version.h"
 
 namespace Axion {
 
@@ -13,7 +14,7 @@ namespace Axion {
 		std::string author;
 		std::string company;
 		std::string description;
-		std::string version;
+		Version version = Version(1, 0, 0);
 	};
 
 	class Project {
@@ -29,8 +30,8 @@ namespace Axion {
 		void setAuthor(const std::string& author) { m_author = author; }
 		void setCompany(const std::string& company) { m_company = company; }
 		void setDescription(const std::string& desc) { m_description = desc; }
-		void setVersion(const std::string& version) { m_version = version; }
-		void setEngineVersion(const std::string& version) { m_engineVersion = version; }
+		void setVersion(const Version& version) { m_version = version; }
+		void setEngineVersion(const Version& version) { m_engineVersion = version; }
 		void setAppIconPath(const std::filesystem::path& path) { m_appIconPath = path; }
 
 		const std::string& getName() const { return m_name; }
@@ -41,14 +42,14 @@ namespace Axion {
 		const std::string& getAuthor() const { return m_author; }
 		const std::string& getCompany() const { return m_company; }
 		const std::string& getDescription() const { return m_description; }
-		const std::string& getVersion() const { return m_version; }
-		const std::string& getEngineVersion() const { return m_engineVersion; }
+		const Version& getVersion() const { return m_version; }
+		const Version& getEngineVersion() const { return m_engineVersion; }
 		const std::filesystem::path& getAppIconPath() const { return m_appIconPath; }
 
 		Ref<AssetRegistry> getAssetRegistry() { return m_assetRegistry; }
 
-		void save(const std::filesystem::path& path);
-		static Ref<Project> load(const std::filesystem::path& path);
+		void save(const std::filesystem::path& path); // TODO: rename to save text
+		static Ref<Project> load(const std::filesystem::path& path); // TODO: rename to loadText
 		static Ref<Project> loadBinary(const std::filesystem::path& path);
 		static Ref<Project> createNew(const ProjectSpecification& spec);
 
@@ -56,8 +57,8 @@ namespace Axion {
 
 		// ----- Required -----
 		std::string m_name;
-		std::string m_version;
-		std::string m_engineVersion;
+		Version m_version;
+		Version m_engineVersion;
 		std::filesystem::path m_projectPath;
 		std::filesystem::path m_assetsPath;
 		std::filesystem::path m_defaultScene;

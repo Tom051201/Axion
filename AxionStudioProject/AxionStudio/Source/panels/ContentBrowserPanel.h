@@ -50,12 +50,12 @@ namespace Axion {
 		bool m_showFileExtensions = true;
 
 		// -- Search / filtering --
-		char m_searchBuffer[128] = "";
+		std::string m_searchString;
 		bool m_onlyEngineAssets = false;
 
 		// -- Renaming --
 		std::filesystem::path m_itemBeingRenamed;
-		char m_itemRenameBuffer[260] = "";
+		std::string m_itemRenameString;
 		bool m_startRenaming = false;
 		std::optional<std::pair<std::filesystem::path, std::filesystem::path>> m_pendingRename;
 

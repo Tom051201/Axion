@@ -9,20 +9,23 @@
 namespace Axion {
 
 	struct ProjectManagerData {
-		bool isRuntime;
+		bool isRuntime = false;
 		Ref<Project> project = nullptr;
 		std::filesystem::path projectPath;
 		std::function<void(Event&)> eventCallback;
-		std::function<bool(RenderingFinishedEvent&)> onRenderingFinished;
+
 		// -- New project --
 		bool newProjectRequest = false;
 		ProjectSpecification newProjectSpecification;
+
 		// -- Load project --
 		bool loadProjectRequest = false;
 		std::filesystem::path toLoadProjectPath;
+
 		// -- Save project --
 		bool saveProjectRequest = false;
 		std::filesystem::path toSaveProjectPath;
+
 		// -- Unload project --
 		bool unloadProjectRequest = false;
 	};
@@ -32,62 +35,6 @@ namespace Axion {
 	void ProjectManager::initialize(std::function<void(Event&)> eventCallback) {
 		s_managerData = new ProjectManagerData();
 		s_managerData->eventCallback = eventCallback;
-		s_managerData->onRenderingFinished = [&](RenderingFinishedEvent& e) {
-			// -- Save project --
-			if (s_managerData->saveProjectRequest) {
-				std::filesystem::path filePath = s_managerData->toSaveProjectPath;
-				if (!filePath.empty() && std::filesystem::exists(filePath)) {
-					s_managerData->project->save(filePath);
-					AX_CORE_LOG_INFO("Project saved");
-				}
-				else {
-					AX_CORE_LOG_ERROR("Unable to save project");
-				}
-				s_managerData->saveProjectRequest = false;
-				s_managerData->toSaveProjectPath.clear();
-			}
-
-			// -- Load project --
-			if (s_managerData->loadProjectRequest) {
-				std::filesystem::path filePath = s_managerData->toLoadProjectPath;
-				if (!filePath.empty() && std::filesystem::exists(filePath)) {
-					setProject(Project::load(filePath));
-					s_managerData->projectPath = filePath;
-
-					if (!s_managerData->project->getDefaultScene().empty()) {
-						SceneManager::loadScene(s_managerData->project->getDefaultScene().string()); // TODO: remove .string
-					}
-					else {
-						SceneManager::newScene();
-					}
-
-					AX_CORE_LOG_INFO("Project loaded");
-				}
-				else {
-					AX_CORE_LOG_ERROR("Unable to load project");
-				}
-				s_managerData->loadProjectRequest = false;
-				s_managerData->toLoadProjectPath.clear();
-			}
-
-			// -- Unload project --
-			if (s_managerData->unloadProjectRequest) {
-				setProject(nullptr);
-				s_managerData->projectPath.clear();
-				AX_CORE_LOG_INFO("Unloaded project");
-				s_managerData->unloadProjectRequest = false;
-			}
-
-			// -- New project --
-			if (s_managerData->newProjectRequest) {
-				Project::createNew(s_managerData->newProjectSpecification);
-				AX_CORE_LOG_INFO("New Project");
-				s_managerData->newProjectRequest = false;
-				s_managerData->newProjectSpecification = {};
-			}
-
-			return false;
-		};
 	}
 
 	void ProjectManager::shutdown() {
@@ -96,15 +43,104 @@ namespace Axion {
 
 	void ProjectManager::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<RenderingFinishedEvent>(s_managerData->onRenderingFinished);
+
+		dispatcher.dispatch<RenderingFinishedEvent>([](RenderingFinishedEvent& e) {
+
+			// -- Save Project --
+			if (s_managerData->saveProjectRequest) {
+				std::filesystem::path filepath = s_managerData->toSaveProjectPath;
+				if (!filepath.empty() && std::filesystem::exists(filepath.parent_path())) {
+					s_managerData->project->save(filepath);
+					AX_CORE_LOG_INFO("Project Saved");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Unable to save Project!");
+				}
+
+				s_managerData->saveProjectRequest = false;
+				s_managerData->toSaveProjectPath.clear();
+			}
+
+			// -- Load Project --
+			if (s_managerData->loadProjectRequest) {
+				std::filesystem::path filePath = s_managerData->toLoadProjectPath;
+				if (!filePath.empty() && std::filesystem::exists(filePath)) {
+					setProject(Project::load(filePath));
+					s_managerData->projectPath = filePath;
+
+					if (!s_managerData->project->getDefaultScene().empty()) {
+						SceneManager::loadScene(s_managerData->project->getDefaultScene());
+						AX_CORE_LOG_TRACE("Loaded Default Scene: {}", SceneManager::getScene()->getTitle());
+					}
+					else {
+						SceneManager::newScene();
+						AX_CORE_LOG_WARN("Unable loading Default Scene, loaded an emptry Scene!");
+					}
+
+					AX_CORE_LOG_INFO("Project Loaded!");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Unable to load Project!");
+				}
+
+				s_managerData->loadProjectRequest = false;
+				s_managerData->toLoadProjectPath.clear();
+			}
+
+			// -- New Project --
+			if (s_managerData->newProjectRequest) {
+				Ref<Project> newProject = Project::createNew(s_managerData->newProjectSpecification);
+				if (newProject) {
+					AX_CORE_LOG_INFO("New Project created");
+
+					setProject(newProject);
+
+					std::string safeName = s_managerData->newProjectSpecification.name;
+					std::replace(safeName.begin(), safeName.end(), ' ', '_');
+					s_managerData->projectPath = s_managerData->newProjectSpecification.location / safeName / (safeName + ".axproj");
+
+					SceneManager::newScene();
+
+					AX_CORE_LOG_TRACE("New Project loaded");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Unable creating new Project");
+				}
+
+				s_managerData->newProjectRequest = false;
+				s_managerData->newProjectSpecification = {};
+			}
+
+			// -- Unload Project --
+			if (s_managerData->unloadProjectRequest) {
+				setProject(nullptr);
+				s_managerData->projectPath.clear();
+				AX_CORE_LOG_INFO("Unloaded Project");
+
+				s_managerData->unloadProjectRequest = false;
+			}
+
+			return false;
+		});
+
 	}
 
 	void ProjectManager::newProject(const ProjectSpecification& spec) {
+		// -- Auto Save active Project and request a new Project --
+		if (hasProject()) {
+			saveProject(s_managerData->projectPath);
+		}
+
 		s_managerData->newProjectSpecification = spec;
 		s_managerData->newProjectRequest = true;
 	}
 
 	void ProjectManager::loadProject(const std::filesystem::path& filePath) {
+		// -- Auto Save active Project and request loading --
+		if (hasProject()) {
+			saveProject(s_managerData->projectPath);
+		}
+
 		s_managerData->toLoadProjectPath = filePath;
 		s_managerData->loadProjectRequest = true;
 	}
@@ -130,6 +166,11 @@ namespace Axion {
 	}
 
 	void ProjectManager::unloadProject() {
+		// -- Auto Save active Project and request saving --
+		if (hasProject()) {
+			saveProject(s_managerData->projectPath);
+		}
+
 		s_managerData->unloadProjectRequest = true;
 	}
 

@@ -3,6 +3,7 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
+#include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
@@ -105,6 +106,7 @@ namespace Axion {
 			bool outputExists = std::filesystem::exists(m_outputPath);
 			bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
 			bool invalidOutFileName = std::filesystem::exists(finalPath);
+			bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
 
 			bool disabled = (
 				m_name.empty() ||
@@ -114,7 +116,8 @@ namespace Axion {
 				!sourceIsFile ||
 				!outputExists ||
 				!outputIsDirectory ||
-				invalidOutFileName
+				invalidOutFileName ||
+				nameTooLong
 			);
 
 			if (disabled) {
@@ -127,6 +130,7 @@ namespace Axion {
 				else if (!outputExists) ImGui::Text("Output directory does not exist.");
 				else if (!outputIsDirectory) ImGui::Text("Output is not a directory.");
 				else if (invalidOutFileName) ImGui::Text("Asset with this name already exists.");
+				else if (nameTooLong) ImGui::Text("Name exceeds max limit (%d characters).", Config::MaxBinaryStringLength);
 				ImGui::PopStyleColor();
 			}
 			else {

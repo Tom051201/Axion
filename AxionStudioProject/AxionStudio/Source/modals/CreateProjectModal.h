@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AxionEngine/Source/core/Version.h"
+
 #include "AxionStudio/Source/core/Modal.h"
 
 #include <string>
@@ -22,7 +24,7 @@ namespace Axion {
 		std::string m_author;
 		std::string m_company;
 		std::string m_description;
-		std::string m_version = "1.0.0";
+		Version m_version = Version(1, 0, 0);
 
 	};
 

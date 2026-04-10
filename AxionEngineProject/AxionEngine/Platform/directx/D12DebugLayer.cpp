@@ -1,7 +1,7 @@
 #include "axpch.h"
 #include "D12DebugLayer.h"
 
-#include "AxionEngine/Source/AxionSettings.h"
+#include "AxionEngine/Source/EngineConfig.h"
 
 namespace Axion {
 
@@ -17,19 +17,21 @@ namespace Axion {
 		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue)))) {
 			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
 			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-			#if AX_D12_ENABLE_DEBUG_SEVERITY_WARNING
-			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, TRUE);
-			#endif
+
+			if constexpr (Config::D12EnableDebugSeverityWarning) {
+				dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, TRUE);
+			}
+
 			AX_CORE_LOG_TRACE("DXGI Debug Layer enabled");
 		}
 
-		#if AX_D12_ENABLE_DEBUG_GPU_BASED_VALIDATION
-		Microsoft::WRL::ComPtr<ID3D12Debug1> debugController1;
-		if (SUCCEEDED(debugController.As(&debugController1))) {
-			debugController1->SetEnableGPUBasedValidation(TRUE);
-			AX_CORE_LOG_TRACE("GPU-based validation enabled");
+		if constexpr (Config::D12EnableDebugGpuBasedValidation) {
+			Microsoft::WRL::ComPtr<ID3D12Debug1> debugController1;
+			if (SUCCEEDED(debugController.As(&debugController1))) {
+				debugController1->SetEnableGPUBasedValidation(TRUE);
+				AX_CORE_LOG_TRACE("GPU-based validation enabled");
+			}
 		}
-		#endif
 
 		Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)))) {

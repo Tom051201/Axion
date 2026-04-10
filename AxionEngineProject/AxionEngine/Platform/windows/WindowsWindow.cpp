@@ -1,6 +1,7 @@
 #include "axpch.h"
 #include "WindowsWindow.h"
 
+#include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
 #include "AxionEngine/Source/events/MouseEvent.h"
@@ -52,13 +53,10 @@ namespace Axion {
 		if (!resultCEX) { AX_CORE_LOG_ERROR("Failed to register window class"); throw::std::runtime_error("Failed to register window class"); }
 
 
-		DWORD style;
 		// ----- Activates the custom title bar -----
-		#if AX_WIN_USING_CUSTOM_TITLE_BAR
-			style = WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-		#else
-			style = WS_OVERLAPPEDWINDOW;
-		#endif
+		DWORD style = Config::WinUsingCustomTitleBar ?
+			(WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX) :
+			WS_OVERLAPPEDWINDOW;
 
 		RECT wRect = { 0, 0, (LONG)m_data.width, (LONG)m_data.height };
 		AdjustWindowRect(&wRect, style, FALSE);
@@ -116,12 +114,9 @@ namespace Axion {
 	void WindowsWindow::setPosition(uint32_t x, uint32_t y) {
 		RECT rect = { 0, 0, (LONG)m_data.width, (LONG)m_data.height };
 
-		DWORD style =
-			#if AX_WIN_USING_CUSTOM_TITLE_BAR
-				WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-			#else
-				WS_OVERLAPPEDWINDOW;
-			#endif
+		DWORD style = Config::WinUsingCustomTitleBar ?
+			(WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX) :
+			WS_OVERLAPPEDWINDOW;
 
 		AdjustWindowRect(&rect, style, FALSE);
 
@@ -283,70 +278,68 @@ namespace Axion {
 				}
 				// ----- Deactivate title bar -----
 				case WM_NCCALCSIZE: {
-					#if AX_WIN_USING_CUSTOM_TITLE_BAR
-					if (wparam == TRUE) {
-						return 0;
+					if constexpr (Config::WinUsingCustomTitleBar) {
+						if (wparam == TRUE) {
+							return 0;
+						}
 					}
-					#endif
 					break;
 				}
 				// ----- Hit test for custom title bar -----
 				case WM_NCHITTEST: {
-					#if AX_WIN_USING_CUSTOM_TITLE_BAR
-					POINT pt = { GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
-					ScreenToClient(hwnd, &pt);
-					
-					RECT rect;
-					GetClientRect(hwnd, &rect);
-					
-					const int border = 6;
-					
-					bool left = pt.x < border;
-					bool right = pt.x >= rect.right - border;
-					bool top = pt.y < border;
-					bool bottom = pt.y >= rect.bottom - border;
-					
-					if (top && left) return HTTOPLEFT;
-					if (top && right) return HTTOPRIGHT;
-					if (bottom && left) return HTBOTTOMLEFT;
-					if (bottom && right) return HTBOTTOMRIGHT;
+					if constexpr (Config::WinUsingCustomTitleBar) {
+						POINT pt = { GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
+						ScreenToClient(hwnd, &pt);
 
-					if (window->isDragZone && window->isDragZone(pt.x, pt.y)) return HTCAPTION;
-					
-					if (left) return HTLEFT;
-					if (right) return HTRIGHT;
-					if (top) return HTTOP;
-					if (bottom) return HTBOTTOM;
+						RECT rect;
+						GetClientRect(hwnd, &rect);
 
-					return HTCLIENT;
+						const int border = 6;
 
-					#else
+						bool left = pt.x < border;
+						bool right = pt.x >= rect.right - border;
+						bool top = pt.y < border;
+						bool bottom = pt.y >= rect.bottom - border;
+
+						if (top && left) return HTTOPLEFT;
+						if (top && right) return HTTOPRIGHT;
+						if (bottom && left) return HTBOTTOMLEFT;
+						if (bottom && right) return HTBOTTOMRIGHT;
+
+						if (window->isDragZone && window->isDragZone(pt.x, pt.y)) return HTCAPTION;
+
+						if (left) return HTLEFT;
+						if (right) return HTRIGHT;
+						if (top) return HTTOP;
+						if (bottom) return HTBOTTOM;
+
+						return HTCLIENT;
+					}
 					break;
-					#endif
 				}
 				// ----- Calculating size for minimizing / maximizing -----
 				case WM_GETMINMAXINFO: {
-					#if AX_WIN_USING_CUSTOM_TITLE_BAR
-					LPMINMAXINFO mmi = (LPMINMAXINFO)lparam;
+					if constexpr (Config::WinUsingCustomTitleBar) {
+						LPMINMAXINFO mmi = (LPMINMAXINFO)lparam;
 
-					HMONITOR hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-					MONITORINFO mi = {};
-					mi.cbSize = sizeof(MONITORINFO);
-					GetMonitorInfo(hmonitor, &mi);
+						HMONITOR hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+						MONITORINFO mi = {};
+						mi.cbSize = sizeof(MONITORINFO);
+						GetMonitorInfo(hmonitor, &mi);
 
-					RECT rcWork = mi.rcWork; // work area excluding taskbar
-					RECT rcMonitor = mi.rcMonitor;
+						RECT rcWork = mi.rcWork; // work area excluding taskbar
+						RECT rcMonitor = mi.rcMonitor;
 
-					const int border = GetSystemMetrics(SM_CXSIZEFRAME); // horizontal border
-					const int caption = GetSystemMetrics(SM_CYCAPTION); // title bar height
+						const int border = GetSystemMetrics(SM_CXSIZEFRAME); // horizontal border
+						const int caption = GetSystemMetrics(SM_CYCAPTION); // title bar height
 
-					mmi->ptMaxSize.x = rcWork.right - rcWork.left;
-					mmi->ptMaxSize.y = rcWork.bottom - rcWork.top;
-					mmi->ptMaxPosition.x = rcWork.left - rcMonitor.left;
-					mmi->ptMaxPosition.y = rcWork.top - rcMonitor.top;
+						mmi->ptMaxSize.x = rcWork.right - rcWork.left;
+						mmi->ptMaxSize.y = rcWork.bottom - rcWork.top;
+						mmi->ptMaxPosition.x = rcWork.left - rcMonitor.left;
+						mmi->ptMaxPosition.y = rcWork.top - rcMonitor.top;
 
-					return 0;
-					#endif
+						return 0;
+					}
 					break;
 				}
 				// ----- Custom event for custom minimizing -----

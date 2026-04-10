@@ -3,6 +3,7 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
+#include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
@@ -47,7 +48,12 @@ namespace Axion {
 			ImGui::Text("Version");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(inputFieldWidth);
-			ImGui::InputText("##ProjVersion", &m_version);
+			int versionArr[3] = { (int)m_version.major, (int)m_version.minor, (int)m_version.patch };
+			if (ImGui::InputInt3("##ProjVersion", versionArr)) {
+				m_version.major = std::max(0, versionArr[0]);
+				m_version.minor = std::max(0, versionArr[1]);
+				m_version.patch = std::max(0, versionArr[2]);
+			}
 
 			// -- Author --
 			ImGui::TableNextRow();
@@ -81,18 +87,22 @@ namespace Axion {
 		bool validLocation = std::filesystem::is_directory(outpath);
 		std::filesystem::path projectFolder = outpath / m_name;
 		bool invalidName = std::filesystem::exists(projectFolder);
+		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
 
 		bool disabled = (
 			m_name.empty() ||
 			m_outputPath.empty() ||
 			!validLocation ||
-			invalidName);
+			invalidName ||
+			nameTooLong
+		);
 
 		if (disabled) {
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255));
 			if (m_name.empty()) ImGui::Text("Name needs to be set.");
 			else if (!validLocation) ImGui::Text("Selected Location is not a folder");
 			else if (invalidName) ImGui::Text("Project with this name already exists.");
+			else if (nameTooLong) ImGui::Text("Name exceeds max limit (%d characters).", Config::MaxBinaryStringLength);
 			ImGui::PopStyleColor();
 		}
 
@@ -124,7 +134,7 @@ namespace Axion {
 		m_author.clear();
 		m_company.clear();
 		m_description.clear();
-		m_version = "1.0.0";
+		m_version = Version(1, 0, 0);
 	}
 
 }

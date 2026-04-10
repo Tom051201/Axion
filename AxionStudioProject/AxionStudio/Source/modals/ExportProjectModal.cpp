@@ -3,7 +3,7 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
-#include "AxionEngine/Source/AxionSettings.h"
+#include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
@@ -28,8 +28,8 @@ namespace Axion {
 		ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "Build Summary:");
 		ImGui::Indent();
 		ImGui::Text("Name: %s", project->getName().c_str());
-		ImGui::Text("Version: %s", project->getVersion().c_str());
-		ImGui::TextDisabled("Powered by Axion Engine v%s", AX_ENGINE_VERSION);
+		ImGui::Text("Version: %s", project->getVersion().toString().c_str());
+		ImGui::TextDisabled("Powered by Axion Engine %s", Config::EngineVersion.toString().c_str());
 		if (!project->getAppIconPath().empty()) {
 			std::string iconName = project->getAppIconPath().stem().string();
 			ImGui::Text("Custom Icon: %s", iconName.c_str());

@@ -3,7 +3,7 @@
 
 #include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
-#include "AxionEngine/Source/AxionSettings.h"
+#include "AxionEngine/Source/EngineConfig.h"
 
 namespace Axion {
 
@@ -30,8 +30,8 @@ namespace Axion {
 
 		// ----- Set name and versions -----
 		project->setName(data["Project"].as<std::string>());
-		project->setVersion(data["Version"].as<std::string>());
-		project->setEngineVersion(data["EngineVersion"].as<std::string>());
+		project->setVersion(Version::fromString(data["Version"].as<std::string>()));
+		project->setEngineVersion(Version::fromString(data["EngineVersion"].as<std::string>()));
 
 		// ----- Author, company and description -----
 		if (data["Author"]) project->setAuthor(data["Author"].as<std::string>());
@@ -47,7 +47,7 @@ namespace Axion {
 		if (data["AppIcon"]) project->setAppIconPath(data["AppIcon"].as<std::string>());
 
 		std::filesystem::path registryPath = path.parent_path() / "AssetRegistry.yaml";
-		project->getAssetRegistry()->deserialize(registryPath.string()); // TODO: remove .string
+		project->getAssetRegistry()->deserialize(registryPath);
 
 		return project;
 	}
@@ -72,6 +72,12 @@ namespace Axion {
 		// -- Read Game Name --
 		uint32_t nameLength;
 		in.read(reinterpret_cast<char*>(&nameLength), sizeof(uint32_t));
+
+		if (nameLength > Config::MaxBinaryStringLength) {
+			AX_CORE_LOG_FATAL("GameConfig Binary Corrupted: Project name length ( {} ) exceeds maximum limit of {} bytes!", nameLength, Config::MaxBinaryStringLength);
+			return nullptr;
+		}
+
 		std::string name(nameLength, '\0');
 		in.read(reinterpret_cast<char*>(&name[0]), nameLength);
 
@@ -82,6 +88,12 @@ namespace Axion {
 		// -- Read App Icon Path --
 		uint32_t iconPathLength;
 		in.read(reinterpret_cast<char*>(&iconPathLength), sizeof(uint32_t));
+
+		if (iconPathLength > Config::MaxBinaryStringLength) {
+			AX_CORE_LOG_FATAL("GameConfig Binary Corrupted: App icon path length ({}) exceeds {} bytes!", iconPathLength, Config::MaxBinaryStringLength);
+			return nullptr;
+		}
+
 		std::string iconPath(iconPathLength, '\0');
 		if (iconPathLength > 0) {
 			in.read(&iconPath[0], iconPathLength);
@@ -107,8 +119,8 @@ namespace Axion {
 		out << YAML::BeginMap;
 
 		out << YAML::Key << "Project" << YAML::Value << m_name;
-		out << YAML::Key << "Version" << YAML::Value << m_version;
-		out << YAML::Key << "EngineVersion" << YAML::Value << m_engineVersion;
+		out << YAML::Key << "Version" << YAML::Value << m_version.toString();
+		out << YAML::Key << "EngineVersion" << YAML::Value << m_engineVersion.toString();
 
 		if (!m_author.empty()) out << YAML::Key << "Author" << YAML::Value << m_author;
 		if (!m_company.empty()) out << YAML::Key << "Company" << YAML::Value << m_company;
@@ -126,7 +138,7 @@ namespace Axion {
 		fout << out.c_str();
 
 		std::filesystem::path registryPath = path.parent_path() / "AssetRegistry.yaml";
-		m_assetRegistry->serialize(registryPath.string()); // TODO: remove .string
+		m_assetRegistry->serialize(registryPath);
 	}
 
 	Ref<Project> Project::createNew(const ProjectSpecification& spec) {
@@ -158,7 +170,7 @@ namespace Axion {
 			// -- Setup Project --
 			result->setName(spec.name);
 			result->setVersion(spec.version);
-			result->setEngineVersion(AX_ENGINE_VERSION);
+			result->setEngineVersion(Config::EngineVersion);
 			result->setProjectPath(projectDir);
 			result->setAssetsPath(assetsDir);
 
@@ -170,7 +182,7 @@ namespace Axion {
 			result->save(projectDir / (projectName + ".axproj"));
 
 			std::filesystem::path registryPath = (projectDir / "AssetRegistry.yaml");
-			result->getAssetRegistry()->serialize(registryPath.string()); // TODO: remove .string
+			result->getAssetRegistry()->serialize(registryPath);
 
 			return result;
 		}

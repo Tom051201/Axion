@@ -2,6 +2,7 @@
 
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/imgui/imgui_internal.h"
+#include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
@@ -324,14 +325,7 @@ namespace Axion {
 		// ----- TagComponent -----
 		if (entity.hasComponent<TagComponent>()) {
 			auto& tag = entity.getComponent<TagComponent>().tag;
-
-			char buffer[256];
-			memset(buffer, 0, sizeof(buffer));
-			strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
-
-			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) { // TODO: make this with string and remove char buffer
-				tag = std::string(buffer);
-			}
+			ImGui::InputText("##Tag", &tag);
 		}
 
 		// ------ Add Component -----
@@ -1510,15 +1504,8 @@ namespace Axion {
 				ImGui::Text("Class Name");
 				ImGui::Separator();
 				ImGui::TableSetColumnIndex(1);
-
-				char buffer[256];
-				memset(buffer, 0, sizeof(buffer)); // TODO: remove buffer and replace with string
-				strncpy_s(buffer, sizeof(buffer), component.className.c_str(), sizeof(buffer));
-
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				if (ImGui::InputText("##ScriptClassName", buffer, sizeof(buffer))) {
-					component.className = std::string(buffer);
-				}
+				ImGui::InputText("##ScriptClassName", &component.className);
 
 				// -- State --
 				ImGui::TableNextRow();

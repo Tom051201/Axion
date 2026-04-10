@@ -2,6 +2,7 @@
 
 #include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
 
+#include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
@@ -16,9 +17,7 @@
 #include "AxionAssetPipeline/Source/core/AssetPackager.h"
 
 // -- Windows only --
-#if AX_WIN_USING_CUSTOM_TITLE_BAR
 #include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"
-#endif
 
 namespace Axion {
 
@@ -656,9 +655,9 @@ namespace Axion {
 
 
 			// ----- WIN32 custom title bar -----
-			#if AX_WIN_USING_CUSTOM_TITLE_BAR
-			WindowsTitleBar::drawCustomTitleBar();
-			#endif
+			if constexpr (Config::WinUsingCustomTitleBar) {
+				WindowsTitleBar::drawCustomTitleBar();
+			}
 
 			ImGui::EndMenuBar();
 
