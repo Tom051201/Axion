@@ -18,8 +18,8 @@ namespace Axion {
 		GraphicsContext::get()->drawIndexed(vb, ib, instanceCount);
 	}
 
-	void RenderCommand::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount) {
-		GraphicsContext::get()->drawIndexed(ib, indexCount, instanceCount);
+	void RenderCommand::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseIndexLocation) {
+		GraphicsContext::get()->drawIndexed(ib, indexCount, instanceCount, startIndexLocation, baseIndexLocation);
 	}
 
 	void RenderCommand::draw(uint32_t vertexCount) {

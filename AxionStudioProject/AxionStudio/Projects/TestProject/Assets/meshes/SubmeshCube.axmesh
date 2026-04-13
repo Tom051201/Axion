@@ -1,0 +1,8 @@
+Version: 2
+Name: SubmeshCube
+UUID: f9cdd784ca27aa098da5acf93c45f11e
+Type: Mesh
+Format: OBJ
+Source: meshes/submeshCube.obj
+Submeshes:
+  []

@@ -110,12 +110,18 @@ namespace Axion {
 			out << YAML::Key << "MaterialComponent";
 			out << YAML::BeginMap;
 			auto& mat = entity.getComponent<MaterialComponent>();
-			if (mat.handle.isValid()) {
-				out << YAML::Key << "UUID" << YAML::Value << mat.handle.uuid;
+
+			out << YAML::Key << "Materials" << YAML::Value << YAML::BeginSeq;
+			for (const auto& matHandle : mat.materials) {
+				if (matHandle.isValid()) {
+					out << matHandle.uuid;
+				}
+				else {
+					out << "0";
+				}
 			}
-			else {
-				out << YAML::Key << "UUID" << YAML::Value << "0";
-			}
+
+			out << YAML::EndSeq;
 			out << YAML::EndMap;
 		}
 
@@ -507,7 +513,7 @@ namespace Axion {
 
 		uint32_t version;
 		in.read(reinterpret_cast<char*>(&version), sizeof(uint32_t));
-		if (version != ASSET_VERSION_SCENE) {
+		if (version > ASSET_VERSION_SCENE || version == 0) {
 			AX_CORE_LOG_ERROR("Scene version of Scene Binary is not supported");
 			return false;
 		}
@@ -536,7 +542,7 @@ namespace Axion {
 
 		for (uint32_t i = 0; i < entityCount; i++) {
 
-			Entity entity = deserializeEntityBinary(m_scene.get(), in, false, relationshipsToBuild);
+			Entity entity = deserializeEntityBinary(m_scene.get(), in, false, relationshipsToBuild, version);
 			UUID entityUUID = entity.getComponent<UUIDComponent>().id;
 			uuidToEntityMap[entityUUID] = entity;
 
@@ -631,18 +637,29 @@ namespace Axion {
 		auto materialComponent = entityNode["MaterialComponent"];
 		if (materialComponent) {
 			auto& mc = deserializedEntity.addComponent<MaterialComponent>();
-			UUID materialUUID = materialComponent["UUID"].as<UUID>();
-			if (materialUUID.isValid()) {
-				if (registry->contains(materialUUID)) {
-					AssetHandle<Material> handle = AssetManager::load<Material>(materialUUID);
-					mc.handle = handle;
+			mc.materials.clear();
+
+			if (materialComponent["UUID"]) {
+				// -- Version 1 Scenes - Single Material components --
+				UUID materialUUID = materialComponent["UUID"].as<UUID>();
+				if (materialUUID.isValid() && registry->contains(materialUUID)) {
+					mc.materials.push_back(AssetManager::load<Material>(materialUUID));
 				}
 				else {
-					mc.handle = AssetHandle<Material>();
+					mc.materials.push_back(AssetHandle<Material>());
 				}
 			}
-			else {
-				mc.handle = AssetHandle<Material>();
+			else if (materialComponent["Materials"]) {
+				// -- Version 2 Scenes - Multiple Material components --
+				for (auto matNode : materialComponent["Materials"]) {
+					UUID materialUUID = matNode.as<UUID>();
+					if (materialUUID.isValid() && registry->contains(materialUUID)) {
+						mc.materials.push_back(AssetManager::load<Material>(materialUUID));
+					}
+					else {
+						mc.materials.push_back(AssetHandle<Material>());
+					}
+				}
 			}
 		}
 
@@ -929,8 +946,14 @@ namespace Axion {
 		if (entity.hasComponent<MaterialComponent>()) {
 			ComponentID id = ComponentID::Material;
 			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
-			UUID materialUUID = entity.getComponent<MaterialComponent>().handle.isValid() ? entity.getComponent<MaterialComponent>().handle.uuid : UUID(0, 0);
-			out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+			auto& component = entity.getComponent<MaterialComponent>();
+
+			uint32_t matCount = static_cast<uint32_t>(component.materials.size());
+			out.write(reinterpret_cast<const char*>(&matCount), sizeof(uint32_t));
+			for (uint32_t i = 0; i < matCount; i++) {
+				UUID materialUUID = component.materials[i].isValid() ? component.materials[i].uuid : UUID(0, 0);
+				out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+			}
 		}
 
 		// -- Write Audio Component --
@@ -1131,7 +1154,7 @@ namespace Axion {
 		out.write(reinterpret_cast<const char*>(&endID), sizeof(uint16_t));
 	}
 
-	Entity SceneSerializer::deserializeEntityBinary(Scene* scene, std::istream& in, bool generateNewUUID, std::vector<std::pair<Entity, UUID>>& relationshipsToBuild) {
+	Entity SceneSerializer::deserializeEntityBinary(Scene* scene, std::istream& in, bool generateNewUUID, std::vector<std::pair<Entity, UUID>>& relationshipsToBuild, uint32_t sceneVersion) {
 		UUID originalyUUID;
 		in.read(reinterpret_cast<char*>(&originalyUUID), sizeof(UUID));
 		UUID finalUUID = generateNewUUID ? UUID::generate() : originalyUUID;
@@ -1189,9 +1212,36 @@ namespace Axion {
 			case ComponentID::Material: {
 				// -- Read Material Component --
 				auto& component = entity.addComponent<MaterialComponent>();
-				UUID materialUUID;
-				in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
-				if (materialUUID.isValid()) component.handle = AssetManager::load<Material>(materialUUID);
+				component.materials.clear();
+
+				if (sceneVersion == 1) {
+					// -- Version 1 Scenes - Single Material components --
+					UUID materialUUID;
+					in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+					if (materialUUID.isValid()) {
+						component.materials.push_back(AssetManager::load<Material>(materialUUID));
+					}
+					else {
+						component.materials.push_back(AssetHandle<Material>());
+					}
+					break;
+				}
+				else {
+					// -- Version 2 Scenes - Multiple Materials components --
+					uint32_t matCount;
+					in.read(reinterpret_cast<char*>(&matCount), sizeof(uint32_t));
+					for (uint32_t i = 0; i < matCount; i++) {
+						UUID materialUUID;
+						in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+						if (materialUUID.isValid()) {
+							component.materials.push_back(AssetManager::load<Material>(materialUUID));
+						}
+						else {
+							component.materials.push_back(AssetHandle<Material>());
+						}
+					}
+				}
+
 				break;
 			}
 			case ComponentID::Audio: {

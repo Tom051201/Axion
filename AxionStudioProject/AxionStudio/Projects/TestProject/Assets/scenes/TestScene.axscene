@@ -1,0 +1,74 @@
+Version: 2
+UUID: cb6d1ff4e98c9ed731b52f1c54d0acdf
+Type: Scene
+Scene: TestScene
+Skybox: 5297c6f680e015a3e4d605fc0cf32c11
+AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
+Entities:
+  - Entity: c717806f89c07f82c5424276d42fa640
+    TagComponent:
+      Tag: Point Light
+    TransformComponent:
+      Translation: [-2.21857262, 0.862093687, -0.32387349]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
+      Radius: 10
+      Falloff: 1
+  - Entity: d4797495f9407b05ddd11fea0ef94175
+    TagComponent:
+      Tag: Submesh Cube
+    TransformComponent:
+      Translation: [-1.98310661, 0, 0]
+      Rotation: [-0.293553919, 0, -0, 0.955942512]
+      Scale: [1, 0.999999881, 0.999999881]
+    MeshComponent:
+      UUID: f9cdd784ca27aa098da5acf93c45f11e
+    MaterialComponent:
+      Materials:
+        - 2e986f85eda45f97252996f2695564fc
+        - f4840a5c05babfe0414d530a8306aeef
+  - Entity: 05e991d3eb39baa6aca7c7ba08a41b42
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-2.11123085, 0, -1.12987673]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    SpotLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 20
+      Range: 100
+      InnerConeAngle: 17.5
+      OuterConeAngle: 20
+  - Entity: b449f386f4cb2d49edf664f9328dc21c
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      UUID: 61aa8ca013e9890b54366991f0eaac18
+    MaterialComponent:
+      Materials:
+        - 2e986f85eda45f97252996f2695564fc
+  - Entity: 9aa3f51ce0b859b5f585fa9f0757232b
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [-1.79543805, 0.360408187, -2.04274344]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      ProjectionType: Perspective
+      PerspectiveFOV: 0.785398185
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 100
+      OrthographicSize: 10
+      OrthographicNear: -1
+      OrthographicFar: 1

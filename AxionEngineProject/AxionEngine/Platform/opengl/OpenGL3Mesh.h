@@ -10,6 +10,7 @@ namespace Axion {
 	public:
 
 		OpenGL3Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+		OpenGL3Mesh(const MeshData& meshdata);
 		~OpenGL3Mesh();
 
 		void release() override;
@@ -18,6 +19,7 @@ namespace Axion {
 
 		Ref<VertexBuffer> getVertexBuffer() const override { return m_vertexBuffer; }
 		Ref<IndexBuffer> getIndexBuffer() const override { return m_indexBuffer; }
+		const std::vector<Submesh>& getSubmeshes() const override { return m_submeshes; }
 
 		uint32_t getIndexCount() const override { return m_indexBuffer->getIndexCount(); }
 
@@ -26,6 +28,7 @@ namespace Axion {
 		const AssetHandle<Mesh> m_handle;
 		Ref<VertexBuffer> m_vertexBuffer;
 		Ref<IndexBuffer> m_indexBuffer;
+		std::vector<Submesh> m_submeshes;
 
 	};
 

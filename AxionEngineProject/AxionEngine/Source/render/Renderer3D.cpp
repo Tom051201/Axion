@@ -56,7 +56,7 @@ namespace Axion {
 		RenderCommand::clear();
 	}
 
-	void Renderer3D::drawMesh(const Mat4& transform, Ref<Mesh>& mesh, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
+	void Renderer3D::drawMesh(const Mat4& transform, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
 		if (!material || !material->isValid()) return;
 
 		std::vector<ObjectBuffer> singleInstance;
@@ -65,10 +65,10 @@ namespace Axion {
 		buffer.modelMatrix = transform.transposed().toXM();
 		singleInstance.push_back(buffer);
 
-		drawMeshInstanced(mesh, material, singleInstance);
+		drawMeshInstanced(mesh, submeshIndex, material, singleInstance);
 	}
 
-	void Renderer3D::drawMeshInstanced(Ref<Mesh>& mesh, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData) {
+	void Renderer3D::drawMeshInstanced(Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData) {
 		if (instanceData.empty()) return;
 		if (!material || !material->isValid()) return;
 
@@ -81,15 +81,23 @@ namespace Axion {
 		mesh->render();
 		s_instanceVertexBuffer->bind(1, bufferOffset);
 
-		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer(), static_cast<uint32_t>(instanceData.size()));
-
+		const auto& submeshes = mesh->getSubmeshes();
 		auto& stats = Renderer::getStats();
+
+		if (submeshes.empty()) {
+			RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer(), static_cast<uint32_t>(instanceData.size()));
+		}
+		else {
+			const auto& submesh = submeshes[submeshIndex];
+			RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
+		}
+
 		stats.drawCalls++;
 		stats.meshCount3D++;
 		stats.instanceCount3D += static_cast<uint32_t>(instanceData.size());
 	}
 
-	void Renderer3D::drawMeshInstancedShadow(Ref<Mesh>& mesh, const std::vector<ObjectBuffer>& instanceData) {
+	void Renderer3D::drawMeshInstancedShadow(Ref<Mesh>& mesh, uint32_t submeshIndex, const std::vector<ObjectBuffer>& instanceData) {
 		if (instanceData.empty()) return;
 		Ref<Pipeline> shadowPipeline = EngineAssets::getShadowPipeline();
 		if (!shadowPipeline) return;
@@ -103,7 +111,16 @@ namespace Axion {
 		mesh->render();
 		s_instanceVertexBuffer->bind(1, bufferOffset);
 
-		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer(), static_cast<uint32_t>(instanceData.size()));
+		const auto& submeshes = mesh->getSubmeshes();
+
+		if (submeshes.empty()) {
+			RenderCommand::drawIndexed(mesh->getIndexBuffer(), mesh->getIndexCount(), static_cast<uint32_t>(instanceData.size()), 0, 0);
+		}
+		else {
+			const auto& submesh = submeshes[submeshIndex];
+			RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
+		}
+
 	}
 
 }

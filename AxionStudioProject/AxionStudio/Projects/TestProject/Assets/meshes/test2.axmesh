@@ -1,0 +1,15 @@
+Version: 2
+Name: test2
+UUID: 06a3c49714be996e5c8d13a4beb517f7
+Type: Mesh
+Format: OBJ
+Source: meshes/submeshCube.obj
+Submeshes:
+  - BaseVertex: 0
+    StartIndex: 0
+    IndexCount: 30
+    MaterialIndex: 0
+  - BaseVertex: 0
+    StartIndex: 30
+    IndexCount: 6
+    MaterialIndex: 0

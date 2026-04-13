@@ -1,56 +1,16 @@
-Version: 1
+Version: 2
 UUID: 00000000000000000000000000000000
 Type: Scene
 Scene: TestScene
-Skybox: d86bf91a02b4d62666c3187d521c3a77
+Skybox: 5297c6f680e015a3e4d605fc0cf32c11
 AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
 Entities:
-  - Entity: 0a71bfa293475f62ebd5b8eb5906d2cd
-    TagComponent:
-      Tag: Cube
-    TransformComponent:
-      Translation: [0, 2.34848499, 0]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [1, 1, 1]
-    MeshComponent:
-      UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
-    MaterialComponent:
-      UUID: bdd54239500d5c3bf9b47e90277290fd
-    RigidBodyComponent:
-      BodyType: Dynamic
-      Mass: 1
-      IsKinematic: false
-      LinearDamping: 0
-      AngularDamping: 0.0500000007
-      FixedRotationX: false
-      FixedRotationY: false
-      FixedRotationZ: false
-      EnableCCD: false
-    BoxColliderComponent:
-      HalfExtents: [0.5, 0.5, 0.5]
-      Offset: [0, 0, 0]
-      IsTrigger: false
-      Material: 5242324b66ed5b200ce1b98fbf3e6c22
-  - Entity: 92721182be594963461f0299d746068e
-    TagComponent:
-      Tag: Light Entity
-    TransformComponent:
-      Translation: [0, 0.994234324, -0.91685915]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
-      Radius: 10
-      Falloff: 1
-  - Entity: ff1562b996d22b5e23ea43f2a05bfb1a
+  - Entity: 9aa3f51ce0b859b5f585fa9f0757232b
     TagComponent:
       Tag: Camera
-    RelationshipComponent:
-      Parent: c033d03f953b3d6d3d9aa371eb2e9969
     TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [-0, 0, -0, 0]
+      Translation: [-1.79543805, 0.360408187, -2.04274344]
+      Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
     CameraComponent:
       Primary: true
@@ -62,68 +22,53 @@ Entities:
       OrthographicSize: 10
       OrthographicNear: -1
       OrthographicFar: 1
-  - Entity: ea253d4719151501a10b7ed3f0c9f94d
+  - Entity: b449f386f4cb2d49edf664f9328dc21c
     TagComponent:
-      Tag: Red Light
-    TransformComponent:
-      Translation: [-1.86957526, 1.32811427, 0.0565609299]
-      Rotation: [0, 0.772133946, 0, 0.63545984]
-      Scale: [1.00000012, 1, 1.00000012]
-    SpotLightComponent:
-      Color: [1, 0, 0, 1]
-      Intensity: 20
-      Range: 10
-      InnerConeAngle: 12.5
-      OuterConeAngle: 17.5
-  - Entity: 640dd5a278c8ea459fac2f45a85cba07
-    TagComponent:
-      Tag: Floor
+      Tag: Cube
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [6.40524101, 1, 4.44427395]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
     MeshComponent:
-      UUID: 5fadf97116be5f2b1c98f7ceab9d0e6d
+      UUID: 61aa8ca013e9890b54366991f0eaac18
     MaterialComponent:
-      UUID: d8e7846ca068eb85d5589647caca498e
-    RigidBodyComponent:
-      BodyType: Static
-      Mass: 1
-      IsKinematic: false
-      LinearDamping: 0
-      AngularDamping: 0.0500000007
-      FixedRotationX: false
-      FixedRotationY: false
-      FixedRotationZ: false
-      EnableCCD: false
-    BoxColliderComponent:
-      HalfExtents: [0.5, 0.5, 0.5]
-      Offset: [0, 0, 0]
-      IsTrigger: false
-      Material: 5242324b66ed5b200ce1b98fbf3e6c22
-  - Entity: c033d03f953b3d6d3d9aa371eb2e9969
+      Materials:
+        - 2e986f85eda45f97252996f2695564fc
+  - Entity: 05e991d3eb39baa6aca7c7ba08a41b42
     TagComponent:
-      Tag: Player
-    RelationshipComponent:
-      Parent: None
+      Tag: Light
     TransformComponent:
-      Translation: [-2.02435327, 1.26502991, -1.32982802]
+      Translation: [-2.11123085, 0, -1.12987673]
       Rotation: [-0, 0, -0, 1]
-      Scale: [0.600000024, 0.600000024, 0.600000024]
-    RigidBodyComponent:
-      BodyType: Dynamic
-      Mass: 1
-      IsKinematic: false
-      LinearDamping: 0
-      AngularDamping: 0.0500000007
-      FixedRotationX: false
-      FixedRotationY: false
-      FixedRotationZ: false
-      EnableCCD: false
-    BoxColliderComponent:
-      HalfExtents: [0.5, 0.5, 0.5]
-      Offset: [0, 0, 0]
-      IsTrigger: false
-      Material: 5242324b66ed5b200ce1b98fbf3e6c22
-    ScriptComponent:
-      ClassName: AxionScriptCore.Player
+      Scale: [1, 1, 1]
+    SpotLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 20
+      Range: 100
+      InnerConeAngle: 17.5
+      OuterConeAngle: 20
+  - Entity: d4797495f9407b05ddd11fea0ef94175
+    TagComponent:
+      Tag: Submesh Cube
+    TransformComponent:
+      Translation: [-1.98310661, 0, 0]
+      Rotation: [-0.293553919, 0, -0, 0.955942512]
+      Scale: [1, 0.999999881, 0.999999881]
+    MeshComponent:
+      UUID: f9cdd784ca27aa098da5acf93c45f11e
+    MaterialComponent:
+      Materials:
+        - 2e986f85eda45f97252996f2695564fc
+        - f4840a5c05babfe0414d530a8306aeef
+  - Entity: c717806f89c07f82c5424276d42fa640
+    TagComponent:
+      Tag: Point Light
+    TransformComponent:
+      Translation: [-2.21857262, 0.862093687, -0.32387349]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
+      Radius: 10
+      Falloff: 1

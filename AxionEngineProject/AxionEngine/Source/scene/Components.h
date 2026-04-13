@@ -91,11 +91,18 @@ namespace Axion {
 
 
 	struct MaterialComponent {
-		AssetHandle<Material> handle;
+		std::vector<AssetHandle<Material>> materials;
 
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
-		MaterialComponent(const AssetHandle<Material>& handle) : handle(handle) {}
+		MaterialComponent(const AssetHandle<Material>& handle) { materials.push_back(handle); }
+
+		AssetHandle<Material> getMaterial(size_t index) const {
+			if (materials.empty()) return AssetHandle<Material>();
+			if (index < materials.size()) return materials[index];
+			return materials[0];
+		}
+
 	};
 
 

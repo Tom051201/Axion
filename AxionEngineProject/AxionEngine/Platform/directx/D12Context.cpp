@@ -229,8 +229,8 @@ namespace Axion {
 		m_commandList.getCommandList()->DrawIndexedInstanced(ib->getIndexCount(), instanceCount, 0, 0, 0);
 	}
 
-	void D12Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount) {
-		m_commandList.getCommandList()->DrawIndexedInstanced(indexCount, instanceCount, 0, 0, 0);
+	void D12Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) {
+		m_commandList.getCommandList()->DrawIndexedInstanced(indexCount, instanceCount, startIndexLocation, baseVertexLocation, 0);
 	}
 
 	void D12Context::draw(uint32_t vertexCount) {

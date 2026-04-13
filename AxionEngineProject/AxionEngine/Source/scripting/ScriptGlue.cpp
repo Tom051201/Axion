@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/input/Input.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/physics/Physics.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/scene/Prefab.h"
@@ -335,7 +336,7 @@ namespace Axion {
 						std::istringstream in(dataStr);
 
 						std::vector<std::pair<Entity, UUID>> relationshipsToBuild;
-						newEntity = SceneSerializer::deserializeEntityBinary(scene, in, true, relationshipsToBuild);
+						newEntity = SceneSerializer::deserializeEntityBinary(scene, in, true, relationshipsToBuild, ASSET_VERSION_SCENE);
 
 						for (auto& pair : relationshipsToBuild) {
 							Entity child = pair.first;

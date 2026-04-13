@@ -270,19 +270,31 @@ namespace Axion {
 
 
 		// ----- Pre-Calculate Batches -----
-		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>> renderBatches;
-		auto meshRenderView = m_registry.view<MeshComponent, TransformComponent, MaterialComponent>();
-		for (auto [entity, mesh, transform, material] : meshRenderView.each()) {
-			if (mesh.handle.isValid() && material.handle.isValid()) {
-				Ref<Material> matInstance = AssetManager::get<Material>(material.handle);
-				if (!matInstance) continue;
-				Mat4 worldTransform = getWorldTransform({entity, this});
+		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>>> renderBatches;
 
+		auto meshRenderView = m_registry.view<MeshComponent, TransformComponent, MaterialComponent>();
+		for (auto [entity, meshComp, transform, materialComp] : meshRenderView.each()) {
+			if (meshComp.handle.isValid()) {
+				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshComp.handle);
+				if (!mesh) continue;
+
+				Mat4 worldTransform = getWorldTransform({ entity, this });
 				ObjectBuffer objData;
-				objData.color = matInstance->getAlbedoColor().toFloat4();
 				objData.modelMatrix = worldTransform.transposed().toXM();
 
-				renderBatches[mesh.handle][material.handle].push_back(objData);
+				uint32_t submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
+
+				for (uint32_t i = 0; i < submeshCount; i++) {
+					AssetHandle<Material> matHandle = materialComp.getMaterial(i);
+					if (!matHandle.isValid()) continue;
+
+					Ref<Material> matInstance = AssetManager::get<Material>(matHandle);
+					if (!matInstance) continue;
+
+					objData.color = matInstance->getAlbedoColor().toFloat4();
+
+					renderBatches[meshComp.handle][i][matHandle].push_back(objData);
+				}
 			}
 		}
 
@@ -298,19 +310,20 @@ namespace Axion {
 			Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
 
 			Renderer3D::beginScene(lightProjection, lightView.inverse());
-
 			GraphicsContext::get()->bindDepthOnlyRenderTarget(Renderer::getShadowMap());
 
-			for (auto& [meshHandle, materialMap] : renderBatches) {
+			for (auto& [meshHandle, submeshMap] : renderBatches) {
 				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 				if (!mesh) continue;
 
-				std::vector<ObjectBuffer> flatInstanceData;
-				for (auto& [matHandle, data] : materialMap) {
-					flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
-				}
+				for (auto& [submeshIndex, materialMap] : submeshMap) {
+					std::vector<ObjectBuffer> flatInstanceData;
+					for (auto& [matHandle, data] : materialMap) {
+						flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+					}
 
-				Renderer3D::drawMeshInstancedShadow(mesh, flatInstanceData);
+					Renderer3D::drawMeshInstancedShadow(mesh, submeshIndex, flatInstanceData);
+				}
 			}
 
 			GraphicsContext::get()->unbindDepthOnlyRenderTarget(Renderer::getShadowMap());
@@ -318,7 +331,6 @@ namespace Axion {
 		}
 
 		Renderer::restoreRenderTarget();
-
 		Renderer3D::beginScene(cam, lightData);
 
 
@@ -329,15 +341,17 @@ namespace Axion {
 		}
 
 		// -- Main Scene Pass --
-		for (auto& [meshHandle, materialMap] : renderBatches) {
+		for (auto& [meshHandle, submeshMap] : renderBatches) {
 			Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 			if (!mesh) continue;
 
-			for (auto& [materialHandle, instanceData] : materialMap) {
-				Ref<Material> mat = AssetManager::get<Material>(materialHandle);
-				if (!mat) continue;
+			for (auto& [submeshIndex, materialMap] : submeshMap) {
+				for (auto& [materialHandle, instanceData] : materialMap) {
+					Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+					if (!mat) continue;
 
-				Renderer3D::drawMeshInstanced(mesh, mat, instanceData);
+					Renderer3D::drawMeshInstanced(mesh, submeshIndex, mat, instanceData);
+				}
 			}
 		}
 

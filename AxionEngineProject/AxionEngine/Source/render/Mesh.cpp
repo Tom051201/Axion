@@ -25,6 +25,19 @@ namespace Axion {
 
 	}
 
+	Ref<Mesh> Mesh::create(const MeshData& meshData) {
+
+		switch (Renderer::getAPI()) {
+
+		case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
+		case RendererAPI::DirectX12: { return std::make_shared<D12Mesh>(meshData); }
+		case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Mesh>(meshData); }
+
+		}
+		return nullptr;
+
+	}
+
 
 
 	// ----- Loading OBJ Files -----
@@ -46,14 +59,23 @@ namespace Axion {
 		const auto& attrib = reader.GetAttrib();
 		const auto& shapes = reader.GetShapes();
 
-		std::vector<Vertex> vertices;
-		std::vector<uint32_t> indices;
+		MeshData meshData;
 		std::unordered_map<Vertex, uint32_t> uniqueVertices;
 
 		bool hasNormals = !attrib.normals.empty();
 
 		// -- Load data --
 		for (const auto& shape : shapes) {
+
+			Submesh submesh;
+			submesh.startIndex = static_cast<uint32_t>(meshData.indices.size());
+			submesh.baseVertex = 0;
+
+			submesh.materialIndex = 0;
+			if (!shape.mesh.material_ids.empty() && shape.mesh.material_ids[0] >= 0) {
+				submesh.materialIndex = static_cast<uint32_t>(shape.mesh.material_ids[0]);
+			}
+
 			for (const auto& index : shape.mesh.indices) {
 				Vertex vertex{};
 
@@ -92,27 +114,33 @@ namespace Axion {
 
 				// -- Remove duplicates --
 				if (uniqueVertices.count(vertex) == 0) {
-					uint32_t newIndex = static_cast<uint32_t>(vertices.size());
+					uint32_t newIndex = static_cast<uint32_t>(meshData.vertices.size());
 					uniqueVertices[vertex] = newIndex;
-					vertices.push_back(vertex);
-					indices.push_back(newIndex);
+					meshData.vertices.push_back(vertex);
+					meshData.indices.push_back(newIndex);
 				}
 				else {
-					indices.push_back(uniqueVertices[vertex]);
+					meshData.indices.push_back(uniqueVertices[vertex]);
 				}
 			}
+
+			submesh.indexCount = static_cast<uint32_t>(meshData.indices.size()) - submesh.startIndex;
+			if (submesh.indexCount > 0) {
+				meshData.submeshes.push_back(submesh);
+			}
+
 		}
 
 		// -- Normalize Mesh --
-		Vertex::normalizeVertices(vertices);
+		Vertex::normalizeVertices(meshData.vertices);
 
 		// -- Calculate Normals if missing --
 		if (!hasNormals) {
 			AX_CORE_LOG_WARN("OBJ file missing normals, recalculating them...");
-			for (size_t i = 0; i < indices.size(); i += 3) {
-				Vertex& v0 = vertices[indices[i]];
-				Vertex& v1 = vertices[indices[i + 1]];
-				Vertex& v2 = vertices[indices[i + 2]];
+			for (size_t i = 0; i < meshData.indices.size(); i += 3) {
+				Vertex& v0 = meshData.vertices[meshData.indices[i]];
+				Vertex& v1 = meshData.vertices[meshData.indices[i + 1]];
+				Vertex& v2 = meshData.vertices[meshData.indices[i + 2]];
 
 				float ax = v1.position.x - v0.position.x;
 				float ay = v1.position.y - v0.position.y;
@@ -131,17 +159,17 @@ namespace Axion {
 				v2.normal.x += nx; v2.normal.y += ny; v2.normal.z += nz;
 			}
 
-			for (auto& v : vertices) {
+			for (auto& v : meshData.vertices) {
 				normalizeVector(v.normal);
 			}
 
 		}
 
 		// -- Calculate Tangents --
-		for (size_t i = 0; i < indices.size(); i += 3) {
-			Vertex& v0 = vertices[indices[i]];
-			Vertex& v1 = vertices[indices[i + 1]];
-			Vertex& v2 = vertices[indices[i + 2]];
+		for (size_t i = 0; i < meshData.indices.size(); i += 3) {
+			Vertex& v0 = meshData.vertices[meshData.indices[i]];
+			Vertex& v1 = meshData.vertices[meshData.indices[i + 1]];
+			Vertex& v2 = meshData.vertices[meshData.indices[i + 2]];
 
 			// -- Edge Vectors --
 			float e1x = v1.position.x - v0.position.x;
@@ -173,7 +201,7 @@ namespace Axion {
 		}
 
 		// Normalize Tangents and orthogonalize (Gram-Schmidt)
-		for (auto& v : vertices) {
+		for (auto& v : meshData.vertices) {
 			normalizeVector(v.tangent);
 
 			// t = normalize(t - n * dot(n, t));
@@ -184,7 +212,7 @@ namespace Axion {
 			normalizeVector(v.tangent);
 		}
 
-		return { vertices, indices };
+		return meshData;
 	}
 
 

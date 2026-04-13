@@ -43,8 +43,11 @@ namespace Axion {
 
 			// ----- Set initial path -----
 			if (!initialPath.empty()) {
+				std::filesystem::path absPath = std::filesystem::absolute(initialPath);
+				absPath.make_preferred();
+
 				IShellItem* pItem = nullptr;
-				if (SUCCEEDED(SHCreateItemFromParsingName(initialPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+				if (SUCCEEDED(SHCreateItemFromParsingName(absPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
 					pfd->SetFolder(pItem);
 					pItem->Release();
 				}
@@ -98,8 +101,11 @@ namespace Axion {
 
 			// ----- Set initial path -----
 			if (!initialPath.empty()) {
+				std::filesystem::path absPath = std::filesystem::absolute(initialPath);
+				absPath.make_preferred();
+
 				IShellItem* pItem = nullptr;
-				if (SUCCEEDED(SHCreateItemFromParsingName(initialPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+				if (SUCCEEDED(SHCreateItemFromParsingName(absPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
 					pfd->SetFolder(pItem);
 					pItem->Release();
 				}
@@ -140,8 +146,11 @@ namespace Axion {
 			pfd->SetOptions(options | FOS_PICKFOLDERS);
 
 			if (!initialPath.empty()) {
+				std::filesystem::path absPath = std::filesystem::absolute(initialPath);
+				absPath.make_preferred();
+
 				IShellItem* pItem = nullptr;
-				if (SUCCEEDED(SHCreateItemFromParsingName(initialPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
+				if (SUCCEEDED(SHCreateItemFromParsingName(absPath.c_str(), nullptr, IID_PPV_ARGS(&pItem)))) {
 					pfd->SetFolder(pItem);
 					pItem->Release();
 				}

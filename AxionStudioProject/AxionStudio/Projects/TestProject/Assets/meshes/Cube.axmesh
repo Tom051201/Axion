@@ -1,0 +1,6 @@
+Version: 1
+Name: Cube
+UUID: 61aa8ca013e9890b54366991f0eaac18
+Type: Mesh
+Format: OBJ
+Source: meshes/cube.obj

@@ -131,7 +131,7 @@ namespace Axion {
 		glDrawElements(GL_TRIANGLES, ib->getIndexCount(), GL_UNSIGNED_INT, nullptr);
 	}
 
-	void OpenGL3Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount) {
+	void OpenGL3Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) {
 		AX_CORE_ASSERT(false, "OpenGL3Context::drawIndexed is not implemented yet");
 	}
 

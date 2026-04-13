@@ -135,13 +135,24 @@ namespace Axion {
 					in.read(reinterpret_cast<char*>(&vertexCount), sizeof(uint32_t));
 					in.read(reinterpret_cast<char*>(&indexCount), sizeof(uint32_t));
 
-					std::vector<Vertex> vertices(vertexCount);
-					std::vector<uint32_t> indices(indexCount);
+					uint32_t submeshCount = 0;
+					if (header.version >= 2) {
+						in.read(reinterpret_cast<char*>(&submeshCount), sizeof(uint32_t));
+					}
 
-					in.read(reinterpret_cast<char*>(vertices.data()), vertexCount * sizeof(Vertex));
-					in.read(reinterpret_cast<char*>(indices.data()), indexCount * sizeof(uint32_t));
+					MeshData meshData;
+					meshData.vertices.resize(vertexCount);
+					meshData.indices.resize(indexCount);
 
-					return Mesh::create(vertices, indices);
+					in.read(reinterpret_cast<char*>(meshData.vertices.data()), vertexCount * sizeof(Vertex));
+					in.read(reinterpret_cast<char*>(meshData.indices.data()), indexCount * sizeof(uint32_t));
+
+					if (submeshCount > 0) {
+						meshData.submeshes.resize(submeshCount);
+						in.read(reinterpret_cast<char*>(meshData.submeshes.data()), submeshCount * sizeof(Submesh));
+					}
+
+					return Mesh::create(meshData);
 				}
 			});
 			storage<Mesh>().handleToPath[handle] = absolutePath;
@@ -153,14 +164,14 @@ namespace Axion {
 		YAML::Node data = YAML::Load(stream);
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_MESH) {
+		if (version <= ASSET_VERSION_MESH) {
 			std::filesystem::path sourcePath = getAbsolute(data["Source"].as<std::string>());
 
 			storage<Mesh>().assets[handle] = nullptr;
 			storage<Mesh>().loadQueue.push_back({ handle,
 				[sourcePath]() {
-					auto meshData = Mesh::loadOBJ(sourcePath);
-					return Mesh::create(meshData.vertices, meshData.indices);
+					MeshData meshData = Mesh::loadOBJ(sourcePath);
+					return Mesh::create(meshData);
 				}
 			});
 			storage<Mesh>().handleToPath[handle] = absolutePath;

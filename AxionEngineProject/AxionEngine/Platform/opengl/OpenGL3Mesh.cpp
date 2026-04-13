@@ -8,6 +8,12 @@ namespace Axion {
 		m_indexBuffer = std::dynamic_pointer_cast<OpenGL3IndexBuffer>(IndexBuffer::create(indices));
 	}
 
+	OpenGL3Mesh::OpenGL3Mesh(const MeshData& meshData) {
+		m_vertexBuffer = std::dynamic_pointer_cast<OpenGL3VertexBuffer>(VertexBuffer::create(meshData.vertices));
+		m_indexBuffer = std::dynamic_pointer_cast<OpenGL3IndexBuffer>(IndexBuffer::create(meshData.indices));
+		m_submeshes = meshData.submeshes;
+	}
+
 	OpenGL3Mesh::~OpenGL3Mesh() {
 		release();
 	}
@@ -15,6 +21,7 @@ namespace Axion {
 	void OpenGL3Mesh::release() {
 		m_vertexBuffer->release();
 		m_indexBuffer->release();
+		m_submeshes.clear();
 	}
 
 	void OpenGL3Mesh::render() const {

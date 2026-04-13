@@ -8,6 +8,12 @@ namespace Axion {
 		m_indexBuffer = std::dynamic_pointer_cast<D12IndexBuffer>(IndexBuffer::create(indices));
 	}
 
+	D12Mesh::D12Mesh(const MeshData& meshData) {
+		m_vertexBuffer = std::dynamic_pointer_cast<D12VertexBuffer>(VertexBuffer::create(meshData.vertices));
+		m_indexBuffer = std::dynamic_pointer_cast<D12IndexBuffer>(IndexBuffer::create(meshData.indices));
+		m_submeshes = meshData.submeshes;
+	}
+
 	D12Mesh::~D12Mesh() {
 		release();
 	}
@@ -15,6 +21,7 @@ namespace Axion {
 	void D12Mesh::release() {
 		m_vertexBuffer->release();
 		m_indexBuffer->release();
+		m_submeshes.clear();
 	}
 
 	void D12Mesh::render() const {

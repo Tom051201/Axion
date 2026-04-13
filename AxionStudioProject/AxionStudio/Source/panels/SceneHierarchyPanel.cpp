@@ -519,79 +519,111 @@ namespace Axion {
 		drawComponentInfo<MaterialComponent>("Material", m_selectedEntity, [this]() {
 			auto& component = m_selectedEntity.getComponent<MaterialComponent>();
 
-			if (component.handle.isValid()) {
-				if (ImGui::BeginTable("MaterialTable", 2, ImGuiTableFlags_BordersInnerV)) {
-					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-
-					Ref<Material> material = AssetManager::get<Material>(component.handle);
-					Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(material->getPipelineHandle());
-
-					// -- Name --
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Name");
-					ImGui::Separator();
-					ImGui::TableSetColumnIndex(1);
-					ImGui::Text(material->getName().c_str());
-					
-					// -- Pipeline --
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Pipeline (Shader)");
-					ImGui::TableSetColumnIndex(1);
-					if (pipeline != nullptr) {
-						ImGui::Text(pipeline->getSpecification().shader->getName().c_str());
+			// -- Determine how many material slots we need --
+			uint32_t submeshCount = 1;
+			if (m_selectedEntity.hasComponent<MeshComponent>()) {
+				auto& meshComp = m_selectedEntity.getComponent<MeshComponent>();
+				if (meshComp.handle.isValid()) {
+					Ref<Mesh> mesh = AssetManager::get<Mesh>(meshComp.handle);
+					if (mesh) {
+						submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
 					}
-					else {
-						ImGui::Text("Internal Default Pipeline");
-					}
-
-					// -- AlbedoColor --
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Albedo Color");
-					ImGui::Separator();
-					ImGui::TableSetColumnIndex(1);
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::ColorEdit4("##ColorEdit", material->getAlbedoColor().data());
-					
-					// -- Options --
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("Options");
-					ImGui::TableSetColumnIndex(1);
-					if (ImGui::Button("Remove")) {
-						component.handle.invalidate();
-					}
-
-					ImGui::EndTable();
 				}
 			}
-			else {
-				// -- Load Button --
-				if (ImGui::Button("Open Material...")) {
-					std::filesystem::path materialDir = ProjectManager::getProject()->getAssetsPath() / "materials"; // TODO: add fallback
-					std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir);
-					if (!absPath.empty()) {
-						UUID assetUUID = AssetManager::getAssetUUID(absPath);
-						if (assetUUID.isValid()) component.handle = AssetManager::load<Material>(assetUUID);
+
+			if (component.materials.size() < submeshCount) {
+				component.materials.resize(submeshCount);
+			}
+
+			// -- Draw a slot for each submesh --
+			for (uint32_t i = 0; i < submeshCount; i++) {
+				ImGui::PushID(i);
+				std::string label = "Material (Submesh " + std::to_string(i) + ")";
+
+				if (component.materials[i].isValid()) {
+					if (ImGui::BeginTable("MaterialTable", 2, ImGuiTableFlags_BordersInnerV)) {
+						ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+						ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+						Ref<Material> material = AssetManager::get<Material>(component.materials[i]);
+						Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(material->getPipelineHandle());
+
+						// -- Name --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text(label.c_str());
+						ImGui::Separator();
+						ImGui::TableSetColumnIndex(1);
+						ImGui::Text(material->getName().c_str());
+
+						// -- Pipeline --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Pipeline (Shader)");
+						ImGui::TableSetColumnIndex(1);
+						if (pipeline != nullptr) {
+							ImGui::Text(pipeline->getSpecification().shader->getName().c_str());
+						}
+						else {
+							ImGui::Text("Internal Default Pipeline");
+						}
+
+						// -- AlbedoColor --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Albedo Color");
+						ImGui::Separator();
+						ImGui::TableSetColumnIndex(1);
+						ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+						ImGui::ColorEdit4("##ColorEdit", material->getAlbedoColor().data());
+
+						// -- Options --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Options");
+						ImGui::TableSetColumnIndex(1);
+						if (ImGui::Button("Remove")) {
+							component.materials[i].invalidate();
+						}
+
+						ImGui::EndTable();
 					}
 				}
+				else {
+					// -- Load Button --
+					std::string btnLabel = "Open " + label + "...";
+					if (ImGui::Button(btnLabel.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+						std::filesystem::path materialDir = ProjectManager::getProject()->getAssetsPath() / "materials";
+						std::filesystem::path absPath;
+						if (std::filesystem::exists(materialDir)) {
+							absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir);
+						}
+						else {
+							absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, ProjectManager::getProject()->getAssetsPath());
+						}
 
-				// -- Drag drop on button --
-				if (ImGui::BeginDragDropTarget()) {
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-						std::filesystem::path relPath = static_cast<const char*>(payload->Data);
-						std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
-						if (absPath.extension() == ".axmat") {
+						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
-							if (assetUUID.isValid()) component.handle = AssetManager::load<Material>(assetUUID);
+							if (assetUUID.isValid()) component.materials[i] = AssetManager::load<Material>(assetUUID);
 						}
 					}
-					ImGui::EndDragDropTarget();
+
+					// -- Drag drop on button --
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+							std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+							std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+							if (absPath.extension() == ".axmat") {
+								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+								if (assetUUID.isValid()) component.materials[i] = AssetManager::load<Material>(assetUUID);
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
 				}
 
+				if (i < submeshCount - 1) ImGui::Spacing();
+				ImGui::PopID();
 			}
 
 		});
