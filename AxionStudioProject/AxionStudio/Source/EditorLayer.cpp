@@ -16,6 +16,8 @@
 
 #include "AxionAssetPipeline/Source/core/AssetPackager.h"
 
+#include "AxionAssetPipeline/Source/GLTFImporter.h" // TODO: remove this and put in a separated modal or so
+
 // -- Windows only --
 #include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"
 
@@ -578,6 +580,26 @@ namespace Axion {
 					if (ImGui::MenuItem("Pipeline")) { m_pipelineImportModal->open(); }
 					if (ImGui::MenuItem("Audio")) { m_audioImportModal->open(); }
 					if (ImGui::MenuItem("Physics Material")) { m_physicsMaterialImportModal->open(); }
+					if (ImGui::MenuItem("GLB Model")) {
+						std::filesystem::path filePath = FileDialogs::openFile({ {"GLTF Binary", "*.glb"}});
+						if (!filePath.empty()) {
+							AX_CORE_LOG_INFO("Starting import process for: {}", filePath.string());
+
+							AAP::GLTFImporter::import(filePath);
+
+							AX_CORE_LOG_INFO("Import complete! Check your Content Browser.");
+						}
+					}
+					if (ImGui::MenuItem("GLTF Model")) {
+						std::filesystem::path filePath = FileDialogs::openFile({ {"GLTF Text", "*.gltf"} });
+						if (!filePath.empty()) {
+							AX_CORE_LOG_INFO("Starting import process for: {}", filePath.string());
+
+							AAP::GLTFImporter::import(filePath);
+
+							AX_CORE_LOG_INFO("Import complete! Check your Content Browser.");
+						}
+					}
 
 					ImGui::EndMenu();
 				}

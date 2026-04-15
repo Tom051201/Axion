@@ -167,10 +167,22 @@ namespace Axion {
 		if (version <= ASSET_VERSION_MESH) {
 			std::filesystem::path sourcePath = getAbsolute(data["Source"].as<std::string>());
 
+			std::string format = "OBJ";
+			if (data["Format"]) {
+				format = data["Format"].as<std::string>();
+			}
+
 			storage<Mesh>().assets[handle] = nullptr;
 			storage<Mesh>().loadQueue.push_back({ handle,
-				[sourcePath]() {
-					MeshData meshData = Mesh::loadOBJ(sourcePath);
+				[sourcePath, format]() {
+					MeshData meshData;
+					if (format == "GLB" || format == "GLTF") {
+						meshData = Mesh::loadGLTF(sourcePath);
+					}
+					else {
+						meshData = Mesh::loadOBJ(sourcePath);
+					}
+
 					return Mesh::create(meshData);
 				}
 			});

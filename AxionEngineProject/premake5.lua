@@ -22,7 +22,9 @@ project "AxionEngine"
 		"AxionEngine/Vendor/stb_image/stb_image.cpp",
 		"AxionEngine/Vendor/tinyobjloader/tiny_obj_loader.h",
 		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.h",
-		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.cpp"
+		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.cpp",
+		"AxionEngine/Vendor/cgltf/cgltf.h",
+		"AxionEngine/Vendor/cgltf/cgltf.cpp"
 	}
 	
 	includedirs {
@@ -60,6 +62,9 @@ project "AxionEngine"
 	}
 
 	filter "files:AxionEngine/Vendor/ImGuizmo/**.cpp"
+		enablepch "Off"
+
+	filter "files:AxionEngine/Vendor/cgltf/cgltf.cpp"
 		enablepch "Off"
 	
 	filter "system:windows"

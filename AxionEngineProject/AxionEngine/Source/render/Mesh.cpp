@@ -4,6 +4,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "AxionEngine/Vendor/tinyobjloader/tiny_obj_loader.h"
 #include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include "AxionEngine/Vendor/cgltf/cgltf.h"
 
 #include "AxionEngine/Source/render/Renderer.h"
 
@@ -214,6 +215,98 @@ namespace Axion {
 
 		return meshData;
 	}
+
+	// ----- Loading GLTF Files -----
+	MeshData Mesh::loadGLTF(const std::filesystem::path& path) {
+		MeshData meshData;
+
+		cgltf_options options = {};
+		cgltf_data* data = nullptr;
+		cgltf_result result = cgltf_parse_file(&options, path.string().c_str(), &data);
+
+		if (result != cgltf_result_success) {
+			AX_CORE_LOG_ERROR("Failed to parse GLTF file: {}", path.string());
+			return meshData;
+		}
+
+		// -- Load binary buffers --
+		result = cgltf_load_buffers(&options, data, path.string().c_str());
+		if (result != cgltf_result_success) {
+			AX_CORE_LOG_ERROR("Failed to load GLTF buffers: {}", path.string());
+			cgltf_free(data);
+			return meshData;
+		}
+
+		for (cgltf_size m = 0; m < data->meshes_count; ++m) {
+			const cgltf_mesh& mesh = data->meshes[m];
+
+			for (cgltf_size p = 0; p < mesh.primitives_count; ++p) {
+				const cgltf_primitive& primitive = mesh.primitives[p];
+
+				Submesh submesh;
+				submesh.baseVertex = static_cast<uint32_t>(meshData.vertices.size());
+				submesh.startIndex = static_cast<uint32_t>(meshData.indices.size());
+
+				submesh.materialIndex = 0;
+				if (primitive.material) {
+					submesh.materialIndex = static_cast<uint32_t>(primitive.material - data->materials);
+				}
+
+				// -- Extract Indices --
+				if (primitive.indices) {
+					cgltf_size indexCount = primitive.indices->count;
+					for (cgltf_size i = 0; i < indexCount; ++i) {
+						uint32_t index = static_cast<uint32_t>(cgltf_accessor_read_index(primitive.indices, i));
+						meshData.indices.push_back(index);
+					}
+				}
+
+				// -- Extract Vertices --
+				cgltf_size vertexCount = 0;
+				for (cgltf_size a = 0; a < primitive.attributes_count; ++a) {
+					if (primitive.attributes[a].type == cgltf_attribute_type_position) {
+						vertexCount = primitive.attributes[a].data->count;
+						break;
+					}
+				}
+
+				std::vector<Vertex> submeshVertices(vertexCount);
+				for (cgltf_size a = 0; a < primitive.attributes_count; ++a) {
+					const cgltf_attribute& attribute = primitive.attributes[a];
+
+					for (cgltf_size v = 0; v < vertexCount; ++v) {
+						float values[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+						cgltf_accessor_read_float(attribute.data, v, values, 4);
+
+						if (attribute.type == cgltf_attribute_type_position) {
+							submeshVertices[v].position = { values[0], values[1], values[2] };
+						}
+						else if (attribute.type == cgltf_attribute_type_normal) {
+							submeshVertices[v].normal = { values[0], values[1], values[2] };
+						}
+						else if (attribute.type == cgltf_attribute_type_texcoord) {
+							submeshVertices[v].texcoord = { values[0], values[1] };
+						}
+						else if (attribute.type == cgltf_attribute_type_tangent) {
+							submeshVertices[v].tangent = { values[0], values[1], values[2] };
+						}
+					}
+				}
+
+				meshData.vertices.insert(meshData.vertices.end(), submeshVertices.begin(), submeshVertices.end());
+
+				submesh.indexCount = static_cast<uint32_t>(meshData.indices.size()) - submesh.startIndex;
+				if (submesh.indexCount > 0) {
+					meshData.submeshes.push_back(submesh);
+				}
+
+			}
+		}
+
+		cgltf_free(data);
+		return meshData;
+	}
+
 
 
 

@@ -1,0 +1,21 @@
+Version: 1
+Name: Material_MR
+UUID: 6d64521c230377d08899dff8e19a5e09
+Type: Material
+AlbedoColor: [1, 1, 1, 1]
+Metalness: 1
+Roughness: 1
+Emission: 1
+Tiling: 1
+UseNormalMap: 1
+UseMetalnessMap: 1
+UseRoughnessMap: 1
+UseOcclusionMap: 1
+UseEmissiveMap: 1
+Textures:
+  Albedo: 34e1dd032a1433ee6594ca73c0f8c257
+  Normal: 2b5b939b2b647b374074dfe47c3baec3
+  Metalness: 04d4dcf41563adb69a3a1e571f1881cc
+  Roughness: 04d4dcf41563adb69a3a1e571f1881cc
+  Occlusion: f909d41c1fbb1955b75960bd84b85ebf
+  Emissive: 81c885347f7f329fcc3c525185f4b80a

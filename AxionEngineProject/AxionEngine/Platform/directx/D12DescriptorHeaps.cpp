@@ -122,7 +122,13 @@ namespace Axion {
 		}
 
 		uint32_t idx = m_frameNextIndex[m_currentFrame]++;
-		AX_CORE_ASSERT(idx < m_numDescriptors, "Out of srv heap descriptors for current frame");
+
+		uint32_t dynamicCount = m_numDescriptors - m_reservedCount;
+		uint32_t chunkSize = dynamicCount / m_frameCount;
+		uint32_t frameEndIdx = m_reservedCount + ((m_currentFrame + 1) * chunkSize);
+
+		AX_CORE_ASSERT(idx < frameEndIdx, "Out of SRV heap descriptors for current frame chunk!");
+
 		return idx;
 	}
 
@@ -130,7 +136,12 @@ namespace Axion {
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		uint32_t startIdx = m_frameNextIndex[m_currentFrame];
 		m_frameNextIndex[m_currentFrame] += count;
-		AX_CORE_ASSERT(startIdx + count <= m_numDescriptors, "Out of SRV heap descriptors for current frame (range allocation)");
+
+		uint32_t dynamicCount = m_numDescriptors - m_reservedCount;
+		uint32_t chunkSize = dynamicCount / m_frameCount;
+		uint32_t frameEndIdx = m_reservedCount + ((m_currentFrame + 1) * chunkSize);
+
+		AX_CORE_ASSERT(m_frameNextIndex[m_currentFrame] <= frameEndIdx, "Out of SRV heap descriptors for current frame chunk!");
 		return startIdx;
 	}
 
@@ -147,12 +158,23 @@ namespace Axion {
 
 	void D12srvHeap::reserve(uint32_t numDescriptors) {
 		m_reservedCount = numDescriptors;
-		std::fill(m_frameNextIndex.begin(), m_frameNextIndex.end(), m_reservedCount);
+
+		uint32_t dynamicCount = m_numDescriptors - m_reservedCount;
+		uint32_t chunkSize = dynamicCount / m_frameCount;
+
+		//std::fill(m_frameNextIndex.begin(), m_frameNextIndex.end(), m_reservedCount);
+		for (uint32_t i = 0; i < m_frameCount; i++) {
+			m_frameNextIndex[i] = m_reservedCount + (i * chunkSize);
+		}
 	}
 
 	void D12srvHeap::nextFrame() {
 		m_currentFrame = (m_currentFrame + 1) % m_frameCount;
-		m_frameNextIndex[m_currentFrame] = m_reservedCount;
+
+		uint32_t dynamicCount = m_numDescriptors - m_reservedCount;
+		uint32_t chunkSize = dynamicCount / m_frameCount;
+
+		m_frameNextIndex[m_currentFrame] = m_reservedCount + (m_currentFrame * chunkSize);
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE D12srvHeap::getCpuHandle(uint32_t index) const {

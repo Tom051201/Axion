@@ -1,0 +1,16 @@
+Version: 1
+Type: Prefab
+UUID: fe628f9d4bcd90083a8c84e7656868ab
+Entity:
+  Entity: 3ca775fcd95099b454c78791961b95d2
+  TagComponent:
+    Tag: DamagedHelmet
+  TransformComponent:
+    Translation: [0, 0, 0]
+    Rotation: [0, 0, 0, 1]
+    Scale: [1, 1, 1]
+  MeshComponent:
+    UUID: b3bda371c36a994af2c8ad48954c8fd4
+  MaterialComponent:
+    Materials:
+      - 6d64521c230377d08899dff8e19a5e09

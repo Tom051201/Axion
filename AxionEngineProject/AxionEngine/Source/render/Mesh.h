@@ -43,6 +43,7 @@ namespace Axion {
 		static Ref<Mesh> createPBRCube();
 
 		static MeshData loadOBJ(const std::filesystem::path& path);
+		static MeshData loadGLTF(const std::filesystem::path& path);
 
 	private:
 

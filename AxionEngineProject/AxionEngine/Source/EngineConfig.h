@@ -19,7 +19,7 @@ namespace Axion::Config {
 
 	// ----- DIRECTX12 -----
 	inline constexpr uint32_t D12MaxRtvDescriptors = 16;
-	inline constexpr uint32_t D12MaxSrvDescriptors = 1024;
+	inline constexpr uint32_t D12MaxSrvDescriptors = 100000;
 	inline constexpr uint32_t D12MaxDsvDescriptors = 16;
 	inline constexpr uint32_t D12SrvHeapReserve = 64;
 	inline constexpr uint32_t D12MaxTextureSlots = 16;

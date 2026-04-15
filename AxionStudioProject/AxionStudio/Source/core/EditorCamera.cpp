@@ -38,7 +38,7 @@ namespace Axion {
 		setViewportSize((uint32_t)width, (uint32_t)height);
 
 		if (is3D()) {
-			setPerspective(Math::toRadians(m_fov), 0.1f, 100.0f);
+			setPerspective(Math::toRadians(m_fov), 0.1f, 10000.0f);
 		}
 		else {
 			setOrthographic(m_zoom2D, -100.0f, 100.0f);
@@ -58,7 +58,7 @@ namespace Axion {
 	void EditorCamera::set3D() {
 		m_projectionType = ProjectionType::Perspective;
 
-		setPerspective(Math::toRadians(45.0f), 0.1f, 100.0f);
+		setPerspective(Math::toRadians(45.0f), 0.1f, 10000.0f);
 		updateView();
 	}
 
@@ -123,7 +123,7 @@ namespace Axion {
 		if (is3D()) {
 			m_fov -= delta;
 			m_fov = Math::clamp(m_fov, 1.0f, 90.0f);
-			setPerspective(Math::toRadians(m_fov), 0.1f, 100.0f);
+			setPerspective(Math::toRadians(m_fov), 0.1f, 10000.0f);
 		}
 		else {
 			m_zoom2D -= delta * 0.1f;

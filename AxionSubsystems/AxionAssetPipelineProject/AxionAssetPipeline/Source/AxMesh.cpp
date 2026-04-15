@@ -6,8 +6,15 @@ namespace Axion::AAP {
 
 	void MeshParser::createTextFile(const MeshAssetData& data, const std::filesystem::path& outputPath) {
 
-		MeshData meshData = Mesh::loadOBJ(AssetManager::getAbsolute(data.filePath));
-		// TODO: add a source file type check here
+		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
+
+		MeshData meshData;
+		if (data.fileFormat == "GLB" || data.fileFormat == "GLTF") {
+			meshData = Mesh::loadGLTF(absoluteSourcePath);
+		}
+		else if (data.fileFormat == "OBJ") {
+			meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+		}
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -39,8 +46,15 @@ namespace Axion::AAP {
 
 	void MeshParser::createBinaryFile(const MeshAssetData& data, const std::filesystem::path& outputPath) {
 
-		MeshData meshData = Mesh::loadOBJ(data.filePath);
-		// TODO: add a source file type check here
+		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
+
+		MeshData meshData;
+		if (data.fileFormat == "GLB" || data.fileFormat == "GLTF") {
+			meshData = Mesh::loadGLTF(absoluteSourcePath);
+		}
+		else if (data.fileFormat == "OBJ") {
+			meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+		}
 
 		// -- Open Binary File --
 		std::ofstream out(outputPath, std::ios::out | std::ios::binary);

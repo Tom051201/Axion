@@ -1,0 +1,11 @@
+Version: 2
+Name: DamagedHelmet
+UUID: b3bda371c36a994af2c8ad48954c8fd4
+Type: Mesh
+Format: GLB
+Source: meshes/DamagedHelmet/DamagedHelmet.glb
+Submeshes:
+  - BaseVertex: 0
+    StartIndex: 0
+    IndexCount: 46356
+    MaterialIndex: 0
