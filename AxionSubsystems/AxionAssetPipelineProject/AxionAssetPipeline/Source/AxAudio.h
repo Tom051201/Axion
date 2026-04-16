@@ -1,10 +1,12 @@
 #pragma once
 
+#include <string>
+#include <filesystem>
+
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 
-#include <string>
-#include <filesystem>
+#include "AxionAssetPipeline/Source/core/AssetFormats.h"
 
 namespace Axion::AAP {
 
@@ -12,7 +14,7 @@ namespace Axion::AAP {
 		UUID uuid;
 		std::string name;
 		std::filesystem::path audioFilePath;
-		std::string fileFormat;
+		AudioFormat fileFormat = AudioFormat::None;
 		AudioClip::Mode mode;
 	};
 

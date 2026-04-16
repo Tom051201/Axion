@@ -180,7 +180,7 @@ namespace Axion {
 				AAP::AudioAssetData data;
 				data.uuid = newAssetUUID;
 				data.name = m_name;
-				data.fileFormat = m_formatNames[m_importFormat];
+				data.fileFormat = AAP::FormatUtils::audioFormatFromString(m_formatNames[m_importFormat]);
 				data.audioFilePath = AssetManager::getRelativeToAssets(m_sourcePath);
 				data.mode = m_types[m_loadType];
 

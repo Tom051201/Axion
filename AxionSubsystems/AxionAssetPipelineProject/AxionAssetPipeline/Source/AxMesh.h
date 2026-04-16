@@ -2,6 +2,8 @@
 
 #include "AxionEngine/Source/core/UUID.h"
 
+#include "AxionAssetPipeline/Source/core/AssetFormats.h"
+
 #include <string>
 #include <filesystem>
 
@@ -10,7 +12,7 @@ namespace Axion::AAP {
 	struct MeshAssetData {
 		UUID uuid;
 		std::string name;
-		std::string fileFormat; // OBJ
+		MeshFormat fileFormat = MeshFormat::None;
 		std::filesystem::path filePath;
 	};
 

@@ -16,7 +16,7 @@
 
 #include "AxionAssetPipeline/Source/core/AssetPackager.h"
 
-#include "AxionAssetPipeline/Source/GLTFImporter.h" // TODO: remove this and put in a separated modal or so
+#include "AxionAssetPipeline/Source/importer/GLTFImporter.h" // TODO: remove this and put in a separated modal or so
 
 // -- Windows only --
 #include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"

@@ -13,7 +13,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "AudioClip";
 
-		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
+		out << YAML::Key << "Format" << YAML::Value << FormatUtils::audioFormatToString(data.fileFormat);
 		out << YAML::Key << "Mode" << YAML::Value << EnumUtils::toString(data.mode);
 		out << YAML::Key << "Source" << YAML::Value << data.audioFilePath.generic_string();
 

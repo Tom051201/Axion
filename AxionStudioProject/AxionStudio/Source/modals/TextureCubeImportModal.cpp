@@ -56,10 +56,10 @@ namespace Axion {
 				std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
 				std::filesystem::path absPath;
 				if (std::filesystem::exists(dir)) {
-					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, dir); // TODO: add hdr later
+					absPath = FileDialogs::openFile({ {"Image File", "*.png;*.jpg;*.jpeg"} }, dir); // TODO: add hdr later
 				}
 				else {
-					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, ProjectManager::getProject()->getAssetsPath()); // TODO: add hdr later
+					absPath = FileDialogs::openFile({ {"Image File", "*.png;*.jpg;*.jpeg"} }, ProjectManager::getProject()->getAssetsPath()); // TODO: add hdr later
 				}
 				if (!absPath.empty()) m_sourcePath = absPath.string();
 			}
@@ -137,7 +137,7 @@ namespace Axion {
 				AAP::TextureCubeAssetData data;
 				data.uuid = newAssetUUID;
 				data.name = m_name;
-				data.fileFormat = m_types[m_importType];
+				data.fileFormat = AAP::FormatUtils::textureFormatFromString(m_types[m_importType]);
 				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
 				AAP::TextureCubeParser::createTextFile(data, finalPath);

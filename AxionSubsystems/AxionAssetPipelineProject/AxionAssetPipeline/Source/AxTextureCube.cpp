@@ -12,7 +12,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "TextureCube";
-		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
+		out << YAML::Key << "Format" << YAML::Value << FormatUtils::textureFormatToString(data.fileFormat);
 		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
 
 		out << YAML::EndMap;

@@ -152,7 +152,7 @@ namespace Axion {
 				AAP::ShaderAssetData data;
 				data.uuid = newAssetUUID;
 				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
-				data.fileFormat = m_formats[m_formatIndex];
+				data.fileFormat = AAP::FormatUtils::shaderFormatFromString(m_formats[m_formatIndex]);
 				data.spec = spec;
 
 				AAP::ShaderParser::createTextFile(data, finalPath);

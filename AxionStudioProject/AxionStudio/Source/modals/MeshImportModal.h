@@ -26,7 +26,7 @@ namespace Axion {
 		std::string m_outputPath;
 
 		int m_importType = 0;
-		const char* m_types[1] = { "OBJ" };
+		const char* m_types[3] = { "OBJ", "GLTF", "GLB" };
 
 	};
 

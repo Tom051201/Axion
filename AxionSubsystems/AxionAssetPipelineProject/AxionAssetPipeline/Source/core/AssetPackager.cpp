@@ -52,7 +52,7 @@ namespace Axion::AAP {
 					MeshAssetData meshData;
 					meshData.uuid = uuid;
 					meshData.name = data["Name"].as<std::string>();
-					meshData.fileFormat = data["Format"].as<std::string>();
+					meshData.fileFormat = FormatUtils::meshFormatFromString(data["Format"].as<std::string>());
 					meshData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
 					MeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
@@ -66,7 +66,7 @@ namespace Axion::AAP {
 					audioData.uuid = uuid;
 					audioData.name = data["Name"].as<std::string>();
 					audioData.audioFilePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
-					audioData.fileFormat = data["Format"].as<std::string>();
+					audioData.fileFormat = FormatUtils::audioFormatFromString(data["Format"].as<std::string>());
 					audioData.mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
 
 					AudioParser::createBinaryFile(audioData, runtimeAbsolutePath);
@@ -182,7 +182,7 @@ namespace Axion::AAP {
 
 					ShaderAssetData shaderData;
 					shaderData.uuid = uuid;
-					shaderData.fileFormat = data["Format"].as<std::string>();
+					shaderData.fileFormat = FormatUtils::shaderFormatFromString(data["Format"].as<std::string>());
 					shaderData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
 					YAML::Node specData = data["Specification"];
@@ -227,7 +227,7 @@ namespace Axion::AAP {
 					TextureCubeAssetData texData;
 					texData.uuid = uuid;
 					texData.name = data["Name"].as<std::string>();
-					texData.fileFormat = data["Format"].as<std::string>();
+					texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
 					texData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
 					TextureCubeParser::createBinaryFile(texData, runtimeAbsolutePath);
@@ -240,7 +240,7 @@ namespace Axion::AAP {
 					Texture2DAssetData texData;
 					texData.uuid = uuid;
 					texData.name = data["Name"].as<std::string>();
-					texData.fileFormat = data["Format"].as<std::string>();
+					texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
 					texData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
 					Texture2DParser::createBinaryFile(texData, runtimeAbsolutePath);

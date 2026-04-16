@@ -31,7 +31,10 @@ namespace Axion {
 		// -- Type --
 		std::string typeStr = sourceFile.extension().string();
 		std::transform(typeStr.begin(), typeStr.end(), typeStr.begin(), [](unsigned char c) { return std::tolower(c); });
+
 		if (typeStr == ".obj") m_importType = 0;
+		else if (typeStr == ".gltf") m_importType = 1;
+		else if (typeStr == ".glb") m_importType = 2;
 		else AX_CORE_LOG_WARN("Unable to identify automatically type of mesh");
 	}
 
@@ -76,10 +79,10 @@ namespace Axion {
 				std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
 				std::filesystem::path absPath;
 				if (std::filesystem::exists(meshDir)) {
-					absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, meshDir);
+					absPath = FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, meshDir);
 				}
 				else {
-					absPath = FileDialogs::openFile({ {"OBJ File", "*.obj"} }, ProjectManager::getProject()->getAssetsPath());
+					absPath = FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, ProjectManager::getProject()->getAssetsPath());
 				}
 				if (!absPath.empty()) m_sourcePath = absPath.string();
 			}
@@ -157,7 +160,7 @@ namespace Axion {
 				AAP::MeshAssetData data;
 				data.uuid = newAssetUUID;
 				data.name = m_name;
-				data.fileFormat = m_types[m_importType];
+				data.fileFormat = AAP::FormatUtils::meshFormatFromString(m_types[m_importType]);
 				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
 				AAP::MeshParser::createTextFile(data, finalPath);

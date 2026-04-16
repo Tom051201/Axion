@@ -56,10 +56,10 @@ namespace Axion {
 				std::filesystem::path tex2dDir = ProjectManager::getProject()->getAssetsPath() / "textures";
 				std::filesystem::path absPath;
 				if (std::filesystem::exists(tex2dDir)) {
-					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, tex2dDir);
+					absPath = FileDialogs::openFile({ {"Image File", "*.png;*.jpg;*.jpeg"} }, tex2dDir);
 				}
 				else {
-					absPath = FileDialogs::openFile({ {"PNG File", "*.png"} }, ProjectManager::getProject()->getAssetsPath());
+					absPath = FileDialogs::openFile({ {"Image File", "*.png;*.jpg;*.jpeg"} }, ProjectManager::getProject()->getAssetsPath());
 				}
 				if (!absPath.empty()) m_sourcePath = absPath.string();
 			}
@@ -137,7 +137,7 @@ namespace Axion {
 				AAP::Texture2DAssetData data;
 				data.uuid = newAssetUUID;
 				data.name = m_name;
-				data.fileFormat = m_types[m_importType];
+				data.fileFormat = AAP::FormatUtils::textureFormatFromString(m_types[m_importType]);
 				data.filePath = AssetManager::getRelativeToAssets(m_sourcePath);
 
 				AAP::Texture2DParser::createTextFile(data, finalPath);

@@ -5,12 +5,14 @@
 
 #include "AxionEngine/Source/core/UUID.h"
 
+#include "AxionAssetPipeline/Source/core/AssetFormats.h"
+
 namespace Axion::AAP {
 
 	struct Texture2DAssetData {
 		UUID uuid;
 		std::string name;
-		std::string fileFormat;
+		TextureFormat fileFormat = TextureFormat::None;
 		std::filesystem::path filePath;
 	};
 

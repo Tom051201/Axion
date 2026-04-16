@@ -5,12 +5,14 @@
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/render/Shader.h"
 
+#include "AxionAssetPipeline/Source/core/AssetFormats.h"
+
 namespace Axion::AAP {
 
 	struct ShaderAssetData {
 		UUID uuid;
 		ShaderSpecification spec;
-		std::string fileFormat; // .hlsl
+		ShaderFormat fileFormat = ShaderFormat::None;
 		std::filesystem::path filePath;
 	};
 

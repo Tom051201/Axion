@@ -100,8 +100,8 @@ namespace Axion::AAP {
 				Texture2DAssetData textureAssetData;
 				textureAssetData.uuid = texUUID;
 				textureAssetData.name = texName;
-				if (extension == ".jpg" || extension == ".jpeg") textureAssetData.fileFormat = "JPG";
-				else textureAssetData.fileFormat = "PNG";
+				if (extension == ".jpg" || extension == ".jpeg") textureAssetData.fileFormat = TextureFormat::JPG;
+				else textureAssetData.fileFormat = TextureFormat::PNG;
 				textureAssetData.filePath = AssetManager::getRelativeToAssets(outTexPath);
 
 				std::filesystem::path axtexPath = texOutputDir / (texName + ".axtex");
@@ -224,7 +224,7 @@ namespace Axion::AAP {
 		if (std::filesystem::absolute(glbPath) != std::filesystem::absolute(copiedModelPath)) {
 			try {
 				std::filesystem::copy_file(glbPath, copiedModelPath, std::filesystem::copy_options::overwrite_existing);
-				AX_CORE_LOG_TRACE(" Copied source model to: {}", copiedModelPath.string());
+				AX_CORE_LOG_TRACE("Copied source model to: {}", copiedModelPath.string());
 
 				for (cgltf_size i = 0; i < data->buffers_count; ++i) {
 					if (data->buffers[i].uri) {
@@ -239,7 +239,7 @@ namespace Axion::AAP {
 								AX_CORE_LOG_TRACE("Copied external buffer to: {}", destBufferPath.filename().string());
 							}
 							else {
-								AX_CORE_LOG_ERROR("-> Missing external buffer file: {}", sourceBufferPath.string());
+								AX_CORE_LOG_ERROR("Missing external buffer file: {}", sourceBufferPath.string());
 							}
 						}
 					}
@@ -253,7 +253,7 @@ namespace Axion::AAP {
 		MeshAssetData meshAssetData;
 		meshAssetData.uuid = UUID::generate();
 		meshAssetData.name = baseName;
-		meshAssetData.fileFormat = (originalExt == ".glb") ? "GLB" : "GLTF";
+		meshAssetData.fileFormat = (originalExt == ".glb") ? MeshFormat::GLB : MeshFormat::GLTF;
 		meshAssetData.filePath = AssetManager::getRelativeToAssets(copiedModelPath);
 
 		std::filesystem::path axmeshPath = meshOutputDir / (baseName + ".axmesh");

@@ -9,11 +9,19 @@ namespace Axion::AAP {
 		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
 
 		MeshData meshData;
-		if (data.fileFormat == "GLB" || data.fileFormat == "GLTF") {
-			meshData = Mesh::loadGLTF(absoluteSourcePath);
-		}
-		else if (data.fileFormat == "OBJ") {
-			meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+		switch (data.fileFormat) {
+			case MeshFormat::GLB: case MeshFormat::GLTF: {
+				meshData = Mesh::loadGLTF(absoluteSourcePath);
+				break;
+			}
+			case MeshFormat::OBJ: {
+				meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+				break;
+			}
+			default: {
+				AX_CORE_LOG_ERROR("Unsupported Mesh Format!");
+				return;
+			}
 		}
 
 		YAML::Emitter out;
@@ -23,7 +31,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Mesh";
-		out << YAML::Key << "Format" << YAML::Value << data.fileFormat;
+		out << YAML::Key << "Format" << YAML::Value << FormatUtils::meshFormatToString(data.fileFormat);
 		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
 
 		out << YAML::Key << "Submeshes" << YAML::Value << YAML::BeginSeq;
@@ -49,11 +57,19 @@ namespace Axion::AAP {
 		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
 
 		MeshData meshData;
-		if (data.fileFormat == "GLB" || data.fileFormat == "GLTF") {
-			meshData = Mesh::loadGLTF(absoluteSourcePath);
-		}
-		else if (data.fileFormat == "OBJ") {
-			meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+		switch (data.fileFormat) {
+			case MeshFormat::GLB: case MeshFormat::GLTF: {
+				meshData = Mesh::loadGLTF(absoluteSourcePath);
+				break;
+			}
+			case MeshFormat::OBJ: {
+				meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+				break;
+			}
+			default: {
+				AX_CORE_LOG_ERROR("Unsupported Mesh Format!");
+				return;
+			}
 		}
 
 		// -- Open Binary File --
