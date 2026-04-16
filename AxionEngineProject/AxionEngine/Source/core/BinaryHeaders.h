@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/core/UUID.h"
+#include "AxionEngine/Source/render/MaterialData.h"
 
 namespace Axion {
 

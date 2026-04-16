@@ -39,7 +39,7 @@ namespace Axion {
 		AudioManager::initialize();
 		PhysicsSystem::initialize();
 
-		AssetManager::initialize();
+		AssetManager::initialize(m_specification.assetLoader);
 		SceneManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 		ProjectManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 

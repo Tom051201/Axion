@@ -7,6 +7,7 @@
 
 #include "EditorLayer.h"
 #include "AxionStudio/Source/core/EditorTheme.h"
+#include "AxionStudio/Source/core/EditorAssetLoader.h"
 
 namespace Axion {
 
@@ -65,6 +66,7 @@ namespace Axion {
 				}
 			}
 		};
+		spec.assetLoader = new EditorAssetLoader();
 
 		return new AxionStudio(spec);
 	}

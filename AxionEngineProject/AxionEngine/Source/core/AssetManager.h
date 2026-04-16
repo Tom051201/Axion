@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/core/AssetRegistry.h"
+#include "AxionEngine/Source/core/AssetLoader.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 
 namespace Axion {
@@ -46,7 +47,7 @@ namespace Axion {
 
 		AssetManager() = delete;
 
-		static void initialize();
+		static void initialize(AssetLoader* loader);
 		static void shutdown();
 		static void onEvent(Event& e);
 
@@ -87,13 +88,15 @@ namespace Axion {
 			return storage<T>().handleToPath.at(handle);
 		}
 
-	private:
-
 		template<typename T>
 		static AssetStorage<T>& storage() {
 			static AssetStorage<T> s_storage;
 			return s_storage;
 		}
+
+	private:
+
+		inline static AssetLoader* s_loader;
 
 		template<typename T>
 		static void release() {

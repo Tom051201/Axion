@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/core/Window.h"
 #include "AxionEngine/Source/core/Cursor.h"
+#include "AxionEngine/Source/core/AssetLoader.h"
 
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
@@ -22,6 +23,7 @@ namespace Axion {
 		WindowProperties windowProperties;
 		std::function<void()> guiSyleSetter = nullptr;
 		std::filesystem::path guiLayoutFilePath;
+		AssetLoader* assetLoader = nullptr;
 	};
 
 	class Application {
