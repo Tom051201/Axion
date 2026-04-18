@@ -4,7 +4,6 @@
 #include "AxionEngine/Source/render/Renderer.h"
 
 #include "AxionEngine/Platform/directx/D12Texture.h"
-#include "AxionEngine/Platform/opengl/OpenGL3Texture.h"
 
 namespace Axion {
 
@@ -14,7 +13,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Texture2D>(path); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Texture2D>(path); }
 
 		}
 
@@ -27,7 +25,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Texture2D>(width, height, data); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Texture2D>(width, height, data); }
 
 		}
 
@@ -41,7 +38,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Texture2D>(data, size); }
-			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "OpenGL is not supported yet!"); break; }
 
 		}
 
@@ -57,7 +53,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12TextureCube>(paths); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3TextureCube>(paths); }
 
 		}
 
@@ -70,7 +65,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12TextureCube>(filePath); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3TextureCube>(filePath); }
 
 		}
 
@@ -83,7 +77,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12TextureCube>(data, size); }
-			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "None is not supported yet!"); return nullptr; }
 
 		}
 
@@ -98,7 +91,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12DepthTexture>(width, height); }
-			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "OpenGL is not supported yet!"); break; }
 
 		}
 

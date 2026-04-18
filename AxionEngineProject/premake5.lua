@@ -27,7 +27,6 @@ project "AxionEngine"
 	includedirs {
 		".",
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.GLAD}",
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.PhysX}",
 		"AxionEngine/Source",
@@ -42,7 +41,6 @@ project "AxionEngine"
 	
 	links {
 		"ImGui",
-		"GLAD",
 		"yaml-cpp",
 		"PhysXFoundation_64",
 		"PhysX_64",

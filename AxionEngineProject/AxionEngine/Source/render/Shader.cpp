@@ -4,7 +4,6 @@
 #include "AxionEngine/Source/render/Renderer.h"
 
 #include "AxionEngine/Platform/directx/D12Shader.h"
-#include "AxionEngine/Platform/opengl/OpenGL3Shader.h"
 
 namespace Axion {
 
@@ -18,7 +17,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(spec); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(spec); }
 
 		}
 		return nullptr;
@@ -31,7 +29,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Shader>(spec, filePath); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3Shader>(spec); }
 
 		}
 		return nullptr;
@@ -54,9 +51,8 @@ namespace Axion {
 	ShaderBytecode Shader::compileToBytecode(const std::filesystem::path& filePath) {
 		switch (Renderer::getAPI()) {
 
-			case RendererAPI::DirectX12: { return D12Shader::compileToBytecode(filePath); }
-			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "OpenGL compilation not implemented yet!"); break; }
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); break; }
+			case RendererAPI::DirectX12: { return D12Shader::compileToBytecode(filePath); }
 
 		}
 		return {};

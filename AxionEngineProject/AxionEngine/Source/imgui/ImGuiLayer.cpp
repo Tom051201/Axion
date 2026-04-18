@@ -15,12 +15,6 @@
 
 namespace Axion {
 
-	struct OpenGL3WindowData {
-		HDC hdc;
-		HWND hwnd;
-		OpenGL3Context* ctx;
-	};
-
 	ImGuiLayer::ImGuiLayer(const std::function<void()>& styleSetupFunc, const std::filesystem::path& layoutFilePath)
 		: Layer("ImGuiLayer"), m_activeAPI(RendererAPI::None), m_styleSetupFunc(styleSetupFunc), m_layoutFilePath(layoutFilePath) {
 		m_layoutFilePathString = m_layoutFilePath.string();
@@ -61,7 +55,6 @@ namespace Axion {
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_LOG_ERROR("None is not supported yet"); return; }
 			case Axion::RendererAPI::DirectX12: { setupD12(); break; }
-			case Axion::RendererAPI::OpenGL3: { setupOpenGL(); break; }
 		}
 
 		AX_CORE_LOG_TRACE("ImGui layer attached");
@@ -72,7 +65,6 @@ namespace Axion {
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
 			case Axion::RendererAPI::DirectX12: { ImGui_ImplDX12_Shutdown(); break; }
-			case Axion::RendererAPI::OpenGL3: { ImGui_ImplOpenGL3_Shutdown(); break; }
 		}
 
 		ImGui_ImplWin32_Shutdown();
@@ -99,7 +91,6 @@ namespace Axion {
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); return; }
 			case Axion::RendererAPI::DirectX12: { ImGui_ImplDX12_NewFrame(); break; }
-			case Axion::RendererAPI::OpenGL3: { ImGui_ImplOpenGL3_NewFrame(); break; }
 		}
 
 		ImGui_ImplWin32_NewFrame();
@@ -114,16 +105,10 @@ namespace Axion {
 
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
-
 			case Axion::RendererAPI::DirectX12: {
 				ID3D12DescriptorHeap* heaps[] = { m_d12Context->getSrvHeapWrapper().getHeap() };
 				m_d12Context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
 				ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_d12Context->getCommandList());
-				break;
-			}
-
-			case Axion::RendererAPI::OpenGL3: {
-				ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 				break;
 			}
 		}
@@ -134,9 +119,6 @@ namespace Axion {
 			ImGui::UpdatePlatformWindows();
 			if (m_activeAPI == RendererAPI::DirectX12) {
 				ImGui::RenderPlatformWindowsDefault(nullptr, m_d12Context->getCommandQueue());
-			}
-			else if (m_activeAPI == RendererAPI::OpenGL3) {
-				ImGui::RenderPlatformWindowsDefault();
 			}
 		}
 
@@ -156,57 +138,6 @@ namespace Axion {
 			srvHeap.getCpuHandle(m_srvHeapIndex),
 			srvHeap.getGpuHandle(m_srvHeapIndex)
 		);
-	}
-
-	void ImGuiLayer::setupOpenGL() {
-		const char* glsl_version = "#version 130";
-		ImGui_ImplWin32_InitForOpenGL(Application::get().getWindow().getNativeHandle());
-		ImGui_ImplOpenGL3_Init(glsl_version);
-
-		ImGuiIO& io = ImGui::GetIO();
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
-			IM_ASSERT(platform_io.Renderer_CreateWindow == NULL);
-			IM_ASSERT(platform_io.Renderer_DestroyWindow == NULL);
-			IM_ASSERT(platform_io.Renderer_SwapBuffers == NULL);
-			IM_ASSERT(platform_io.Platform_RenderWindow == NULL);
-
-			platform_io.Renderer_CreateWindow = [](ImGuiViewport* viewport) {
-				auto* context = static_cast<OpenGL3Context*>(GraphicsContext::get()->getNativeContext());
-
-				OpenGL3WindowData* data = IM_NEW(OpenGL3WindowData);
-				data->hwnd = (HWND)viewport->PlatformHandle;
-				data->hdc = GetDC(data->hwnd);
-				data->ctx = context;
-
-				viewport->RendererUserData = data;
-				wglMakeCurrent(data->hdc, context->getHGLRC());
-			};
-
-			platform_io.Renderer_DestroyWindow = [](ImGuiViewport* viewport) {
-				auto* data = static_cast<OpenGL3WindowData*>(viewport->RendererUserData);
-				if (data) {
-					wglMakeCurrent(nullptr, nullptr);
-					ReleaseDC(data->hwnd, data->hdc);
-					IM_DELETE(data);
-					viewport->RendererUserData = nullptr;
-				}
-			};
-
-			platform_io.Renderer_SwapBuffers = [](ImGuiViewport* viewport, void*) {
-				auto* data = static_cast<OpenGL3WindowData*>(viewport->RendererUserData);
-				if (data) {
-					SwapBuffers(data->hdc);
-				}
-			};
-
-			platform_io.Platform_RenderWindow = [](ImGuiViewport* viewport, void*) {
-				auto* data = static_cast<OpenGL3WindowData*>(viewport->RendererUserData);
-				if (data) {
-					wglMakeCurrent(data->hdc, data->ctx->getHGLRC());
-				}
-			};
-		}
 	}
 
 	bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& e) {

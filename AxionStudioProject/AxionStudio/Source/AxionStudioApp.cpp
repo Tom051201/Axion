@@ -58,12 +58,6 @@ namespace Axion {
 					ImGui_ImplDX12_CreateDeviceObjects();
 					break;
 				}
-
-				case Axion::RendererAPI::OpenGL3: {
-					//ImGui_ImplOpenGL3_DestroyDeviceObjects();
-					//ImGui_ImplOpenGL3_CreateDeviceObjects();	
-					break;
-				}
 			}
 		};
 		spec.assetLoader = new EditorAssetLoader();

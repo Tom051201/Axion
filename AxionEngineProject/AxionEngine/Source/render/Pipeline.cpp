@@ -13,7 +13,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12Pipeline>(spec); }
-			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "OpenGL3 is not supported yet"); return nullptr; }
 
 		}
 		return nullptr;

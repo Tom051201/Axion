@@ -4,7 +4,6 @@
 #include "AxionEngine/Source/render/Renderer.h"
 
 #include "AxionEngine/Platform/directx/D12Buffers.h"
-#include "AxionEngine/Platform/opengl/OpenGL3Buffers.h"
 
 namespace Axion {
 
@@ -33,7 +32,6 @@ namespace Axion {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12VertexBuffer>(vertices); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3VertexBuffer>(vertices); }
 
 		}
 		return nullptr;
@@ -44,7 +42,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12VertexBuffer>(size, stride); }
-			case RendererAPI::OpenGL3: { AX_CORE_ASSERT(false, "Opengl is not supported yet!"); }
 
 		}
 		return nullptr;
@@ -60,7 +57,6 @@ namespace Axion {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12IndexBuffer>(indices); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3IndexBuffer>(indices); }
 			
 		}
 		return nullptr;
@@ -73,7 +69,6 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12IndexBuffer>(maxIndices); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3IndexBuffer>(maxIndices); }
 
 		}
 		return nullptr;
@@ -88,7 +83,6 @@ namespace Axion {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return std::make_shared<D12ConstantBuffer>(size); }
-			case RendererAPI::OpenGL3: { return std::make_shared<OpenGL3ConstantBuffer>(size); }
 
 		}
 		return nullptr;

@@ -170,16 +170,12 @@ namespace Axion {
 			std::string format = data["Format"].as<std::string>();
 			RendererAPI api = Renderer::getAPI();
 
-			bool formatMatches =
-				(format == "HLSL" && api == RendererAPI::DirectX12) ||
-				(format == "GLSL" && api == RendererAPI::OpenGL3);
+			bool formatMatches = (format == "HLSL" && api == RendererAPI::DirectX12);
 
 			// -- Check extension --
 			std::string ext = sourcePath.extension().string();
 
-			bool extensionMatches =
-				(api == RendererAPI::DirectX12 && ext == "HLSL") ||
-				(api == RendererAPI::OpenGL3 && ext == "GLSL");
+			bool extensionMatches = (api == RendererAPI::DirectX12 && ext == "HLSL");
 
 			if (!formatMatches) {
 				if (extensionMatches) {
