@@ -1,6 +1,8 @@
 #include "AxMesh.h"
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
+#include "AxionAssetPipeline/Source/importer/OBJImporter.h"
+#include "AxionAssetPipeline/Source/importer/GLTFImporter.h"
 
 namespace Axion::AAP {
 
@@ -11,11 +13,11 @@ namespace Axion::AAP {
 		MeshData meshData;
 		switch (data.fileFormat) {
 			case MeshFormat::GLB: case MeshFormat::GLTF: {
-				meshData = Mesh::loadGLTF(absoluteSourcePath);
+				meshData = GLTFImporter::extractMeshes(absoluteSourcePath);
 				break;
 			}
 			case MeshFormat::OBJ: {
-				meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+				meshData = OBJImporter::extractMeshes(absoluteSourcePath);
 				break;
 			}
 			default: {
@@ -59,11 +61,11 @@ namespace Axion::AAP {
 		MeshData meshData;
 		switch (data.fileFormat) {
 			case MeshFormat::GLB: case MeshFormat::GLTF: {
-				meshData = Mesh::loadGLTF(absoluteSourcePath);
+				meshData = GLTFImporter::extractMeshes(absoluteSourcePath);
 				break;
 			}
 			case MeshFormat::OBJ: {
-				meshData = Mesh::loadOBJ(AssetManager::getAbsolute(absoluteSourcePath));
+				meshData = OBJImporter::extractMeshes(absoluteSourcePath);
 				break;
 			}
 			default: {

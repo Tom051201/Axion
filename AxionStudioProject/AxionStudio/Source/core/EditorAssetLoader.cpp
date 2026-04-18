@@ -16,6 +16,9 @@
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
+#include "AxionAssetPipeline/Source/importer/OBJImporter.h"
+#include "AxionAssetPipeline/Source/importer/GLTFImporter.h"
+
 namespace Axion {
 
 	UUID EditorAssetLoader::peekUUID(const std::filesystem::path& absolutePath) {
@@ -56,10 +59,10 @@ namespace Axion {
 				[sourcePath, format]() {
 					MeshData meshData;
 					if (format == "GLB" || format == "GLTF") {
-						meshData = Mesh::loadGLTF(sourcePath);
+						meshData = AAP::GLTFImporter::extractMeshes(sourcePath);
 					}
 					else {
-						meshData = Mesh::loadOBJ(sourcePath);
+						meshData = AAP::OBJImporter::extractMeshes(sourcePath);
 					}
 
 					return Mesh::create(meshData);

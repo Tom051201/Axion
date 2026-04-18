@@ -14,7 +14,9 @@ project "AxionAssetPipeline"
 		"AxionAssetPipeline/Source/**.h",
 		"AxionAssetPipeline/Source/**.cpp",
 		"AxionAssetPipeline/Platform/**.h",
-		"AxionAssetPipeline/Platform/**.cpp"
+		"AxionAssetPipeline/Platform/**.cpp",
+		"AxionAssetPipeline/Vendor/cgltf/cgltf.h",
+		"AxionAssetPipeline/Vendor/tinyobjloader/tiny_obj_loader.h"
 	}
 	
 	includedirs {

@@ -20,11 +20,8 @@ project "AxionEngine"
 		"AxionEngine/Platform/**.cpp",
 		"AxionEngine/Vendor/stb_image/stb_image.h",
 		"AxionEngine/Vendor/stb_image/stb_image.cpp",
-		"AxionEngine/Vendor/tinyobjloader/tiny_obj_loader.h",
 		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.h",
 		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.cpp",
-		"AxionEngine/Vendor/cgltf/cgltf.h",
-		"AxionEngine/Vendor/cgltf/cgltf.cpp"
 	}
 	
 	includedirs {
