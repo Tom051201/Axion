@@ -1,29 +1,29 @@
 #include "axpch.h"
-#include "D12Shader.h"
+#include "DX12Shader.h"
 
 #include "AxionEngine/Source/render/Vertex.h"
 #include "AxionEngine/Source/render/GraphicsContext.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
-#include "AxionEngine/Platform/directx/D12Helpers.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
+#include "AxionEngine/Platform/directx/DX12Helpers.h"
 
-#include <d3d12shader.h>
+#include <d3D12Shader.h>
 
 namespace Axion {
 
-	D12Shader::D12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {}
+	DX12Shader::DX12Shader() : m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr) {}
 
-	D12Shader::D12Shader(const ShaderSpecification& spec)
+	DX12Shader::DX12Shader(const ShaderSpecification& spec)
 		: m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec), m_shaderFileLocation("") {}
 
-	D12Shader::D12Shader(const ShaderSpecification& spec, const std::filesystem::path& filePath)
+	DX12Shader::DX12Shader(const ShaderSpecification& spec, const std::filesystem::path& filePath)
 		: m_vertexShaderBlob(nullptr), m_pixelShaderBlob(nullptr), m_specification(spec), m_shaderFileLocation(filePath) {}
 
-	D12Shader::~D12Shader() {
+	DX12Shader::~DX12Shader() {
 		release();
 	}
 
-	void D12Shader::release() {
+	void DX12Shader::release() {
 		m_rootSignature.Reset();
 		m_pixelShaderBlob.Reset();
 		m_vertexShaderBlob.Reset();
@@ -31,7 +31,7 @@ namespace Axion {
 
 
 
-	void D12Shader::compileFromFile(const std::filesystem::path& filePath) {
+	void DX12Shader::compileFromFile(const std::filesystem::path& filePath) {
 		std::string source = Shader::readShaderFile(filePath);
 
 		compileStage(source, "VSMain", SHADER_MODEL_VS, m_vertexShaderBlob);
@@ -44,7 +44,7 @@ namespace Axion {
 
 
 
-	void D12Shader::recompile() {
+	void DX12Shader::recompile() {
 		if (m_shaderFileLocation.empty()) {
 			AX_CORE_LOG_WARN("Cannot recompile a shader that has no file path cached");
 			return;
@@ -55,7 +55,7 @@ namespace Axion {
 
 
 
-	void D12Shader::loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) {
+	void DX12Shader::loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) {
 
 		HRESULT hr = D3DCreateBlob(vsSize, &m_vertexShaderBlob);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create Vertex Shader Blob for bytecode");
@@ -74,7 +74,7 @@ namespace Axion {
 
 
 
-	void D12Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob) {
+	void DX12Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob) {
 
 		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
 
@@ -106,17 +106,17 @@ namespace Axion {
 
 
 
-	void D12Shader::bind() const {}
+	void DX12Shader::bind() const {}
 
 
 
 	// not required
-	void D12Shader::unbind() const {}
+	void DX12Shader::unbind() const {}
 
 
 
-	void D12Shader::createRootSignature() {
-		auto* device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+	void DX12Shader::createRootSignature() {
+		auto* device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -231,7 +231,7 @@ namespace Axion {
 		#endif
 	}
 
-	int D12Shader::getBindPoint(const std::string& name) const {
+	int DX12Shader::getBindPoint(const std::string& name) const {
 		auto it = m_resourceMap.find(name);
 		if (it != m_resourceMap.end()) {
 			return static_cast<int>(it->second);
@@ -240,7 +240,7 @@ namespace Axion {
 		return -1;
 	}
 
-	ShaderBytecode D12Shader::compileToBytecode(const std::filesystem::path& filepath) {
+	ShaderBytecode DX12Shader::compileToBytecode(const std::filesystem::path& filepath) {
 		ShaderBytecode result;
 		std::wstring wFilePath = filepath.wstring();
 

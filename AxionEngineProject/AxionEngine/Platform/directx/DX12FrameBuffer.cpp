@@ -1,14 +1,14 @@
 #include "axpch.h"
-#include "D12FrameBuffer.h"
+#include "DX12FrameBuffer.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
-#include "AxionEngine/Platform/directx/D12Helpers.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
+#include "AxionEngine/Platform/directx/DX12Helpers.h"
 
 namespace Axion {
 
-	D12FrameBuffer::D12FrameBuffer(const FrameBufferSpecification& spec) : m_specification(spec) {
-		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-		AX_CORE_ASSERT(m_context, "Failed to acquire D12 context");
+	DX12FrameBuffer::DX12FrameBuffer(const FrameBufferSpecification& spec) : m_specification(spec) {
+		m_context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		AX_CORE_ASSERT(m_context, "Failed to acquire DirectX12 context");
 		m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
 		try {
@@ -21,11 +21,11 @@ namespace Axion {
 		}
 	}
 
-	D12FrameBuffer::~D12FrameBuffer() {
+	DX12FrameBuffer::~DX12FrameBuffer() {
 		release();
 	}
 
-	void D12FrameBuffer::release() {
+	void DX12FrameBuffer::release() {
 		if (!m_allocated) return;
 
 		if (m_colorResource) {
@@ -40,7 +40,7 @@ namespace Axion {
 		}
 	}
 
-	void D12FrameBuffer::resize(uint32_t width, uint32_t height) {
+	void DX12FrameBuffer::resize(uint32_t width, uint32_t height) {
 
 		// secures that the width and height are at
 		// least 1px otherwise this failes
@@ -70,7 +70,7 @@ namespace Axion {
 		texDesc.Height = m_specification.height;
 		texDesc.DepthOrArraySize = 1;
 		texDesc.MipLevels = 1;
-		texDesc.Format = D12Helpers::toD12ColorFormat(m_specification.textureFormat);
+		texDesc.Format = DX12Helpers::toDX12ColorFormat(m_specification.textureFormat);
 		texDesc.SampleDesc.Count = 1;
 		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -97,7 +97,7 @@ namespace Axion {
 
 
 		// ----- Depth -----
-		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(m_specification.depthStencilFormat);
+		DXGI_FORMAT depthFormat = DX12Helpers::toDX12DepthStencilFormat(m_specification.depthStencilFormat);
 		if (depthFormat == DXGI_FORMAT_UNKNOWN) {
 			AX_CORE_LOG_WARN("Attempting to create framebuffer with unknown depth format");
 		}
@@ -161,7 +161,7 @@ namespace Axion {
 		#endif
 	}
 
-	void D12FrameBuffer::bind() const {
+	void DX12FrameBuffer::bind() const {
 		auto* cmdList = m_context->getCommandList();
 		
 
@@ -201,7 +201,7 @@ namespace Axion {
 		cmdList->RSSetScissorRects(1, &sc);
 	}
 
-	void D12FrameBuffer::unbind() const {
+	void DX12FrameBuffer::unbind() const {
 		auto* cmdList = m_context->getCommandList();
 
 		// ----- Reverse barrier -----
@@ -221,14 +221,14 @@ namespace Axion {
 	// in the resource description causes warning!
 	// Setting a color here does not change the
 	// specification!
-	void D12FrameBuffer::clear(const Vec4& clearColor) {
+	void DX12FrameBuffer::clear(const Vec4& clearColor) {
 		auto* cmdList = m_context->getCommandList();
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 
 		#ifdef AX_DEBUG
 		if (clearColor != m_specification.clearColor) {
-			AX_CORE_LOG_WARN("Clearing the D12Framebuffer with not optimized color!");
+			AX_CORE_LOG_WARN("Clearing the DX12FrameBuffer with not optimized color!");
 		}
 		#endif
 
@@ -237,11 +237,11 @@ namespace Axion {
 		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	}
 
-	void D12FrameBuffer::clear() {
+	void DX12FrameBuffer::clear() {
 		clear(m_specification.clearColor);
 	}
 
-	void* D12FrameBuffer::getColorAttachmentHandle() const {
+	void* DX12FrameBuffer::getColorAttachmentHandle() const {
 		auto* device = m_context->getDevice();
 
 		uint32_t viewIndex = m_context->getSrvHeapWrapper().allocate();

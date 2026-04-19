@@ -5,13 +5,13 @@
 
 namespace Axion {
 
-	class D12Context;
+	class DX12Context;
 
-	class D12SwapChain {
+	class DX12SwapChain {
 	public:
 
-		D12SwapChain() = default;
-		~D12SwapChain();
+		DX12SwapChain() = default;
+		~DX12SwapChain();
 
 		void initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, const SwapChainSpecification& spec);
 		void release();
@@ -37,7 +37,7 @@ namespace Axion {
 	
 	private:
 
-		D12Context* m_context = nullptr;
+		DX12Context* m_context = nullptr;
 		Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swapChain;
 		SwapChainSpecification m_specification;
 

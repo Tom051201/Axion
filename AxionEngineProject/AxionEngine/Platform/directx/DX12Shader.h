@@ -8,13 +8,13 @@ namespace Axion {
 	constexpr const char* SHADER_MODEL_VS = "vs_5_1";
 	constexpr const char* SHADER_MODEL_PS = "ps_5_1";
 
-	class D12Shader : public Shader {
+	class DX12Shader : public Shader {
 	public:
 
-		D12Shader();
-		D12Shader(const ShaderSpecification& spec);
-		D12Shader(const ShaderSpecification& spec, const std::filesystem::path& filePath);
-		~D12Shader() override;
+		DX12Shader();
+		DX12Shader(const ShaderSpecification& spec);
+		DX12Shader(const ShaderSpecification& spec, const std::filesystem::path& filePath);
+		~DX12Shader() override;
 
 		void release() override;
 

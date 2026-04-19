@@ -3,16 +3,16 @@
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/render/Mesh.h"
 
-#include "AxionEngine/Platform/directx/D12Buffers.h"
+#include "AxionEngine/Platform/directx/DX12Buffers.h"
 
 namespace Axion {
 
-	class D12Mesh : public Mesh {
+	class DX12Mesh : public Mesh {
 	public:
 
-		D12Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
-		D12Mesh(const MeshData& meshData);
-		~D12Mesh() override;
+		DX12Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+		DX12Mesh(const MeshData& meshData);
+		~DX12Mesh() override;
 
 		void release() override;
 
@@ -27,8 +27,8 @@ namespace Axion {
 	private:
 
 		const AssetHandle<Mesh> m_handle;
-		Ref<D12VertexBuffer> m_vertexBuffer;
-		Ref<D12IndexBuffer> m_indexBuffer;
+		Ref<DX12VertexBuffer> m_vertexBuffer;
+		Ref<DX12IndexBuffer> m_indexBuffer;
 		std::vector<Submesh> m_submeshes;
 
 	};

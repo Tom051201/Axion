@@ -2,11 +2,11 @@
 
 namespace Axion {
 
-	class D12Fence {
+	class DX12Fence {
 	public:
 
-		D12Fence() = default;
-		~D12Fence();
+		DX12Fence() = default;
+		~DX12Fence();
 
 		void initialize(ID3D12Device* device);
 		void release();

@@ -9,7 +9,7 @@
 #include "AxionEngine/Source/events/KeyEvent.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
 
 namespace Axion {
 
@@ -35,7 +35,7 @@ namespace Axion {
 		std::string m_layoutFilePathString;
 
 		// directx12 specifics
-		D12Context* m_d12Context = nullptr;
+		DX12Context* m_DX12Context = nullptr;
 		uint32_t m_srvHeapIndex = 0;
 
 		void setupD12();

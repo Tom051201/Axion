@@ -7,11 +7,11 @@ namespace Axion {
 	///////////// RTV Heap /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	class D12rtvHeap {
+	class DX12rtvHeap {
 	public:
 
-		D12rtvHeap();
-		~D12rtvHeap();
+		DX12rtvHeap();
+		~DX12rtvHeap();
 
 		void initialize(ID3D12Device* device, uint32_t numDescriptors);
 		void release();
@@ -42,11 +42,11 @@ namespace Axion {
 	///////////// SRV Heap /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	class D12srvHeap {
+	class DX12srvHeap {
 	public:
 
-		D12srvHeap();
-		~D12srvHeap();
+		DX12srvHeap();
+		~DX12srvHeap();
 
 		void initialize(ID3D12Device* device, uint32_t numDescriptors, bool isShaderVisible, uint32_t frameCount = 3);
 		void release();
@@ -89,11 +89,11 @@ namespace Axion {
 	///////////// DSV Heap /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	class D12dsvHeap {
+	class DX12dsvHeap {
 	public:
 
-		D12dsvHeap();
-		~D12dsvHeap();
+		DX12dsvHeap();
+		~DX12dsvHeap();
 
 		void initialize(ID3D12Device* device, uint32_t numDescriptors);
 		void release();

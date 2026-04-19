@@ -1,11 +1,11 @@
 #include "axpch.h"
-#include "D12DebugLayer.h"
+#include "DX12DebugLayer.h"
 
 #include "AxionEngine/Source/EngineConfig.h"
 
 namespace Axion {
 
-	void D12DebugLayer::initialize() {
+	void DX12DebugLayer::initialize() {
 
 		Microsoft::WRL::ComPtr<ID3D12Debug> debugController;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
@@ -45,7 +45,7 @@ namespace Axion {
 
 	}
 
-	void D12DebugLayer::reportLiveObjects() {
+	void DX12DebugLayer::reportLiveObjects() {
 
 		Microsoft::WRL::ComPtr<IDXGIDebug1> dxgiDebug;
 		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug)))) {

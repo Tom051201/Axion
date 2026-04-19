@@ -7,8 +7,8 @@
 #include "AxionEngine/Source/render/RenderCommand.h"
 #include "AxionEngine/Source/render/Texture.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
-#include "AxionEngine/Platform/directx/D12CommandList.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
+#include "AxionEngine/Platform/directx/DX12CommandList.h"
 
 #include "AxionEngine/Resources/shaders/Batch2DQuad_VS.h"
 #include "AxionEngine/Resources/shaders/Batch2DQuad_PS.h"

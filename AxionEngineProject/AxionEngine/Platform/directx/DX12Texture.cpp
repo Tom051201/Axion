@@ -1,21 +1,21 @@
 #include "axpch.h"
-#include "D12Texture.h"
+#include "DX12Texture.h"
 
 #include "AxionEngine/Source/render/GraphicsContext.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
 
 namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12Texture2D /////////////////////////////////////////////////////////////
+	///// DX12Texture2D /////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	D12Texture2D::D12Texture2D(const std::filesystem::path& path) {
+	DX12Texture2D::DX12Texture2D(const std::filesystem::path& path) {
 
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = context->getDevice();
 		auto* cmdList = context->getCommandList();
 		auto* cmdQueue = context->getCommandQueue();
@@ -116,10 +116,10 @@ namespace Axion {
 		stbi_image_free(pixels);
 	}
 
-	D12Texture2D::D12Texture2D(uint32_t width, uint32_t height, void* data)
+	DX12Texture2D::DX12Texture2D(uint32_t width, uint32_t height, void* data)
 		: m_width(width), m_height(height) {
 
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = context->getDevice();
 		auto* cmdList = context->getCommandList();
 		auto* cmdQueue = context->getCommandQueue();
@@ -225,8 +225,8 @@ namespace Axion {
 		}
 	}
 
-	D12Texture2D::D12Texture2D(const uint8_t* data, size_t size) {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	DX12Texture2D::DX12Texture2D(const uint8_t* data, size_t size) {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = context->getDevice();
 		auto* cmdList = context->getCommandList();
 		auto* cmdQueue = context->getCommandQueue();
@@ -326,17 +326,17 @@ namespace Axion {
 		stbi_image_free(pixels);
 	}
 
-	D12Texture2D::~D12Texture2D() {
+	DX12Texture2D::~DX12Texture2D() {
 		release();
 	}
 
-	void D12Texture2D::release() {
+	void DX12Texture2D::release() {
 		m_textureResource.Reset();
 		m_uploadHeap.Reset();
 	}
 
-	void D12Texture2D::bind(uint32_t slot) const {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	void DX12Texture2D::bind(uint32_t slot) const {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
 		auto* device = context->getDevice();
 
@@ -352,22 +352,22 @@ namespace Axion {
 		cmdList->SetGraphicsRootDescriptorTable(slot, srvGpuHandle);
 	}
 
-	void D12Texture2D::unbind() const {
+	void DX12Texture2D::unbind() const {
 		// Explicit unbinding is not required in DirectX 12
 	}
 
-	void* D12Texture2D::getHandle() const {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	void* DX12Texture2D::getHandle() const {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		return reinterpret_cast<void*>(context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
 	}
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12TextureCube ///////////////////////////////////////////////////////////
+	///// DX12TextureCube //////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	D12TextureCube::D12TextureCube(const std::filesystem::path& filePath) {
+	DX12TextureCube::DX12TextureCube(const std::filesystem::path& filePath) {
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(false);
 		stbi_uc* fullImage = stbi_load(filePath.string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -418,7 +418,7 @@ namespace Axion {
 		}
 	}
 
-	D12TextureCube::D12TextureCube(const std::array<std::filesystem::path, 6>& paths) {
+	DX12TextureCube::DX12TextureCube(const std::array<std::filesystem::path, 6>& paths) {
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(false);
 		std::array<stbi_uc*, 6> pixels = {};
@@ -445,7 +445,7 @@ namespace Axion {
 
 	}
 
-	D12TextureCube::D12TextureCube(const uint8_t* data, size_t size) {
+	DX12TextureCube::DX12TextureCube(const uint8_t* data, size_t size) {
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(false);
 
@@ -495,17 +495,17 @@ namespace Axion {
 		}
 	}
 
-	D12TextureCube::~D12TextureCube() {
+	DX12TextureCube::~DX12TextureCube() {
 		release();
 	}
 
-	void D12TextureCube::release() {
+	void DX12TextureCube::release() {
 		m_textureResource.Reset();
 		m_uploadHeap.Reset();
 	}
 
-	void D12TextureCube::bind(uint32_t slot) const {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	void DX12TextureCube::bind(uint32_t slot) const {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
 		auto* device = context->getDevice();
 
@@ -522,17 +522,17 @@ namespace Axion {
 		cmdList->SetGraphicsRootDescriptorTable(slot, srvGpuHandle);
 	}
 
-	void D12TextureCube::unbind() const {
+	void DX12TextureCube::unbind() const {
 		// Explicit unbinding is not required in DirectX 12
 	}
 
-	void* D12TextureCube::getHandle() const {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	void* DX12TextureCube::getHandle() const {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		return reinterpret_cast<void*>(context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
 	}
 
-	void D12TextureCube::setupGpuResources(const std::array<stbi_uc*, 6>& pixels) {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	void DX12TextureCube::setupGpuResources(const std::array<stbi_uc*, 6>& pixels) {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = context->getDevice();
 		auto* cmdList = context->getCommandList();
 		auto* cmdQueue = context->getCommandQueue();
@@ -620,14 +620,14 @@ namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12DepthTexture //////////////////////////////////////////////////////////
+	///// DX12DepthTexture //////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	D12DepthTexture::D12DepthTexture(uint32_t width, uint32_t height)
+	DX12DepthTexture::DX12DepthTexture(uint32_t width, uint32_t height)
 		: m_width(width), m_height(height) {
 
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = context->getDevice();
 
 		// ----- Create resource -----
@@ -681,16 +681,16 @@ namespace Axion {
 		device->CreateShaderResourceView(m_textureResource.Get(), &srvDesc, srvCpuHandle);
 	}
 
-	D12DepthTexture::~D12DepthTexture() {
+	DX12DepthTexture::~DX12DepthTexture() {
 		release();
 	}
 
-	void D12DepthTexture::release() {
+	void DX12DepthTexture::release() {
 		m_textureResource.Reset();
 	}
 
-	void D12DepthTexture::bind(uint32_t slot) const {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	void DX12DepthTexture::bind(uint32_t slot) const {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* cmdList = context->getCommandList();
 		auto* device = context->getDevice();
 
@@ -706,12 +706,12 @@ namespace Axion {
 		cmdList->SetGraphicsRootDescriptorTable(slot, srvGpuHandle);
 	}
 
-	void D12DepthTexture::unbind() const {
+	void DX12DepthTexture::unbind() const {
 		// Explicit unbinding is not required in DirectX 12
 	}
 
-	void* D12DepthTexture::getHandle() const {
-		auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+	void* DX12DepthTexture::getHandle() const {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		return reinterpret_cast<void*>(context->getSrvHeapWrapper().getGpuHandle(m_srvHeapIndex).ptr);
 	}
 

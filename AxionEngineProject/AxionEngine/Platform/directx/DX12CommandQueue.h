@@ -2,11 +2,11 @@
 
 namespace Axion {
 	
-	class D12CommandQueue {
+	class DX12CommandQueue {
 	public:
 
-		D12CommandQueue() = default;
-		~D12CommandQueue();
+		DX12CommandQueue() = default;
+		~DX12CommandQueue();
 
 		void initialize(ID3D12Device* device);
 		void release();

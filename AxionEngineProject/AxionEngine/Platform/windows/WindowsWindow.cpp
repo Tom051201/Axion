@@ -9,7 +9,7 @@
 
 #include "AxionEngine/Platform/windows/WindowsInputMapper.h"
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
-#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
 
 #include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
 

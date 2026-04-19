@@ -2,11 +2,11 @@
 
 namespace Axion {
 
-	class D12CommandList {
+	class DX12CommandList {
 	public:
 
-		D12CommandList() = default;
-		~D12CommandList();
+		DX12CommandList() = default;
+		~DX12CommandList();
 
 		void initialize(ID3D12Device* device);
 		void release();

@@ -5,15 +5,15 @@
 namespace Axion {
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12VertexBuffer //////////////////////////////////////////////////////////
+	///// DX12VertexBuffer /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class D12VertexBuffer : public VertexBuffer {
+	class DX12VertexBuffer : public VertexBuffer {
 	public:
 
-		D12VertexBuffer(const std::vector<Vertex>& vertices);
-		D12VertexBuffer(uint32_t size, uint32_t stride);
-		~D12VertexBuffer() override;
+		DX12VertexBuffer(const std::vector<Vertex>& vertices);
+		DX12VertexBuffer(uint32_t size, uint32_t stride);
+		~DX12VertexBuffer() override;
 
 		void release() override;
 
@@ -49,15 +49,15 @@ namespace Axion {
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12IndexBuffer ///////////////////////////////////////////////////////////
+	///// DX12IndexBuffer //////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class D12IndexBuffer : public IndexBuffer {
+	class DX12IndexBuffer : public IndexBuffer {
 	public:
 
-		D12IndexBuffer(const std::vector<uint32_t>& indices);
-		D12IndexBuffer(uint32_t maxIndices);
-		~D12IndexBuffer();
+		DX12IndexBuffer(const std::vector<uint32_t>& indices);
+		DX12IndexBuffer(uint32_t maxIndices);
+		~DX12IndexBuffer();
 
 		void release() override;
 
@@ -83,14 +83,14 @@ namespace Axion {
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12ConstantBuffer ////////////////////////////////////////////////////////
+	///// DX12ConstantBuffer ///////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class D12ConstantBuffer : public ConstantBuffer {
+	class DX12ConstantBuffer : public ConstantBuffer {
 	public:
 
-		D12ConstantBuffer(size_t size);
-		~D12ConstantBuffer() override;
+		DX12ConstantBuffer(size_t size);
+		~DX12ConstantBuffer() override;
 
 		void release() override;
 

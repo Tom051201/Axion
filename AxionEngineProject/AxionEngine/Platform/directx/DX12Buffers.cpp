@@ -1,18 +1,18 @@
 #include "axpch.h"
-#include "D12Buffers.h"
+#include "DX12Buffers.h"
 
 #include "AxionEngine/Source/render/GraphicsContext.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
 
 namespace Axion {
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12VertexBuffer //////////////////////////////////////////////////////////
+	///// DX12VertexBuffer /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 	// Static Constructor
-	D12VertexBuffer::D12VertexBuffer(const std::vector<Vertex>& vertices) {
+	DX12VertexBuffer::DX12VertexBuffer(const std::vector<Vertex>& vertices) {
 		m_type = BufferType::Static;
 		m_vertexCount = static_cast<uint32_t>(vertices.size());
 		m_size = m_stride * m_vertexCount;
@@ -22,7 +22,7 @@ namespace Axion {
 
 
 		// ----- Create resource -----
-		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		auto device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
@@ -55,7 +55,7 @@ namespace Axion {
 	}
 
 	// Dynamic Constructor
-	D12VertexBuffer::D12VertexBuffer(uint32_t size, uint32_t stride) {
+	DX12VertexBuffer::DX12VertexBuffer(uint32_t size, uint32_t stride) {
 		m_type = BufferType::Dynamic;
 		m_vertexCount = 0;
 		m_size = size;
@@ -66,7 +66,7 @@ namespace Axion {
 
 
 		// ----- Create resource -----
-		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		auto device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
@@ -94,17 +94,17 @@ namespace Axion {
 		#endif
 	}
 
-	D12VertexBuffer::~D12VertexBuffer() {
+	DX12VertexBuffer::~DX12VertexBuffer() {
 		release();
 	}
 
-	void D12VertexBuffer::release() {
+	void DX12VertexBuffer::release() {
 		m_buffer.Reset();
 		m_mappedPtr = nullptr;
 	}
 
-	void D12VertexBuffer::bind(uint32_t slot, uint32_t offset) const {
-		auto cmdList = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+	void DX12VertexBuffer::bind(uint32_t slot, uint32_t offset) const {
+		auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
 		D3D12_VERTEX_BUFFER_VIEW view = m_view;
 		view.BufferLocation += offset;
 		view.SizeInBytes -= offset;
@@ -112,39 +112,39 @@ namespace Axion {
 	}
 
 	// Not required
-	void D12VertexBuffer::unbind() const {}
+	void DX12VertexBuffer::unbind() const {}
 
-	void D12VertexBuffer::update(const void* data, size_t size) {
+	void DX12VertexBuffer::update(const void* data, size_t size) {
 		AX_CORE_ASSERT(m_mappedPtr, "Attempting to update a non-dynamic vertex buffer");
 		if (size > m_size) return;
 
 		memcpy(m_mappedPtr, data, size);
 	}
 
-	void D12VertexBuffer::update(const void* data, size_t size, size_t offset) {
+	void DX12VertexBuffer::update(const void* data, size_t size, size_t offset) {
 		AX_CORE_ASSERT(m_mappedPtr, "Attempting to update a non-dynamic vertex buffer");
 		AX_CORE_ASSERT(offset + size <= m_size, "VertexBuffer overflow");
 
 		memcpy(static_cast<uint8_t*>(m_mappedPtr) + offset, data, size);
 	}
 
-	uint32_t D12VertexBuffer::append(const void* data, size_t size) {
+	uint32_t DX12VertexBuffer::append(const void* data, size_t size) {
 		uint32_t writeOffset = m_currentOffset;
 		memcpy(m_mappedPtr + writeOffset, data, size);
 		m_currentOffset += (uint32_t)size;
 		return writeOffset;
 	}
 
-	void D12VertexBuffer::resetOffset() {
+	void DX12VertexBuffer::resetOffset() {
 		m_currentOffset = 0;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12IndexBuffer ///////////////////////////////////////////////////////////
+	///// DX12IndexBuffer //////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 	// Static Constructor
-	D12IndexBuffer::D12IndexBuffer(const std::vector<uint32_t>& indices) {
+	DX12IndexBuffer::DX12IndexBuffer(const std::vector<uint32_t>& indices) {
 		m_type = BufferType::Static;
 		m_indexCount = static_cast<uint32_t>(indices.size());
 		uint32_t bufferSize = m_indexCount * sizeof(uint32_t);
@@ -154,7 +154,7 @@ namespace Axion {
 
 
 		// ----- Create resource -----
-		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		auto device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
@@ -186,7 +186,7 @@ namespace Axion {
 	}
 
 	// Dynamic Constructor
-	D12IndexBuffer::D12IndexBuffer(uint32_t maxIndices) {
+	DX12IndexBuffer::DX12IndexBuffer(uint32_t maxIndices) {
 		m_type = BufferType::Dynamic;
 		m_indexCount = 0;
 		uint32_t bufferSize = maxIndices * sizeof(uint32_t);
@@ -194,7 +194,7 @@ namespace Axion {
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
-		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		auto device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
@@ -220,31 +220,31 @@ namespace Axion {
 		#endif
 	}
 
-	D12IndexBuffer::~D12IndexBuffer() {
+	DX12IndexBuffer::~DX12IndexBuffer() {
 		release();
 	}
 
-	void D12IndexBuffer::release() {
+	void DX12IndexBuffer::release() {
 		m_buffer.Reset();
 		m_mappedPtr = nullptr;
 	}
 
-	void D12IndexBuffer::bind() const {
-		auto cmdList = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+	void DX12IndexBuffer::bind() const {
+		auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
 		cmdList->IASetIndexBuffer(&m_view);
 	}
 
 	// Not required
-	void D12IndexBuffer::unbind() const {}
+	void DX12IndexBuffer::unbind() const {}
 
-	void D12IndexBuffer::update(const void* data, size_t size) {
+	void DX12IndexBuffer::update(const void* data, size_t size) {
 		AX_CORE_ASSERT(m_mappedPtr, "Attempting to update a non-dynamic index buffer");
 		AX_CORE_ASSERT(size <= m_view.SizeInBytes, "IndexBuffer overflow");
 
 		memcpy(m_mappedPtr, data, size);
 	}
 
-	void D12IndexBuffer::update(const void* data, size_t size, size_t offset) {
+	void DX12IndexBuffer::update(const void* data, size_t size, size_t offset) {
 		AX_CORE_ASSERT(m_mappedPtr, "Attempting to update a non-dynamic index buffer");
 		AX_CORE_ASSERT(offset + size <= m_view.SizeInBytes, "IndexBuffer overflow");
 
@@ -252,16 +252,16 @@ namespace Axion {
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12ConstantBuffer ////////////////////////////////////////////////////////
+	///// DX12ConstantBuffer ///////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	D12ConstantBuffer::D12ConstantBuffer(size_t size) : m_bufferSize((size + 255) & ~255) {
+	DX12ConstantBuffer::DX12ConstantBuffer(size_t size) : m_bufferSize((size + 255) & ~255) {
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize);
 
 
 		// ----- Create resource -----
-		auto device = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		auto device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
@@ -283,35 +283,35 @@ namespace Axion {
 		#endif
 	}
 
-	D12ConstantBuffer::~D12ConstantBuffer() {
+	DX12ConstantBuffer::~DX12ConstantBuffer() {
 		release();
 	}
 	
-	void D12ConstantBuffer::release() {
+	void DX12ConstantBuffer::release() {
 		m_buffer.Reset();
 		m_mappedPtr = nullptr;
 	}
 
-	void D12ConstantBuffer::bind(uint32_t slot) const {
-		auto cmdList = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+	void DX12ConstantBuffer::bind(uint32_t slot) const {
+		auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress());
 	}
 
-	void D12ConstantBuffer::bind(uint32_t slot, size_t offset) const {
-		AX_CORE_ASSERT(offset + 256 <= m_bufferSize, "D12 ConstantBuffer bounds check failed");
-		auto cmdList = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+	void DX12ConstantBuffer::bind(uint32_t slot, size_t offset) const {
+		AX_CORE_ASSERT(offset + 256 <= m_bufferSize, "DirectX12 ConstantBuffer bounds check failed");
+		auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress() + offset);
 	}
 
 	// Not required
-	void D12ConstantBuffer::unbind() const {}
+	void DX12ConstantBuffer::unbind() const {}
 
-	void D12ConstantBuffer::update(const void* data, size_t size) {
+	void DX12ConstantBuffer::update(const void* data, size_t size) {
 		AX_CORE_ASSERT(size <= m_bufferSize, "ConstantBuffer overflow");
 		memcpy(m_mappedPtr, data, size);
 	}
 
-	uint32_t D12ConstantBuffer::append(const void* data, size_t size) {
+	uint32_t DX12ConstantBuffer::append(const void* data, size_t size) {
 		uint32_t alignedSize = (size + 255) & ~255;
 
 		AX_CORE_ASSERT(m_currentOffset + alignedSize <= m_bufferSize, "ConstantBuffer overflow");
@@ -323,7 +323,7 @@ namespace Axion {
 		return writeOffset;
 	}
 
-	void D12ConstantBuffer::resetOffset() {
+	void DX12ConstantBuffer::resetOffset() {
 		m_currentOffset = 0;
 	}
 

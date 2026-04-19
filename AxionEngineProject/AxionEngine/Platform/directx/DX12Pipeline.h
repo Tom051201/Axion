@@ -3,11 +3,11 @@
 
 namespace Axion {
 
-	class D12Pipeline : public Pipeline {
+	class DX12Pipeline : public Pipeline {
 	public:
 
-		D12Pipeline(const PipelineSpecification& spec);
-		~D12Pipeline() override;
+		DX12Pipeline(const PipelineSpecification& spec);
+		~DX12Pipeline() override;
 
 		void release() override;
 

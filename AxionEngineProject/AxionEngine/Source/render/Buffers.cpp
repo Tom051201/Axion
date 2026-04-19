@@ -3,7 +3,7 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 
-#include "AxionEngine/Platform/directx/D12Buffers.h"
+#include "AxionEngine/Platform/directx/DX12Buffers.h"
 
 namespace Axion {
 
@@ -31,7 +31,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12VertexBuffer>(vertices); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12VertexBuffer>(vertices); }
 
 		}
 		return nullptr;
@@ -41,7 +41,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12VertexBuffer>(size, stride); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12VertexBuffer>(size, stride); }
 
 		}
 		return nullptr;
@@ -56,7 +56,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12IndexBuffer>(indices); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12IndexBuffer>(indices); }
 			
 		}
 		return nullptr;
@@ -68,7 +68,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12IndexBuffer>(maxIndices); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12IndexBuffer>(maxIndices); }
 
 		}
 		return nullptr;
@@ -82,7 +82,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12ConstantBuffer>(size); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12ConstantBuffer>(size); }
 
 		}
 		return nullptr;

@@ -3,7 +3,7 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 
-#include "AxionEngine/Platform/directx/D12Pipeline.h"
+#include "AxionEngine/Platform/directx/DX12Pipeline.h"
 
 namespace Axion {
 
@@ -12,7 +12,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12Pipeline>(spec); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12Pipeline>(spec); }
 
 		}
 		return nullptr;

@@ -1,5 +1,5 @@
 #include "axpch.h"
-#include "D12DescriptorHeaps.h"
+#include "DX12DescriptorHeaps.h"
 
 namespace Axion {
 
@@ -7,13 +7,13 @@ namespace Axion {
 	///////////// RTV Heap /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	D12rtvHeap::D12rtvHeap() {}
+	DX12rtvHeap::DX12rtvHeap() {}
 
-	D12rtvHeap::~D12rtvHeap() {
+	DX12rtvHeap::~DX12rtvHeap() {
 		release();
 	}
 
-	void D12rtvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors) {
+	void DX12rtvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors) {
 		if (m_rtvHeap) release();
 
 		m_numDescriptors = numDescriptors;
@@ -36,14 +36,14 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Successfully created RTV heap with {0} descriptors", numDescriptors);
 	}
 
-	void D12rtvHeap::release() {
+	void DX12rtvHeap::release() {
 		m_rtvHeap.Reset();
 		m_nextIndex.store(0);
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		std::queue<uint32_t>().swap(m_freeList);
 	}
 
-	uint32_t D12rtvHeap::allocate() {
+	uint32_t DX12rtvHeap::allocate() {
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		if (!m_freeList.empty()) {
 			uint32_t index = m_freeList.front();
@@ -56,13 +56,13 @@ namespace Axion {
 		return idx;
 	}
 
-	void D12rtvHeap::free(uint32_t index) {
+	void DX12rtvHeap::free(uint32_t index) {
 		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid RTV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE D12rtvHeap::getCpuHandle(uint32_t index) const {
+	D3D12_CPU_DESCRIPTOR_HANDLE DX12rtvHeap::getCpuHandle(uint32_t index) const {
 		AX_CORE_ASSERT(m_rtvHeap, "RTV heap not initialized");
 		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), index, m_descriptorSize);
 		return handle;
@@ -74,13 +74,13 @@ namespace Axion {
 	///////////// SRV Heap /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	D12srvHeap::D12srvHeap() {}
+	DX12srvHeap::DX12srvHeap() {}
 
-	D12srvHeap::~D12srvHeap() {
+	DX12srvHeap::~DX12srvHeap() {
 		release();
 	}
 
-	void D12srvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors, bool isShaderVisible, uint32_t frameCount) {
+	void DX12srvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors, bool isShaderVisible, uint32_t frameCount) {
 		m_numDescriptors = numDescriptors;
 		m_frameCount = frameCount;
 
@@ -105,7 +105,7 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Successfully created SRV heap with {0} descriptors", numDescriptors);
 	}
 
-	void D12srvHeap::release() {
+	void DX12srvHeap::release() {
 		m_srvHeap.Reset();
 		m_nextIndex.store(0);
 		m_frameNextIndex.clear();
@@ -113,7 +113,7 @@ namespace Axion {
 		std::queue<uint32_t>().swap(m_freeList);
 	}
 
-	uint32_t D12srvHeap::allocate() {
+	uint32_t DX12srvHeap::allocate() {
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		if (!m_freeList.empty()) {
 			uint32_t index = m_freeList.front();
@@ -132,7 +132,7 @@ namespace Axion {
 		return idx;
 	}
 
-	uint32_t D12srvHeap::allocateRange(uint32_t count) {
+	uint32_t DX12srvHeap::allocateRange(uint32_t count) {
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		uint32_t startIdx = m_frameNextIndex[m_currentFrame];
 		m_frameNextIndex[m_currentFrame] += count;
@@ -145,18 +145,18 @@ namespace Axion {
 		return startIdx;
 	}
 
-	uint32_t D12srvHeap::allocateStatic() {
+	uint32_t DX12srvHeap::allocateStatic() {
 		AX_CORE_ASSERT(m_staticIndex < m_reservedCount, "Out of static SRV descriptors");
 		return m_staticIndex++;
 	}
 
-	void D12srvHeap::free(uint32_t index) {
+	void DX12srvHeap::free(uint32_t index) {
 		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid SRV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
 	}
 
-	void D12srvHeap::reserve(uint32_t numDescriptors) {
+	void DX12srvHeap::reserve(uint32_t numDescriptors) {
 		m_reservedCount = numDescriptors;
 
 		uint32_t dynamicCount = m_numDescriptors - m_reservedCount;
@@ -168,7 +168,7 @@ namespace Axion {
 		}
 	}
 
-	void D12srvHeap::nextFrame() {
+	void DX12srvHeap::nextFrame() {
 		m_currentFrame = (m_currentFrame + 1) % m_frameCount;
 
 		uint32_t dynamicCount = m_numDescriptors - m_reservedCount;
@@ -177,13 +177,13 @@ namespace Axion {
 		m_frameNextIndex[m_currentFrame] = m_reservedCount + (m_currentFrame * chunkSize);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE D12srvHeap::getCpuHandle(uint32_t index) const {
+	D3D12_CPU_DESCRIPTOR_HANDLE DX12srvHeap::getCpuHandle(uint32_t index) const {
 		D3D12_CPU_DESCRIPTOR_HANDLE handle = m_srvHeap->GetCPUDescriptorHandleForHeapStart();
 		handle.ptr += index * m_descriptorSize;
 		return handle;
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE D12srvHeap::getGpuHandle(uint32_t index) const {
+	D3D12_GPU_DESCRIPTOR_HANDLE DX12srvHeap::getGpuHandle(uint32_t index) const {
 		D3D12_GPU_DESCRIPTOR_HANDLE handle = m_srvHeap->GetGPUDescriptorHandleForHeapStart();
 		handle.ptr += index * m_descriptorSize;
 		return handle;
@@ -195,13 +195,13 @@ namespace Axion {
 	///////////// DSV Heap /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	D12dsvHeap::D12dsvHeap() {}
+	DX12dsvHeap::DX12dsvHeap() {}
 
-	D12dsvHeap::~D12dsvHeap() {
+	DX12dsvHeap::~DX12dsvHeap() {
 		release();
 	}
 
-	void D12dsvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors) {
+	void DX12dsvHeap::initialize(ID3D12Device* device, uint32_t numDescriptors) {
 		m_numDescriptors = numDescriptors;
 
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
@@ -222,14 +222,14 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Successfully created DSV heap with {0} descriptors", numDescriptors);
 	}
 
-	void D12dsvHeap::release() {
+	void DX12dsvHeap::release() {
 		m_dsvHeap.Reset();
 		m_nextIndex.store(0);
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		std::queue<uint32_t>().swap(m_freeList);
 	}
 
-	uint32_t D12dsvHeap::allocate() {
+	uint32_t DX12dsvHeap::allocate() {
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		if (!m_freeList.empty()) {
 			uint32_t index = m_freeList.front();
@@ -242,13 +242,13 @@ namespace Axion {
 		return idx;
 	}
 
-	void D12dsvHeap::free(uint32_t index) {
+	void DX12dsvHeap::free(uint32_t index) {
 		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid DSV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE D12dsvHeap::getCpuHandle(uint32_t index) const {
+	D3D12_CPU_DESCRIPTOR_HANDLE DX12dsvHeap::getCpuHandle(uint32_t index) const {
 		D3D12_CPU_DESCRIPTOR_HANDLE handle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 		handle.ptr += index * m_descriptorSize;
 		return handle;

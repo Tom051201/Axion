@@ -4,20 +4,20 @@
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/render/GraphicsContext.h"
 
-#include "AxionEngine/Platform/directx/D12Device.h"
-#include "AxionEngine/Platform/directx/D12CommandQueue.h"
-#include "AxionEngine/Platform/directx/D12SwapChain.h"
-#include "AxionEngine/Platform/directx/D12CommandList.h"
-#include "AxionEngine/Platform/directx/D12Fence.h"
-#include "AxionEngine/Platform/directx/D12DescriptorHeaps.h"
-#include "AxionEngine/Platform/directx/D12Texture.h"
+#include "AxionEngine/Platform/directx/DX12Device.h"
+#include "AxionEngine/Platform/directx/DX12CommandQueue.h"
+#include "AxionEngine/Platform/directx/DX12SwapChain.h"
+#include "AxionEngine/Platform/directx/DX12CommandList.h"
+#include "AxionEngine/Platform/directx/DX12Fence.h"
+#include "AxionEngine/Platform/directx/DX12DescriptorHeaps.h"
+#include "AxionEngine/Platform/directx/DX12Texture.h"
 
 namespace Axion {
 
-	class D12Context : public GraphicsContext {
+	class DX12Context : public GraphicsContext {
 	public:
 
-		~D12Context() override;
+		~DX12Context() override;
 
 		void initialize(void* hwnd, uint32_t width, uint32_t height) override;
 		void shutdown() override;
@@ -55,14 +55,14 @@ namespace Axion {
 
 		// ----- Getter for D3D12 components -----
 		D12Device& getDeviceWrapper() { return m_device; }
-		D12CommandQueue& getCommandQueueWrapper() { return m_commandQueue; }
-		D12rtvHeap& getRtvHeapWrapper() { return m_rtvHeap; }
-		D12SwapChain& getSwapChainWrapper() { return m_swapChain; }
-		D12CommandList& getCommandListWrapper() { return m_commandList; }
-		D12Fence& getFenceWrapper() { return m_fence; }
-		D12srvHeap& getSrvHeapWrapper() { return m_gpuSrvHeap; }
-		D12srvHeap& getStagingSrvHeapWrapper() { return m_stagingSrvHeap; }
-		D12dsvHeap& getDsvHeapWrapper() { return m_dsvHeap; }
+		DX12CommandQueue& getCommandQueueWrapper() { return m_commandQueue; }
+		DX12rtvHeap& getRtvHeapWrapper() { return m_rtvHeap; }
+		DX12SwapChain& getSwapChainWrapper() { return m_swapChain; }
+		DX12CommandList& getCommandListWrapper() { return m_commandList; }
+		DX12Fence& getFenceWrapper() { return m_fence; }
+		DX12srvHeap& getSrvHeapWrapper() { return m_gpuSrvHeap; }
+		DX12srvHeap& getStagingSrvHeapWrapper() { return m_stagingSrvHeap; }
+		DX12dsvHeap& getDsvHeapWrapper() { return m_dsvHeap; }
 
 		ID3D12Device* getDevice() const { return m_device.getDevice(); }
 		IDXGIFactory6* getFactory() const { return m_device.getFactory(); }
@@ -81,14 +81,14 @@ namespace Axion {
 		Vec4 m_clearColor = Vec4::zero();
 
 		D12Device m_device;
-		D12CommandQueue m_commandQueue;
-		D12rtvHeap m_rtvHeap;
-		D12SwapChain m_swapChain;
-		D12CommandList m_commandList;
-		D12Fence m_fence;
-		D12srvHeap m_gpuSrvHeap;
-		D12srvHeap m_stagingSrvHeap;
-		D12dsvHeap m_dsvHeap;
+		DX12CommandQueue m_commandQueue;
+		DX12rtvHeap m_rtvHeap;
+		DX12SwapChain m_swapChain;
+		DX12CommandList m_commandList;
+		DX12Fence m_fence;
+		DX12srvHeap m_gpuSrvHeap;
+		DX12srvHeap m_stagingSrvHeap;
+		DX12dsvHeap m_dsvHeap;
 
 	};
 

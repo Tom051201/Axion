@@ -5,7 +5,7 @@
 
 #include "AxionEngine/Source/render/Renderer.h"
 
-#include "AxionEngine/Platform/directx/D12Mesh.h"
+#include "AxionEngine/Platform/directx/DX12Mesh.h"
 
 namespace Axion {
 
@@ -14,7 +14,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12Mesh>(vertices, indices); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12Mesh>(vertices, indices); }
 
 		}
 		return nullptr;
@@ -26,7 +26,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<D12Mesh>(meshData); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12Mesh>(meshData); }
 
 		}
 		return nullptr;

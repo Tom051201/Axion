@@ -1,23 +1,23 @@
 #include "axpch.h"
-#include "D12SwapChain.h"
+#include "DX12SwapChain.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
-#include "AxionEngine/Platform/directx/D12Helpers.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
+#include "AxionEngine/Platform/directx/DX12Helpers.h"
 
 namespace Axion {
 
-	D12SwapChain::~D12SwapChain() {
+	DX12SwapChain::~DX12SwapChain() {
 		release();
 	}
 
-	void D12SwapChain::initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, const SwapChainSpecification& spec) {
+	void DX12SwapChain::initialize(HWND hwnd, IDXGIFactory6* factory, ID3D12CommandQueue* cmdQueue, const SwapChainSpecification& spec) {
 
 		AX_CORE_ASSERT(hwnd, "HWMD is null");
 		AX_CORE_ASSERT(factory, "IDXGIFactory6 is null");
 		AX_CORE_ASSERT(cmdQueue, "Command queue is null");
 
 		m_specification = spec;
-		m_context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+		m_context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		auto* device = m_context->getDevice();
 		auto& rtvHeap = m_context->getRtvHeapWrapper();
 		auto& dsvHeap = m_context->getDsvHeapWrapper();
@@ -28,7 +28,7 @@ namespace Axion {
 		swapDesc.BufferCount = spec.bufferCount;
 		swapDesc.Width = spec.width;
 		swapDesc.Height = spec.height;
-		swapDesc.Format = D12Helpers::toD12ColorFormat(spec.backBufferFormat);
+		swapDesc.Format = DX12Helpers::toDX12ColorFormat(spec.backBufferFormat);
 		swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapDesc.SampleDesc.Count = 1;
@@ -60,7 +60,7 @@ namespace Axion {
 
 
 		// ----- Create DSVs -----
-		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(spec.depthBufferFormat);
+		DXGI_FORMAT depthFormat = DX12Helpers::toDX12DepthStencilFormat(spec.depthBufferFormat);
 		for (UINT i = 0; i < spec.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 				depthFormat,
@@ -110,7 +110,7 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Successfully created {0} DSVs for the swap chain", spec.bufferCount);
 	}
 
-	void D12SwapChain::release() {
+	void DX12SwapChain::release() {
 		for (auto& buffer : m_backBuffers) { buffer.Reset(); }
 		for (auto& buffer : m_depthBuffers) { buffer.Reset(); }
 
@@ -124,7 +124,7 @@ namespace Axion {
 		m_swapChain.Reset();
 	}
 
-	void D12SwapChain::resize(UINT width, UINT height) {
+	void DX12SwapChain::resize(UINT width, UINT height) {
 		if (width == 0 || height == 0) return;
 		m_specification.width = width;
 		m_specification.height = height;
@@ -167,7 +167,7 @@ namespace Axion {
 
 
 		// ----- Recreate DSVs -----
-		DXGI_FORMAT depthFormat = D12Helpers::toD12DepthStencilFormat(m_specification.depthBufferFormat);
+		DXGI_FORMAT depthFormat = DX12Helpers::toDX12DepthStencilFormat(m_specification.depthBufferFormat);
 		for (UINT i = 0; i < m_specification.bufferCount; ++i) {
 			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 				depthFormat,
@@ -205,24 +205,24 @@ namespace Axion {
 
 	}
 
-	void D12SwapChain::present(UINT syncInterval, UINT flags) {
+	void DX12SwapChain::present(UINT syncInterval, UINT flags) {
 		AX_THROW_IF_FAILED_HR(m_swapChain->Present(syncInterval, flags), "Failed to present swap chain");
 	}
 
-	void D12SwapChain::advanceFrame() {
+	void DX12SwapChain::advanceFrame() {
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE D12SwapChain::getBackBufferRtv(uint32_t index) const {
+	D3D12_CPU_DESCRIPTOR_HANDLE DX12SwapChain::getBackBufferRtv(uint32_t index) const {
 		return m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndices[index]);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE D12SwapChain::getDepthBufferDsv(uint32_t index) const {
+	D3D12_CPU_DESCRIPTOR_HANDLE DX12SwapChain::getDepthBufferDsv(uint32_t index) const {
 		return m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndices[index]);
 	}
 
 
-	void D12SwapChain::setAsRenderTarget() {
+	void DX12SwapChain::setAsRenderTarget() {
 		auto* cmdList = m_context->getCommandList();
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndices[m_frameIndex]);
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndices[m_frameIndex]);
@@ -241,7 +241,7 @@ namespace Axion {
 		cmdList->RSSetScissorRects(1, &sc);
 	}
 
-	void D12SwapChain::clear(const float clearColor[4]) {
+	void DX12SwapChain::clear(const float clearColor[4]) {
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = getBackBufferRtv(m_frameIndex);
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = getDepthBufferDsv(m_frameIndex);
 

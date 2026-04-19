@@ -7,7 +7,7 @@
 #include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 
-#include "AxionEngine/Platform/directx/D12Context.h"
+#include "AxionEngine/Platform/directx/DX12Context.h"
 
 namespace Axion {
 
@@ -68,7 +68,7 @@ namespace Axion {
 		// setup backend specific graphics context
 		switch (s_api) {
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
-			case RendererAPI::DirectX12: { GraphicsContext::set(new D12Context()); break; }
+			case RendererAPI::DirectX12: { GraphicsContext::set(new DX12Context()); break; }
 		}
 		GraphicsContext::get()->initialize(window->getNativeHandle(), window->getWidth(), window->getHeight());
 
@@ -245,7 +245,7 @@ namespace Axion {
 		}
 
 		if (s_api == RendererAPI::DirectX12) {
-			auto* context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
+			auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 			context->bindSrvTable(rootIndex, finalTextures, count);
 		}
 	}

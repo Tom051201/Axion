@@ -2,7 +2,7 @@
 
 namespace Axion {
 
-	class D12DebugLayer {
+	class DX12DebugLayer {
 	public:
 
 		static void initialize();

@@ -9,17 +9,17 @@ namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12Texture2D /////////////////////////////////////////////////////////////
+	///// DX12Texture2D ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	class D12Texture2D : public Texture2D {
+	class DX12Texture2D : public Texture2D {
 	public:
 
-		D12Texture2D(const std::filesystem::path& path);
-		D12Texture2D(uint32_t width, uint32_t height, void* data);
-		D12Texture2D(const uint8_t* data, size_t size);
-		~D12Texture2D() override;
+		DX12Texture2D(const std::filesystem::path& path);
+		DX12Texture2D(uint32_t width, uint32_t height, void* data);
+		DX12Texture2D(const uint8_t* data, size_t size);
+		~DX12Texture2D() override;
 
 		void release() override;
 
@@ -46,18 +46,18 @@ namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12TextureCube ///////////////////////////////////////////////////////////
+	///// DX12TextureCube //////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	class D12TextureCube : public TextureCube {
+	class DX12TextureCube : public TextureCube {
 	public:
 
 		// Order: +X, -X, +Y, -Y, +Z, -Z
-		D12TextureCube(const std::filesystem::path& filePath);
-		D12TextureCube(const std::array<std::filesystem::path, 6>& paths);
-		D12TextureCube(const uint8_t* data, size_t size);
-		~D12TextureCube() override;
+		DX12TextureCube(const std::filesystem::path& filePath);
+		DX12TextureCube(const std::array<std::filesystem::path, 6>& paths);
+		DX12TextureCube(const uint8_t* data, size_t size);
+		~DX12TextureCube() override;
 
 		void release() override;
 
@@ -88,15 +88,15 @@ namespace Axion {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	///// D12DepthTexture //////////////////////////////////////////////////////////
+	///// DX12DepthTexture /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
 
-	class D12DepthTexture : public Texture2D {
+	class DX12DepthTexture : public Texture2D {
 	public:
 
-		D12DepthTexture(uint32_t width, uint32_t height);
-		~D12DepthTexture() override;
+		DX12DepthTexture(uint32_t width, uint32_t height);
+		~DX12DepthTexture() override;
 
 		void release() override;
 

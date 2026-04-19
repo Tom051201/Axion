@@ -106,9 +106,9 @@ namespace Axion {
 		switch (m_activeAPI) {
 			case Axion::RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
 			case Axion::RendererAPI::DirectX12: {
-				ID3D12DescriptorHeap* heaps[] = { m_d12Context->getSrvHeapWrapper().getHeap() };
-				m_d12Context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
-				ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_d12Context->getCommandList());
+				ID3D12DescriptorHeap* heaps[] = { m_DX12Context->getSrvHeapWrapper().getHeap() };
+				m_DX12Context->getCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
+				ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_DX12Context->getCommandList());
 				break;
 			}
 		}
@@ -118,20 +118,20 @@ namespace Axion {
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable/* && !ImGui::GetIO().WantSaveIniSettings*/) {
 			ImGui::UpdatePlatformWindows();
 			if (m_activeAPI == RendererAPI::DirectX12) {
-				ImGui::RenderPlatformWindowsDefault(nullptr, m_d12Context->getCommandQueue());
+				ImGui::RenderPlatformWindowsDefault(nullptr, m_DX12Context->getCommandQueue());
 			}
 		}
 
 	}
 
 	void ImGuiLayer::setupD12() {
-		m_d12Context = static_cast<D12Context*>(GraphicsContext::get()->getNativeContext());
-		auto& srvHeap = m_d12Context->getSrvHeapWrapper();
+		m_DX12Context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		auto& srvHeap = m_DX12Context->getSrvHeapWrapper();
 		m_srvHeapIndex = srvHeap.allocateStatic();
 
 		ImGui_ImplWin32_Init((HWND)Application::get().getWindow().getNativeHandle());
 		ImGui_ImplDX12_Init(
-			m_d12Context->getDevice(),
+			m_DX12Context->getDevice(),
 			Config::ImguiFramesInFlight,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
 			srvHeap.getHeap(),

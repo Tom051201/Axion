@@ -1,5 +1,5 @@
 #include "axpch.h"
-#include "D12Context.h"
+#include "DX12Context.h"
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/EngineAssets.h"
@@ -10,14 +10,14 @@
 
 
 #ifdef AX_DEBUG
-#include "AxionEngine/Platform/directx/D12DebugLayer.h"
+#include "AxionEngine/Platform/directx/DX12DebugLayer.h"
 #endif
 
 namespace Axion {
 
-	D12Context::~D12Context() {}
+	DX12Context::~DX12Context() {}
 
-	void D12Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
+	void DX12Context::initialize(void* hwnd, uint32_t width, uint32_t height) {
 		AX_CORE_ASSERT(hwnd, "HWND cannot be null");
 		m_width = width;
 		m_height = height;
@@ -25,7 +25,7 @@ namespace Axion {
 
 		// ----- Enable D3D12 Debug layer -----
 		#ifdef AX_DEBUG
-		D12DebugLayer::initialize();
+		DX12DebugLayer::initialize();
 		#endif
 
 
@@ -42,7 +42,7 @@ namespace Axion {
 		m_commandQueue.initialize(m_device.getDevice());
 		m_rtvHeap.initialize(m_device.getDevice(), Config::D12MaxRtvDescriptors);
 		m_gpuSrvHeap.initialize(m_device.getDevice(), Config::D12MaxSrvDescriptors, true);
-		m_gpuSrvHeap.reserve(Config::D12SrvHeapReserve);
+		m_gpuSrvHeap.reserve(Config::DX12srvHeapReserve);
 		m_stagingSrvHeap.initialize(m_device.getDevice(), Config::D12MaxSrvDescriptors, false);
 		m_dsvHeap.initialize(m_device.getDevice(), Config::D12MaxDsvDescriptors);
 		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), swapSpec);
@@ -53,7 +53,7 @@ namespace Axion {
 		AX_CORE_LOG_INFO("DirectX12 backend initialized successfully");
 	}
 
-	void D12Context::shutdown() {
+	void DX12Context::shutdown() {
 
 		waitForPreviousFrame();
 		m_commandQueue.getCommandQueue()->Signal(m_fence.getFence(), m_fence.getFenceValue());
@@ -69,13 +69,13 @@ namespace Axion {
 		m_device.release();
 
 		#ifdef AX_DEBUG
-		D12DebugLayer::reportLiveObjects();
+		DX12DebugLayer::reportLiveObjects();
 		#endif
 
 		AX_CORE_LOG_INFO("DirectX12 backend shutdown");
 	}
 
-	void D12Context::prepareRendering() {
+	void DX12Context::prepareRendering() {
 		auto* cmd = m_commandList.getCommandList();
 
 		AX_THROW_IF_FAILED_HR(m_commandList.getCommandAllocator()->Reset(), "Failed to reset command allocator");
@@ -102,7 +102,7 @@ namespace Axion {
 		cmd->SetDescriptorHeaps(1, heaps);
 	}
 
-	void D12Context::finishRendering() {
+	void DX12Context::finishRendering() {
 		// ----- Reverse barrier -----
 		m_commandList.getCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
 			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
@@ -120,16 +120,16 @@ namespace Axion {
 		waitForPreviousFrame();
 	}
 
-	void D12Context::setClearColor(const Vec4& color) {
+	void DX12Context::setClearColor(const Vec4& color) {
 		m_clearColor = color;
 	}
 
-	void D12Context::clear() {
+	void DX12Context::clear() {
 		const float clearColor[] = { m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w };
 		m_swapChain.clear(clearColor);
 	}
 
-	void D12Context::waitForPreviousFrame() {
+	void DX12Context::waitForPreviousFrame() {
 		const UINT64 currentFence = m_fence.getFenceValue();
 		AX_THROW_IF_FAILED_HR(m_commandQueue.getCommandQueue()->Signal(m_fence.getFence(), currentFence), "Failed to signal fence");
 		m_fence.incrFenceValue();
@@ -142,12 +142,12 @@ namespace Axion {
 		m_swapChain.setFrameIndex(m_swapChain.getSwapChain()->GetCurrentBackBufferIndex());
 	}
 
-	void D12Context::bindSwapChainRenderTarget() {
+	void DX12Context::bindSwapChainRenderTarget() {
 		m_swapChain.setAsRenderTarget();
 	}
 
-	void D12Context::bindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
-		auto* depthTex = static_cast<D12DepthTexture*>(depthTexture.get());
+	void DX12Context::bindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+		auto* depthTex = static_cast<DX12DepthTexture*>(depthTexture.get());
 		auto* cmd = m_commandList.getCommandList();
 
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -168,8 +168,8 @@ namespace Axion {
 		cmd->RSSetScissorRects(1, &sc);
 	}
 
-	void D12Context::unbindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
-		auto* depthTex = static_cast<D12DepthTexture*>(depthTexture.get());
+	void DX12Context::unbindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+		auto* depthTex = static_cast<DX12DepthTexture*>(depthTexture.get());
 		auto* cmd = m_commandList.getCommandList();
 
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -180,7 +180,7 @@ namespace Axion {
 		cmd->ResourceBarrier(1, &barrier);
 	}
 
-	void* D12Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
+	void* DX12Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
 		uint32_t viewIndex = m_gpuSrvHeap.allocate();
 
 		auto destHandle = m_gpuSrvHeap.getCpuHandle(viewIndex);
@@ -192,7 +192,7 @@ namespace Axion {
 		return (void*)gpuHandle.ptr;
 	}
 
-	void D12Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
+	void DX12Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
 		auto* device = m_device.getDevice();
 
 		uint32_t tableSize = Config::D12MaxTextureSlots;
@@ -214,7 +214,7 @@ namespace Axion {
 		m_commandList.getCommandList()->SetGraphicsRootDescriptorTable(rootIndex, gpuHandle);
 	}
 
-	void D12Context::resize(uint32_t width, uint32_t height) {
+	void DX12Context::resize(uint32_t width, uint32_t height) {
 		if (width <= 0 || height <= 0) return;
 
 		waitForPreviousFrame();
@@ -225,28 +225,28 @@ namespace Axion {
 		m_swapChain.resize(width, height);
 	}
 
-	void D12Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
+	void DX12Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
 		m_commandList.getCommandList()->DrawIndexedInstanced(ib->getIndexCount(), instanceCount, 0, 0, 0);
 	}
 
-	void D12Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) {
+	void DX12Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) {
 		m_commandList.getCommandList()->DrawIndexedInstanced(indexCount, instanceCount, startIndexLocation, baseVertexLocation, 0);
 	}
 
-	void D12Context::draw(uint32_t vertexCount) {
+	void DX12Context::draw(uint32_t vertexCount) {
 		m_commandList.getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 		m_commandList.getCommandList()->DrawInstanced(vertexCount, 1, 0, 0);
 		m_commandList.getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 
-	std::string D12Context::getGpuName() const {
+	std::string DX12Context::getGpuName() const {
 		DXGI_ADAPTER_DESC1 desc;
 		m_device.getAdapter()->GetDesc1(&desc);
 		std::wstring ws(desc.Description);
 		return WindowsHelper::WStringToString(ws);
 	}
 
-	std::string D12Context::getGpuDriverVersion() const {
+	std::string DX12Context::getGpuDriverVersion() const {
 		LARGE_INTEGER driverVersion;
 		if (SUCCEEDED(m_device.getAdapter()->CheckInterfaceSupport(__uuidof(IDXGIDevice), &driverVersion))) {
 			WORD product = HIWORD(driverVersion.HighPart);
@@ -265,7 +265,7 @@ namespace Axion {
 		}
 	}
 
-	uint64_t D12Context::getVramMB() const {
+	uint64_t DX12Context::getVramMB() const {
 		DXGI_ADAPTER_DESC1 desc;
 		m_device.getAdapter()->GetDesc1(&desc);
 		return desc.DedicatedVideoMemory / (1024 * 1024);

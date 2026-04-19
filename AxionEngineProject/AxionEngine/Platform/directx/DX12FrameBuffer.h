@@ -5,14 +5,14 @@
 
 namespace Axion {
 
-	class D12Context;
+	class DX12Context;
 
 
-	class D12FrameBuffer : public FrameBuffer {
+	class DX12FrameBuffer : public FrameBuffer {
 	public:
 
-		D12FrameBuffer(const FrameBufferSpecification& spec);
-		~D12FrameBuffer() override;
+		DX12FrameBuffer(const FrameBufferSpecification& spec);
+		~DX12FrameBuffer() override;
 
 		void release() override;
 		void resize(uint32_t width, uint32_t height) override;
@@ -34,7 +34,7 @@ namespace Axion {
 
 	private:
 
-		D12Context* m_context = nullptr;
+		DX12Context* m_context = nullptr;
 
 		FrameBufferSpecification m_specification;
 		bool m_allocated = false;

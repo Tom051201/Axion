@@ -21,7 +21,7 @@ namespace Axion::Config {
 	inline constexpr uint32_t D12MaxRtvDescriptors = 16;
 	inline constexpr uint32_t D12MaxSrvDescriptors = 100000;
 	inline constexpr uint32_t D12MaxDsvDescriptors = 16;
-	inline constexpr uint32_t D12SrvHeapReserve = 64;
+	inline constexpr uint32_t DX12srvHeapReserve = 64;
 	inline constexpr uint32_t D12MaxTextureSlots = 16;
 	inline constexpr bool D12EnableDebugSeverityWarning = false;
 	inline constexpr bool D12EnableDebugGpuBasedValidation = false;
