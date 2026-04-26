@@ -92,6 +92,8 @@ namespace Axion {
 		static void onCollisionEnter(void* gcHandle, Collision& collision);
 		static void onCollisionExit(void* gcHandle, Collision& collision);
 		static void updateTime(float deltaTime);
+		static void loadAppAssembly(const std::filesystem::path& filePath);
+		static bool compileAppAssembly(const std::filesystem::path& csprojPath);
 
 		// -- Metadata reflection --
 		static void registerScriptField(const std::string& className, const std::string& fieldName, ScriptFieldType type);

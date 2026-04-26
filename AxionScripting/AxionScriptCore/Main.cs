@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Runtime.Loader;
+using System.IO;
 
 namespace AxionScriptCore {
 
@@ -122,6 +125,35 @@ namespace AxionScriptCore {
 
 	public class ScriptManager {
 
+		private static Assembly? s_AppAssembly = null;
+
+		static ScriptManager() {
+			AssemblyLoadContext.Default.Resolving += OnAssemblyResolve;
+		}
+
+		private static Assembly? OnAssemblyResolve(AssemblyLoadContext context, AssemblyName assemblyName) {
+			if (assemblyName.Name != null && assemblyName.Name.Contains("AxionScriptCore")) {
+				return typeof(ScriptManager).Assembly;
+			}
+			return null;
+		}
+
+		[UnmanagedCallersOnly(EntryPoint = "LoadAppAssembly")]
+		public static unsafe void LoadAppAssembly(IntPtr assemblyPathPtr) {
+			string? path = Marshal.PtrToStringAnsi(assemblyPathPtr);
+			if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
+
+			try {
+				byte[] assemblyBytes = File.ReadAllBytes(path);
+				s_AppAssembly = Assembly.Load(assemblyBytes);
+
+				Console.WriteLine($"[C#] Successfully loaded App Assembly: {path}");
+			}
+			catch (Exception e) {
+				Console.WriteLine($"[C#] Failed to load App Assembly: {e.Message}");
+			}
+		}
+
 		[UnmanagedCallersOnly(EntryPoint = "CreateEntityScript")]
 		public static IntPtr CreateEntityScript(ulong uuidHigh, ulong uuidLow, IntPtr scriptNamePtr) {
 
@@ -132,7 +164,7 @@ namespace AxionScriptCore {
 				return IntPtr.Zero;
 			}
 
-			Type? scriptType = Type.GetType(scriptName);
+			Type? scriptType = s_AppAssembly?.GetType(scriptName) ?? Type.GetType(scriptName);
 			if (scriptType == null) {
 				Console.WriteLine($"[C#] ERROR: Could not find script class '{scriptName}'!");
 				return IntPtr.Zero;
@@ -208,27 +240,38 @@ namespace AxionScriptCore {
 
 		[UnmanagedCallersOnly(EntryPoint = "GenerateScriptMetadata")]
 		public static unsafe void GenerateScriptMetadata() {
-			var assembly = typeof(ScriptManager).Assembly;
+			if (s_AppAssembly == null) return;
 
-			foreach (var type in assembly.GetTypes()) {
-				if (type.IsSubclassOf(typeof(Entity))) {
-					IntPtr classNamePtr = Marshal.StringToHGlobalAnsi(type.FullName);
+			try {
+				foreach (var type in s_AppAssembly.GetTypes()) {
+					if (type.IsSubclassOf(typeof(Entity))) {
+						IntPtr classNamePtr = Marshal.StringToHGlobalAnsi(type.FullName);
 
-					foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
-						int fieldType = -1;
-						if (field.FieldType == typeof(float)) fieldType = 0; // Float
-						else if (field.FieldType == typeof(Vector3)) fieldType = 1; // Vector3
+						foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
+							int fieldType = -1;
+							if (field.FieldType == typeof(float)) fieldType = 0; // Float
+							else if (field.FieldType == typeof(Vector3)) fieldType = 1; // Vector3
 
-						if (fieldType != -1) {
-							IntPtr fieldNamePtr = Marshal.StringToHGlobalAnsi(field.Name);
-							CoreAPI.API.Script_RegisterField(classNamePtr, fieldNamePtr, fieldType);
-							Marshal.FreeHGlobal(fieldNamePtr);
+							if (fieldType != -1) {
+								IntPtr fieldNamePtr = Marshal.StringToHGlobalAnsi(field.Name);
+								CoreAPI.API.Script_RegisterField(classNamePtr, fieldNamePtr, fieldType);
+								Marshal.FreeHGlobal(fieldNamePtr);
+							}
 						}
+						Marshal.FreeHGlobal(classNamePtr);
 					}
-					Marshal.FreeHGlobal(classNamePtr);
+				}
+				Console.WriteLine("[C#] Reflection Metadata Generated!");
+			}
+			catch (ReflectionTypeLoadException rtle) {
+				Console.WriteLine($"[C#] Reflection Error: {rtle.Message}");
+				foreach (var ex in rtle.LoaderExceptions) {
+					Console.WriteLine($"  - {ex?.Message}");
 				}
 			}
-			Console.WriteLine("[C#] Reflection Metadata Generated!");
+			catch (Exception e) {
+				Console.WriteLine($"[C#] Metadata Error: {e.Message}");
+			}
 		}
 
 		[UnmanagedCallersOnly(EntryPoint = "GetFieldValue_Float")]

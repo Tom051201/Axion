@@ -4,6 +4,7 @@
 #include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
 #include "AxionEngine/Source/EngineConfig.h"
+#include "AxionEngine/Source/core/PlatformUtils.h"
 
 namespace Axion {
 
@@ -167,6 +168,9 @@ namespace Axion {
 			fs::create_directories(exportDir);
 
 
+			Project::generateScriptProject(projectDir);
+
+
 			// -- Setup Project --
 			result->setName(spec.name);
 			result->setVersion(spec.version);
@@ -190,6 +194,53 @@ namespace Axion {
 			AX_CORE_LOG_ERROR("Failed to create project: {}", e.what());
 			(void)e;
 			return nullptr;
+		}
+	}
+
+	void Project::generateScriptProject(const std::filesystem::path& projectDir) {
+		namespace fs = std::filesystem;
+
+		// -- Create Scripts Directory --
+		fs::path scriptsDir = projectDir / "Scripts";
+		if (!fs::exists(scriptsDir)) {
+			fs::create_directories(scriptsDir);
+		}
+
+		// -- Create C# Project --
+		fs::path csprojPath = scriptsDir / "GameAssembly.csproj";
+		if (!fs::exists(csprojPath)) {
+			fs::path engineDir = PlatformUtils::getExecutableDirectory();
+			std::string coreDllPath = (engineDir / "AxionScriptCore.dll").generic_string();
+
+			std::ofstream csprojFile(csprojPath);
+			csprojFile << "<Project Sdk=\"Microsoft.NET.Sdk\">\n";
+			csprojFile << "  <PropertyGroup>\n";
+			csprojFile << "    <TargetFramework>net10.0</TargetFramework>\n";
+			csprojFile << "    <ImplicitUsings>enable</ImplicitUsings>\n";
+			csprojFile << "    <Nullable>enable</Nullable>\n";
+			csprojFile << "  </PropertyGroup>\n";
+			csprojFile << "  <ItemGroup>\n";
+			csprojFile << "    <Reference Include=\"AxionScriptCore\">\n";
+			csprojFile << "      <HintPath>" << coreDllPath << "</HintPath>\n";
+			csprojFile << "    </Reference>\n";
+			csprojFile << "  </ItemGroup>\n";
+			csprojFile << "</Project>\n";
+			csprojFile.close();
+		}
+
+		// -- Create Sample Script --
+		fs::path sampleScriptPath = scriptsDir / "Player.cs";
+		if (!fs::exists(sampleScriptPath)) {
+			std::ofstream scriptFile(sampleScriptPath);
+			scriptFile << "using System;\nusing AxionScriptCore;\n\n";
+			scriptFile << "public class Player : Entity {\n";
+			scriptFile << "    public override void OnCreate() {\n";
+			scriptFile << "        Console.WriteLine(\"Player created!\");\n";
+			scriptFile << "    }\n";
+			scriptFile << "    public override void OnUpdate(float timestep) {\n";
+			scriptFile << "    }\n";
+			scriptFile << "}\n";
+			scriptFile.close();
 		}
 	}
 

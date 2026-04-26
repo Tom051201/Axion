@@ -18,18 +18,18 @@ AssetRegistry:
   - Handle: 61aa8ca013e9890b54366991f0eaac18
     Type: Mesh
     FilePath: meshes/Cube.axmesh
-  - Handle: def7c83f68459ff610c27a1bf55c6ed4
-    Type: None
-    FilePath: meshes/CesiumMan/CesiumMan.axskelmesh
   - Handle: b5f080dcbc66687fbaa0bbe91b24f108
     Type: Texture2D
     FilePath: textures/NormalMap.axtex
-  - Handle: 5297c6f680e015a3e4d605fc0cf32c11
-    Type: Skybox
-    FilePath: skybox/Skybox.axsky
+  - Handle: def7c83f68459ff610c27a1bf55c6ed4
+    Type: None
+    FilePath: meshes/CesiumMan/CesiumMan.axskelmesh
   - Handle: 04d4dcf41563adb69a3a1e571f1881cc
     Type: Texture2D
     FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_1.axtex
+  - Handle: 5297c6f680e015a3e4d605fc0cf32c11
+    Type: Skybox
+    FilePath: skybox/Skybox.axsky
   - Handle: 1f9aebfa16b78f1d006a63c26bfba25a
     Type: Texture2D
     FilePath: textures/MetalnessMap.axtex

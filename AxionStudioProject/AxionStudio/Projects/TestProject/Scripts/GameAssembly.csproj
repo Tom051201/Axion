@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AxionScriptCore">
+      <HintPath>D:/Coding/AxionEngine/Axion/bin/Debug-windows-x86_64/AxionStudio/AxionScriptCore.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

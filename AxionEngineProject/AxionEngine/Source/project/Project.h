@@ -52,6 +52,7 @@ namespace Axion {
 		static Ref<Project> load(const std::filesystem::path& path); // TODO: rename to loadText
 		static Ref<Project> loadBinary(const std::filesystem::path& path);
 		static Ref<Project> createNew(const ProjectSpecification& spec);
+		static void generateScriptProject(const std::filesystem::path& projectDir);
 
 	private:
 

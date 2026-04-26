@@ -189,23 +189,6 @@ namespace Axion {
 			}
 			return result;
 		}
-		//template<typename Fn>
-		//std::string runSTA(Fn&& fn) {
-		//	// REMOVE the thread creation entirely
-		//	std::string result;
-		//	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-		//	if (SUCCEEDED(hr)) {
-		//		result = fn();           // Run directly on the current thread
-		//		CoUninitialize();
-		//	}
-		//	else if (hr == RPC_E_CHANGED_MODE) {
-		//		// COM is already initialized in MTA; you can log a warning
-		//		// Or just try running fn() anyway, but some COM features may fail
-		//		result = fn();
-		//	}
-		//	return result;
-		//}
-
 	}
 
 	std::filesystem::path FileDialogs::openFile(const FilterList& filters, const std::filesystem::path &initialPath) {

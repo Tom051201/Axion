@@ -405,6 +405,17 @@ namespace Axion::AAP {
 						}
 					}
 
+					std::filesystem::path userAssembly = project->getProjectPath() / "Scripts" / "bin" / "Debug" / "net10.0" / "GameAssembly.dll";
+					std::filesystem::path destAssembly = outputDirectory / "GameAssembly.dll";
+
+					if (std::filesystem::exists(userAssembly)) {
+						std::filesystem::copy_file(userAssembly, destAssembly, std::filesystem::copy_options::overwrite_existing);
+						AX_CORE_LOG_INFO("Copied Game Scripts: GameAssembly.dll");
+					}
+					else {
+						AX_CORE_LOG_WARN("Could not find GameAssembly.dll to package! Did you build your C# project?");
+					}
+
 				}
 				catch (const std::exception& e) {
 					AX_CORE_LOG_ERROR("Failed to copy Runtime Player: {}", e.what());

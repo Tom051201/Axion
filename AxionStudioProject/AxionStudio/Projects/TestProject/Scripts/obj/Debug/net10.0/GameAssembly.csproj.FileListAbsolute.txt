@@ -1,0 +1,15 @@
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\bin\Debug\net10.0\GameAssembly.deps.json
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\bin\Debug\net10.0\GameAssembly.dll
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\bin\Debug\net10.0\GameAssembly.pdb
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\bin\Debug\net10.0\AxionScriptCore.dll
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.csproj.AssemblyReference.cache
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.GeneratedMSBuildEditorConfig.editorconfig
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.AssemblyInfoInputs.cache
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.AssemblyInfo.cs
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.csproj.CoreCompileInputs.cache
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.sourcelink.json
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAsse.29018E22.Up2Date
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.dll
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\refint\GameAssembly.dll
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\GameAssembly.pdb
+D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\obj\Debug\net10.0\ref\GameAssembly.dll

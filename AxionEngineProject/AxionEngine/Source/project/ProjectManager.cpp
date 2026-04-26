@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/events/RenderingEvent.h"
 #include "AxionEngine/Source/project/Project.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 namespace Axion {
 
@@ -77,6 +78,8 @@ namespace Axion {
 						AX_CORE_LOG_WARN("Unable loading Default Scene, loaded an emptry Scene!");
 					}
 
+					triggerScriptAssemblyLoad();
+
 					AX_CORE_LOG_INFO("Project Loaded!");
 				}
 				else {
@@ -100,6 +103,8 @@ namespace Axion {
 					s_managerData->projectPath = s_managerData->newProjectSpecification.location / safeName / (safeName + ".axproj");
 
 					SceneManager::newScene();
+
+					triggerScriptAssemblyLoad();
 
 					AX_CORE_LOG_TRACE("New Project loaded");
 				}
@@ -153,6 +158,7 @@ namespace Axion {
 		if (runtimeProject) {
 			setProject(runtimeProject);
 			s_managerData->projectPath = configFilePath;
+			triggerScriptAssemblyLoad();
 			AX_CORE_LOG_INFO("Runtime Project Loaded: {}", runtimeProject->getName());
 		}
 		else {
@@ -193,6 +199,32 @@ namespace Axion {
 
 	bool ProjectManager::isRuntime() {
 		return s_managerData->isRuntime;
+	}
+
+	void ProjectManager::triggerScriptAssemblyLoad() {
+		std::filesystem::path gameAssemblyPath;
+
+		if (s_managerData->isRuntime) {
+			gameAssemblyPath = "GameAssembly.dll";
+			ScriptEngine::loadAppAssembly(gameAssemblyPath);
+		}
+		else if (s_managerData->project) {
+			std::filesystem::path projectDir = s_managerData->projectPath.parent_path();
+			gameAssemblyPath = projectDir / "Scripts" / "bin" / "Debug" / "net10.0" / "GameAssembly.dll";
+			std::filesystem::path csprojPath = projectDir / "Scripts" / "GameAssembly.csproj";
+
+			if (!std::filesystem::exists(csprojPath)) {
+				AX_CORE_LOG_WARN("Legacy project detected. Upgrading project to support C# scripting...");
+				Project::generateScriptProject(projectDir);
+			}
+
+			if (ScriptEngine::compileAppAssembly(csprojPath)) {
+				ScriptEngine::loadAppAssembly(gameAssemblyPath);
+			}
+			else {
+				AX_CORE_LOG_ERROR("Skipped loading assembly due to compilation errors.");
+			}
+		}
 	}
 
 }

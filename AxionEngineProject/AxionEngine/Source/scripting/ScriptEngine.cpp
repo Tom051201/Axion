@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/scripting/ScriptGlue.h"
 #include "AxionEngine/Source/scene/Scene.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 #include <nethost.h>
 #include <coreclr_delegates.h>
@@ -40,6 +41,7 @@ namespace Axion {
 	typedef void(*setFloatFunc)(void*, const char*, float);
 	typedef void(*getVec3Func)(void*, const char*, float*);
 	typedef void(*setVec3Func)(void*, const char*, float*);
+	typedef void(*loadAppAssemblyFunc)(const char*);
 
 	static createScriptFunc s_createEntityScriptFunc = nullptr;
 	static destroyScriptFunc s_destroyEntityScriptFunc = nullptr;
@@ -52,6 +54,7 @@ namespace Axion {
 	static setFloatFunc s_setFloatFunc = nullptr;
 	static getVec3Func s_getVec3Func = nullptr;
 	static setVec3Func s_setVec3Func = nullptr;
+	static loadAppAssemblyFunc s_loadAppAssemblyFunc = nullptr;
 
 	void ScriptEngine::initialize() {
 		bool loadHostSuccess = loadHostFxr();
@@ -152,12 +155,13 @@ namespace Axion {
 		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"GetFieldValue_Vector3", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_getVec3Func);
 		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"SetFieldValue_Vector3", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_setVec3Func);
 
-		if (s_generateMetadataFunc) {
-			s_generateMetadataFunc();
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"LoadAppAssembly", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_loadAppAssemblyFunc);
+		if (rc != 0 || s_loadAppAssemblyFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load LoadAppAssembly.");
+			return;
 		}
 
 		AX_CORE_LOG_INFO("[ScriptEngine] ScriptManager loaded successfully!");
-
 	}
 
 	void ScriptEngine::shutdown() {
@@ -241,6 +245,49 @@ namespace Axion {
 	void ScriptEngine::updateTime(float deltaTime) {
 		if (s_updateTimeFunc) {
 			s_updateTimeFunc(deltaTime);
+		}
+	}
+
+	void ScriptEngine::loadAppAssembly(const std::filesystem::path& filePath) {
+		if (std::filesystem::exists(filePath)) {
+			std::string pathStr = filePath.string();
+			if (s_loadAppAssemblyFunc) s_loadAppAssemblyFunc(pathStr.c_str());
+
+			if (s_generateMetadataFunc) s_generateMetadataFunc();
+
+			AX_CORE_LOG_INFO("[ScriptEngine] Successfully loaded App Assembly from {}", pathStr);
+		}
+		else {
+			AX_CORE_LOG_WARN("[ScriptEngine] No GameAssembly.dll found at: {}", filePath.string());
+		}
+	}
+
+	bool ScriptEngine::compileAppAssembly(const std::filesystem::path& csprojPath) {
+		AX_CORE_LOG_INFO("[ScriptEngine] Compiling Game Scripts...");
+
+		std::string cmd = "dotnet build \"" + csprojPath.string() + "\" -c Debug";
+
+		FILE* pipe = _popen(cmd.c_str(), "r"); // TODO: make this platform indenpendent
+		if (!pipe) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to start dotnet build process!");
+			return false;
+		}
+
+		char buffer[128];
+		std::string result = "";
+		while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+			result += buffer;
+		}
+
+		int returnCode = _pclose(pipe);
+
+		if (returnCode == 0) {
+			AX_CORE_LOG_INFO("[ScriptEngine] Compilation Successful!");
+			return true;
+		}
+		else {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Compilation Failed:\n{}", result);
+			return false;
 		}
 	}
 

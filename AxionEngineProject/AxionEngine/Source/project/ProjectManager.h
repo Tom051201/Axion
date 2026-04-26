@@ -31,6 +31,7 @@ namespace Axion {
 	private:
 
 		static void setProject(const Ref<Project>& project);
+		static void triggerScriptAssemblyLoad();
 
 	};
 
