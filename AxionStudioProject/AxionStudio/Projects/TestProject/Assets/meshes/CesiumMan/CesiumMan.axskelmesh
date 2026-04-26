@@ -1,0 +1,10 @@
+Version: 1
+Name: CesiumMan
+UUID: def7c83f68459ff610c27a1bf55c6ed4
+Type: Mesh
+Source: meshes/CesiumMan/CesiumMan.glb
+Submeshes:
+  - BaseVertex: 0
+    StartIndex: 0
+    IndexCount: 14016
+    MaterialIndex: 3435973836

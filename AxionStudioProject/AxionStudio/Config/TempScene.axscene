@@ -5,11 +5,26 @@ Scene: TestScene
 Skybox: 5297c6f680e015a3e4d605fc0cf32c11
 AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
 Entities:
+  - Entity: e1c69613c23b7c4b79c761865834b4c0
+    TagComponent:
+      Tag: CesiumMan
+    TransformComponent:
+      Translation: [-0.0995261073, -1.2434063, -0.914557278]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    MaterialComponent:
+      Materials:
+        - e9d6cb395c847bbb81d581ad7d112a0c
+    SkeletalMeshComponent:
+      UUID: def7c83f68459ff610c27a1bf55c6ed4
+    AnimatorComponent:
+      CurrentClip: ddf4a5448f142811df4a8159a8234fe4
+      IsPlaying: true
   - Entity: 9aa3f51ce0b859b5f585fa9f0757232b
     TagComponent:
       Tag: Camera
     TransformComponent:
-      Translation: [-1.79543805, 0.360408187, -2.04274344]
+      Translation: [-0.601063251, 0.360408187, -2.50998735]
       Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
     CameraComponent:

@@ -26,12 +26,12 @@ namespace Axion {
 	///// VertexBuffer /////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	Ref<VertexBuffer> VertexBuffer::create(const std::vector<Vertex>& vertices) {
+	Ref<VertexBuffer> VertexBuffer::create(const void* data, uint32_t size, uint32_t stride) {
 
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12VertexBuffer>(vertices); }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12VertexBuffer>(data, size, stride); }
 
 		}
 		return nullptr;
@@ -83,6 +83,20 @@ namespace Axion {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return std::make_shared<DX12ConstantBuffer>(size); }
+
+		}
+		return nullptr;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// StructuredBuffer /////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	Ref<StructuredBuffer> StructuredBuffer::create(uint32_t elementSize, uint32_t elementCount) {
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12StructuredBuffer>(elementSize, elementCount); }
 
 		}
 		return nullptr;

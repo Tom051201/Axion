@@ -14,8 +14,11 @@
 #include "AxionAssetPipeline/Source/AxMaterial.h"
 #include "AxionAssetPipeline/Source/AxMesh.h"
 #include "AxionAssetPipeline/Source/AxPrefab.h"
+#include "AxionAssetPipeline/Source/AxSkeletalMesh.h"
+#include "AxionAssetPipeline/Source/AxAnimationClip.h"
 
 #include <fstream>
+#include <unordered_map>
 
 namespace Axion::AAP {
 
@@ -251,23 +254,73 @@ namespace Axion::AAP {
 			}
 		}
 
-		MeshAssetData meshAssetData;
-		meshAssetData.uuid = UUID::generate();
-		meshAssetData.name = baseName;
-		meshAssetData.fileFormat = (originalExt == ".glb") ? MeshFormat::GLB : MeshFormat::GLTF;
-		meshAssetData.filePath = AssetManager::getRelativeToAssets(copiedModelPath);
+		// -- Check if skeletal --
+		bool isSkeletal = data->skins_count > 0;
+		UUID mainMeshUUID = UUID::generate();
 
-		std::filesystem::path axmeshPath = meshOutputDir / (baseName + ".axmesh");
-		MeshParser::createTextFile(meshAssetData, axmeshPath);
+		if (isSkeletal) {
+			SkeletalMeshAssetData skelAssetData;
+			skelAssetData.uuid = mainMeshUUID;
+			skelAssetData.name = baseName;
+			//skelAssetData.fileFormat = (originalExt == ".glb") ? MeshFormat::GLB : MeshFormat::GLTF;
+			skelAssetData.filePath = AssetManager::getRelativeToAssets(copiedModelPath);
 
-		AssetMetadata meshMetadata;
-		meshMetadata.handle = meshAssetData.uuid;
-		meshMetadata.type = AssetType::Mesh;
-		meshMetadata.filePath = AssetManager::getRelativeToAssets(axmeshPath);
-		assetRegistry->add(meshMetadata);
+			std::filesystem::path axmeshPath = meshOutputDir / (baseName + ".axskelmesh");
+			SkeletalMeshParser::createTextFile(skelAssetData, axmeshPath);
 
-		AX_CORE_LOG_TRACE("Extracted Mesh: {}", axmeshPath.filename().string());
+			AssetMetadata meshMetadata;
+			meshMetadata.handle = skelAssetData.uuid;
+			meshMetadata.type = AssetType::SkeletalMesh;
+			meshMetadata.filePath = AssetManager::getRelativeToAssets(axmeshPath);
+			assetRegistry->add(meshMetadata);
+			AX_CORE_LOG_TRACE("Extracted Skeletal Mesh: {}", axmeshPath.filename().string());
+		}
+		else {
+			MeshAssetData meshAssetData;
+			meshAssetData.uuid = mainMeshUUID;
+			meshAssetData.name = baseName;
+			meshAssetData.fileFormat = (originalExt == ".glb") ? MeshFormat::GLB : MeshFormat::GLTF;
+			meshAssetData.filePath = AssetManager::getRelativeToAssets(copiedModelPath);
 
+			std::filesystem::path axmeshPath = meshOutputDir / (baseName + ".axmesh");
+			MeshParser::createTextFile(meshAssetData, axmeshPath);
+
+			AssetMetadata meshMetadata;
+			meshMetadata.handle = meshAssetData.uuid;
+			meshMetadata.type = AssetType::Mesh;
+			meshMetadata.filePath = AssetManager::getRelativeToAssets(axmeshPath);
+			assetRegistry->add(meshMetadata);
+			AX_CORE_LOG_TRACE("Extracted Static Mesh: {}", axmeshPath.filename().string());
+		}
+
+		// -- Phase 4: Extract Animations --
+		std::vector<UUID> extractedAnimationUUIDs;
+		if (data->animations_count > 0) {
+			std::filesystem::path animOutputDir = ProjectManager::getProject()->getAssetsPath() / "animations" / baseName;
+			std::filesystem::create_directories(animOutputDir);
+			AX_CORE_LOG_INFO("Unpacking GLB Animations: {} (Found {})", baseName, data->animations_count);
+
+			for (cgltf_size i = 0; i < data->animations_count; ++i) {
+				std::string animName = data->animations[i].name ? data->animations[i].name : (baseName + "_Anim_" + std::to_string(i));
+
+				AnimationClipAssetData animAssetData;
+				animAssetData.uuid = UUID::generate();
+				animAssetData.name = animName;
+				animAssetData.filePath = AssetManager::getRelativeToAssets(copiedModelPath);
+
+				std::filesystem::path axanimPath = animOutputDir / (animName + ".axanim");
+				AnimationClipParser::createTextFile(animAssetData, axanimPath);
+
+				AssetMetadata animMetadata;
+				animMetadata.handle = animAssetData.uuid;
+				animMetadata.type = AssetType::AnimationClip;
+				animMetadata.filePath = AssetManager::getRelativeToAssets(axanimPath);
+				assetRegistry->add(animMetadata);
+
+				extractedAnimationUUIDs.push_back(animAssetData.uuid);
+				AX_CORE_LOG_TRACE("Extracted Animation: {}", axanimPath.filename().string());
+			}
+		}
 
 
 		// -- Create Prefab --
@@ -278,9 +331,26 @@ namespace Axion::AAP {
 		Ref<Scene> tempScene = std::make_shared<Scene>();
 		Entity prefabEntity = tempScene->createEntity(baseName);
 
-		AssetHandle<Mesh> meshHandle;
-		meshHandle.uuid = meshAssetData.uuid;
-		prefabEntity.addComponent<MeshComponent>(meshHandle);
+		if (isSkeletal) {
+			AssetHandle<SkeletalMesh> skelHandle;
+			skelHandle.uuid = mainMeshUUID;
+			prefabEntity.addComponent<SkeletalMeshComponent>(skelHandle);
+
+			if (!extractedAnimationUUIDs.empty()) {
+				AssetHandle<AnimationClip> animHandle;
+				animHandle.uuid = extractedAnimationUUIDs[0];
+
+				AnimatorComponent animComp;
+				animComp.currentClip = animHandle;
+				animComp.isPlaying = true;
+				prefabEntity.addComponent<AnimatorComponent>(animComp);
+			}
+		}
+		else {
+			AssetHandle<Mesh> meshHandle;
+			meshHandle.uuid = mainMeshUUID;
+			prefabEntity.addComponent<MeshComponent>(meshHandle);
+		}
 
 		auto& matComp = prefabEntity.addComponent<MaterialComponent>();
 		matComp.materials.clear();
@@ -415,6 +485,193 @@ namespace Axion::AAP {
 
 		cgltf_free(data);
 		return meshData;
+	}
+
+	DirectX::XMMATRIX getNodeTransform(const cgltf_node* node) {
+		if (node->has_matrix) {
+			return DirectX::XMMATRIX(node->matrix);
+		}
+
+		DirectX::XMVECTOR T = DirectX::XMVectorZero();
+		DirectX::XMVECTOR R = DirectX::XMQuaternionIdentity();
+		DirectX::XMVECTOR S = DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+
+		if (node->has_translation) T = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)node->translation);
+		if (node->has_rotation) R = DirectX::XMLoadFloat4((DirectX::XMFLOAT4*)node->rotation);
+		if (node->has_scale) S = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)node->scale);
+
+		return DirectX::XMMatrixAffineTransformation(S, DirectX::XMVectorZero(), R, T);
+	}
+
+	SkeletalMeshData GLTFImporter::extractSkeletalMesh(const std::filesystem::path& path) {
+		SkeletalMeshData meshData;
+		cgltf_options options = {};
+		cgltf_data* data = nullptr;
+
+		if (cgltf_parse_file(&options, path.string().c_str(), &data) != cgltf_result_success ||
+			cgltf_load_buffers(&options, data, path.string().c_str()) != cgltf_result_success) {
+			AX_CORE_LOG_ERROR("Failed to load skeletal GLTF: {}", path.string());
+			return meshData;
+		}
+
+		if (data->skins_count == 0) {
+			cgltf_free(data);
+			return meshData;
+		}
+
+		// --- 1. Extract Skeleton ---
+		const cgltf_skin& skin = data->skins[0]; // Assuming first skin
+		std::unordered_map<const cgltf_node*, int> nodeToBoneIndex;
+		meshData.skeleton.bones.resize(skin.joints_count);
+
+		// Initialize bones
+		for (cgltf_size i = 0; i < skin.joints_count; ++i) {
+			cgltf_node* jointNode = skin.joints[i];
+			Bone& bone = meshData.skeleton.bones[i];
+			bone.name = jointNode->name ? jointNode->name : "Bone_" + std::to_string(i);
+			bone.localBindTransform = getNodeTransform(jointNode);
+			nodeToBoneIndex[jointNode] = static_cast<int>(i);
+
+			// Read Inverse Bind Matrix
+			if (skin.inverse_bind_matrices) {
+				float ibm[16];
+				cgltf_accessor_read_float(skin.inverse_bind_matrices, i, ibm, 16);
+				bone.inverseBindMatrix = DirectX::XMMATRIX(ibm);
+			}
+			else {
+				bone.inverseBindMatrix = DirectX::XMMatrixIdentity();
+			}
+		}
+
+		// Build Hierarchy
+		for (cgltf_size i = 0; i < skin.joints_count; ++i) {
+			cgltf_node* jointNode = skin.joints[i];
+			if (jointNode->parent && nodeToBoneIndex.count(jointNode->parent)) {
+				meshData.skeleton.bones[i].parentIndex = nodeToBoneIndex[jointNode->parent];
+				meshData.skeleton.bones[nodeToBoneIndex[jointNode->parent]].children.push_back(i);
+			}
+		}
+
+		DirectX::XMMATRIX accumulatedTransform = DirectX::XMMatrixIdentity();
+		if (skin.joints_count > 0 && skin.joints[0]->parent) {
+			cgltf_node* parentNode = skin.joints[0]->parent;
+			while (parentNode) {
+				// Accumulate transforms from bottom to top
+				accumulatedTransform = accumulatedTransform * getNodeTransform(parentNode);
+				parentNode = parentNode->parent;
+			}
+		}
+		meshData.skeleton.rootTransform = accumulatedTransform;
+
+		// --- 2. Extract Geometry & Skinning Weights ---
+		for (cgltf_size m = 0; m < data->meshes_count; ++m) {
+			const cgltf_mesh& mesh = data->meshes[m];
+			for (cgltf_size p = 0; p < mesh.primitives_count; ++p) {
+				const cgltf_primitive& primitive = mesh.primitives[p];
+
+				Submesh submesh;
+				submesh.baseVertex = static_cast<uint32_t>(meshData.vertices.size());
+				submesh.startIndex = static_cast<uint32_t>(meshData.indices.size());
+
+				// Indices
+				if (primitive.indices) {
+					for (cgltf_size i = 0; i < primitive.indices->count; ++i) {
+						meshData.indices.push_back(static_cast<uint32_t>(cgltf_accessor_read_index(primitive.indices, i)));
+					}
+				}
+
+				// Vertices
+				cgltf_size vertexCount = primitive.attributes[0].data->count;
+				std::vector<SkeletalVertex> submeshVerts(vertexCount);
+
+				for (cgltf_size a = 0; a < primitive.attributes_count; ++a) {
+					const cgltf_attribute& attr = primitive.attributes[a];
+					for (cgltf_size v = 0; v < vertexCount; ++v) {
+						float vals[4] = { 0.0f };
+						cgltf_accessor_read_float(attr.data, v, vals, 4);
+
+						if (attr.type == cgltf_attribute_type_position) submeshVerts[v].position = { vals[0], vals[1], vals[2] };
+						else if (attr.type == cgltf_attribute_type_normal) submeshVerts[v].normal = { vals[0], vals[1], vals[2] };
+						else if (attr.type == cgltf_attribute_type_texcoord) submeshVerts[v].texcoord = { vals[0], vals[1] };
+						else if (attr.type == cgltf_attribute_type_tangent) submeshVerts[v].tangent = { vals[0], vals[1], vals[2] };
+						else if (attr.type == cgltf_attribute_type_weights) {
+							for (int w = 0; w < 4; ++w) submeshVerts[v].boneWeights[w] = vals[w];
+						}
+						else if (attr.type == cgltf_attribute_type_joints) {
+							uint32_t jVals[4] = { 0 };
+							cgltf_accessor_read_uint(attr.data, v, jVals, 4);
+							for (int j = 0; j < 4; ++j) submeshVerts[v].boneIDs[j] = jVals[j];
+						}
+					}
+				}
+
+				meshData.vertices.insert(meshData.vertices.end(), submeshVerts.begin(), submeshVerts.end());
+				submesh.indexCount = static_cast<uint32_t>(meshData.indices.size()) - submesh.startIndex;
+				if (submesh.indexCount > 0) meshData.submeshes.push_back(submesh);
+			}
+		}
+
+		cgltf_free(data);
+		return meshData;
+	}
+
+	Ref<AnimationClip> GLTFImporter::extractAnimation(const std::filesystem::path& path) {
+		cgltf_options options = {};
+		cgltf_data* data = nullptr;
+		cgltf_parse_file(&options, path.string().c_str(), &data);
+		cgltf_load_buffers(&options, data, path.string().c_str());
+
+		if (data->animations_count == 0) {
+			cgltf_free(data);
+			return nullptr;
+		}
+
+		Ref<AnimationClip> clip = std::make_shared<AnimationClip>();
+		const cgltf_animation& anim = data->animations[0]; // Loading first animation
+		clip->ticksPerSecond = 1.0f; // GLTF uses seconds directly
+		clip->duration = 0.0f;
+
+		std::unordered_map<std::string, BoneAnimation> boneAnimMap;
+
+		for (cgltf_size c = 0; c < anim.channels_count; ++c) {
+			const cgltf_animation_channel& channel = anim.channels[c];
+			const cgltf_animation_sampler& sampler = *channel.sampler;
+
+			std::string nodeName = channel.target_node->name ? channel.target_node->name : "";
+			if (nodeName.empty()) continue;
+
+			BoneAnimation& boneAnim = boneAnimMap[nodeName];
+			boneAnim.boneName = nodeName;
+
+			cgltf_size keyframeCount = sampler.input->count;
+			std::vector<float> times(keyframeCount);
+			for (cgltf_size i = 0; i < keyframeCount; ++i) {
+				cgltf_accessor_read_float(sampler.input, i, &times[i], 1);
+				if (times[i] > clip->duration) clip->duration = times[i];
+			}
+
+			for (cgltf_size i = 0; i < keyframeCount; ++i) {
+				float vals[4] = { 0.0f };
+				cgltf_accessor_read_float(sampler.output, i, vals, 4);
+
+				if (channel.target_path == cgltf_animation_path_type_translation) {
+					boneAnim.positions.push_back({ times[i], {vals[0], vals[1], vals[2]} }); // Assuming Vec3 = XMFLOAT3
+				}
+				else if (channel.target_path == cgltf_animation_path_type_rotation) {
+					boneAnim.rotations.push_back({ times[i], {vals[0], vals[1], vals[2], vals[3]} }); // Assuming Vec4 = XMFLOAT4
+				}
+				else if (channel.target_path == cgltf_animation_path_type_scale) {
+					boneAnim.scales.push_back({ times[i], {vals[0], vals[1], vals[2]} });
+				}
+			}
+		}
+
+		for (auto& pair : boneAnimMap) {
+			clip->boneAnimations.push_back(pair.second);
+		}
+
+		cgltf_free(data);
+		return clip;
 	}
 
 }

@@ -157,6 +157,8 @@ namespace Axion {
 
 		updateScripts(ts);
 
+		updateAnimations(ts);
+
 		onUpdate(ts, cam);
 	}
 
@@ -172,6 +174,7 @@ namespace Axion {
 
 		updateScripts(ts);
 
+		updateAnimations(ts);
 
 
 		// -- Setup Camera --
@@ -298,6 +301,56 @@ namespace Axion {
 			}
 		}
 
+		// ----- Pre-Calculate Skeletal Batches -----
+		std::unordered_map<AssetHandle<SkeletalMesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<SkeletalObjectBuffer>>>> skeletalRenderBatches;
+
+		auto skelRenderView = m_registry.view<SkeletalMeshComponent, TransformComponent, MaterialComponent>();
+		for (auto [entity, skelComp, transform, materialComp] : skelRenderView.each()) {
+			if (skelComp.handle.isValid()) {
+				Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(skelComp.handle);
+				if (!mesh) continue;
+
+				Mat4 worldTransform = getWorldTransform({ entity, this });
+				SkeletalObjectBuffer objData;
+				objData.modelMatrix = worldTransform.transposed().toFloat4x4();
+
+				AnimatorComponent* animComp = m_registry.try_get<AnimatorComponent>(entity);
+				if (animComp && animComp->animator) {
+					const auto& matrices = animComp->animator->getFinalMatrices();
+					size_t boneCount = std::min(matrices.size(), (size_t)100);
+					for (size_t i = 0; i < boneCount; ++i) {
+						DirectX::XMStoreFloat4x4(&objData.boneTransforms[i], DirectX::XMMatrixTranspose(matrices[i]));
+					}
+				}
+				else {
+					// -- Fallback to Bind Pose --
+					const auto& bindPose = mesh->getBindPoseMatrices();
+					size_t boneCount = std::min(bindPose.size(), (size_t)100);
+					for (size_t i = 0; i < boneCount; ++i) {
+						DirectX::XMStoreFloat4x4(&objData.boneTransforms[i], DirectX::XMMatrixTranspose(bindPose[i]));
+					}
+
+					for (size_t i = boneCount; i < 100; ++i) {
+						DirectX::XMStoreFloat4x4(&objData.boneTransforms[i], DirectX::XMMatrixIdentity());
+					}
+				}
+
+				uint32_t submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
+
+				for (uint32_t i = 0; i < submeshCount; i++) {
+					AssetHandle<Material> matHandle = materialComp.getMaterial(i);
+					if (!matHandle.isValid()) continue;
+
+					Ref<Material> matInstance = AssetManager::get<Material>(matHandle);
+					if (!matInstance) continue;
+
+					objData.color = matInstance->getAlbedoColor().toFloat4();
+
+					skeletalRenderBatches[skelComp.handle][i][matHandle].push_back(objData);
+				}
+			}
+		}
+
 		// -- Shadow Map Pass --
 		if (lightData.directionalLights.size() > 0) {
 			Vec3 lightDir = lightData.directionalLights[0].direction;
@@ -312,6 +365,7 @@ namespace Axion {
 			Renderer3D::beginScene(lightProjection, lightView.inverse());
 			GraphicsContext::get()->bindDepthOnlyRenderTarget(Renderer::getShadowMap());
 
+			// -- Draw Shadows for Static Meshes --
 			for (auto& [meshHandle, submeshMap] : renderBatches) {
 				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 				if (!mesh) continue;
@@ -323,6 +377,21 @@ namespace Axion {
 					}
 
 					Renderer3D::drawMeshInstancedShadow(mesh, submeshIndex, flatInstanceData);
+				}
+			}
+
+			// -- Draw Shadows for Skeletal Meshes --
+			for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
+				Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
+				if (!mesh) continue;
+
+				for (auto& [submeshIndex, materialMap] : submeshMap) {
+					std::vector<SkeletalObjectBuffer> flatInstanceData;
+					for (auto& [matHandle, data] : materialMap) {
+						flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+					}
+
+					Renderer3D::drawSkeletalMeshInstancedShadow(mesh, submeshIndex, flatInstanceData);
 				}
 			}
 
@@ -340,7 +409,7 @@ namespace Axion {
 			if (skybox) skybox->onUpdate(ts);
 		}
 
-		// -- Main Scene Pass --
+		// -- Draw Static Meshes --
 		for (auto& [meshHandle, submeshMap] : renderBatches) {
 			Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 			if (!mesh) continue;
@@ -351,6 +420,21 @@ namespace Axion {
 					if (!mat) continue;
 
 					Renderer3D::drawMeshInstanced(mesh, submeshIndex, mat, instanceData);
+				}
+			}
+		}
+
+		// -- Draw Skeletal Meshes --
+		for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
+			Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
+			if (!mesh) continue;
+
+			for (auto& [submeshIndex, materialMap] : submeshMap) {
+				for (auto& [materialHandle, instanceData] : materialMap) {
+					Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+					if (!mat) continue;
+
+					Renderer3D::drawSkeletalMeshInstanced(mesh, submeshIndex, mat, instanceData);
 				}
 			}
 		}
@@ -575,6 +659,36 @@ namespace Axion {
 			}
 			if (sc.gcHandle) {
 				ScriptEngine::updateEntityScript(sc.gcHandle, ts.getSeconds());
+			}
+		}
+	}
+
+	void Scene::updateAnimations(Timestep ts) {
+		// -- Update Skeletal Animations --
+		auto animationsView = m_registry.view<AnimatorComponent, SkeletalMeshComponent>();
+		for (auto [entity, animComp, skelMeshComp] : animationsView.each()) {
+
+			// -- Create Animator if missing --
+			if (!animComp.animator && skelMeshComp.handle.isValid()) {
+				Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(skelMeshComp.handle);
+				if (mesh) {
+					animComp.animator = std::make_shared<Animator>(mesh->getSkeleton());
+				}
+			}
+
+			// -- Update Animator --
+			if (animComp.animator && animComp.isPlaying) {
+				if (animComp.currentClip != animComp.previousClip) {
+					if (animComp.currentClip.isValid()) {
+						Ref<AnimationClip> clip = AssetManager::get<AnimationClip>(animComp.currentClip);
+						if (clip) {
+							animComp.animator->playAnimation(clip);
+							animComp.previousClip = animComp.currentClip;
+						}
+					}
+				}
+
+				animComp.animator->update(ts);
 			}
 		}
 	}

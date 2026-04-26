@@ -23,11 +23,13 @@ namespace Axion {
 		static Ref<Pipeline> getSkyboxPipeline() { return s_skyboxPipeline; }
 		static Ref<Pipeline> getShadowPipeline() { return s_shadowPipeline; }
 		static Ref<Pipeline> getStandardPBRPipeline() { return s_standardPBRPipeline; }
+		static Ref<Pipeline> getSkeletalPBRPipeline() { return s_skeletalPBRPipeline; }
 
 		// ----- Shaders -----
 		static Ref<Shader> getSkyboxShader() { return s_skyboxShader; }
 		static Ref<Shader> getShadowShader() { return s_shadowShader; }
 		static Ref<Shader> getStandardPBRShader() { return s_standardPBRShader; }
+		static Ref<Shader> getSkeletalPBRShader() { return s_skeletalPBRShader; }
 
 	private:
 
@@ -39,10 +41,12 @@ namespace Axion {
 		static Ref<Pipeline> s_skyboxPipeline;
 		static Ref<Pipeline> s_shadowPipeline;
 		static Ref<Pipeline> s_standardPBRPipeline;
+		static Ref<Pipeline> s_skeletalPBRPipeline;
 
 		static Ref<Shader> s_skyboxShader;
 		static Ref<Shader> s_shadowShader;
 		static Ref<Shader> s_standardPBRShader;
+		static Ref<Shader> s_skeletalPBRShader;
 
 	};
 

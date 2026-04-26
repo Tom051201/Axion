@@ -17,5 +17,7 @@ namespace Axion {
 	constexpr uint32_t ASSET_VERSION_PREFAB = 1;
 	constexpr uint32_t ASSET_VERSION_SCENE = 2;
 	constexpr uint32_t ASSET_VERSION_TEXTURE_CUBE = 1;
+	constexpr uint32_t ASSET_VERSION_ANIMATION_CLIP = 1;
+	constexpr uint32_t ASSET_VERSION_SKELETAL_MESH = 1;
 
 }

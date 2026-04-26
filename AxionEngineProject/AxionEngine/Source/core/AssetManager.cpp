@@ -8,11 +8,13 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
+#include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Texture.h"
+#include "AxionEngine/Source/render/SkeletalMesh.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
@@ -42,6 +44,8 @@ namespace Axion {
 		release<Texture2D>();
 		release<Pipeline>();
 		release<PhysicsMaterial>();
+		release<SkeletalMesh>();
+		release<AnimationClip>();
 		release<Prefab>();
 
 		AX_CORE_LOG_INFO("AssetManager shutdown");
@@ -60,6 +64,8 @@ namespace Axion {
 			processLoadQueue<Material>();
 			processLoadQueue<AudioClip>();
 			processLoadQueue<PhysicsMaterial>();
+			processLoadQueue<SkeletalMesh>();
+			processLoadQueue<AnimationClip>();
 			processLoadQueue<Prefab>();
 
 		}
@@ -260,6 +266,36 @@ namespace Axion {
 		}
 
 		s_loader->loadPrefab(handle, getAbsolute(registry->get(handle).filePath));
+		return handle;
+	}
+
+	// -- SkeletalMesh --
+	template<>
+	AssetHandle<SkeletalMesh> AssetManager::load<SkeletalMesh>(UUID handle) {
+		if (has<SkeletalMesh>(handle)) return handle;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Prefab UUID not found in AssetRegistry!");
+			return {};
+		}
+
+		s_loader->loadSkeletalMesh(handle, getAbsolute(registry->get(handle).filePath));
+		return handle;
+	}
+
+	// -- AnimationClip --
+	template<>
+	AssetHandle<AnimationClip> AssetManager::load<AnimationClip>(UUID handle) {
+		if (has<AnimationClip>(handle)) return handle;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("Prefab UUID not found in AssetRegistry!");
+			return {};
+		}
+
+		s_loader->loadAnimationClip(handle, getAbsolute(registry->get(handle).filePath));
 		return handle;
 	}
 

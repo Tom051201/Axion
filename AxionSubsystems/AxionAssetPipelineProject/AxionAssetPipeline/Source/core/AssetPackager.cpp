@@ -19,7 +19,8 @@
 #include "AxionAssetPipeline/Source/AxTexture2D.h"
 #include "AxionAssetPipeline/Source/AxPrefab.h"
 #include "AxionAssetPipeline/Source/AxAudio.h"
-
+#include "AxionAssetPipeline/Source/AxAnimationClip.h"
+#include "AxionAssetPipeline/Source/AxSkeletalMesh.h"
 
 namespace Axion::AAP {
 
@@ -270,6 +271,30 @@ namespace Axion::AAP {
 					else {
 						AX_CORE_LOG_ERROR("Failed to bake scene {}", inPath.string());
 					}
+					break;
+				}
+				case AssetType::AnimationClip: {
+					std::ifstream stream(inPath);
+					YAML::Node data = YAML::Load(stream);
+
+					AnimationClipAssetData clipData;
+					clipData.uuid = uuid;
+					clipData.name = data["Name"].as<std::string>();
+					clipData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+
+					AnimationClipParser::createBinaryFile(clipData, runtimeAbsolutePath);
+					break;
+				}
+				case AssetType::SkeletalMesh: {
+					std::ifstream stream(inPath);
+					YAML::Node data = YAML::Load(stream);
+
+					SkeletalMeshAssetData meshData;
+					meshData.uuid = uuid;
+					meshData.name = data["Name"].as<std::string>();
+					meshData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+
+					SkeletalMeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
 					break;
 				}
 				default: {

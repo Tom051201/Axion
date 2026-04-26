@@ -7,6 +7,8 @@
 #include "AxionEngine/Resources/shaders/Skybox_PS.h"
 #include "AxionEngine/Resources/shaders/StandardPBR_VS.h"
 #include "AxionEngine/Resources/shaders/StandardPBR_PS.h"
+#include "AxionEngine/Resources/shaders/SkeletalPBR_VS.h"
+#include "AxionEngine/Resources/shaders/SkeletalPBR_PS.h"
 
 namespace Axion {
 
@@ -16,9 +18,11 @@ namespace Axion {
 	Ref<Pipeline> EngineAssets::s_skyboxPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_shadowPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_standardPBRPipeline = nullptr;
+	Ref<Pipeline> EngineAssets::s_skeletalPBRPipeline = nullptr;
 	Ref<Shader> EngineAssets::s_skyboxShader = nullptr;
 	Ref<Shader> EngineAssets::s_shadowShader = nullptr;
 	Ref<Shader> EngineAssets::s_standardPBRShader = nullptr;
+	Ref<Shader> EngineAssets::s_skeletalPBRShader = nullptr;
 
 	void EngineAssets::initialize() {
 		// -- White Texture --
@@ -155,6 +159,39 @@ namespace Axion {
 		};
 		s_standardPBRPipeline = Pipeline::create(standardPBRPipeSpec);
 
+		// -- Skeletal PBR Shader --
+		ShaderSpecification skeletalPBRShaderSpec;
+		skeletalPBRShaderSpec.name = "SkeletalPBRShader";
+		skeletalPBRShaderSpec.batchTextures = 16;
+		s_skeletalPBRShader = Shader::create(skeletalPBRShaderSpec);
+		s_skeletalPBRShader->loadFromBytecode(
+			g_SkeletalPBR_VS, sizeof(g_SkeletalPBR_VS),
+			g_SkeletalPBR_PS, sizeof(g_SkeletalPBR_PS)
+		);
+
+		// -- Skeletal PBR Pipeline --
+		PipelineSpecification skeletalPBRPipeSpec;
+		skeletalPBRPipeSpec.shader = s_skeletalPBRShader;
+		skeletalPBRPipeSpec.numRenderTargets = 1;
+		skeletalPBRPipeSpec.colorFormat = ColorFormat::RGBA8;
+		skeletalPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		skeletalPBRPipeSpec.depthTest = true;
+		skeletalPBRPipeSpec.depthWrite = true;
+		skeletalPBRPipeSpec.depthFunction = DepthCompare::Less;
+		skeletalPBRPipeSpec.stencilEnabled = false;
+		skeletalPBRPipeSpec.sampleCount = 1;
+		skeletalPBRPipeSpec.cullMode = CullMode::Back;
+		skeletalPBRPipeSpec.topology = PrimitiveTopology::TriangleList;
+		skeletalPBRPipeSpec.vertexLayout = {
+			{ "POSITION",		ShaderDataType::Float3 },
+			{ "NORMAL",			ShaderDataType::Float3 },
+			{ "TANGENT",		ShaderDataType::Float3 },
+			{ "TEXCOORD",		ShaderDataType::Float2 },
+			{ "BLENDINDICES",	ShaderDataType::Int4 },
+			{ "BLENDWEIGHT",	ShaderDataType::Float4 }
+		};
+		s_skeletalPBRPipeline = Pipeline::create(skeletalPBRPipeSpec);
+
 		AX_CORE_LOG_INFO("Engine Assets initialized");
 	}
 
@@ -167,10 +204,12 @@ namespace Axion {
 		s_skyboxShader->release();
 		s_shadowShader->release();
 		s_standardPBRShader->release();
+		s_skeletalPBRShader->release();
 
 		s_skyboxPipeline->release();
 		s_shadowPipeline->release();
 		s_standardPBRPipeline->release();
+		s_skeletalPBRPipeline->release();
 
 		AX_CORE_LOG_INFO("Engine Assets shutdown");
 	}

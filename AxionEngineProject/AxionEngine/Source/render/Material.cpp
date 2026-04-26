@@ -31,7 +31,7 @@ namespace Axion {
 			pipeline = AssetManager::get<Pipeline>(m_pipelineHandle);
 		}
 		else {
-			pipeline = EngineAssets::getStandardPBRPipeline();
+			pipeline = m_isSkeletal ? EngineAssets::getSkeletalPBRPipeline() : EngineAssets::getStandardPBRPipeline();
 		}
 		if (!pipeline) return;
 

@@ -11,7 +11,7 @@ namespace Axion {
 	class DX12VertexBuffer : public VertexBuffer {
 	public:
 
-		DX12VertexBuffer(const std::vector<Vertex>& vertices);
+		DX12VertexBuffer(const void* data, uint32_t size, uint32_t stride);
 		DX12VertexBuffer(uint32_t size, uint32_t stride);
 		~DX12VertexBuffer() override;
 
@@ -110,6 +110,43 @@ namespace Axion {
 		uint8_t* m_mappedPtr;
 		size_t m_bufferSize = 0;
 
+		uint32_t m_currentOffset = 0;
+
+	};
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// DX12StructuredBuffer /////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	class DX12StructuredBuffer : public StructuredBuffer {
+	public:
+
+		DX12StructuredBuffer(uint32_t elementSize, uint32_t elementCount);
+		~DX12StructuredBuffer() override;
+
+		void release() override;
+
+		void bind(uint32_t slot) const override;
+		void bind(uint32_t slot, size_t offset) const override;
+		void unbind() const override;
+
+		void update(const void* data, size_t size) override;
+		void update(const void* data, size_t size, size_t offset) override;
+		uint32_t append(const void* data, size_t size) override;
+		void resetOffset() override;
+
+		uint32_t getSize() const override { return m_bufferSize; }
+		uint32_t getElementCount() const override { return m_elementCount; }
+		uint32_t getElementSize() const override { return m_elementSize; }
+
+	private:
+
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_buffer;
+		uint8_t* m_mappedPtr;
+
+		uint32_t m_elementSize = 0;
+		uint32_t m_elementCount = 0;
+		uint32_t m_bufferSize = 0;
 		uint32_t m_currentOffset = 0;
 
 	};

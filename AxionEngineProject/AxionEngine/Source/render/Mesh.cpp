@@ -1,36 +1,37 @@
 #include "axpch.h"
 #include "Mesh.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
-
 #include "AxionEngine/Source/render/Renderer.h"
-
-#include "AxionEngine/Platform/directx/DX12Mesh.h"
 
 namespace Axion {
 
+	Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
+		m_vertexBuffer = VertexBuffer::create(vertices);
+		m_indexBuffer = IndexBuffer::create(indices);
+	}
+
+	Mesh::Mesh(const MeshData& meshData) {
+		m_vertexBuffer = VertexBuffer::create(meshData.vertices);
+		m_indexBuffer = IndexBuffer::create(meshData.indices);
+		m_submeshes = meshData.submeshes;
+	}
+
+	Mesh::~Mesh() {
+		release();
+	}
+
+	void Mesh::release() {
+		m_vertexBuffer->release();
+		m_indexBuffer->release();
+		m_submeshes.clear();
+	}
+
 	Ref<Mesh> Mesh::create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
-
-		switch (Renderer::getAPI()) {
-
-			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Mesh>(vertices, indices); }
-
-		}
-		return nullptr;
-
+		return std::make_shared<Mesh>(vertices, indices);
 	}
 
 	Ref<Mesh> Mesh::create(const MeshData& meshData) {
-
-		switch (Renderer::getAPI()) {
-
-			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Mesh>(meshData); }
-
-		}
-		return nullptr;
-
+		return std::make_shared<Mesh>(meshData);
 	}
 
 

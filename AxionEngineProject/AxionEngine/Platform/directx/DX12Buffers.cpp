@@ -12,10 +12,11 @@ namespace Axion {
 	////////////////////////////////////////////////////////////////////////////////
 
 	// Static Constructor
-	DX12VertexBuffer::DX12VertexBuffer(const std::vector<Vertex>& vertices) {
+	DX12VertexBuffer::DX12VertexBuffer(const void* data, uint32_t size, uint32_t stride) {
 		m_type = BufferType::Static;
-		m_vertexCount = static_cast<uint32_t>(vertices.size());
-		m_size = m_stride * m_vertexCount;
+		m_stride = stride;
+		m_size = size;
+		m_vertexCount = m_size / m_stride;
 
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_size);
@@ -39,7 +40,7 @@ namespace Axion {
 		hr = m_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedPtr));
 		AX_THROW_IF_FAILED_HR(hr, "Failed to map vertex buffer");
 
-		memcpy(m_mappedPtr, vertices.data(), m_size);
+		memcpy(m_mappedPtr, data, m_size);
 		m_buffer->Unmap(0, nullptr);
 		m_mappedPtr = nullptr;
 
@@ -324,6 +325,86 @@ namespace Axion {
 	}
 
 	void DX12ConstantBuffer::resetOffset() {
+		m_currentOffset = 0;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// DX12StructuredBuffer /////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	DX12StructuredBuffer::DX12StructuredBuffer(uint32_t elementSize, uint32_t elementCount)
+		: m_elementSize(elementSize), m_elementCount(elementCount) {
+
+		m_bufferSize = m_elementSize * m_elementCount;
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize);
+
+		// ----- Create Resource -----
+		auto device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		HRESULT hr = device->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_buffer)
+		);
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create structured buffer");
+
+		// ----- Upload data -----
+		D3D12_RANGE readRange = { 0, 0 };
+		hr = m_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedPtr));
+		AX_THROW_IF_FAILED_HR(hr, "Failed to map structured buffer");
+
+		#ifdef AX_DEBUG
+		m_buffer->SetName(L"StructuredBuffer");
+		#endif
+	}
+
+	DX12StructuredBuffer::~DX12StructuredBuffer() {
+		release();
+	}
+
+	void DX12StructuredBuffer::release() {
+		if (m_buffer && m_mappedPtr) {
+			m_buffer->Unmap(0, nullptr);
+		}
+		m_buffer.Reset();
+		m_mappedPtr = nullptr;
+	}
+
+	void DX12StructuredBuffer::bind(uint32_t slot) const {
+		auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+		cmdList->SetGraphicsRootShaderResourceView(slot, m_buffer->GetGPUVirtualAddress());
+	}
+
+	void DX12StructuredBuffer::bind(uint32_t slot, size_t offset) const {
+		auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+		cmdList->SetGraphicsRootShaderResourceView(slot, m_buffer->GetGPUVirtualAddress() + offset);
+	}
+
+	void DX12StructuredBuffer::unbind() const {}
+
+	void DX12StructuredBuffer::update(const void* data, size_t size) {
+		AX_CORE_ASSERT(size <= m_bufferSize, "StructuredBuffer overflow");
+		memcpy(m_mappedPtr, data, size);
+	}
+
+	void DX12StructuredBuffer::update(const void* data, size_t size, size_t offset) {
+		AX_CORE_ASSERT(offset + size <= m_bufferSize, "StructuredBuffer overflow");
+		memcpy(m_mappedPtr + offset, data, size);
+	}
+
+	uint32_t DX12StructuredBuffer::append(const void* data, size_t size) {
+		AX_CORE_ASSERT(m_currentOffset + size <= m_bufferSize, "StructuredBuffer overflow");
+		uint32_t writeOffset = m_currentOffset;
+		memcpy(m_mappedPtr + writeOffset, data, size);
+		m_currentOffset += (uint32_t)size;
+		return writeOffset;
+	}
+
+	void DX12StructuredBuffer::resetOffset() {
 		m_currentOffset = 0;
 	}
 

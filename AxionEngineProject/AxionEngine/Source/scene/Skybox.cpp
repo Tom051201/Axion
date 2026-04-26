@@ -35,7 +35,8 @@ namespace Axion {
 		texture->bind(1);
 
 		Ref<Mesh> mesh = EngineAssets::getCubeMesh();
-		mesh->render();
+		mesh->getVertexBuffer()->bind();
+		mesh->getIndexBuffer()->bind();
 		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
 
 		pipeline->unbind();

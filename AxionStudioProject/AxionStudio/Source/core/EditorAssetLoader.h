@@ -19,6 +19,8 @@ namespace Axion {
 		void loadAudioClip(UUID handle, const std::filesystem::path& absolutePath) override;
 		void loadPhysicsMaterial(UUID handle, const std::filesystem::path& absolutePath) override;
 		void loadPrefab(UUID handle, const std::filesystem::path& absolutePath) override;
+		void loadAnimationClip(UUID handle, const std::filesystem::path& absolutePath) override;
+		void loadSkeletalMesh(UUID handle, const std::filesystem::path& absolutePath) override;
 
 		void reloadMaterial(UUID handle, const std::filesystem::path& absolutePath) override;
 

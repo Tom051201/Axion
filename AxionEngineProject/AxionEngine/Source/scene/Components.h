@@ -7,10 +7,12 @@
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Texture.h"
+#include "AxionEngine/Source/render/SkeletalMesh.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 #include "AxionEngine/Source/scene/ParticleSystem.h"
+#include "AxionEngine/Source/scene/Animation.h"
 
 #include "AxionEngine/Vendor/entt/entt.hpp"
 
@@ -311,5 +313,30 @@ namespace Axion {
 			particlePool.resize(maxParticles);
 		}
 	};
+
+
+
+	struct SkeletalMeshComponent {
+		AssetHandle<SkeletalMesh> handle;
+
+		SkeletalMeshComponent() = default;
+		SkeletalMeshComponent(const SkeletalMeshComponent&) = default;
+		SkeletalMeshComponent(const AssetHandle<SkeletalMesh>& handle) : handle(handle) {}
+	};
+
+
+
+	struct AnimatorComponent {
+		AssetHandle<AnimationClip> currentClip;
+		Ref<Animator> animator = nullptr;
+		bool isPlaying = true;
+
+		AssetHandle<AnimationClip> previousClip;
+
+		AnimatorComponent() = default;
+		AnimatorComponent(const AnimatorComponent&) = default;
+		AnimatorComponent(const AssetHandle<AnimationClip>& clip) : currentClip(clip) {}
+	};
+
 
 }

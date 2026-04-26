@@ -19,6 +19,8 @@ namespace Axion {
 		PhysicsMaterial,
 		Prefab,
 		Scene,
+		AnimationClip,
+		SkeletalMesh
 	};
 
 

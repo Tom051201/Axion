@@ -1,0 +1,16 @@
+Version: 1
+Name: Cesium_Man-effect
+UUID: e9d6cb395c847bbb81d581ad7d112a0c
+Type: Material
+AlbedoColor: [1, 1, 1, 1]
+Metalness: 0
+Roughness: 1
+Emission: 0
+Tiling: 1
+UseNormalMap: 0
+UseMetalnessMap: 0
+UseRoughnessMap: 0
+UseOcclusionMap: 0
+UseEmissiveMap: 0
+Textures:
+  Albedo: 8c5319fa96dbdbf2edde63d659df4367

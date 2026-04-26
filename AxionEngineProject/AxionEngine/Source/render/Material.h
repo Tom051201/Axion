@@ -44,6 +44,8 @@ namespace Axion {
 		void setProperties(const MaterialProperties& properties) { m_properties = properties; }
 		void clearTextures() { m_textures.clear(); m_dirty = true; }
 
+		void setSkeletal(bool skeletal) { m_isSkeletal = skeletal; }
+
 		static Ref<Material> create(const std::string& name, const MaterialProperties& properties = {});
 		static Ref<Material> create(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties = {});
 
@@ -59,7 +61,7 @@ namespace Axion {
 		std::map<TextureSlot, AssetHandle<Texture2D>> m_textures; // TODO: make this an array
 
 		mutable bool m_dirty = true;
-
+		bool m_isSkeletal = false;
 		bool m_slotsCached = false;
 		int m_materialBufferSlot = -1;
 		uint32_t m_textureTableSlot = 0;

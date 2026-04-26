@@ -14,7 +14,6 @@ namespace Axion {
 	RendererStats Renderer::s_stats;
 	FrameTimer Renderer::s_frameTimer;
 	double Renderer::s_lastFrameTimeMs = 0.0;
-	//Ref<Texture2D> Renderer::s_whiteFallbackTexture = nullptr;
 	std::function<void(Event&)> Renderer::s_eventCallback;
 	uint32_t Renderer::s_sceneDataOffset = 0;
 	Ref<Texture2D> Renderer::s_shadowMapTexture = nullptr;
@@ -258,7 +257,8 @@ namespace Axion {
 		shader->bind();
 		uploadBuffer->bind(0);
 		objectData->bind(1);
-		mesh->render();
+		mesh->getVertexBuffer()->bind();
+		mesh->getIndexBuffer()->bind();
 		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
 	}
 

@@ -8,11 +8,13 @@
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
+#include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/render/Mesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Texture.h"
+#include "AxionEngine/Source/render/SkeletalMesh.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
@@ -384,7 +386,7 @@ namespace Axion {
 			AssetManager::storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
 		}
 		else {
-			AX_CORE_LOG_ERROR("Unsupported PhysivsMaterial Version: {} in file {}", version, absolutePath.string());
+			AX_CORE_LOG_ERROR("Unsupported PhysicsMaterial Version: {} in file {}", version, absolutePath.string());
 		}
 	}
 
@@ -404,6 +406,55 @@ namespace Axion {
 		}
 		else {
 			AX_CORE_LOG_ERROR("Unsupported Prefab Version: {} in file {}", version, absolutePath.string());
+		}
+	}
+
+	void EditorAssetLoader::loadAnimationClip(UUID handle, const std::filesystem::path& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		if (version == ASSET_VERSION_ANIMATION_CLIP) {
+			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			UUID uuid = data["UUID"].as<UUID>();
+
+			AssetManager::storage<AnimationClip>().assets[handle] = nullptr;
+
+			AssetManager::storage<AnimationClip>().loadQueue.push_back({ handle,
+			[sourcePath]() {
+					return AAP::GLTFImporter::extractAnimation(sourcePath);
+				}
+			});
+
+			AssetManager::storage<AnimationClip>().handleToPath[handle] = absolutePath;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Animation Clip Version: {} in file {}", version, absolutePath.string());
+		}
+	}
+
+	void EditorAssetLoader::loadSkeletalMesh(UUID handle, const std::filesystem::path& absolutePath) {
+		std::ifstream stream(absolutePath);
+		YAML::Node data = YAML::Load(stream);
+
+		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+
+		if (version <= ASSET_VERSION_SKELETAL_MESH) {
+			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+
+			AssetManager::storage<SkeletalMesh>().assets[handle] = nullptr;
+
+			AssetManager::storage<SkeletalMesh>().loadQueue.push_back({ handle,
+				[sourcePath]() {
+					SkeletalMeshData meshData = AAP::GLTFImporter::extractSkeletalMesh(sourcePath);
+					return SkeletalMesh::create(meshData);
+				}
+			});
+
+			AssetManager::storage<SkeletalMesh>().handleToPath[handle] = absolutePath;
+		}
+		else {
+			AX_CORE_LOG_ERROR("Unsupported Skeletal Mesh Version: {} in file {}", version, absolutePath.string());
 		}
 	}
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <filesystem>
-
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/render/Buffers.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
@@ -24,23 +22,31 @@ namespace Axion {
 	class Mesh {
 	public:
 
-		virtual ~Mesh() = default;
+		Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+		Mesh(const MeshData& meshData);
+		~Mesh();
 
-		virtual void release() = 0;
+		void release();
 
-		virtual void render() const = 0;
+		Ref<VertexBuffer> getVertexBuffer() const { return m_vertexBuffer; }
+		Ref<IndexBuffer> getIndexBuffer() const { return m_indexBuffer; }
+		uint32_t getVertexCount() const { return m_vertexBuffer->getVertexCount(); }
+		uint32_t getIndexCount() const { return m_indexBuffer->getIndexCount(); }
+		const std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
 
-		virtual Ref<VertexBuffer> getVertexBuffer() const = 0;
-		virtual Ref<IndexBuffer> getIndexBuffer() const = 0;
-		virtual const std::vector<Submesh>& getSubmeshes() const = 0;
 
-		virtual uint32_t getIndexCount() const = 0;
 
 
 		static Ref<Mesh> create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 		static Ref<Mesh> create(const MeshData& meshData);
 
 		static Ref<Mesh> createPBRCube();
+
+	private:
+
+		Ref<VertexBuffer> m_vertexBuffer;
+		Ref<IndexBuffer> m_indexBuffer;
+		std::vector<Submesh> m_submeshes;
 
 	};
 

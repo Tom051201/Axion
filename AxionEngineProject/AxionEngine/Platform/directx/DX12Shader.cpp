@@ -129,7 +129,13 @@ namespace Axion {
 			D3D12_SHADER_VISIBILITY visibility;
 		};
 
+		struct SrvInfo {
+			std::string name;
+			D3D12_SHADER_VISIBILITY visibility;
+		};
+
 		std::map<UINT, CbvInfo> cbvRegisters;
+		std::map<UINT, SrvInfo> rootSrvRegisters;
 		UINT maxSrvRegister = 0;
 		bool hasSrvs = false;
 
@@ -160,6 +166,14 @@ namespace Axion {
 					maxSrvRegister = std::max(maxSrvRegister, bindDesc.BindPoint + bindDesc.BindCount - 1);
 					hasSrvs = true;
 				}
+				else if (bindDesc.Type == D3D_SIT_STRUCTURED) {
+					if (rootSrvRegisters.find(bindDesc.BindPoint) != rootSrvRegisters.end()) {
+						rootSrvRegisters[bindDesc.BindPoint].visibility = D3D12_SHADER_VISIBILITY_ALL;
+					}
+					else {
+						rootSrvRegisters[bindDesc.BindPoint] = { bindDesc.Name, visibility };
+					}
+				}
 			}
 		};
 
@@ -172,6 +186,15 @@ namespace Axion {
 		for (auto const& [reg, info] : cbvRegisters) {
 			CD3DX12_ROOT_PARAMETER1 param;
 			param.InitAsConstantBufferView(reg, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, info.visibility);
+
+			uint32_t rootParamIndex = static_cast<uint32_t>(rootParameters.size());
+			m_resourceMap[info.name] = rootParamIndex;
+			rootParameters.push_back(param);
+		}
+
+		for (auto const& [reg, info] : rootSrvRegisters) {
+			CD3DX12_ROOT_PARAMETER1 param;
+			param.InitAsShaderResourceView(reg, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, info.visibility);
 
 			uint32_t rootParamIndex = static_cast<uint32_t>(rootParameters.size());
 			m_resourceMap[info.name] = rootParamIndex;

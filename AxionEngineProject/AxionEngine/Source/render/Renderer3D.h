@@ -3,9 +3,9 @@
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/render/Camera.h"
 #include "AxionEngine/Source/render/Mesh.h"
+#include "AxionEngine/Source/render/SkeletalMesh.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Buffers.h"
-
 #include "AxionEngine/Source/render/Renderer.h"
 
 namespace Axion {
@@ -13,6 +13,12 @@ namespace Axion {
 	struct alignas(16) ObjectBuffer {
 		DirectX::XMFLOAT4 color; // TODO: remove this and remove from shaders
 		DirectX::XMMATRIX modelMatrix;
+	};
+
+	struct alignas(16) SkeletalObjectBuffer {
+		DirectX::XMFLOAT4X4 modelMatrix;
+		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT4X4 boneTransforms[100];
 	};
 
 	class Renderer3D {
@@ -37,7 +43,11 @@ namespace Axion {
 
 		static void drawMesh(const Mat4& transform, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer);
 		static void drawMeshInstanced(Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData);
+
+		static void drawSkeletalMeshInstanced(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<SkeletalObjectBuffer>& instanceData);
+
 		static void drawMeshInstancedShadow(Ref<Mesh>& mesh, uint32_t submeshIndex, const std::vector<ObjectBuffer>& instanceData);
+		static void drawSkeletalMeshInstancedShadow(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const std::vector<SkeletalObjectBuffer>& instanceData);
 	};
 
 }

@@ -106,8 +106,13 @@ namespace Axion {
 		virtual uint32_t append(const void* data, size_t size) = 0;
 		virtual void resetOffset() = 0;
 
-		static Ref<VertexBuffer> create(const std::vector<Vertex>& vertices);
+		static Ref<VertexBuffer> create(const void* data, uint32_t size, uint32_t stride);
 		static Ref<VertexBuffer> createDynamic(uint32_t size, uint32_t stride);
+
+		template<typename T>
+		static Ref<VertexBuffer> create(const std::vector<T>& vertices) {
+			return create(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(T)), sizeof(T));
+		}
 
 	};
 
@@ -156,6 +161,34 @@ namespace Axion {
 		virtual uint32_t getSize() const = 0;
 
 		static Ref<ConstantBuffer> create(size_t size);
+
+	};
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// StructuredBuffer /////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	class StructuredBuffer {
+	public:
+
+		virtual ~StructuredBuffer() = default;
+
+		virtual void release() = 0;
+
+		virtual void bind(uint32_t slot) const = 0;
+		virtual void bind(uint32_t slot, size_t offset) const = 0;
+		virtual void unbind() const = 0;
+
+		virtual void update(const void* data, size_t size) = 0;
+		virtual void update(const void* data, size_t size, size_t offset) = 0;
+		virtual uint32_t append(const void* data, size_t size) = 0;
+		virtual void resetOffset() = 0;
+
+		virtual uint32_t getSize() const = 0;
+		virtual uint32_t getElementCount() const = 0;
+		virtual uint32_t getElementSize() const = 0;
+
+		static Ref<StructuredBuffer> create(uint32_t elementSize, uint32_t elementCount);
 
 	};
 

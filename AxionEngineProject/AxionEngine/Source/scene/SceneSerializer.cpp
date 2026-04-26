@@ -19,7 +19,8 @@ namespace Axion {
 		Tag, Relationship, Transform, Mesh, Sprite, Material, Audio, Camera,
 		DirectionalLight, PointLight, SpotLight,
 		RigidBody, BoxCollider, SphereCollider, CapsuleCollider, GravitySource,
-		Script, NativeScript, ParticleSystem
+		Script, NativeScript, ParticleSystem,
+		SkeletalMesh, Animator
 	};
 
 	static void writeString(std::ofstream& out, const std::string& str) {
@@ -322,6 +323,25 @@ namespace Axion {
 			else {
 				out << YAML::Key << "Texture" << YAML::Value << "0";
 			}
+			out << YAML::EndMap;
+		}
+
+		// -- SkeletalMeshComponent --
+		if (entity.hasComponent<SkeletalMeshComponent>()) { // TODO: add this for binary
+			out << YAML::Key << "SkeletalMeshComponent";
+			out << YAML::BeginMap;
+			auto& skelComp = entity.getComponent<SkeletalMeshComponent>();
+			out << YAML::Key << "UUID" << YAML::Value << skelComp.handle.uuid;
+			out << YAML::EndMap;
+		}
+
+		// -- AnimatorComponent --
+		if (entity.hasComponent<AnimatorComponent>()) { // TODO: add this for binary
+			out << YAML::Key << "AnimatorComponent";
+			out << YAML::BeginMap;
+			auto& animComp = entity.getComponent<AnimatorComponent>();
+			out << YAML::Key << "CurrentClip" << YAML::Value << animComp.currentClip.uuid;
+			out << YAML::Key << "IsPlaying" << YAML::Value << animComp.isPlaying;
 			out << YAML::EndMap;
 		}
 
@@ -889,6 +909,46 @@ namespace Axion {
 			}
 		}
 
+		// -- SkeletalMeshComponent --
+		auto skelMeshComponent = entityNode["SkeletalMeshComponent"];
+		if (skelMeshComponent) {
+			auto& skelComp = deserializedEntity.addComponent<SkeletalMeshComponent>();
+			UUID meshUUID = skelMeshComponent["UUID"].as<UUID>();
+			if (meshUUID.isValid()) {
+				if (registry->contains(meshUUID)) {
+					AssetHandle<SkeletalMesh> handle = AssetManager::load<SkeletalMesh>(meshUUID);
+					skelComp.handle = handle;
+				}
+				else {
+					skelComp.handle = AssetHandle<SkeletalMesh>();
+				}
+			}
+			else {
+				skelComp.handle = AssetHandle<SkeletalMesh>();
+			}
+		}
+
+		// -- AnimatorComponent --
+		auto animatorComponent = entityNode["AnimatorComponent"];
+		if (animatorComponent) {
+			auto& animComp = deserializedEntity.addComponent<AnimatorComponent>();
+			UUID clipUUID = animatorComponent["CurrentClip"].as<UUID>();
+			if (clipUUID.isValid()) {
+				if (registry->contains(clipUUID)) {
+					AssetHandle<AnimationClip> handle = AssetManager::load<AnimationClip>(clipUUID);
+					animComp.currentClip = handle;
+				}
+				else {
+					animComp.currentClip = AssetHandle<AnimationClip>();
+				}
+			}
+			else {
+				animComp.currentClip = AssetHandle<AnimationClip>();
+			}
+
+			animComp.isPlaying = animatorComponent["IsPlaying"].as<bool>();
+		}
+
 		return deserializedEntity;
 	}
 
@@ -1148,6 +1208,24 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&component.velocityVariation), sizeof(Vec3));
 			out.write(reinterpret_cast<const char*>(&component.colorBegin), sizeof(Vec4));
 			out.write(reinterpret_cast<const char*>(&component.colorEnd), sizeof(Vec4));
+		}
+
+		// -- Write Skeletal Mesh Component --
+		if (entity.hasComponent<SkeletalMeshComponent>()) {
+			ComponentID id = ComponentID::SkeletalMesh;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			UUID meshUUID = entity.getComponent<SkeletalMeshComponent>().handle.isValid() ? entity.getComponent<SkeletalMeshComponent>().handle.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&meshUUID), sizeof(UUID));
+		}
+
+		// -- Write Animator Component --
+		if (entity.hasComponent<AnimatorComponent>()) {
+			ComponentID id = ComponentID::Animator;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			auto& component = entity.getComponent<AnimatorComponent>();
+			UUID clipUUID = component.currentClip.uuid.isValid() ? component.currentClip.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&clipUUID), sizeof(UUID));
+			out.write(reinterpret_cast<const char*>(&component.isPlaying), sizeof(bool));
 		}
 
 		ComponentID endID = ComponentID::None;
@@ -1443,6 +1521,20 @@ namespace Axion {
 				in.read(reinterpret_cast<char*>(&component.colorBegin), sizeof(Vec4));
 				in.read(reinterpret_cast<char*>(&component.colorEnd), sizeof(Vec4));
 				break;
+			}
+			case ComponentID::SkeletalMesh: {
+				// -- Read Skeletal Mesh Component --
+				auto& component = entity.addComponent<SkeletalMeshComponent>();
+				UUID meshUUID;
+				in.read(reinterpret_cast<char*>(&meshUUID), sizeof(UUID));
+				if (meshUUID.isValid()) component.handle = AssetManager::load<SkeletalMesh>(meshUUID);
+				break;
+			}
+			case ComponentID::Animator: {
+				// -- Read Animator Component --
+				auto& component = entity.getComponent<AnimatorComponent>();
+				in.read(reinterpret_cast<char*>(&component.currentClip), sizeof(UUID));
+				in.read(reinterpret_cast<char*>(&component.isPlaying), sizeof(bool));
 			}
 			}
 

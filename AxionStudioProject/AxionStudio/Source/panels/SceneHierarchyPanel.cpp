@@ -346,7 +346,9 @@ namespace Axion {
 			m_selectedEntity.hasComponent<CapsuleColliderComponent>() &&
 			m_selectedEntity.hasComponent<GravitySourceComponent>() &&
 			m_selectedEntity.hasComponent<ScriptComponent>() &&
-			m_selectedEntity.hasComponent<ParticleSystemComponent>();
+			m_selectedEntity.hasComponent<ParticleSystemComponent>() &&
+			m_selectedEntity.hasComponent<SkeletalMeshComponent>() &&
+			m_selectedEntity.hasComponent<AnimatorComponent>();
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(hasAll);
@@ -359,6 +361,7 @@ namespace Axion {
 
 			drawAddComponent<TransformComponent>("Transform");
 			drawAddComponent<MeshComponent>("Mesh");
+			drawAddComponent<SkeletalMeshComponent>("Skeletal Mesh");
 			drawAddComponent<MaterialComponent>("Material");
 			drawAddComponent<SpriteComponent>("Sprite");
 			drawAddComponent<CameraComponent>("Camera");
@@ -392,6 +395,7 @@ namespace Axion {
 			drawAddComponent<NativeScriptComponent>("Native Script");
 			drawAddComponent<ScriptComponent>("C# Script");
 			drawAddComponent<ParticleSystemComponent>("Particle System");
+			drawAddComponent<AnimatorComponent>("Animator");
 
 			ImGui::EndPopup();
 		}
@@ -525,6 +529,15 @@ namespace Axion {
 				auto& meshComp = m_selectedEntity.getComponent<MeshComponent>();
 				if (meshComp.handle.isValid()) {
 					Ref<Mesh> mesh = AssetManager::get<Mesh>(meshComp.handle);
+					if (mesh) {
+						submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
+					}
+				}
+			}
+			else if (m_selectedEntity.hasComponent<SkeletalMeshComponent>()) {
+				auto& skelComp = m_selectedEntity.getComponent<SkeletalMeshComponent>();
+				if (skelComp.handle.isValid()) {
+					Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(skelComp.handle);
 					if (mesh) {
 						submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
 					}
@@ -1726,7 +1739,183 @@ namespace Axion {
 			}
 		});
 
+		// ----- SkeletalMeshComponent -----
+		drawComponentInfo<SkeletalMeshComponent>("Skeletal Mesh", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<SkeletalMeshComponent>();
 
+			if (component.handle.isValid()) {
+
+				if (ImGui::BeginTable("SkelMeshTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(component.handle);
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- UUID --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("UUID");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(component.handle.uuid.toString().c_str());
+
+					if (mesh) {
+						// -- Vertices --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Vertices");
+						ImGui::TableSetColumnIndex(1);
+						ImGui::Text("%u", mesh->getVertexCount());
+
+						// -- Indices --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Indices");
+						ImGui::Separator();
+						ImGui::TableSetColumnIndex(1);
+						ImGui::Text("%u", mesh->getIndexCount());
+
+						// -- Bones --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Bones");
+						ImGui::TableSetColumnIndex(1);
+						ImGui::Text("%u", static_cast<uint32_t>(mesh->getSkeleton().bones.size()));
+					}
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove##SkelMesh")) {
+						component.handle.invalidate();
+					}
+
+					ImGui::EndTable();
+				}
+			}
+			else {
+				// -- Load Button --
+				if (ImGui::Button("Open Skeletal Mesh...", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+					std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
+					std::filesystem::path absPath;
+					if (std::filesystem::exists(meshDir)) {
+						absPath = FileDialogs::openFile({ {"Axion Skeletal Mesh", "*.axskelmesh"} }, meshDir);
+					}
+					else {
+						absPath = FileDialogs::openFile({ {"Axion Skeletal Mesh", "*.axskelmesh"} }, ProjectManager::getProject()->getAssetsPath());
+					}
+
+					if (!absPath.empty()) {
+						UUID assetUUID = AssetManager::getAssetUUID(absPath);
+						if (assetUUID.isValid()) component.handle = AssetManager::load<SkeletalMesh>(assetUUID);
+					}
+				}
+
+				// -- Drag drop on button --
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+						std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.extension() == ".axskelmesh") {
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.handle = AssetManager::load<SkeletalMesh>(assetUUID);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+			}
+		});
+
+		// ----- AnimatorComponent -----
+		drawComponentInfo<AnimatorComponent>("Animator", m_selectedEntity, [this]() {
+			auto& component = m_selectedEntity.getComponent<AnimatorComponent>();
+
+			if (component.currentClip.isValid()) {
+
+				if (ImGui::BeginTable("AnimatorTable", 2, ImGuiTableFlags_BordersInnerV)) {
+					Ref<AnimationClip> clip = AssetManager::get<AnimationClip>(component.currentClip);
+					ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+					// -- UUID --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Clip UUID");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(component.currentClip.uuid.toString().c_str());
+
+					if (clip) {
+						// -- Duration --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Duration");
+						ImGui::TableSetColumnIndex(1);
+						ImGui::Text("%.2f seconds", clip->duration);
+
+						// -- Bone Tracks --
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text("Bone Tracks");
+						ImGui::Separator();
+						ImGui::TableSetColumnIndex(1);
+						ImGui::Text("%u", static_cast<uint32_t>(clip->boneAnimations.size()));
+					}
+
+					// -- State --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Playback");
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Checkbox("Playing", &component.isPlaying);
+
+					// -- Options --
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("Options");
+					ImGui::Separator();
+					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Button("Remove Clip")) {
+						component.currentClip.invalidate();
+					}
+
+					ImGui::EndTable();
+				}
+			}
+			else {
+				// -- Load Button --
+				if (ImGui::Button("Open Animation Clip...", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+					std::filesystem::path animDir = ProjectManager::getProject()->getAssetsPath() / "animations";
+					std::filesystem::path absPath;
+					if (std::filesystem::exists(animDir)) {
+						absPath = FileDialogs::openFile({ {"Axion Animation", "*.axanim"} }, animDir);
+					}
+					else {
+						absPath = FileDialogs::openFile({ {"Axion Animation", "*.axanim"} }, ProjectManager::getProject()->getAssetsPath());
+					}
+
+					if (!absPath.empty()) {
+						UUID assetUUID = AssetManager::getAssetUUID(absPath);
+						if (assetUUID.isValid()) component.currentClip = AssetManager::load<AnimationClip>(assetUUID);
+					}
+				}
+
+				// -- Drag drop on button --
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+						std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+						if (absPath.extension() == ".axanim") {
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) component.currentClip = AssetManager::load<AnimationClip>(assetUUID);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+			}
+		});
 
 	}
 

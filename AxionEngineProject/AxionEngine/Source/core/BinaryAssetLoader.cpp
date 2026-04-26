@@ -5,7 +5,9 @@
 #include "AxionEngine/Source/core/BinaryHeaders.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
+#include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/render/Mesh.h"
+#include "AxionEngine/Source/render/SkeletalMesh.h"
 #include "AxionEngine/Source/render/Shader.h"
 #include "AxionEngine/Source/render/Material.h"
 #include "AxionEngine/Source/render/Renderer.h"
@@ -321,6 +323,99 @@ namespace Axion {
 			}
 		});
 		AssetManager::storage<Prefab>().handleToPath[handle] = absolutePath;
+	}
+
+	void BinaryAssetLoader::loadAnimationClip(UUID handle, const std::filesystem::path& absolutePath) {
+		AssetManager::storage<AnimationClip>().assets[handle] = nullptr;
+		AssetManager::storage<AnimationClip>().loadQueue.push_back({ handle,
+			[absolutePath]() {
+				std::ifstream in(absolutePath, std::ios::in  | std::ios::binary);
+				BinaryAssetHeader header;
+				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+				Ref<AnimationClip> clip = std::make_shared<AnimationClip>();
+				uint32_t boneAnimationCount;
+				in.read(reinterpret_cast<char*>(&clip->duration), sizeof(float));
+				in.read(reinterpret_cast<char*>(&clip->ticksPerSecond), sizeof(float));
+				in.read(reinterpret_cast<char*>(&boneAnimationCount), sizeof(uint32_t));
+
+				clip->boneAnimations.resize(boneAnimationCount);
+
+				for (uint32_t i = 0; i < boneAnimationCount; i++) {
+					auto& boneAnimation = clip->boneAnimations[i];
+
+					uint32_t nameLength;
+					in.read(reinterpret_cast<char*>(&nameLength), sizeof(uint32_t));
+					boneAnimation.boneName.resize(nameLength);
+					in.read(&boneAnimation.boneName[0], nameLength);
+
+					uint32_t posCount;
+					in.read(reinterpret_cast<char*>(&posCount), sizeof(uint32_t));
+					boneAnimation.positions.resize(posCount);
+					in.read(reinterpret_cast<char*>(boneAnimation.positions.data()), posCount * sizeof(Keyframe<DirectX::XMFLOAT3>));
+
+					uint32_t rotCount;
+					in.read(reinterpret_cast<char*>(&rotCount), sizeof(uint32_t));
+					boneAnimation.rotations.resize(rotCount);
+					in.read(reinterpret_cast<char*>(boneAnimation.rotations.data()), rotCount * sizeof(Keyframe<DirectX::XMFLOAT4>));
+
+					uint32_t scaCount;
+					in.read(reinterpret_cast<char*>(&scaCount), sizeof(uint32_t));
+					boneAnimation.scales.resize(scaCount);
+					in.read(reinterpret_cast<char*>(boneAnimation.scales.data()), scaCount * sizeof(Keyframe<DirectX::XMFLOAT3>));
+				}
+
+				return clip;
+			}
+		});
+		AssetManager::storage<AnimationClip>().handleToPath[handle] = absolutePath;
+	}
+
+	void BinaryAssetLoader::loadSkeletalMesh(UUID handle, const std::filesystem::path& absolutePath) {
+		AssetManager::storage<SkeletalMesh>().assets[handle] = nullptr;
+		AssetManager::storage<SkeletalMesh>().loadQueue.push_back({ handle,
+			[absolutePath]() {
+				std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+				BinaryAssetHeader header;
+				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+				uint32_t vertexCount, indexCount, submeshCount, boneCount;
+				in.read(reinterpret_cast<char*>(&vertexCount), sizeof(uint32_t));
+				in.read(reinterpret_cast<char*>(&indexCount), sizeof(uint32_t));
+				in.read(reinterpret_cast<char*>(&submeshCount), sizeof(uint32_t));
+				in.read(reinterpret_cast<char*>(&boneCount), sizeof(uint32_t));
+
+				SkeletalMeshData meshData;
+				meshData.vertices.resize(vertexCount);
+				meshData.indices.resize(indexCount);
+
+				in.read(reinterpret_cast<char*>(meshData.vertices.data()), vertexCount * sizeof(SkeletalVertex));
+				in.read(reinterpret_cast<char*>(meshData.indices.data()), indexCount * sizeof(uint32_t));
+
+				if (submeshCount > 0) {
+					meshData.submeshes.resize(submeshCount);
+					in.read(reinterpret_cast<char*>(meshData.submeshes.data()), submeshCount * sizeof(Submesh));
+				}
+
+				meshData.skeleton.bones.resize(boneCount);
+				for (uint32_t i = 0; i < boneCount; i++) {
+					auto& bone = meshData.skeleton.bones[i];
+
+					uint32_t nameLength;
+					in.read(reinterpret_cast<char*>(&nameLength), sizeof(uint32_t));
+					bone.name.resize(nameLength);
+					in.read(&bone.name[0], nameLength);
+
+					in.read(reinterpret_cast<char*>(&bone.parentIndex), sizeof(int32_t));
+					in.read(reinterpret_cast<char*>(&bone.inverseBindMatrix), sizeof(DirectX::XMMATRIX));
+				}
+
+				in.read(reinterpret_cast<char*>(&meshData.skeleton.rootTransform), sizeof(DirectX::XMMATRIX));
+
+				return SkeletalMesh::create(meshData);
+			}
+		});
+		AssetManager::storage<SkeletalMesh>().handleToPath[handle] = absolutePath;
 	}
 
 	void BinaryAssetLoader::reloadMaterial(UUID handle, const std::filesystem::path& absolutePath) {

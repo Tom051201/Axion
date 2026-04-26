@@ -1,0 +1,16 @@
+Version: 1
+Type: Prefab
+UUID: f6af8622740b282b0561ec983e9dcfe2
+Entity:
+  Entity: b72f77ba56798d504b6dca5950140f32
+  TagComponent:
+    Tag: AnimatedMorphSphere
+  TransformComponent:
+    Translation: [0, 0, 0]
+    Rotation: [0, 0, 0, 1]
+    Scale: [1, 1, 1]
+  MeshComponent:
+    UUID: 32d25683f2e9b57d864fb8027b0bb635
+  MaterialComponent:
+    Materials:
+      - b9c7f4ff4db73182b4dd97c1b6cbf734

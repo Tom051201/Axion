@@ -112,6 +112,7 @@ namespace Axion {
 		void flushDestroyedEntities();
 		void processPhysicsCallbacks();
 		void updateScripts(Timestep ts);
+		void updateAnimations(Timestep ts);
 
 		friend class Entity;
 		friend class SceneSerializer;

@@ -1,0 +1,11 @@
+Version: 2
+Name: AnimatedMorphSphere
+UUID: 32d25683f2e9b57d864fb8027b0bb635
+Type: Mesh
+Format: GLB
+Source: meshes/AnimatedMorphSphere/AnimatedMorphSphere.glb
+Submeshes:
+  - BaseVertex: 0
+    StartIndex: 0
+    IndexCount: 2880
+    MaterialIndex: 0
