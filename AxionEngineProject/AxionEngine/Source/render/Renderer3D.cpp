@@ -202,32 +202,58 @@ namespace Axion {
 
 	}
 
-	void Renderer3D::drawSkeletalMeshInstancedShadow(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const std::vector<SkeletalObjectBuffer>& instanceData) { // TODO
-		//if (instanceData.empty()) return;
-		//Ref<Pipeline> shadowPipeline = EngineAssets::getSkeletalShadowPipeline(); // You'll need a separate shadow pipeline for skeletal meshes!
-		//if (!shadowPipeline) return;
-		//
-		//shadowPipeline->bind();
-		//Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
-		//
-		//uint32_t dataSize = static_cast<uint32_t>(instanceData.size() * sizeof(SkeletalObjectBuffer));
-		//uint32_t bufferOffset = s_skeletalInstanceBuffer->append(instanceData.data(), dataSize);
-		//
-		//mesh->getVertexBuffer()->bind();
-		//mesh->getIndexBuffer()->bind();
-		//
-		//// Bind to slot 7
-		//s_skeletalInstanceBuffer->bind(7, bufferOffset);
-		//
-		//const auto& submeshes = mesh->getSubmeshes();
-		//
-		//if (submeshes.empty()) {
-		//	RenderCommand::drawIndexed(mesh->getIndexBuffer(), mesh->getIndexCount(), static_cast<uint32_t>(instanceData.size()), 0, 0);
-		//}
-		//else {
-		//	const auto& submesh = submeshes[submeshIndex];
-		//	RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
-		//}
+	void Renderer3D::drawSkeletalMeshInstancedShadow(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const std::vector<SkeletalObjectBuffer>& instanceData) {
+		if (instanceData.empty()) return;
+
+		Ref<Pipeline> shadowPipeline = EngineAssets::getSkeletalShadowPipeline();
+		if (!shadowPipeline) return;
+
+		shadowPipeline->bind();
+		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
+
+		std::vector<GPUInstanceData> gpuInstances(instanceData.size());
+		std::vector<DirectX::XMFLOAT4X4> flatBones;
+		flatBones.reserve(instanceData.size() * 100);
+
+		for (size_t i = 0; i < instanceData.size(); ++i) {
+			gpuInstances[i].modelMatrix = instanceData[i].modelMatrix;
+			gpuInstances[i].color = instanceData[i].color;
+			gpuInstances[i].boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
+
+			for (int b = 0; b < 100; ++b) {
+				flatBones.push_back(instanceData[i].boneTransforms[b]);
+			}
+		}
+
+		s_currentBoneElementIndex += static_cast<uint32_t>(flatBones.size());
+
+		uint32_t instanceByteOffset = s_skeletalInstanceBuffer->append(gpuInstances.data(), gpuInstances.size() * sizeof(GPUInstanceData));
+		uint32_t boneByteOffset = s_boneBuffer->append(flatBones.data(), flatBones.size() * sizeof(DirectX::XMFLOAT4X4));
+
+		mesh->getVertexBuffer()->bind();
+		mesh->getIndexBuffer()->bind();
+
+		Ref<Shader> shader = shadowPipeline->getSpecification().shader;
+		uint32_t instanceSlot = shader->getBindPoint("u_instanceData");
+		uint32_t boneSlot = shader->getBindPoint("u_boneData");
+
+		s_skeletalInstanceBuffer->bind(instanceSlot, instanceByteOffset);
+		s_boneBuffer->bind(boneSlot, 0);
+
+		const auto& submeshes = mesh->getSubmeshes();
+		auto& stats = Renderer::getStats();
+
+		if (submeshes.empty()) {
+			RenderCommand::drawIndexed(mesh->getIndexBuffer(), mesh->getIndexCount(), static_cast<uint32_t>(instanceData.size()), 0, 0);
+		}
+		else {
+			const auto& submesh = submeshes[submeshIndex];
+			RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
+		}
+
+		stats.drawCalls++;
+		stats.meshCount3D++;
+		stats.instanceCount3D += static_cast<uint32_t>(instanceData.size());
 	}
 
 }

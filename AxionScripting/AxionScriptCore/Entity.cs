@@ -19,11 +19,13 @@ namespace AxionScriptCore {
 		public Transform Transform { get; private set; }
 		public RigidBody RigidBody { get; private set; }
 		public AudioSource Audio { get; private set; }
+		public Animator Animator { get; private set; }
 
 		public Entity() {
 			Transform = new Transform(this);
 			RigidBody = new RigidBody(this);
 			Audio = new AudioSource(this);
+			Animator = new Animator(this);
 		}
 
 		public virtual void OnCreate() {}

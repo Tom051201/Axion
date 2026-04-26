@@ -63,6 +63,11 @@ namespace Axion {
 		void*(*entity_getScriptInstance)(uint64_t, uint64_t);
 		void(*entity_emitParticles)(uint64_t, uint64_t, int);
 
+		// -- ANIMATION --
+		void(*animation_play)(uint64_t, uint64_t);
+		void(*animation_stop)(uint64_t, uint64_t);
+		uint8_t(*animation_isPlaying)(uint64_t, uint64_t);
+
 		// -- REFLECTION --
 		void(*script_registerField)(const char*, const char*, int);
 

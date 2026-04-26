@@ -327,7 +327,7 @@ namespace Axion {
 		}
 
 		// -- SkeletalMeshComponent --
-		if (entity.hasComponent<SkeletalMeshComponent>()) { // TODO: add this for binary
+		if (entity.hasComponent<SkeletalMeshComponent>()) {
 			out << YAML::Key << "SkeletalMeshComponent";
 			out << YAML::BeginMap;
 			auto& skelComp = entity.getComponent<SkeletalMeshComponent>();
@@ -336,7 +336,7 @@ namespace Axion {
 		}
 
 		// -- AnimatorComponent --
-		if (entity.hasComponent<AnimatorComponent>()) { // TODO: add this for binary
+		if (entity.hasComponent<AnimatorComponent>()) {
 			out << YAML::Key << "AnimatorComponent";
 			out << YAML::BeginMap;
 			auto& animComp = entity.getComponent<AnimatorComponent>();

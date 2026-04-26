@@ -9,6 +9,8 @@
 #include "AxionEngine/Resources/shaders/StandardPBR_PS.h"
 #include "AxionEngine/Resources/shaders/SkeletalPBR_VS.h"
 #include "AxionEngine/Resources/shaders/SkeletalPBR_PS.h"
+#include "AxionEngine/Resources/shaders/SkeletalShadowMap_VS.h"
+#include "AxionEngine/Resources/shaders/SkeletalShadowMap_PS.h"
 
 namespace Axion {
 
@@ -19,10 +21,12 @@ namespace Axion {
 	Ref<Pipeline> EngineAssets::s_shadowPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_standardPBRPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_skeletalPBRPipeline = nullptr;
+	Ref<Pipeline> EngineAssets::s_skeletalShadowPipeline = nullptr;
 	Ref<Shader> EngineAssets::s_skyboxShader = nullptr;
 	Ref<Shader> EngineAssets::s_shadowShader = nullptr;
 	Ref<Shader> EngineAssets::s_standardPBRShader = nullptr;
 	Ref<Shader> EngineAssets::s_skeletalPBRShader = nullptr;
+	Ref<Shader> EngineAssets::s_skeletalShadowShader = nullptr;
 
 	void EngineAssets::initialize() {
 		// -- White Texture --
@@ -192,6 +196,39 @@ namespace Axion {
 		};
 		s_skeletalPBRPipeline = Pipeline::create(skeletalPBRPipeSpec);
 
+		// -- Skeletal Shadow Shader --
+		ShaderSpecification skelShadowShaderSpec;
+		skelShadowShaderSpec.name = "SkeletalShadowMap";
+		skelShadowShaderSpec.batchTextures = 0;
+		s_skeletalShadowShader = Shader::create(skelShadowShaderSpec);
+		s_skeletalShadowShader->loadFromBytecode(
+			g_SkeletalShadowMap_VS, sizeof(g_SkeletalShadowMap_VS),
+			g_SkeletalShadowMap_PS, sizeof(g_SkeletalShadowMap_PS)
+		);
+
+		// -- Skeletal Shadow Pipeline --
+		PipelineSpecification skelShadowPipeSpec;
+		skelShadowPipeSpec.shader = s_skeletalShadowShader;
+		skelShadowPipeSpec.numRenderTargets = 0;
+		skelShadowPipeSpec.colorFormat = ColorFormat::RED_INTEGER;
+		skelShadowPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		skelShadowPipeSpec.depthTest = true;
+		skelShadowPipeSpec.depthWrite = true;
+		skelShadowPipeSpec.depthFunction = DepthCompare::Less;
+		skelShadowPipeSpec.stencilEnabled = false;
+		skelShadowPipeSpec.sampleCount = 1;
+		skelShadowPipeSpec.cullMode = CullMode::Front;
+		skelShadowPipeSpec.topology = PrimitiveTopology::TriangleList;
+		skelShadowPipeSpec.vertexLayout = {
+			{ "POSITION",		ShaderDataType::Float3 },
+			{ "NORMAL",			ShaderDataType::Float3 },
+			{ "TANGENT",		ShaderDataType::Float3 },
+			{ "TEXCOORD",		ShaderDataType::Float2 },
+			{ "BLENDINDICES",	ShaderDataType::Int4 },
+			{ "BLENDWEIGHT",	ShaderDataType::Float4 }
+		};
+		s_skeletalShadowPipeline = Pipeline::create(skelShadowPipeSpec);
+
 		AX_CORE_LOG_INFO("Engine Assets initialized");
 	}
 
@@ -205,11 +242,13 @@ namespace Axion {
 		s_shadowShader->release();
 		s_standardPBRShader->release();
 		s_skeletalPBRShader->release();
+		s_skeletalShadowShader->release();
 
 		s_skyboxPipeline->release();
 		s_shadowPipeline->release();
 		s_standardPBRPipeline->release();
 		s_skeletalPBRPipeline->release();
+		s_skeletalShadowPipeline->release();
 
 		AX_CORE_LOG_INFO("Engine Assets shutdown");
 	}

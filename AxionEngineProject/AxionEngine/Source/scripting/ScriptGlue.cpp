@@ -447,6 +447,30 @@ namespace Axion {
 		}
 
 
+		// -- ANIMATION --
+		extern "C" void animation_play(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AnimatorComponent>()) {
+				entity.getComponent<AnimatorComponent>().isPlaying = true;
+			}
+		}
+
+		extern "C" void animation_stop(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AnimatorComponent>()) {
+				entity.getComponent<AnimatorComponent>().isPlaying = false;
+			}
+		}
+
+		extern "C" uint8_t animation_isPlaying(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<AnimatorComponent>()) {
+				return entity.getComponent<AnimatorComponent>().isPlaying ? 1 : 0;
+			}
+			return 0;
+		}
+
+
 		// -- REFLECTION --
 		extern "C" void script_registerField(const char* className, const char* fieldName, int type) {
 			ScriptEngine::registerScriptField(className, fieldName, static_cast<ScriptFieldType>(type));
@@ -509,6 +533,11 @@ namespace Axion {
 		REGISTER_API(apiStruct, entity_findEntityByName);
 		REGISTER_API(apiStruct, entity_getScriptInstance);
 		REGISTER_API(apiStruct, entity_emitParticles);
+
+		// -- ANIMATION --
+		REGISTER_API(apiStruct, animation_play);
+		REGISTER_API(apiStruct, animation_stop);
+		REGISTER_API(apiStruct, animation_isPlaying);
 
 		// -- REFLECTION --
 		REGISTER_API(apiStruct, script_registerField);

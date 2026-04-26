@@ -61,6 +61,11 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, IntPtr> Entity_GetScriptInstance;
 		public delegate* unmanaged<ulong, ulong, int, void> Entity_EmitParticles;
 
+		// -- ANIMATION --
+		public delegate* unmanaged<ulong, ulong, void> Animation_Play;
+		public delegate* unmanaged<ulong, ulong, void> Animation_Stop;
+		public delegate* unmanaged<ulong, ulong, byte> Animation_IsPlaying;
+
 		// -- REFLECTION --
 		public delegate* unmanaged<IntPtr, IntPtr, int, void> Script_RegisterField;
 

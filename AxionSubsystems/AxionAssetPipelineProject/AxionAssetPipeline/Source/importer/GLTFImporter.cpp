@@ -548,7 +548,7 @@ namespace Axion::AAP {
 			cgltf_node* jointNode = skin.joints[i];
 			if (jointNode->parent && nodeToBoneIndex.count(jointNode->parent)) {
 				meshData.skeleton.bones[i].parentIndex = nodeToBoneIndex[jointNode->parent];
-				meshData.skeleton.bones[nodeToBoneIndex[jointNode->parent]].children.push_back(i);
+				meshData.skeleton.bones[nodeToBoneIndex[jointNode->parent]].children.push_back((int32_t)i);
 			}
 		}
 
