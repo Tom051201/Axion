@@ -1,7 +1,7 @@
 Version: 1
 Name: CesiumMan
-UUID: def7c83f68459ff610c27a1bf55c6ed4
-Type: Mesh
+UUID: 3313069d85b136dc9677c5c9b331c2f4
+Type: SkeletalMesh
 Source: meshes/CesiumMan/CesiumMan.glb
 Submeshes:
   - BaseVertex: 0

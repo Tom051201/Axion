@@ -79,7 +79,14 @@ namespace Axion::AAP {
 			out.write(bone.name.data(), nameLength);
 
 			out.write(reinterpret_cast<const char*>(&bone.parentIndex), sizeof(int32_t));
+			out.write(reinterpret_cast<const char*>(&bone.localBindTransform), sizeof(DirectX::XMMATRIX));
 			out.write(reinterpret_cast<const char*>(&bone.inverseBindMatrix), sizeof(DirectX::XMMATRIX));
+			
+			uint32_t childCount = static_cast<uint32_t>(bone.children.size());
+			out.write(reinterpret_cast<const char*>(&childCount), sizeof(uint32_t));
+			if (childCount > 0) {
+				out.write(reinterpret_cast<const char*>(bone.children.data()), childCount * sizeof(int));
+			}
 		}
 
 		out.write(reinterpret_cast<const char*>(&meshData.skeleton.rootTransform), sizeof(DirectX::XMMATRIX));

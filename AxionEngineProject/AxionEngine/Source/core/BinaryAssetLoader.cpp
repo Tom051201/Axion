@@ -34,19 +34,29 @@ namespace Axion {
 		AssetManager::storage<Mesh>().assets[handle] = nullptr;
 
 		AssetManager::storage<Mesh>().loadQueue.push_back({ handle,
-			[absolutePath]() {
+			[absolutePath]() -> Ref<Mesh> {
+
+				if (absolutePath.empty() || !std::filesystem::exists(absolutePath)) {
+					AX_CORE_LOG_ERROR("Mesh binary missing: {}", absolutePath.string());
+					return nullptr;
+				}
+
 				std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
 
 				BinaryAssetHeader header;
 				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
 
-				uint32_t vertexCount, indexCount;
+				uint32_t vertexCount = 0, indexCount = 0, submeshCount = 0;
 				in.read(reinterpret_cast<char*>(&vertexCount), sizeof(uint32_t));
 				in.read(reinterpret_cast<char*>(&indexCount), sizeof(uint32_t));
 
-				uint32_t submeshCount = 0;
 				if (header.version >= 2) {
 					in.read(reinterpret_cast<char*>(&submeshCount), sizeof(uint32_t));
+				}
+
+				if (vertexCount > 1000000 || indexCount > 3000000) {
+					AX_CORE_LOG_ERROR("Mesh Corrupted! Vertices: {}. Path: {}", vertexCount, absolutePath.string());
+					return nullptr;
 				}
 
 				MeshData meshData;
@@ -71,14 +81,25 @@ namespace Axion {
 	void BinaryAssetLoader::loadTexture2D(UUID handle, const std::filesystem::path& absolutePath) {
 		AssetManager::storage<Texture2D>().assets[handle] = nullptr;
 		AssetManager::storage<Texture2D>().loadQueue.push_back({ handle,
-			[absolutePath]() {
+			[absolutePath]() -> Ref<Texture2D> {
+
+				if (absolutePath.empty() || !std::filesystem::exists(absolutePath)) {
+					AX_CORE_LOG_ERROR("Texture binary missing: {}", absolutePath.string());
+					return nullptr;
+				}
+
 				std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
 
 				BinaryAssetHeader header;
 				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
 
-				uint64_t dataSize;
+				uint64_t dataSize = 0;
 				in.read(reinterpret_cast<char*>(&dataSize), sizeof(uint64_t));
+
+				if (dataSize == 0 || dataSize > 100000000) {
+					AX_CORE_LOG_ERROR("Texture Corrupted or Missing! Size: {} bytes. Path: {}", dataSize, absolutePath.string());
+					return nullptr;
+				}
 
 				std::vector<uint8_t> imageData(dataSize);
 				in.read(reinterpret_cast<char*>(imageData.data()), dataSize);
@@ -328,13 +349,24 @@ namespace Axion {
 	void BinaryAssetLoader::loadAnimationClip(UUID handle, const std::filesystem::path& absolutePath) {
 		AssetManager::storage<AnimationClip>().assets[handle] = nullptr;
 		AssetManager::storage<AnimationClip>().loadQueue.push_back({ handle,
-			[absolutePath]() {
+			[absolutePath]() -> Ref<AnimationClip> {
+
+				if (absolutePath.empty() || !std::filesystem::exists(absolutePath)) {
+					AX_CORE_LOG_ERROR("Animation binary missing: {}", absolutePath.string());
+					return nullptr;
+				}
+
 				std::ifstream in(absolutePath, std::ios::in  | std::ios::binary);
+				if (!in.is_open()) {
+					AX_CORE_LOG_ERROR("Failed to open Animation binary: {}", absolutePath.string());
+					return nullptr;
+				}
+
 				BinaryAssetHeader header;
 				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
 
 				Ref<AnimationClip> clip = std::make_shared<AnimationClip>();
-				uint32_t boneAnimationCount;
+				uint32_t boneAnimationCount = 0;
 				in.read(reinterpret_cast<char*>(&clip->duration), sizeof(float));
 				in.read(reinterpret_cast<char*>(&clip->ticksPerSecond), sizeof(float));
 				in.read(reinterpret_cast<char*>(&boneAnimationCount), sizeof(uint32_t));
@@ -344,25 +376,36 @@ namespace Axion {
 				for (uint32_t i = 0; i < boneAnimationCount; i++) {
 					auto& boneAnimation = clip->boneAnimations[i];
 
-					uint32_t nameLength;
+					uint32_t nameLength = 0;
 					in.read(reinterpret_cast<char*>(&nameLength), sizeof(uint32_t));
-					boneAnimation.boneName.resize(nameLength);
-					in.read(&boneAnimation.boneName[0], nameLength);
+					if (nameLength > 0) {
+						boneAnimation.boneName.resize(nameLength);
+						in.read(&boneAnimation.boneName[0], nameLength);
+					}
 
-					uint32_t posCount;
+					uint32_t posCount = 0;
 					in.read(reinterpret_cast<char*>(&posCount), sizeof(uint32_t));
 					boneAnimation.positions.resize(posCount);
-					in.read(reinterpret_cast<char*>(boneAnimation.positions.data()), posCount * sizeof(Keyframe<DirectX::XMFLOAT3>));
+					for (uint32_t k = 0; k < posCount; ++k) {
+						in.read(reinterpret_cast<char*>(&boneAnimation.positions[k].time), sizeof(float));
+						in.read(reinterpret_cast<char*>(&boneAnimation.positions[k].value), sizeof(DirectX::XMFLOAT3));
+					}
 
-					uint32_t rotCount;
+					uint32_t rotCount = 0;
 					in.read(reinterpret_cast<char*>(&rotCount), sizeof(uint32_t));
 					boneAnimation.rotations.resize(rotCount);
-					in.read(reinterpret_cast<char*>(boneAnimation.rotations.data()), rotCount * sizeof(Keyframe<DirectX::XMFLOAT4>));
+					for (uint32_t k = 0; k < rotCount; ++k) {
+						in.read(reinterpret_cast<char*>(&boneAnimation.rotations[k].time), sizeof(float));
+						in.read(reinterpret_cast<char*>(&boneAnimation.rotations[k].value), sizeof(DirectX::XMFLOAT4));
+					}
 
-					uint32_t scaCount;
+					uint32_t scaCount = 0;
 					in.read(reinterpret_cast<char*>(&scaCount), sizeof(uint32_t));
 					boneAnimation.scales.resize(scaCount);
-					in.read(reinterpret_cast<char*>(boneAnimation.scales.data()), scaCount * sizeof(Keyframe<DirectX::XMFLOAT3>));
+					for (uint32_t k = 0; k < scaCount; ++k) {
+						in.read(reinterpret_cast<char*>(&boneAnimation.scales[k].time), sizeof(float));
+						in.read(reinterpret_cast<char*>(&boneAnimation.scales[k].value), sizeof(DirectX::XMFLOAT3));
+					}
 				}
 
 				return clip;
@@ -374,16 +417,27 @@ namespace Axion {
 	void BinaryAssetLoader::loadSkeletalMesh(UUID handle, const std::filesystem::path& absolutePath) {
 		AssetManager::storage<SkeletalMesh>().assets[handle] = nullptr;
 		AssetManager::storage<SkeletalMesh>().loadQueue.push_back({ handle,
-			[absolutePath]() {
+			[absolutePath]() -> Ref<SkeletalMesh> {
+
+				if (absolutePath.empty() || !std::filesystem::exists(absolutePath)) {
+					AX_CORE_LOG_ERROR("Binary file path is missing of invalid: {}", absolutePath.string());
+					return nullptr;
+				}
+
 				std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
 				BinaryAssetHeader header;
 				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
 
-				uint32_t vertexCount, indexCount, submeshCount, boneCount;
+				uint32_t vertexCount = 0, indexCount = 0, submeshCount = 0, boneCount = 0;
 				in.read(reinterpret_cast<char*>(&vertexCount), sizeof(uint32_t));
 				in.read(reinterpret_cast<char*>(&indexCount), sizeof(uint32_t));
 				in.read(reinterpret_cast<char*>(&submeshCount), sizeof(uint32_t));
 				in.read(reinterpret_cast<char*>(&boneCount), sizeof(uint32_t));
+
+				if (!in) {
+					AX_CORE_LOG_ERROR("Failed to read SkeletalMesh data. File is corrupted or empty: {}", absolutePath.string());
+					return nullptr;
+				}
 
 				SkeletalMeshData meshData;
 				meshData.vertices.resize(vertexCount);
@@ -407,7 +461,16 @@ namespace Axion {
 					in.read(&bone.name[0], nameLength);
 
 					in.read(reinterpret_cast<char*>(&bone.parentIndex), sizeof(int32_t));
+					in.read(reinterpret_cast<char*>(&bone.localBindTransform), sizeof(DirectX::XMMATRIX));
 					in.read(reinterpret_cast<char*>(&bone.inverseBindMatrix), sizeof(DirectX::XMMATRIX));
+					
+					uint32_t childCount;
+					in.read(reinterpret_cast<char*>(&childCount), sizeof(uint32_t));
+					AX_CORE_LOG_INFO("Reading bone '{}'. Child count: {}", bone.name, childCount);
+					if (childCount > 0) {
+						bone.children.resize(childCount);
+						in.read(reinterpret_cast<char*>(bone.children.data()), childCount * sizeof(int));
+					}
 				}
 
 				in.read(reinterpret_cast<char*>(&meshData.skeleton.rootTransform), sizeof(DirectX::XMMATRIX));

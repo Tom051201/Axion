@@ -1532,9 +1532,12 @@ namespace Axion {
 			}
 			case ComponentID::Animator: {
 				// -- Read Animator Component --
-				auto& component = entity.getComponent<AnimatorComponent>();
-				in.read(reinterpret_cast<char*>(&component.currentClip), sizeof(UUID));
+				auto& component = entity.addComponent<AnimatorComponent>();
+				UUID clipUUID;
+				in.read(reinterpret_cast<char*>(&clipUUID), sizeof(UUID));
+				if (clipUUID.isValid()) component.currentClip = AssetManager::load<AnimationClip>(clipUUID);
 				in.read(reinterpret_cast<char*>(&component.isPlaying), sizeof(bool));
+				break;
 			}
 			}
 

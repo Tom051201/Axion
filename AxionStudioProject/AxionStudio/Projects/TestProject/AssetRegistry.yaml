@@ -1,29 +1,26 @@
 Version: 1
 AssetRegistry:
-  - Handle: b9c7f4ff4db73182b4dd97c1b6cbf734
-    Type: Material
-    FilePath: materials/AnimatedMorphSphere/No Name.axmat
-  - Handle: 2e986f85eda45f97252996f2695564fc
-    Type: Material
-    FilePath: materials/BlueMetal.axmat
   - Handle: cb6d1ff4e98c9ed731b52f1c54d0acdf
     Type: Scene
     FilePath: scenes/TestScene.axscene
   - Handle: 733d8fbe7dc61424ec859ebab050261e
     Type: Texture2D
     FilePath: textures/RoughnessMap.axtex
-  - Handle: 2a4d473277b77f921a36499558eba271
+  - Handle: 2e986f85eda45f97252996f2695564fc
+    Type: Material
+    FilePath: materials/BlueMetal.axmat
+  - Handle: ee63f6883e41dcff1b8e01079adfd02e
     Type: Texture2D
-    FilePath: textures/AlbedoMap.axtex
+    FilePath: textures/CesiumMan/CesiumMan_Tex_0.axtex
   - Handle: 61aa8ca013e9890b54366991f0eaac18
     Type: Mesh
     FilePath: meshes/Cube.axmesh
+  - Handle: 2a4d473277b77f921a36499558eba271
+    Type: Texture2D
+    FilePath: textures/AlbedoMap.axtex
   - Handle: b5f080dcbc66687fbaa0bbe91b24f108
     Type: Texture2D
     FilePath: textures/NormalMap.axtex
-  - Handle: def7c83f68459ff610c27a1bf55c6ed4
-    Type: None
-    FilePath: meshes/CesiumMan/CesiumMan.axskelmesh
   - Handle: 04d4dcf41563adb69a3a1e571f1881cc
     Type: Texture2D
     FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_1.axtex
@@ -39,30 +36,24 @@ AssetRegistry:
   - Handle: f9cdd784ca27aa098da5acf93c45f11e
     Type: Mesh
     FilePath: meshes/SubmeshCube.axmesh
-  - Handle: f4840a5c05babfe0414d530a8306aeef
-    Type: Material
-    FilePath: materials/RedMetal.axmat
   - Handle: fe628f9d4bcd90083a8c84e7656868ab
     Type: Prefab
     FilePath: prefabs/DamagedHelmet/DamagedHelmet.axprefab
+  - Handle: f4840a5c05babfe0414d530a8306aeef
+    Type: Material
+    FilePath: materials/RedMetal.axmat
   - Handle: c90ff323161f10d1093cc0b6535d716c
     Type: TextureCube
     FilePath: skybox/Skybox.axtcube
   - Handle: 6bfe9dd4e37d1bd90560ab8a5c6799b5
     Type: Mesh
     FilePath: meshes/test.axmesh
-  - Handle: 8c5319fa96dbdbf2edde63d659df4367
-    Type: Texture2D
-    FilePath: textures/CesiumMan/CesiumMan_Tex_0.axtex
-  - Handle: 2b5b939b2b647b374074dfe47c3baec3
-    Type: Texture2D
-    FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_4.axtex
   - Handle: 06a3c49714be996e5c8d13a4beb517f7
     Type: Mesh
     FilePath: meshes/test2.axmesh
-  - Handle: 11af5c643a3f764cf0e978c42c012759
-    Type: Prefab
-    FilePath: prefabs/CesiumMan/CesiumMan.axprefab
+  - Handle: 2b5b939b2b647b374074dfe47c3baec3
+    Type: Texture2D
+    FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_4.axtex
   - Handle: 34e1dd032a1433ee6594ca73c0f8c257
     Type: Texture2D
     FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_0.axtex
@@ -78,18 +69,15 @@ AssetRegistry:
   - Handle: b3bda371c36a994af2c8ad48954c8fd4
     Type: Mesh
     FilePath: meshes/DamagedHelmet/DamagedHelmet.axmesh
-  - Handle: 32d25683f2e9b57d864fb8027b0bb635
-    Type: Mesh
-    FilePath: meshes/AnimatedMorphSphere/AnimatedMorphSphere.axmesh
-  - Handle: 8d15fd04c7da44dec6b80c56073b2482
-    Type: None
-    FilePath: animations/AnimatedMorphSphere/Globe.axanim
-  - Handle: f6af8622740b282b0561ec983e9dcfe2
-    Type: Prefab
-    FilePath: prefabs/AnimatedMorphSphere/AnimatedMorphSphere.axprefab
-  - Handle: e9d6cb395c847bbb81d581ad7d112a0c
+  - Handle: eccddf704f8fc336bbc9693139b5b740
     Type: Material
     FilePath: materials/CesiumMan/Cesium_Man-effect.axmat
-  - Handle: ddf4a5448f142811df4a8159a8234fe4
-    Type: None
+  - Handle: 3313069d85b136dc9677c5c9b331c2f4
+    Type: SkeletalMesh
+    FilePath: meshes/CesiumMan/CesiumMan.axskelmesh
+  - Handle: 6ede705ff9d667248b4ba52ec0528c83
+    Type: AnimationClip
     FilePath: animations/CesiumMan/CesiumMan_Anim_0.axanim
+  - Handle: 831142a98a5a6a34ce8ffafb9d3ea0dc
+    Type: Prefab
+    FilePath: prefabs/CesiumMan/CesiumMan.axprefab

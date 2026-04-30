@@ -1,8 +1,8 @@
 Version: 1
 Type: Prefab
-UUID: 11af5c643a3f764cf0e978c42c012759
+UUID: 831142a98a5a6a34ce8ffafb9d3ea0dc
 Entity:
-  Entity: 0e715aaab06891584c5fbb101a647b04
+  Entity: bd7f26fa364a97aba862abda4a6bf438
   TagComponent:
     Tag: CesiumMan
   TransformComponent:
@@ -11,9 +11,9 @@ Entity:
     Scale: [1, 1, 1]
   MaterialComponent:
     Materials:
-      - e9d6cb395c847bbb81d581ad7d112a0c
+      - eccddf704f8fc336bbc9693139b5b740
   SkeletalMeshComponent:
-    UUID: def7c83f68459ff610c27a1bf55c6ed4
+    UUID: 3313069d85b136dc9677c5c9b331c2f4
   AnimatorComponent:
-    CurrentClip: ddf4a5448f142811df4a8159a8234fe4
+    CurrentClip: 6ede705ff9d667248b4ba52ec0528c83
     IsPlaying: true

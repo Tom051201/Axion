@@ -194,6 +194,8 @@ namespace Axion {
 		if (assetType == "PhysicsMaterial")		return AssetType::PhysicsMaterial;
 		if (assetType == "Prefab")				return AssetType::Prefab;
 		if (assetType == "Scene")				return AssetType::Scene;
+		if (assetType == "SkeletalMesh")		return AssetType::SkeletalMesh;
+		if (assetType == "AnimationClip")		return AssetType::AnimationClip;
 		return AssetType::None;
 	}
 
@@ -211,6 +213,8 @@ namespace Axion {
 			case AssetType::Prefab:				return "Prefab";
 			case AssetType::Scene:				return "Scene";
 			case AssetType::None:				return "None";
+			case AssetType::SkeletalMesh:		return "SkeletalMesh";
+			case AssetType::AnimationClip:		return "AnimationClip";
 		}
 		return "None";
 	}

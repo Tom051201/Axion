@@ -12,7 +12,7 @@ namespace Axion {
 
 	Animator::Animator(const Skeleton& skeleton)
 		: m_skeleton(skeleton) {
-		m_finalBoneMatrices.resize(100, DirectX::XMMatrixIdentity());
+		m_finalBoneMatrices.resize(m_skeleton.bones.size(), DirectX::XMMatrixIdentity());
 	}
 
 	void Animator::playAnimation(const Ref<AnimationClip>& clip) {
@@ -45,11 +45,11 @@ namespace Axion {
 	}
 
 	template<typename T>
-	int GetKeyframeIndex(const std::vector<Keyframe<T>>& keys, float time) {
+	int getKeyframeIndex(const std::vector<Keyframe<T>>& keys, float time) {
 		for (size_t i = 0; i < keys.size() - 1; ++i) {
 			if (time < keys[i + 1].time) return static_cast<int>(i);
 		}
-		return 0;
+		return static_cast<int>(keys.size() - 2);
 	}
 
 	void Animator::calculateBoneTransform(const Bone* bone, DirectX::XMMATRIX parentTransform) {
@@ -59,7 +59,11 @@ namespace Axion {
 			const BoneAnimation* boneAnim = m_currentClip->getBoneAnimation(bone->name);
 			if (boneAnim) {
 				DirectX::XMVECTOR S, R, T;
-				DirectX::XMMatrixDecompose(&S, &R, &T, localTransform);
+				if (!DirectX::XMMatrixDecompose(&S, &R, &T, localTransform)) {
+					S = DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
+					R = DirectX::XMQuaternionIdentity();
+					T = DirectX::XMVectorZero();
+				}
 
 				// -- Interpolate Translation --
 				if (!boneAnim->positions.empty()) {
@@ -67,9 +71,16 @@ namespace Axion {
 						T = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&boneAnim->positions[0].value);
 					}
 					else {
-						int idx = GetKeyframeIndex(boneAnim->positions, m_currentTime);
+						int idx = getKeyframeIndex(boneAnim->positions, m_currentTime);
 						int nextIdx = idx + 1;
-						float factor = (m_currentTime - boneAnim->positions[idx].time) / (boneAnim->positions[nextIdx].time - boneAnim->positions[idx].time);
+						float timeDiff = boneAnim->positions[nextIdx].time - boneAnim->positions[idx].time;
+						float factor = 1.0f;
+
+						if (timeDiff > 0.0001f) {
+							factor = (m_currentTime - boneAnim->positions[idx].time) / timeDiff;
+							if (factor > 1.0f) factor = 1.0f;
+							if (factor < 0.0f) factor = 0.0f;
+						}
 
 						DirectX::XMVECTOR start = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&boneAnim->positions[idx].value);
 						DirectX::XMVECTOR end = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&boneAnim->positions[nextIdx].value);
@@ -81,14 +92,31 @@ namespace Axion {
 				if (!boneAnim->rotations.empty()) {
 					if (boneAnim->rotations.size() == 1) {
 						R = DirectX::XMLoadFloat4((DirectX::XMFLOAT4*)&boneAnim->rotations[0].value);
+
+						if (DirectX::XMVectorGetX(DirectX::XMVector4LengthSq(R)) < 0.0001f) R = DirectX::XMQuaternionIdentity();
+						else R = DirectX::XMQuaternionNormalize(R);
 					}
 					else {
-						int idx = GetKeyframeIndex(boneAnim->rotations, m_currentTime);
+						int idx = getKeyframeIndex(boneAnim->rotations, m_currentTime);
 						int nextIdx = idx + 1;
-						float factor = (m_currentTime - boneAnim->rotations[idx].time) / (boneAnim->rotations[nextIdx].time - boneAnim->rotations[idx].time);
+						float timeDiff = boneAnim->rotations[nextIdx].time - boneAnim->rotations[idx].time;
+						float factor = 1.0f;
+
+						if (timeDiff > 0.0001f) {
+							factor = (m_currentTime - boneAnim->rotations[idx].time) / timeDiff;
+							if (factor > 1.0f) factor = 1.0f;
+							if (factor < 0.0f) factor = 0.0f;
+						}
 
 						DirectX::XMVECTOR start = DirectX::XMLoadFloat4((DirectX::XMFLOAT4*)&boneAnim->rotations[idx].value);
 						DirectX::XMVECTOR end = DirectX::XMLoadFloat4((DirectX::XMFLOAT4*)&boneAnim->rotations[nextIdx].value);
+
+						if (DirectX::XMVectorGetX(DirectX::XMVector4LengthSq(start)) < 0.0001f) start = DirectX::XMQuaternionIdentity();
+						else start = DirectX::XMQuaternionNormalize(start);
+
+						if (DirectX::XMVectorGetX(DirectX::XMVector4LengthSq(end)) < 0.0001f) end = DirectX::XMQuaternionIdentity();
+						else end = DirectX::XMQuaternionNormalize(end);
+
 						R = DirectX::XMQuaternionSlerp(start, end, factor);
 					}
 				}
@@ -99,9 +127,16 @@ namespace Axion {
 						S = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&boneAnim->scales[0].value);
 					}
 					else {
-						int idx = GetKeyframeIndex(boneAnim->scales, m_currentTime);
+						int idx = getKeyframeIndex(boneAnim->scales, m_currentTime);
 						int nextIdx = idx + 1;
-						float factor = (m_currentTime - boneAnim->scales[idx].time) / (boneAnim->scales[nextIdx].time - boneAnim->scales[idx].time);
+						float timeDiff = boneAnim->scales[nextIdx].time - boneAnim->scales[idx].time;
+						float factor = 1.0f;
+
+						if (timeDiff > 0.0001f) {
+							factor = (m_currentTime - boneAnim->scales[idx].time) / timeDiff;
+							if (factor > 1.0f) factor = 1.0f;
+							if (factor < 0.0f) factor = 0.0f;
+						}
 
 						DirectX::XMVECTOR start = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&boneAnim->scales[idx].value);
 						DirectX::XMVECTOR end = DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&boneAnim->scales[nextIdx].value);

@@ -61,18 +61,26 @@ namespace Axion::AAP {
 			// -- Write Positions --
 			uint32_t posCount = static_cast<uint32_t>(boneAnimation.positions.size());
 			out.write(reinterpret_cast<const char*>(&posCount), sizeof(uint32_t));
-			out.write(reinterpret_cast<const char*>(boneAnimation.positions.data()), posCount * sizeof(Keyframe<DirectX::XMFLOAT3>));
+			for (uint32_t k = 0; k < posCount; ++k) {
+				out.write(reinterpret_cast<const char*>(&boneAnimation.positions[k].time), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&boneAnimation.positions[k].value), sizeof(DirectX::XMFLOAT3));
+			}
 
 			// -- Write Rotations --
 			uint32_t rotCount = static_cast<uint32_t>(boneAnimation.rotations.size());
 			out.write(reinterpret_cast<const char*>(&rotCount), sizeof(uint32_t));
-			out.write(reinterpret_cast<const char*>(boneAnimation.rotations.data()), rotCount * sizeof(Keyframe<DirectX::XMFLOAT4>));
+			for (uint32_t k = 0; k < rotCount; ++k) {
+				out.write(reinterpret_cast<const char*>(&boneAnimation.rotations[k].time), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&boneAnimation.rotations[k].value), sizeof(DirectX::XMFLOAT4));
+			}
 
 			// -- Write Scales --
 			uint32_t scaCount = static_cast<uint32_t>(boneAnimation.scales.size());
 			out.write(reinterpret_cast<const char*>(&scaCount), sizeof(uint32_t));
-			out.write(reinterpret_cast<const char*>(boneAnimation.scales.data()), scaCount * sizeof(Keyframe<DirectX::XMFLOAT3>));
-
+			for (uint32_t k = 0; k < scaCount; ++k) {
+				out.write(reinterpret_cast<const char*>(&boneAnimation.scales[k].time), sizeof(float));
+				out.write(reinterpret_cast<const char*>(&boneAnimation.scales[k].value), sizeof(DirectX::XMFLOAT3));
+			}
 		}
 
 		out.close();

@@ -534,7 +534,7 @@ namespace Axion::AAP {
 
 			// Read Inverse Bind Matrix
 			if (skin.inverse_bind_matrices) {
-				float ibm[16];
+				float ibm[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 				cgltf_accessor_read_float(skin.inverse_bind_matrices, i, ibm, 16);
 				bone.inverseBindMatrix = DirectX::XMMATRIX(ibm);
 			}
@@ -651,14 +651,28 @@ namespace Axion::AAP {
 			}
 
 			for (cgltf_size i = 0; i < keyframeCount; ++i) {
-				float vals[4] = { 0.0f };
-				cgltf_accessor_read_float(sampler.output, i, vals, 4);
+
+				float vals[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+				if (channel.target_path == cgltf_animation_path_type_scale) {
+					vals[0] = 1.0f; vals[1] = 1.0f; vals[2] = 1.0f;
+				}
+
+				cgltf_size outputIndex = i;
+				if (sampler.interpolation == cgltf_interpolation_type_cubic_spline) {
+					outputIndex = i * 3 + 1;
+
+					if (outputIndex >= sampler.output->count) {
+						outputIndex = i;
+					}
+				}
+
+				cgltf_accessor_read_float(sampler.output, outputIndex, vals, 4);
 
 				if (channel.target_path == cgltf_animation_path_type_translation) {
-					boneAnim.positions.push_back({ times[i], {vals[0], vals[1], vals[2]} }); // Assuming Vec3 = XMFLOAT3
+					boneAnim.positions.push_back({ times[i], {vals[0], vals[1], vals[2]} });
 				}
 				else if (channel.target_path == cgltf_animation_path_type_rotation) {
-					boneAnim.rotations.push_back({ times[i], {vals[0], vals[1], vals[2], vals[3]} }); // Assuming Vec4 = XMFLOAT4
+					boneAnim.rotations.push_back({ times[i], {vals[0], vals[1], vals[2], vals[3]} });
 				}
 				else if (channel.target_path == cgltf_animation_path_type_scale) {
 					boneAnim.scales.push_back({ times[i], {vals[0], vals[1], vals[2]} });
