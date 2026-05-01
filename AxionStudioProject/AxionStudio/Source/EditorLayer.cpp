@@ -198,6 +198,8 @@ namespace Axion {
 
 		drawMenuBar();
 
+		if (ProjectManager::isCompilingScripts()) drawCompilationScriptsOverlay();
+
 		endDockspace();
 	}
 
@@ -1089,6 +1091,33 @@ namespace Axion {
 
 			m_pendingDropPath.clear();
 		}
+	}
+
+	void EditorLayer::drawCompilationScriptsOverlay() {
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking |
+			ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
+			ImGuiWindowFlags_NoMove;
+
+		const float PAD = 20.0f;
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImVec2 work_pos = viewport->WorkPos;
+		ImVec2 work_size = viewport->WorkSize;
+
+		ImVec2 window_pos;
+		window_pos.x = work_pos.x + work_size.x - PAD;
+		window_pos.y = work_pos.y + work_size.y - PAD;
+		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, ImVec2(1.0f, 1.0f));
+		ImGui::SetNextWindowBgAlpha(0.8f);
+
+		if (ImGui::Begin("CompileOverlay", nullptr, window_flags)) {
+			float time = (float)ImGui::GetTime();
+			int frame = (int)(time * 8.0f) % 4;
+			const char* spinner[] = { "|", "/", "-", "\\" };
+
+			ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Compiling C# Scripts %s", spinner[frame]);
+		}
+		ImGui::End();
 	}
 
 }

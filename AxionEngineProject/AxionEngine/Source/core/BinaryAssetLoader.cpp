@@ -80,34 +80,34 @@ namespace Axion {
 
 	void BinaryAssetLoader::loadTexture2D(UUID handle, const std::filesystem::path& absolutePath) {
 		AssetManager::storage<Texture2D>().assets[handle] = nullptr;
+		AssetManager::storage<Texture2D>().handleToPath[handle] = absolutePath;
 		AssetManager::storage<Texture2D>().loadQueue.push_back({ handle,
 			[absolutePath]() -> Ref<Texture2D> {
-
+		
 				if (absolutePath.empty() || !std::filesystem::exists(absolutePath)) {
 					AX_CORE_LOG_ERROR("Texture binary missing: {}", absolutePath.string());
 					return nullptr;
 				}
-
+		
 				std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
-
+		
 				BinaryAssetHeader header;
 				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
-
+		
 				uint64_t dataSize = 0;
 				in.read(reinterpret_cast<char*>(&dataSize), sizeof(uint64_t));
-
+		
 				if (dataSize == 0 || dataSize > 100000000) {
 					AX_CORE_LOG_ERROR("Texture Corrupted or Missing! Size: {} bytes. Path: {}", dataSize, absolutePath.string());
 					return nullptr;
 				}
-
+		
 				std::vector<uint8_t> imageData(dataSize);
 				in.read(reinterpret_cast<char*>(imageData.data()), dataSize);
-
+		
 				return Texture2D::create(imageData.data(), imageData.size());
 			}
 		});
-		AssetManager::storage<Texture2D>().handleToPath[handle] = absolutePath;
 	}
 
 	void BinaryAssetLoader::loadTextureCube(UUID handle, const std::filesystem::path& absolutePath) {

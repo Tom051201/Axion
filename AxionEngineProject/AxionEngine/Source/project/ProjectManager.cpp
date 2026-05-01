@@ -29,6 +29,12 @@ namespace Axion {
 
 		// -- Unload project --
 		bool unloadProjectRequest = false;
+
+		// -- Async Script Compilation --
+		std::atomic<bool> isCompiling = false;
+		std::atomic<bool> compileFinished = false;
+		std::atomic<bool> compileSuccess = false;
+		std::filesystem::path pendingAssemblyPath;
 	};
 
 	static ProjectManagerData* s_managerData;
@@ -46,6 +52,19 @@ namespace Axion {
 		EventDispatcher dispatcher(e);
 
 		dispatcher.dispatch<RenderingFinishedEvent>([](RenderingFinishedEvent& e) {
+
+			// -- Process Async Compilation Result --
+			if (s_managerData->compileFinished) {
+				s_managerData->compileFinished = false;
+
+				if (s_managerData->compileSuccess) {
+					ScriptEngine::loadAppAssembly(s_managerData->pendingAssemblyPath);
+					AX_CORE_LOG_INFO("Assembly loaded successfully after async compilation.");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Skipped loading assembly due to compilation errors.");
+				}
+			}
 
 			// -- Save Project --
 			if (s_managerData->saveProjectRequest) {
@@ -218,13 +237,24 @@ namespace Axion {
 				Project::generateScriptProject(projectDir);
 			}
 
-			if (ScriptEngine::compileAppAssembly(csprojPath)) {
-				ScriptEngine::loadAppAssembly(gameAssemblyPath);
-			}
-			else {
-				AX_CORE_LOG_ERROR("Skipped loading assembly due to compilation errors.");
-			}
+			s_managerData->pendingAssemblyPath = gameAssemblyPath;
+			s_managerData->isCompiling = true;
+			s_managerData->compileFinished = false;
+
+			AX_CORE_LOG_INFO("Starting Background Script Compilation...");
+
+			std::thread([csprojPath]() {
+				bool success = ScriptEngine::compileAppAssembly(csprojPath);
+
+				s_managerData->compileSuccess = success;
+				s_managerData->compileFinished = true;
+				s_managerData->isCompiling = false;
+			}).detach();
 		}
+	}
+
+	bool ProjectManager::isCompilingScripts() {
+		return s_managerData && s_managerData->isCompiling;
 	}
 
 }
