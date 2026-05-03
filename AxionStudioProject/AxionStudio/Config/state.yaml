@@ -10,10 +10,12 @@ Panels:
     Visible: true
     ThumbnailSize: 110
     OnlyAssetFiles: false
-    ShowExtensions: false
+    ShowExtensions: true
   - Name: ProjectPanel
     Visible: true
   - Name: SceneOverviewPanel
     Visible: true
   - Name: AssetManagerPanel
     Visible: false
+  - Name: VisualScriptPanel
+    Visible: true

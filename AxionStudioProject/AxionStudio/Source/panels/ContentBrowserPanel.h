@@ -26,6 +26,8 @@ namespace Axion {
 
 		void refresh();
 
+		void setOpenVisualScriptPanelCallback(const std::function<void(const std::filesystem::path& path)>& func) { m_openVisualScriptPanel = func; }
+
 	private:
 
 		// ----- Content browser item -----
@@ -69,6 +71,9 @@ namespace Axion {
 		// -- UI --
 		bool m_showNames = true;
 		float m_thumbnailSize = 128.0f;
+
+		// -- Callbacks --
+		std::function<void(const std::filesystem::path& path)> m_openVisualScriptPanel;
 
 		// ----- Events -----
 		bool onProjectChanged(ProjectChangedEvent& e);

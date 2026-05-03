@@ -14,7 +14,10 @@ project "AxionStudio"
 		"AxionStudio/Source/**.h",
 		"AxionStudio/Source/**.cpp",
 		"**.h",
-		"**.rc"
+		"**.rc",
+		"AxionStudio/Vendor/ImguiNodeEditor/**.h",
+		"AxionStudio/Vendor/ImguiNodeEditor/**.cpp",
+		"AxionStudio/Vendor/ImguiNodeEditor/**.inl"
 	}
 	
 	includedirs {
@@ -26,7 +29,8 @@ project "AxionStudio"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
-		"%{wks.location}/AxionSubsystems/AxionAssetPipelineProject"
+		"%{wks.location}/AxionSubsystems/AxionAssetPipelineProject",
+		"AxionStudio/Vendor/ImguiNodeEditor"
 	}
 	
 	links {

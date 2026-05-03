@@ -28,12 +28,12 @@ namespace Axion {
 		static void setRuntime();
 		static bool isRuntime();
 
+		static void triggerScriptAssemblyLoad();
 		static bool isCompilingScripts();
 
 	private:
 
 		static void setProject(const Ref<Project>& project);
-		static void triggerScriptAssemblyLoad();
 
 	};
 

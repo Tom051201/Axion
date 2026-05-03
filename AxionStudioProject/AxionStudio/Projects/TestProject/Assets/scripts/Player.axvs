@@ -1,0 +1,388 @@
+VisualScript: Player
+Nodes:
+  - ID: 1
+    Type: Event_OnCreate
+    Name: On Create
+    Inputs:
+      []
+    Outputs:
+      - ID: 1000
+        NodeID: 1
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 2
+    Type: Event_OnUpdate
+    Name: On Update
+    Inputs:
+      []
+    Outputs:
+      - ID: 1001
+        NodeID: 2
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1002
+        NodeID: 2
+        Name: Delta Time
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 3
+    Type: Event_OnCollisionEnter
+    Name: On Collision Enter
+    Inputs:
+      []
+    Outputs:
+      - ID: 1003
+        NodeID: 3
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1004
+        NodeID: 3
+        Name: Other Entity
+        Kind: Output
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 4
+    Type: Audio_Play
+    Name: Play Audio
+    Inputs:
+      - ID: 1005
+        NodeID: 4
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1006
+        NodeID: 4
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 5
+    Type: RigidBody_AddForce
+    Name: Add Force
+    Inputs:
+      - ID: 1007
+        NodeID: 5
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1008
+        NodeID: 5
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1009
+        NodeID: 5
+        Name: Force
+        Kind: Input
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1010
+        NodeID: 5
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 6
+    Type: Transform_GetPosition
+    Name: Get Position
+    Inputs:
+      - ID: 1011
+        NodeID: 6
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1012
+        NodeID: 6
+        Name: Result
+        Kind: Output
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 8
+    Type: Logic_Branch
+    Name: Branch
+    Inputs:
+      - ID: 1017
+        NodeID: 8
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1018
+        NodeID: 8
+        Name: Condition
+        Kind: Input
+        Type: Bool
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1019
+        NodeID: 8
+        Name: True
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1020
+        NodeID: 8
+        Name: False
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 9
+    Type: Math_Equal
+    Name: Equal (==)
+    Inputs:
+      - ID: 1021
+        NodeID: 9
+        Name: A
+        Kind: Input
+        Type: Float
+        FloatValue: 0.100000001
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1022
+        NodeID: 9
+        Name: B
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1023
+        NodeID: 9
+        Name: Result
+        Kind: Output
+        Type: Bool
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 10
+    Type: Entity_EmitParticles
+    Name: Emit Particles
+    Inputs:
+      - ID: 1024
+        NodeID: 10
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1025
+        NodeID: 10
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1026
+        NodeID: 10
+        Name: Count
+        Kind: Input
+        Type: Int
+        FloatValue: 0
+        IntValue: 30
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1027
+        NodeID: 10
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 11
+    Type: RigidBody_AddForce
+    Name: Add Force
+    Inputs:
+      - ID: 1028
+        NodeID: 11
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1029
+        NodeID: 11
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1030
+        NodeID: 11
+        Name: Force
+        Kind: Input
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0.400000006, 0.899999976, 1.29999995]
+    Outputs:
+      - ID: 1031
+        NodeID: 11
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 12
+    Type: Audio_Play
+    Name: Play Audio
+    Inputs:
+      - ID: 1032
+        NodeID: 12
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1033
+        NodeID: 12
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+Links:
+  - ID: 100
+    StartPin: 1001
+    EndPin: 1001
+  - ID: 101
+    StartPin: 1012
+    EndPin: 1009
+  - ID: 102
+    StartPin: 1006
+    EndPin: 1007
+  - ID: 103
+    StartPin: 1000
+    EndPin: 1005
+  - ID: 106
+    StartPin: 1023
+    EndPin: 1018
+  - ID: 107
+    StartPin: 1010
+    EndPin: 1024
+  - ID: 108
+    StartPin: 1027
+    EndPin: 1017
+  - ID: 109
+    StartPin: 1019
+    EndPin: 1028
+  - ID: 110
+    StartPin: 1020
+    EndPin: 1032

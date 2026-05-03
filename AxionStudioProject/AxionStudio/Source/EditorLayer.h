@@ -19,6 +19,7 @@
 #include "AxionStudio/Source/panels/ProjectPanel.h"
 #include "AxionStudio/Source/panels/SceneOverviewPanel.h"
 #include "AxionStudio/Source/panels/AssetManagerPanel.h"
+#include "AxionStudio/Source/panels/VisualScriptPanel.h"
 #include "AxionStudio/Source/modals/SkyboxImportModal.h"
 #include "AxionStudio/Source/modals/MeshImportModal.h"
 #include "AxionStudio/Source/modals/AudioImportModal.h"
@@ -69,6 +70,7 @@ namespace Axion {
 		ProjectPanel* m_projectPanel;
 		SceneOverviewPanel* m_sceneOverviewPanel;
 		AssetManagerPanel* m_assetManagerPanel;
+		VisualScriptPanel* m_visualScriptPanel;
 
 
 		// ----- Modals -----

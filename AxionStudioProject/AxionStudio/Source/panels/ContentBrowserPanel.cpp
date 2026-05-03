@@ -13,6 +13,8 @@
 #include "AxionEngine/Source/audio/AudioSource.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
+#include "AxionStudio/Source/scripting/VisualScriptGraph.h"
+#include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
 
 namespace Axion {
 
@@ -115,6 +117,10 @@ namespace Axion {
 				else if (path.extension() == ".axscene") {
 					SceneManager::loadScene(path);
 				}
+				else if (path.extension() == ".axvs") {
+					
+					if (m_openVisualScriptPanel) { m_openVisualScriptPanel(path); }
+				}
 			}
 
 			// -- Draw options on right click --
@@ -186,6 +192,14 @@ namespace Axion {
 						if (!m_itemBeingRenamed.empty()) {
 							std::filesystem::path newPath = path.parent_path() / m_itemRenameString;
 
+							// -- Enforce a File Extenion if not a Folder --
+							if (!item.isDir && path.has_extension()) {
+								std::string originalExt = path.extension().string();
+								if (newPath.extension().string() != originalExt) {
+									newPath += originalExt;
+								}
+							}
+
 							// -- Check if name is valid --
 							std::error_code ec;
 							if (!std::filesystem::exists(newPath, ec) && !ec) {
@@ -233,6 +247,38 @@ namespace Axion {
 
 		}
 		ImGui::Columns(1);
+
+		// -- Right-Click Background Menu --
+		if (ImGui::BeginPopupContextWindow("ContentBrowser_Background", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
+			if (ImGui::BeginMenu("Create File")) {
+
+				// -- Create Visual Script File --
+				if (ImGui::MenuItem("Visual Script")) {
+					std::string baseName = "NewVisualScript";
+					std::filesystem::path newScriptPath = m_currentDirectory / (baseName + ".axvs");
+
+					int counter = 1;
+					while (std::filesystem::exists(newScriptPath)) {
+						newScriptPath = m_currentDirectory / (baseName + "_" + std::to_string(counter) + ".axvs");
+						counter++;
+					}
+
+					VisualGraph newGraph;
+					newGraph.className = newScriptPath.stem().string();
+					VisualScriptSerializer::serialize(newGraph, newScriptPath);
+
+					refreshDirectory();
+					m_itemBeingRenamed = newScriptPath;
+					m_itemRenameString = newScriptPath.filename().string();
+					m_startRenaming = true;
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndPopup();
+		}
+
 		ImGui::EndChild();	// ContentBrowserChild end
 
 
@@ -367,7 +413,10 @@ namespace Axion {
 			ext == ".axprefab" ||
 			ext == ".axpso" ||
 			ext == ".axscene" ||
-			ext == ".axtcube";
+			ext == ".axtcube" ||
+			ext == ".axanim" ||
+			ext == ".axskelmesh" ||
+			ext == ".axvs";
 	}
 
 	void ContentBrowserPanel::deletePath(const std::filesystem::path& path) {

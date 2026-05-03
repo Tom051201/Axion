@@ -13,9 +13,11 @@
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorStateSerializer.h"
 #include "AxionStudio/Source/core/EditorTheme.h"
+#include "AxionStudio/Source/scripting/VisualScriptGraph.h"
+#include "AxionStudio/Source/scripting/VisualScriptCompiler.h"
+#include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
 
 #include "AxionAssetPipeline/Source/core/AssetPackager.h"
-
 #include "AxionAssetPipeline/Source/importer/GLTFImporter.h" // TODO: remove this and put in a separated modal or so
 
 // -- Windows only --
@@ -54,8 +56,17 @@ namespace Axion {
 		m_projectPanel			= m_panelManager.addPanel<ProjectPanel>("ProjectPanel");
 		m_sceneOverviewPanel	= m_panelManager.addPanel<SceneOverviewPanel>("SceneOverviewPanel");
 		m_assetManagerPanel		= m_panelManager.addPanel<AssetManagerPanel>("AssetManagerPanel");
+		m_visualScriptPanel		= m_panelManager.addPanel<VisualScriptPanel>("VisualScriptPanel");
 		m_panelManager.setupAll();
 		m_projectPanel->setOpenExportModalCallback([this]() { m_exportProjectModal->open(); });
+		m_contentBrowserPanel->setOpenVisualScriptPanelCallback([this](const std::filesystem::path& path) {
+			m_visualScriptPanel->isVisible() = true;
+			ImGui::SetWindowFocus("Virtual Script Editor");
+			VisualGraph loadedGraph;
+			if (VisualScriptSerializer::deserialize(loadedGraph, path)) {
+				m_visualScriptPanel->setContext(loadedGraph, path);
+			}
+		});
 
 
 		// ----- Setup framebuffer for scene viewport -----
