@@ -7,7 +7,7 @@ namespace Axion {
 
 	enum class PinKind { None, Input, Output };
 
-	enum class PinType { None, Flow, Bool, Int, Float, String, Vector3, Entity };
+	enum class PinType { None, Flow, Bool, Int, Float, String, Vector3, Entity, Key, MouseButton };
 
 	enum class NodeType {
 		None = 0,
@@ -40,9 +40,12 @@ namespace Axion {
 		// -- RIGIDBODY --
 		RigidBody_AddForce,
 		RigidBody_AddTorque,
+		RigidBody_AddImpulse,
 		RigidBody_AddRadialImpulse,
 		RigidBody_GetLinearVelocity,
 		RigidBody_SetLinearVelocity,
+		RigidBody_GetAngularVelocity,
+		RigidBody_SetAngularVelocity,
 		RigidBody_GetMass,
 		RigidBody_SetMass,
 
@@ -63,6 +66,9 @@ namespace Axion {
 
 		// -- LOGIC --
 		Logic_Branch,
+		Logic_Sequence,
+		Logic_And,
+		Logic_Or,
 
 		// -- MATH --
 		Math_Add,
@@ -71,7 +77,19 @@ namespace Axion {
 		Math_Divide,
 		Math_Equal,
 		Math_Greater,
-		Math_Less
+		Math_Less,
+		Math_MakeVector3,
+		Math_BreakVector3,
+
+		// -- VARIABLES --
+		Variable_GetFloat,
+		Variable_SetFloat,
+		Variable_GetInt,
+		Variable_SetInt,
+		Variable_GetBool,
+		Variable_SetBool,
+		Variable_GetVector3,
+		Variable_SetVector3
 	};
 
 	struct Pin {
@@ -94,6 +112,8 @@ namespace Axion {
 		std::string name;
 		std::vector<Pin> inputs;
 		std::vector<Pin> outputs;
+
+		PinType operationType = PinType::Float;
 	};
 
 	struct Link {
@@ -102,10 +122,21 @@ namespace Axion {
 		int endPinID;
 	};
 
+	struct Variable {
+		std::string name = "NewVar";
+		PinType type = PinType::Float;
+
+		float floatValue = 0.0f;
+		int intValue = 0;
+		bool boolValue = false;
+		Vec3 vec3Value = Vec3::zero();
+	};
+
 	struct VisualGraph {
 		std::string className;
 		std::vector<Node> nodes;
 		std::vector<Link> links;
+		std::vector<Variable> variables;
 	};
 
 }

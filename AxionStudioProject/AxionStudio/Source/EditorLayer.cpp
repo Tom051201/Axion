@@ -61,7 +61,7 @@ namespace Axion {
 		m_projectPanel->setOpenExportModalCallback([this]() { m_exportProjectModal->open(); });
 		m_contentBrowserPanel->setOpenVisualScriptPanelCallback([this](const std::filesystem::path& path) {
 			m_visualScriptPanel->isVisible() = true;
-			ImGui::SetWindowFocus("Virtual Script Editor");
+			ImGui::SetWindowFocus("Visual Script Editor");
 			VisualGraph loadedGraph;
 			if (VisualScriptSerializer::deserialize(loadedGraph, path)) {
 				m_visualScriptPanel->setContext(loadedGraph, path);
@@ -455,6 +455,13 @@ namespace Axion {
 							}
 						}
 					}
+
+					// -- Try loading Visual Script File --
+					if (payloadPath.extension() == ".axvs") {
+						std::filesystem::path absPath = AssetManager::getAbsolute(payloadPath);
+						m_visualScriptPanel->openScript(absPath);
+						ImGui::SetWindowFocus("Visual Script Editor");
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -631,6 +638,7 @@ namespace Axion {
 
 			// ----- View menu -----
 			if (ImGui::BeginMenu("  View  ")) {
+				ImGui::MenuItem("Visual Script", nullptr, &m_visualScriptPanel->isVisible());
 				ImGui::MenuItem("Scene Hierarchy", nullptr, &m_sceneHierarchyPanel->isVisible());
 				ImGui::MenuItem("Content Browser", nullptr, &m_contentBrowserPanel->isVisible());
 				ImGui::MenuItem("Project Overview", nullptr, &m_projectPanel->isVisible());
@@ -1095,6 +1103,10 @@ namespace Axion {
 			else if (ext == ".mp3" || ext == ".wav" || ext == ".ogg") {
 				m_audioImportModal->presetFromFile(m_pendingDropPath);
 				m_audioImportModal->open();
+			}
+			else if (ext == ".axvs") {
+				m_visualScriptPanel->openScript(m_pendingDropPath);
+				ImGui::SetWindowFocus("Visual Script Editor");
 			}
 			else {
 				AX_CORE_LOG_WARN("Unsupported dropped file: {}", m_pendingDropPath.string());

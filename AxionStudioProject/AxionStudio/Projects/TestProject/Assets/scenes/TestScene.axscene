@@ -12,6 +12,20 @@ Entities:
       Translation: [-0.601063251, 0.360408187, -2.50998735]
       Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
+    AudioComponent:
+      IsListener: false
+      IsSource: true
+      AudioSource:
+        AudioClip: 25766119d9fb88451906347850bfe89a
+        Volume: 1
+        Pitch: 1
+        Pan: 0
+        IsSpatial: true
+        Position: [-0.601063251, 0.360408187, -2.50998735]
+        Velocity: [0, 0, 0]
+        MinDistance: 1
+        MaxDistance: 100
+        DopplerFactor: 1
     CameraComponent:
       Primary: true
       FixedAspectRatio: false
@@ -22,6 +36,23 @@ Entities:
       OrthographicSize: 10
       OrthographicNear: -1
       OrthographicFar: 1
+    RigidBodyComponent:
+      BodyType: Dynamic
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Material: 0
+    ScriptComponent:
+      ClassName: Player
   - Entity: b449f386f4cb2d49edf664f9328dc21c
     TagComponent:
       Tag: Cube
@@ -87,3 +118,30 @@ Entities:
     AnimatorComponent:
       CurrentClip: 6ede705ff9d667248b4ba52ec0528c83
       IsPlaying: true
+  - Entity: 5bdf43514fa10d2a76d716c3980c1b0d
+    TagComponent:
+      Tag: Floor
+    TransformComponent:
+      Translation: [0, -1.04342079, 0]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [14.1287041, 1, 16.6775818]
+    MeshComponent:
+      UUID: 61aa8ca013e9890b54366991f0eaac18
+    MaterialComponent:
+      Materials:
+        - 2e986f85eda45f97252996f2695564fc
+    RigidBodyComponent:
+      BodyType: Static
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Material: 0

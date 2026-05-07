@@ -1552,6 +1552,22 @@ namespace Axion {
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				ImGui::InputText("##ScriptClassName", &component.className);
 
+				// -- Drop Target for .axvs Files --
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+						std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+						std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+
+						if (absPath.extension() == ".axvs") {
+							component.className = absPath.stem().string();
+						}
+						else {
+							AX_CORE_LOG_WARN("Dropped item is not a valid script file (.axvs)!");
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+
 				// -- State --
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);

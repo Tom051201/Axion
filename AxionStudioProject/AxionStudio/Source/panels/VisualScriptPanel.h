@@ -16,10 +16,10 @@ namespace Axion {
 
 		void setup() override;
 		void shutdown() override;
-		void onEvent(Event& e) override;
 		void onGuiRender() override;
 
 		void setContext(const VisualGraph& graph, const std::filesystem::path& filePath);
+		void openScript(const std::filesystem::path& filePath);
 
 	private:
 
@@ -27,12 +27,17 @@ namespace Axion {
 		ax::NodeEditor::Config m_config;
 		VisualGraph m_activeGraph;
 		std::filesystem::path m_currentFilePath;
+		std::string m_currentLayoutFilePath;
 
 		int m_nextLinkId = 1000;
 		int m_nextNodeId = 1;
 		int m_nextPinId = 10000;
 
 		ImVec2 m_newNodePosition;
+
+		std::string m_nodeSearchString = "";
+		std::string m_keySearchString = "";
+		std::string m_mouseSearchString = "";
 
 		void spawnNode(NodeType type, ImVec2 position);
 		bool isPinLinked(int pinId) const;

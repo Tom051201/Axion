@@ -10,6 +10,24 @@ namespace Axion {
 		cs << "using AxionScriptCore;\n\n";
 		cs << "public class " << graph.className << " : Entity {\n\n";
 
+		// -- Create Variables --
+		for (const auto& var : graph.variables) {
+			if (var.type == PinType::Float) {
+				cs << "\tpublic float " << var.name << " = " << formatFloat(var.floatValue) << ";\n";
+			}
+			else if (var.type == PinType::Int) {
+				cs << "\tpublic int " << var.name << " = " << var.intValue << ";\n";
+			}
+			else if (var.type == PinType::Bool) {
+				cs << "\tpublic bool " << var.name << " = " << (var.boolValue ? "true" : "false") << ";\n";
+			}
+			else if (var.type == PinType::Vector3) {
+				cs << "\tpublic Vector3 " << var.name << " = new Vector3(" << formatFloat(var.vec3Value.x) << ", " << formatFloat(var.vec3Value.y) << ", " << formatFloat(var.vec3Value.z) << ");\n";
+			}
+		}
+		cs << "\n";
+
+		// -- Create Code --
 		for (const auto& node : graph.nodes) {
 
 			if (node.type == NodeType::Event_OnCreate) {
@@ -35,13 +53,23 @@ namespace Axion {
 
 	std::string VisualScriptCompiler::getInlineValueString(const Pin& pin) {
 		switch (pin.type) {
-			case PinType::Float: { return std::to_string(pin.floatValue) + "f"; }
+			case PinType::Float: { return formatFloat(pin.floatValue); }
 			case PinType::Int: { return std::to_string(pin.intValue); }
 			case PinType::Bool: { return pin.boolValue ? "true" : "false"; }
 			case PinType::String: { return "\"" + pin.stringValue + "\""; }
-			case PinType::Vector3: { return "new Vector3(" + std::to_string(pin.vec3Value.x) + "f, " + std::to_string(pin.vec3Value.y) + "f, " + std::to_string(pin.vec3Value.z) + "f)"; }
+			case PinType::Vector3: { return "new Vector3(" + formatFloat(pin.vec3Value.x) + ", " + formatFloat(pin.vec3Value.y) + ", " + formatFloat(pin.vec3Value.z) + ")"; }
 			default: return "";
 		}
+	}
+
+	std::string VisualScriptCompiler::formatFloat(float value) {
+		std::string str = std::to_string(value);
+
+		str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+
+		if (str.back() == '.') str += "0";
+
+		return str + "f";
 	}
 
 	std::string VisualScriptCompiler::resolvePinValue(const VisualGraph& graph, const Pin& inputPin) {
@@ -73,6 +101,23 @@ namespace Axion {
 							if (sourceNode.type == NodeType::Math_Greater) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " > " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
 							if (sourceNode.type == NodeType::Math_Less) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " < " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
 
+							// -- LOGIC (PURE) --
+							if (sourceNode.type == NodeType::Logic_And) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " && " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
+							if (sourceNode.type == NodeType::Logic_Or) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " || " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
+
+							if (sourceNode.type == NodeType::Math_MakeVector3) {
+								return "new Vector3(" + resolvePinValue(graph, sourceNode.inputs[0]) + ", " +
+									resolvePinValue(graph, sourceNode.inputs[1]) + ", " +
+									resolvePinValue(graph, sourceNode.inputs[2]) + ")";
+							}
+
+							if (sourceNode.type == NodeType::Math_BreakVector3) {
+								std::string vec = resolvePinValue(graph, sourceNode.inputs[0]);
+								if (outputPin.name == "X") return "(" + vec + ").X";
+								if (outputPin.name == "Y") return "(" + vec + ").Y";
+								if (outputPin.name == "Z") return "(" + vec + ").Z";
+							}
+
 							// -- Resolve Target for Components --
 							std::string target = resolvePinValue(graph, sourceNode.inputs[0]);
 							if (target.empty() || target == "\"\"") target = "this";
@@ -87,11 +132,22 @@ namespace Axion {
 
 							// -- RIGIDBODY GETTERS --
 							if (sourceNode.type == NodeType::RigidBody_GetLinearVelocity) return target + ".RigidBody.LinearVelocity";
+							if (sourceNode.type == NodeType::RigidBody_GetAngularVelocity) return target + ".RigidBody.AngularVelocity";
 							if (sourceNode.type == NodeType::RigidBody_GetMass) return target + ".RigidBody.Mass";
 
 							// -- AUDIO / ANIMATOR GETTERS --
 							if (sourceNode.type == NodeType::Audio_GetVolume) return target + ".Audio.Volume";
 							if (sourceNode.type == NodeType::Animator_IsPlaying) return target + ".Animator.IsPlaying";
+
+							// -- VARIABLES (GET) --
+							if (sourceNode.type == NodeType::Variable_GetFloat || sourceNode.type == NodeType::Variable_GetInt ||
+								sourceNode.type == NodeType::Variable_GetVector3 || sourceNode.type == NodeType::Variable_GetBool) {
+								std::string varName = resolvePinValue(graph, sourceNode.inputs[0]);
+								if (varName.size() >= 2 && varName.front() == '"' && varName.back() == '"') {
+									varName = varName.substr(1, varName.size() - 2);
+								}
+								return "this." + varName;
+							}
 						}
 					}
 				}
@@ -104,45 +160,71 @@ namespace Axion {
 	void VisualScriptCompiler::compileFlowExecution(const VisualGraph& graph, int currentFlowOutputPinID, std::stringstream& cs, int indentLevel) {
 		std::string tabs(indentLevel, '\t');
 
-		const Node* nextNode = nullptr;
-		int nextFlowOutputID = -1;
-
 		// -- Find the next node connected to the current execution pin --
 		for (const auto& link : graph.links) {
-			if (link.startPinID == currentFlowOutputPinID) {
-				for (const auto& node : graph.nodes) {
-					for (const auto& inputPin : node.inputs) {
-						if (inputPin.id == link.endPinID && inputPin.type == PinType::Flow) {
-							nextNode = &node;
-							if (!node.outputs.empty() && node.outputs[0].type == PinType::Flow) {
-								nextFlowOutputID = node.outputs[0].id;
-							}
-							break;
+			if (link.startPinID != currentFlowOutputPinID) continue;
+
+			const Node* nextNode = nullptr;
+			int nextFlowOutputID = -1;
+
+			for (const auto& node : graph.nodes) {
+				for (const auto& inputPin : node.inputs) {
+					if (inputPin.id == link.endPinID && inputPin.type == PinType::Flow) {
+						nextNode = &node;
+						if (!node.outputs.empty() && node.outputs[0].type == PinType::Flow) {
+							nextFlowOutputID = node.outputs[0].id;
 						}
+						break;
 					}
 				}
+				if (nextNode) break;
 			}
-		}
 
-		if (!nextNode) return;
+			if (!nextNode) continue;
 
-		// -- Resolve Target --
-		std::string target = "this";
-		if (nextNode->inputs.size() > 1 && nextNode->inputs[1].type == PinType::Entity) {
-			target = resolvePinValue(graph, nextNode->inputs[1]);
-			if (target.empty() || target == "\"\"") target = "this";
-		}
+			// -- Resolve Target --
+			std::string target = "this";
+			if (nextNode->inputs.size() > 1 && nextNode->inputs[1].type == PinType::Entity) {
+				target = resolvePinValue(graph, nextNode->inputs[1]);
+				if (target.empty() || target == "\"\"") target = "this";
+			}
 
-		switch (nextNode->type) {
+			// -- Generate Code --
+			switch (nextNode->type) {
 			// -- CONTROL FLOW --
 			case NodeType::Logic_Branch: {
 				std::string condition = resolvePinValue(graph, nextNode->inputs[1]);
+				// -- Generate If Block --
 				cs << tabs << "if (" << condition << ") {\n";
 				compileFlowExecution(graph, nextNode->outputs[0].id, cs, indentLevel + 1);
-				cs << tabs << "} else {\n";
-				compileFlowExecution(graph, nextNode->outputs[1].id, cs, indentLevel + 1);
-				cs << tabs << "}\n";
-				return;
+
+				// -- Generate False Block --
+				bool hasFalseConnection = false;
+				for (const auto& link : graph.links) {
+					if (link.startPinID == nextNode->outputs[1].id) {
+						hasFalseConnection = true;
+						break;
+					}
+				}
+
+				if (hasFalseConnection) {
+					cs << tabs << "} else {\n";
+					compileFlowExecution(graph, nextNode->outputs[1].id, cs, indentLevel + 1);
+					cs << tabs << "}\n";
+				}
+				else {
+					cs << tabs << "}\n";
+				}
+
+				continue;
+			}
+			case NodeType::Logic_Sequence: {
+				for (const auto& pin : nextNode->outputs) {
+					if (pin.type == PinType::Flow) {
+						compileFlowExecution(graph, pin.id, cs, indentLevel);
+					}
+				}
+				continue;
 			}
 
 			// -- ENTITY --
@@ -184,6 +266,11 @@ namespace Axion {
 				cs << tabs << target << ".RigidBody.AddTorque(" << torque << ");\n";
 				break;
 			}
+			case NodeType::RigidBody_AddImpulse: {
+				std::string force = resolvePinValue(graph, nextNode->inputs[2]);
+				cs << tabs << target << ".RigidBody.AddForce(" << force << ", ForceMode.Impulse);\n";
+				break;
+			}
 			case NodeType::RigidBody_AddRadialImpulse: {
 				std::string origin = resolvePinValue(graph, nextNode->inputs[2]);
 				std::string radius = resolvePinValue(graph, nextNode->inputs[3]);
@@ -194,6 +281,11 @@ namespace Axion {
 			case NodeType::RigidBody_SetLinearVelocity: {
 				std::string vel = resolvePinValue(graph, nextNode->inputs[2]);
 				cs << tabs << target << ".RigidBody.LinearVelocity = " << vel << ";\n";
+				break;
+			}
+			case NodeType::RigidBody_SetAngularVelocity: {
+				std::string vel = resolvePinValue(graph, nextNode->inputs[2]);
+				cs << tabs << target << ".RigidBody.AngularVelocity = " << vel << ";\n";
 				break;
 			}
 			case NodeType::RigidBody_SetMass: {
@@ -215,12 +307,28 @@ namespace Axion {
 			case NodeType::Animator_Play: cs << tabs << target << ".Animator.Play();\n"; break;
 			case NodeType::Animator_Stop: cs << tabs << target << ".Animator.Stop();\n"; break;
 
-			default: break;
-		}
+			// -- VARIABLES SETTERS --
+			case NodeType::Variable_SetFloat:
+			case NodeType::Variable_SetInt:
+			case NodeType::Variable_SetVector3:
+			case NodeType::Variable_SetBool: {
+				std::string varName = resolvePinValue(graph, nextNode->inputs[1]);
+				if (varName.size() >= 2 && varName.front() == '"' && varName.back() == '"') {
+					varName = varName.substr(1, varName.size() - 2);
+				}
+				std::string val = resolvePinValue(graph, nextNode->inputs[2]);
+				cs << tabs << "this." + varName << " = " << val << ";\n";
+				break;
+			}
 
-		// Continue down the white wire
-		if (nextFlowOutputID != -1) {
-			compileFlowExecution(graph, nextFlowOutputID, cs, indentLevel);
+			default: break;
+			}
+
+			// -- Continue Down the White Wire --
+			if (nextFlowOutputID != -1) {
+				compileFlowExecution(graph, nextFlowOutputID, cs, indentLevel);
+			}
+
 		}
 	}
 

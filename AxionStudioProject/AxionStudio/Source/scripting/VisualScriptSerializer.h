@@ -14,8 +14,6 @@ namespace Axion {
 		static void serialize(const VisualGraph& graph, const std::filesystem::path& filepath);
 		static bool deserialize(VisualGraph& outGraph, const std::filesystem::path& filepath);
 
-	private:
-
 		static void serializePin(YAML::Emitter& out, const Pin& pin);
 
 		static PinKind pinKindFromString(const std::string& str);

@@ -4,21 +4,24 @@ using AxionScriptCore;
 
 public class Player : Entity {
 
-	public override void OnCreate() {
-		this.Audio.Play();
-		this.RigidBody.AddForce(this.Transform.Position);
-		this.EmitParticles(30);
-		if ((0.100000f == 0.000000f)) {
-			this.RigidBody.AddForce(new Vector3(0.400000f, 0.900000f, 1.300000f));
-		} else {
-			this.Audio.Play();
-		}
-	}
+	public float MoveSpeed = 5.0f;
+	public Vector3 TargetVelocity = new Vector3(0.0f, 0.0f, 0.0f);
 
 	public override void OnUpdate(float timestep) {
-	}
-
-	public override void OnCollisionEnter(Collision col) {
+		this.TargetVelocity = new Vector3(0.0f, (this.RigidBody.LinearVelocity).Y, 0.0f);
+		if (Input.IsKeyPressed(KeyCode.W)) {
+			this.TargetVelocity = ((this.Transform.Forward * this.MoveSpeed) + this.TargetVelocity);
+		}
+		if (Input.IsKeyPressed(KeyCode.S)) {
+			this.TargetVelocity = (this.TargetVelocity - (this.Transform.Forward * this.MoveSpeed));
+		}
+		if (Input.IsKeyPressed(KeyCode.D)) {
+			this.TargetVelocity = ((this.Transform.Right * this.MoveSpeed) + this.TargetVelocity);
+		}
+		if (Input.IsKeyPressed(KeyCode.A)) {
+			this.TargetVelocity = (this.TargetVelocity - (this.Transform.Right * this.MoveSpeed));
+		}
+		this.RigidBody.LinearVelocity = this.TargetVelocity;
 	}
 
 }

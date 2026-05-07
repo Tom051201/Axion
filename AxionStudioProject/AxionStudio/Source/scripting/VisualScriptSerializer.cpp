@@ -10,12 +10,28 @@ namespace Axion {
 		out << YAML::BeginMap;
 		out << YAML::Key << "VisualScript" << YAML::Value << graph.className;
 
+		// -- Serialize Variables --
+		out << YAML::Key << "Variables" << YAML::Value << YAML::BeginSeq;
+		for (const auto& var : graph.variables) {
+			out << YAML::BeginMap;
+			out << YAML::Key << "Name" << YAML::Value << var.name;
+			out << YAML::Key << "Type" << YAML::Value << pinTypeToString(var.type);
+
+			out << YAML::Key << "FloatValue" << YAML::Value << var.floatValue;
+			out << YAML::Key << "IntValue" << YAML::Value << var.intValue;
+			out << YAML::Key << "BoolValue" << YAML::Value << var.boolValue;
+			out << YAML::Key << "Vec3Value" << YAML::Value << var.vec3Value;
+			out << YAML::EndMap;
+		}
+		out << YAML::EndSeq;
+
 		// -- Serialize Nodes --
 		out << YAML::Key << "Nodes" << YAML::Value << YAML::BeginSeq;
 		for (const auto& node : graph.nodes) {
 			out << YAML::BeginMap;
 			out << YAML::Key << "ID" << YAML::Value << node.id;
 			out << YAML::Key << "Type" << YAML::Value << nodeTypeToString(node.type);
+			out << YAML::Key << "OperationType" << YAML::Value << pinTypeToString(node.operationType);
 			out << YAML::Key << "Name" << YAML::Value << node.name;
 
 			// Inputs
@@ -69,6 +85,21 @@ namespace Axion {
 		outGraph.className = data["VisualScript"].as<std::string>();
 		outGraph.nodes.clear();
 		outGraph.links.clear();
+		outGraph.variables.clear();
+
+		auto vars = data["Variables"];
+		if (vars) {
+			for (auto varData : vars) {
+				Variable var;
+				var.name = varData["Name"].as<std::string>();
+				var.type = pinTypeFromString(varData["Type"].as<std::string>());
+				var.floatValue = varData["FloatValue"].as<float>();
+				var.intValue = varData["IntValue"].as<int>();
+				var.boolValue = varData["BoolValue"].as<bool>();
+				var.vec3Value = varData["Vec3Value"].as<Vec3>();
+				outGraph.variables.push_back(var);
+			}
+		}
 
 		auto nodes = data["Nodes"];
 		if (nodes) {
@@ -77,6 +108,13 @@ namespace Axion {
 				node.id = nodeData["ID"].as<int>();
 				node.type = nodeTypeFromString(nodeData["Type"].as<std::string>());
 				node.name = nodeData["Name"].as<std::string>();
+
+				if (nodeData["OperationType"]) {
+					node.operationType = pinTypeFromString(nodeData["OperationType"].as<std::string>());
+				}
+				else {
+					node.operationType = PinType::Float;
+				}
 
 				auto inputs = nodeData["Inputs"];
 				if (inputs) {
@@ -180,6 +218,8 @@ namespace Axion {
 		else if (str == "String") return PinType::String;
 		else if (str == "Vector3") return PinType::Vector3;
 		else if (str == "Entity") return PinType::Entity;
+		else if (str == "Key") return PinType::Key;
+		else if (str == "MouseButton") return PinType::MouseButton;
 		else if (str == "None") return PinType::None;
 
 		AX_CORE_LOG_WARN("Unable converting string to pin type!");
@@ -195,6 +235,8 @@ namespace Axion {
 			case PinType::String: { return "String"; }
 			case PinType::Vector3: { return "Vector3"; }
 			case PinType::Entity: { return "Entity"; }
+			case PinType::Key: return "Key";
+			case PinType::MouseButton: return "MouseButton";
 			case PinType::None: { return "None"; }
 		}
 
@@ -231,9 +273,12 @@ namespace Axion {
 		// -- RIGIDBODY --
 		else if (str == "RigidBody_AddForce") return NodeType::RigidBody_AddForce;
 		else if (str == "RigidBody_AddTorque") return NodeType::RigidBody_AddTorque;
+		else if (str == "RigidBody_AddImpulse") return NodeType::RigidBody_AddImpulse;
 		else if (str == "RigidBody_AddRadialImpulse") return NodeType::RigidBody_AddRadialImpulse;
 		else if (str == "RigidBody_GetLinearVelocity") return NodeType::RigidBody_GetLinearVelocity;
 		else if (str == "RigidBody_SetLinearVelocity") return NodeType::RigidBody_SetLinearVelocity;
+		else if (str == "RigidBody_GetAngularVelocity") return NodeType::RigidBody_GetAngularVelocity;
+		else if (str == "RigidBody_SetAngularVelocity") return NodeType::RigidBody_SetAngularVelocity;
 		else if (str == "RigidBody_GetMass") return NodeType::RigidBody_GetMass;
 		else if (str == "RigidBody_SetMass") return NodeType::RigidBody_SetMass;
 
@@ -254,6 +299,9 @@ namespace Axion {
 
 		// -- LOGIC --
 		else if (str == "Logic_Branch") return NodeType::Logic_Branch;
+		else if (str == "Logic_Sequence") return NodeType::Logic_Sequence;
+		else if (str == "Logic_And") return NodeType::Logic_And;
+		else if (str == "Logic_Or") return NodeType::Logic_Or;
 
 		// -- MATH --
 		else if (str == "Math_Add") return NodeType::Math_Add;
@@ -263,6 +311,18 @@ namespace Axion {
 		else if (str == "Math_Equal") return NodeType::Math_Equal;
 		else if (str == "Math_Greater") return NodeType::Math_Greater;
 		else if (str == "Math_Less") return NodeType::Math_Less;
+		else if (str == "Math_MakeVector3") return NodeType::Math_MakeVector3;
+		else if (str == "Math_BreakVector3") return NodeType::Math_BreakVector3;
+
+		// -- VARIABLES --
+		else if (str == "Variable_GetFloat") return NodeType::Variable_GetFloat;
+		else if (str == "Variable_SetFloat") return NodeType::Variable_SetFloat;
+		else if (str == "Variable_GetInt") return NodeType::Variable_GetInt;
+		else if (str == "Variable_SetInt") return NodeType::Variable_SetInt;
+		else if (str == "Variable_GetBool") return NodeType::Variable_GetBool;
+		else if (str == "Variable_SetBool") return NodeType::Variable_SetBool;
+		else if (str == "Variable_GetVector3") return NodeType::Variable_GetVector3;
+		else if (str == "Variable_SetVector3") return NodeType::Variable_SetVector3;
 
 		else if (str == "None") return NodeType::None;
 
@@ -300,9 +360,12 @@ namespace Axion {
 			// -- RIGIDBODY --
 			case NodeType::RigidBody_AddForce: return "RigidBody_AddForce";
 			case NodeType::RigidBody_AddTorque: return "RigidBody_AddTorque";
+			case NodeType::RigidBody_AddImpulse: return "RigidBody_AddImpulse";
 			case NodeType::RigidBody_AddRadialImpulse: return "RigidBody_AddRadialImpulse";
 			case NodeType::RigidBody_GetLinearVelocity: return "RigidBody_GetLinearVelocity";
 			case NodeType::RigidBody_SetLinearVelocity: return "RigidBody_SetLinearVelocity";
+			case NodeType::RigidBody_GetAngularVelocity: return "RigidBody_GetAngularVelocity";
+			case NodeType::RigidBody_SetAngularVelocity: return "RigidBody_SetAngularVelocity";
 			case NodeType::RigidBody_GetMass: return "RigidBody_GetMass";
 			case NodeType::RigidBody_SetMass: return "RigidBody_SetMass";
 
@@ -323,6 +386,9 @@ namespace Axion {
 
 			// -- LOGIC --
 			case NodeType::Logic_Branch: return "Logic_Branch";
+			case NodeType::Logic_Sequence: return "Logic_Sequence";
+			case NodeType::Logic_And: return "Logic_And";
+			case NodeType::Logic_Or: return "Logic_Or";
 
 			// -- MATH --
 			case NodeType::Math_Add: return "Math_Add";
@@ -332,6 +398,19 @@ namespace Axion {
 			case NodeType::Math_Equal: return "Math_Equal";
 			case NodeType::Math_Greater: return "Math_Greater";
 			case NodeType::Math_Less: return "Math_Less";
+			case NodeType::Math_MakeVector3: return "Math_MakeVector3";
+			case NodeType::Math_BreakVector3: return "Math_BreakVector3";
+
+			// -- VARIABLES --
+			case NodeType::Variable_GetFloat: return "Variable_GetFloat";
+			case NodeType::Variable_SetFloat: return "Variable_SetFloat";
+			case NodeType::Variable_GetInt: return "Variable_GetInt";
+			case NodeType::Variable_SetInt: return "Variable_SetInt";
+
+			case NodeType::Variable_GetBool: return "Variable_GetBool";
+			case NodeType::Variable_SetBool: return "Variable_SetBool";
+			case NodeType::Variable_GetVector3: return "Variable_GetVector3";
+			case NodeType::Variable_SetVector3: return "Variable_SetVector3";
 
 			case NodeType::None: return "None";
 		}

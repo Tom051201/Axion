@@ -3,14 +3,33 @@
 #include "AxionEngine/Vendor/imgui/imgui.h"
 #include "AxionEngine/Vendor/imgui/misc/cpp/imgui_stdlib.h"
 
+#include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/render/GraphicsContext.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
 #include "AxionStudio/Source/scripting/VisualScriptCompiler.h"
+#include "AxionStudio/Source/core/EditorResourceManager.h"
 
 namespace Axion {
 
 	namespace ed = ax::NodeEditor;
+
+	static const char* s_KeyNames[] = {
+		"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+		"Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+		"Semicolon", "Equal", "Comma", "Minus", "Period", "Slash", "GraveAccent", "LeftBracket", "Backslash", "RightBracket", "Apostrophe",
+		"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+		"Left", "Right", "Up", "Down", "PageUp", "PageDown", "Home", "End", "Insert", "Delete",
+		"LeftShift", "RightShift", "LeftControl", "RightControl", "LeftAlt", "RightAlt", "CapsLock", "NumLock", "ScrollLock", "PrintScreen", "Pause",
+		"Space", "Enter", "Escape", "Tab", "Backspace",
+		"Numpad0", "Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8", "Numpad9",
+		"NumpadDecimal", "NumpadDivide", "NumpadMultiply", "NumpadSubtract", "NumpadAdd"
+	};
+
+	static const char* s_MouseButtonNames[] = {
+		"Left", "Right", "Middle", "X1", "X2"
+	};
 
 	VisualScriptPanel::VisualScriptPanel(const std::string& name)
 		: Panel(name) {}
@@ -20,21 +39,24 @@ namespace Axion {
 	}
 
 	void VisualScriptPanel::setup() {
-		m_config = {};
-		m_config.SettingsFile = "AxionStudio/Config/VisualScriptSettings.json";
-		m_editorContext = ed::CreateEditor(&m_config);
+		//m_config = {};
+		//m_config.SettingsFile = "AxionStudio/Config/VisualScriptSettings.json";
+		//m_editorContext = ed::CreateEditor(&m_config);
+		//
+		//ed::SetCurrentEditor(m_editorContext);
+		//ed::Style& style = ed::GetStyle();
+		//style.NodeRounding = 6.0f;
+		//style.NodeBorderWidth = 1.5;
+		//style.HoveredNodeBorderWidth = 2.5f;
+		//style.SelectedNodeBorderWidth = 3.0f;
+		//style.PinRounding = 4.0f;
+		//style.LinkStrength = 4.0f;
+		//style.Colors[ed::StyleColor_NodeBg] = ImColor(32, 32, 32, 240);
+		//style.Colors[ed::StyleColor_NodeBorder] = ImColor(255, 255, 255, 40);
+		//ed::SetCurrentEditor(nullptr);
 
-		ed::SetCurrentEditor(m_editorContext);
-		ed::Style& style = ed::GetStyle();
-		style.NodeRounding = 6.0f;
-		style.NodeBorderWidth = 1.5;
-		style.HoveredNodeBorderWidth = 2.5f;
-		style.SelectedNodeBorderWidth = 3.0f;
-		style.PinRounding = 4.0f;
-		style.LinkStrength = 4.0f;
-		style.Colors[ed::StyleColor_NodeBg] = ImColor(32, 32, 32, 240);
-		style.Colors[ed::StyleColor_NodeBorder] = ImColor(255, 255, 255, 40);
-		ed::SetCurrentEditor(nullptr);
+		EditorResourceManager::loadIcon("vsp_header_bg", "AxionStudio/Resources/HeaderBackground.png");
+
 	}
 
 	void VisualScriptPanel::shutdown() {
@@ -66,7 +88,47 @@ namespace Axion {
 		}
 	}
 
-	void VisualScriptPanel::onEvent(Event& e) {}
+	void VisualScriptPanel::openScript(const std::filesystem::path& filePath) {
+		// -- Save the active Script --
+		if (!m_currentFilePath.empty() && !m_activeGraph.nodes.empty()) {
+			compileAndSave();
+		}
+
+		// -- Load new Script --
+		VisualGraph loadedGraph;
+		if (VisualScriptSerializer::deserialize(loadedGraph, filePath)) {
+			setContext(loadedGraph, filePath);
+
+			if (m_editorContext) {
+				ed::DestroyEditor(m_editorContext);
+				m_editorContext = nullptr;
+			}
+
+			std::filesystem::path layoutPath = filePath.parent_path() / (filePath.stem().string() + "_layout.json");
+			m_currentLayoutFilePath = layoutPath.string();
+
+			m_config = {};
+			m_config.SettingsFile = m_currentLayoutFilePath.c_str();
+			m_editorContext = ed::CreateEditor(&m_config);
+
+			ed::SetCurrentEditor(m_editorContext);
+			ed::Style& style = ed::GetStyle();
+			style.NodeRounding = 6.0f;
+			style.NodeBorderWidth = 1.5;
+			style.HoveredNodeBorderWidth = 2.5f;
+			style.SelectedNodeBorderWidth = 3.0f;
+			style.PinRounding = 4.0f;
+			style.LinkStrength = 4.0f;
+			style.Colors[ed::StyleColor_NodeBg] = ImColor(32, 32, 32, 240);
+			style.Colors[ed::StyleColor_NodeBorder] = ImColor(255, 255, 255, 40);
+			ed::SetCurrentEditor(nullptr);
+
+			AX_CORE_LOG_TRACE("Opened Visual Script: {}", filePath.filename().string());
+		}
+		else {
+			AX_CORE_LOG_ERROR("Failed to open Visual Script: {}", filePath.string());
+		}
+	}
 
 	void VisualScriptPanel::onGuiRender() {
 		ImGui::Begin("Visual Script Editor");
@@ -75,6 +137,70 @@ namespace Axion {
 
 			drawToolbar();
 
+			// ----- Left Variables Sidebar -----
+			ImGui::BeginChild("LeftPanel", ImVec2(250, 0), true);
+
+			ImGui::TextUnformatted("GRAPH VARIABLES");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 30);
+			if (ImGui::Button("+##AddVar")) {
+				Variable newVar;
+				newVar.name = "Var_" + std::to_string(m_activeGraph.variables.size());
+				newVar.type = PinType::Float;
+				m_activeGraph.variables.push_back(newVar);
+			}
+			ImGui::Separator();
+
+			for (int i = 0; i < m_activeGraph.variables.size(); i++) {
+				auto& var = m_activeGraph.variables[i];
+				ImGui::PushID(i);
+
+				// 1. Variable Name
+				ImGui::SetNextItemWidth(120.0f);
+				ImGui::InputText("##Name", &var.name);
+				ImGui::SameLine();
+
+				// 2. Variable Type
+				ImGui::SetNextItemWidth(80.0f);
+				std::string typeStr = "Float";
+				if (var.type == PinType::Int) typeStr = "Int";
+				else if (var.type == PinType::Vector3) typeStr = "Vector3";
+				else if (var.type == PinType::Bool) typeStr = "Bool";
+
+				if (ImGui::BeginCombo("##Type", typeStr.c_str())) {
+					if (ImGui::Selectable("Float", var.type == PinType::Float)) var.type = PinType::Float;
+					if (ImGui::Selectable("Int", var.type == PinType::Int)) var.type = PinType::Int;
+					if (ImGui::Selectable("Vector3", var.type == PinType::Vector3)) var.type = PinType::Vector3;
+					if (ImGui::Selectable("Bool", var.type == PinType::Bool)) var.type = PinType::Bool;
+					ImGui::EndCombo();
+				}
+
+				// 3. Delete Button
+				ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+				if (ImGui::Button("X")) {
+					m_activeGraph.variables.erase(m_activeGraph.variables.begin() + i);
+					ImGui::PopStyleColor();
+					ImGui::PopID();
+					break;
+				}
+				ImGui::PopStyleColor();
+
+				// 4. Default Value Setter
+				ImGui::SetNextItemWidth(208.0f);
+				if (var.type == PinType::Float) { ImGui::DragFloat("##DefFlt", &var.floatValue, 0.1f); }
+				else if (var.type == PinType::Int) { ImGui::DragInt("##DefInt", &var.intValue); }
+				else if (var.type == PinType::Vector3) { ImGui::DragFloat3("##DefVec3", var.vec3Value.data(), 0.1f); }
+				else if (var.type == PinType::Bool) { ImGui::Checkbox("Default Value", &var.boolValue); }
+
+				ImGui::Dummy(ImVec2(0, 5));
+				ImGui::PopID();
+			}
+			ImGui::EndChild();
+			ImGui::SameLine();
+
+
+
+			// ----- Node Editor Canvas -----
 			ed::SetCurrentEditor(m_editorContext);
 			ImVec2 editorSize = ImGui::GetContentRegionAvail();
 			ImGui::SetItemAllowOverlap();
@@ -85,12 +211,19 @@ namespace Axion {
 
 				// -- Header Text --
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-				ImGui::TextUnformatted(node.name.c_str());
+
+				std::string displayTitle = node.name;
+				if (node.type == NodeType::Math_Add || node.type == NodeType::Math_Subtract ||
+					node.type == NodeType::Math_Multiply || node.type == NodeType::Math_Divide) {
+					displayTitle += " (" + VisualScriptSerializer::pinTypeToString(node.operationType) + ")";
+				}
+
+				ImGui::TextUnformatted(displayTitle.c_str());
 				ImGui::Dummy(ImVec2(0, 4));
 				ImGui::PopStyleColor();
 
 				float headerHeight = ImGui::GetTextLineHeight() + 4.0f + ed::GetStyle().NodePadding.y;
-				float headerWidth = ImGui::CalcTextSize(node.name.c_str()).x + 30.0f;
+				float headerWidth = ImGui::CalcTextSize(displayTitle.c_str()).x + 30.0f;
 
 				float maxOutputWidth = 0.0f;
 				for (auto& pin : node.outputs) {
@@ -115,14 +248,67 @@ namespace Axion {
 					if (pin.type != PinType::Flow && !isPinLinked(pin.id)) {
 						ImGui::SameLine();
 						ImGui::PushID(pin.id);
-						ImGui::PushItemWidth(80.0f);
+						ImGui::PushItemWidth(110.0f);
 
 						switch (pin.type) {
 							case PinType::Float: { ImGui::DragFloat("##flt", &pin.floatValue, 0.1f); break; }
 							case PinType::Int: { ImGui::DragInt("##int", &pin.intValue); break; }
 							case PinType::Vector3: { ImGui::DragFloat3("##flt3", pin.vec3Value.data(), 0.1f); break; }
 							case PinType::Bool: { ImGui::Checkbox("##bl", &pin.boolValue); break; }
-							case PinType::String: { ImGui::InputText("##str", &pin.stringValue); break; }
+							case PinType::String: {
+								bool isVarNode = (node.type >= NodeType::Variable_GetFloat && node.type <= NodeType::Variable_SetVector3);
+								bool isNamePin = isVarNode && (pin.name == "Name");
+
+								bool pushedColor = false;
+
+								// -- Validate --
+								if (isNamePin && !pin.stringValue.empty()) {
+									bool found = false;
+									bool typeMatch = false;
+
+									for (const auto& var : m_activeGraph.variables) {
+										if (var.name == pin.stringValue) {
+											found = true;
+
+											PinType expectedType = PinType::None;
+											if (node.type == NodeType::Variable_GetFloat || node.type == NodeType::Variable_SetFloat) expectedType = PinType::Float;
+											else if (node.type == NodeType::Variable_GetInt || node.type == NodeType::Variable_SetInt) expectedType = PinType::Int;
+											else if (node.type == NodeType::Variable_GetVector3 || node.type == NodeType::Variable_SetVector3) expectedType = PinType::Vector3;
+											else if (node.type == NodeType::Variable_GetBool || node.type == NodeType::Variable_SetBool) expectedType = PinType::Bool;
+
+											if (var.type == expectedType) typeMatch = true;
+											break;
+										}
+									}
+
+									// -- Apply the Syntax Highlighting --
+									if (!found) {
+										// -- Does not Exist --
+										ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+										pushedColor = true;
+									}
+									else if (!typeMatch) {
+										// -- Exists but Wrong Type --
+										ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.1f, 1.0f));
+										pushedColor = true;
+									}
+									else {
+										// -- Correct Variable --
+										ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+										pushedColor = true;
+									}
+								}
+
+								ImGui::InputText("##str", &pin.stringValue);
+
+								if (pushedColor) {
+									ImGui::PopStyleColor();
+								}
+								break;
+							}
+							case PinType::Key: { ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "[ %s ]", pin.stringValue.c_str()); break; }
+							case PinType::MouseButton: { ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "[ %s ]", pin.stringValue.c_str()); break; }
+
 							default: break;
 						}
 
@@ -174,10 +360,26 @@ namespace Axion {
 				ImVec2 headerMax = ImVec2(nodePos.x + nodeSize.x - borderWidth, nodePos.y + headerHeight);
 				ImColor headerColor = getNodeTypeColor(node.type);
 
-				drawList->AddRectFilled(
-					headerMin, headerMax, headerColor,
-					ed::GetStyle().NodeRounding - 1.0f, ImDrawFlags_RoundCornersTop
-				);
+				Ref<Texture2D> headerTex = EditorResourceManager::getIcon("vsp_header_bg");
+				if (headerTex) {
+					void* texID = GraphicsContext::get()->getImGuiTextureID(headerTex);
+					ImTextureID imTexID = (ImTextureID)texID;
+
+					drawList->AddImageRounded(
+						imTexID,
+						headerMin, headerMax,
+						ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f),
+						headerColor,
+						ed::GetStyle().NodeRounding - 1.0f,
+						ImDrawFlags_RoundCornersTop
+					);
+				}
+				else {
+					drawList->AddRectFilled(
+						headerMin, headerMax, headerColor,
+						ed::GetStyle().NodeRounding - 1.0f, ImDrawFlags_RoundCornersTop
+					);
+				}
 
 				drawList->AddLine(
 					ImVec2(headerMin.x, nodePos.y + headerHeight),
@@ -233,8 +435,8 @@ namespace Axion {
 						return nullptr;
 					};
 
-					const Pin* startPin = getPin(startPinId.Get());
-					const Pin* endPin = getPin(endPinId.Get());
+					const Pin* startPin = getPin((int)startPinId.Get());
+					const Pin* endPin = getPin((int)endPinId.Get());
 
 					if (startPin && endPin) {
 						if (startPin == endPin) {
@@ -263,10 +465,9 @@ namespace Axion {
 								m_activeGraph.links.erase(
 									std::remove_if(m_activeGraph.links.begin(), m_activeGraph.links.end(),
 										[&](const Link& link) {
-											if (startPin->type == PinType::Flow && link.startPinID == outputPinID) return true;
 											return link.endPinID == inputPinID;
-									}),
-									m_activeGraph.links.end()
+										}
+									), m_activeGraph.links.end()
 								);
 
 								Link newLink;
@@ -336,11 +537,14 @@ namespace Axion {
 
 			if (ed::ShowNodeContextMenu(&contextNodeId)) {
 				ImGui::OpenPopup("NodeOptionsPopup");
+				m_keySearchString.clear();
+				m_mouseSearchString.clear();
 			}
 
 			if (ed::ShowBackgroundContextMenu()) {
 				ImGui::OpenPopup("NodeContextMenu");
 				m_newNodePosition = ImGui::GetMousePos();
+				m_nodeSearchString.clear();
 			}
 			else if (ed::ShowBackgroundContextMenu()) {
 				ImGui::OpenPopup("BackgroundContextMenu");
@@ -351,90 +555,140 @@ namespace Axion {
 			if (ImGui::BeginPopup("NodeContextMenu")) {
 				ImVec2 canvasPos = ed::ScreenToCanvas(m_newNodePosition);
 
-				ImGui::TextUnformatted("Add Node...");
+				if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+				ImGui::InputTextWithHint("##NodeSearch", "Search nodes...", &m_nodeSearchString);
 				ImGui::Separator();
 
-				// -- EVENT --
-				if (ImGui::BeginMenu("Events")) {
-					if (ImGui::MenuItem("On Create", nullptr, false, !hasNodeOfType(NodeType::Event_OnCreate))) { spawnNode(NodeType::Event_OnCreate, canvasPos); }
-					if (ImGui::MenuItem("On Destroy", nullptr, false, !hasNodeOfType(NodeType::Event_OnDestroy))) { spawnNode(NodeType::Event_OnDestroy, canvasPos); }
-					if (ImGui::MenuItem("On Update", nullptr, false, !hasNodeOfType(NodeType::Event_OnUpdate))) { spawnNode(NodeType::Event_OnUpdate, canvasPos); }
-					if (ImGui::MenuItem("On Collision Enter", nullptr, false, !hasNodeOfType(NodeType::Event_OnCollisionEnter))) { spawnNode(NodeType::Event_OnCollisionEnter, canvasPos); }
-					if (ImGui::MenuItem("On Collision Exit", nullptr, false, !hasNodeOfType(NodeType::Event_OnCollisionExit))) { spawnNode(NodeType::Event_OnCollisionExit, canvasPos); }
-					ImGui::EndMenu();
+				std::string searchQ = m_nodeSearchString;
+				std::transform(searchQ.begin(), searchQ.end(), searchQ.begin(), ::tolower);
+				bool isSearching = !searchQ.empty();
+
+				auto beginCategory = [&](const char* name) -> bool {
+					if (isSearching) return true;
+					return ImGui::BeginMenu(name);
+				};
+
+				auto endCategory = [&]() {
+					if (!isSearching) ImGui::EndMenu();
+				};
+
+				auto drawNode = [&](const char* name, NodeType type) {
+					std::string lowerName = name;
+					std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+
+					if (!isSearching || lowerName.find(searchQ) != std::string::npos) {
+						bool isEventNode = (type >= NodeType::Event_OnCreate && type <= NodeType::Event_OnCollisionExit);
+						bool canSpawn = isEventNode ? !hasNodeOfType(type) : true;
+						if (ImGui::MenuItem(name, nullptr, false, canSpawn)) {
+							spawnNode(type, canvasPos);
+							ImGui::CloseCurrentPopup();
+						}
+					}
+				};
+
+				// -- EVENTS --
+				if (beginCategory("Events")) {
+					drawNode("On Create", NodeType::Event_OnCreate);
+					drawNode("On Destroy", NodeType::Event_OnDestroy);
+					drawNode("On Update", NodeType::Event_OnUpdate);
+					drawNode("On Collision Enter", NodeType::Event_OnCollisionEnter);
+					drawNode("On Collision Exit", NodeType::Event_OnCollisionExit);
+					endCategory();
 				}
 
 				// -- ENTITY --
-				if (ImGui::BeginMenu("Entity")) {
-					if (ImGui::MenuItem("Instantiate Entity")) spawnNode(NodeType::Entity_Instantiate, canvasPos);
-					if (ImGui::MenuItem("Instantiate Prefab")) spawnNode(NodeType::Entity_InstantiatePrefab, canvasPos);
-					if (ImGui::MenuItem("Destroy Entity")) spawnNode(NodeType::Entity_Destroy, canvasPos);
-					if (ImGui::MenuItem("Find Entity by Name")) spawnNode(NodeType::Entity_FindByName, canvasPos);
-					if (ImGui::MenuItem("Emit Particles")) spawnNode(NodeType::Entity_EmitParticles, canvasPos);
-					ImGui::EndMenu();
+				if (beginCategory("Entity")) {
+					drawNode("Instantiate Entity", NodeType::Entity_Instantiate);
+					drawNode("Instantiate Prefab", NodeType::Entity_InstantiatePrefab);
+					drawNode("Destroy Entity", NodeType::Entity_Destroy);
+					drawNode("Find Entity by Name", NodeType::Entity_FindByName);
+					drawNode("Emit Particles", NodeType::Entity_EmitParticles);
+					endCategory();
 				}
 
 				// -- TRANSFORM --
-				if (ImGui::BeginMenu("Transform")) {
-					if (ImGui::MenuItem("Get Position")) spawnNode(NodeType::Transform_GetPosition, canvasPos);
-					if (ImGui::MenuItem("Set Position")) spawnNode(NodeType::Transform_SetPosition, canvasPos);
+				if (beginCategory("Transform")) {
+					drawNode("Get Position", NodeType::Transform_GetPosition);
+					drawNode("Set Position", NodeType::Transform_SetPosition);
+					drawNode("Get Rotation", NodeType::Transform_GetRotation);
+					drawNode("Set Rotation", NodeType::Transform_SetRotation);
+					drawNode("Get Scale", NodeType::Transform_GetScale);
+					drawNode("Set Scale", NodeType::Transform_SetScale);
 					ImGui::Separator();
-					if (ImGui::MenuItem("Get Rotation")) spawnNode(NodeType::Transform_GetRotation, canvasPos);
-					if (ImGui::MenuItem("Set Rotation")) spawnNode(NodeType::Transform_SetRotation, canvasPos);
-					ImGui::Separator();
-					if (ImGui::MenuItem("Get Scale")) spawnNode(NodeType::Transform_GetScale, canvasPos);
-					if (ImGui::MenuItem("Set Scale")) spawnNode(NodeType::Transform_SetScale, canvasPos);
-					ImGui::Separator();
-					if (ImGui::MenuItem("Get Forward")) spawnNode(NodeType::Transform_GetForward, canvasPos);
-					if (ImGui::MenuItem("Get Right")) spawnNode(NodeType::Transform_GetRight, canvasPos);
-					if (ImGui::MenuItem("Get Up")) spawnNode(NodeType::Transform_GetUp, canvasPos);
-					ImGui::EndMenu();
+					drawNode("Get Forward", NodeType::Transform_GetForward);
+					drawNode("Get Right", NodeType::Transform_GetRight);
+					drawNode("Get Up", NodeType::Transform_GetUp);
+					endCategory();
 				}
 
 				// -- AUDIO --
-				if (ImGui::BeginMenu("Audio")) {
-					if (ImGui::MenuItem("Play Audio")) spawnNode(NodeType::Audio_Play, canvasPos);
-					if (ImGui::MenuItem("Stop Audio")) spawnNode(NodeType::Audio_Stop, canvasPos);
-					if (ImGui::MenuItem("Get Volume")) spawnNode(NodeType::Audio_GetVolume, canvasPos);
-					if (ImGui::MenuItem("Set Volume")) spawnNode(NodeType::Audio_SetVolume, canvasPos);
-					ImGui::EndMenu();
+				if (beginCategory("Audio")) {
+					drawNode("Play Audio", NodeType::Audio_Play);
+					drawNode("Stop Audio", NodeType::Audio_Stop);
+					drawNode("Get Volume", NodeType::Audio_GetVolume);
+					drawNode("Set Volume", NodeType::Audio_SetVolume);
+					endCategory();
 				}
 
 				// -- PHYSICS --
-				if (ImGui::BeginMenu("Physics")) {
-					if (ImGui::MenuItem("Add Force")) spawnNode(NodeType::RigidBody_AddForce, canvasPos);
-					if (ImGui::MenuItem("Add Torque")) spawnNode(NodeType::RigidBody_AddTorque, canvasPos);
-					if (ImGui::MenuItem("Add Radial Impulse")) spawnNode(NodeType::RigidBody_AddRadialImpulse, canvasPos);
+				if (beginCategory("Physics")) {
+					drawNode("Add Force", NodeType::RigidBody_AddForce);
+					drawNode("Add Torque", NodeType::RigidBody_AddTorque);
+					drawNode("Add Impulse", NodeType::RigidBody_AddImpulse);
+					drawNode("Add Radial Impulse", NodeType::RigidBody_AddRadialImpulse);
 					ImGui::Separator();
-					if (ImGui::MenuItem("Get Linear Velocity")) spawnNode(NodeType::RigidBody_GetLinearVelocity, canvasPos);
-					if (ImGui::MenuItem("Set Linear Velocity")) spawnNode(NodeType::RigidBody_SetLinearVelocity, canvasPos);
-					ImGui::EndMenu();
+					drawNode("Get Linear Velocity", NodeType::RigidBody_GetLinearVelocity);
+					drawNode("Set Linear Velocity", NodeType::RigidBody_SetLinearVelocity);
+					drawNode("Get Angular Velocity", NodeType::RigidBody_GetAngularVelocity);
+					drawNode("Set Angular Velocity", NodeType::RigidBody_SetAngularVelocity);
+					drawNode("Get Mass", NodeType::RigidBody_GetMass);
+					drawNode("Set Mass", NodeType::RigidBody_SetMass);
+					endCategory();
 				}
 
 				// -- INPUT --
-				if (ImGui::BeginMenu("Input")) {
-					if (ImGui::MenuItem("Is Key Pressed")) { spawnNode(NodeType::Input_IsKeyPressed, canvasPos); }
-					if (ImGui::MenuItem("Is Mouse Button Pressed")) { spawnNode(NodeType::Input_IsMouseButtonPressed, canvasPos); }
-					ImGui::EndMenu();
+				if (beginCategory("Input")) {
+					drawNode("Is Key Pressed", NodeType::Input_IsKeyPressed);
+					drawNode("Is Mouse Button Pressed", NodeType::Input_IsMouseButtonPressed);
+					endCategory();
 				}
 
 				// -- LOGIC --
-				if (ImGui::BeginMenu("Logic")) {
-					if (ImGui::MenuItem("Branch (If)")) spawnNode(NodeType::Logic_Branch, canvasPos);
-					ImGui::EndMenu();
+				if (beginCategory("Logic")) {
+					drawNode("Branch (If)", NodeType::Logic_Branch);
+					drawNode("Sequence)", NodeType::Logic_Sequence);
+					drawNode("And (&&)", NodeType::Logic_And);
+					drawNode("Or (||)", NodeType::Logic_Or);
+					endCategory();
 				}
 
 				// -- MATH --
-				if (ImGui::BeginMenu("Math")) {
-					if (ImGui::MenuItem("Add (+)")) spawnNode(NodeType::Math_Add, canvasPos);
-					if (ImGui::MenuItem("Subtract (-)")) spawnNode(NodeType::Math_Subtract, canvasPos);
-					if (ImGui::MenuItem("Multiply (*)")) spawnNode(NodeType::Math_Multiply, canvasPos);
-					if (ImGui::MenuItem("Divide (/)")) spawnNode(NodeType::Math_Divide, canvasPos);
+				if (beginCategory("Math")) {
+					drawNode("Add (+)", NodeType::Math_Add);
+					drawNode("Subtract (-)", NodeType::Math_Subtract);
+					drawNode("Multiply (*)", NodeType::Math_Multiply);
+					drawNode("Divide (/)", NodeType::Math_Divide);
 					ImGui::Separator();
-					if (ImGui::MenuItem("Equal (==)")) spawnNode(NodeType::Math_Equal, canvasPos);
-					if (ImGui::MenuItem("Greater (>)")) spawnNode(NodeType::Math_Greater, canvasPos);
-					if (ImGui::MenuItem("Less (<)")) spawnNode(NodeType::Math_Less, canvasPos);
-					ImGui::EndMenu();
+					drawNode("Equal (==)", NodeType::Math_Equal);
+					drawNode("Greater (>)", NodeType::Math_Greater);
+					drawNode("Less (<)", NodeType::Math_Less);
+					ImGui::Separator();
+					drawNode("Make Vector3", NodeType::Math_MakeVector3);
+					drawNode("Break Vector3", NodeType::Math_BreakVector3);
+					endCategory();
+				}
+
+				// -- VARIABLES --
+				if (beginCategory("Variables")) {
+					drawNode("Get Int", NodeType::Variable_GetInt);
+					drawNode("Set Int", NodeType::Variable_SetInt);
+					drawNode("Get Float", NodeType::Variable_GetFloat);
+					drawNode("Set Float", NodeType::Variable_SetFloat);
+					drawNode("Get Bool", NodeType::Variable_GetBool);
+					drawNode("Set Bool", NodeType::Variable_SetBool);
+					drawNode("Get Vector3", NodeType::Variable_GetVector3);
+					drawNode("Set Vector3", NodeType::Variable_SetVector3);
+					endCategory();
 				}
 
 				ImGui::EndPopup();
@@ -442,18 +696,124 @@ namespace Axion {
 
 			// -- Node Options Popup --
 			if (ImGui::BeginPopup("NodeOptionsPopup")) {
-				ImGui::TextUnformatted("Node Actions");
-				ImGui::Separator();
 
-				// -- Break all Links --
-				if (ImGui::MenuItem("Break Links")) {
-					auto nodeIt = std::find_if(m_activeGraph.nodes.begin(), m_activeGraph.nodes.end(),
-						[&](const Node& n) {
-							return n.id == contextNodeId.Get();
+				auto nodeIt = std::find_if(m_activeGraph.nodes.begin(), m_activeGraph.nodes.end(),
+					[&](const Node& n) { return n.id == contextNodeId.Get(); }
+				);
+
+				if (nodeIt->type == NodeType::Math_Add || nodeIt->type == NodeType::Math_Subtract ||
+					nodeIt->type == NodeType::Math_Multiply || nodeIt->type == NodeType::Math_Divide) {
+
+					if (ImGui::BeginMenu("Change Data Type...")) {
+
+						auto changeType = [&](PinType newType, PinType secondaryType = PinType::None) {
+							if (nodeIt->operationType != newType) {
+								nodeIt->operationType = newType;
+
+								nodeIt->inputs[0].type = newType;
+								nodeIt->inputs[1].type = (secondaryType == PinType::None) ? newType : secondaryType;
+								nodeIt->outputs[0].type = newType;
+
+								m_activeGraph.links.erase(
+									std::remove_if(m_activeGraph.links.begin(), m_activeGraph.links.end(),
+										[&](const Link& link) {
+											for (const auto& pin : nodeIt->inputs) if (link.endPinID == pin.id) return true;
+											for (const auto& pin : nodeIt->outputs) if (link.startPinID == pin.id) return true;
+											return false;
+										}
+									), m_activeGraph.links.end()
+								);
+							}
+						};
+
+						if (ImGui::MenuItem("Float", nullptr, nodeIt->operationType == PinType::Float)) changeType(PinType::Float);
+						if (ImGui::MenuItem("Int", nullptr, nodeIt->operationType == PinType::Int)) changeType(PinType::Int);
+						if (ImGui::MenuItem("Vector3", nullptr, nodeIt->operationType == PinType::Vector3)) changeType(PinType::Vector3);
+
+						// -- Multiply Vector3 and Float
+						if (nodeIt->type == NodeType::Math_Multiply) {
+							ImGui::Separator();
+							if (ImGui::MenuItem("Vector3 * Float")) changeType(PinType::Vector3, PinType::Float);
 						}
-					);
 
-					if (nodeIt != m_activeGraph.nodes.end()) {
+						ImGui::EndMenu();
+					}
+					ImGui::Separator();
+				}
+
+				if (nodeIt != m_activeGraph.nodes.end()) {
+					ImGui::TextUnformatted(nodeIt->name.c_str());
+					ImGui::Separator();
+
+					bool hasConfigurablePins = false;
+					for (auto& pin : nodeIt->inputs) {
+						if (pin.type == PinType::Key) {
+							hasConfigurablePins = true;
+							ImGui::PushItemWidth(140.0f);
+
+							if (ImGui::BeginCombo("Key", pin.stringValue.c_str())) {
+
+								if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+								ImGui::InputTextWithHint("##KeySearch", "Search...", &m_keySearchString);
+								ImGui::Separator();
+
+								std::string searchQ = m_keySearchString;
+								std::transform(searchQ.begin(), searchQ.end(), searchQ.begin(), ::tolower);
+
+								for (int i = 0; i < IM_ARRAYSIZE(s_KeyNames); i++) {
+									std::string lowerKey = s_KeyNames[i];
+									std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
+
+									if (searchQ.empty() || lowerKey.find(searchQ) != std::string::npos) {
+										bool isSelected = (pin.stringValue == s_KeyNames[i]);
+										if (ImGui::Selectable(s_KeyNames[i], isSelected)) {
+											pin.stringValue = s_KeyNames[i];
+											ImGui::CloseCurrentPopup();
+										}
+
+										if (isSelected && searchQ.empty()) ImGui::SetItemDefaultFocus();
+									}
+								}
+								ImGui::EndCombo();
+							}
+							ImGui::PopItemWidth();
+						}
+						else if (pin.type == PinType::MouseButton) {
+							hasConfigurablePins = true;
+							ImGui::PushItemWidth(140.0f);
+
+							if (ImGui::BeginCombo("Mouse Button", pin.stringValue.c_str())) {
+
+								if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+								ImGui::InputTextWithHint("##MouseSearch", "Search...", &m_mouseSearchString);
+								ImGui::Separator();
+
+								std::string searchQ = m_mouseSearchString;
+								std::transform(searchQ.begin(), searchQ.end(), searchQ.begin(), ::tolower);
+
+								for (int i = 0; i < IM_ARRAYSIZE(s_MouseButtonNames); i++) {
+									std::string lowerMouse = s_MouseButtonNames[i];
+									std::transform(lowerMouse.begin(), lowerMouse.end(), lowerMouse.begin(), ::tolower);
+
+									if (searchQ.empty() || lowerMouse.find(searchQ) != std::string::npos) {
+										bool isSelected = (pin.stringValue == s_MouseButtonNames[i]);
+										if (ImGui::Selectable(s_MouseButtonNames[i], isSelected)) {
+											pin.stringValue = s_MouseButtonNames[i];
+											ImGui::CloseCurrentPopup();
+										}
+										if (isSelected && searchQ.empty()) ImGui::SetItemDefaultFocus();
+									}
+								}
+								ImGui::EndCombo();
+							}
+							ImGui::PopItemWidth();
+						}
+					}
+
+					if (hasConfigurablePins) ImGui::Separator();
+
+					// -- Break all Links --
+					if (ImGui::MenuItem("Break Links")) {
 						m_activeGraph.links.erase(
 							std::remove_if(m_activeGraph.links.begin(), m_activeGraph.links.end(),
 								[&](const Link& link) {
@@ -465,15 +825,16 @@ namespace Axion {
 							m_activeGraph.links.end()
 						);
 					}
-				}
-				ImGui::Separator();
 
-				// -- Delete Node --
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
-				if (ImGui::MenuItem("Delete")) {
-					ed::DeleteNode(contextNodeId);
+					ImGui::Separator();
+
+					// -- Delete Node --
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
+					if (ImGui::MenuItem("Delete")) {
+						ed::DeleteNode(contextNodeId);
+					}
+					ImGui::PopStyleColor();
 				}
-				ImGui::PopStyleColor();
 
 				ImGui::EndPopup();
 			}
@@ -482,10 +843,40 @@ namespace Axion {
 
 			ed::End();
 			ed::SetCurrentEditor(nullptr);
+
+
+
+			// -- Drop Target for .axvs Files --
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+					std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+					std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+
+					if (absPath.extension() == ".axvs") {
+						openScript(absPath);
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
 		}
 		else {
 			ImGui::Text("No Visual Script Loaded.");
 			ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Create or open a .axvs file from the Content Browser.");
+
+			// -- Drop Target for .axvs Files --
+			ImGui::Dummy(ImGui::GetContentRegionAvail());
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+					std::filesystem::path relPath = static_cast<const char*>(payload->Data);
+					std::filesystem::path absPath = AssetManager::getAbsolute(relPath);
+
+					if (absPath.extension() == ".axvs") {
+						openScript(absPath);
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+
 		}
 
 		ImGui::End();
@@ -645,6 +1036,14 @@ namespace Axion {
 				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
 				break;
 			}
+			case NodeType::RigidBody_AddImpulse: {
+				newNode.name = "Add Impulse";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Target", PinKind::Input, PinType::Entity });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Force", PinKind::Input, PinType::Vector3 });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
+				break;
+			}
 			case NodeType::RigidBody_AddRadialImpulse: {
 				newNode.name = "Add Radial Impulse";
 				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
@@ -669,6 +1068,20 @@ namespace Axion {
 				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
 				break;
 			}
+			case NodeType::RigidBody_GetAngularVelocity: {
+				newNode.name = "Get Angular Velocity";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Target", PinKind::Input, PinType::Entity });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Velocity", PinKind::Output, PinType::Vector3 });
+				break;
+			}
+			case NodeType::RigidBody_SetAngularVelocity: {
+				newNode.name = "Set Angular Velocity";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Target", PinKind::Input, PinType::Entity });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Velocity", PinKind::Input, PinType::Vector3 });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
+				break;
+			}
 			case NodeType::RigidBody_GetMass: {
 				newNode.name = "Get Mass";
 				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Target", PinKind::Input, PinType::Entity });
@@ -687,13 +1100,13 @@ namespace Axion {
 			// -- INPUT --
 			case NodeType::Input_IsKeyPressed: {
 				newNode.name = "Is Key Pressed";
-				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Key", PinKind::Input, PinType::String }); // TODO: add enum dropdown here
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Key", PinKind::Input, PinType::Key, 0.0f, 0, Vec3::zero(), false, "Space" });
 				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Result", PinKind::Output, PinType::Bool });
 				break;
 			}
 			case NodeType::Input_IsMouseButtonPressed: {
 				newNode.name = "Is Mouse Button Pressed";
-				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Button", PinKind::Input, PinType::String });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Button", PinKind::Input, PinType::MouseButton, 0.0f, 0, Vec3::zero(), false, "Left" });
 				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Result", PinKind::Output, PinType::Bool });
 				break;
 			}
@@ -758,6 +1171,31 @@ namespace Axion {
 				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "False", PinKind::Output, PinType::Flow });
 				break;
 			}
+			case NodeType::Logic_Sequence: {
+				newNode.name = "Sequence";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Then 0", PinKind::Output, PinType::Flow });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Then 1", PinKind::Output, PinType::Flow });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Then 2", PinKind::Output, PinType::Flow });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Then 3", PinKind::Output, PinType::Flow });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Then 4", PinKind::Output, PinType::Flow });
+				break;
+			}
+			case NodeType::Logic_And: {
+				newNode.name = "And (&&)";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Condition", PinKind::Input, PinType::Bool });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Condition", PinKind::Input, PinType::Bool });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "True", PinKind::Output, PinType::Bool });
+				break;
+			}
+			case NodeType::Logic_Or: {
+				newNode.name = "Or (||)";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Condition", PinKind::Input, PinType::Bool });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Condition", PinKind::Input, PinType::Bool });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "True", PinKind::Output, PinType::Bool });
+				break;
+			}
+
 
 			// -- MATH --
 			case NodeType::Math_Add: {
@@ -807,6 +1245,80 @@ namespace Axion {
 				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "A", PinKind::Input, PinType::Float });
 				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "B", PinKind::Input, PinType::Float });
 				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Result", PinKind::Output, PinType::Bool });
+				break;
+			}
+			case NodeType::Math_MakeVector3: {
+				newNode.name = "Make Vector3";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "X", PinKind::Input, PinType::Float });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Y", PinKind::Input, PinType::Float });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Z", PinKind::Input, PinType::Float });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Vector", PinKind::Output, PinType::Vector3 });
+				break;
+			}
+			case NodeType::Math_BreakVector3: {
+				newNode.name = "Break Vector3";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Vector", PinKind::Input, PinType::Vector3 });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "X", PinKind::Output, PinType::Float });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Y", PinKind::Output, PinType::Float });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Z", PinKind::Output, PinType::Float });
+				break;
+			}
+
+			// -- VARIABLES --
+			case NodeType::Variable_GetFloat: {
+				newNode.name = "Get Float";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Output, PinType::Float });
+				break;
+			}
+			case NodeType::Variable_SetFloat: {
+				newNode.name = "Set Float";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Input, PinType::Float });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
+				break;
+			}
+			case NodeType::Variable_GetInt: {
+				newNode.name = "Get Int";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Output, PinType::Int });
+				break;
+			}
+			case NodeType::Variable_SetInt: {
+				newNode.name = "Set Int";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Input, PinType::Int });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
+				break;
+			}
+			case NodeType::Variable_GetBool: {
+				newNode.name = "Get Bool";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Output, PinType::Bool });
+				break;
+			}
+			case NodeType::Variable_SetBool: {
+				newNode.name = "Set Bool";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Input, PinType::Bool });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
+				break;
+			}
+			case NodeType::Variable_GetVector3: {
+				newNode.name = "Get Vector3";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Output, PinType::Vector3 });
+				break;
+			}
+			case NodeType::Variable_SetVector3: {
+				newNode.name = "Set Vector3";
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Execute", PinKind::Input, PinType::Flow });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Name", PinKind::Input, PinType::String, 0.0f, 0, Vec3::zero(), false, "NewVar" });
+				newNode.inputs.push_back({ m_nextPinId++, newNode.id, "Value", PinKind::Input, PinType::Vector3 });
+				newNode.outputs.push_back({ m_nextPinId++, newNode.id, "Next", PinKind::Output, PinType::Flow });
 				break;
 			}
 
@@ -941,9 +1453,12 @@ namespace Axion {
 			// -- PHYSICS --
 			case NodeType::RigidBody_AddForce:
 			case NodeType::RigidBody_AddTorque:
+			case NodeType::RigidBody_AddImpulse:
 			case NodeType::RigidBody_AddRadialImpulse:
 			case NodeType::RigidBody_GetLinearVelocity:
 			case NodeType::RigidBody_SetLinearVelocity:
+			case NodeType::RigidBody_GetAngularVelocity:
+			case NodeType::RigidBody_SetAngularVelocity:
 			case NodeType::RigidBody_GetMass:
 			case NodeType::RigidBody_SetMass:			return ImColor(20, 50, 140); // Dark Navy Blue
 
@@ -957,7 +1472,10 @@ namespace Axion {
 			case NodeType::Animator_IsPlaying:			return ImColor(20, 120, 120); // Teal
 
 			// -- LOGIC --
-			case NodeType::Logic_Branch:				return ImColor(100, 100, 100); // Silver
+			case NodeType::Logic_Branch:
+			case NodeType::Logic_Sequence:
+			case NodeType::Logic_And:
+			case NodeType::Logic_Or:					return ImColor(100, 100, 100); // Silver
 
 			// -- MATH --
 			case NodeType::Math_Add:
@@ -966,7 +1484,19 @@ namespace Axion {
 			case NodeType::Math_Divide:
 			case NodeType::Math_Equal:
 			case NodeType::Math_Greater:
-			case NodeType::Math_Less:					return ImColor(60, 100, 60); // Olive
+			case NodeType::Math_Less:
+			case NodeType::Math_MakeVector3:
+			case NodeType::Math_BreakVector3:			return ImColor(60, 100, 60); // Olive
+
+			// -- VARIABLES --
+			case NodeType::Variable_GetFloat:
+			case NodeType::Variable_SetFloat:
+			case NodeType::Variable_GetInt:
+			case NodeType::Variable_SetInt:
+			case NodeType::Variable_GetBool:
+			case NodeType::Variable_SetBool:
+			case NodeType::Variable_GetVector3:
+			case NodeType::Variable_SetVector3:			return ImColor(100, 10, 10); // Dark Red
 
 			default: return ImColor(80, 80, 80); // Gray
 		}
@@ -974,15 +1504,17 @@ namespace Axion {
 
 	ImColor VisualScriptPanel::getPinColor(PinType type) {
 		switch (type) {
-			case PinType::Flow:		return ImColor(255, 255, 255); // White
-			case PinType::Bool:		return ImColor(220, 48, 48); // Red
-			case PinType::Int:		return ImColor(68, 201, 156); // Teal
-			case PinType::Float:	return ImColor(147, 226, 74); // Green
-			case PinType::String:	return ImColor(218, 0, 183); // Magenta
-			case PinType::Vector3:	return ImColor(255, 202, 36); // Yellow
-			case PinType::Entity:	return ImColor(51, 150, 215); // Cyan
-			case PinType::None:		return ImColor(200, 200, 200); // Gray
-			default:				return ImColor(200, 200, 200); // Gray
+			case PinType::Flow:			return ImColor(255, 255, 255); // White
+			case PinType::Bool:			return ImColor(220, 48, 48); // Red
+			case PinType::Int:			return ImColor(68, 201, 156); // Teal
+			case PinType::Float:		return ImColor(147, 226, 74); // Green
+			case PinType::String:		return ImColor(218, 0, 183); // Magenta
+			case PinType::Vector3:		return ImColor(255, 202, 36); // Yellow
+			case PinType::Entity:		return ImColor(51, 150, 215); // Cyan
+			case PinType::Key:			return ImColor(200, 200, 200); // Gray
+			case PinType::MouseButton:	return ImColor(200, 200, 200); // Gray
+			case PinType::None:			return ImColor(200, 200, 200); // Gray
+			default:					return ImColor(200, 200, 200); // Gray
 		}
 	}
 

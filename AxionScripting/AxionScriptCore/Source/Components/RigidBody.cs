@@ -1,6 +1,13 @@
 ﻿
 namespace AxionScriptCore {
 
+	public enum ForceMode : int {
+		Force = 0,
+		Impulse,
+		VelocityChange,
+		Acceleration
+	}
+
 	public class RigidBody {
 		private Entity m_Entity;
 

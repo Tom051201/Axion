@@ -1,0 +1,40 @@
+VisualScript: Enemy
+Variables:
+  []
+Nodes:
+  - ID: 20
+    Type: Event_OnCreate
+    OperationType: Float
+    Name: On Create
+    Inputs:
+      []
+    Outputs:
+      - ID: 1049
+        NodeID: 20
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 21
+    Type: Event_OnDestroy
+    OperationType: Float
+    Name: On Destroy
+    Inputs:
+      []
+    Outputs:
+      - ID: 1050
+        NodeID: 21
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+Links:
+  []
