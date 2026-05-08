@@ -12,6 +12,18 @@ Variables:
     IntValue: 0
     BoolValue: false
     Vec3Value: [0, 0, 0]
+  - Name: TurnSpeed
+    Type: Float
+    FloatValue: 3
+    IntValue: 0
+    BoolValue: false
+    Vec3Value: [0, 0, 0]
+  - Name: TurnInput
+    Type: Float
+    FloatValue: 0
+    IntValue: 0
+    BoolValue: false
+    Vec3Value: [0, 0, 0]
 Nodes:
   - ID: 1
     Type: Event_OnUpdate
@@ -1414,6 +1426,560 @@ Nodes:
         BoolValue: false
         StringValue: ""
         Vec3Value: [0, 0, 0]
+  - ID: 45
+    Type: Variable_SetFloat
+    OperationType: Float
+    Name: Set Float
+    Inputs:
+      - ID: 1126
+        NodeID: 45
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1127
+        NodeID: 45
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: TurnInput
+        Vec3Value: [0, 0, 0]
+      - ID: 1128
+        NodeID: 45
+        Name: Value
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1129
+        NodeID: 45
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 46
+    Type: Logic_Branch
+    OperationType: Float
+    Name: Branch
+    Inputs:
+      - ID: 1130
+        NodeID: 46
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1131
+        NodeID: 46
+        Name: Condition
+        Kind: Input
+        Type: Bool
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1132
+        NodeID: 46
+        Name: True
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1133
+        NodeID: 46
+        Name: False
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 47
+    Type: Input_IsKeyPressed
+    OperationType: Float
+    Name: Is Key Pressed
+    Inputs:
+      - ID: 1134
+        NodeID: 47
+        Name: Key
+        Kind: Input
+        Type: Key
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: Q
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1135
+        NodeID: 47
+        Name: Result
+        Kind: Output
+        Type: Bool
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 48
+    Type: Variable_SetFloat
+    OperationType: Float
+    Name: Set Float
+    Inputs:
+      - ID: 1136
+        NodeID: 48
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1137
+        NodeID: 48
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: TurnInput
+        Vec3Value: [0, 0, 0]
+      - ID: 1138
+        NodeID: 48
+        Name: Value
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1139
+        NodeID: 48
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 49
+    Type: Logic_Sequence
+    OperationType: Float
+    Name: Sequence
+    Inputs:
+      - ID: 1140
+        NodeID: 49
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1141
+        NodeID: 49
+        Name: Then 0
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1142
+        NodeID: 49
+        Name: Then 1
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1143
+        NodeID: 49
+        Name: Then 2
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1144
+        NodeID: 49
+        Name: Then 3
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1145
+        NodeID: 49
+        Name: Then 4
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 50
+    Type: Logic_Branch
+    OperationType: Float
+    Name: Branch
+    Inputs:
+      - ID: 1146
+        NodeID: 50
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1147
+        NodeID: 50
+        Name: Condition
+        Kind: Input
+        Type: Bool
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1148
+        NodeID: 50
+        Name: True
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1149
+        NodeID: 50
+        Name: False
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 51
+    Type: Input_IsKeyPressed
+    OperationType: Float
+    Name: Is Key Pressed
+    Inputs:
+      - ID: 1150
+        NodeID: 51
+        Name: Key
+        Kind: Input
+        Type: Key
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: E
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1151
+        NodeID: 51
+        Name: Result
+        Kind: Output
+        Type: Bool
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 52
+    Type: Variable_SetFloat
+    OperationType: Float
+    Name: Set Float
+    Inputs:
+      - ID: 1152
+        NodeID: 52
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1153
+        NodeID: 52
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: TurnInput
+        Vec3Value: [0, 0, 0]
+      - ID: 1154
+        NodeID: 52
+        Name: Value
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1155
+        NodeID: 52
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 53
+    Type: RigidBody_SetAngularVelocity
+    OperationType: Float
+    Name: Set Angular Velocity
+    Inputs:
+      - ID: 1156
+        NodeID: 53
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1157
+        NodeID: 53
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1158
+        NodeID: 53
+        Name: Velocity
+        Kind: Input
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1159
+        NodeID: 53
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 54
+    Type: Variable_GetFloat
+    OperationType: Float
+    Name: Get Float
+    Inputs:
+      - ID: 1160
+        NodeID: 54
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: TurnSpeed
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1161
+        NodeID: 54
+        Name: Value
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 55
+    Type: Math_Multiply
+    OperationType: Float
+    Name: Multiply (*)
+    Inputs:
+      - ID: 1162
+        NodeID: 55
+        Name: A
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1163
+        NodeID: 55
+        Name: B
+        Kind: Input
+        Type: Float
+        FloatValue: -1
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1164
+        NodeID: 55
+        Name: Result
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 57
+    Type: Variable_GetFloat
+    OperationType: Float
+    Name: Get Float
+    Inputs:
+      - ID: 1167
+        NodeID: 57
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: TurnSpeed
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1168
+        NodeID: 57
+        Name: Value
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 58
+    Type: Variable_GetFloat
+    OperationType: Float
+    Name: Get Float
+    Inputs:
+      - ID: 1169
+        NodeID: 58
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: TurnInput
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1170
+        NodeID: 58
+        Name: Value
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 59
+    Type: Math_MakeVector3
+    OperationType: Float
+    Name: Make Vector3
+    Inputs:
+      - ID: 1171
+        NodeID: 59
+        Name: X
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1172
+        NodeID: 59
+        Name: Y
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1173
+        NodeID: 59
+        Name: Z
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1174
+        NodeID: 59
+        Name: Vector
+        Kind: Output
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
 Links:
   - ID: 100
     StartPin: 1000
@@ -1532,3 +2098,45 @@ Links:
   - ID: 153
     StartPin: 1113
     EndPin: 1114
+  - ID: 154
+    StartPin: 1055
+    EndPin: 1126
+  - ID: 156
+    StartPin: 1135
+    EndPin: 1131
+  - ID: 157
+    StartPin: 1132
+    EndPin: 1136
+  - ID: 158
+    StartPin: 1141
+    EndPin: 1130
+  - ID: 159
+    StartPin: 1129
+    EndPin: 1140
+  - ID: 160
+    StartPin: 1151
+    EndPin: 1147
+  - ID: 161
+    StartPin: 1142
+    EndPin: 1146
+  - ID: 162
+    StartPin: 1148
+    EndPin: 1152
+  - ID: 163
+    StartPin: 1143
+    EndPin: 1156
+  - ID: 164
+    StartPin: 1161
+    EndPin: 1162
+  - ID: 165
+    StartPin: 1164
+    EndPin: 1138
+  - ID: 166
+    StartPin: 1168
+    EndPin: 1154
+  - ID: 167
+    StartPin: 1170
+    EndPin: 1172
+  - ID: 168
+    StartPin: 1174
+    EndPin: 1158

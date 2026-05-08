@@ -27,6 +27,7 @@ namespace Axion {
 		void refresh();
 
 		void setOpenVisualScriptPanelCallback(const std::function<void(const std::filesystem::path& path)>& func) { m_openVisualScriptPanel = func; }
+		void setAssetDeletedCallback(const std::function<void(const std::filesystem::path& path)>& func) { m_onAssetDeleted = func; }
 
 	private:
 
@@ -64,9 +65,13 @@ namespace Axion {
 		// -- Deleting --
 		bool m_openDeletePopup = false;
 		std::optional<std::filesystem::path> m_pendingDelete;
+		std::vector<std::filesystem::path> m_relatedFilesToDelete;
+		bool m_deleteRelatedFiles = true;
 
 		// -- Navigating --
 		std::optional<std::filesystem::path> m_pendingNavigate;
+		std::vector<std::filesystem::path> m_backHistory;
+		std::vector<std::filesystem::path> m_forwardHistory;
 
 		// -- UI --
 		bool m_showNames = true;
@@ -74,6 +79,7 @@ namespace Axion {
 
 		// -- Callbacks --
 		std::function<void(const std::filesystem::path& path)> m_openVisualScriptPanel;
+		std::function<void(const std::filesystem::path& path)> m_onAssetDeleted;
 
 		// ----- Events -----
 		bool onProjectChanged(ProjectChangedEvent& e);
@@ -84,6 +90,7 @@ namespace Axion {
 		bool matchesSearch(const std::string& name);
 		bool isEngineAssetExtension(const std::filesystem::path& path);
 		void deletePath(const std::filesystem::path& path);
+		std::vector<std::filesystem::path> findRelatedFiles(const std::filesystem::path& path);
 
 		void drawToolbar();
 

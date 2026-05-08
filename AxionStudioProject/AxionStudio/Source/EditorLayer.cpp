@@ -62,9 +62,11 @@ namespace Axion {
 		m_contentBrowserPanel->setOpenVisualScriptPanelCallback([this](const std::filesystem::path& path) {
 			m_visualScriptPanel->isVisible() = true;
 			ImGui::SetWindowFocus("Visual Script Editor");
-			VisualGraph loadedGraph;
-			if (VisualScriptSerializer::deserialize(loadedGraph, path)) {
-				m_visualScriptPanel->setContext(loadedGraph, path);
+			m_visualScriptPanel->openScript(path);
+		});
+		m_contentBrowserPanel->setAssetDeletedCallback([this](const std::filesystem::path& path) {
+			if (m_visualScriptPanel->getActiveFilePath() == path) {
+				m_visualScriptPanel->closeActiveScript();
 			}
 		});
 
@@ -401,6 +403,14 @@ namespace Axion {
 	void EditorLayer::drawSceneViewport() {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
 		ImGui::Begin("Editor Viewport", nullptr, ImGuiWindowFlags_NoScrollbar);
+
+		// -- Always Focus Viewport when Opening Editor --
+		static int focusFrames = 3;
+		if (focusFrames > 0) {
+			ImGui::SetWindowFocus("Editor Viewport");
+			focusFrames--;
+		}
+
 		m_editorCamera.setHoveringSceneViewport(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem));
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
@@ -425,6 +435,12 @@ namespace Axion {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 					std::filesystem::path payloadPath = static_cast<const char*>(payload->Data);
 					AX_CORE_LOG_TRACE("Dropped: {}", payloadPath.string());
+
+					// -- Try loading a Scene --
+					if (payloadPath.extension() == ".axscene") {
+						std::filesystem::path absPath = AssetManager::getAbsolute(payloadPath);
+						SceneManager::loadScene(absPath);
+					}
 
 					// -- Try loading a skybox --
 					if (payloadPath.extension() == ".axsky") {

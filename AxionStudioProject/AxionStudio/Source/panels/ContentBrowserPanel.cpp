@@ -37,6 +37,7 @@ namespace Axion {
 		EditorResourceManager::loadIcon("FolderIcon", "AxionStudio/Resources/contentbrowser/FolderIcon.png");
 		EditorResourceManager::loadIcon("FileIcon", "AxionStudio/Resources/contentbrowser/FileIcon.png");
 		EditorResourceManager::loadIcon("BackIcon", "AxionStudio/Resources/contentbrowser/BackIcon.png");
+		EditorResourceManager::loadIcon("ForwardIcon", "AxionStudio/Resources/contentbrowser/ForwardIcon.png");
 		EditorResourceManager::loadIcon("RefreshIcon", "AxionStudio/Resources/contentbrowser/RefreshIcon.png");
 		EditorResourceManager::loadIcon("AddFolderIcon", "AxionStudio/Resources/contentbrowser/AddFolderIcon.png");
 
@@ -60,6 +61,27 @@ namespace Axion {
 
 		// ----- Draw toolbar -----
 		drawToolbar();
+
+
+
+		// ----- Mouse Navigation -----
+		if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) {
+			// -- Mouse X1 --
+			if (ImGui::IsMouseClicked(3) && !m_backHistory.empty()) {
+				m_forwardHistory.push_back(m_currentDirectory);
+				m_currentDirectory = m_backHistory.back();
+				m_backHistory.pop_back();
+				refreshDirectory();
+			}
+			// -- Mouse X2 --
+			if (ImGui::IsMouseClicked(4) && !m_forwardHistory.empty()) {
+				m_backHistory.push_back(m_currentDirectory);
+				m_currentDirectory = m_forwardHistory.back();
+				m_forwardHistory.pop_back();
+				refreshDirectory();
+			}
+		}
+
 
 
 		// ----- Draw ContentBrowser -----
@@ -104,6 +126,8 @@ namespace Axion {
 			if (ImGui::ImageButton((uniqueID + "_icon").c_str(), (ImTextureID)texID, {m_thumbnailSize, m_thumbnailSize})) {
 				if (item.isDir) {
 					// -- Clicked on folder --
+					m_backHistory.push_back(m_currentDirectory);
+					m_forwardHistory.clear();
 					m_pendingNavigate = m_currentDirectory / path.filename();
 				}
 				else {
@@ -112,6 +136,8 @@ namespace Axion {
 			}
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 				if (item.isDir) {
+					m_backHistory.push_back(m_currentDirectory);
+					m_forwardHistory.clear();
 					m_pendingNavigate = m_currentDirectory / path.filename();
 				}
 				else if (path.extension() == ".axscene") {
@@ -158,6 +184,8 @@ namespace Axion {
 				ImGui::Separator();
 				if (ImGui::MenuItem("Delete")) {
 					m_pendingDelete = path;
+					m_relatedFilesToDelete = findRelatedFiles(path);
+					m_deleteRelatedFiles = true;
 					m_openDeletePopup = true;
 				}
 
@@ -318,12 +346,51 @@ namespace Axion {
 		if (ImGui::BeginPopupModal("Confirm Delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 			std::string msg = "Are you sure you want to delete:\n" + m_pendingDelete->filename().string() + "?";
 			ImGui::TextWrapped("%s", msg.c_str());
+
+			// -- Related Files UI --
+			if (!m_relatedFilesToDelete.empty()) {
+				ImGui::Dummy(ImVec2(0, 5));
+				ImGui::Checkbox("Delete related files (Layouts, etc.)", &m_deleteRelatedFiles);
+
+				if (m_deleteRelatedFiles) {
+					ImGui::BeginDisabled();
+					for (const auto& rel : m_relatedFilesToDelete) {
+						ImGui::Text("  - %s", rel.filename().string().c_str());
+					}
+					ImGui::EndDisabled();
+				}
+			}
+
 			ImGui::Separator();
 
 			// -- Yes button --
 			if (ImGui::Button("Yes", ImVec2(120, 0))) {
+
+				if (m_onAssetDeleted) {
+					m_onAssetDeleted(*m_pendingDelete);
+				}
+
+				// -- Remove From Asset Registry and RAM --
+				if (isEngineAssetExtension(*m_pendingDelete)) {
+					UUID assetUUID = AssetManager::getAssetUUID(*m_pendingDelete);
+					if (assetUUID.isValid()) {
+						AssetManager::removeAsset(assetUUID);
+						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+					}
+				}
+
+				// -- Delete Main File --
 				deletePath(*m_pendingDelete);
+
+				// -- Delete Related Files --
+				if (m_deleteRelatedFiles) {
+					for (const auto& rel : m_relatedFilesToDelete) {
+						deletePath(rel);
+					}
+				}
+
 				m_pendingDelete.reset();
+				m_relatedFilesToDelete.clear();
 				refresh();
 				ImGui::CloseCurrentPopup();
 			}
@@ -432,11 +499,26 @@ namespace Axion {
 	}
 
 	void ContentBrowserPanel::drawToolbar() {
-		// ----- Go a folder back button -----
-		ImGui::BeginDisabled(m_currentDirectory == m_rootDirectory);
-		void* texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("BackIcon"));
-		if (ImGui::ImageButton("##Back_icon", (ImTextureID)texID, {iconSize, iconSize})) {
-			m_currentDirectory = m_currentDirectory.parent_path();
+		// ----- Go Back button -----
+		ImGui::BeginDisabled(m_backHistory.empty());
+		void* backTexID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("BackIcon"));
+		if (ImGui::ImageButton("##Back_icon", (ImTextureID)backTexID, { iconSize, iconSize })) {
+			m_forwardHistory.push_back(m_currentDirectory);
+			m_currentDirectory = m_backHistory.back();
+			m_backHistory.pop_back();
+			refreshDirectory();
+		}
+		ImGui::EndDisabled();
+
+
+		// ----- Go Forward button -----
+		ImGui::SameLine();
+		ImGui::BeginDisabled(m_forwardHistory.empty());
+		void* fwdTexID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("ForwardIcon"));
+		if (ImGui::ImageButton("##Forward_icon", (ImTextureID)fwdTexID, {iconSize, iconSize})) {
+			m_backHistory.push_back(m_currentDirectory);
+			m_currentDirectory = m_forwardHistory.back();
+			m_forwardHistory.pop_back();
 			refreshDirectory();
 		}
 		ImGui::EndDisabled();
@@ -444,16 +526,16 @@ namespace Axion {
 
 		// ----- Refresh button -----
 		ImGui::SameLine();
-		texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("RefreshIcon"));
-		if (ImGui::ImageButton("##Refresh_icon", (ImTextureID)texID, { iconSize, iconSize })) {
+		void* refreshTexID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("RefreshIcon"));
+		if (ImGui::ImageButton("##Refresh_icon", (ImTextureID)refreshTexID, { iconSize, iconSize })) {
 			refresh();
 		}
 
 
 		// ----- Add folder button -----
 		ImGui::SameLine();
-		texID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("AddFolderIcon"));
-		if (ImGui::ImageButton("##AddFolder_icon", (ImTextureID)texID, { iconSize, iconSize })) {
+		void* addTexID = GraphicsContext::get()->getImGuiTextureID(EditorResourceManager::getIcon("AddFolderIcon"));
+		if (ImGui::ImageButton("##AddFolder_icon", (ImTextureID)addTexID, { iconSize, iconSize })) {
 			std::string baseName = "New Folder";
 			std::filesystem::path newFolderPath = m_currentDirectory / baseName;
 
@@ -524,6 +606,9 @@ namespace Axion {
 			m_currentDirectory.clear();
 		}
 
+		m_backHistory.clear();
+		m_forwardHistory.clear();
+
 		return false;
 	}
 
@@ -550,6 +635,20 @@ namespace Axion {
 
 	void ContentBrowserPanel::refresh() {
 		refreshDirectory();
+	}
+
+	std::vector<std::filesystem::path> ContentBrowserPanel::findRelatedFiles(const std::filesystem::path& path) {
+		std::vector<std::filesystem::path> related;
+
+		// -- Visual Script Layouts --
+		if (path.extension() == ".axvs") {
+			std::filesystem::path layoutPath = path.parent_path() / (path.stem().string() + "_layout.json");
+			if (std::filesystem::exists(layoutPath)) {
+				related.push_back(layoutPath);
+			}
+		}
+
+		return related;
 	}
 
 }

@@ -254,6 +254,8 @@ namespace Axion {
 	}
 
 	void Renderer::submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& objectData, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer) {
+		if (!mesh || !shader || !objectData || !uploadBuffer) return;
+
 		shader->bind();
 		uploadBuffer->bind(0);
 		objectData->bind(1);

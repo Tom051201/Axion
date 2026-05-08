@@ -39,24 +39,7 @@ namespace Axion {
 	}
 
 	void VisualScriptPanel::setup() {
-		//m_config = {};
-		//m_config.SettingsFile = "AxionStudio/Config/VisualScriptSettings.json";
-		//m_editorContext = ed::CreateEditor(&m_config);
-		//
-		//ed::SetCurrentEditor(m_editorContext);
-		//ed::Style& style = ed::GetStyle();
-		//style.NodeRounding = 6.0f;
-		//style.NodeBorderWidth = 1.5;
-		//style.HoveredNodeBorderWidth = 2.5f;
-		//style.SelectedNodeBorderWidth = 3.0f;
-		//style.PinRounding = 4.0f;
-		//style.LinkStrength = 4.0f;
-		//style.Colors[ed::StyleColor_NodeBg] = ImColor(32, 32, 32, 240);
-		//style.Colors[ed::StyleColor_NodeBorder] = ImColor(255, 255, 255, 40);
-		//ed::SetCurrentEditor(nullptr);
-
 		EditorResourceManager::loadIcon("vsp_header_bg", "AxionStudio/Resources/HeaderBackground.png");
-
 	}
 
 	void VisualScriptPanel::shutdown() {
@@ -128,6 +111,19 @@ namespace Axion {
 		else {
 			AX_CORE_LOG_ERROR("Failed to open Visual Script: {}", filePath.string());
 		}
+	}
+
+	void VisualScriptPanel::closeActiveScript() {
+		// -- Destroy Layout Context --
+		if (m_editorContext) {
+			ed::DestroyEditor(m_editorContext);
+			m_editorContext = nullptr;
+		}
+
+		// -- Clear Memory --
+		m_activeGraph = VisualGraph();
+		m_currentFilePath.clear();
+		m_currentLayoutFilePath.clear();
 	}
 
 	void VisualScriptPanel::onGuiRender() {

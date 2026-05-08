@@ -20,6 +20,9 @@ namespace Axion {
 
 		void setContext(const VisualGraph& graph, const std::filesystem::path& filePath);
 		void openScript(const std::filesystem::path& filePath);
+		void closeActiveScript();
+
+		const std::filesystem::path& getActiveFilePath() const { return m_currentFilePath; }
 
 	private:
 

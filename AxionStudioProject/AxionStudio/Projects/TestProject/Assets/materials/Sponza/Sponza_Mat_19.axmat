@@ -1,0 +1,19 @@
+Version: 1
+Name: Sponza_Mat_19
+UUID: 32201f76bd513be91dccb9aa0e353837
+Type: Material
+AlbedoColor: [0.588, 0.588, 0.588, 1]
+Metalness: 1
+Roughness: 1
+Emission: 0
+Tiling: 1
+UseNormalMap: 1
+UseMetalnessMap: 1
+UseRoughnessMap: 1
+UseOcclusionMap: 0
+UseEmissiveMap: 0
+Textures:
+  Albedo: a5986bf803de621ff02eedebab388956
+  Normal: 43408e350c7e8da6f92b9be601374f19
+  Metalness: 6667b828c34913965810f04494b53f7c
+  Roughness: 6667b828c34913965810f04494b53f7c

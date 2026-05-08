@@ -92,6 +92,7 @@ namespace Axion {
 
 	void Renderer3D::drawMeshInstanced(Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData) {
 		if (instanceData.empty()) return;
+		if (!mesh) return;
 		if (!material || !material->isValid()) return;
 
 		material->bind();
@@ -121,7 +122,9 @@ namespace Axion {
 	}
 
 	void Renderer3D::drawSkeletalMeshInstanced(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<SkeletalObjectBuffer>& instanceData) {
-		if (instanceData.empty() || !material || !material->isValid()) return;
+		if (instanceData.empty()) return;
+		if (!mesh) return;
+		if (!material || !material->isValid()) return;
 
 		material->setSkeletal(true);
 		material->bind();
@@ -179,6 +182,7 @@ namespace Axion {
 		if (instanceData.empty()) return;
 		Ref<Pipeline> shadowPipeline = EngineAssets::getShadowPipeline();
 		if (!shadowPipeline) return;
+		if (!mesh) return;
 
 		shadowPipeline->bind();
 		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
@@ -204,9 +208,9 @@ namespace Axion {
 
 	void Renderer3D::drawSkeletalMeshInstancedShadow(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const std::vector<SkeletalObjectBuffer>& instanceData) {
 		if (instanceData.empty()) return;
-
 		Ref<Pipeline> shadowPipeline = EngineAssets::getSkeletalShadowPipeline();
 		if (!shadowPipeline) return;
+		if (!mesh) return;
 
 		shadowPipeline->bind();
 		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());

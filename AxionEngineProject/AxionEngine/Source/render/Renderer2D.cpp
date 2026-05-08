@@ -337,6 +337,8 @@ namespace Axion {
 	void Renderer2D::drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint) {
 		if (!s_initialized) return;
 
+		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
+
 		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices || s_data.textureSlotIndex >= Renderer2DData::MaxTextureSlots) {
 			nextBatch();
 		}
@@ -344,7 +346,7 @@ namespace Axion {
 		float texIndex = -1.0f;
 
 		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
-			if (s_data.textureSlots[i]->getHandle() == texture->getHandle()) {
+			if (s_data.textureSlots[i]->getHandle() == validTexture->getHandle()) {
 				texIndex = static_cast<float>(i);
 				break;
 			}
@@ -352,7 +354,7 @@ namespace Axion {
 
 		if (texIndex == -1) {
 			texIndex = static_cast<float>(s_data.textureSlotIndex);
-			s_data.textureSlots[s_data.textureSlotIndex] = texture;
+			s_data.textureSlots[s_data.textureSlotIndex] = validTexture;
 			s_data.textureSlotIndex++;
 		}
 
@@ -428,6 +430,8 @@ namespace Axion {
 	void Renderer2D::drawQuad(const Vec3& position, const Vec2& size, float rotation, const Ref<Texture2D>& texture, const Vec4& tint) {
 		if (!s_initialized) return;
 
+		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
+
 		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices || s_data.textureSlotIndex >= Renderer2DData::MaxTextureSlots) {
 			nextBatch();
 		}
@@ -436,7 +440,7 @@ namespace Axion {
 
 		// check if already in a slot
 		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
-			if (s_data.textureSlots[i]->getHandle() == texture->getHandle()) {
+			if (s_data.textureSlots[i]->getHandle() == validTexture->getHandle()) {
 				texIndex = static_cast<float>(i);
 				break;
 			}
@@ -444,7 +448,7 @@ namespace Axion {
 
 		if (texIndex == -1) {
 			texIndex = static_cast<float>(s_data.textureSlotIndex);
-			s_data.textureSlots[s_data.textureSlotIndex] = texture;
+			s_data.textureSlots[s_data.textureSlotIndex] = validTexture;
 			s_data.textureSlotIndex++;
 		}
 

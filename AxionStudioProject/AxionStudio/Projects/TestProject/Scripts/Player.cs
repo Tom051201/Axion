@@ -6,6 +6,8 @@ public class Player : Entity {
 
 	public float MoveSpeed = 5.0f;
 	public Vector3 TargetVelocity = new Vector3(0.0f, 0.0f, 0.0f);
+	public float TurnSpeed = 3.0f;
+	public float TurnInput = 0.0f;
 
 	public override void OnUpdate(float timestep) {
 		this.TargetVelocity = new Vector3(0.0f, (this.RigidBody.LinearVelocity).Y, 0.0f);
@@ -22,6 +24,14 @@ public class Player : Entity {
 			this.TargetVelocity = (this.TargetVelocity - (this.Transform.Right * this.MoveSpeed));
 		}
 		this.RigidBody.LinearVelocity = this.TargetVelocity;
+		this.TurnInput = 0.0f;
+		if (Input.IsKeyPressed(KeyCode.Q)) {
+			this.TurnInput = (this.TurnSpeed * -1.0f);
+		}
+		if (Input.IsKeyPressed(KeyCode.E)) {
+			this.TurnInput = this.TurnSpeed;
+		}
+		this.RigidBody.AngularVelocity = new Vector3(0.0f, this.TurnInput, 0.0f);
 	}
 
 }

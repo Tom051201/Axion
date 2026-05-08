@@ -64,6 +64,8 @@ namespace Axion {
 		template<typename T>
 		static void reload(const AssetHandle<T>& handle);
 
+		static void removeAsset(UUID handle);
+
 		// -- Templated getter function --
 		template<typename T>
 		static Ref<T> get(const AssetHandle<T>& handle) {

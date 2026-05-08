@@ -1,0 +1,419 @@
+Version: 2
+Name: Sponza
+UUID: dfd345df5df06469cfdb558bf76d7516
+Type: Mesh
+Format: GLTF
+Source: meshes/Sponza/Sponza.gltf
+Submeshes:
+  - BaseVertex: 0
+    StartIndex: 0
+    IndexCount: 10920
+    MaterialIndex: 0
+  - BaseVertex: 3175
+    StartIndex: 10920
+    IndexCount: 1404
+    MaterialIndex: 3
+  - BaseVertex: 3708
+    StartIndex: 12324
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 4939
+    StartIndex: 18957
+    IndexCount: 4086
+    MaterialIndex: 4
+  - BaseVertex: 5692
+    StartIndex: 23043
+    IndexCount: 324
+    MaterialIndex: 5
+  - BaseVertex: 5820
+    StartIndex: 23367
+    IndexCount: 840
+    MaterialIndex: 6
+  - BaseVertex: 6380
+    StartIndex: 24207
+    IndexCount: 6996
+    MaterialIndex: 7
+  - BaseVertex: 8244
+    StartIndex: 31203
+    IndexCount: 4368
+    MaterialIndex: 8
+  - BaseVertex: 9952
+    StartIndex: 35571
+    IndexCount: 8688
+    MaterialIndex: 6
+  - BaseVertex: 13144
+    StartIndex: 44259
+    IndexCount: 48
+    MaterialIndex: 9
+  - BaseVertex: 13160
+    StartIndex: 44307
+    IndexCount: 6996
+    MaterialIndex: 7
+  - BaseVertex: 15024
+    StartIndex: 51303
+    IndexCount: 3288
+    MaterialIndex: 6
+  - BaseVertex: 16196
+    StartIndex: 54591
+    IndexCount: 11040
+    MaterialIndex: 10
+  - BaseVertex: 22564
+    StartIndex: 65631
+    IndexCount: 612
+    MaterialIndex: 5
+  - BaseVertex: 22780
+    StartIndex: 66243
+    IndexCount: 612
+    MaterialIndex: 7
+  - BaseVertex: 22992
+    StartIndex: 66855
+    IndexCount: 444
+    MaterialIndex: 5
+  - BaseVertex: 23130
+    StartIndex: 67299
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 23256
+    StartIndex: 67779
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 23378
+    StartIndex: 68115
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 23504
+    StartIndex: 68595
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 23626
+    StartIndex: 68931
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 23752
+    StartIndex: 69411
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 23874
+    StartIndex: 69747
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 24000
+    StartIndex: 70227
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 24122
+    StartIndex: 70563
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 24248
+    StartIndex: 71043
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 24370
+    StartIndex: 71379
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 24496
+    StartIndex: 71859
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 24618
+    StartIndex: 72195
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 24744
+    StartIndex: 72675
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 24866
+    StartIndex: 73011
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 24992
+    StartIndex: 73491
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 25114
+    StartIndex: 73827
+    IndexCount: 480
+    MaterialIndex: 6
+  - BaseVertex: 25240
+    StartIndex: 74307
+    IndexCount: 336
+    MaterialIndex: 7
+  - BaseVertex: 25362
+    StartIndex: 74643
+    IndexCount: 1320
+    MaterialIndex: 6
+  - BaseVertex: 26242
+    StartIndex: 75963
+    IndexCount: 96
+    MaterialIndex: 5
+  - BaseVertex: 26298
+    StartIndex: 76059
+    IndexCount: 840
+    MaterialIndex: 6
+  - BaseVertex: 26858
+    StartIndex: 76899
+    IndexCount: 162
+    MaterialIndex: 5
+  - BaseVertex: 26924
+    StartIndex: 77061
+    IndexCount: 726
+    MaterialIndex: 11
+  - BaseVertex: 27238
+    StartIndex: 77787
+    IndexCount: 72
+    MaterialIndex: 5
+  - BaseVertex: 27286
+    StartIndex: 77859
+    IndexCount: 246
+    MaterialIndex: 11
+  - BaseVertex: 27384
+    StartIndex: 78105
+    IndexCount: 72
+    MaterialIndex: 5
+  - BaseVertex: 27432
+    StartIndex: 78177
+    IndexCount: 1668
+    MaterialIndex: 11
+  - BaseVertex: 28120
+    StartIndex: 79845
+    IndexCount: 150
+    MaterialIndex: 5
+  - BaseVertex: 28212
+    StartIndex: 79995
+    IndexCount: 10224
+    MaterialIndex: 10
+  - BaseVertex: 34116
+    StartIndex: 90219
+    IndexCount: 150
+    MaterialIndex: 5
+  - BaseVertex: 34208
+    StartIndex: 90369
+    IndexCount: 15
+    MaterialIndex: 9
+  - BaseVertex: 34215
+    StartIndex: 90384
+    IndexCount: 4080
+    MaterialIndex: 8
+  - BaseVertex: 36039
+    StartIndex: 94464
+    IndexCount: 11208
+    MaterialIndex: 6
+  - BaseVertex: 39803
+    StartIndex: 105672
+    IndexCount: 69624
+    MaterialIndex: 12
+  - BaseVertex: 62841
+    StartIndex: 175296
+    IndexCount: 54
+    MaterialIndex: 2
+  - BaseVertex: 62877
+    StartIndex: 175350
+    IndexCount: 192
+    MaterialIndex: 5
+  - BaseVertex: 62997
+    StartIndex: 175542
+    IndexCount: 16368
+    MaterialIndex: 13
+  - BaseVertex: 66949
+    StartIndex: 191910
+    IndexCount: 83388
+    MaterialIndex: 0
+  - BaseVertex: 87936
+    StartIndex: 275298
+    IndexCount: 16512
+    MaterialIndex: 14
+  - BaseVertex: 91196
+    StartIndex: 291810
+    IndexCount: 16512
+    MaterialIndex: 15
+  - BaseVertex: 94456
+    StartIndex: 308322
+    IndexCount: 16512
+    MaterialIndex: 16
+  - BaseVertex: 97716
+    StartIndex: 324834
+    IndexCount: 16512
+    MaterialIndex: 14
+  - BaseVertex: 100976
+    StartIndex: 341346
+    IndexCount: 16512
+    MaterialIndex: 15
+  - BaseVertex: 104236
+    StartIndex: 357858
+    IndexCount: 16512
+    MaterialIndex: 14
+  - BaseVertex: 107496
+    StartIndex: 374370
+    IndexCount: 16512
+    MaterialIndex: 16
+  - BaseVertex: 110756
+    StartIndex: 390882
+    IndexCount: 16512
+    MaterialIndex: 15
+  - BaseVertex: 114016
+    StartIndex: 407394
+    IndexCount: 33120
+    MaterialIndex: 13
+  - BaseVertex: 122356
+    StartIndex: 440514
+    IndexCount: 14592
+    MaterialIndex: 17
+  - BaseVertex: 124971
+    StartIndex: 455106
+    IndexCount: 13824
+    MaterialIndex: 18
+  - BaseVertex: 127480
+    StartIndex: 468930
+    IndexCount: 14592
+    MaterialIndex: 19
+  - BaseVertex: 130095
+    StartIndex: 483522
+    IndexCount: 14592
+    MaterialIndex: 18
+  - BaseVertex: 132710
+    StartIndex: 498114
+    IndexCount: 13824
+    MaterialIndex: 19
+  - BaseVertex: 135219
+    StartIndex: 511938
+    IndexCount: 14592
+    MaterialIndex: 18
+  - BaseVertex: 137834
+    StartIndex: 526530
+    IndexCount: 13824
+    MaterialIndex: 17
+  - BaseVertex: 140343
+    StartIndex: 540354
+    IndexCount: 14592
+    MaterialIndex: 19
+  - BaseVertex: 142958
+    StartIndex: 554946
+    IndexCount: 13824
+    MaterialIndex: 18
+  - BaseVertex: 145467
+    StartIndex: 568770
+    IndexCount: 14592
+    MaterialIndex: 17
+  - BaseVertex: 148082
+    StartIndex: 583362
+    IndexCount: 24
+    MaterialIndex: 20
+  - BaseVertex: 148098
+    StartIndex: 583386
+    IndexCount: 14871
+    MaterialIndex: 21
+  - BaseVertex: 151055
+    StartIndex: 598257
+    IndexCount: 24
+    MaterialIndex: 20
+  - BaseVertex: 151071
+    StartIndex: 598281
+    IndexCount: 14871
+    MaterialIndex: 21
+  - BaseVertex: 154028
+    StartIndex: 613152
+    IndexCount: 24
+    MaterialIndex: 20
+  - BaseVertex: 154044
+    StartIndex: 613176
+    IndexCount: 14871
+    MaterialIndex: 21
+  - BaseVertex: 157001
+    StartIndex: 628047
+    IndexCount: 24
+    MaterialIndex: 20
+  - BaseVertex: 157017
+    StartIndex: 628071
+    IndexCount: 14871
+    MaterialIndex: 21
+  - BaseVertex: 159974
+    StartIndex: 642942
+    IndexCount: 1404
+    MaterialIndex: 3
+  - BaseVertex: 160507
+    StartIndex: 644346
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 161738
+    StartIndex: 650979
+    IndexCount: 1404
+    MaterialIndex: 3
+  - BaseVertex: 162271
+    StartIndex: 652383
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 163502
+    StartIndex: 659016
+    IndexCount: 1404
+    MaterialIndex: 3
+  - BaseVertex: 164035
+    StartIndex: 660420
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 165266
+    StartIndex: 667053
+    IndexCount: 1200
+    MaterialIndex: 3
+  - BaseVertex: 165716
+    StartIndex: 668253
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 166947
+    StartIndex: 674886
+    IndexCount: 1200
+    MaterialIndex: 3
+  - BaseVertex: 167397
+    StartIndex: 676086
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 168628
+    StartIndex: 682719
+    IndexCount: 1200
+    MaterialIndex: 3
+  - BaseVertex: 169078
+    StartIndex: 683919
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 170309
+    StartIndex: 690552
+    IndexCount: 1200
+    MaterialIndex: 3
+  - BaseVertex: 170759
+    StartIndex: 691752
+    IndexCount: 6633
+    MaterialIndex: 1
+  - BaseVertex: 171990
+    StartIndex: 698385
+    IndexCount: 27552
+    MaterialIndex: 22
+  - BaseVertex: 177298
+    StartIndex: 725937
+    IndexCount: 4563
+    MaterialIndex: 23
+  - BaseVertex: 178164
+    StartIndex: 730500
+    IndexCount: 4086
+    MaterialIndex: 4
+  - BaseVertex: 178917
+    StartIndex: 734586
+    IndexCount: 4563
+    MaterialIndex: 23
+  - BaseVertex: 179783
+    StartIndex: 739149
+    IndexCount: 4086
+    MaterialIndex: 4
+  - BaseVertex: 180536
+    StartIndex: 743235
+    IndexCount: 84
+    MaterialIndex: 5
+  - BaseVertex: 180586
+    StartIndex: 743319
+    IndexCount: 43452
+    MaterialIndex: 24
+  - BaseVertex: 192476
+    StartIndex: 786771
+    IndexCount: 30
+    MaterialIndex: 5

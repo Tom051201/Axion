@@ -109,6 +109,37 @@ namespace Axion {
 		return s_loader->peekUUID(absolutePath);
 	}
 
+	void AssetManager::removeAsset(UUID handle) {
+		if (!ProjectManager::hasProject() || !handle.isValid()) return;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+
+		if (registry->contains(handle)) {
+			AssetType type = registry->get(handle).type;
+
+			// -- Remove from Registry File --
+			registry->remove(handle);
+			AX_CORE_LOG_INFO("Removed asset from registry: {}", handle.toString());
+
+			// 3. Clear from live RAM
+			switch (type) {
+				case AssetType::Mesh: {				storage<Mesh>().assets.erase(handle);				storage<Mesh>().handleToPath.erase(handle); break; }
+				case AssetType::Texture2D: {		storage<Texture2D>().assets.erase(handle);			storage<Texture2D>().handleToPath.erase(handle); break; }
+				case AssetType::TextureCube: {		storage<TextureCube>().assets.erase(handle);		storage<TextureCube>().handleToPath.erase(handle); break; }
+				case AssetType::Material: {			storage<Material>().assets.erase(handle);			storage<Material>().handleToPath.erase(handle); break; }
+				case AssetType::Shader: {			storage<Shader>().assets.erase(handle);				storage<Shader>().handleToPath.erase(handle); break; }
+				case AssetType::Pipeline: {			storage<Pipeline>().assets.erase(handle);			storage<Pipeline>().handleToPath.erase(handle); break; }
+				case AssetType::Skybox: {			storage<Skybox>().assets.erase(handle);				storage<Skybox>().handleToPath.erase(handle); break; }
+				case AssetType::AudioClip: {		storage<AudioClip>().assets.erase(handle);			storage<AudioClip>().handleToPath.erase(handle); break; }
+				case AssetType::PhysicsMaterial: {	storage<PhysicsMaterial>().assets.erase(handle);	storage<PhysicsMaterial>().handleToPath.erase(handle); break; }
+				case AssetType::Prefab: {			storage<Prefab>().assets.erase(handle);				storage<Prefab>().handleToPath.erase(handle); break; }
+				case AssetType::SkeletalMesh: {		storage<SkeletalMesh>().assets.erase(handle);		storage<SkeletalMesh>().handleToPath.erase(handle); break; }
+				case AssetType::AnimationClip: {	storage<AnimationClip>().assets.erase(handle);		storage<AnimationClip>().handleToPath.erase(handle); break; }
+				default: break;
+			}
+		}
+	}
+
 	// ----- Mesh Assets -----
 	template<>
 	AssetHandle<Mesh> AssetManager::load<Mesh>(UUID handle) {
