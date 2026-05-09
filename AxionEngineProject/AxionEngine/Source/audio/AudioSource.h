@@ -8,11 +8,22 @@
 
 namespace Axion {
 
+	struct AudioStreamContext {
+		std::ifstream stream;
+		uint64_t dataOffset = 0;
+		uint64_t dataSize = 0;
+	};
+
 	class AudioSource {
 	public:
 
 		AudioSource(AssetHandle<AudioClip> handle);
+		AudioSource(AudioSource&& other) noexcept;
+		AudioSource(const AudioSource&) = delete;
+		AudioSource& operator=(const AudioSource&) = delete;
 		~AudioSource();
+
+		AudioSource& operator=(AudioSource&& other) noexcept;
 
 		void release();
 
@@ -56,22 +67,32 @@ namespace Axion {
 	private:
 
 		AssetHandle<AudioClip> m_clipHandle;
-		ma_sound m_memorySound{};
-		ma_sound m_streamSound{};
-		ma_sound* m_instance{};
-		bool m_initialized = false;
 
+		ma_sound* m_sound = nullptr;
+		ma_decoder* m_streamDecoder = nullptr;
+		AudioStreamContext* m_streamContext = nullptr;
+
+		bool m_initialized = false;
+		bool m_ownsDecoder = false;
 		std::function<void()> m_onEndCallback;
+
 		bool m_paused = false;
 		float m_volume = 1.0f;
 		float m_pitch = 1.0f;
 		float m_pan = 0.0f;
+
+		std::ifstream m_binaryStream;
+		uint64_t m_binaryDataOffset = 0;
+		uint64_t m_binaryDataSize = 0;
 
 		Vec3 m_position;
 		Vec3 m_velocity;
 		float m_minDistance = 1.0f;
 		float m_maxDistance = 100.0f;
 		float m_dopplerFactor = 1.0f;
+
+		static ma_result miniaudioRead(ma_decoder* decoder, void* bufferOut, size_t bytesToRead, size_t* bytesRead);
+		static ma_result miniaudioSeek(ma_decoder* decoder, ma_int64 byteOffset, ma_seek_origin origin);
 
 	};
 

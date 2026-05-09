@@ -1,0 +1,51 @@
+VisualScript: Audio
+Variables:
+  []
+Nodes:
+  - ID: 1
+    Type: Event_OnCreate
+    OperationType: Float
+    Name: On Create
+    Inputs:
+      []
+    Outputs:
+      - ID: 1000
+        NodeID: 1
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 2
+    Type: Audio_Play
+    OperationType: Float
+    Name: Play Audio
+    Inputs:
+      - ID: 1001
+        NodeID: 2
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1002
+        NodeID: 2
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+Links:
+  - ID: 100
+    StartPin: 1000
+    EndPin: 1001

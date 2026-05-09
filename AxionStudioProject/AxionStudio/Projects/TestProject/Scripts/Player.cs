@@ -4,7 +4,7 @@ using AxionScriptCore;
 
 public class Player : Entity {
 
-	public float MoveSpeed = 5.0f;
+	public float MoveSpeed = 2.0f;
 	public Vector3 TargetVelocity = new Vector3(0.0f, 0.0f, 0.0f);
 	public float TurnSpeed = 3.0f;
 	public float TurnInput = 0.0f;

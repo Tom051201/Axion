@@ -8,7 +8,7 @@ Panels:
     Visible: true
   - Name: ContentBrowserPanel
     Visible: true
-    ThumbnailSize: 110
+    ThumbnailSize: 111
     OnlyAssetFiles: true
     ShowExtensions: true
   - Name: ProjectPanel

@@ -294,10 +294,14 @@ namespace Axion {
 				uint64_t dataSize;
 				in.read(reinterpret_cast<char*>(&dataSize), sizeof(uint64_t));
 
-				std::vector<uint8_t> audioData(dataSize);
-				in.read(reinterpret_cast<char*>(audioData.data()), dataSize);
-
-				return std::make_shared<AudioClip>(std::move(audioData), mode);
+				if (mode == AudioClip::Mode::Stream) {
+					return std::make_shared<AudioClip>(absolutePath, mode);
+				}
+				else {
+					std::vector<uint8_t> audioData(dataSize);
+					in.read(reinterpret_cast<char*>(audioData.data()), dataSize);
+					return std::make_shared<AudioClip>(std::move(audioData), mode);
+				}
 			}
 		});
 		AssetManager::storage<AudioClip>().handleToPath[handle] = absolutePath;

@@ -23,6 +23,8 @@ namespace Axion {
 		const ma_sound* getSound() const { return &m_sound; }
 		Mode getMode() const { return m_mode; }
 		const std::filesystem::path& getPath() const { return m_path; }
+		const std::vector<uint8_t>& getAudioData() const { return m_audioData; }
+		bool isFromMemory() const { return m_fromMemory; }
 
 	private:
 

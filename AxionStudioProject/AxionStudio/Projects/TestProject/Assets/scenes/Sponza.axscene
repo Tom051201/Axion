@@ -184,3 +184,26 @@ Entities:
       Material: 0
     ScriptComponent:
       ClassName: Player
+  - Entity: 5c354e6cf44fad8ca2cb81c747bd18c9
+    TagComponent:
+      Tag: Music
+    TransformComponent:
+      Translation: [0, 12.9213028, 0]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]
+    AudioComponent:
+      IsListener: false
+      IsSource: true
+      AudioSource:
+        AudioClip: 25766119d9fb88451906347850bfe89a
+        Volume: 1
+        Pitch: 1
+        Pan: 0
+        IsSpatial: true
+        Position: [0, 12.9213028, 0]
+        Velocity: [0, 0, 0]
+        MinDistance: 1
+        MaxDistance: 100
+        DopplerFactor: 1
+    ScriptComponent:
+      ClassName: Audio

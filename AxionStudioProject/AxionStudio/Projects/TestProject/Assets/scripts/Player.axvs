@@ -2,7 +2,7 @@ VisualScript: Player
 Variables:
   - Name: MoveSpeed
     Type: Float
-    FloatValue: 5
+    FloatValue: 2
     IntValue: 0
     BoolValue: false
     Vec3Value: [0, 0, 0]
