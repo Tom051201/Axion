@@ -10,7 +10,7 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
 
-#include "AxionAssetPipeline/Source/AxAudio.h"
+#include "AxionAssetPipeline/Source/parser/AudioParser.h"
 
 namespace Axion {
 

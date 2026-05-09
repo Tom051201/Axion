@@ -9,7 +9,7 @@
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-#include "AxionAssetPipeline/Source/AxSkybox.h"
+#include "AxionAssetPipeline/Source/parser/SkyboxParser.h"
 
 namespace Axion {
 

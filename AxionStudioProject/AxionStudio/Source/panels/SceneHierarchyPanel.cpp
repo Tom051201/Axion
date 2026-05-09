@@ -17,7 +17,7 @@
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 
-#include "AxionAssetPipeline/Source/AxPrefab.h"
+#include "AxionAssetPipeline/Source/parser/PrefabParser.h"
 
 namespace Axion {
 

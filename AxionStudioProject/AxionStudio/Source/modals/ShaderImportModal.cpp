@@ -9,7 +9,7 @@
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-#include "AxionAssetPipeline/Source/AxShader.h"
+#include "AxionAssetPipeline/Source/parser/ShaderParser.h"
 
 namespace Axion {
 

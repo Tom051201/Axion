@@ -9,7 +9,7 @@
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-#include "AxionAssetPipeline/Source/AxTextureCube.h"
+#include "AxionAssetPipeline/Source/parser/TextureCubeParser.h"
 
 namespace Axion {
 

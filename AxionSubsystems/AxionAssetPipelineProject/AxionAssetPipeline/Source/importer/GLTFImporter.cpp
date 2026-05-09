@@ -10,12 +10,12 @@
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/Components.h"
 
-#include "AxionAssetPipeline/Source/AxTexture2D.h"
-#include "AxionAssetPipeline/Source/AxMaterial.h"
-#include "AxionAssetPipeline/Source/AxMesh.h"
-#include "AxionAssetPipeline/Source/AxPrefab.h"
-#include "AxionAssetPipeline/Source/AxSkeletalMesh.h"
-#include "AxionAssetPipeline/Source/AxAnimationClip.h"
+#include "AxionAssetPipeline/Source/parser/Texture2DParser.h"
+#include "AxionAssetPipeline/Source/parser/MaterialParser.h"
+#include "AxionAssetPipeline/Source/parser/MeshParser.h"
+#include "AxionAssetPipeline/Source/parser/PrefabParser.h"
+#include "AxionAssetPipeline/Source/parser/SkeletalMeshParser.h"
+#include "AxionAssetPipeline/Source/parser/AnimationClipParser.h"
 
 #include <fstream>
 #include <unordered_map>

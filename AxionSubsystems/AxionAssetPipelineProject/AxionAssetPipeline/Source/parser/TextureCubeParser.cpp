@@ -1,4 +1,4 @@
-#include "AxTextureCube.h"
+#include "TextureCubeParser.h"
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 

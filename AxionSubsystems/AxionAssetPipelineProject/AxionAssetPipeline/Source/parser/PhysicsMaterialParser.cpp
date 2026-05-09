@@ -1,4 +1,4 @@
-#include "AxPhysicsMaterial.h"
+#include "PhysicsMaterialParser.h"
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
