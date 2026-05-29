@@ -2,6 +2,16 @@
 
 #include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
 
+#include "AxionStudio/Vendor/Silica/backends/SilicaImplWin32.h"
+#include "AxionStudio/Vendor/Silica/backends/SilicaImplDX12.h"
+
+#include "AxionStudio/Vendor/Silica/include/SBox.h"
+#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
+#include "AxionStudio/Vendor/Silica/include/SWorkspace.h"
+#include "AxionStudio/Vendor/Silica/include/SOverlay.h"
+#include "AxionStudio/Vendor/Silica/include/SDockspace.h"
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
+
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -22,6 +32,13 @@
 
 // -- Windows only --
 #include "AxionStudio/Source/platform/windows/WindowsTitleBar.h"
+
+#ifdef AX_PLATFORM_WINDOWS
+#include <Windows.h>
+#endif
+
+// TODO TEMP
+#include "AxionEngine/Platform/directx/DX12Context.h"
 
 namespace Axion {
 
@@ -71,6 +88,110 @@ namespace Axion {
 		});
 
 
+		// ----- Setup Silica -----
+		#ifdef AX_PLATFORM_WINDOWS
+		HWND hwnd = (HWND)Application::get().getWindow().getNativeHandle();
+		Silica::ImplWin32_init(hwnd);
+		#endif
+
+		auto dx12Context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		ID3D12Device* device = dx12Context->getDevice();
+		ID3D12GraphicsCommandList* cmdList = dx12Context->getCommandList();
+		ID3D12CommandQueue* cmdQueue = dx12Context->getCommandQueue();
+		ID3D12CommandAllocator* cmdAlloc = dx12Context->getCommandAllocator();
+
+		Silica::ImplDX12_init(device, 3, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+		cmdAlloc->Reset();
+		cmdList->Reset(cmdAlloc, nullptr);
+
+		if (m_silicaFont.loadFromFile("AxionStudio/Resources/fonts/openSans/OpenSans-Bold.ttf", 18.0f)) {
+			Silica::ImplDX12_uploadFontAtlas(cmdList, m_silicaFont.getPixels(), m_silicaFont.getWidth(), m_silicaFont.getHeight());
+		}
+		else {
+			AX_CORE_LOG_WARN("Silica: Failed to load OpenSans font!");
+		}
+
+		cmdList->Close();
+		ID3D12CommandList* ppCommandLists[] = { cmdList };
+		cmdQueue->ExecuteCommandLists(1, ppCommandLists);
+
+		dx12Context->waitForPreviousFrame();
+
+		auto hierarchyWidget = Silica::MakeWidget<Silica::SBox>({
+			{0.0f, 0.0f},
+			Silica::Color(35, 35, 35, 255),
+			Silica::Color(35, 35, 35, 255),
+			[]() { return Silica::EventReply::unhandled(); },
+			Silica::MakeWidget<Silica::STextBlock>({
+				"  [Scene Hierarchy Placeholder]",
+				Silica::Color::white(),
+				&m_silicaFont
+			})
+		});
+
+		auto propertiesWidget = Silica::MakeWidget<Silica::SBox>({
+			{0.0f, 0.0f},
+			Silica::Color(35, 35, 35, 255),
+			Silica::Color(35, 35, 35, 255),
+			[]() { return Silica::EventReply::unhandled(); },
+			Silica::MakeWidget<Silica::STextBlock>({
+				"  [Properties Placeholder]",
+				Silica::Color::white(),
+				&m_silicaFont
+			})
+		});
+
+		auto contentBrowserWidget = Silica::MakeWidget<Silica::SBox>({
+			{0.0f, 0.0f},
+			Silica::Color(35, 35, 35, 255),
+			Silica::Color(35, 35, 35, 255),
+			[]() { return Silica::EventReply::unhandled(); },
+			Silica::MakeWidget<Silica::STextBlock>({
+				"  [Content Browser Placeholder]",
+				Silica::Color::white(),
+				&m_silicaFont
+			})
+		});
+
+		auto viewportWidget = Silica::MakeWidget<Silica::SBox>({
+			{0.0f, 0.0f},
+			Silica::Color(35, 35, 35, 255),
+			Silica::Color(35, 35, 35, 255),
+			[]() { return Silica::EventReply::unhandled(); },
+			Silica::MakeWidget<Silica::STextBlock>({
+				"\n\n  [SViewport 3D Image Goes Here]",
+				Silica::Color::white(),
+				&m_silicaFont
+			})
+		});
+
+		auto workspace = Silica::MakeWidget<Silica::SWorkspace>({
+			"Viewport",
+			viewportWidget,
+			&m_silicaFont
+		});
+
+		auto dock = workspace->getDockSpace();
+
+		dock->registerTab("Scene Hierarchy", hierarchyWidget);
+		dock->registerTab("Properties", propertiesWidget);
+		dock->registerTab("Content Browser", contentBrowserWidget);
+		dock->registerTab("Editor Viewport", viewportWidget);
+
+		dock->loadLayout("AxionStudio/Config/SilicaLayout.ini");
+
+		if (!dock->getRootNode() || dock->getRootNode()->splitDirection == Silica::SplitDirection::None) {
+			auto root = dock->getRootNode();
+			dock->splitNode(root, Silica::SplitDirection::Horizontal, 0.2f, "Scene Hierarchy", hierarchyWidget, true);
+			dock->splitNode(root->child[1], Silica::SplitDirection::Horizontal, 0.75f, "Properties", propertiesWidget, false);
+			dock->splitNode(root->child[1]->child[0], Silica::SplitDirection::Vertical, 0.7f, "Content Browser", contentBrowserWidget, false);
+		}
+
+		m_silicaRoot = Silica::MakeWidget<Silica::SOverlay>({
+			{ workspace }
+		});
+
 		// ----- Setup framebuffer for scene viewport -----
 		FrameBufferSpecification fbs;
 		fbs.width = 1280;
@@ -109,6 +230,10 @@ namespace Axion {
 	}
 
 	void EditorLayer::onDetach() {
+		// -- Silica --
+		Silica::ImplDX12_shutdown();
+		Silica::ImplWin32_shutdown();
+
 		m_frameBuffer->release();
 
 		EditorStateSerializer stateSerializer("AxionStudio/Config/State.yaml");
@@ -197,23 +322,33 @@ namespace Axion {
 	}
 
 	void EditorLayer::onGuiRender() {
-		beginDockspace();
+		//beginDockspace();
+		//
+		//processPendingDroppedFiles();
+		//
+		//drawToolBar();
+		//
+		//drawSceneViewport();
+		//
+		//m_panelManager.renderAll();
+		//
+		//m_modalManager.renderAll();
+		//
+		//drawMenuBar();
+		//
+		//if (ProjectManager::isCompilingScripts()) drawCompilationScriptsOverlay();
+		//
+		//endDockspace();
 
-		processPendingDroppedFiles();
+		// -- Silica --
+		float width = (float)Application::get().getWindow().getWidth();
+		float height = (float)Application::get().getWindow().getHeight();
+		Silica::ImplDX12_newFrame();
+		Silica::Renderer::render(m_silicaRoot, width, height);
 
-		drawToolBar();
-
-		drawSceneViewport();
-
-		m_panelManager.renderAll();
-
-		m_modalManager.renderAll();
-
-		drawMenuBar();
-
-		if (ProjectManager::isCompilingScripts()) drawCompilationScriptsOverlay();
-
-		endDockspace();
+		auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+		const Silica::DrawList* drawData = Silica::Renderer::getDrawData();
+		Silica::ImplDX12_renderDrawData(drawData, cmdList, width, height);
 	}
 
 	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
@@ -386,7 +521,12 @@ namespace Axion {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+
 		ImGui::Begin("DockSpaceFrame", nullptr, m_windowFlags);
+
+		ImGui::PopStyleColor();
+
 		ImGui::PopStyleVar(3);
 
 		ImGuiIO& io = ImGui::GetIO();

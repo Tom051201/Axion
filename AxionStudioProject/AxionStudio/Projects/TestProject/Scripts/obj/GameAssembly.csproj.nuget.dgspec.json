@@ -10,11 +10,11 @@
         "projectUniqueName": "D:\\Coding\\AxionEngine\\Axion\\AxionStudioProject\\AxionStudio\\Projects\\TestProject\\Scripts\\GameAssembly.csproj",
         "projectName": "GameAssembly",
         "projectPath": "D:\\Coding\\AxionEngine\\Axion\\AxionStudioProject\\AxionStudio\\Projects\\TestProject\\Scripts\\GameAssembly.csproj",
-        "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\tomsc\\.nuget\\packages\\",
         "outputPath": "D:\\Coding\\AxionEngine\\Axion\\AxionStudioProject\\AxionStudio\\Projects\\TestProject\\Scripts\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\tomsc\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [

@@ -17,7 +17,9 @@ project "AxionStudio"
 		"**.rc",
 		"AxionStudio/Vendor/ImguiNodeEditor/**.h",
 		"AxionStudio/Vendor/ImguiNodeEditor/**.cpp",
-		"AxionStudio/Vendor/ImguiNodeEditor/**.inl"
+		"AxionStudio/Vendor/ImguiNodeEditor/**.inl",
+		"AxionStudio/Vendor/Silica/**.h",
+		"AxionStudio/Vendor/Silica/**.cpp"
 	}
 	
 	includedirs {
@@ -30,9 +32,14 @@ project "AxionStudio"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
 		"%{wks.location}/AxionSubsystems/AxionAssetPipelineProject",
-		"AxionStudio/Vendor/ImguiNodeEditor"
+		"AxionStudio/Vendor/ImguiNodeEditor",
+		"AxionStudio/Vendor/Silica/include"
 	}
-	
+
+	libdirs {
+		"AxionStudio/Vendor/Silica/libs"
+	}
+
 	links {
 		"AxionEngine",
 		"AxionAssetPipeline"
@@ -55,18 +62,21 @@ project "AxionStudio"
 		defines "AX_DEBUG"
 		runtime "Debug"
 		symbols "on"
+		links { "Silica-Debug" }
 	
 	filter { "system:windows", "configurations:Release" }
 		kind "ConsoleApp"
 		defines "AX_RELEASE"
 		runtime "Release"
 		optimize "on"
+		links { "Silica-Release" }
 	
 	filter { "system:windows", "configurations:Distribution" }
 		kind "WindowedApp"
 		defines "AX_DISTRIBUTION"
 		runtime "Release"
 		optimize "on"
+		links { "Silica-Dist" }
 
 
 	filter "configurations:Debug"

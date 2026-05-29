@@ -32,6 +32,9 @@
 #include "AxionStudio/Source/modals/CreateProjectModal.h"
 #include "AxionStudio/Source/modals/ExportProjectModal.h"
 
+#include "AxionStudio/Vendor/Silica/include/SWidget.h"
+#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
+
 namespace Axion {
 
 	enum class SceneState {
@@ -115,6 +118,11 @@ namespace Axion {
 
 		// ----- Utils -----
 		std::filesystem::path m_pendingDropPath = {};
+
+
+		// -- Silica --
+		Silica::WidgetPtr m_silicaRoot;
+		Silica::FontAtlas m_silicaFont;
 
 
 		// ----- Event functions -----
