@@ -372,7 +372,8 @@ namespace Axion {
 
 					DragFinish(hDrop);
 
-					window->m_data.eventCallback(FileDropEvent(std::move(files)));
+					FileDropEvent event(std::move(files));
+					window->m_data.eventCallback(event);
 
 					break;
 				}

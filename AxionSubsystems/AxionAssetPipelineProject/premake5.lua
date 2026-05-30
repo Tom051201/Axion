@@ -1,13 +1,13 @@
 project "AxionAssetPipeline"
 	kind "StaticLib"
 	language "C++"
-	cppdialect "C++17"
+	cppdialect "C++20"
 	staticruntime "on"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	buildoptions { "/utf-8" }
+	buildoptions { "/utf-8", "/Zc:char8_t" }
 	defines { "FMT_UNICODE" }
 	
 	files {

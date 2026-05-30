@@ -83,11 +83,12 @@ namespace Axion {
 
 
 		// ----- Transition barrier -----
-		cmd->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_STATE_RENDER_TARGET
-		));
+		);
+		cmd->ResourceBarrier(1, &barrier);
 
 		//clear();
 
@@ -104,11 +105,12 @@ namespace Axion {
 
 	void DX12Context::finishRendering() {
 		// ----- Reverse barrier -----
-		m_commandList.getCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_swapChain.getBackBuffer(m_swapChain.getFrameIndex()),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PRESENT
-		));
+		);
+		m_commandList.getCommandList()->ResourceBarrier(1, &barrier);
 
 		m_commandList.close();
 

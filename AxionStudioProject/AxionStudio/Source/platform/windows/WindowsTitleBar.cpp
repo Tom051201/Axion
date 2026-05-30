@@ -48,11 +48,11 @@ namespace Axion {
 
 		// ----- Set custom icons for buttons -----
 		ImGui::SameLine(ImGui::GetWindowWidth() - 134);
-		if (ImGui::Button(u8"\uE15B", { buttonWidth, buttonHeight })) { Application::get().minimizeWindow(); }
+		if (ImGui::Button((const char*)u8"\uE15B", { buttonWidth, buttonHeight })) { Application::get().minimizeWindow(); }
 		ImGui::SameLine();
-		if (ImGui::Button(u8"\uE5D1", { buttonWidth, buttonHeight })) { Application::get().maximizeOrRestoreWindow(); }
+		if (ImGui::Button((const char*)u8"\uE5D1", { buttonWidth, buttonHeight })) { Application::get().maximizeOrRestoreWindow(); }
 		ImGui::SameLine();
-		if (ImGui::Button(u8"\uE5CD", { buttonWidth, buttonHeight })) { Application::get().close(); }
+		if (ImGui::Button((const char*)u8"\uE5CD", { buttonWidth, buttonHeight })) { Application::get().close(); }
 	}
 
 }

@@ -436,9 +436,11 @@ namespace Axion {
 				auto& rotation = component.rotation;
 				auto& scale = component.scale;
 
+				Vec3 eulerRotation = rotation.toEulerAngles();
 				drawVec3Control("Position", position, 0.0f, 0.0f, 0.0f, 70.0f);
-				drawVec3Control("Rotation", rotation.toEulerAngles(), 0.0f, 0.0f, 0.0f, 70.0f);
+				drawVec3Control("Rotation", eulerRotation, 0.0f, 0.0f, 0.0f, 70.0f);
 				drawVec3Control("Scale", scale, 1.0f, 1.0f, 1.0f, 70.0f);
+				rotation = Quat::fromEulerAngles(eulerRotation);
 
 				ImGui::TreePop();
 			}

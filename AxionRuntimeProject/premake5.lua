@@ -1,7 +1,7 @@
 project "AxionRuntime"
 	kind "ConsoleApp"
 	language "C++"
-	cppdialect "C++17"
+	cppdialect "C++20"
 	staticruntime "on"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
@@ -9,7 +9,7 @@ project "AxionRuntime"
 
 	debugdir ("%{wks.location}/RuntimeTestProject")
 
-	buildoptions { "/utf-8" }
+	buildoptions { "/utf-8", "/Zc:char8_t" }
 	defines {
 		"FMT_UNICODE",
 		"AX_RUNTIME"

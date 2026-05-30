@@ -130,7 +130,8 @@ namespace Axion {
 	}
 
 	void Application::close() {
-		onEvent(WindowCloseEvent());
+		WindowCloseEvent event;
+		onEvent(event);
 		#ifdef AX_PLATFORM_WINDOWS
 		PostQuitMessage(0);
 		#endif

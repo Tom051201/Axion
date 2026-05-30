@@ -4,7 +4,7 @@
 
 namespace Axion {
 
-	constexpr wchar_t* windowClassName = L"Win32WindowClass";
+	constexpr const wchar_t* windowClassName = L"Win32WindowClass";
 
 	class WindowsWindow : public Window {
 	public:
