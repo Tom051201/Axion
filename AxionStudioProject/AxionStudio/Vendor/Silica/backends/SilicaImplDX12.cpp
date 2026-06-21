@@ -29,7 +29,7 @@ namespace Silica {
 		Vertex* vertexData = nullptr;
 		uint32_t* indexData = nullptr;
 
-		uint32_t maxVertices = 10000;
+		uint32_t maxVertices = 200000;
 		uint32_t maxIndices = maxVertices * 3;
 
 		ComPtr<ID3D12DescriptorHeap> srvHeap;
@@ -148,10 +148,10 @@ namespace Silica {
 					float edgeFade = 1.0f - smoothstep(halfThickness - 1.0f, halfThickness, pixelDist);
 
 					finalColor.a *= edgeFade;
-				} 
+				}
 				else {
-					float fontAlpha = fontTex.Sample(fontSampler, input.uv).r;
-					finalColor.a *= fontAlpha;
+					float4 texColor = fontTex.Sample(fontSampler, input.uv);
+					finalColor *=texColor;
 				}
 
 				return finalColor;
@@ -247,6 +247,14 @@ namespace Silica {
 
 		size_t vertexCount = drawData->vertices.size();
 		size_t indexCount = drawData->indices.size();
+
+		if (vertexCount > g_state.maxVertices) {
+			OutputDebugStringA("SILICA WARNING: Max Vertices Exceeded! Truncating UI render to prevent GPU crash.\n");
+			vertexCount = g_state.maxVertices;
+		}
+		if (indexCount > g_state.maxIndices) {
+			indexCount = g_state.maxIndices;
+		}
 
 		// -- Calculate Offset for this Frame --
 		uint32_t vbOffsetBytes = g_state.frameIndex * g_state.maxVertices * sizeof(Vertex);
@@ -400,7 +408,12 @@ namespace Silica {
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = DXGI_FORMAT_R8_UNORM;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Shader4ComponentMapping = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(
+			D3D12_SHADER_COMPONENT_MAPPING_FORCE_VALUE_1, // R
+			D3D12_SHADER_COMPONENT_MAPPING_FORCE_VALUE_1, // G
+			D3D12_SHADER_COMPONENT_MAPPING_FORCE_VALUE_1, // B
+			D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_0 // A
+		);
 		srvDesc.Texture2D.MipLevels = 1;
 		g_state.device->CreateShaderResourceView(g_state.fontTexture.Get(), &srvDesc, g_state.srvHeap->GetCPUDescriptorHandleForHeapStart());
 	}
@@ -426,6 +439,24 @@ namespace Silica {
 		g_state.device->CreateShaderResourceView(textureResource, &srvDesc, cpuHandle);
 
 		return newId;
+	}
+
+	void ImplDX12_updateTexture(TextureID textureId, ID3D12Resource* textureResource) {
+		if (!textureResource || !g_state.srvHeap || textureId == 0) return;
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(
+			g_state.srvHeap->GetCPUDescriptorHandleForHeapStart(),
+			textureId,
+			g_state.srvDescriptorSize
+		);
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		g_state.device->CreateShaderResourceView(textureResource, &srvDesc, cpuHandle);
 	}
 
 }

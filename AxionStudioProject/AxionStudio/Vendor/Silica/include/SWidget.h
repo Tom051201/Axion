@@ -26,7 +26,15 @@ namespace Silica {
 	class SWidget {
 	public:
 
-		virtual ~SWidget() = default;
+		virtual ~SWidget() {
+			if (s_focusedWidget == this) {
+				s_focusedWidget = nullptr;
+			}
+
+			if (s_capturedWidget == this) {
+				setCapturedWidget(nullptr);
+			}
+		}
 
 		virtual void computeDesiredSize() = 0;
 		virtual void arrangeChildren(const Geometry& allocatedGeometry) {

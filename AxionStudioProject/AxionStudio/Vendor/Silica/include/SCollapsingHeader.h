@@ -19,6 +19,7 @@ namespace Silica {
 			std::optional<Color> headerHoverColor;
 			std::optional<Color> textColor;
 			FontAtlas* font = nullptr;
+			WidgetPtr trailingWidget = nullptr;
 			WidgetPtr content = nullptr;
 		};
 
@@ -39,6 +40,7 @@ namespace Silica {
 		bool m_isOpen = true;
 		WidgetPtr m_content;
 		FontAtlas* m_font = nullptr;
+		WidgetPtr m_trailingWidget;
 
 		Color m_headerColor;
 		Color m_headerHoverColor;

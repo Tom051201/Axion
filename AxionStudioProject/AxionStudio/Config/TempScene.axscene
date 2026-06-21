@@ -12,20 +12,6 @@ Entities:
       Translation: [-0.601063251, 0.360408187, -2.50998735]
       Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
-    AudioComponent:
-      IsListener: false
-      IsSource: true
-      AudioSource:
-        AudioClip: 25766119d9fb88451906347850bfe89a
-        Volume: 1
-        Pitch: 1
-        Pan: 0
-        IsSpatial: true
-        Position: [-0.601063251, 0.360408187, -2.50998735]
-        Velocity: [0, 0, 0]
-        MinDistance: 1
-        MaxDistance: 100
-        DopplerFactor: 1
     CameraComponent:
       Primary: true
       FixedAspectRatio: false

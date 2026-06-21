@@ -24,6 +24,7 @@ namespace Axion {
 		void clear(const Vec4& clearColor) override;
 
 		void* getColorAttachmentHandle() const override;
+		void* getColorAttachmentNativeResource() const override { return (void*)m_colorResource.Get(); }
 		const FrameBufferSpecification& getSpecification() const override { return m_specification; }
 
 		uint32_t getRtvHeapIndex() const { return m_rtvHeapIndex; }

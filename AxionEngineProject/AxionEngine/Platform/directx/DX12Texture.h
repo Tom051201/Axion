@@ -31,6 +31,9 @@ namespace Axion {
 
 		void* getHandle() const override;
 		uint32_t getSrvHeapIndex() const override { return m_srvHeapIndex; }
+		void* getNativeResource() const override { return (void*)m_textureResource.Get(); }
+
+		ID3D12Resource* getResource() const { return m_textureResource.Get(); }
 
 
 	private:
@@ -108,8 +111,9 @@ namespace Axion {
 
 		void* getHandle() const override;
 		uint32_t getSrvHeapIndex() const override { return m_srvHeapIndex; }
-		ID3D12Resource* getResource() const { return m_textureResource.Get(); }
+		void* getNativeResource() const override { return (void*)m_textureResource.Get(); }
 
+		ID3D12Resource* getResource() const { return m_textureResource.Get(); }
 		D3D12_CPU_DESCRIPTOR_HANDLE getDsvHandle() const { return m_dsvHandle; }
 
 	private:

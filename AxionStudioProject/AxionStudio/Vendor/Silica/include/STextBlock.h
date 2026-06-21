@@ -24,6 +24,8 @@ namespace Silica {
 		void arrangeChildren(const Geometry& allocatedGeometry) override;
 		void onDraw(DrawList& outDrawList, const Geometry& allocatedGeometry) const override;
 
+		void setText(const std::string& text);
+
 	private:
 
 		std::string m_text;

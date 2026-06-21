@@ -39,6 +39,7 @@ namespace Axion {
 		m_data.width = wp.width;
 		m_data.height = wp.height;
 		m_data.title = wp.title;
+		m_data.wndProcCallback = wp.win32_wndProcCallback;
 
 
 		// ----- Window class -----
@@ -170,9 +171,17 @@ namespace Axion {
 		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
 			return true;
 		}
-		
+
 		WindowsWindow* window = (WindowsWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 		if (window && window->m_data.eventCallback) {
+
+			// ----- Custom Win32 WndProc -----
+			if (window->m_data.wndProcCallback) {
+				bool handled = window->m_data.wndProcCallback((void*)hwnd, msg, (uint64_t)wparam, (uint64_t)lparam);
+
+				if (handled) return true;
+			}
+
 
 			switch (msg) {
 				// ----- Close -----

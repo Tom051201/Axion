@@ -66,6 +66,11 @@ namespace Silica {
 		void addNode(const GraphNode& node);
 		void addLink(LinkID id, PinID startPin, PinID endPin, Color color = Color::white());
 
+		const std::vector<GraphNode>& getNodes() const;
+		const std::vector<GraphLink>& getLinks() const;
+
+		void clear();
+
 		void saveGraph(const std::filesystem::path& filepath);
 		void loadGraph(const std::filesystem::path& filepath);
 

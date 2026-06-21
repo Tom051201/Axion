@@ -59,8 +59,10 @@ namespace Axion {
 		bool hasSkybox() const { return m_skyboxHandle.isValid(); }
 		void removeSkybox();
 
+		void setGravity(const Vec3& gravity) { m_gravity = gravity; }
 		const Vec3& getGravity() const { return m_gravity; }
 		Vec3& getGravity() { return m_gravity; }
+		void setAmbientColor(const Vec4& color) { m_sceneAmbientColor = color; }
 		const Vec4& getAmbientColor() const { return m_sceneAmbientColor; }
 		Vec4& getAmbientColor() { return m_sceneAmbientColor; }
 

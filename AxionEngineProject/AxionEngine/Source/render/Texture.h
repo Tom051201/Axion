@@ -18,7 +18,7 @@ namespace Axion {
 
 		virtual void* getHandle() const = 0;
 		virtual uint32_t getSrvHeapIndex() const = 0;
-
+		virtual void* getNativeResource() const = 0;
 
 		static Ref<Texture2D> create(const std::filesystem::path& path);
 		static Ref<Texture2D> create(uint32_t width, uint32_t height, void* data = nullptr);

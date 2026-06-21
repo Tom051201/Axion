@@ -18,4 +18,6 @@ namespace Silica {
 
 	TextureID ImplDX12_registerTexture(ID3D12Resource* textureResource);
 
+	void ImplDX12_updateTexture(TextureID textureId, ID3D12Resource* textureResource);
+
 }

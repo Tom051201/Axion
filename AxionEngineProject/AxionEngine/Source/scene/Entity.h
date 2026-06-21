@@ -98,6 +98,7 @@ namespace Axion {
 		}
 
 		entt::entity getHandle() const { return m_handle; }
+		Scene* getScene() const { return m_scene; }
 
 		operator bool() const { return isValid(); }
 		operator uint32_t() const { return (uint32_t)m_handle; }

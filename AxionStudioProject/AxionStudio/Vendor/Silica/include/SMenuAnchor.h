@@ -11,8 +11,10 @@ namespace Silica {
 
 		struct Args {
 			bool openOnHover = false;
+			bool openOnRightClick = false;
 			bool openToRight = false;
 			bool showArrow = false;
+			bool openAtMousePos = false;
 			WidgetPtr anchorContent = nullptr;
 			WidgetPtr menuContent = nullptr;
 		};
@@ -37,8 +39,11 @@ namespace Silica {
 
 		bool m_isOpen = false;
 		bool m_openOnHover = false;
+		bool m_openOnRightClick = false;
 		bool m_openToRight = false;
 		bool m_showArrow = false;
+		bool m_openAtMousePos = false;
+		Vec2 m_clickPos;
 
 		Geometry m_menuGeometry;
 

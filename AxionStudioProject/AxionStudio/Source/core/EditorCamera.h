@@ -71,7 +71,7 @@ namespace Axion {
 		Vec3 getRightDirection() const;
 		Vec3 getUpDirection() const;
 
-		friend class EditorCameraPanel;
+		friend class ViewportPanel;
 	};
 
 }

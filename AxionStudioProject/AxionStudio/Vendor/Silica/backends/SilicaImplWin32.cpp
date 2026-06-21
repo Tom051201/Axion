@@ -107,60 +107,60 @@ namespace Silica {
 				Platform::setCursor(Platform::Cursor::Arrow);
 
 				Renderer::processMouseMove(rootWidget, s_state.clientWidth, s_state.clientHeight, x, y);
-				return true;
+				return false;
 			}
 			case WM_LBUTTONDOWN: {
 				float mx = static_cast<float>(GET_X_LPARAM(lParam));
 				float my = static_cast<float>(GET_Y_LPARAM(lParam));
 
 				Renderer::processMouseDown(rootWidget, s_state.clientWidth, s_state.clientHeight, mx, my, MouseButton::Left);
-				return true;
+				return false;
 			}
 			case WM_LBUTTONUP: {
 				float x = static_cast<float>(GET_X_LPARAM(lParam));
 				float y = static_cast<float>(GET_Y_LPARAM(lParam));
 
 				Renderer::processMouseUp(rootWidget, s_state.clientWidth, s_state.clientHeight, x, y, MouseButton::Left);
-				return true;
+				return false;
 			}
 			case WM_RBUTTONDOWN: {
 				float mx = static_cast<float>(GET_X_LPARAM(lParam));
 				float my = static_cast<float>(GET_Y_LPARAM(lParam));
 				Renderer::processMouseDown(rootWidget, s_state.clientWidth, s_state.clientHeight, mx, my, MouseButton::Right);
-				return true;
+				return false;
 			}
 			case WM_RBUTTONUP: {
 				float x = static_cast<float>(GET_X_LPARAM(lParam));
 				float y = static_cast<float>(GET_Y_LPARAM(lParam));
 
 				Renderer::processMouseUp(rootWidget, s_state.clientWidth, s_state.clientHeight, x, y, MouseButton::Right);
-				return true;
+				return false;
 			}
 			case WM_MBUTTONDOWN: {
 				float mx = static_cast<float>(GET_X_LPARAM(lParam));
 				float my = static_cast<float>(GET_Y_LPARAM(lParam));
 				Renderer::processMouseDown(rootWidget, s_state.clientWidth, s_state.clientHeight, mx, my, MouseButton::Middle);
-				return true;
+				return false;
 			}
 			case WM_MBUTTONUP: {
 				float x = static_cast<float>(GET_X_LPARAM(lParam));
 				float y = static_cast<float>(GET_Y_LPARAM(lParam));
 
 				Renderer::processMouseUp(rootWidget, s_state.clientWidth, s_state.clientHeight, x, y, MouseButton::Middle);
-				return true;
+				return false;
 			}
 			case WM_CHAR: {
 				if (SWidget::getFocusedWidget()) {
 					SWidget::getFocusedWidget()->onChar((char)wParam);
 				}
-				return 0;
+				return false;
 			}
 			case WM_KEYDOWN: {
 				if (SWidget::getFocusedWidget()) {
 					Key mappedKey = mapWin32KeyToSilica(wParam);
 					SWidget::getFocusedWidget()->onKeyDown(mappedKey);
 				}
-				return 0;
+				return false;
 			}
 			case WM_KEYUP: {
 				if (SWidget::getFocusedWidget()) {
@@ -175,7 +175,7 @@ namespace Silica {
 
 				ScreenToClient(hwnd, &pt);
 				Renderer::processMouseWheel(rootWidget, s_state.clientWidth, s_state.clientHeight, (float)pt.x, (float)pt.y, delta);
-				return 0;
+				return false;
 			}
 		}
 

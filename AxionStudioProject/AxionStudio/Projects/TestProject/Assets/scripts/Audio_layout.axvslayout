@@ -1,0 +1,23 @@
+[SNodeEditor_v1]
+Pan 0 0
+Zoom 1
+[Node]
+ID 1
+Title On Create
+Pos 0 0
+Size 150 100
+Color 160 20 20 255
+Out 1000 255 255 255 255 Next
+[Node]
+ID 2
+Title Play Audio
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1001 255 255 255 255 Execute
+Out 1002 255 255 255 255 Next
+[Link]
+ID 100
+Start 1000
+End 1001
+Color 255 255 255 255

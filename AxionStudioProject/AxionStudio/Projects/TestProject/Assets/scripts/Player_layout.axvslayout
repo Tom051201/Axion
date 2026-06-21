@@ -1,0 +1,755 @@
+[SNodeEditor_v1]
+Pan 0 0
+Zoom 1
+[Node]
+ID 1
+Title On Update
+Pos 0 0
+Size 150 100
+Color 160 20 20 255
+Out 1000 255 255 255 255 Next
+Out 1001 147 226 74 255 Delta Time
+[Node]
+ID 2
+Title Set Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1002 255 255 255 255 Execute
+In 1003 200 200 200 255 Name
+In 1004 255 202 36 255 Value
+Out 1005 255 255 255 255 Next
+[Node]
+ID 3
+Title Sequence
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1006 255 255 255 255 Execute
+Out 1007 255 255 255 255 Then 0
+Out 1008 255 255 255 255 Then 1
+Out 1009 255 255 255 255 Then 2
+Out 1010 255 255 255 255 Then 3
+Out 1011 255 255 255 255 Then 4
+[Node]
+ID 4
+Title Branch
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1012 255 255 255 255 Execute
+In 1013 200 200 200 255 Condition
+Out 1014 255 255 255 255 True
+Out 1015 255 255 255 255 False
+[Node]
+ID 5
+Title Is Key Pressed
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1016 200 200 200 255 Key
+Out 1017 200 200 200 255 Result
+[Node]
+ID 6
+Title Set Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1018 255 255 255 255 Execute
+In 1019 200 200 200 255 Name
+In 1020 255 202 36 255 Value
+Out 1021 255 255 255 255 Next
+[Node]
+ID 7
+Title Branch
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1022 255 255 255 255 Execute
+In 1023 200 200 200 255 Condition
+Out 1024 255 255 255 255 True
+Out 1025 255 255 255 255 False
+[Node]
+ID 8
+Title Is Key Pressed
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1026 200 200 200 255 Key
+Out 1027 200 200 200 255 Result
+[Node]
+ID 9
+Title Set Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1028 255 255 255 255 Execute
+In 1029 200 200 200 255 Name
+In 1030 255 202 36 255 Value
+Out 1031 255 255 255 255 Next
+[Node]
+ID 10
+Title Branch
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1032 255 255 255 255 Execute
+In 1033 200 200 200 255 Condition
+Out 1034 255 255 255 255 True
+Out 1035 255 255 255 255 False
+[Node]
+ID 11
+Title Is Key Pressed
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1036 200 200 200 255 Key
+Out 1037 200 200 200 255 Result
+[Node]
+ID 12
+Title Set Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1038 255 255 255 255 Execute
+In 1039 200 200 200 255 Name
+In 1040 255 202 36 255 Value
+Out 1041 255 255 255 255 Next
+[Node]
+ID 13
+Title Branch
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1042 255 255 255 255 Execute
+In 1043 200 200 200 255 Condition
+Out 1044 255 255 255 255 True
+Out 1045 255 255 255 255 False
+[Node]
+ID 14
+Title Is Key Pressed
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1046 200 200 200 255 Key
+Out 1047 200 200 200 255 Result
+[Node]
+ID 15
+Title Set Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1048 255 255 255 255 Execute
+In 1049 200 200 200 255 Name
+In 1050 255 202 36 255 Value
+Out 1051 255 255 255 255 Next
+[Node]
+ID 16
+Title Set Linear Velocity
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1052 255 255 255 255 Execute
+In 1053 200 200 200 255 Target
+In 1054 255 202 36 255 Velocity
+Out 1055 255 255 255 255 Next
+[Node]
+ID 17
+Title Get Linear Velocity
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1056 200 200 200 255 Target
+Out 1057 255 202 36 255 Velocity
+[Node]
+ID 18
+Title Break Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1058 255 202 36 255 Vector
+Out 1059 147 226 74 255 X
+Out 1060 147 226 74 255 Y
+Out 1061 147 226 74 255 Z
+[Node]
+ID 19
+Title Make Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1062 147 226 74 255 X
+In 1063 147 226 74 255 Y
+In 1064 147 226 74 255 Z
+Out 1065 255 202 36 255 Vector
+[Node]
+ID 20
+Title Get Forward Vector
+Pos 0 0
+Size 150 100
+Color 40 130 40 255
+In 1066 200 200 200 255 Target
+Out 1067 255 202 36 255 Result
+[Node]
+ID 21
+Title Get Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1068 200 200 200 255 Name
+Out 1069 147 226 74 255 Value
+[Node]
+ID 22
+Title Multiply (*)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1070 255 202 36 255 A
+In 1071 147 226 74 255 B
+Out 1072 255 202 36 255 Result
+[Node]
+ID 23
+Title Get Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1073 200 200 200 255 Name
+Out 1074 255 202 36 255 Value
+[Node]
+ID 24
+Title Add (+)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1075 255 202 36 255 A
+In 1076 255 202 36 255 B
+Out 1077 255 202 36 255 Result
+[Node]
+ID 26
+Title Get Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1080 200 200 200 255 Name
+Out 1081 147 226 74 255 Value
+[Node]
+ID 27
+Title Multiply (*)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1082 255 202 36 255 A
+In 1083 147 226 74 255 B
+Out 1084 255 202 36 255 Result
+[Node]
+ID 28
+Title Get Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1085 200 200 200 255 Name
+Out 1086 255 202 36 255 Value
+[Node]
+ID 30
+Title Get Right Vector
+Pos 0 0
+Size 150 100
+Color 40 130 40 255
+In 1090 200 200 200 255 Target
+Out 1091 255 202 36 255 Result
+[Node]
+ID 31
+Title Get Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1092 200 200 200 255 Name
+Out 1093 147 226 74 255 Value
+[Node]
+ID 32
+Title Multiply (*)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1094 255 202 36 255 A
+In 1095 147 226 74 255 B
+Out 1096 255 202 36 255 Result
+[Node]
+ID 33
+Title Get Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1097 200 200 200 255 Name
+Out 1098 255 202 36 255 Value
+[Node]
+ID 35
+Title Add (+)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1102 255 202 36 255 A
+In 1103 255 202 36 255 B
+Out 1104 255 202 36 255 Result
+[Node]
+ID 36
+Title Get Right Vector
+Pos 0 0
+Size 150 100
+Color 40 130 40 255
+In 1105 200 200 200 255 Target
+Out 1106 255 202 36 255 Result
+[Node]
+ID 37
+Title Get Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1107 200 200 200 255 Name
+Out 1108 147 226 74 255 Value
+[Node]
+ID 38
+Title Multiply (*)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1109 255 202 36 255 A
+In 1110 147 226 74 255 B
+Out 1111 255 202 36 255 Result
+[Node]
+ID 39
+Title Get Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1112 200 200 200 255 Name
+Out 1113 255 202 36 255 Value
+[Node]
+ID 40
+Title Subtract (-)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1114 255 202 36 255 A
+In 1115 255 202 36 255 B
+Out 1116 255 202 36 255 Result
+[Node]
+ID 41
+Title Get Vector3
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1117 200 200 200 255 Name
+Out 1118 255 202 36 255 Value
+[Node]
+ID 42
+Title Subtract (-)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1119 255 202 36 255 A
+In 1120 255 202 36 255 B
+Out 1121 255 202 36 255 Result
+[Node]
+ID 43
+Title Get Forward Vector
+Pos 0 0
+Size 150 100
+Color 40 130 40 255
+In 1122 200 200 200 255 Target
+Out 1123 255 202 36 255 Result
+[Node]
+ID 45
+Title Set Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1126 255 255 255 255 Execute
+In 1127 200 200 200 255 Name
+In 1128 147 226 74 255 Value
+Out 1129 255 255 255 255 Next
+[Node]
+ID 46
+Title Branch
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1130 255 255 255 255 Execute
+In 1131 200 200 200 255 Condition
+Out 1132 255 255 255 255 True
+Out 1133 255 255 255 255 False
+[Node]
+ID 47
+Title Is Key Pressed
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1134 200 200 200 255 Key
+Out 1135 200 200 200 255 Result
+[Node]
+ID 48
+Title Set Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1136 255 255 255 255 Execute
+In 1137 200 200 200 255 Name
+In 1138 147 226 74 255 Value
+Out 1139 255 255 255 255 Next
+[Node]
+ID 49
+Title Sequence
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1140 255 255 255 255 Execute
+Out 1141 255 255 255 255 Then 0
+Out 1142 255 255 255 255 Then 1
+Out 1143 255 255 255 255 Then 2
+Out 1144 255 255 255 255 Then 3
+Out 1145 255 255 255 255 Then 4
+[Node]
+ID 50
+Title Branch
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1146 255 255 255 255 Execute
+In 1147 200 200 200 255 Condition
+Out 1148 255 255 255 255 True
+Out 1149 255 255 255 255 False
+[Node]
+ID 51
+Title Is Key Pressed
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1150 200 200 200 255 Key
+Out 1151 200 200 200 255 Result
+[Node]
+ID 52
+Title Set Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1152 255 255 255 255 Execute
+In 1153 200 200 200 255 Name
+In 1154 147 226 74 255 Value
+Out 1155 255 255 255 255 Next
+[Node]
+ID 53
+Title Set Angular Velocity
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1156 255 255 255 255 Execute
+In 1157 200 200 200 255 Target
+In 1158 255 202 36 255 Velocity
+Out 1159 255 255 255 255 Next
+[Node]
+ID 54
+Title Get Float
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1160 200 200 200 255 Name
+Out 1161 147 226 74 255 Value
+[Node]
+ID 55
+Title Multiply (*)
+Pos 0 0
+Size 150 100
+Color 80 80 80 255
+In 1162 147 226 74 255 A
+In 1163 147 226 74 255 B
+Out 1164 147 226 74 255 Result
+[Node]
+ID 59
+Title Make Vector3
+Pos 64 295
+Size 150 100
+Color 80 80 80 255
+In 1171 147 226 74 255 X
+In 1172 147 226 74 255 Y
+In 1173 147 226 74 255 Z
+Out 1174 255 202 36 255 Vector
+[Node]
+ID 58
+Title Get Float
+Pos 184 200
+Size 150 100
+Color 80 80 80 255
+In 1169 200 200 200 255 Name
+Out 1170 147 226 74 255 Value
+[Node]
+ID 57
+Title Get Float
+Pos -4 485
+Size 150 100
+Color 80 80 80 255
+In 1167 200 200 200 255 Name
+Out 1168 147 226 74 255 Value
+[Link]
+ID 100
+Start 1000
+End 1002
+Color 255 255 255 255
+[Link]
+ID 101
+Start 1005
+End 1006
+Color 255 255 255 255
+[Link]
+ID 102
+Start 1017
+End 1013
+Color 255 255 255 255
+[Link]
+ID 103
+Start 1007
+End 1012
+Color 255 255 255 255
+[Link]
+ID 104
+Start 1014
+End 1018
+Color 255 255 255 255
+[Link]
+ID 105
+Start 1008
+End 1022
+Color 255 255 255 255
+[Link]
+ID 106
+Start 1027
+End 1023
+Color 255 255 255 255
+[Link]
+ID 107
+Start 1024
+End 1028
+Color 255 255 255 255
+[Link]
+ID 108
+Start 1009
+End 1032
+Color 255 255 255 255
+[Link]
+ID 109
+Start 1037
+End 1033
+Color 255 255 255 255
+[Link]
+ID 110
+Start 1034
+End 1038
+Color 255 255 255 255
+[Link]
+ID 111
+Start 1010
+End 1042
+Color 255 255 255 255
+[Link]
+ID 112
+Start 1047
+End 1043
+Color 255 255 255 255
+[Link]
+ID 113
+Start 1044
+End 1048
+Color 255 255 255 255
+[Link]
+ID 114
+Start 1011
+End 1052
+Color 255 255 255 255
+[Link]
+ID 116
+Start 1057
+End 1058
+Color 255 255 255 255
+[Link]
+ID 117
+Start 1060
+End 1063
+Color 255 255 255 255
+[Link]
+ID 118
+Start 1065
+End 1004
+Color 255 255 255 255
+[Link]
+ID 119
+Start 1067
+End 1070
+Color 255 255 255 255
+[Link]
+ID 120
+Start 1069
+End 1071
+Color 255 255 255 255
+[Link]
+ID 121
+Start 1072
+End 1075
+Color 255 255 255 255
+[Link]
+ID 122
+Start 1074
+End 1076
+Color 255 255 255 255
+[Link]
+ID 123
+Start 1077
+End 1020
+Color 255 255 255 255
+[Link]
+ID 124
+Start 1081
+End 1083
+Color 255 255 255 255
+[Link]
+ID 129
+Start 1091
+End 1094
+Color 255 255 255 255
+[Link]
+ID 130
+Start 1093
+End 1095
+Color 255 255 255 255
+[Link]
+ID 134
+Start 1096
+End 1102
+Color 255 255 255 255
+[Link]
+ID 135
+Start 1098
+End 1103
+Color 255 255 255 255
+[Link]
+ID 136
+Start 1104
+End 1040
+Color 255 255 255 255
+[Link]
+ID 137
+Start 1106
+End 1109
+Color 255 255 255 255
+[Link]
+ID 138
+Start 1108
+End 1110
+Color 255 255 255 255
+[Link]
+ID 142
+Start 1118
+End 1054
+Color 255 255 255 255
+[Link]
+ID 143
+Start 1116
+End 1050
+Color 255 255 255 255
+[Link]
+ID 148
+Start 1121
+End 1030
+Color 255 255 255 255
+[Link]
+ID 149
+Start 1086
+End 1119
+Color 255 255 255 255
+[Link]
+ID 150
+Start 1084
+End 1120
+Color 255 255 255 255
+[Link]
+ID 151
+Start 1123
+End 1082
+Color 255 255 255 255
+[Link]
+ID 152
+Start 1111
+End 1115
+Color 255 255 255 255
+[Link]
+ID 153
+Start 1113
+End 1114
+Color 255 255 255 255
+[Link]
+ID 154
+Start 1055
+End 1126
+Color 255 255 255 255
+[Link]
+ID 156
+Start 1135
+End 1131
+Color 255 255 255 255
+[Link]
+ID 157
+Start 1132
+End 1136
+Color 255 255 255 255
+[Link]
+ID 158
+Start 1141
+End 1130
+Color 255 255 255 255
+[Link]
+ID 159
+Start 1129
+End 1140
+Color 255 255 255 255
+[Link]
+ID 160
+Start 1151
+End 1147
+Color 255 255 255 255
+[Link]
+ID 161
+Start 1142
+End 1146
+Color 255 255 255 255
+[Link]
+ID 162
+Start 1148
+End 1152
+Color 255 255 255 255
+[Link]
+ID 163
+Start 1143
+End 1156
+Color 255 255 255 255
+[Link]
+ID 164
+Start 1161
+End 1162
+Color 255 255 255 255
+[Link]
+ID 165
+Start 1164
+End 1138
+Color 255 255 255 255
+[Link]
+ID 166
+Start 1168
+End 1154
+Color 255 255 255 255
+[Link]
+ID 167
+Start 1170
+End 1172
+Color 255 255 255 255
+[Link]
+ID 168
+Start 1174
+End 1158
+Color 255 255 255 255

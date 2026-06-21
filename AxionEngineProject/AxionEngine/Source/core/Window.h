@@ -6,6 +6,10 @@
 
 namespace Axion {
 
+	#ifdef AX_PLATFORM_WINDOWS
+	using Win32_WndProcCallback = std::function<bool(void* hwnd, unsigned int msg, unsigned long long wparam, long long lparam)>;
+	#endif
+
 	class WindowProperties {
 	public:
 
@@ -14,6 +18,11 @@ namespace Axion {
 		uint32_t height;
 		bool dragAcceptFiles;
 		std::filesystem::path iconFilePath;
+
+		// -- Windows WndProc Callback for Client --
+		#ifdef AX_PLATFORM_WINDOWS
+		Win32_WndProcCallback win32_wndProcCallback = nullptr;
+		#endif
 
 		WindowProperties(const std::string& title = "Axion Engine", uint32_t width = 1280, uint32_t height = 720, bool dragAcceptFiles = false, const std::string& iconFilePath = "")
 			: title(title), width(width), height(height), dragAcceptFiles(dragAcceptFiles), iconFilePath(iconFilePath) {}
@@ -45,6 +54,10 @@ namespace Axion {
 		virtual bool isVSync() const = 0;
 
 		virtual void* getNativeHandle() const = 0;
+
+		#ifdef AX_PLATFORM_WINDOWS
+		virtual void setWndProcCallback(const Win32_WndProcCallback& callback) = 0;
+		#endif
 
 
 		static Window* create(const WindowProperties& wp = WindowProperties());

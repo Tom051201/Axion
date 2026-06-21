@@ -31,6 +31,8 @@ namespace Axion {
 
 		void* getNativeHandle() const override { return m_hwnd; }
 
+		void setWndProcCallback(const Win32_WndProcCallback& callback) override { m_data.wndProcCallback = callback; }
+
 		std::function<bool(int x, int y)> isDragZone = nullptr;
 
 	private:
@@ -40,6 +42,7 @@ namespace Axion {
 			uint32_t width, height;
 			bool vsync;
 			EventCallbackFn eventCallback;
+			Win32_WndProcCallback wndProcCallback;
 		};
 
 		WindowData m_data;

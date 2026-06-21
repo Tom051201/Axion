@@ -2,42 +2,28 @@
 
 #include "Axion.h"
 
-#include <filesystem>
-
-#include "AxionEngine/Vendor/imgui/imgui.h"
-#include "AxionEngine/Vendor/entt/entt.hpp"
-
-#include "AxionEngine/Source/project/Project.h"
+#include "AxionStudio/Vendor/Silica/include/SWidget.h"
+#include "AxionStudio/Vendor/Silica/include/SBox.h"
+#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
+#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
+#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
+#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
+#include "AxionStudio/Vendor/Silica/include/SImage.h"
 
 #include "AxionStudio/Source/core/EditorCamera.h"
-#include "AxionStudio/Source/core/PanelManager.h"
-#include "AxionStudio/Source/core/ModalManager.h"
-#include "AxionStudio/Source/panels/SystemInfoPanel.h"
-#include "AxionStudio/Source/panels/SceneHierarchyPanel.h"
-#include "AxionStudio/Source/panels/EditorCameraPanel.h"
-#include "AxionStudio/Source/panels/ContentBrowserPanel.h"
-#include "AxionStudio/Source/panels/ProjectPanel.h"
-#include "AxionStudio/Source/panels/SceneOverviewPanel.h"
-#include "AxionStudio/Source/panels/AssetManagerPanel.h"
-#include "AxionStudio/Source/panels/VisualScriptPanel.h"
-#include "AxionStudio/Source/modals/SkyboxImportModal.h"
-#include "AxionStudio/Source/modals/MeshImportModal.h"
-#include "AxionStudio/Source/modals/AudioImportModal.h"
-#include "AxionStudio/Source/modals/ShaderImportModal.h"
-#include "AxionStudio/Source/modals/MaterialImportModal.h"
-#include "AxionStudio/Source/modals/Texture2DImportModal.h"
-#include "AxionStudio/Source/modals/PipelineImportModal.h"
-#include "AxionStudio/Source/modals/PhysicsMaterialImportModal.h"
-#include "AxionStudio/Source/modals/TextureCubeImportModal.h"
-#include "AxionStudio/Source/modals/CreateProjectModal.h"
-#include "AxionStudio/Source/modals/ExportProjectModal.h"
-
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
 
 namespace Axion {
 
-	enum class SceneState {
+	class ContentBrowser;
+	class VisualScriptPanel;
+	class SceneOverviewPanel;
+	class ProjectPanel;
+	class AssetManagerPanel;
+	class HierarchyPanel;
+	class EntityPropertiesPanel;
+	class ViewportPanel;
+
+	enum class EditorState {
 		Edit = 0,
 		Play,
 		Pause,
@@ -48,7 +34,7 @@ namespace Axion {
 	public:
 
 		EditorLayer();
-		~EditorLayer() = default;
+		~EditorLayer() override = default;
 
 		void onAttach() override;
 		void onDetach() override;
@@ -59,97 +45,42 @@ namespace Axion {
 
 	private:
 
-		// ----- Editor utils -----
+		// -- Editor --
 		EditorCamera m_editorCamera;
-
-
-		// ----- Panels -----
-		PanelManager m_panelManager;
-
-		SystemInfoPanel* m_systemInfoPanel;
-		SceneHierarchyPanel* m_sceneHierarchyPanel;
-		EditorCameraPanel* m_editorCameraPanel;
-		ContentBrowserPanel* m_contentBrowserPanel;
-		ProjectPanel* m_projectPanel;
-		SceneOverviewPanel* m_sceneOverviewPanel;
-		AssetManagerPanel* m_assetManagerPanel;
-		VisualScriptPanel* m_visualScriptPanel;
-
-
-		// ----- Modals -----
-		ModalManager m_modalManager;
-
-		SkyboxImportModal* m_skyboxImportModal;
-		MeshImportModal* m_meshImportModal;
-		AudioImportModal* m_audioImportModal;
-		ShaderImportModal* m_shaderImportModal;
-		MaterialImportModal* m_materialImportModal;
-		Texture2DImportModal* m_tex2dImportModal;
-		PipelineImportModal* m_pipelineImportModal;
-		PhysicsMaterialImportModal* m_physicsMaterialImportModal;
-		TextureCubeImportModal* m_textureCubeImportModal;
-		CreateProjectModal* m_createProjectModal;
-		ExportProjectModal* m_exportProjectModal;
-
-
-		// ----- Scene viewport -----
-		Ref<FrameBuffer> m_frameBuffer;
 		Vec2 m_viewportSize = { 0.0f, 0.0f };
-		bool m_viewportResized = false;
-
-
-		// ----- Active scene -----
-		Ref<Scene> m_activeScene;
+		Ref<FrameBuffer> m_frameBuffer;
 		Ref<Scene> m_editorScene;
-		std::filesystem::path m_activeSceneFilePath;
-		SceneState m_sceneState = SceneState::Edit;
-		SceneState m_prePauseState = SceneState::Edit;
+		Entity m_selectedEntity;
+
+
+		// -- Scene --
+		Ref<Scene> m_activeScene;
+		EditorState m_sceneState = EditorState::Edit;
+		EditorState m_prePauseState = EditorState::Edit;
 		int m_stepFrames = 0;
 
 
-		// ----- Active project -----
-		std::filesystem::path m_activeProjectFilePath;
-
-
-		// ----- ImGui utils -----
-		ImGuiDockNodeFlags m_dockspaceFlags = 0;
-		ImGuiWindowFlags m_windowFlags = 0;
-
-
-		// ----- Utils -----
-		std::filesystem::path m_pendingDropPath = {};
-
-
 		// -- Silica --
-		Silica::WidgetPtr m_silicaRoot;
-		Silica::FontAtlas m_silicaFont;
+		std::shared_ptr<Silica::SBox> m_silicaRoot;
+		Silica::WidgetPtr m_mainLayout;
+		Silica::FontAtlas m_font;
+		Silica::TextureID m_viewportTextureID = 0;
+		Ref<ContentBrowser> m_contentBrowserPanel;
+		Ref<VisualScriptPanel> m_visualScriptPanel;
+		Ref<SceneOverviewPanel> m_sceneOverviewPanel;
+		Ref<ProjectPanel> m_projectOverviewPanel;
+		Ref<AssetManagerPanel> m_assetManagerPanel;
+		Ref<HierarchyPanel> m_hierarchyPanel;
+		Ref<EntityPropertiesPanel> m_propertiesPanel;
+		Ref<ViewportPanel> m_viewportPanel;
 
 
-		// ----- Event functions -----
-		bool onKeyPressed(KeyPressedEvent& e);
-		bool onRenderingFinished(RenderingFinishedEvent& e);
-		bool onSceneChanged(SceneChangedEvent& e);
-		bool onFileDrop(FileDropEvent& e);
-
-
-		// ----- Helper functions -----
-		void beginDockspace();
-		void endDockspace();
-		void drawSceneViewport();
-		void drawGizmo();
-		void drawMenuBar();
-		void drawToolBar();
-		void processPendingDroppedFiles();
-
-		void onScenePlay();
-		void onSceneSimulate();
-		void onSceneStop();
-
+		void playScene();
+		void simScene();
+		void stopScene();
+		void selectEntity(Entity selectedEntity);
 		void drawOverlay();
-		void drawWireframeBox(const Mat4& transform, const Vec4& color);
-		void drawWireframeSphere(const Mat4& transform, float radius, const Vec4& color);
-		void drawWireframeCapsule(const Mat4& transform, float radius, float halfHeight, const Vec4& color);
-		void drawCompilationScriptsOverlay();
+
 	};
 
 }
