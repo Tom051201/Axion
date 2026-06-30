@@ -25,6 +25,7 @@ namespace Axion {
 		void setViewportTexture(Silica::TextureID texID, Silica::Vec2 size);
 		void setStatsText(const std::string& text);
 		Silica::Vec2 getViewportSize() const;
+		Silica::Vec2 getViewportPosition() const;
 		bool isHovered(const Silica::Vec2& mousePos) const;
 		void refreshToolbar();
 

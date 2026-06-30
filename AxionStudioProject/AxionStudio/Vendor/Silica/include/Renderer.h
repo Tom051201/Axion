@@ -3,11 +3,14 @@
 #include <stdint.h>
 #include <vector>
 #include <functional>
+#include <string>
 
 #include "MathTypes.h"
 #include "SWidget.h"
 
 namespace Silica {
+
+	class FontAtlas;
 
 	using TextureID = uint32_t;
 
@@ -36,6 +39,7 @@ namespace Silica {
 
 		void addThickLine(const Vec2& p0, const Vec2& p1, float thickness, Color color);
 		void addBezierCurve(const Vec2& p0, const Vec2& p1, const Vec2& p2, const Vec2& p3, float thickness, Color color);
+		void addText(FontAtlas* font, const std::string& text, Vec2 position, Color color, float lineHeight = 20.0f);
 
 		Rect getCurrentClipRect() const;
 		void pushClipRect(const Rect& rect);

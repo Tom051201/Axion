@@ -1,6 +1,6 @@
 [SNodeEditor_v1]
-Pan 0 0
-Zoom 1
+Pan 986.72 302.286
+Zoom 2
 [Node]
 ID 1
 Title On Create
@@ -11,7 +11,7 @@ Out 1000 255 255 255 255 Next
 [Node]
 ID 2
 Title Play Audio
-Pos 0 0
+Pos 267 -145.5
 Size 150 100
 Color 80 80 80 255
 In 1001 255 255 255 255 Execute

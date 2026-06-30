@@ -80,6 +80,14 @@ namespace Silica {
 			);
 		}
 
+		constexpr inline bool operator==(const Rect& other) const {
+			return left == other.left && right == other.right && top == other.top && bottom == other.bottom;
+		}
+
+		constexpr inline bool operator!=(const Rect& other) const {
+			return !(*this == other);
+		}
+
 	};
 
 

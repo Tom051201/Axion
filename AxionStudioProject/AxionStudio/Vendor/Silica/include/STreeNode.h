@@ -61,7 +61,6 @@ namespace Silica {
 		std::function<EventReply()> m_onDrop;
 		bool m_isLeftMouseDown = false;
 
-		void drawText(DrawList& drawList, const std::string& text, Vec2 pos, Color color, float yOffset = 16.0f) const;
 		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
 		void drawTriangle(DrawList& drawList, const Vec2& center, float radius, Color color, bool pointDown) const;
 

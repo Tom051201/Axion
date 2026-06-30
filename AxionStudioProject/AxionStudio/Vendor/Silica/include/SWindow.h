@@ -33,11 +33,11 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 
-		bool isDragging() const { return m_isDragging; }
+		bool isDragging() const;
 		void startDragging(const Vec2& mousePos);
-		void setContent(WidgetPtr content) { m_content = content; }
-		WidgetPtr getContent() const { return m_content; }
-		const std::string& getTitle() const { return m_title; }
+		void setContent(WidgetPtr content);
+		WidgetPtr getContent() const;
+		const std::string& getTitle() const;
 
 		std::function<void(Vec2)> onDragMove = nullptr;
 		std::function<void(Vec2)> onDragEnd = nullptr;

@@ -2,6 +2,9 @@
 
 #include "Axion.h"
 
+#include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
+
 #include "AxionStudio/Vendor/Silica/include/SWidget.h"
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
 #include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
@@ -9,6 +12,7 @@
 #include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
 #include "AxionStudio/Vendor/Silica/include/STextBlock.h"
 #include "AxionStudio/Vendor/Silica/include/SImage.h"
+#include "AxionStudio/Vendor/Silica/include/SDockspace.h"
 
 #include "AxionStudio/Source/core/EditorCamera.h"
 
@@ -62,6 +66,7 @@ namespace Axion {
 
 		// -- Silica --
 		std::shared_ptr<Silica::SBox> m_silicaRoot;
+		std::shared_ptr<Silica::SDockSpace> m_dock;
 		Silica::WidgetPtr m_mainLayout;
 		Silica::FontAtlas m_font;
 		Silica::TextureID m_viewportTextureID = 0;
@@ -73,6 +78,10 @@ namespace Axion {
 		Ref<HierarchyPanel> m_hierarchyPanel;
 		Ref<EntityPropertiesPanel> m_propertiesPanel;
 		Ref<ViewportPanel> m_viewportPanel;
+
+
+		// -- ImGuizmo --
+		int m_gizmoType = ImGuizmo::TRANSLATE;
 
 
 		void playScene();

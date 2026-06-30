@@ -1,6 +1,6 @@
 [SNodeEditor_v1]
-Pan 0 0
-Zoom 1
+Pan 969.954 388.982
+Zoom 0.9
 [Node]
 ID 1
 Title On Update
@@ -368,9 +368,72 @@ In 1127 200 200 200 255 Name
 In 1128 147 226 74 255 Value
 Out 1129 255 255 255 255 Next
 [Node]
+ID 54
+Title Get Float
+Pos -604 326
+Size 150 100
+Color 80 80 80 255
+In 1160 200 200 200 255 Name
+Out 1161 147 226 74 255 Value
+[Node]
+ID 53
+Title Set Angular Velocity
+Pos 442 8
+Size 150 100
+Color 80 80 80 255
+In 1156 255 255 255 255 Execute
+In 1157 200 200 200 255 Target
+In 1158 255 202 36 255 Velocity
+Out 1159 255 255 255 255 Next
+[Node]
+ID 59
+Title Make Vector3
+Pos 252 127
+Size 150 100
+Color 80 80 80 255
+In 1171 147 226 74 255 X
+In 1172 147 226 74 255 Y
+In 1173 147 226 74 255 Z
+Out 1174 255 202 36 255 Vector
+[Node]
+ID 58
+Title Get Float
+Pos -7 333
+Size 150 100
+Color 80 80 80 255
+In 1169 200 200 200 255 Name
+Out 1170 147 226 74 255 Value
+[Node]
+ID 51
+Title Is Key Pressed
+Pos -711.111 65.5555
+Size 150 100
+Color 80 80 80 255
+In 1150 200 200 200 255 Key
+Out 1151 200 200 200 255 Result
+[Node]
+ID 55
+Title Multiply (*)
+Pos -310.111 392.667
+Size 150 100
+Color 80 80 80 255
+In 1162 147 226 74 255 A
+In 1163 147 226 74 255 B
+Out 1164 147 226 74 255 Result
+[Node]
+ID 48
+Title Set Float
+Pos -65.5555 197.778
+Size 150 100
+Color 80 80 80 255
+In 1136 255 255 255 255 Execute
+In 1137 200 200 200 255 Name
+In 1138 147 226 74 255 Value
+Out 1139 255 255 255 255 Next
+[Node]
 ID 46
 Title Branch
-Pos 0 0
+Pos -941.111 -98.8889
 Size 150 100
 Color 80 80 80 255
 In 1130 255 255 255 255 Execute
@@ -380,25 +443,15 @@ Out 1133 255 255 255 255 False
 [Node]
 ID 47
 Title Is Key Pressed
-Pos 0 0
+Pos -1227.78 64.4444
 Size 150 100
 Color 80 80 80 255
 In 1134 200 200 200 255 Key
 Out 1135 200 200 200 255 Result
 [Node]
-ID 48
-Title Set Float
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1136 255 255 255 255 Execute
-In 1137 200 200 200 255 Name
-In 1138 147 226 74 255 Value
-Out 1139 255 255 255 255 Next
-[Node]
 ID 49
 Title Sequence
-Pos 0 0
+Pos -1437.78 -384.444
 Size 150 100
 Color 80 80 80 255
 In 1140 255 255 255 255 Execute
@@ -410,7 +463,7 @@ Out 1145 255 255 255 255 Then 4
 [Node]
 ID 50
 Title Branch
-Pos 0 0
+Pos -1006.67 -481.111
 Size 150 100
 Color 80 80 80 255
 In 1146 255 255 255 255 Execute
@@ -418,17 +471,9 @@ In 1147 200 200 200 255 Condition
 Out 1148 255 255 255 255 True
 Out 1149 255 255 255 255 False
 [Node]
-ID 51
-Title Is Key Pressed
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1150 200 200 200 255 Key
-Out 1151 200 200 200 255 Result
-[Node]
 ID 52
 Title Set Float
-Pos 0 0
+Pos -450.889 -477.222
 Size 150 100
 Color 80 80 80 255
 In 1152 255 255 255 255 Execute
@@ -436,54 +481,9 @@ In 1153 200 200 200 255 Name
 In 1154 147 226 74 255 Value
 Out 1155 255 255 255 255 Next
 [Node]
-ID 53
-Title Set Angular Velocity
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1156 255 255 255 255 Execute
-In 1157 200 200 200 255 Target
-In 1158 255 202 36 255 Velocity
-Out 1159 255 255 255 255 Next
-[Node]
-ID 54
-Title Get Float
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1160 200 200 200 255 Name
-Out 1161 147 226 74 255 Value
-[Node]
-ID 55
-Title Multiply (*)
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1162 147 226 74 255 A
-In 1163 147 226 74 255 B
-Out 1164 147 226 74 255 Result
-[Node]
-ID 59
-Title Make Vector3
-Pos 64 295
-Size 150 100
-Color 80 80 80 255
-In 1171 147 226 74 255 X
-In 1172 147 226 74 255 Y
-In 1173 147 226 74 255 Z
-Out 1174 255 202 36 255 Vector
-[Node]
-ID 58
-Title Get Float
-Pos 184 200
-Size 150 100
-Color 80 80 80 255
-In 1169 200 200 200 255 Name
-Out 1170 147 226 74 255 Value
-[Node]
 ID 57
 Title Get Float
-Pos -4 485
+Pos -638.889 -379
 Size 150 100
 Color 80 80 80 255
 In 1167 200 200 200 255 Name

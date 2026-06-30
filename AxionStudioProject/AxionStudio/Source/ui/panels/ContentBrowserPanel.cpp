@@ -306,18 +306,20 @@ namespace Axion {
 		float iconSize = 24.0f;
 
 		// -- Helper Functions --
-		auto makeIconBtn = [=](const std::string& iconName, bool disabled, std::function<void()> onClick) {
+		auto makeIconBtn = [=](const std::string& iconName, bool isDisabled, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 4.0f },
-				.color = disabled ? Silica::Color::transparent() : Silica::Color(45, 45, 45, 0),
-				.hoverColor = disabled ? Silica::Color::transparent() : Silica::Color(100, 100, 100, 150),
-				.onClick = [disabled, onClick]() {
-					if (!disabled) onClick();
-					return disabled ? Silica::EventReply::unhandled() : Silica::EventReply::handled();
+				.enabled = !isDisabled,
+				.color = Silica::Color(45, 45, 45, 0),
+				.hoverColor = Silica::Color(100, 100, 100, 150),
+				.disabledColor = Silica::Color::transparent(),
+				.onClick = [onClick]() {
+					onClick();
+					return Silica::EventReply::handled();
 				},
 				.child = Silica::MakeWidget<Silica::SImage>({
 					.textureID = SilicaContext::getIcon(iconName),
-					.tint = disabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
+					.tint = isDisabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
 					.desiredSize = { iconSize, iconSize }
 				})
 			});

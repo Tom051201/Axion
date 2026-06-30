@@ -1,35 +1,29 @@
 Version: 1
 AssetRegistry:
-  - Handle: cb6d1ff4e98c9ed731b52f1c54d0acdf
-    Type: Scene
-    FilePath: scenes/TestScene.axscene
-  - Handle: 59f15eed9c975773ec47a786236f5780
-    Type: Material
-    FilePath: materials/Sponza/Sponza_Mat_20.axmat
-  - Handle: 733d8fbe7dc61424ec859ebab050261e
-    Type: Texture2D
-    FilePath: textures/RoughnessMap.axtex
   - Handle: 2e986f85eda45f97252996f2695564fc
     Type: Material
     FilePath: materials/BlueMetal.axmat
-  - Handle: ee63f6883e41dcff1b8e01079adfd02e
+  - Handle: cb6d1ff4e98c9ed731b52f1c54d0acdf
+    Type: Scene
+    FilePath: scenes/TestScene.axscene
+  - Handle: 733d8fbe7dc61424ec859ebab050261e
     Type: Texture2D
-    FilePath: textures/CesiumMan/CesiumMan_Tex_0.axtex
-  - Handle: 61aa8ca013e9890b54366991f0eaac18
-    Type: Mesh
-    FilePath: meshes/Cube.axmesh
+    FilePath: textures/RoughnessMap.axtex
+  - Handle: 59f15eed9c975773ec47a786236f5780
+    Type: Material
+    FilePath: materials/Sponza/Sponza_Mat_20.axmat
   - Handle: b6eeba3080fadb25431235f589b959c7
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_1.axtex
   - Handle: 2a4d473277b77f921a36499558eba271
     Type: Texture2D
     FilePath: textures/AlbedoMap.axtex
-  - Handle: 2febdf2f9809c72d3e7790d5ecbce13c
+  - Handle: ee63f6883e41dcff1b8e01079adfd02e
     Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_42.axtex
-  - Handle: 138926f808e151cbd6a5c526ac4cbb12
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_31.axtex
+    FilePath: textures/CesiumMan/CesiumMan_Tex_0.axtex
+  - Handle: 61aa8ca013e9890b54366991f0eaac18
+    Type: Mesh
+    FilePath: meshes/Cube.axmesh
   - Handle: b5f080dcbc66687fbaa0bbe91b24f108
     Type: Texture2D
     FilePath: textures/NormalMap.axtex
@@ -39,39 +33,48 @@ AssetRegistry:
   - Handle: 04d4dcf41563adb69a3a1e571f1881cc
     Type: Texture2D
     FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_1.axtex
+  - Handle: 2febdf2f9809c72d3e7790d5ecbce13c
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_42.axtex
+  - Handle: 138926f808e151cbd6a5c526ac4cbb12
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_31.axtex
   - Handle: 1f9aebfa16b78f1d006a63c26bfba25a
     Type: Texture2D
     FilePath: textures/MetalnessMap.axtex
-  - Handle: f61a97852a876b298b0ba7797ae0c804
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_30.axtex
-  - Handle: 3d160406e1458a91628b507a1e12e202
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_22.axtex
   - Handle: 901d37b8685f30b022bfd9f2abcd7b33
     Type: Mesh
     FilePath: meshes/SubmeshCube.axmesh
-  - Handle: 38a4d9d1ef017d70df9b1a764a11c3af
+  - Handle: 3d160406e1458a91628b507a1e12e202
     Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_33.axtex
+    FilePath: textures/Sponza/Sponza_Tex_22.axtex
+  - Handle: f61a97852a876b298b0ba7797ae0c804
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_30.axtex
   - Handle: 48c8776abaffd302e970a7efd1332d61
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_46.axtex
   - Handle: f9cdd784ca27aa098da5acf93c45f11e
     Type: Mesh
     FilePath: meshes/SubmeshCube.axmesh
-  - Handle: fe628f9d4bcd90083a8c84e7656868ab
-    Type: Prefab
-    FilePath: prefabs/DamagedHelmet/DamagedHelmet.axprefab
+  - Handle: 38a4d9d1ef017d70df9b1a764a11c3af
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_33.axtex
   - Handle: f4840a5c05babfe0414d530a8306aeef
     Type: Material
     FilePath: materials/RedMetal.axmat
+  - Handle: fe628f9d4bcd90083a8c84e7656868ab
+    Type: Prefab
+    FilePath: prefabs/DamagedHelmet/DamagedHelmet.axprefab
   - Handle: c90ff323161f10d1093cc0b6535d716c
     Type: TextureCube
     FilePath: skybox/Skybox.axtcube
   - Handle: 6bfe9dd4e37d1bd90560ab8a5c6799b5
     Type: Mesh
     FilePath: meshes/test.axmesh
+  - Handle: 2b5b939b2b647b374074dfe47c3baec3
+    Type: Texture2D
+    FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_4.axtex
   - Handle: 06a3c49714be996e5c8d13a4beb517f7
     Type: Mesh
     FilePath: meshes/test2.axmesh
@@ -81,57 +84,54 @@ AssetRegistry:
   - Handle: 2e67c4b04550e1a311110851e39b6a8d
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_20.axtex
-  - Handle: 2b5b939b2b647b374074dfe47c3baec3
-    Type: Texture2D
-    FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_4.axtex
   - Handle: 34e1dd032a1433ee6594ca73c0f8c257
     Type: Texture2D
     FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_0.axtex
-  - Handle: b06038ac864cfdfda5aee708b1295fe6
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_26.axtex
   - Handle: 81c885347f7f329fcc3c525185f4b80a
     Type: Texture2D
     FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_2.axtex
+  - Handle: b06038ac864cfdfda5aee708b1295fe6
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_26.axtex
   - Handle: f909d41c1fbb1955b75960bd84b85ebf
     Type: Texture2D
     FilePath: textures/DamagedHelmet/DamagedHelmet_Tex_3.axtex
   - Handle: 9af016b63f93fc88ecbc7eefa02bf21a
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_13.axtex
-  - Handle: 4d56326a4a7ea56b6a34192d1994af17
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_3.axtex
   - Handle: 6d64521c230377d08899dff8e19a5e09
     Type: Material
     FilePath: materials/DamagedHelmet/Material_MR.axmat
+  - Handle: 4d56326a4a7ea56b6a34192d1994af17
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_3.axtex
   - Handle: b3bda371c36a994af2c8ad48954c8fd4
     Type: Mesh
     FilePath: meshes/DamagedHelmet/DamagedHelmet.axmesh
   - Handle: eccddf704f8fc336bbc9693139b5b740
     Type: Material
     FilePath: materials/CesiumMan/Cesium_Man-effect.axmat
-  - Handle: 7257305f7956bdd928cd546aca73f9b4
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_27.axtex
   - Handle: 3313069d85b136dc9677c5c9b331c2f4
     Type: SkeletalMesh
     FilePath: meshes/CesiumMan/CesiumMan.axskelmesh
-  - Handle: 73f7a3d5e2b92ec9cae9a33336ef00bb
+  - Handle: 7257305f7956bdd928cd546aca73f9b4
     Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_0.axtex
+    FilePath: textures/Sponza/Sponza_Tex_27.axtex
   - Handle: 6ede705ff9d667248b4ba52ec0528c83
     Type: AnimationClip
     FilePath: animations/CesiumMan/CesiumMan_Anim_0.axanim
+  - Handle: 73f7a3d5e2b92ec9cae9a33336ef00bb
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_0.axtex
+  - Handle: 831142a98a5a6a34ce8ffafb9d3ea0dc
+    Type: Prefab
+    FilePath: prefabs/CesiumMan/CesiumMan.axprefab
   - Handle: 16379f7a964306130ce165eb8881b4e2
     Type: Material
     FilePath: materials/Sponza/Sponza_Mat_2.axmat
   - Handle: ea73358f07a8278deea35ff818caa8ca
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_28.axtex
-  - Handle: 831142a98a5a6a34ce8ffafb9d3ea0dc
-    Type: Prefab
-    FilePath: prefabs/CesiumMan/CesiumMan.axprefab
   - Handle: 5fbd410735036825872dfdbf90113f2b
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_9.axtex
@@ -141,21 +141,21 @@ AssetRegistry:
   - Handle: c9bb8bb031336ebf08cf5592dcef5262
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_4.axtex
-  - Handle: 4b11defacc4f66014361e6293047776c
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_8.axtex
   - Handle: 907b3b56d04c248f7a62dafa9319bba7
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_5.axtex
-  - Handle: 53ac51cd05dcdf47461138e8bfac377e
+  - Handle: 4b11defacc4f66014361e6293047776c
     Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_32.axtex
-  - Handle: 5a779839636b60d480b6362575df02ce
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_12.axtex
+    FilePath: textures/Sponza/Sponza_Tex_8.axtex
   - Handle: 2e92b80bd29d427e6abdb6098aa5a0b4
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_6.axtex
+  - Handle: 5a779839636b60d480b6362575df02ce
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_12.axtex
+  - Handle: 53ac51cd05dcdf47461138e8bfac377e
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_32.axtex
   - Handle: 7945cd03b2c2232d99a0241301d3b8d3
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_7.axtex
@@ -201,12 +201,12 @@ AssetRegistry:
   - Handle: 8849174446ce19c16a123d2609b6da7e
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_34.axtex
-  - Handle: fef45ae7e187df455ff1aff73918e3f3
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_59.axtex
   - Handle: e0aaeeb1db1922d8fbe945d4fae50174
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_35.axtex
+  - Handle: fef45ae7e187df455ff1aff73918e3f3
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_59.axtex
   - Handle: d8dda4795bc5b1aee2071697069a8453
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_36.axtex
@@ -270,12 +270,12 @@ AssetRegistry:
   - Handle: f9638a0a2957a1004bfb6c7c0637ce2d
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_60.axtex
-  - Handle: bfa907c02e38b06e64361ca7d6cda3a4
-    Type: Texture2D
-    FilePath: textures/Sponza/Sponza_Tex_64.axtex
   - Handle: 43cae46a7fa373bb9e158d4177836917
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_61.axtex
+  - Handle: bfa907c02e38b06e64361ca7d6cda3a4
+    Type: Texture2D
+    FilePath: textures/Sponza/Sponza_Tex_64.axtex
   - Handle: 82f8832a51cbbaa3a980211669c1afbf
     Type: Texture2D
     FilePath: textures/Sponza/Sponza_Tex_62.axtex

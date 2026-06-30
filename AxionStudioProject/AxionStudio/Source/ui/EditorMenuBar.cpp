@@ -1,6 +1,10 @@
 #include "EditorMenuBar.h"
 
 #include "AxionEngine/Source/core/Logging.h"
+#include "AxionEngine/Source/core/PlatformUtils.h"
+#include "AxionEngine/Source/core/Application.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
 #include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
@@ -40,32 +44,7 @@ namespace Axion {
 
 
 
-	Silica::WidgetPtr EditorMenuBar::construct(Silica::FontAtlas* font) {
-		// ----- IMPORT SUB MENU -----
-		auto importMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
-			.openOnHover = true,
-			.openToRight = true,
-			.showArrow = true,
-			.anchorContent = MakeMenuItem("Import", font, []() { return Silica::EventReply::unhandled(); }),
-			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = dropDownBg,
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = dropdownSpacing,
-					.slots = {
-						{ dropDownPadding, MakeMenuItem("Mesh", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Texture 2D", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Texture Cube", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Material", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Skybox", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Shader", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Pipeline", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Audio", font, []() { return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Physics Material", font, []() { return Silica::EventReply::handled(); }) }
-					}
-				})
-			})
-		});
-
+	Silica::WidgetPtr EditorMenuBar::construct(Silica::FontAtlas* font, std::shared_ptr<Silica::SDockSpace> dockspace) {
 		// ----- FILE MENU -----
 		auto fileMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
@@ -76,12 +55,67 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
-						{ dropDownPadding, MakeMenuItem("New Scene", font, []() { AX_CORE_LOG_TRACE("New"); return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Load Scene", font, []() { AX_CORE_LOG_TRACE("Load"); return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Save Scene", font, []() { AX_CORE_LOG_TRACE("Save"); return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, MakeMenuItem("Save Scene As...", font, []() { AX_CORE_LOG_TRACE("Save As"); return Silica::EventReply::handled(); }) },
-						{ dropDownPadding, importMenu },
-						{ dropDownPadding, MakeMenuItem("Exit", font, []() { AX_CORE_LOG_TRACE("Exit"); return Silica::EventReply::handled(); }) }
+						// -- NEW SCENE --
+						{ dropDownPadding, MakeMenuItem("New Scene", font, []() { 
+							EditorActionQueue::push([]() {
+								SceneManager::newScene(); 
+							});
+							return Silica::EventReply::handled(); 
+						}) },
+
+						// -- LOAD SCENE --
+						{ dropDownPadding, MakeMenuItem("Load Scene", font, []() { 
+							std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
+							std::filesystem::path filepath = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} }, initialDir);
+							
+							if (!filepath.empty()) {
+								EditorActionQueue::push([filepath]() {
+									SceneManager::loadScene(filepath);
+								});
+							}
+							return Silica::EventReply::handled(); 
+						}) },
+
+						// -- SAVE SCENE --
+						{ dropDownPadding, MakeMenuItem("Save Scene", font, []() { 
+							if (SceneManager::isNewScene() || SceneManager::getScenePath().empty()) {
+								std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
+								std::filesystem::path filepath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, initialDir);
+								
+								if (!filepath.empty()) {
+									if (filepath.extension() != ".axscene") filepath += ".axscene";
+									EditorActionQueue::push([filepath]() {
+										SceneManager::saveScene(filepath);
+									});
+								}
+							} else {
+								EditorActionQueue::push([]() {
+									SceneManager::saveScene(SceneManager::getScenePath());
+								});
+							}
+							return Silica::EventReply::handled(); 
+						}) },
+
+						// -- SAVE SCENE AS --
+						{ dropDownPadding, MakeMenuItem("Save Scene As...", font, []() { 
+							std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
+							std::filesystem::path filepath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, initialDir);
+							
+							if (!filepath.empty()) {
+								if (filepath.extension() != ".axscene") filepath += ".axscene";
+								EditorActionQueue::push([filepath]() {
+									SceneManager::saveScene(filepath);
+								});
+							}
+							return Silica::EventReply::handled(); 
+						}) },
+
+						// -- EXIT --
+						{ dropDownPadding, MakeMenuItem("Exit", font, []() { 
+							//Application::get().close();
+							// TODO: fix the crash
+							return Silica::EventReply::handled(); 
+						}) }
 					}
 				})
 			}),
@@ -104,6 +138,29 @@ namespace Axion {
 		});
 
 		// ----- VIEW MENU -----
+		auto windowsListContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = dropdownSpacing });
+
+		if (dockspace) {
+			std::vector<std::string> availableTabs = dockspace->getRegisteredTabNames();
+			for (const std::string& tabName : availableTabs) {
+				windowsListContent->addSlot({ dropDownPadding, MakeMenuItem(tabName, font, [dockspace, tabName]() {
+					dockspace->openTab(tabName);
+					return Silica::EventReply::handled();
+				}) });
+			}
+		}
+
+		auto windowsSubMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
+			.openOnHover = true,
+			.openToRight = true,
+			.showArrow = true,
+			.anchorContent = MakeMenuItem("Windows", font, []() { return Silica::EventReply::unhandled(); }),
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.backgroundColor = dropDownBg,
+				.child = windowsListContent
+			})
+		});
+
 		auto viewMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.openToRight = false,
@@ -113,7 +170,8 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
-						{ dropDownPadding, MakeMenuItem("Nothing here...", font, []() { return Silica::EventReply::handled(); })},
+						// -- View Options --
+						{ dropDownPadding, windowsSubMenu }
 					}
 				})
 			})

@@ -27,6 +27,7 @@ namespace Silica {
 		std::string title;
 		WidgetPtr content;
 		Rect hitRect;
+		Rect closeRect;
 	};
 
 
@@ -77,6 +78,10 @@ namespace Silica {
 		void loadLayout(const std::filesystem::path& filePath);
 
 		void registerTab(const std::string& title, WidgetPtr content);
+		void openTab(const std::string& title);
+		void closeTab(DockNodePtr node, int tabIndex);
+
+		std::vector<std::string> getRegisteredTabNames() const;
 
 	private:
 

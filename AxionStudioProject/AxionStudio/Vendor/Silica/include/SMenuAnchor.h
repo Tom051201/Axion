@@ -29,8 +29,8 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 
-		void closeMenu() { m_isOpen = false; }
-		bool isOpen() const { return m_isOpen; }
+		void closeMenu();
+		bool isOpen() const;
 
 	private:
 

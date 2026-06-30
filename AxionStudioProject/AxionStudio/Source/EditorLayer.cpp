@@ -115,30 +115,32 @@ namespace Axion {
 			.font = &m_font
 		});
 
-		auto dock = workspace->getDockSpace();
+		m_dock = workspace->getDockSpace();
 
-		dock->registerTab("Hierarchy", hierarchyWidget);
-		dock->registerTab("Properties", propertiesWidget);
-		dock->registerTab("Viewport", fullViewportPanel);
-		dock->registerTab("Visual Script", visualScriptWidget);
-		dock->registerTab("Content Browser", contentBrowserWidget);
-		dock->registerTab("Project Settings", projectSettings);
-		dock->registerTab("Scene Settings", sceneSettings);
-		dock->registerTab("Asset Inspector", assetManagerWidget);
+		m_dock->registerTab("Hierarchy", hierarchyWidget);
+		m_dock->registerTab("Properties", propertiesWidget);
+		m_dock->registerTab("Viewport", fullViewportPanel);
+		m_dock->registerTab("Visual Script", visualScriptWidget);
+		m_dock->registerTab("Content Browser", contentBrowserWidget);
+		m_dock->registerTab("Project Settings", projectSettings);
+		m_dock->registerTab("Scene Settings", sceneSettings);
+		m_dock->registerTab("Asset Inspector", assetManagerWidget);
 
-		if (!dock->getRootNode() || (dock->getRootNode()->tabs.size() <= 1 && dock->getRootNode()->splitDirection == Silica::SplitDirection::None)) {
-			auto root = dock->getRootNode();
-			dock->splitNode(root, Silica::SplitDirection::Vertical, 0.75f, "Content Browser", contentBrowserWidget, false);
+		m_dock->loadLayout("AxionStudio/Config/EditorLayout.ini");
+
+		if (!m_dock->getRootNode() || (m_dock->getRootNode()->tabs.size() <= 1 && m_dock->getRootNode()->splitDirection == Silica::SplitDirection::None)) {
+			auto root = m_dock->getRootNode();
+			m_dock->splitNode(root, Silica::SplitDirection::Vertical, 0.75f, "Content Browser", contentBrowserWidget, false);
 			auto topHalf = root->child[0];
-			dock->splitNode(topHalf, Silica::SplitDirection::Horizontal, 0.2f, "Viewport", fullViewportPanel, false);
+			m_dock->splitNode(topHalf, Silica::SplitDirection::Horizontal, 0.2f, "Viewport", fullViewportPanel, false);
 			auto viewportNode = topHalf->child[1];
 			viewportNode->tabs.push_back({
 				.title = "Visual Script",
 				.content = visualScriptWidget,
 				.hitRect = {}
 			});
-			dock->splitNode(topHalf->child[0], Silica::SplitDirection::Vertical, 0.5f, "Properties", propertiesWidget, false);
-			dock->splitNode(viewportNode, Silica::SplitDirection::Horizontal, 0.75f, "Project Settings", projectSettings, false);
+			m_dock->splitNode(topHalf->child[0], Silica::SplitDirection::Vertical, 0.5f, "Properties", propertiesWidget, false);
+			m_dock->splitNode(viewportNode, Silica::SplitDirection::Horizontal, 0.75f, "Project Settings", projectSettings, false);
 			viewportNode->child[1]->tabs.push_back({
 				.title = "Scene Settings",
 				.content = sceneSettings,
@@ -153,7 +155,7 @@ namespace Axion {
 
 
 		// ----- Menu Bar -----
-		auto menuBar = EditorMenuBar::construct(&m_font);
+		auto menuBar = EditorMenuBar::construct(&m_font, m_dock);
 
 
 		// ----- Assemble -----
@@ -174,11 +176,12 @@ namespace Axion {
 	void EditorLayer::onDetach() {
 		m_selectedEntity = {};
 		if (m_propertiesPanel) m_propertiesPanel->setEntity({});
+		if (m_dock) m_dock->saveLayout("AxionStudio/Config/EditorLayout.ini");
 
 		SilicaContext::unbindWndProcCallback();
 
 		m_silicaRoot = nullptr;
-
+		m_dock = nullptr;
 		m_hierarchyPanel = nullptr;
 		m_propertiesPanel = nullptr;
 		m_contentBrowserPanel = nullptr;
@@ -333,6 +336,98 @@ namespace Axion {
 		float height = (float)Application::get().getWindow().getHeight();
 		Silica::Renderer::render(m_silicaRoot, width, height);
 		SilicaContext::renderDrawData(width, height);
+
+		// ----- Render ImGuizmo Overlay -----
+		if (m_sceneState == EditorState::Edit && m_selectedEntity && m_gizmoType != -1) {
+
+			Silica::Vec2 viewPos = m_viewportPanel->getViewportPosition();
+			Silica::Vec2 viewSize = m_viewportPanel->getViewportSize();
+
+			// -- Create An Invisible Window --
+			ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos({ viewPos.x + mainViewport->Pos.x, viewPos.y + mainViewport->Pos.y });
+			ImGui::SetNextWindowSize({ viewSize.x, viewSize.y });
+			ImGui::SetNextWindowViewport(mainViewport->ID);
+			ImGui::SetNextWindowBgAlpha(0.0f);
+
+			ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking |
+				ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoSavedSettings |
+				ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoFocusOnAppearing;
+
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+			ImGui::Begin("GizmoOverlay", nullptr, flags);
+
+			// -- Setup ImGuizmo
+			ImGuizmo::SetOrthographic(m_editorCamera.is2D());
+			ImGuizmo::SetDrawlist();
+			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+
+			// -- Input: Mode Switching --
+			if (!ImGui::IsAnyItemActive() && !Input::isMouseButtonPressed(MouseButton::Right)) {
+				if (ImGui::IsKeyPressed(ImGuiKey_Q)) m_gizmoType = -1;
+				if (ImGui::IsKeyPressed(ImGuiKey_W)) m_gizmoType = ImGuizmo::TRANSLATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_E)) m_gizmoType = ImGuizmo::ROTATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_R)) m_gizmoType = ImGuizmo::SCALE;
+			}
+
+			// -- Camera --
+			const Mat4& cameraView = m_editorCamera.getViewMatrix();
+			const Mat4& cameraProjection = m_editorCamera.getProjectionMatrix();
+
+			// -- Entity Transform --
+			auto& tc = m_selectedEntity.getComponent<TransformComponent>();
+			Mat4 worldM = m_activeScene->getWorldTransform(m_selectedEntity);
+
+			// -- To float[16] for ImGuizmo --
+			DirectX::XMFLOAT4X4 objF4;
+			DirectX::XMStoreFloat4x4(&objF4, worldM.toXM());
+			float object[16];
+			memcpy(object, &objF4, sizeof(objF4));
+
+			// -- Snapping --
+			bool snap = Input::isKeyPressed(KeyCode::LeftControl);
+			float snapValue = 0.5f;
+			if (m_gizmoType == ImGuizmo::ROTATE) snapValue = 45.0f;
+			float snapValues[3] = { snapValue, snapValue, snapValue };
+
+			// -- Do gizmo stuff --
+			ImGuizmo::Manipulate(
+				cameraView.data(),
+				cameraProjection.data(),
+				(ImGuizmo::OPERATION)m_gizmoType,
+				ImGuizmo::LOCAL,
+				object,
+				nullptr,
+				snap ? snapValues : nullptr
+			);
+
+			// -- Apply changes --
+			if (ImGuizmo::IsUsing()) {
+				DirectX::XMMATRIX newM = DirectX::XMLoadFloat4x4(reinterpret_cast<DirectX::XMFLOAT4X4*>(object));
+				Mat4 updatedWorld = Mat4::fromXM(newM);
+
+				Entity parent = m_selectedEntity.getParent();
+				if (parent) {
+					Mat4 parentWorld = m_activeScene->getWorldTransform(parent);
+					Mat4 localM = parentWorld.inverse() * updatedWorld;
+
+					TRSData trs = localM.decompose();
+					tc.position = trs.translation;
+					tc.rotation = trs.rotation;
+					tc.scale = trs.scale;
+				}
+				else {
+					TRSData trs = updatedWorld.decompose();
+					tc.position = trs.translation;
+					tc.rotation = trs.rotation;
+					tc.scale = trs.scale;
+				}
+			}
+
+			ImGui::End();
+			ImGui::PopStyleVar();
+		}
+
 	}
 
 	void EditorLayer::drawOverlay() {

@@ -15,9 +15,6 @@ project "AxionStudio"
 		"AxionStudio/Source/**.cpp",
 		"**.h",
 		"**.rc",
-		"AxionStudio/Vendor/ImguiNodeEditor/**.h",
-		"AxionStudio/Vendor/ImguiNodeEditor/**.cpp",
-		"AxionStudio/Vendor/ImguiNodeEditor/**.inl",
 		"AxionStudio/Vendor/Silica/**.h",
 		"AxionStudio/Vendor/Silica/**.cpp"
 	}
@@ -32,7 +29,6 @@ project "AxionStudio"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
 		"%{wks.location}/AxionSubsystems/AxionAssetPipelineProject",
-		"AxionStudio/Vendor/ImguiNodeEditor",
 		"AxionStudio/Vendor/Silica/include"
 	}
 

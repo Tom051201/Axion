@@ -92,22 +92,20 @@ namespace Axion {
 		float btnSize = 24.0f;
 
 		// -- Helper Function --
-		auto makeImageButton = [btnSize](Silica::TextureID texID, bool disabled, std::function<void()> onClick) {
-			Silica::Color btnColor = disabled ? Silica::Color::transparent() : Silica::Color(45, 45, 45, 0);
-			Silica::Color hoverColor = disabled ? Silica::Color::transparent() : Silica::Color(100, 100, 100, 150);
-			Silica::Color tintColor = disabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white();
-
+		auto makeImageButton = [btnSize](Silica::TextureID texID, bool isDisabled, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 4.0f },
-				.color = btnColor,
-				.hoverColor = hoverColor,
-				.onClick = [disabled, onClick]() {
-					if (!disabled) onClick();
-					return disabled ? Silica::EventReply::unhandled() : Silica::EventReply::handled();
+				.enabled = !isDisabled,
+				.color = Silica::Color(45, 45, 45, 0),
+				.hoverColor = Silica::Color(100, 100, 100, 150),
+				.disabledColor = Silica::Color::transparent(),
+				.onClick = [onClick]() {
+					onClick();
+					return Silica::EventReply::handled();
 				},
 				.child = Silica::MakeWidget<Silica::SImage>({
 					.textureID = texID,
-					.tint = tintColor,
+					.tint = isDisabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
 					.desiredSize = { btnSize, btnSize }
 				})
 			});
@@ -218,6 +216,12 @@ namespace Axion {
 
 	Silica::Vec2 ViewportPanel::getViewportSize() const {
 		if (m_viewportContainer) return m_viewportContainer->getAllocatedGeometry().size;
+		return { 0.0f, 0.0f };
+	}
+
+
+	Silica::Vec2 ViewportPanel::getViewportPosition() const {
+		if (m_viewportContainer) return m_viewportContainer->getAllocatedGeometry().position;
 		return { 0.0f, 0.0f };
 	}
 
