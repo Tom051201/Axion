@@ -39,6 +39,7 @@ namespace Axion {
 		AssetMap<T> assets;
 		HandleToPathMap<T> handleToPath;
 		LoadQueue<T> loadQueue;
+		std::recursive_mutex mutex;
 	};
 
 
@@ -65,19 +66,26 @@ namespace Axion {
 		static void reload(const AssetHandle<T>& handle);
 
 		static void removeAsset(UUID handle);
+		static bool isLoadingAssets();
+
+		static void setMaxAssetsPerFrame(uint32_t maxAssets);
+		static int getMaxAssetsPerFrame();
 
 		// -- Templated getter function --
 		template<typename T>
 		static Ref<T> get(const AssetHandle<T>& handle) {
-			auto& map = storage<T>().assets;
-			auto it = map.find(handle);
-			return it != map.end() ? it->second : nullptr;
+			auto& s = storage<T>();
+			std::lock_guard<std::recursive_mutex> lock(s.mutex);
+			auto it = s.assets.find(handle);
+			return it != s.assets.end() ? it->second : nullptr;
 		}
 
 		// -- Templated has function --
 		template<typename T>
 		static bool has(const AssetHandle<T>& handle) {
-			return storage<T>().assets.find(handle) != storage<T>().assets.end();
+			auto& s = storage<T>();
+			std::lock_guard<std::recursive_mutex> lock(s.mutex);
+			return s.assets.find(handle) != s.assets.end();
 		}
 
 		// -- Templated getMap function --
@@ -111,13 +119,33 @@ namespace Axion {
 		}
 
 		template<typename T>
-		static void processLoadQueue() {
+		static void processLoadQueue(uint32_t& maxItems) {
 			auto& storageRef = storage<T>();
-			for (auto& [handle, task] : storageRef.loadQueue) {
-				storageRef.assets[handle] = task();
-				AX_CORE_LOG_TRACE("{} loaded: {}", typeid(T).name(), handle.uuid.toString());
+			std::lock_guard<std::recursive_mutex> lock(storageRef.mutex);
+
+			while (!storageRef.loadQueue.empty() && maxItems > 0) {
+				auto it = storageRef.loadQueue.begin();
+
+				storageRef.assets[it->first] = it->second();
+				AX_CORE_LOG_TRACE("{} loaded: {}", typeid(T).name(), it->first.uuid.toString());
+
+				storageRef.loadQueue.erase(it);
+				maxItems--;
 			}
-			storageRef.loadQueue.clear();
+		}
+
+		template<typename T>
+		static void removeAssetFromStorage(UUID handle) {
+			auto& s = storage<T>();
+			std::lock_guard<std::recursive_mutex> lock(s.mutex);
+			s.assets.erase(handle);
+			s.handleToPath.erase(handle);
+		}
+
+		template<typename T>
+		static size_t getPendingCount() {
+			std::lock_guard<std::recursive_mutex> lock(storage<T>().mutex);
+			return storage<T>().loadQueue.size();
 		}
 
 	};

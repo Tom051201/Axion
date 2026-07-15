@@ -32,8 +32,6 @@ namespace Silica {
 		Color m_checkColor;
 		std::function<void(bool)> m_onCheckChanged;
 
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
-
 	};
 
 }

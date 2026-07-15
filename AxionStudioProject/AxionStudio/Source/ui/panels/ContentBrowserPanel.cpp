@@ -1,10 +1,13 @@
 #include "ContentBrowserPanel.h"
 
+#include <chrono>
+
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
+#include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
-#include "AxionEngine/Source/core/Application.h"
+#include "AxionEngine/Source/input/Input.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
@@ -26,121 +29,9 @@
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
 #include "AxionStudio/Vendor/Silica/include/SWrapBox.h"
 #include "AxionStudio/Vendor/Silica/include/SScrollCatcher.h"
-
-#include <chrono>
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 namespace Axion {
-
-	// ----- CUSTOM WIDGETS -----
-	class SAssetDropZone : public Silica::SWidget {
-	public:
-
-		struct Args {
-			Silica::FontAtlas* font;
-			Silica::WidgetPtr child;
-		};
-
-		void construct(const Args& args) {
-			m_child = args.child;
-			m_font = args.font;
-		}
-
-		void computeDesiredSize() override {
-			if (m_child) {
-				m_child->computeDesiredSize();
-				m_desiredSize = m_child->getDesiredSize();
-			}
-		}
-
-		void arrangeChildren(const Silica::Geometry& geo) override {
-			SWidget::arrangeChildren(geo);
-			if (m_child) m_child->arrangeChildren(geo);
-		}
-
-		void onDraw(Silica::DrawList& outDrawList, const Silica::Geometry& allocatedGeometry) const override {
-			if (m_child) m_child->onDraw(outDrawList, m_child->getAllocatedGeometry());
-
-			// -- Draw Tooltip --
-			if (!s_draggedAssetPath.empty() && m_font) {
-				std::string tag = s_draggedAssetPath.filename().string();
-				Silica::Vec2 mousePos = Silica::Renderer::s_mousePosition;
-				mousePos.x += 15.0f;
-				mousePos.y += 15.0f;
-
-				float textWidth = 0.0f;
-				for (char c : tag) textWidth += m_font->getGlyph(c).advanceX;
-
-				Silica::Geometry bgGeo = { mousePos, {textWidth + 16.0f, 26.0f} };
-
-				uint32_t startIndex = (uint32_t)outDrawList.vertices.size();
-				Silica::Color color(40, 40, 40, 230);
-				outDrawList.vertices.push_back({ {bgGeo.position.x, bgGeo.position.y}, {0, 0}, color });
-				outDrawList.vertices.push_back({ {bgGeo.position.x + bgGeo.size.x, bgGeo.position.y}, {0, 0}, color });
-				outDrawList.vertices.push_back({ {bgGeo.position.x + bgGeo.size.x, bgGeo.position.y + bgGeo.size.y}, {0, 0}, color });
-				outDrawList.vertices.push_back({ {bgGeo.position.x, bgGeo.position.y + bgGeo.size.y}, {0, 0}, color });
-				outDrawList.indices.push_back(startIndex + 0); outDrawList.indices.push_back(startIndex + 1); outDrawList.indices.push_back(startIndex + 2);
-				outDrawList.indices.push_back(startIndex + 0); outDrawList.indices.push_back(startIndex + 2); outDrawList.indices.push_back(startIndex + 3);
-				if (outDrawList.commands.empty()) outDrawList.commands.push_back({ 0, 0, 0 });
-				outDrawList.commands.back().indexCount += 6;
-
-				// -- Draw Text --
-				float cursorX = mousePos.x + 8.0f;
-				float baselineY = mousePos.y + 18.0f;
-				for (char c : tag) {
-					const Silica::Glyph& g = m_font->getGlyph(c);
-					if (g.size.x > 0 && g.size.y > 0) {
-						float x0 = cursorX + g.offset.x; float y0 = baselineY + g.offset.y;
-						float x1 = x0 + g.size.x;        float y1 = y0 + g.size.y;
-						uint32_t iIdx = (uint32_t)outDrawList.vertices.size();
-						outDrawList.vertices.push_back({ {x0, y0}, {g.uvMin.x, g.uvMin.y}, Silica::Color::white() });
-						outDrawList.vertices.push_back({ {x1, y0}, {g.uvMax.x, g.uvMin.y}, Silica::Color::white() });
-						outDrawList.vertices.push_back({ {x1, y1}, {g.uvMax.x, g.uvMax.y}, Silica::Color::white() });
-						outDrawList.vertices.push_back({ {x0, y1}, {g.uvMin.x, g.uvMax.y}, Silica::Color::white() });
-						outDrawList.indices.push_back(iIdx + 0); outDrawList.indices.push_back(iIdx + 1); outDrawList.indices.push_back(iIdx + 2);
-						outDrawList.indices.push_back(iIdx + 0); outDrawList.indices.push_back(iIdx + 2); outDrawList.indices.push_back(iIdx + 3);
-						if (outDrawList.commands.empty()) outDrawList.commands.push_back({ 0, 0, 0 });
-						outDrawList.commands.back().indexCount += 6;
-					}
-					cursorX += g.advanceX;
-				}
-			}
-		}
-
-		Silica::EventReply onMouseWheel(const Silica::Geometry& geom, const Silica::Vec2& pos, float delta) override {
-			if (m_child) return m_child->onMouseWheel(m_child->getAllocatedGeometry(), pos, delta);
-			return Silica::EventReply::unhandled();
-		}
-
-		Silica::EventReply onMouseButtonDown(const Silica::Geometry& geom, const Silica::Vec2& pos, Silica::MouseButton btn) override {
-			Silica::EventReply reply = Silica::EventReply::unhandled();
-			if (m_child) reply = m_child->onMouseButtonDown(m_child->getAllocatedGeometry(), pos, btn);
-			return reply;
-		}
-
-		Silica::EventReply onMouseMove(const Silica::Geometry& geom, const Silica::Vec2& pos) override {
-			if (!s_draggedAssetPath.empty()) {
-				Application::get().getCursor().setCursor(CursorType::Hand);
-			}
-			if (m_child) return m_child->onMouseMove(m_child->getAllocatedGeometry(), pos);
-			return Silica::EventReply::unhandled();
-		}
-
-		Silica::EventReply onMouseButtonUp(const Silica::Geometry& geom, const Silica::Vec2& pos, Silica::MouseButton btn) override {
-			if (!s_draggedAssetPath.empty()) {
-				s_draggedAssetPath = "";
-				Application::get().getCursor().setCursor(CursorType::Arrow);
-			}
-			Silica::EventReply reply = Silica::EventReply::unhandled();
-			if (m_child) reply = m_child->onMouseButtonUp(m_child->getAllocatedGeometry(), pos, btn);
-			return reply;
-		}
-
-	private:
-
-		Silica::FontAtlas* m_font = nullptr;
-		Silica::WidgetPtr m_child;
-
-	};
 
 	class SAssetClickBox : public Silica::SWidget {
 	public:
@@ -157,22 +48,13 @@ namespace Axion {
 			m_onClick = args.onClick;
 		}
 
-		void computeDesiredSize() override {
-			if (m_child) {
-				m_child->computeDesiredSize();
-				m_desiredSize = m_child->getDesiredSize();
-			}
-		}
+		void computeDesiredSize() override { if (m_child) { m_child->computeDesiredSize(); m_desiredSize = m_child->getDesiredSize(); } }
 
-		void arrangeChildren(const Silica::Geometry& geom) override {
-			SWidget::arrangeChildren(geom);
-			if (m_child) m_child->arrangeChildren(geom);
-		}
+		void arrangeChildren(const Silica::Geometry& geom) override { SWidget::arrangeChildren(geom); if (m_child) m_child->arrangeChildren(geom); }
 
 		void onDraw(Silica::DrawList& dl, const Silica::Geometry& geom) const override {
-			// -- Draw Background --
 			Silica::Color color = Silica::Color::transparent();
-			if (m_isMouseDown) color = Silica::Color(70, 130, 200, 150);
+			if (m_isMouseDown) { color = Silica::GetTheme().Accent_Primary; color.setAlpha(150); }
 			else if (m_isHovered) color = Silica::Color(255, 255, 255, 20);
 
 			if (color.a() > 0) {
@@ -186,7 +68,6 @@ namespace Axion {
 				if (dl.commands.empty()) dl.commands.push_back({ 0, 0, 0 });
 				dl.commands.back().indexCount += 6;
 			}
-
 			if (m_child) m_child->onDraw(dl, m_child->getAllocatedGeometry());
 		}
 
@@ -198,23 +79,41 @@ namespace Axion {
 		Silica::EventReply onMouseButtonDown(const Silica::Geometry& geom, const Silica::Vec2& pos, Silica::MouseButton btn) override {
 			Silica::EventReply reply = Silica::EventReply::unhandled();
 			if (m_child) reply = m_child->onMouseButtonDown(m_child->getAllocatedGeometry(), pos, btn);
-			if (btn == Silica::MouseButton::Left && geom.contains(pos)) m_isMouseDown = true;
+			if (reply.isHandled) return reply;
+
+			if (btn == Silica::MouseButton::Left && geom.contains(pos)) {
+				m_isMouseDown = true;
+				Silica::SWidget::setCapturedWidget(this);
+				return Silica::EventReply::handled();
+			}
 			return reply;
 		}
 
 		Silica::EventReply onMouseMove(const Silica::Geometry& geom, const Silica::Vec2& pos) override {
 			m_isHovered = geom.contains(pos);
-			if (m_isMouseDown && m_onDragStart) m_onDragStart();
+
+			if (m_isMouseDown && m_onDragStart) {
+				m_onDragStart();
+				m_isMouseDown = false;
+				Silica::SWidget::setCapturedWidget(nullptr);
+			}
+
 			if (m_child) return m_child->onMouseMove(m_child->getAllocatedGeometry(), pos);
 			return Silica::EventReply::unhandled();
 		}
 
 		Silica::EventReply onMouseButtonUp(const Silica::Geometry& geom, const Silica::Vec2& pos, Silica::MouseButton btn) override {
-			m_isMouseDown = false;
+			bool wasClicked = m_isMouseDown;
+
+			if (m_isMouseDown) {
+				m_isMouseDown = false;
+				Silica::SWidget::setCapturedWidget(nullptr);
+			}
+
 			Silica::EventReply reply = Silica::EventReply::unhandled();
 			if (m_child) reply = m_child->onMouseButtonUp(m_child->getAllocatedGeometry(), pos, btn);
 
-			if (!reply.isHandled && btn == Silica::MouseButton::Left && geom.contains(pos) && m_onClick) {
+			if (!reply.isHandled && btn == Silica::MouseButton::Left && wasClicked && geom.contains(pos) && m_onClick) {
 				return m_onClick();
 			}
 			return reply;
@@ -227,6 +126,53 @@ namespace Axion {
 		std::function<Silica::EventReply()> m_onClick;
 		bool m_isMouseDown = false;
 		bool m_isHovered = false;
+
+	};
+
+	class SMouseNavCatcher : public Silica::SWidget {
+	public:
+
+		struct Args {
+			std::function<void()> onBack;
+			std::function<void()> onForward;
+			Silica::WidgetPtr child;
+		};
+
+		void construct(const Args& args) {
+			m_onBack = args.onBack;
+			m_onForward = args.onForward;
+			m_child = args.child;
+		}
+
+		void computeDesiredSize() override { if (m_child) { m_child->computeDesiredSize(); m_desiredSize = m_child->getDesiredSize(); } }
+		void arrangeChildren(const Silica::Geometry& geo) override { SWidget::arrangeChildren(geo); if (m_child) m_child->arrangeChildren(geo); }
+		void onDraw(Silica::DrawList& dl, const Silica::Geometry& geo) const override { if (m_child) m_child->onDraw(dl, geo); }
+		Silica::EventReply onMouseMove(const Silica::Geometry& geo, const Silica::Vec2& pos) override { if (m_child) return m_child->onMouseMove(geo, pos); return Silica::EventReply::unhandled(); }
+		Silica::EventReply onMouseWheel(const Silica::Geometry& geo, const Silica::Vec2& pos, float delta) override { if (m_child) return m_child->onMouseWheel(geo, pos, delta); return Silica::EventReply::unhandled(); }
+		Silica::EventReply onMouseButtonUp(const Silica::Geometry& geo, const Silica::Vec2& pos, Silica::MouseButton btn) override { if (m_child) return m_child->onMouseButtonUp(geo, pos, btn); return Silica::EventReply::unhandled(); }
+
+		Silica::EventReply onMouseButtonDown(const Silica::Geometry& geo, const Silica::Vec2& pos, Silica::MouseButton btn) override {
+			Silica::EventReply reply = Silica::EventReply::unhandled();
+			if (m_child) reply = m_child->onMouseButtonDown(m_child->getAllocatedGeometry(), pos, btn);
+			if (reply.isHandled) return reply;
+
+			if (btn == Silica::MouseButton::Side1 && m_onBack) {
+				m_onBack();
+				return Silica::EventReply::handled();
+			}
+			if (btn == Silica::MouseButton::Side2 && m_onForward) {
+				m_onForward();
+				return Silica::EventReply::handled();
+			}
+
+			return Silica::EventReply::unhandled();
+		}
+
+	private:
+
+		std::function<void()> m_onBack;
+		std::function<void()> m_onForward;
+		Silica::WidgetPtr m_child;
 
 	};
 
@@ -243,12 +189,10 @@ namespace Axion {
 		}
 	}
 
-	Silica::WidgetPtr ContentBrowser::getWidget(Silica::FontAtlas* font) {
-		m_font = font;
-
+	Silica::WidgetPtr ContentBrowser::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::Color(30, 30, 30, 255)
+				.borderThickness = Silica::GetTheme().Border_Thickness
 			});
 			rebuildUI_Internal();
 		}
@@ -273,8 +217,7 @@ namespace Axion {
 				.horizontalAlign = Silica::HorizontalAlign::Center,
 				.verticalAlign = Silica::VerticalAlign::Center,
 				.child = Silica::MakeWidget<Silica::STextBlock>({
-					.text = "No Project Loaded.\nPlease load or create a project first.",
-					.font = m_font
+					.text = "No Project Loaded.\nPlease load or create a project first."
 				})
 			}));
 			return;
@@ -285,7 +228,27 @@ namespace Axion {
 			.contentArea = buildContentArea()
 		});
 
-		Silica::WidgetPtr finalContent = mainLayout;
+		auto navCatcher = Silica::MakeWidget<SMouseNavCatcher>({
+			.onBack = [this]() {
+				if (!m_backHistory.empty()) {
+					m_forwardHistory.push_back(m_currentDirectory);
+					m_currentDirectory = m_backHistory.back();
+					m_backHistory.pop_back();
+					refresh();
+				}
+			},
+			.onForward = [this]() {
+				if (!m_forwardHistory.empty()) {
+					m_backHistory.push_back(m_currentDirectory);
+					m_currentDirectory = m_forwardHistory.back();
+					m_forwardHistory.pop_back();
+					refresh();
+				}
+			},
+			.child = mainLayout
+		});
+
+		Silica::WidgetPtr finalContent = navCatcher;
 
 		// -- Delete Popup Modal --
 		if (m_openDeletePopup) {
@@ -310,7 +273,7 @@ namespace Axion {
 			return Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 4.0f },
 				.enabled = !isDisabled,
-				.color = Silica::Color(45, 45, 45, 0),
+				.color = Silica::Color::transparent(),
 				.hoverColor = Silica::Color(100, 100, 100, 150),
 				.disabledColor = Silica::Color::transparent(),
 				.onClick = [onClick]() {
@@ -325,7 +288,9 @@ namespace Axion {
 			});
 		};
 
-		auto makeSpacer = []() { return Silica::MakeWidget<Silica::SBox>({ .backgroundColor = Silica::Color::transparent() }); };
+		auto makeSpacer = []() { return Silica::MakeWidget<Silica::SBox>({
+			.backgroundColor = Silica::Color::transparent()
+		}); };
 
 
 
@@ -375,7 +340,6 @@ namespace Axion {
 			.child = Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = m_searchString,
 				.hintText = "Search...",
-				.font = m_font,
 				.onTextCommitted = [this](const std::string& val) {
 					m_searchString = val;
 					rebuildUI();
@@ -392,7 +356,7 @@ namespace Axion {
 				rebuildUI();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X" })
 		});
 
 		// -- Only Engine Assets Checkbox --
@@ -408,7 +372,7 @@ namespace Axion {
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Assets Only", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Assets Only" })
 				})}
 			}
 		});
@@ -426,7 +390,7 @@ namespace Axion {
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Show Ext", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Show Ext" })
 				})}
 			}
 		});
@@ -435,7 +399,8 @@ namespace Axion {
 		// -- Assemble --
 		return Silica::MakeWidget<Silica::SBox>({
 			.padding = { 5.0f, 5.0f },
-			.backgroundColor = Silica::Color(25, 25, 25, 255),
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
+//			.hoverColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 8.0f,
 				.slots = {
@@ -471,40 +436,69 @@ namespace Axion {
 
 			if (path.extension() == ".axscene") {
 				ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
-					.onClick = [path]() { ProjectManager::getProject()->setDefaultScene(path); ProjectManager::saveProject(ProjectManager::getProjectFilePath()); return Silica::EventReply::handled(); },
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Set as Default Scene", .font = m_font})
+					.padding = {8, 4},
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::GetTheme().Accent_Primary,
+					.onClick = [path]() {
+						ProjectManager::getProject()->setDefaultScene(path);
+						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Set as Default Scene" })
 				}) });
 			}
 
 			if (path.extension() == ".axmat") {
 				ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
-					.onClick = [path]() { AssetManager::reload<Material>(AssetManager::getAssetUUID(path)); return Silica::EventReply::handled(); },
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Reload Material", .font = m_font})
+					.padding = {8, 4},
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::GetTheme().Accent_Primary,
+					.onClick = [path]() {
+						AssetManager::reload<Material>(AssetManager::getAssetUUID(path));
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Reload Material" })
 				}) });
 			}
 
 			ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-				.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
-				.onClick = [path]() { PlatformUtils::showInFileExplorer(path); return Silica::EventReply::handled(); },
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Show in Explorer", .font = m_font})
+				.padding = {8, 4},
+				.color = Silica::Color::transparent(),
+				.hoverColor = Silica::GetTheme().Accent_Primary,
+				.onClick = [path]() {
+					PlatformUtils::showInFileExplorer(path);
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Show in Explorer" })
 			}) });
 
 			ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-				.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+				.padding = {8, 4},
+				.color = Silica::Color::transparent(),
+				.hoverColor = Silica::GetTheme().Accent_Primary,
 				.onClick = [this, path, item]() {
-					m_itemBeingRenamed = path; m_itemRenameString = path.filename().string(); m_startRenaming = true; rebuildUI(); return Silica::EventReply::handled();
+					m_itemBeingRenamed = path;
+					m_itemRenameString = path.filename().string();
+					m_startRenaming = true;
+					rebuildUI();
+					return Silica::EventReply::handled();
 				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Rename", .font = m_font})
+				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Rename" })
 			}) });
 
 			ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-				.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(200, 50, 50, 255),
+				.padding = {8, 4},
+				.color = Silica::Color::transparent(),
+				.hoverColor = Silica::GetTheme().Accent_Danger,
 				.onClick = [this, path]() {
-					m_pendingDelete = path; m_relatedFilesToDelete = findRelatedFiles(path); m_deleteRelatedFiles = true; m_openDeletePopup = true; rebuildUI(); return Silica::EventReply::handled();
+					m_pendingDelete = path;
+					m_relatedFilesToDelete = findRelatedFiles(path);
+					m_deleteRelatedFiles = true;
+					m_openDeletePopup = true;
+					rebuildUI();
+					return Silica::EventReply::handled();
 				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete", .font = m_font})
+				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Delete" })
 			}) });
 
 
@@ -515,18 +509,51 @@ namespace Axion {
 					.explicitSize = Silica::Vec2(m_thumbnailSize + 30.0f, 0.0f),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_itemRenameString,
-						.font = m_font,
 						.onTextCommitted = [this, path, item](const std::string& newText) {
 							std::filesystem::path newPath = path.parent_path() / newText;
 							if (!item.isDir && path.has_extension()) {
 								std::string ext = path.extension().string();
 								if (newPath.extension().string() != ext) newPath += ext;
 							}
+
 							std::error_code ec;
 							if (!std::filesystem::exists(newPath, ec)) {
+
+								std::filesystem::path oldLayoutPath, newLayoutPath;
+								std::filesystem::path oldCSPath, newCSPath;
+								if (path.extension() == ".axvs") {
+									oldLayoutPath = path.parent_path() / (path.stem().string() + "_layout.axvslayout");
+									newLayoutPath = newPath.parent_path() / (newPath.stem().string() + "_layout.axvslayout");
+
+									std::filesystem::path scriptsDir = ProjectManager::getProject()->getProjectPath() / "Scripts";
+									oldCSPath = scriptsDir / (path.stem().string() + ".cs");
+									newCSPath = scriptsDir / (newPath.stem().string() + ".cs");
+								}
+
+								// -- Rename Main Asset --
 								std::filesystem::rename(path, newPath, ec);
+
+								if (!ec) {
+									// -- Rename Layout File --
+									if (!oldLayoutPath.empty() && std::filesystem::exists(oldLayoutPath)) {
+										std::error_code layoutEc;
+										std::filesystem::rename(oldLayoutPath, newLayoutPath, layoutEc);
+									}
+
+									// -- Rename C# Script --
+									if (!oldCSPath.empty() && std::filesystem::exists(oldCSPath)) {
+										std::error_code csEc;
+										std::filesystem::rename(oldCSPath, newCSPath, csEc);
+									}
+
+									// -- Notify Editor That Rename Occurred --
+									if (m_onAssetRenamed) {
+										m_onAssetRenamed(path, newPath);
+									}
+								}
 							}
-							resetRenaming(); refresh();
+							resetRenaming();
+							refresh();
 						}
 					})
 				});
@@ -537,7 +564,7 @@ namespace Axion {
 					.explicitSize = Silica::Vec2(m_thumbnailSize + 30.0f, 0.0f),
 					.child = Silica::MakeWidget<Silica::SAlign>({
 						.horizontalAlign = Silica::HorizontalAlign::Center,
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = displayName, .font = m_font})
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = displayName })
 					})
 				});
 			}
@@ -546,7 +573,7 @@ namespace Axion {
 			// -- Clickable Folder / File --
 			auto assetClickBox = Silica::MakeWidget<SAssetClickBox>({
 				.onDragStart = [path]() {
-					s_draggedAssetPath = path;
+					Silica::DragDrop::beginDrag("AssetPath", path, path.filename().string(), Silica::GetTheme().Font_Default);
 				},
 				.onClick = [this, path, item]() {
 					auto now = std::chrono::steady_clock::now();
@@ -574,7 +601,10 @@ namespace Axion {
 					.slots = {
 						{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 							.horizontalAlign = Silica::HorizontalAlign::Center,
-							.child = Silica::MakeWidget<Silica::SImage>({.textureID = iconTex, .tint = Silica::Color::white(), .desiredSize = {m_thumbnailSize, m_thumbnailSize} })
+							.child = Silica::MakeWidget<Silica::SImage>({
+								.textureID = iconTex,
+								.desiredSize = {m_thumbnailSize, m_thumbnailSize} 
+							})
 						})},
 						{ {0,0}, labelWidget }
 					}
@@ -586,7 +616,12 @@ namespace Axion {
 				.openOnRightClick = true,
 				.openAtMousePos = true,
 				.anchorContent = assetClickBox,
-				.menuContent = Silica::MakeWidget<Silica::SBox>({.padding = {5,5}, .backgroundColor = Silica::Color(45, 45, 45, 255), .child = ctxMenu })
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = {5,5},
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = ctxMenu
+				})
 			});
 
 			grid->addChild(itemBox);
@@ -596,7 +631,9 @@ namespace Axion {
 		auto bgMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
 
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				std::string baseName = "NewVisualScript";
 				std::filesystem::path newScriptPath = m_currentDirectory / (baseName + ".axvs");
@@ -615,13 +652,15 @@ namespace Axion {
 				refresh();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Visual Script", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Visual Script" })
 		}) });
 
 
 		// -- Audio Import --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
 				std::filesystem::path absPath = std::filesystem::exists(audioDir) ?
@@ -632,7 +671,7 @@ namespace Axion {
 					m_audioImportModal = std::make_shared<AudioImportModal>();
 					m_audioImportModal->presetFromFile(absPath);
 
-					auto modalWidget = m_audioImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_audioImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_audioImportModal = nullptr;
@@ -644,18 +683,20 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Audio", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Import Audio" })
 		}) });
 
 
 		// -- Material Import --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				if (m_openGlobalModal) {
 					m_materialImportModal = std::make_shared<MaterialImportModal>();
 
-					auto modalWidget = m_materialImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_materialImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_materialImportModal = nullptr;
@@ -667,13 +708,15 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Material", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Material" })
 		}) });
 
 
 		// -- Mesh Import --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
 				std::filesystem::path absPath = std::filesystem::exists(meshDir) ?
@@ -684,7 +727,7 @@ namespace Axion {
 					m_meshImportModal = std::make_shared<MeshImportModal>();
 					m_meshImportModal->presetFromFile(absPath);
 
-					auto modalWidget = m_meshImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_meshImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_meshImportModal = nullptr;
@@ -697,18 +740,20 @@ namespace Axion {
 
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Mesh", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Mesh" })
 		}) });
 
 
 		// -- Create Physics Material --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				if (m_openGlobalModal) {
 					m_physicsMaterialModal = std::make_shared<PhysicsMaterialImportModal>();
 
-					auto modalWidget = m_physicsMaterialModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_physicsMaterialModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_physicsMaterialModal = nullptr;
@@ -720,18 +765,20 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Physics Material", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Physics Material" })
 		}) });
 
 
 		// -- Create Pipeline --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				if (m_openGlobalModal) {
 					m_pipelineImportModal = std::make_shared<PipelineImportModal>();
 
-					auto modalWidget = m_pipelineImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_pipelineImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_pipelineImportModal = nullptr;
@@ -743,18 +790,20 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Pipeline", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Pipeline" })
 		}) });
 
 
 		// -- Shader Import --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				if (m_openGlobalModal) {
 					m_shaderImportModal = std::make_shared<ShaderImportModal>();
 
-					auto modalWidget = m_shaderImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_shaderImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_shaderImportModal = nullptr;
@@ -766,18 +815,20 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Shader", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Shader" })
 		}) });
 
 
 		// -- Create Skybox --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				if (m_openGlobalModal) {
 					m_skyboxImportModal = std::make_shared<SkyboxImportModal>();
 
-					auto modalWidget = m_skyboxImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_skyboxImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_skyboxImportModal = nullptr;
@@ -789,18 +840,20 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Skybox", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Skybox" })
 		}) });
 
 
 		// -- Texture2D Import --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				if (m_openGlobalModal) {
 					m_texture2DImportModal = std::make_shared<Texture2DImportModal>();
 
-					auto modalWidget = m_texture2DImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_texture2DImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_texture2DImportModal = nullptr;
@@ -812,18 +865,20 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture 2D", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture 2D" })
 		}) });
 
 
 		// -- Texture Cube Import --
 		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::Color(70, 130, 200, 255),
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
 				if (m_openGlobalModal) {
 					m_textureCubeImportModal = std::make_shared<TextureCubeImportModal>();
 
-					auto modalWidget = m_textureCubeImportModal->getWidget(m_font, [this]() {
+					auto modalWidget = m_textureCubeImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
 							if (m_closeGlobalModal) m_closeGlobalModal();
 							m_textureCubeImportModal = nullptr;
@@ -835,7 +890,7 @@ namespace Axion {
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture Cube", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture Cube" })
 		}) });
 
 
@@ -848,39 +903,36 @@ namespace Axion {
 				.child = grid
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {5,5}, .backgroundColor = Silica::Color(45, 45, 45, 255),
+				.padding = {5,5},
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = bgMenuContent
 			})
 		});
 
-		auto dropZone = Silica::MakeWidget<SAssetDropZone>({
-			.font = m_font,
-			.child = backgroundMenu,
-		});
-
 		auto zoomBox = Silica::MakeWidget<Silica::SScrollCatcher>({
 			.onMouseWheel = [this](float delta) {
-				m_thumbnailSize += delta * 5.0f;
-				m_thumbnailSize = std::clamp(m_thumbnailSize, 32.0f, 256.0f);
-				m_showNames = m_thumbnailSize >= 50.0f;
-				rebuildUI();
-				return Silica::EventReply::handled();
+				bool isCtrlDown = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
+				if (isCtrlDown) {
+					m_thumbnailSize += delta * 5.0f;
+					m_thumbnailSize = std::clamp(m_thumbnailSize, 32.0f, 256.0f);
+					m_showNames = m_thumbnailSize >= 50.0f;
+					rebuildUI();
+					return Silica::EventReply::handled();
+				}
+				return Silica::EventReply::unhandled();
 			},
-			.child = dropZone,
+			.child = backgroundMenu
 		});
 
 		return zoomBox;
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildDeleteModal() {
-		auto overlayBg = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(0, 0, 0, 150)
-		});
-
 		auto modalContent = Silica::MakeWidget<Silica::SVerticalBox>({
 			.spacing = 10.0f,
 			.slots = {
-				{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Are you sure you want to delete\n" + m_pendingDelete->filename().string() + "?", .font = m_font}) }
+				{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Are you sure you want to delete\n" + m_pendingDelete->filename().string() + "?" }) }
 			}
 		});
 
@@ -892,7 +944,7 @@ namespace Axion {
 						.initialCheck = m_deleteRelatedFiles,
 						.onCheckChanged = [this](bool val) { m_deleteRelatedFiles = val; rebuildUI(); }
 					})},
-					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Delete related files", .font = m_font})}
+					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Delete related files" })}
 				}
 			}) });
 		}
@@ -901,27 +953,39 @@ namespace Axion {
 			.spacing = 10.0f,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 20.0f, 8.0f }, .color = Silica::Color(150, 50, 50, 255),
+					.padding = { 20.0f, 8.0f },
+					.color = Silica::GetTheme().Accent_Danger,
 					.onClick = [this]() {
 						if (m_onAssetDeleted) m_onAssetDeleted(*m_pendingDelete);
 						if (isEngineAssetExtension(*m_pendingDelete)) {
 							UUID assetUUID = AssetManager::getAssetUUID(*m_pendingDelete);
-							if (assetUUID.isValid()) { AssetManager::removeAsset(assetUUID); ProjectManager::saveProject(ProjectManager::getProjectFilePath()); }
+							if (assetUUID.isValid()) {
+								AssetManager::removeAsset(assetUUID);
+								ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+							}
 						}
 						deletePath(*m_pendingDelete);
-						if (m_deleteRelatedFiles) { for (const auto& rel : m_relatedFilesToDelete) deletePath(rel); }
-						m_pendingDelete.reset(); m_relatedFilesToDelete.clear(); m_openDeletePopup = false; refresh();
+						if (m_deleteRelatedFiles) {
+							for (const auto& rel : m_relatedFilesToDelete) deletePath(rel);
+						}
+						if (m_pendingDelete->extension() == ".axvs" && m_deleteRelatedFiles) {
+							ProjectManager::triggerScriptAssemblyLoad();
+						}
+						m_pendingDelete.reset();
+						m_relatedFilesToDelete.clear();
+						m_openDeletePopup = false;
+						refresh();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete" })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 20.0f, 8.0f }, .color = Silica::Color(80, 80, 80, 255),
+					.padding = { 20.0f, 8.0f },
 					.onClick = [this]() {
 						m_pendingDelete.reset(); m_openDeletePopup = false; rebuildUI();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
 				})}
 			}
 		});
@@ -930,7 +994,6 @@ namespace Axion {
 
 		auto modalBox = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 20.0f, 20.0f },
-			.backgroundColor = Silica::Color(40, 40, 40, 255),
 			.child = modalContent
 		});
 
@@ -1011,10 +1074,41 @@ namespace Axion {
 
 	std::vector<std::filesystem::path> ContentBrowser::findRelatedFiles(const std::filesystem::path& path) {
 		std::vector<std::filesystem::path> related;
+
 		if (path.extension() == ".axvs") {
-			std::filesystem::path layoutPath = path.parent_path() / (path.stem().string() + "_layout.json");
-			if (std::filesystem::exists(layoutPath)) related.push_back(layoutPath);
+			// -- Delete Layout File --
+			std::filesystem::path layoutPath = path.parent_path() / (path.stem().string() + "_layout.axvslayout");
+			if (std::filesystem::exists(layoutPath)) {
+				related.push_back(layoutPath);
+			}
+
+			// -- Delete C# Script --
+			if (ProjectManager::hasProject()) {
+				std::filesystem::path scriptsDir = ProjectManager::getProject()->getProjectPath() / "Scripts";
+				std::filesystem::path csPath = scriptsDir / (path.stem().string() + ".cs");
+				if (std::filesystem::exists(csPath)) {
+					related.push_back(csPath);
+				}
+			}
 		}
+
 		return related;
 	}
+
+	void ContentBrowser::loadSettings(const YAML::Node& editorConfig) {
+		if (auto cbConfig = editorConfig["ContentBrowser"]) {
+			if (cbConfig["ShowFileExtensions"]) m_showFileExtensions = cbConfig["ShowFileExtensions"].as<bool>();
+			if (cbConfig["OnlyEngineAssets"]) m_onlyEngineAssets = cbConfig["OnlyEngineAssets"].as<bool>();
+			if (cbConfig["ThumbnailSize"]) m_thumbnailSize = cbConfig["ThumbnailSize"].as<float>();
+		}
+	}
+
+	void ContentBrowser::saveSettings(YAML::Emitter& out) const {
+		out << YAML::Key << "ContentBrowser" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "ShowFileExtensions" << YAML::Value << m_showFileExtensions;
+		out << YAML::Key << "OnlyEngineAssets" << YAML::Value << m_onlyEngineAssets;
+		out << YAML::Key << "ThumbnailSize" << YAML::Value << m_thumbnailSize;
+		out << YAML::EndMap;
+	}
+
 }

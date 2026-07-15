@@ -10,6 +10,7 @@
 #include "AxionStudio/Vendor/Silica/include/SSliderFloat.h"
 #include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
 #include "AxionStudio/Vendor/Silica/include/SOverlay.h"
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
@@ -29,12 +30,10 @@ namespace Axion {
 		m_onStop = onStop;
 	}
 
-	Silica::WidgetPtr ViewportPanel::getWidget(Silica::FontAtlas* font) {
-		m_font = font;
-
+	Silica::WidgetPtr ViewportPanel::getWidget() {
 		m_toolbarContainer = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 2.0f, 4.0f },
-			.backgroundColor = Silica::Color(25, 25, 25, 255)
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 		});
 
 		rebuildToolbar();
@@ -42,18 +41,55 @@ namespace Axion {
 		// -- Create Viewport Image And Stats Overlay --
 		m_statsText = Silica::MakeWidget<Silica::STextBlock>({
 			.text = "Stats",
-			.color = Silica::Color(0, 255, 0, 255),
-			.font = m_font
+			.color = Silica::GetTheme().Text_Success
 		});
 
 		m_viewportImage = Silica::MakeWidget<Silica::SImage>({
 			.textureID = 0,
-			.tint = Silica::Color::white(),
 			.desiredSize = { 1280.0f, 720.0f }
 		});
 
 		m_viewportContainer = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(20, 20, 20, 255),
+			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.onDragOver = [](const Silica::DragDropPayload& payload) {
+				if (payload.type == "AssetPath") {
+					auto path = std::any_cast<std::filesystem::path>(payload.data);
+					if (path.extension() == ".axsky" || path.extension() == ".axscene" || path.extension() == ".axprefab" || path.extension() == ".axvs") {
+						return Silica::EventReply::handled();
+					}
+				}
+				return Silica::EventReply::unhandled();
+			},
+			.onDrop = [this](const Silica::DragDropPayload& payload) {
+				if (payload.type == "AssetPath") {
+					auto path = std::any_cast<std::filesystem::path>(payload.data);
+					if (path.extension() == ".axsky" && m_onSkyboxDropped) {
+						EditorActionQueue::push([this, path]() { m_onSkyboxDropped(path); });
+						return Silica::EventReply::handled();
+					}
+					else if (path.extension() == ".axscene" && m_onSceneDropped) {
+						EditorActionQueue::push([this, path]() { m_onSceneDropped(path); });
+						return Silica::EventReply::handled();
+					}
+					else if (path.extension() == ".axprefab" && m_onPrefabDropped) {
+						Silica::Vec2 globalMouse = Silica::Renderer::getMousePosition();
+						Silica::Vec2 viewPos = getViewportPosition();
+						Silica::Vec2 localMouse = { globalMouse.x - viewPos.x, globalMouse.y - viewPos.y };
+
+						EditorActionQueue::push([this, path, localMouse]() {
+							m_onPrefabDropped(path, localMouse);
+						});
+						return Silica::EventReply::handled();
+					}
+					else if (path.extension() == ".axvs" && m_onVisualScriptDropped) {
+						EditorActionQueue::push([this, path]() {
+							m_onVisualScriptDropped(path);
+						});
+						return Silica::EventReply::handled();
+					}
+				}
+				return Silica::EventReply::unhandled();
+			},
 			.child = Silica::MakeWidget<Silica::SOverlay>({
 				.children = {
 					m_viewportImage,
@@ -96,7 +132,7 @@ namespace Axion {
 			return Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 4.0f },
 				.enabled = !isDisabled,
-				.color = Silica::Color(45, 45, 45, 0),
+				.color = Silica::Color::transparent(),
 				.hoverColor = Silica::Color(100, 100, 100, 150),
 				.disabledColor = Silica::Color::transparent(),
 				.onClick = [onClick]() {
@@ -115,7 +151,7 @@ namespace Axion {
 			return Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 10.0f,
 				.slots = {
-					{ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{ 100,0 }, .child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .font = m_font}) }) },
+					{ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{ 100,0 }, .child = Silica::MakeWidget<Silica::STextBlock>({.text = label }) }) },
 					{ {1,0}, Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = val, .minValue = min, .maxValue = max, .onValueChanged = [&val](float v) { val = v; } }) }
 				}
 			});
@@ -133,15 +169,16 @@ namespace Axion {
 		// -- Camera Settings Menu --
 		auto camSettingsMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
-			.anchorContent = Silica::MakeWidget<Silica::SBox>({
+			.anchorContent = Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 4.0f },
-				.backgroundColor = Silica::Color(45, 45, 45, 255),
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cam", .font = m_font})
+				.color = Silica::Color::transparent(),
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cam" })
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
 				.padding = { 10.0f, 10.0f },
 				.explicitSize = Silica::Vec2{ 250.0f, 0.0f },
-				.backgroundColor = Silica::Color(35, 35, 35, 255),
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 8.0f,
 					.slots = {

@@ -1,0 +1,88 @@
+[SNodeEditor_v1]
+Pan 1939.95 1941.43
+Zoom 1.1
+[Node]
+ID 1
+Title On Create
+Pos -1507.45 -1599.48
+Size 150 70
+Color 160 20 20 255
+Out 1000 255 255 255 255 Next
+[Node]
+ID 2
+Title On Destroy
+Pos -1506.97 -1513.34
+Size 150 70
+Color 160 20 20 255
+Out 1001 255 255 255 255 Next
+[Node]
+ID 3
+Title On Update
+Pos -1504.83 -1421.91
+Size 150 90
+Color 160 20 20 255
+Out 1002 255 255 255 255 Next
+Out 1003 147 226 74 255 Delta Time
+[Node]
+ID 4
+Title On Collision Enter
+Pos -1499.11 -1310.48
+Size 150 90
+Color 160 20 20 255
+Out 1004 255 255 255 255 Next
+Out 1005 200 200 200 255 Other Entity
+[Node]
+ID 5
+Title On Collision Exit
+Pos -1497.68 -1195.48
+Size 150 90
+Color 160 20 20 255
+Out 1006 255 255 255 255 Next
+Out 1007 200 200 200 255 Other Entity
+[Node]
+ID 6
+Title Instantiate Entity
+Pos -1239.96 -1600.77
+Size 150 90
+Color 40 90 200 255
+In 1008 255 255 255 255 Execute
+In 1009 200 200 200 255 Name
+Out 1010 255 255 255 255 Next
+Out 1011 200 200 200 255 Entity
+[Node]
+ID 7
+Title Instantiate Prefab
+Pos -1238.42 -1496.16
+Size 150 90
+Color 40 90 200 255
+In 1012 255 255 255 255 Execute
+In 1013 200 200 200 255 File Path
+Out 1014 255 255 255 255 Next
+Out 1015 200 200 200 255 Entity
+[Node]
+ID 8
+Title Destroy Entity
+Pos -1236.11 -1391.54
+Size 150 90
+Color 40 90 200 255
+In 1016 255 255 255 255 Execute
+In 1017 200 200 200 255 Target
+Out 1018 255 255 255 255 Next
+[Node]
+ID 9
+Title Find Entity by Name
+Pos -1236.11 -1283.85
+Size 150 70
+Color 40 90 200 255
+In 1019 200 200 200 255 Name
+Out 1020 200 200 200 255 Entity
+[Node]
+ID 10
+Title Emit Particles
+Pos -1234.57 -1194.62
+Size 150 110
+Color 40 90 200 255
+In 1021 255 255 255 255 Execute
+In 1022 200 200 200 255 Target
+In 1023 200 200 200 255 Count
+Out 1024 255 255 255 255 Next

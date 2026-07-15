@@ -8,7 +8,6 @@
 
 #include "AxionStudio/Vendor/Silica/include/SWidget.h"
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
 
 #include "AxionStudio/Source/ui/modals/AudioImportModal.h"
 #include "AxionStudio/Source/ui/modals/MaterialImportModal.h"
@@ -22,8 +21,6 @@
 
 namespace Axion {
 
-	inline std::filesystem::path s_draggedAssetPath = "";
-
 	class ContentBrowser {
 	public:
 
@@ -35,14 +32,18 @@ namespace Axion {
 
 		void refresh();
 
+		void loadSettings(const YAML::Node& editorConfig);
+		void saveSettings(YAML::Emitter& out) const;
+
 		void setOpenVisualScriptPanelCallback(const std::function<void(const std::filesystem::path& path)>& func) { m_openVisualScriptPanel = func; }
 		void setAssetDeletedCallback(const std::function<void(const std::filesystem::path& path)>& func) { m_onAssetDeleted = func; }
 		void setModalCallbacks(const std::function<void(Silica::WidgetPtr)>& open, const std::function<void()>& close) {
 			m_openGlobalModal = open;
 			m_closeGlobalModal = close;
 		}
+		void setAssetRenamedCallback(const std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)>& func) { m_onAssetRenamed = func; }
 
-		Silica::WidgetPtr getWidget(Silica::FontAtlas* font);
+		Silica::WidgetPtr getWidget();
 
 	private:
 
@@ -88,7 +89,7 @@ namespace Axion {
 		std::function<void(const std::filesystem::path& path)> m_onAssetDeleted;
 		std::function<void(Silica::WidgetPtr)> m_openGlobalModal;
 		std::function<void()> m_closeGlobalModal;
-		Silica::FontAtlas* m_font = nullptr;
+		std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)> m_onAssetRenamed;
 
 		// -- Modals --
 		std::shared_ptr<AudioImportModal> m_audioImportModal;

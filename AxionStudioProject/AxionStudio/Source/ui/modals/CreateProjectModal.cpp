@@ -11,6 +11,8 @@
 #include "AxionStudio/Vendor/Silica/include/STextBlock.h"
 #include "AxionStudio/Vendor/Silica/include/SEditableText.h"
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
+#include "AxionStudio/Vendor/Silica/include/SSeparator.h"
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
@@ -26,12 +28,11 @@ namespace Axion {
 		m_version = Version(1, 0, 0);
 	}
 
-	Silica::WidgetPtr CreateProjectModal::getWidget(Silica::FontAtlas* font) {
-		m_font = font;
-
+	Silica::WidgetPtr CreateProjectModal::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::Color(0, 0, 0, 180)
+				.backgroundColor = Silica::Color(0, 0, 0, 180),
+//				.hoverColor = Silica::Color(0, 0, 0, 180)
 			});
 			rebuildUI_Internal();
 		}
@@ -54,8 +55,8 @@ namespace Axion {
 		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 12.0f });
 
 		// -- Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Create New Project", .font = m_font}) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 2}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Create New Project" }) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
 
 		// -- Helper Function --
 		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
@@ -67,7 +68,7 @@ namespace Axion {
 						.backgroundColor = Silica::Color::transparent(),
 						.child = Silica::MakeWidget<Silica::SAlign>({
 							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .font = m_font})
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
 						})
 					})},
 					{ {1, 0}, valueWidget }
@@ -77,9 +78,8 @@ namespace Axion {
 
 		// -- Name --
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(35, 35, 35, 255),
 			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_name, .font = m_font,
+				.initialText = m_name ,
 				.onTextChanged = [this](const std::string& val) { m_name = val; rebuildUI(); }
 			})
 		});
@@ -91,20 +91,19 @@ namespace Axion {
 			.spacing = 8.0f,
 			.slots = {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::Color(35, 35, 35, 255),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_outputPath, .font = m_font,
+						.initialText = m_outputPath ,
 						.onTextChanged = [this](const std::string& val) { m_outputPath = val; rebuildUI(); }
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4}, .color = Silica::Color(50, 50, 50, 255),
+					.padding = {8, 4},
 					.onClick = [this]() {
 						std::filesystem::path folder = FileDialogs::openFolder();
 						if (!folder.empty()) { m_outputPath = folder.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse...", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
 				})}
 			}
 		});
@@ -115,10 +114,8 @@ namespace Axion {
 		auto makeVersionBox = [this](int value, auto onCommit) {
 			return Silica::MakeWidget<Silica::SBox>({
 				.explicitSize = Silica::Vec2(50.0f, 0.0f),
-				.backgroundColor = Silica::Color(35, 35, 35, 255),
 				.child = Silica::MakeWidget<Silica::SEditableText>({
 					.initialText = std::to_string(value),
-					.font = m_font,
 					.onTextCommitted = onCommit
 				})
 			});
@@ -127,9 +124,9 @@ namespace Axion {
 			.spacing = 5.0f,
 			.slots = {
 				{ {0,0}, makeVersionBox(m_version.major, [this](const std::string& val) { try { m_version.major = std::max(0, std::stoi(val)); } catch (...) {} })},
-				{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = ".", .font = m_font}) },
+				{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "." }) },
 				{ {0,0}, makeVersionBox(m_version.minor, [this](const std::string& val) { try { m_version.minor = std::max(0, std::stoi(val)); } catch (...) {} })},
-				{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = ".", .font = m_font}) },
+				{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "." }) },
 				{ {0,0}, makeVersionBox(m_version.patch, [this](const std::string& val) { try { m_version.patch = std::max(0, std::stoi(val)); } catch (...) {} })}
 			}
 		});
@@ -137,9 +134,8 @@ namespace Axion {
 
 		// -- Author --
 		auto authInput = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(35, 35, 35, 255),
 			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_author, .font = m_font,
+				.initialText = m_author ,
 				.onTextChanged = [this](const std::string& val) { m_author = val; }
 			})
 		});
@@ -147,9 +143,8 @@ namespace Axion {
 
 		// -- Company --
 		auto compInput = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(35, 35, 35, 255),
 			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_company, .font = m_font,
+				.initialText = m_company ,
 				.onTextChanged = [this](const std::string& val) { m_company = val; }
 			})
 		});
@@ -157,9 +152,8 @@ namespace Axion {
 
 		// -- Description --
 		auto descInput = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(35, 35, 35, 255),
 			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_description, .font = m_font,
+				.initialText = m_description ,
 				.onTextChanged = [this](const std::string& val) { m_description = val; }
 			})
 		});
@@ -175,25 +169,27 @@ namespace Axion {
 		bool disabled = (m_name.empty() || m_outputPath.empty() || !validLocation || invalidName || nameTooLong);
 
 		std::string validationMsg = "Ready to create project.";
-		Silica::Color validationColor = Silica::Color(50, 255, 50, 255);
+		Silica::Color validationColor = Silica::GetTheme().Text_Success;
 
 		if (disabled) {
-			validationColor = Silica::Color(255, 50, 50, 255);
+			validationColor = Silica::GetTheme().Text_Danger;
 			if (m_name.empty()) validationMsg = "Name needs to be set.";
 			else if (!validLocation) validationMsg = "Selected Location is not a folder.";
 			else if (invalidName) validationMsg = "Project with this name already exists.";
 			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
 		}
 
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = validationMsg, .color = validationColor, .font = m_font}) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 2}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
+			.text = validationMsg,
+			.color = validationColor
+		}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
 
 
 		// -- Footer Buttons --
 		auto createBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
-			.color = disabled ? Silica::Color(60, 60, 60, 255) : Silica::Color(50, 150, 50, 255),
-			.hoverColor = disabled ? Silica::Color::transparent() : Silica::Color(70, 180, 70, 255),
+			.enabled = !disabled,
 			.onClick = [this, disabled]() {
 				if (disabled) return Silica::EventReply::unhandled();
 
@@ -210,20 +206,16 @@ namespace Axion {
 				EditorModalManager::close();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({
-				.text = "Create Project",
-				.color = disabled ? Silica::Color(120, 120, 120, 255) : Silica::Color::white(),
-				.font = m_font,
-			})
+			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Project" })
 		});
 
 		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f }, .color = Silica::Color(80, 80, 80, 255),
+			.padding = { 20.0f, 8.0f },
 			.onClick = []() {
 				EditorModalManager::close();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Cancel" })
 		});
 
 		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
@@ -240,7 +232,9 @@ namespace Axion {
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 550.0f, 0.0f },
-			.backgroundColor = Silica::Color(30, 30, 30, 255),
+			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.backgroundColor = Silica::GetTheme().Background_Panel,
+//			.hoverColor = Silica::GetTheme().Background_Panel,
 			.child = contentBox
 		});
 

@@ -68,9 +68,11 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseWheel(const Geometry& allocatedGeometry, const Vec2& mousePos, float scrollDelta) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 		void splitNode(DockNodePtr node, SplitDirection dir, float ratio, std::string title, WidgetPtr newContent, bool insertFirst = false);
-		DockNodePtr getRootNode() const { return m_rootNode; }
+		DockNodePtr getRootNode() const;
 		void updateDragDropPreview(const Vec2& mousePos, bool isDragging);
 		bool processDrop(std::string title, WidgetPtr draggedContent);
 
@@ -80,6 +82,7 @@ namespace Silica {
 		void registerTab(const std::string& title, WidgetPtr content);
 		void openTab(const std::string& title);
 		void closeTab(DockNodePtr node, int tabIndex);
+		void focusTab(const std::string& title);
 
 		std::vector<std::string> getRegisteredTabNames() const;
 
@@ -90,6 +93,7 @@ namespace Silica {
 		// -- Splitter dragging --
 		DockNodePtr m_draggingNode;
 		DockNodePtr m_hoveredNode = nullptr;
+		DockNodePtr m_focusedNode = nullptr;
 
 		// -- Tab clicking/dragging --
 		DockNodePtr m_pressedTabNode = nullptr;
@@ -108,7 +112,6 @@ namespace Silica {
 
 		void arrangeNode(DockNodePtr node, const Geometry& geo);
 		void drawNode(const DockNodePtr& node, DrawList& drawList) const;
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
 
 		DockNodePtr hitTestSplitter(const DockNodePtr& node, const Vec2& mousePos);
 		DockNodePtr hitTestContentNode(const DockNodePtr& node, const Vec2& mousePos);

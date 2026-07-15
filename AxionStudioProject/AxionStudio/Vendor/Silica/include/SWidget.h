@@ -6,11 +6,12 @@
 
 #include "Geometry.h"
 #include "InputCodes.h"
+#include "DragDrop.h"
 
 namespace Silica {
 
 	namespace Platform {
-		enum class Cursor { Arrow, TextInput, ResizeEW, ResizeNS };
+		enum class Cursor { Arrow, Hand, TextInput, ResizeEW, ResizeNS };
 		extern void setCursor(Cursor cursor);
 		extern void setMouseCapture(bool capture);
 	}
@@ -49,6 +50,8 @@ namespace Silica {
 		virtual EventReply onKeyDown(Key key) { return EventReply::unhandled(); }
 		virtual EventReply onKeyUp(Key key) { return EventReply::unhandled(); }
 		virtual EventReply onMouseWheel(const Geometry& allocatedGeometry, const Vec2& mousePos, float scrollDelta) { return EventReply::unhandled(); }
+		virtual EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) { return EventReply::unhandled(); }
+		virtual EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) { return EventReply::unhandled(); }
 
 		static void setFocusedWidget(SWidget* widget) { s_focusedWidget = widget; }
 		static SWidget* getFocusedWidget() { return s_focusedWidget; }
@@ -58,6 +61,10 @@ namespace Silica {
 			Platform::setMouseCapture(widget != nullptr);
 		}
 		static SWidget* getCapturedWidget() { return s_capturedWidget; }
+		static void setDragHoveredWidget(SWidget* widget) { s_dragHoveredWidget = widget; }
+		static SWidget* getDragHoveredWidget() { return s_dragHoveredWidget; }
+
+		// TODO: add a dirty flag system so that it can check if the layout changed to save cpu power
 
 		Vec2 getDesiredSize() const { return m_desiredSize; }
 		const Geometry& getAllocatedGeometry() const { return m_allocatedGeometry; }
@@ -66,6 +73,7 @@ namespace Silica {
 
 		static SWidget* s_focusedWidget;
 		static SWidget* s_capturedWidget;
+		static SWidget* s_dragHoveredWidget;
 
 		Vec2 m_desiredSize = Vec2::zero();
 		Geometry m_allocatedGeometry;

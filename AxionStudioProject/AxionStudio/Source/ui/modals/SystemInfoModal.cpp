@@ -9,6 +9,7 @@
 #include "AxionStudio/Vendor/Silica/include/SButton.h"
 #include "AxionStudio/Vendor/Silica/include/STextBlock.h"
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
@@ -25,9 +26,7 @@ namespace Axion {
 		m_os = PlatformInfo::getOsVersion();
 	}
 
-	Silica::WidgetPtr SystemInfoModal::getWidget(Silica::FontAtlas* font) {
-		m_font = font;
-
+	Silica::WidgetPtr SystemInfoModal::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.backgroundColor = Silica::Color(0, 0, 0, 180)
@@ -56,7 +55,7 @@ namespace Axion {
 		// -- Helper Functions --
 		auto MakeHeader = [&](const std::string& title) {
 			auto box = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 4.0f });
-			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = title, .color = Silica::Color(100, 200, 255, 255), .font = m_font}) });
+			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = title, .color = Silica::Color(100, 200, 255, 255) }) });
 			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 1}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
 			return box;
 		};
@@ -68,9 +67,9 @@ namespace Axion {
 					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
 						.explicitSize = Silica::Vec2(100.0f, 0.0f),
 						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .color = Silica::Color(180, 180, 180, 255), .font = m_font})
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .color = Silica::Color(180, 180, 180, 255) })
 					})},
-					{ {1, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = value, .font = m_font}) }
+					{ {1, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = value }) }
 				}
 			});
 		};
@@ -109,7 +108,7 @@ namespace Axion {
 				EditorModalManager::close();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Close", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Close" })
 		});
 
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SAlign>({
@@ -122,6 +121,7 @@ namespace Axion {
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 500.0f, 0.0f },
+			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::Color(30, 30, 30, 255),
 			.child = contentBox
 		});

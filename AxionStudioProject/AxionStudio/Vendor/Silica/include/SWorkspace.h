@@ -15,8 +15,8 @@ namespace Silica {
 
 		struct Args {
 			std::string initialTitle = "Workspace";
-			WidgetPtr initialContent = nullptr;
 			FontAtlas* font = nullptr;
+			WidgetPtr initialContent = nullptr;
 		};
 
 		void construct(const Args& args);
@@ -29,8 +29,10 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseWheel(const Geometry& allocatedGeometry, const Vec2& mousePos, float scrollDelta) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
-		std::shared_ptr<SDockSpace> getDockSpace() const { return m_dockSpace; }
+		std::shared_ptr<SDockSpace> getDockSpace() const;
 		void addFloatingWindow(std::shared_ptr<SWindow> window);
 
 	private:

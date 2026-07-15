@@ -11,10 +11,10 @@ namespace Silica {
 	public:
 
 		struct Args {
-			WidgetPtr child = nullptr;
 			float scrollSpeed = 40.0f;
 			std::optional<Color> thumbColor;
 			std::optional<Color> thumbDraggingColor;
+			WidgetPtr child = nullptr;
 		};
 
 		void construct(const Args& args);
@@ -27,6 +27,8 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseWheel(const Geometry& allocatedGeometry, const Vec2& mousePos, float scrollDelta) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 	private:
 
@@ -41,7 +43,6 @@ namespace Silica {
 		Color m_thumbColor;
 		Color m_thumbDraggingColor;
 
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
 		Rect getThumbRect(const Geometry& allocatedGeometry) const;
 
 	};

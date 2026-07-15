@@ -5,6 +5,9 @@
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 
+#include <thread>
+#include <atomic>
+
 namespace Axion {
 
 	struct SceneManagerData {
@@ -13,16 +16,26 @@ namespace Axion {
 		bool isNewScene = false;
 		std::function<void(Event&)> eventCallback;
 		std::function<bool(RenderingFinishedEvent&)> onRenderingFinished;
+
 		// -- New scene --
 		bool newSceneRequest = false;
+
 		// -- Load scene --
 		bool loadSceneRequest = false;
 		std::filesystem::path toLoadScenePath;
+
 		// -- Save scene --
 		bool saveSceneRequest = false;
 		std::filesystem::path toSaveScenePath;
+
 		// -- Unload scene --
 		bool unloadSceneRequest = false;
+
+		// --- Async Load State ---
+		std::atomic<bool> isLoadingScene = false;
+		std::atomic<bool> sceneLoadFinished = false;
+		Ref<Scene> loadedSceneResult = nullptr;
+		std::filesystem::path loadedScenePath;
 	};
 
 	static SceneManagerData* s_managerData;
@@ -56,9 +69,9 @@ namespace Axion {
 					SceneSerializer serializer(scene);
 					serializer.deserializeText(filePath);
 
-					setScene(scene);
 					s_managerData->scenePath = filePath;
 					s_managerData->isNewScene = false;
+					setScene(scene);
 					AX_CORE_LOG_INFO("Scene loaded");
 				}
 				else {
@@ -70,8 +83,8 @@ namespace Axion {
 
 			// -- Unload scene --
 			if (s_managerData->unloadSceneRequest) {
-				setScene(nullptr);
 				s_managerData->scenePath.clear();
+				setScene(nullptr);
 				AX_CORE_LOG_INFO("Unload scene");
 				s_managerData->unloadSceneRequest = false;
 			}
@@ -79,11 +92,29 @@ namespace Axion {
 			// -- New Scene --
 			if (s_managerData->newSceneRequest) {
 				Ref<Scene> scene = std::make_shared<Scene>();
-				setScene(scene);
 				s_managerData->isNewScene = true;
-				s_managerData->newSceneRequest = false;
 				s_managerData->scenePath.clear();
+				setScene(scene);
+				s_managerData->newSceneRequest = false;
 				AX_CORE_LOG_INFO("New Scene");
+			}
+
+			// -- Check If Background Thread Finished Loading Scene --
+			if (s_managerData->sceneLoadFinished) {
+				if (s_managerData->loadedSceneResult) {
+					s_managerData->scenePath = s_managerData->loadedScenePath;
+					s_managerData->isNewScene = false;
+
+					setScene(s_managerData->loadedSceneResult);
+					AX_CORE_LOG_INFO("Scene safely loaded and swapped.");
+				}
+				else {
+					AX_CORE_LOG_ERROR("Unable to load scene");
+				}
+
+				s_managerData->loadedSceneResult = nullptr;
+				s_managerData->sceneLoadFinished = false;
+				s_managerData->isLoadingScene = false;
 			}
 
 			return false;
@@ -103,8 +134,26 @@ namespace Axion {
 	void SceneManager::newScene() { s_managerData->newSceneRequest = true; }
 
 	void SceneManager::loadScene(const std::filesystem::path& filePath) {
-		s_managerData->toLoadScenePath = filePath;
+		if (s_managerData->isLoadingScene) return;
+
 		s_managerData->loadSceneRequest = true;
+		s_managerData->toLoadScenePath = filePath;
+
+		// -- Spin up a background thread to parse the YAML ---
+		std::thread([filePath]() {
+			Ref<Scene> newScene = std::make_shared<Scene>();
+			SceneSerializer serializer(newScene);
+
+			bool success = false;
+			if (std::filesystem::exists(filePath)) {
+				success = serializer.deserializeText(filePath);
+			}
+
+			if (success) s_managerData->loadedSceneResult = newScene;
+			else s_managerData->loadedSceneResult = nullptr;
+
+			s_managerData->sceneLoadFinished = true;
+		}).detach();
 	}
 
 	void SceneManager::saveScene(const std::filesystem::path& filePath) {
@@ -130,6 +179,10 @@ namespace Axion {
 		AX_CORE_ASSERT(s_managerData->eventCallback, "Invalid event callback for scene manager");
 		SceneChangedEvent ev;
 		s_managerData->eventCallback(ev);
+	}
+
+	bool SceneManager::isLoadingScene() {
+		return s_managerData ? s_managerData->isLoadingScene.load() : false;
 	}
 
 }

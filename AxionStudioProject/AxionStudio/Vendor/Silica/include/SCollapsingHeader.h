@@ -33,6 +33,8 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseWheel(const Geometry& allocatedGeometry, const Vec2& mousePos, float scrollDelta) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 	private:
 
@@ -50,7 +52,6 @@ namespace Silica {
 		bool m_isHeaderHovered = false;
 
 		Rect getHeaderRect() const;
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
 		void drawTriangle(DrawList& drawList, const Vec2& center, float radius, bool isOpen, Color color) const;
 
 	};

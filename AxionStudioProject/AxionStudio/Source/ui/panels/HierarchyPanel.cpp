@@ -12,6 +12,7 @@
 #include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
 #include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -25,153 +26,39 @@
 
 namespace Axion {
 
-	static Entity s_draggedEntity = {};
-
-
-
-	// ----- CUSTOM WIDGETS -----
-	class SHierarchyDropZone : public Silica::SWidget {
-	public:
-
-		struct Args {
-			Silica::FontAtlas* font;
-			std::function<Silica::EventReply()> onDrop;
-			Silica::WidgetPtr child;
-		};
-
-
-		void construct(const Args& args) {
-			m_font = args.font;
-			m_onDrop = args.onDrop;
-			m_child = args.child;
-		}
-
-		void computeDesiredSize() override {
-			m_desiredSize = Silica::Vec2::zero();
-			if (m_child) {
-				m_child->computeDesiredSize();
-				m_desiredSize = m_child->getDesiredSize();
-			}
-		}
-
-		void arrangeChildren(const Silica::Geometry& allocatedGeometry) override {
-			SWidget::arrangeChildren(allocatedGeometry);
-			if (m_child) m_child->arrangeChildren(allocatedGeometry);
-		}
-
-		void onDraw(Silica::DrawList& outDrawList, const Silica::Geometry& allocatedGeometry) const override {
-			// -- Draw Scroll Box And Tree Nodes --
-			if (m_child) m_child->onDraw(outDrawList, allocatedGeometry);
-
-			// -- Draw Floating Drag Payload Tooltip --
-			if (s_draggedEntity && m_font) {
-				std::string tag = "Unnamed Entity";
-				if (s_draggedEntity.hasComponent<TagComponent>()) {
-					tag = s_draggedEntity.getComponent<TagComponent>().tag;
-				}
-
-				Silica::Vec2 mousePos = Silica::Renderer::s_mousePosition;
-				mousePos.x += 15.0f;
-				mousePos.y += 15.0f;
-
-				float textWidth = 0.0f;
-				for (char c : tag) textWidth += m_font->getGlyph(c).advanceX;
-
-				Silica::Geometry bgGeo = { mousePos, {textWidth + 16.0f, 26.0f} };
-				addRectToDrawList(outDrawList, bgGeo, Silica::Color(40, 40, 40, 230));
-				drawText(outDrawList, m_font, tag, { mousePos.x + 8.0f, mousePos.y }, Silica::Color::white(), 18.0f);
-			}
-		}
-
-		Silica::EventReply onMouseMove(const Silica::Geometry& allocatedGeometry, const Silica::Vec2& mousePos) override {
-			if (s_draggedEntity) {
-				Application::get().getCursor().setCursor(CursorType::Hand);
-			}
-
-			if (m_child) return m_child->onMouseMove(m_child->getAllocatedGeometry(), mousePos);
-			return Silica::EventReply::unhandled();
-		}
-
-		Silica::EventReply onMouseButtonDown(const Silica::Geometry& allocatedGeometry, const Silica::Vec2& mousePos, Silica::MouseButton button) override {
-			if (m_child) return m_child->onMouseButtonDown(m_child->getAllocatedGeometry(), mousePos, button);
-			return Silica::EventReply::unhandled();
-		}
-
-		Silica::EventReply onMouseButtonUp(const Silica::Geometry& allocatedGeometry, const Silica::Vec2& mousePos, Silica::MouseButton button) override {
-			Silica::EventReply reply = Silica::EventReply::unhandled();
-
-			if (m_child) {
-				reply = m_child->onMouseButtonUp(m_child->getAllocatedGeometry(), mousePos, button);
-			}
-
-			if (s_draggedEntity) {
-				Application::get().getCursor().setCursor(CursorType::Arrow);
-
-				if (!reply.isHandled && m_onDrop) {
-					return m_onDrop();
-				}
-			}
-
-			return reply;
-		}
-
-		Silica::EventReply onMouseWheel(const Silica::Geometry& allocatedGeometry, const Silica::Vec2& mousePos, float scrollDelta) override {
-			if (m_child) return m_child->onMouseWheel(m_child->getAllocatedGeometry(), mousePos, scrollDelta);
-			return Silica::EventReply::unhandled();
-		}
-
-	private:
-
-		Silica::WidgetPtr m_child;
-		Silica::FontAtlas* m_font;
-		std::function<Silica::EventReply()> m_onDrop;
-
-		void drawText(Silica::DrawList& drawList, Silica::FontAtlas* font, const std::string& text, Silica::Vec2 pos, Silica::Color color, float yOffset) const {
-			float cursorX = pos.x;
-			float baselineY = pos.y + yOffset;
-
-			for (char c : text) {
-				const Silica::Glyph& g = font->getGlyph(c);
-				if (g.size.x > 0 && g.size.y > 0) {
-					float x0 = cursorX + g.offset.x; float y0 = baselineY + g.offset.y;
-					float x1 = x0 + g.size.x;        float y1 = y0 + g.size.y;
-					uint32_t startIndex = (uint32_t)drawList.vertices.size();
-					drawList.vertices.push_back({ {x0, y0}, {g.uvMin.x, g.uvMin.y}, color });
-					drawList.vertices.push_back({ {x1, y0}, {g.uvMax.x, g.uvMin.y}, color });
-					drawList.vertices.push_back({ {x1, y1}, {g.uvMax.x, g.uvMax.y}, color });
-					drawList.vertices.push_back({ {x0, y1}, {g.uvMin.x, g.uvMax.y}, color });
-					drawList.indices.push_back(startIndex + 0); drawList.indices.push_back(startIndex + 1); drawList.indices.push_back(startIndex + 2);
-					drawList.indices.push_back(startIndex + 0); drawList.indices.push_back(startIndex + 2); drawList.indices.push_back(startIndex + 3);
-					if (drawList.commands.empty()) drawList.commands.push_back({ 0, 0, 0 });
-					drawList.commands.back().indexCount += 6;
-				}
-				cursorX += g.advanceX;
-			}
-		}
-
-		void addRectToDrawList(Silica::DrawList& drawList, const Silica::Geometry& geo, Silica::Color color) const {
-			uint32_t startIndex = (uint32_t)drawList.vertices.size();
-			drawList.vertices.push_back({ {geo.position.x, geo.position.y}, {0.0f, 0.0f}, color });
-			drawList.vertices.push_back({ {geo.position.x + geo.size.x, geo.position.y}, {0.0f, 0.0f}, color });
-			drawList.vertices.push_back({ {geo.position.x + geo.size.x, geo.position.y + geo.size.y}, {0.0f, 0.0f}, color });
-			drawList.vertices.push_back({ {geo.position.x, geo.position.y + geo.size.y}, {0.0f, 0.0f}, color });
-			drawList.indices.push_back(startIndex + 0); drawList.indices.push_back(startIndex + 1); drawList.indices.push_back(startIndex + 2);
-			drawList.indices.push_back(startIndex + 0); drawList.indices.push_back(startIndex + 2); drawList.indices.push_back(startIndex + 3);
-			if (drawList.commands.empty()) drawList.commands.push_back({ 0, 0, 0 });
-			drawList.commands.back().indexCount += 6;
-		}
-	};
-
-
-
-
-
-	// ----- HIERARCHY PANEL IMPLEMENTATION -----
-	Silica::WidgetPtr HierarchyPanel::getWidget(Silica::FontAtlas* font) {
-		m_font = font;
+	Silica::WidgetPtr HierarchyPanel::getWidget() {
 		if (!m_uiRoot) {
 			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({ .child = m_contentBox });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "Entity") return Silica::EventReply::handled();
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [this](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "Entity") {
+						Entity draggedEntity = std::any_cast<Entity>(payload.data);
+
+						EditorActionQueue::push([this, draggedEntity]() mutable {
+							if (draggedEntity.hasComponent<RelationshipComponent>()) {
+								auto& rel = draggedEntity.getComponent<RelationshipComponent>();
+								if (rel.parent != entt::null) {
+									Entity parent = { rel.parent, m_scene.get() };
+									auto& parentRel = parent.getComponent<RelationshipComponent>();
+									auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)draggedEntity);
+									if (it != parentRel.children.end()) parentRel.children.erase(it);
+
+									rel.parent = entt::null;
+								}
+							}
+							rebuildUI();
+						});
+						return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.child = m_contentBox
+			});
 			rebuildUI();
 		}
 		return m_uiRoot;
@@ -199,7 +86,8 @@ namespace Axion {
 		// -- Right Click Context Menu --
 		auto contextMenu = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 5.0f, 5.0f },
-			.backgroundColor = Silica::Color(45, 45, 45, 255),
+			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.backgroundColor = Silica::GetTheme().Background_Popup,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = 2.0f,
 				.slots = {
@@ -207,7 +95,7 @@ namespace Axion {
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 						.padding = { 8.0f, 4.0f },
 						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::Color(200, 50, 50, 255),
+						.hoverColor = Silica::GetTheme().Accent_Danger,
 						.onClick = [this, entity]() mutable {
 							EditorActionQueue::push([this, entity]() mutable {
 								// -- Remove From Parent --
@@ -234,20 +122,19 @@ namespace Axion {
 
 								destroyHierarchy(entity, destroyHierarchy);
 
-								if (s_draggedEntity == entity) s_draggedEntity = {};
 								if (m_onEntitySelected) m_onEntitySelected({});
 
 								rebuildUI();
 							});
 							return Silica::EventReply::handled();
 						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete Entity", .font = m_font })
+						.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Delete Entity" })
 					})},
 					// -- Add Child --
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 						.padding = { 8.0f, 4.0f },
 						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::Color(70, 130, 200, 255),
+						.hoverColor = Silica::GetTheme().Accent_Primary,
 						.onClick = [this, entity]() mutable {
 							EditorActionQueue::push([this, entity]() mutable {
 								Entity child = m_scene->createEntity("Child Entity");
@@ -256,13 +143,13 @@ namespace Axion {
 							});
 							return Silica::EventReply::handled();
 						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Add Child", .font = m_font })
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Add Child" })
 					})},
 					// -- Create Prefab --
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 						.padding = { 8.0f, 4.0f },
 						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::Color(70, 130, 200, 255),
+						.hoverColor = Silica::GetTheme().Accent_Primary,
 						.onClick = [this, entity]() mutable {
 							std::filesystem::path prefabDir = ProjectManager::getProject()->getAssetsPath() / "prefabs";
 							std::filesystem::create_directories(prefabDir);
@@ -286,7 +173,7 @@ namespace Axion {
 							}
 							return Silica::EventReply::handled();
 						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Prefab", .font = m_font })
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Prefab" })
 					})}
 				}
 			})
@@ -295,34 +182,65 @@ namespace Axion {
 		// -- Create TreeNode And Drag / Drop Logic --
 		auto treeNode = Silica::MakeWidget<Silica::STreeNode>({
 			.label = tag,
-			.font = m_font,
 			.yTextOffset = 16.0f,
-			.isDragged = [entity]() { return s_draggedEntity == entity; },
+			.initiallyOpen = m_openNodes.find((entt::entity)entity) != m_openNodes.end(),
+			.isSelected = m_selectedEntity == entity,
+			.isDragged = [entity]() {
+				return Silica::DragDrop::isDraggingType("Entity") && std::any_cast<Entity>(Silica::DragDrop::getPayload().data) == entity;
+			},
+
 			.onClicked = [this, entity]() {
-				s_draggedEntity = {};
+				m_selectedEntity = entity;
 				if (m_onEntitySelected) m_onEntitySelected(entity);
-				return Silica::EventReply::handled();
+				rebuildUI();
 			},
 
-			// -- Pick Up Payload --
-			.onDragStart = [entity]() {
-				s_draggedEntity = entity;
+			// -- Initiate Native Drag --
+			.onDragStart = [entity, tag]() {
+				Silica::DragDrop::beginDrag("Entity", entity, tag, Silica::GetTheme().Font_Default);
 			},
 
-			// -- Drop Payload On This Node --
-			.onDrop = [this, entity]() mutable {
-				if (s_draggedEntity) {
-					EditorActionQueue::push([this, entity]() mutable {
+			// -- Smart Drag Over Validation --
+			.onDragOver = [this, entity](const Silica::DragDropPayload& payload) {
+				if (payload.type == "Entity") {
+					Entity draggedEntity = std::any_cast<Entity>(payload.data);
+
+					entt::entity currentParent = entt::null;
+					if (draggedEntity.hasComponent<RelationshipComponent>()) {
+						currentParent = draggedEntity.getComponent<RelationshipComponent>().parent;
+					}
+
+					if (draggedEntity == entity || currentParent == (entt::entity)entity) {
+						return Silica::EventReply::unhandled();
+					}
+
+					Entity current = entity;
+					while (current) {
+						if (current == draggedEntity) return Silica::EventReply::unhandled();
+						current = current.getParent();
+					}
+
+					return Silica::EventReply::handled();
+				}
+				return Silica::EventReply::unhandled();
+			},
+
+			// -- Catch Native Drop --
+			.onDrop = [this, entity](const Silica::DragDropPayload& payload) mutable {
+				if (payload.type == "Entity") {
+					Entity draggedEntity = std::any_cast<Entity>(payload.data);
+
+					EditorActionQueue::push([this, entity, draggedEntity]() mutable {
 						entt::entity currentParent = entt::null;
-						if (s_draggedEntity.hasComponent<RelationshipComponent>()) {
-							currentParent = s_draggedEntity.getComponent<RelationshipComponent>().parent;
+						if (draggedEntity.hasComponent<RelationshipComponent>()) {
+							currentParent = draggedEntity.getComponent<RelationshipComponent>().parent;
 						}
 
-						if (s_draggedEntity != entity && currentParent != (entt::entity)entity) {
+						if (draggedEntity != entity && currentParent != (entt::entity)entity) {
 							bool isDescendant = false;
 							Entity current = entity;
 							while (current) {
-								if (current == s_draggedEntity) {
+								if (current == draggedEntity) {
 									isDescendant = true;
 									break;
 								}
@@ -334,23 +252,24 @@ namespace Axion {
 								if (currentParent != entt::null) {
 									Entity parent = { currentParent, m_scene.get() };
 									auto& parentRel = parent.getComponent<RelationshipComponent>();
-									auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)s_draggedEntity);
+									auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)draggedEntity);
 									if (it != parentRel.children.end()) parentRel.children.erase(it);
 								}
 
 								// -- Attach To New Parent --
-								s_draggedEntity.setParent(entity);
+								draggedEntity.setParent(entity);
 							}
 						}
-
-						s_draggedEntity = {};
-						Application::get().getCursor().setCursor(CursorType::Arrow);
 						rebuildUI();
 					});
 					return Silica::EventReply::handled();
 				}
 				return Silica::EventReply::unhandled();
-			}
+			},
+			.onToggleOpen = [this, entity](bool isOpen) {
+				if (isOpen) m_openNodes.insert((entt::entity)entity);
+				else m_openNodes.erase((entt::entity)entity);
+			},
 		});
 
 		auto nodeWithMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
@@ -383,39 +302,41 @@ namespace Axion {
 
 		auto addEntityButton = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 8.0f, 4.0f },
-			.color = Silica::Color(50, 50, 50, 255),
-			.hoverColor = Silica::Color(70, 130, 200, 255),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() mutable {
 				EditorActionQueue::push([this]() {
-					s_draggedEntity = {};
 					m_scene->createEntity("Empty Entity");
 					rebuildUI();
 				});
 
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add Entity", .font = m_font })
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add Entity" })
 		});
 
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 5.0f, 5.0f },
-			.backgroundColor = Silica::Color(30, 30, 30, 255),
-			.onDrop = [this]() mutable {
-				if (s_draggedEntity) {
-					EditorActionQueue::push([this]() mutable {
-						if (s_draggedEntity.hasComponent<RelationshipComponent>()) {
-							auto& rel = s_draggedEntity.getComponent<RelationshipComponent>();
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
+			.onDragOver = [](const Silica::DragDropPayload& payload) {
+				if (payload.type == "Entity") return Silica::EventReply::handled();
+				return Silica::EventReply::unhandled();
+			},
+			.onDrop = [this](const Silica::DragDropPayload& payload) mutable {
+				if (payload.type == "Entity") {
+					Entity draggedEntity = std::any_cast<Entity>(payload.data);
+
+					EditorActionQueue::push([this, draggedEntity]() mutable {
+						if (draggedEntity.hasComponent<RelationshipComponent>()) {
+							auto& rel = draggedEntity.getComponent<RelationshipComponent>();
 							if (rel.parent != entt::null) {
 								Entity parent = { rel.parent, m_scene.get() };
 								auto& parentRel = parent.getComponent<RelationshipComponent>();
-								auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)s_draggedEntity);
+								auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)draggedEntity);
 								if (it != parentRel.children.end()) parentRel.children.erase(it);
 
 								rel.parent = entt::null;
 							}
 						}
-						s_draggedEntity = {};
-						Application::get().getCursor().setCursor(CursorType::Arrow);
 						rebuildUI();
 					});
 					return Silica::EventReply::handled();
@@ -448,44 +369,17 @@ namespace Axion {
 				treeContainer->addSlot({
 					.padding = {0.0f, 0.0f},
 					.child = buildEntityNode(entity)
-					});
+				});
 			}
 		}
 
 		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({ .child = treeContainer });
 
-		auto backgroundDropWrapper = Silica::MakeWidget<SHierarchyDropZone>({
-			.font = m_font,
-			.onDrop = [this]() mutable {
-				if (s_draggedEntity) {
-					EditorActionQueue::push([this]() mutable {
-						if (s_draggedEntity.hasComponent<RelationshipComponent>()) {
-							auto& rel = s_draggedEntity.getComponent<RelationshipComponent>();
-							if (rel.parent != entt::null) {
-								Entity parent = { rel.parent, m_scene.get() };
-								auto& parentRel = parent.getComponent<RelationshipComponent>();
-								auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)s_draggedEntity);
-								if (it != parentRel.children.end()) parentRel.children.erase(it);
-
-								rel.parent = entt::null;
-							}
-						}
-						s_draggedEntity = {};
-						Application::get().getCursor().setCursor(CursorType::Arrow);
-						rebuildUI();
-						});
-					return Silica::EventReply::handled();
-				}
-				return Silica::EventReply::unhandled();
-			},
-			.child = scrollBox
-		});
-
 
 		// -- Assemble Border Layout --
 		auto borderLayout = Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = topBarBox,
-			.contentArea = backgroundDropWrapper
+			.contentArea = scrollBox
 		});
 
 		m_contentBox->addSlot({

@@ -15,10 +15,11 @@ namespace Silica {
 		struct Args {
 			Vec2 padding = Vec2::zero();
 			std::optional<Vec2> explicitSize;
+			float borderThickness = 0.0f;
 			std::optional<Color> backgroundColor;
-			std::optional<Color> hoverColor;
-			std::function<EventReply()> onClick = nullptr;
-			std::function<EventReply()> onDrop = nullptr;
+			std::optional<Color> borderColor;
+			std::function<EventReply(const DragDropPayload&)> onDragOver = nullptr;
+			std::function<EventReply(const DragDropPayload&)> onDrop = nullptr;
 			WidgetPtr child = nullptr;
 		};
 
@@ -32,6 +33,8 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseWheel(const Geometry& allocatedGeometry, const Vec2& mousePos, float scrollDelta) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 		void setChild(WidgetPtr child);
 
@@ -39,13 +42,12 @@ namespace Silica {
 
 		Vec2 m_padding;
 		Vec2 m_explicitSize = Vec2::zero();
+		float m_borderThickness = 0.0f;
 		Color m_backgroundColor;
-		Color m_hoverColor;
-		std::function<EventReply()> m_onClick;
-		std::function<EventReply()> m_onDrop;
+		Color m_borderColor;
+		std::function<EventReply(const DragDropPayload&)> m_onDragOver;
+		std::function<EventReply(const DragDropPayload&)> m_onDrop;
 		WidgetPtr m_child;
-
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
 
 	};
 

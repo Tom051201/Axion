@@ -1,11 +1,11 @@
 [SNodeEditor_v1]
-Pan 969.954 388.982
-Zoom 0.9
+Pan 749.865 480.962
+Zoom 0.3
 [Node]
 ID 1
 Title On Update
 Pos 0 0
-Size 150 100
+Size 150 90
 Color 160 20 20 255
 Out 1000 255 255 255 255 Next
 Out 1001 147 226 74 255 Delta Time
@@ -13,7 +13,7 @@ Out 1001 147 226 74 255 Delta Time
 ID 2
 Title Set Vector3
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1002 255 255 255 255 Execute
 In 1003 200 200 200 255 Name
@@ -23,7 +23,7 @@ Out 1005 255 255 255 255 Next
 ID 3
 Title Sequence
 Pos 0 0
-Size 150 100
+Size 150 150
 Color 80 80 80 255
 In 1006 255 255 255 255 Execute
 Out 1007 255 255 255 255 Then 0
@@ -35,7 +35,7 @@ Out 1011 255 255 255 255 Then 4
 ID 4
 Title Branch
 Pos 0 0
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1012 255 255 255 255 Execute
 In 1013 200 200 200 255 Condition
@@ -45,7 +45,7 @@ Out 1015 255 255 255 255 False
 ID 5
 Title Is Key Pressed
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1016 200 200 200 255 Key
 Out 1017 200 200 200 255 Result
@@ -53,7 +53,7 @@ Out 1017 200 200 200 255 Result
 ID 6
 Title Set Vector3
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1018 255 255 255 255 Execute
 In 1019 200 200 200 255 Name
@@ -63,7 +63,7 @@ Out 1021 255 255 255 255 Next
 ID 7
 Title Branch
 Pos 0 0
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1022 255 255 255 255 Execute
 In 1023 200 200 200 255 Condition
@@ -73,7 +73,7 @@ Out 1025 255 255 255 255 False
 ID 8
 Title Is Key Pressed
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1026 200 200 200 255 Key
 Out 1027 200 200 200 255 Result
@@ -81,7 +81,7 @@ Out 1027 200 200 200 255 Result
 ID 9
 Title Set Vector3
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1028 255 255 255 255 Execute
 In 1029 200 200 200 255 Name
@@ -91,7 +91,7 @@ Out 1031 255 255 255 255 Next
 ID 10
 Title Branch
 Pos 0 0
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1032 255 255 255 255 Execute
 In 1033 200 200 200 255 Condition
@@ -101,7 +101,7 @@ Out 1035 255 255 255 255 False
 ID 11
 Title Is Key Pressed
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1036 200 200 200 255 Key
 Out 1037 200 200 200 255 Result
@@ -109,7 +109,7 @@ Out 1037 200 200 200 255 Result
 ID 12
 Title Set Vector3
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1038 255 255 255 255 Execute
 In 1039 200 200 200 255 Name
@@ -119,7 +119,7 @@ Out 1041 255 255 255 255 Next
 ID 13
 Title Branch
 Pos 0 0
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1042 255 255 255 255 Execute
 In 1043 200 200 200 255 Condition
@@ -129,7 +129,7 @@ Out 1045 255 255 255 255 False
 ID 14
 Title Is Key Pressed
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1046 200 200 200 255 Key
 Out 1047 200 200 200 255 Result
@@ -137,7 +137,7 @@ Out 1047 200 200 200 255 Result
 ID 15
 Title Set Vector3
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1048 255 255 255 255 Execute
 In 1049 200 200 200 255 Name
@@ -147,7 +147,7 @@ Out 1051 255 255 255 255 Next
 ID 16
 Title Set Linear Velocity
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1052 255 255 255 255 Execute
 In 1053 200 200 200 255 Target
@@ -157,7 +157,7 @@ Out 1055 255 255 255 255 Next
 ID 17
 Title Get Linear Velocity
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1056 200 200 200 255 Target
 Out 1057 255 202 36 255 Velocity
@@ -165,7 +165,7 @@ Out 1057 255 202 36 255 Velocity
 ID 18
 Title Break Vector3
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1058 255 202 36 255 Vector
 Out 1059 147 226 74 255 X
@@ -175,7 +175,7 @@ Out 1061 147 226 74 255 Z
 ID 19
 Title Make Vector3
 Pos 0 0
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1062 147 226 74 255 X
 In 1063 147 226 74 255 Y
@@ -185,7 +185,7 @@ Out 1065 255 202 36 255 Vector
 ID 20
 Title Get Forward Vector
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 40 130 40 255
 In 1066 200 200 200 255 Target
 Out 1067 255 202 36 255 Result
@@ -193,7 +193,7 @@ Out 1067 255 202 36 255 Result
 ID 21
 Title Get Float
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1068 200 200 200 255 Name
 Out 1069 147 226 74 255 Value
@@ -201,7 +201,7 @@ Out 1069 147 226 74 255 Value
 ID 22
 Title Multiply (*)
 Pos 0 0
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1070 255 202 36 255 A
 In 1071 147 226 74 255 B
@@ -210,7 +210,7 @@ Out 1072 255 202 36 255 Result
 ID 23
 Title Get Vector3
 Pos 0 0
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1073 200 200 200 255 Name
 Out 1074 255 202 36 255 Value
@@ -218,160 +218,16 @@ Out 1074 255 202 36 255 Value
 ID 24
 Title Add (+)
 Pos 0 0
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1075 255 202 36 255 A
 In 1076 255 202 36 255 B
 Out 1077 255 202 36 255 Result
 [Node]
-ID 26
-Title Get Float
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1080 200 200 200 255 Name
-Out 1081 147 226 74 255 Value
-[Node]
-ID 27
-Title Multiply (*)
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1082 255 202 36 255 A
-In 1083 147 226 74 255 B
-Out 1084 255 202 36 255 Result
-[Node]
-ID 28
-Title Get Vector3
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1085 200 200 200 255 Name
-Out 1086 255 202 36 255 Value
-[Node]
-ID 30
-Title Get Right Vector
-Pos 0 0
-Size 150 100
-Color 40 130 40 255
-In 1090 200 200 200 255 Target
-Out 1091 255 202 36 255 Result
-[Node]
-ID 31
-Title Get Float
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1092 200 200 200 255 Name
-Out 1093 147 226 74 255 Value
-[Node]
-ID 32
-Title Multiply (*)
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1094 255 202 36 255 A
-In 1095 147 226 74 255 B
-Out 1096 255 202 36 255 Result
-[Node]
-ID 33
-Title Get Vector3
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1097 200 200 200 255 Name
-Out 1098 255 202 36 255 Value
-[Node]
-ID 35
-Title Add (+)
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1102 255 202 36 255 A
-In 1103 255 202 36 255 B
-Out 1104 255 202 36 255 Result
-[Node]
-ID 36
-Title Get Right Vector
-Pos 0 0
-Size 150 100
-Color 40 130 40 255
-In 1105 200 200 200 255 Target
-Out 1106 255 202 36 255 Result
-[Node]
-ID 37
-Title Get Float
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1107 200 200 200 255 Name
-Out 1108 147 226 74 255 Value
-[Node]
-ID 38
-Title Multiply (*)
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1109 255 202 36 255 A
-In 1110 147 226 74 255 B
-Out 1111 255 202 36 255 Result
-[Node]
-ID 39
-Title Get Vector3
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1112 200 200 200 255 Name
-Out 1113 255 202 36 255 Value
-[Node]
-ID 40
-Title Subtract (-)
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1114 255 202 36 255 A
-In 1115 255 202 36 255 B
-Out 1116 255 202 36 255 Result
-[Node]
-ID 41
-Title Get Vector3
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1117 200 200 200 255 Name
-Out 1118 255 202 36 255 Value
-[Node]
-ID 42
-Title Subtract (-)
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1119 255 202 36 255 A
-In 1120 255 202 36 255 B
-Out 1121 255 202 36 255 Result
-[Node]
-ID 43
-Title Get Forward Vector
-Pos 0 0
-Size 150 100
-Color 40 130 40 255
-In 1122 200 200 200 255 Target
-Out 1123 255 202 36 255 Result
-[Node]
-ID 45
-Title Set Float
-Pos 0 0
-Size 150 100
-Color 80 80 80 255
-In 1126 255 255 255 255 Execute
-In 1127 200 200 200 255 Name
-In 1128 147 226 74 255 Value
-Out 1129 255 255 255 255 Next
-[Node]
 ID 54
 Title Get Float
 Pos -604 326
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1160 200 200 200 255 Name
 Out 1161 147 226 74 255 Value
@@ -379,7 +235,7 @@ Out 1161 147 226 74 255 Value
 ID 53
 Title Set Angular Velocity
 Pos 442 8
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1156 255 255 255 255 Execute
 In 1157 200 200 200 255 Target
@@ -389,7 +245,7 @@ Out 1159 255 255 255 255 Next
 ID 59
 Title Make Vector3
 Pos 252 127
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1171 147 226 74 255 X
 In 1172 147 226 74 255 Y
@@ -399,7 +255,7 @@ Out 1174 255 202 36 255 Vector
 ID 58
 Title Get Float
 Pos -7 333
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1169 200 200 200 255 Name
 Out 1170 147 226 74 255 Value
@@ -407,7 +263,7 @@ Out 1170 147 226 74 255 Value
 ID 51
 Title Is Key Pressed
 Pos -711.111 65.5555
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1150 200 200 200 255 Key
 Out 1151 200 200 200 255 Result
@@ -415,7 +271,7 @@ Out 1151 200 200 200 255 Result
 ID 55
 Title Multiply (*)
 Pos -310.111 392.667
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1162 147 226 74 255 A
 In 1163 147 226 74 255 B
@@ -424,7 +280,7 @@ Out 1164 147 226 74 255 Result
 ID 48
 Title Set Float
 Pos -65.5555 197.778
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1136 255 255 255 255 Execute
 In 1137 200 200 200 255 Name
@@ -434,7 +290,7 @@ Out 1139 255 255 255 255 Next
 ID 46
 Title Branch
 Pos -941.111 -98.8889
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1130 255 255 255 255 Execute
 In 1131 200 200 200 255 Condition
@@ -444,27 +300,15 @@ Out 1133 255 255 255 255 False
 ID 47
 Title Is Key Pressed
 Pos -1227.78 64.4444
-Size 150 100
+Size 150 70
 Color 80 80 80 255
 In 1134 200 200 200 255 Key
 Out 1135 200 200 200 255 Result
 [Node]
-ID 49
-Title Sequence
-Pos -1437.78 -384.444
-Size 150 100
-Color 80 80 80 255
-In 1140 255 255 255 255 Execute
-Out 1141 255 255 255 255 Then 0
-Out 1142 255 255 255 255 Then 1
-Out 1143 255 255 255 255 Then 2
-Out 1144 255 255 255 255 Then 3
-Out 1145 255 255 255 255 Then 4
-[Node]
 ID 50
 Title Branch
 Pos -1006.67 -481.111
-Size 150 100
+Size 150 90
 Color 80 80 80 255
 In 1146 255 255 255 255 Execute
 In 1147 200 200 200 255 Condition
@@ -474,20 +318,176 @@ Out 1149 255 255 255 255 False
 ID 52
 Title Set Float
 Pos -450.889 -477.222
-Size 150 100
+Size 150 110
 Color 80 80 80 255
 In 1152 255 255 255 255 Execute
 In 1153 200 200 200 255 Name
 In 1154 147 226 74 255 Value
 Out 1155 255 255 255 255 Next
 [Node]
+ID 45
+Title Set Float
+Pos -520 -86
+Size 150 110
+Color 80 80 80 255
+In 1126 255 255 255 255 Execute
+In 1127 200 200 200 255 Name
+In 1128 147 226 74 255 Value
+Out 1129 255 255 255 255 Next
+[Node]
+ID 43
+Title Get Forward Vector
+Pos 32 -265
+Size 150 70
+Color 40 130 40 255
+In 1122 200 200 200 255 Target
+Out 1123 255 202 36 255 Result
+[Node]
+ID 42
+Title Subtract (-)
+Pos -454 -341
+Size 150 90
+Color 80 80 80 255
+In 1119 255 202 36 255 A
+In 1120 255 202 36 255 B
+Out 1121 255 202 36 255 Result
+[Node]
+ID 41
+Title Get Vector3
+Pos 328 -227
+Size 150 70
+Color 80 80 80 255
+In 1117 200 200 200 255 Name
+Out 1118 255 202 36 255 Value
+[Node]
+ID 40
+Title Subtract (-)
+Pos 597 -126
+Size 150 90
+Color 80 80 80 255
+In 1114 255 202 36 255 A
+In 1115 255 202 36 255 B
+Out 1116 255 202 36 255 Result
+[Node]
+ID 39
+Title Get Vector3
+Pos -188 -360
+Size 150 70
+Color 80 80 80 255
+In 1112 200 200 200 255 Name
+Out 1113 255 202 36 255 Value
+[Node]
+ID 38
+Title Multiply (*)
+Pos 344.444 357.778
+Size 150 90
+Color 80 80 80 255
+In 1109 255 202 36 255 A
+In 1110 147 226 74 255 B
+Out 1111 255 202 36 255 Result
+[Node]
+ID 37
+Title Get Float
+Pos 146.667 478.889
+Size 150 70
+Color 80 80 80 255
+In 1107 200 200 200 255 Name
+Out 1108 147 226 74 255 Value
+[Node]
+ID 36
+Title Get Right Vector
+Pos 705.555 235.556
+Size 150 70
+Color 40 130 40 255
+In 1105 200 200 200 255 Target
+Out 1106 255 202 36 255 Result
+[Node]
+ID 35
+Title Add (+)
+Pos 575.555 -332.222
+Size 150 90
+Color 80 80 80 255
+In 1102 255 202 36 255 A
+In 1103 255 202 36 255 B
+Out 1104 255 202 36 255 Result
+[Node]
+ID 33
+Title Get Vector3
+Pos 256.667 -371.111
+Size 150 70
+Color 80 80 80 255
+In 1097 200 200 200 255 Name
+Out 1098 255 202 36 255 Value
+[Node]
+ID 32
+Title Multiply (*)
+Pos -873.333 244.444
+Size 150 90
+Color 80 80 80 255
+In 1094 255 202 36 255 A
+In 1095 147 226 74 255 B
+Out 1096 255 202 36 255 Result
+[Node]
+ID 31
+Title Get Float
+Pos -798.889 462.222
+Size 150 70
+Color 80 80 80 255
+In 1092 200 200 200 255 Name
+Out 1093 147 226 74 255 Value
+[Node]
+ID 30
+Title Get Right Vector
+Pos -498.889 481.111
+Size 150 70
+Color 40 130 40 255
+In 1090 200 200 200 255 Target
+Out 1091 255 202 36 255 Result
+[Node]
+ID 27
+Title Multiply (*)
+Pos -806.667 -560
+Size 150 90
+Color 80 80 80 255
+In 1082 255 202 36 255 A
+In 1083 147 226 74 255 B
+Out 1084 255 202 36 255 Result
+[Node]
 ID 57
 Title Get Float
-Pos -638.889 -379
-Size 150 100
+Pos -643.333 -359
+Size 150 70
 Color 80 80 80 255
 In 1167 200 200 200 255 Name
 Out 1168 147 226 74 255 Value
+[Node]
+ID 26
+Title Get Float
+Pos -1145.56 -726.667
+Size 150 70
+Color 80 80 80 255
+In 1080 200 200 200 255 Name
+Out 1081 147 226 74 255 Value
+[Node]
+ID 28
+Title Get Vector3
+Pos -660.445 -601.111
+Size 150 70
+Color 80 80 80 255
+In 1085 200 200 200 255 Name
+Out 1086 255 202 36 255 Value
+[Node]
+ID 49
+Title Sequence
+Pos -1569.03 -493.194
+Size 150 150
+Color 80 80 80 255
+In 1140 255 255 255 255 Execute
+Out 1141 255 255 255 255 Then 0
+Out 1142 255 255 255 255 Then 1
+Out 1143 255 255 255 255 Then 2
+Out 1144 255 255 255 255 Then 3
+Out 1145 255 255 255 255 Then 4
 [Link]
 ID 100
 Start 1000

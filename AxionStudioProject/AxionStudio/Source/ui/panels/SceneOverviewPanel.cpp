@@ -5,6 +5,8 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
+#include "AxionStudio/Source/core/EditorActionQueue.h"
+
 #include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
 #include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
 #include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
@@ -18,16 +20,42 @@
 #include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
 #include "AxionStudio/Vendor/Silica/include/SVector3FloatInput.h"
 
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-
 namespace Axion {
 
-	Silica::WidgetPtr SceneOverviewPanel::getWidget(Silica::FontAtlas* font) {
-		m_font = font;
-
+	Silica::WidgetPtr SceneOverviewPanel::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::Color(25, 25, 25, 255)
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axsky") {
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [this](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath" && m_activeScene) {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+
+						if (path.extension() == ".axsky") {
+							EditorActionQueue::push([this, path]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									AssetHandle<Skybox> handle = AssetManager::load<Skybox>(assetUUID);
+									m_activeScene->setSkybox(handle);
+									rebuildUI();
+								}
+								else {
+									AX_CORE_LOG_WARN("Attempted to drop invalid Skybox asset!");
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
 			});
 			rebuildUI_Internal();
 		}
@@ -53,8 +81,7 @@ namespace Axion {
 				.horizontalAlign = Silica::HorizontalAlign::Center,
 				.verticalAlign = Silica::VerticalAlign::Center,
 				.child = Silica::MakeWidget<Silica::STextBlock>({
-					.text = "No Project Loaded.\nPlease load or create a project first.",
-					.font = m_font
+					.text = "No Project Loaded.\nPlease load or create a project first."
 				})
 			}));
 			return;
@@ -66,14 +93,44 @@ namespace Axion {
 				.horizontalAlign = Silica::HorizontalAlign::Center,
 				.verticalAlign = Silica::VerticalAlign::Center,
 				.child = Silica::MakeWidget<Silica::STextBlock>({
-					.text = "No Scene Loaded.",
-					.font = m_font
+					.text = "No Scene Loaded."
 				})
 			}));
 			return;
 		}
 
+		// -- Toolbar --
+		auto titleInput = Silica::MakeWidget<Silica::SBox>({
+			.backgroundColor = Silica::GetTheme().Background_Input,
+			.child = Silica::MakeWidget<Silica::SEditableText>({
+				.initialText = m_activeScene->getTitle(),
+				.onTextCommitted = [this](const std::string& newText) {
+					m_activeScene->setTitle(newText);
+				}
+			})
+		});
+
+		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
+			.padding = { 10.0f, 10.0f },
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
+			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
+				.spacing = 10.0f,
+				.slots = {
+					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
+						.verticalAlign = Silica::VerticalAlign::Center,
+						.child = Silica::MakeWidget<Silica::STextBlock>({
+							.text = "Scene:",
+							.color = Silica::GetTheme().Text_Dim
+						})
+					})},
+					{ {1, 0}, titleInput }
+				}
+			})
+		});
+
+		// -- Build Scrollable Content Area --
 		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 10.0f });
+
 
 		// -- Helper Funtions --
 		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
@@ -85,7 +142,7 @@ namespace Axion {
 						.backgroundColor = Silica::Color::transparent(),
 						.child = Silica::MakeWidget<Silica::SAlign>({
 							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .font = m_font})
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
 						})
 					})},
 					{ {1, 0}, valueWidget }
@@ -105,7 +162,7 @@ namespace Axion {
 				.openOnHover = false,
 				.anchorContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { 2.0f, 2.0f },
-					.backgroundColor = Silica::Color(45, 45, 45, 255),
+					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SBox>({
 						.explicitSize = Silica::Vec2(100.0f, 24.0f),
 						.backgroundColor = initialColor
@@ -113,7 +170,7 @@ namespace Axion {
 				}),
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { 10.0f, 10.0f },
-					.backgroundColor = Silica::Color(45, 45, 45, 255),
+					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SColorPicker>({
 						.initialColor = initialColor,
 						.onColorChanged = onColorChanged
@@ -121,20 +178,6 @@ namespace Axion {
 				})
 			});
 		};
-
-
-		// -- Scene Title --
-		auto titleInput = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(35, 35, 35, 255),
-			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_activeScene->getTitle(),
-				.font = m_font,
-				.onTextCommitted = [this](const std::string& newText) {
-					m_activeScene->setTitle(newText);
-				}
-			})
-		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Title", titleInput) });
 
 
 		// -- Skybox --
@@ -148,7 +191,7 @@ namespace Axion {
 				.spacing = 8.0f,
 				.slots = {
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f }, .color = Silica::Color(50, 50, 50, 255),
+						.padding = { 8.0f, 4.0f },
 						.onClick = [this]() {
 							std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox";
 							std::filesystem::path absolutePath = std::filesystem::exists(skyDir) ?
@@ -165,16 +208,17 @@ namespace Axion {
 							}
 							return Silica::EventReply::handled();
 						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Change Skybox", .font = m_font})
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Change Skybox"})
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f }, .color = Silica::Color(150, 50, 50, 255),
+						.padding = { 8.0f, 4.0f },
+						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this]() {
 							m_activeScene->removeSkybox();
 							rebuildUI();
 							return Silica::EventReply::handled();
 						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove", .font = m_font})
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove"})
 					})}
 				}
 			});
@@ -182,8 +226,11 @@ namespace Axion {
 			skyboxContent = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = 4.0f,
 				.slots = {
-					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = skyPath.stem().string(), .font = m_font})},
-					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = skyRel.string(), .color = Silica::Color(150, 150, 150, 255), .font = m_font})},
+					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({ .text = skyPath.stem().string() })},
+					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
+						.text = skyRel.string(),
+						.color = Silica::GetTheme().Text_Dim
+					})},
 					{ {0,0}, btnRow }
 				}
 			});
@@ -192,9 +239,12 @@ namespace Axion {
 			skyboxContent = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = 8.0f,
 				.slots = {
-					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "No Skybox Loaded", .color = Silica::Color(150, 150, 150, 255), .font = m_font})},
+					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
+						.text = "No Skybox Loaded",
+						.color = Silica::GetTheme().Text_Dim
+					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f }, .color = Silica::Color(50, 50, 50, 255),
+						.padding = { 8.0f, 4.0f },
 						.onClick = [this]() {
 							std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox";
 							std::filesystem::path absolutePath = std::filesystem::exists(skyDir) ?
@@ -211,7 +261,7 @@ namespace Axion {
 							}
 							return Silica::EventReply::handled();
 						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Select Skybox", .font = m_font})
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Select Skybox" })
 					})}
 				}
 			});
@@ -224,7 +274,6 @@ namespace Axion {
 		auto gravityInput = Silica::MakeWidget<Silica::SVector3FloatInput>({
 			.label = "",
 			.initialValue = Silica::Vec3(currentGravity.x, currentGravity.y, currentGravity.z),
-			.font = m_font,
 			.onValueChanged = [this](Silica::Vec3 val) {
 				m_activeScene->setGravity(Vec3(val.x, val.y, val.z));
 			}
@@ -245,9 +294,16 @@ namespace Axion {
 			.child = contentBox
 		});
 
-		m_uiRoot->setChild(Silica::MakeWidget<Silica::SScrollBox>({
+		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({
 			.child = paddedContent
-		}));
+		});
+
+		auto borderLayout = Silica::MakeWidget<Silica::SBorderLayout>({
+			.topBar = topBarBox,
+			.contentArea = scrollBox
+		});
+
+		m_uiRoot->setChild(borderLayout);
 	}
 
 	void SceneOverviewPanel::onEvent(Event& e) {

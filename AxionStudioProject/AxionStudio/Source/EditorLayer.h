@@ -62,6 +62,7 @@ namespace Axion {
 		EditorState m_sceneState = EditorState::Edit;
 		EditorState m_prePauseState = EditorState::Edit;
 		int m_stepFrames = 0;
+		std::filesystem::path m_currentScenePath;
 
 
 		// -- Silica --
@@ -87,8 +88,15 @@ namespace Axion {
 		void playScene();
 		void simScene();
 		void stopScene();
+		void setSkybox(const std::filesystem::path& path);
 		void selectEntity(Entity selectedEntity);
+		void newScene();
+		void openScene();
+		void saveScene();
+		void saveSceneAs();
 		void drawOverlay();
+
+		bool onKeyPressed(KeyPressedEvent& e);
 
 	};
 

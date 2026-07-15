@@ -46,7 +46,6 @@ namespace Silica {
 		std::function<void(float)> m_onValueChanged;
 
 		void updateValueFromMouse(float mouseX);
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
 
 	};
 

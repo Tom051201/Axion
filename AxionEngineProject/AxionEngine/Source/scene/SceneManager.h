@@ -25,6 +25,7 @@ namespace Axion {
 		static bool hasScene();
 		static bool isNewScene();
 		static const std::filesystem::path& getScenePath();
+		static bool isLoadingScene();
 
 	};
 

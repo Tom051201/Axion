@@ -19,7 +19,6 @@ namespace Silica {
 			std::optional<Color> backgroundColor;
 			std::optional<Color> focusedColor;
 			FontAtlas* font = nullptr;
-
 			std::function<void(const std::string&)> onTextChanged = nullptr;
 			std::function<void(const std::string&)> onTextCommitted = nullptr;
 		};
@@ -32,8 +31,10 @@ namespace Silica {
 
 		EventReply onMouseMove(const Geometry& allocatedGeometry, const Vec2& mousePos) override;
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
+		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onChar(char c) override;
 		EventReply onKeyDown(Key key) override;
+		EventReply onKeyUp(Key key) override;
 
 	private:
 
@@ -45,11 +46,18 @@ namespace Silica {
 		FontAtlas* m_font;
 
 		int m_cursorIndex = 0;
+		int m_selectionAnchor = 0;
+		bool m_isDragging = false;
+		bool m_isShiftDown = false;
+		bool m_isCtrlDown = false;
+		mutable float m_scrollOffset = 0.0f;
 
 		std::function<void(const std::string&)> m_onTextChanged;
 		std::function<void(const std::string&)> m_onTextCommitted;
 
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
+		int getIndexFromMousePos(const Geometry& geo, const Vec2& pos) const;
+		bool hasSelection() const;
+		void deleteSelection();
 
 	};
 

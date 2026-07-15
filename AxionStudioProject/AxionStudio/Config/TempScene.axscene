@@ -63,7 +63,7 @@ Entities:
     TagComponent:
       Tag: Submesh Cube
     TransformComponent:
-      Translation: [-1.98310661, 0.196632415, -0.133338809]
+      Translation: [-1.98310661, 0, 0]
       Rotation: [-0.293553919, 0, -0, 0.955942512]
       Scale: [1, 0.999999881, 0.999999881]
     MeshComponent:

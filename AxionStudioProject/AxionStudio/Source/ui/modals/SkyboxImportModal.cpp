@@ -14,6 +14,7 @@
 #include "AxionStudio/Vendor/Silica/include/STextBlock.h"
 #include "AxionStudio/Vendor/Silica/include/SEditableText.h"
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 
@@ -28,8 +29,7 @@ namespace Axion {
 		m_outputPath = dir.string();
 	}
 
-	Silica::WidgetPtr SkyboxImportModal::getWidget(Silica::FontAtlas* font, std::function<void()> onClose) {
-		m_font = font;
+	Silica::WidgetPtr SkyboxImportModal::getWidget(std::function<void()> onClose) {
 		m_onClose = onClose;
 
 		if (!m_uiRoot) {
@@ -58,7 +58,7 @@ namespace Axion {
 
 
 		// -- Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Import Skybox Asset", .font = m_font}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Import Skybox Asset" }) });
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 2}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
 
 
@@ -72,7 +72,7 @@ namespace Axion {
 						.backgroundColor = Silica::Color::transparent(),
 						.child = Silica::MakeWidget<Silica::SAlign>({
 							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .font = m_font})
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
 						})
 					})},
 					{ {1, 0}, valueWidget }
@@ -85,7 +85,7 @@ namespace Axion {
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
 			.backgroundColor = Silica::Color(35, 35, 35, 255),
 			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_name, .font = m_font,
+				.initialText = m_name ,
 				.onTextChanged = [this](const std::string& val) { m_name = val; rebuildUI(); }
 			})
 		});
@@ -99,7 +99,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.backgroundColor = Silica::Color(35, 35, 35, 255),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_texturePath, .font = m_font,
+						.initialText = m_texturePath ,
 						.onTextChanged = [this](const std::string& val) { m_texturePath = val; rebuildUI(); }
 					})
 				})},
@@ -113,7 +113,7 @@ namespace Axion {
 						if (!absPath.empty()) { m_texturePath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse...", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
 				})}
 			}
 		});
@@ -127,7 +127,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.backgroundColor = Silica::Color(35, 35, 35, 255),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_pipelinePath, .font = m_font,
+						.initialText = m_pipelinePath ,
 						.onTextChanged = [this](const std::string& val) { m_pipelinePath = val; rebuildUI(); }
 					})
 				})},
@@ -141,7 +141,7 @@ namespace Axion {
 						if (!absPath.empty()) { m_pipelinePath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse...", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
 				})}
 			}
 		});
@@ -155,7 +155,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.backgroundColor = Silica::Color(35, 35, 35, 255),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_outputPath, .font = m_font,
+						.initialText = m_outputPath ,
 						.onTextChanged = [this](const std::string& val) { m_outputPath = val; rebuildUI(); }
 					})
 				})},
@@ -168,7 +168,7 @@ namespace Axion {
 						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse...", .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
 				})}
 			}
 		});
@@ -214,7 +214,7 @@ namespace Axion {
 			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
 		}
 
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = validationMsg, .color = validationColor, .font = m_font}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = validationMsg, .color = validationColor }) });
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 2}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
 
 
@@ -252,8 +252,7 @@ namespace Axion {
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({
 				.text = "Create",
-				.color = disabled ? Silica::Color(120, 120, 120, 255) : Silica::Color::white(),
-				.font = m_font,
+				.color = disabled ? Silica::Color(120, 120, 120, 255) : Silica::Color::white()
 			})
 		});
 
@@ -263,7 +262,7 @@ namespace Axion {
 				if (m_onClose) m_onClose();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel", .font = m_font})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
 		});
 
 		std::string versionText = "v" + std::to_string(ASSET_VERSION_SKYBOX);
@@ -276,7 +275,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = versionText, .color = Silica::Color(100,100,100,255), .font = m_font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = versionText, .color = Silica::Color(100,100,100,255) })
 				})}
 			}
 		});
@@ -288,6 +287,7 @@ namespace Axion {
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 550.0f, 0.0f },
+			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::Color(30, 30, 30, 255),
 			.child = contentBox
 		});

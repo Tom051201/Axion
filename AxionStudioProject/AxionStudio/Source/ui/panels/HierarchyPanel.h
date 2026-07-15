@@ -1,15 +1,13 @@
 #pragma once
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
+#include <unordered_set>
+
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
 #include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
 #include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
 
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Entity.h"
-
-#include <functional>
 
 namespace Axion {
 
@@ -19,8 +17,9 @@ namespace Axion {
 		HierarchyPanel() = default;
 		~HierarchyPanel() = default;
 
-		Silica::WidgetPtr getWidget(Silica::FontAtlas* font);
+		Silica::WidgetPtr getWidget();
 
+		void rebuildUI();
 		void setScene(Ref<Scene> scene);
 		void refresh();
 
@@ -28,12 +27,12 @@ namespace Axion {
 
 	private:
 
-		void rebuildUI();
 		Silica::WidgetPtr buildEntityNode(Entity entity);
 
-		Silica::FontAtlas* m_font = nullptr;
 		Ref<Scene> m_scene;
 		std::function<void(Entity)> m_onEntitySelected;
+		Entity m_selectedEntity = {};
+		std::unordered_set<entt::entity> m_openNodes;
 
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		std::shared_ptr<Silica::SVerticalBox> m_contentBox;

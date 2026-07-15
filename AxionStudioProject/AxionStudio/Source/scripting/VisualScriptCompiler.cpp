@@ -30,6 +30,8 @@ namespace Axion {
 		// -- Create Code --
 		for (const auto& node : graph.nodes) {
 
+			if (node.outputs.empty()) continue;
+
 			if (node.type == NodeType::Event_OnCreate) {
 				cs << "\tpublic override void OnCreate() {\n";
 				compileFlowExecution(graph, node.outputs[0].id, cs, 2);
@@ -79,48 +81,56 @@ namespace Axion {
 					for (const auto& outputPin : sourceNode.outputs) {
 						if (outputPin.id == link.startPinID) {
 
+							auto safeResolve = [&](size_t idx) -> std::string {
+								if (idx >= sourceNode.inputs.size()) return "null /* ERROR_MISSING_PIN */";
+								return resolvePinValue(graph, sourceNode.inputs[idx]);
+							};
+
+							auto safeRawString = [&](size_t idx) -> std::string {
+								if (idx >= sourceNode.inputs.size()) return "";
+								return sourceNode.inputs[idx].stringValue;
+							};
+
 							// -- EVENTS --
 							if (sourceNode.type == NodeType::Event_OnUpdate && outputPin.name == "Delta Time") return "timestep";
 							if (sourceNode.type == NodeType::Event_OnCollisionEnter && outputPin.name == "Other Entity") return "col.OtherEntity";
 
 							// -- ENTITY --
-							if (sourceNode.type == NodeType::Entity_Instantiate) return "Entity.Instantiate(" + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Entity_InstantiatePrefab) return "Entity.InstantiatePrefab(" + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Entity_FindByName) return "Entity.FindEntityByName(" + resolvePinValue(graph, sourceNode.inputs[0]) + ")";
+							if (sourceNode.type == NodeType::Entity_Instantiate) return "Entity.Instantiate(" + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Entity_InstantiatePrefab) return "Entity.InstantiatePrefab(" + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Entity_FindByName) return "Entity.FindEntityByName(" + safeResolve(0) + ")";
 
 							// -- INPUT --
-							if (sourceNode.type == NodeType::Input_IsKeyPressed) return "Input.IsKeyPressed(KeyCode." + sourceNode.inputs[0].stringValue + ")";
-							if (sourceNode.type == NodeType::Input_IsMouseButtonPressed) return "Input.IsMouseButtonPressed(MouseButton." + sourceNode.inputs[0].stringValue + ")";
+							if (sourceNode.type == NodeType::Input_IsKeyPressed) return "Input.IsKeyPressed(KeyCode." + safeRawString(0) + ")";
+							if (sourceNode.type == NodeType::Input_IsMouseButtonPressed) return "Input.IsMouseButtonPressed(MouseButton." + safeRawString(0) + ")";
 
 							// -- MATH --
-							if (sourceNode.type == NodeType::Math_Add) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " + " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Math_Subtract) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " - " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Math_Multiply) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " * " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Math_Divide) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " / " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Math_Equal) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " == " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Math_Greater) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " > " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Math_Less) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " < " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
+							if (sourceNode.type == NodeType::Math_Add) return "(" + safeResolve(0) + " + " + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Math_Subtract) return "(" + safeResolve(0) + " - " + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Math_Multiply) return "(" + safeResolve(0) + " * " + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Math_Divide) return "(" + safeResolve(0) + " / " + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Math_Equal) return "(" + safeResolve(0) + " == " + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Math_Greater) return "(" + safeResolve(0) + " > " + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Math_Less) return "(" + safeResolve(0) + " < " + safeResolve(1) + ")";
 
 							// -- LOGIC (PURE) --
-							if (sourceNode.type == NodeType::Logic_And) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " && " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
-							if (sourceNode.type == NodeType::Logic_Or) return "(" + resolvePinValue(graph, sourceNode.inputs[0]) + " || " + resolvePinValue(graph, sourceNode.inputs[1]) + ")";
+							if (sourceNode.type == NodeType::Logic_And) return "(" + safeResolve(0) + " && " + safeResolve(1) + ")";
+							if (sourceNode.type == NodeType::Logic_Or) return "(" + safeResolve(0) + " || " + safeResolve(1) + ")";
 
 							if (sourceNode.type == NodeType::Math_MakeVector3) {
-								return "new Vector3(" + resolvePinValue(graph, sourceNode.inputs[0]) + ", " +
-									resolvePinValue(graph, sourceNode.inputs[1]) + ", " +
-									resolvePinValue(graph, sourceNode.inputs[2]) + ")";
+								return "new Vector3(" + safeResolve(0) + ", " + safeResolve(1) + ", " + safeResolve(2) + ")";
 							}
 
 							if (sourceNode.type == NodeType::Math_BreakVector3) {
-								std::string vec = resolvePinValue(graph, sourceNode.inputs[0]);
+								std::string vec = safeResolve(0);
 								if (outputPin.name == "X") return "(" + vec + ").X";
 								if (outputPin.name == "Y") return "(" + vec + ").Y";
 								if (outputPin.name == "Z") return "(" + vec + ").Z";
 							}
 
 							// -- Resolve Target for Components --
-							std::string target = resolvePinValue(graph, sourceNode.inputs[0]);
-							if (target.empty() || target == "\"\"") target = "this";
+							std::string target = safeResolve(0);
+							if (target.empty() || target == "\"\"" || target == "null /* ERROR_MISSING_PIN */") target = "this";
 
 							// -- TRANSFORM GETTERS --
 							if (sourceNode.type == NodeType::Transform_GetPosition) return target + ".Transform.Position";
@@ -142,7 +152,7 @@ namespace Axion {
 							// -- VARIABLES (GET) --
 							if (sourceNode.type == NodeType::Variable_GetFloat || sourceNode.type == NodeType::Variable_GetInt ||
 								sourceNode.type == NodeType::Variable_GetVector3 || sourceNode.type == NodeType::Variable_GetBool) {
-								std::string varName = resolvePinValue(graph, sourceNode.inputs[0]);
+								std::string varName = safeResolve(0);
 								if (varName.size() >= 2 && varName.front() == '"' && varName.back() == '"') {
 									varName = varName.substr(1, varName.size() - 2);
 								}
@@ -182,146 +192,155 @@ namespace Axion {
 
 			if (!nextNode) continue;
 
+			auto safeResolve = [&](size_t idx) -> std::string {
+				if (idx >= nextNode->inputs.size()) return "null /* ERROR_MISSING_PIN */";
+				return resolvePinValue(graph, nextNode->inputs[idx]);
+			};
+
 			// -- Resolve Target --
 			std::string target = "this";
 			if (nextNode->inputs.size() > 1 && nextNode->inputs[1].type == PinType::Entity) {
-				target = resolvePinValue(graph, nextNode->inputs[1]);
-				if (target.empty() || target == "\"\"") target = "this";
+				target = safeResolve(1);
+				if (target.empty() || target == "\"\"" || target == "null /* ERROR_MISSING_PIN */") target = "this";
 			}
 
 			// -- Generate Code --
 			switch (nextNode->type) {
 			// -- CONTROL FLOW --
-			case NodeType::Logic_Branch: {
-				std::string condition = resolvePinValue(graph, nextNode->inputs[1]);
-				// -- Generate If Block --
-				cs << tabs << "if (" << condition << ") {\n";
-				compileFlowExecution(graph, nextNode->outputs[0].id, cs, indentLevel + 1);
+				case NodeType::Logic_Branch: {
+					std::string condition = safeResolve(1);
+					// -- Generate If Block --
+					cs << tabs << "if (" << condition << ") {\n";
 
-				// -- Generate False Block --
-				bool hasFalseConnection = false;
-				for (const auto& link : graph.links) {
-					if (link.startPinID == nextNode->outputs[1].id) {
-						hasFalseConnection = true;
-						break;
+					if (!nextNode->outputs.empty()) {
+						compileFlowExecution(graph, nextNode->outputs[0].id, cs, indentLevel + 1);
 					}
-				}
 
-				if (hasFalseConnection) {
-					cs << tabs << "} else {\n";
-					compileFlowExecution(graph, nextNode->outputs[1].id, cs, indentLevel + 1);
-					cs << tabs << "}\n";
-				}
-				else {
-					cs << tabs << "}\n";
-				}
-
-				continue;
-			}
-			case NodeType::Logic_Sequence: {
-				for (const auto& pin : nextNode->outputs) {
-					if (pin.type == PinType::Flow) {
-						compileFlowExecution(graph, pin.id, cs, indentLevel);
+					// -- Generate False Block --
+					bool hasFalseConnection = false;
+					if (nextNode->outputs.size() > 1) {
+						for (const auto& link : graph.links) {
+							if (link.startPinID == nextNode->outputs[1].id) {
+								hasFalseConnection = true;
+								break;
+							}
+						}
 					}
+
+					if (hasFalseConnection && nextNode->outputs.size() > 1) {
+						cs << tabs << "} else {\n";
+						compileFlowExecution(graph, nextNode->outputs[1].id, cs, indentLevel + 1);
+						cs << tabs << "}\n";
+					}
+					else {
+						cs << tabs << "}\n";
+					}
+
+					continue;
 				}
-				continue;
-			}
-
-			// -- ENTITY --
-			case NodeType::Entity_Destroy: {
-				cs << tabs << target << ".Destroy();\n";
-				break;
-			}
-			case NodeType::Entity_EmitParticles: {
-				std::string count = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".EmitParticles(" << count << ");\n";
-				break;
-			}
-
-			// -- TRANSFORM --
-			case NodeType::Transform_SetPosition: {
-				std::string val = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".Transform.Position = " << val << ";\n";
-				break;
-			}
-			case NodeType::Transform_SetRotation: {
-				std::string val = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".Transform.Rotation = " << val << ";\n";
-				break;
-			}
-			case NodeType::Transform_SetScale: {
-				std::string val = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".Transform.Scale = " << val << ";\n";
-				break;
-			}
-
-			// -- RIGIDBODY --
-			case NodeType::RigidBody_AddForce: {
-				std::string force = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".RigidBody.AddForce(" << force << ");\n";
-				break;
-			}
-			case NodeType::RigidBody_AddTorque: {
-				std::string torque = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".RigidBody.AddTorque(" << torque << ");\n";
-				break;
-			}
-			case NodeType::RigidBody_AddImpulse: {
-				std::string force = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".RigidBody.AddForce(" << force << ", ForceMode.Impulse);\n";
-				break;
-			}
-			case NodeType::RigidBody_AddRadialImpulse: {
-				std::string origin = resolvePinValue(graph, nextNode->inputs[2]);
-				std::string radius = resolvePinValue(graph, nextNode->inputs[3]);
-				std::string strength = resolvePinValue(graph, nextNode->inputs[4]);
-				cs << tabs << target << ".RigidBody.AddRadialImpulse(" << origin << ", " << radius << ", " << strength << ");\n";
-				break;
-			}
-			case NodeType::RigidBody_SetLinearVelocity: {
-				std::string vel = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".RigidBody.LinearVelocity = " << vel << ";\n";
-				break;
-			}
-			case NodeType::RigidBody_SetAngularVelocity: {
-				std::string vel = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".RigidBody.AngularVelocity = " << vel << ";\n";
-				break;
-			}
-			case NodeType::RigidBody_SetMass: {
-				std::string mass = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".RigidBody.Mass = " << mass << ";\n";
-				break;
-			}
-
-			// -- AUDIO --
-			case NodeType::Audio_Play: cs << tabs << target << ".Audio.Play();\n"; break;
-			case NodeType::Audio_Stop: cs << tabs << target << ".Audio.Stop();\n"; break;
-			case NodeType::Audio_SetVolume: {
-				std::string vol = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << target << ".Audio.Volume = " << vol << ";\n";
-				break;
-			}
-
-			// -- ANIMATOR --
-			case NodeType::Animator_Play: cs << tabs << target << ".Animator.Play();\n"; break;
-			case NodeType::Animator_Stop: cs << tabs << target << ".Animator.Stop();\n"; break;
-
-			// -- VARIABLES SETTERS --
-			case NodeType::Variable_SetFloat:
-			case NodeType::Variable_SetInt:
-			case NodeType::Variable_SetVector3:
-			case NodeType::Variable_SetBool: {
-				std::string varName = resolvePinValue(graph, nextNode->inputs[1]);
-				if (varName.size() >= 2 && varName.front() == '"' && varName.back() == '"') {
-					varName = varName.substr(1, varName.size() - 2);
+				case NodeType::Logic_Sequence: {
+					for (const auto& pin : nextNode->outputs) {
+						if (pin.type == PinType::Flow) {
+							compileFlowExecution(graph, pin.id, cs, indentLevel);
+						}
+					}
+					continue;
 				}
-				std::string val = resolvePinValue(graph, nextNode->inputs[2]);
-				cs << tabs << "this." + varName << " = " << val << ";\n";
-				break;
-			}
 
-			default: break;
+				case NodeType::Entity_Destroy: {
+					cs << tabs << target << ".Destroy();\n";
+					break;
+				}
+				case NodeType::Entity_EmitParticles: {
+					std::string count = safeResolve(2);
+					cs << tabs << target << ".EmitParticles(" << count << ");\n";
+					break;
+				}
+
+				// -- TRANSFORM --
+				case NodeType::Transform_SetPosition: {
+					std::string val = safeResolve(2);
+					cs << tabs << target << ".Transform.Position = " << val << ";\n";
+					break;
+				}
+				case NodeType::Transform_SetRotation: {
+					std::string val = safeResolve(2);
+					cs << tabs << target << ".Transform.Rotation = " << val << ";\n";
+					break;
+				}
+				case NodeType::Transform_SetScale: {
+					std::string val = safeResolve(2);
+					cs << tabs << target << ".Transform.Scale = " << val << ";\n";
+					break;
+				}
+
+				// -- RIGIDBODY --
+				case NodeType::RigidBody_AddForce: {
+					std::string force = safeResolve(2);
+					cs << tabs << target << ".RigidBody.AddForce(" << force << ");\n";
+					break;
+				}
+				case NodeType::RigidBody_AddTorque: {
+					std::string torque = safeResolve(2);
+					cs << tabs << target << ".RigidBody.AddTorque(" << torque << ");\n";
+					break;
+				}
+				case NodeType::RigidBody_AddImpulse: {
+					std::string force = safeResolve(2);
+					cs << tabs << target << ".RigidBody.AddForce(" << force << ", ForceMode.Impulse);\n";
+					break;
+				}
+				case NodeType::RigidBody_AddRadialImpulse: {
+					std::string origin = safeResolve(2);
+					std::string radius = safeResolve(3);
+					std::string strength = safeResolve(4);
+					cs << tabs << target << ".RigidBody.AddRadialImpulse(" << origin << ", " << radius << ", " << strength << ");\n";
+					break;
+				}
+				case NodeType::RigidBody_SetLinearVelocity: {
+					std::string vel = safeResolve(2);
+					cs << tabs << target << ".RigidBody.LinearVelocity = " << vel << ";\n";
+					break;
+				}
+				case NodeType::RigidBody_SetAngularVelocity: {
+					std::string vel = safeResolve(2);
+					cs << tabs << target << ".RigidBody.AngularVelocity = " << vel << ";\n";
+					break;
+				}
+				case NodeType::RigidBody_SetMass: {
+					std::string mass = safeResolve(2);
+					cs << tabs << target << ".RigidBody.Mass = " << mass << ";\n";
+					break;
+				}
+
+				// -- AUDIO --
+				case NodeType::Audio_Play: cs << tabs << target << ".Audio.Play();\n"; break;
+				case NodeType::Audio_Stop: cs << tabs << target << ".Audio.Stop();\n"; break;
+				case NodeType::Audio_SetVolume: {
+					std::string vol = safeResolve(2);
+					cs << tabs << target << ".Audio.Volume = " << vol << ";\n";
+					break;
+				}
+
+				// -- ANIMATOR --
+				case NodeType::Animator_Play: cs << tabs << target << ".Animator.Play();\n"; break;
+				case NodeType::Animator_Stop: cs << tabs << target << ".Animator.Stop();\n"; break;
+
+				// -- VARIABLES SETTERS --
+				case NodeType::Variable_SetFloat:
+				case NodeType::Variable_SetInt:
+				case NodeType::Variable_SetVector3:
+				case NodeType::Variable_SetBool: {
+					std::string varName = safeResolve(1);
+					if (varName.size() >= 2 && varName.front() == '"' && varName.back() == '"') {
+						varName = varName.substr(1, varName.size() - 2);
+					}
+					std::string val = safeResolve(2);
+					cs << tabs << "this." + varName << " = " << val << ";\n";
+					break;
+				}
+
+				default: break;
 			}
 
 			// -- Continue Down the White Wire --

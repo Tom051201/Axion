@@ -13,6 +13,8 @@
 #include "AxionStudio/Vendor/Silica/include/SCheckBox.h"
 #include "AxionStudio/Vendor/Silica/include/SFloatInput.h"
 #include "AxionStudio/Vendor/Silica/include/SColorPicker.h"
+#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
+#include "AxionStudio/Vendor/Silica/include/SAlign.h"
 
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -102,7 +104,7 @@ namespace Axion {
 	}
 
 	template<typename T, typename UIBuilderFunc>
-	void drawComponentBlock(const std::string& title, Entity entity, std::shared_ptr<Silica::SVerticalBox> container, Silica::FontAtlas* font, std::function<void()> triggerRebuild, bool isRemovable, UIBuilderFunc buildContent) {
+	void drawComponentBlock(const std::string& title, Entity entity, std::shared_ptr<Silica::SVerticalBox> container, std::function<void()> triggerRebuild, bool isRemovable, UIBuilderFunc buildContent) {
 		if (!entity.hasComponent<T>()) return;
 
 		Silica::WidgetPtr removeButton = nullptr;
@@ -110,13 +112,13 @@ namespace Axion {
 			removeButton = Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 0.0f },
 				.color = Silica::Color::transparent(),
-				.hoverColor = Silica::Color(200, 50, 50, 255),
+				.hoverColor = Silica::GetTheme().Accent_Danger,
 				.onClick = [entity, triggerRebuild]() mutable {
 					entity.removeComponent<T>();
 					if (triggerRebuild) triggerRebuild();
 					return Silica::EventReply::handled();
 				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X", .font = font})
+				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "X" })
 			});
 		}
 
@@ -125,24 +127,20 @@ namespace Axion {
 			.child = Silica::MakeWidget<Silica::SCollapsingHeader>({
 				.title = title,
 				.initiallyOpen = true,
-				.font = font,
 				.trailingWidget = removeButton,
 				.content = buildContent()
 			})
 		});
 	}
 
-	Silica::WidgetPtr MakeAddComponentItem(const std::string& text, Silica::FontAtlas* font, std::function<Silica::EventReply()> onClick) {
+	Silica::WidgetPtr MakeAddComponentItem(const std::string& text, std::function<Silica::EventReply()> onClick) {
 		return Silica::MakeWidget<Silica::SButton>({
 			.padding = { 0.0f, 0.0f },
-			.color = Silica::Color(45, 45, 45, 255),
-			.hoverColor = Silica::Color(70, 130, 200, 255),
-			.pressedColor = Silica::Color(50, 100, 180, 255),
 			.onClick = onClick,
 			.child = Silica::MakeWidget<Silica::SBox>({
 				.padding = { 12.0f, 4.0f },
 				.backgroundColor = Silica::Color::transparent(),
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text, .font = font })
+				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = text })
 			})
 		});
 	}
@@ -151,11 +149,13 @@ namespace Axion {
 
 
 	// ----- ENTITY PROPERTIES PANEL IMPLEMENTATION -----
-	Silica::WidgetPtr EntityPropertiesPanel::getWidget(Silica::FontAtlas* font) {
-		m_font = font;
+	Silica::WidgetPtr EntityPropertiesPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 4.0f });
-			m_uiRoot = Silica::MakeWidget<Silica::SScrollBox>({ .child = m_contentBox });
+			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.child = m_contentBox
+			});
 			rebuildUI();
 		}
 		return m_uiRoot;
@@ -175,8 +175,6 @@ namespace Axion {
 		m_contentBox->clearSlots();
 
 		Entity entity = m_selectedEntity;
-		Silica::FontAtlas* font = m_font;
-		auto container = m_contentBox;
 
 		// -- Trigger Rebuild Helper Function --
 		auto triggerRebuild = [this]() {
@@ -186,11 +184,14 @@ namespace Axion {
 
 		// -- No Entity Selected --
 		if (!entity) {
-			container->addSlot({
-				.padding = { 10.0f, 10.0f },
-				.child = Silica::MakeWidget<Silica::STextBlock>({
-					.text = "Select an entity to view properties.",
-					.font = font
+			m_contentBox->addSlot({
+				.padding = {0.0f, 0.0f},
+				.child = Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Center,
+					.verticalAlign = Silica::VerticalAlign::Center,
+					.child = Silica::MakeWidget<Silica::STextBlock>({
+						.text = "Select an entity to view properties."
+					})
 				})
 			});
 			return;
@@ -210,7 +211,6 @@ namespace Axion {
 		// -- Editable Text Field --
 		auto nameInput = Silica::MakeWidget<Silica::SEditableText>({
 			.initialText = tag,
-			.font = font,
 			.onTextCommitted = [entity, triggerRebuild](const std::string& newText) mutable {
 				if (entity.hasComponent<TagComponent>()) {
 					entity.getComponent<TagComponent>().tag = newText;
@@ -259,7 +259,7 @@ namespace Axion {
 
 		auto menuListContainer = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
 
-		auto populateMenuList = [menuListContainer, availableComps, font](const std::string& filter) {
+		auto populateMenuList = [menuListContainer, availableComps](const std::string& filter) {
 			menuListContainer->clearSlots();
 			std::string lowerFilter = ToLower(filter);
 
@@ -272,7 +272,10 @@ namespace Axion {
 			}
 
 			if (grouped.empty()) {
-				menuListContainer->addSlot({ .padding = {10,10}, .child = Silica::MakeWidget<Silica::STextBlock>({.text = "No matches found...", .font = font}) });
+				menuListContainer->addSlot({
+					.padding = {10,10},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "No matches found..." }) 
+				});
 				return;
 			}
 
@@ -283,11 +286,11 @@ namespace Axion {
 					for (const auto& comp : comps) {
 						subMenuBox->addSlot({
 							.padding = {0,0},
-							.child = MakeAddComponentItem(comp.name, font, [comp]() {
+							.child = MakeAddComponentItem(comp.name, [comp]() {
 								comp.addFunc();
 								return Silica::EventReply::handled();
 							})
-							});
+						});
 					}
 
 					menuListContainer->addSlot({
@@ -296,9 +299,9 @@ namespace Axion {
 							.openOnHover = true,
 							.openToRight = true,
 							.showArrow = true,
-							.anchorContent = MakeAddComponentItem(category, font, []() { return Silica::EventReply::unhandled(); }),
+							.anchorContent = MakeAddComponentItem(category, []() { return Silica::EventReply::unhandled(); }),
 							.menuContent = Silica::MakeWidget<Silica::SBox>({
-								.backgroundColor = Silica::Color(45, 45, 45, 255),
+								.backgroundColor = Silica::GetTheme().Background_Popup,
 								.child = subMenuBox
 							})
 						})
@@ -310,7 +313,7 @@ namespace Axion {
 					for (const auto& comp : comps) {
 						menuListContainer->addSlot({
 							.padding = {0,0},
-							.child = MakeAddComponentItem(comp.name + " (" + category + ")", font, [comp]() {
+							.child = MakeAddComponentItem(comp.name + " (" + category + ")", [comp]() {
 								comp.addFunc();
 								return Silica::EventReply::handled();
 							})
@@ -325,7 +328,6 @@ namespace Axion {
 		// -- Search Bar --
 		auto searchBar = Silica::MakeWidget<Silica::SEditableText>({
 			.hintText = "Search components...",
-			.font = font,
 			.onTextChanged = populateMenuList
 		});
 
@@ -335,10 +337,11 @@ namespace Axion {
 			.openOnHover = false,
 			.anchorContent = Silica::MakeWidget<Silica::SButton>({
 				.padding = { 8.0f, 4.0f },
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Add Component", .font = font})
+				.hoverColor = Silica::GetTheme().Accent_Primary,
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add Component" })
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::Color(45, 45, 45, 255),
+				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 2.0f,
 					.slots = {
@@ -349,9 +352,10 @@ namespace Axion {
 			})
 		});
 
-		// -- Assemble Top Section --
-		container->addSlot({
-			.padding = { 5.0f, 5.0f },
+		// -- Build Top Bar --
+		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
+			.padding = { 10.0f, 10.0f },
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = 4.0f,
 				.slots = {
@@ -361,12 +365,14 @@ namespace Axion {
 					})},
 					{ { 0.0f, 0.0f }, Silica::MakeWidget<Silica::STextBlock>({
 						.text = uuidStr,
-						.color = Silica::Color(150, 150, 150, 255),
-						.font = font
+						.color = Silica::GetTheme().Text_Dim,
 					})}
 				}
 			})
 		});
+
+		auto container = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 4.0f });
+
 
 		// -- Helper Function --
 		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
@@ -376,7 +382,7 @@ namespace Axion {
 					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
 						.explicitSize = Silica::Vec2(120.0f, 0.0f),
 						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .font = font})
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
 					})},
 					{ {0, 0}, valueWidget }
 				}
@@ -402,7 +408,7 @@ namespace Axion {
 				}),
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { 10.0f, 10.0f },
-					.backgroundColor = Silica::Color(45, 45, 45, 255),
+					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SColorPicker>({
 						.initialColor = initialColor,
 						.onColorChanged = onColorChanged
@@ -413,7 +419,7 @@ namespace Axion {
 
 
 		// -- TRANSFORM COMPONENT --
-		drawComponentBlock<TransformComponent>("Transform", entity, container, font, triggerRebuild, false, [&]() {
+		drawComponentBlock<TransformComponent>("Transform", entity, container, triggerRebuild, false, [&]() {
 			auto& transform = entity.getComponent<TransformComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { 10.0f, 5.0f },
@@ -423,7 +429,6 @@ namespace Axion {
 						{ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 							.label = "Position",
 							.initialValue = Silica::Vec3(transform.position.x, transform.position.y, transform.position.z),
-							.font = font,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().position = Vec3(val.x, val.y, val.z);
 							}
@@ -431,7 +436,6 @@ namespace Axion {
 						{ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 							.label = "Rotation",
 							.initialValue = Silica::Vec3(transform.getEulerAngles().x, transform.getEulerAngles().y, transform.getEulerAngles().z),
-							.font = font,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().setEulerAngles(Vec3(val.x, val.y, val.z));
 							}
@@ -439,7 +443,6 @@ namespace Axion {
 						{ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 							.label = "Scale",
 							.initialValue = Silica::Vec3(transform.scale.x, transform.scale.y, transform.scale.z),
-							.font = font,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().scale = Vec3(val.x, val.y, val.z);
 							}
@@ -451,66 +454,123 @@ namespace Axion {
 
 
 		// -- MESH COMPONENT --
-		drawComponentBlock<MeshComponent>("Mesh", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<MeshComponent>("Mesh", entity, container, triggerRebuild, true, [&]() {
 			auto& meshComponent = entity.getComponent<MeshComponent>();
 
-			if (meshComponent.handle.isValid()) {
-				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshComponent.handle);
-
-				std::string vertexCount = mesh ? std::to_string(mesh->getVertexBuffer()->getVertexCount()) : "Unknown";
-				std::string indexCount = mesh ? std::to_string(mesh->getIndexCount()) : "Unknown";
-
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SVerticalBox>({
-						.spacing = 4.0f,
-						.slots = {
-							{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "UUID: " + meshComponent.handle.uuid.toString(), .font = font}) },
-							{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Vertices: " + vertexCount, .font = font}) },
-							{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Indices: " + indexCount, .font = font}) },
-
-							{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
-								.onClick = [entity, triggerRebuild]() mutable {
-									entity.getComponent<MeshComponent>().handle.invalidate();
-									triggerRebuild();
-									return Silica::EventReply::handled();
-								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Mesh", .font = font })
-							})}
-						}
-					})
-				});
-			}
-			else {
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
-						.onClick = [entity, triggerRebuild]() mutable {
-							std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
-							std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh"} }, meshDir);
-
-							if (!absPath.empty()) {
-								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+			// -- Drag Drop Logic --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axmesh") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axmesh") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
 								if (assetUUID.isValid()) {
 									entity.getComponent<MeshComponent>().handle = AssetManager::load<Mesh>(assetUUID);
 									triggerRebuild();
 								}
-							}
+							});
 							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Mesh...", .font = font })
-					})
-				});
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Has Mesh Loaded --
+			if (meshComponent.handle.isValid()) {
+				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshComponent.handle);
+				std::string vertexCount = mesh ? std::to_string(mesh->getVertexBuffer()->getVertexCount()) : "Unknown";
+				std::string indexCount = mesh ? std::to_string(mesh->getIndexCount()) : "Unknown";
+
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+					.spacing = 4.0f,
+					.slots = {
+						{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "UUID: " + meshComponent.handle.uuid.toString(), }) },
+						{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Vertices: " + vertexCount }) },
+						{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Indices: " + indexCount }) },
+
+						{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
+							.padding = { 8.0f, 4.0f },
+							.onClick = [entity, triggerRebuild]() mutable {
+								entity.getComponent<MeshComponent>().handle.invalidate();
+								triggerRebuild();
+								return Silica::EventReply::handled();
+							},
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Mesh" })
+						})}
+					}
+				}));
 			}
+			// -- Has No Mesh Loaded --
+			else {
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
+					.padding = { 8.0f, 4.0f },
+					.onClick = [entity, triggerRebuild]() mutable {
+						std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
+						if (!std::filesystem::exists(meshDir)) {
+							meshDir = ProjectManager::getProject()->getAssetsPath();
+						}
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Mesh", "*.axmesh"} }, meshDir);
+
+						if (!absPath.empty()) {
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) {
+								entity.getComponent<MeshComponent>().handle = AssetManager::load<Mesh>(assetUUID);
+								triggerRebuild();
+							}
+						}
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Mesh..." })
+				}));
+			}
+
+			return dropZoneBox;
 		});
 
 
 		// -- SKELETAL MESH COMPONENT --
-		drawComponentBlock<SkeletalMeshComponent>("Skeletal Mesh", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<SkeletalMeshComponent>("Skeletal Mesh", entity, container, triggerRebuild, true, [&]() {
 			auto& skelMeshComp = entity.getComponent<SkeletalMeshComponent>();
 
+			// -- Drag Drop Logic --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axskelmesh") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axskelmesh") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									entity.getComponent<SkeletalMeshComponent>().handle = AssetManager::load<SkeletalMesh>(assetUUID);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Has Skeletal Mesh Loaded --
 			if (skelMeshComp.handle.isValid()) {
 				Ref<SkeletalMesh> actualMesh = AssetManager::get<SkeletalMesh>(skelMeshComp.handle);
 
@@ -519,60 +579,56 @@ namespace Axion {
 				std::string indexCount = actualMesh ? std::to_string(actualMesh->getIndexCount()) : "Unknown";
 				std::string boneCount = actualMesh ? std::to_string(actualMesh->getSkeleton().bones.size()) : "Unknown";
 
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SVerticalBox>({
-						.spacing = 8.0f,
-						.slots = {
-							{ {0,0}, MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr, .font = font }))},
-							{ {0,0}, MakePropertyRow("Vertices", Silica::MakeWidget<Silica::STextBlock>({.text = vertexCount, .font = font }))},
-							{ {0,0}, MakePropertyRow("Indices", Silica::MakeWidget<Silica::STextBlock>({.text = indexCount, .font = font }))},
-							{ {0,0}, MakePropertyRow("Bones", Silica::MakeWidget<Silica::STextBlock>({.text = boneCount, .font = font }))},
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+					.spacing = 8.0f,
+					.slots = {
+						{ {0,0}, MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }))},
+						{ {0,0}, MakePropertyRow("Vertices", Silica::MakeWidget<Silica::STextBlock>({.text = vertexCount }))},
+						{ {0,0}, MakePropertyRow("Indices", Silica::MakeWidget<Silica::STextBlock>({.text = indexCount }))},
+						{ {0,0}, MakePropertyRow("Bones", Silica::MakeWidget<Silica::STextBlock>({.text = boneCount }))},
 
-							{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
-								.onClick = [entity, triggerRebuild]() mutable {
-									entity.getComponent<SkeletalMeshComponent>().handle.invalidate();
-									triggerRebuild();
-									return Silica::EventReply::handled();
-								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Skeletal Mesh", .font = font })
-							})}
-						}
-					})
-				});
+						{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
+							.padding = { 8.0f, 4.0f },
+							.onClick = [entity, triggerRebuild]() mutable {
+								entity.getComponent<SkeletalMeshComponent>().handle.invalidate();
+								triggerRebuild();
+								return Silica::EventReply::handled();
+							},
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Skeletal Mesh" })
+						})}
+					}
+					}));
 			}
+			// -- Has No Skeletal Mesh Loaded --
 			else {
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
-						.onClick = [entity, triggerRebuild]() mutable {
-							std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
-							if (!std::filesystem::exists(meshDir)) {
-								meshDir = ProjectManager::getProject()->getAssetsPath();
-							}
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
+					.padding = { 8.0f, 4.0f },
+					.onClick = [entity, triggerRebuild]() mutable {
+						std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
+						if (!std::filesystem::exists(meshDir)) {
+							meshDir = ProjectManager::getProject()->getAssetsPath();
+						}
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Skeletal Mesh", "*.axskelmesh"} }, meshDir);
 
-							std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Skeletal Mesh", "*.axskelmesh"} }, meshDir);
-
-							if (!absPath.empty()) {
-								UUID assetUUID = AssetManager::getAssetUUID(absPath);
-								if (assetUUID.isValid()) {
-									entity.getComponent<SkeletalMeshComponent>().handle = AssetManager::load<SkeletalMesh>(assetUUID);
-									triggerRebuild();
-								}
+						if (!absPath.empty()) {
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) {
+								entity.getComponent<SkeletalMeshComponent>().handle = AssetManager::load<SkeletalMesh>(assetUUID);
+								triggerRebuild();
 							}
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Skeletal Mesh...", .font = font })
-					})
-				});
+						}
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Skeletal Mesh..." })
+				}));
 			}
+
+			return dropZoneBox;
 		});
 
 
 		// -- MATERIAL COMPONENT --
-		drawComponentBlock<MaterialComponent>("Material", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<MaterialComponent>("Material", entity, container, triggerRebuild, true, [&]() {
 			auto& materialComponent = entity.getComponent<MaterialComponent>();
 
 			uint32_t submeshCount = 1;
@@ -604,69 +660,89 @@ namespace Axion {
 			for (uint32_t i = 0; i < submeshCount; i++) {
 				std::string label = "Material (" + std::to_string(i) + ")";
 
+				// -- Create Drop Zone For This Slot --
+				std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+					.padding = { 10.0f, 5.0f },
+					.onDragOver = [](const Silica::DragDropPayload& payload) {
+						if (payload.type == "AssetPath") {
+							auto path = std::any_cast<std::filesystem::path>(payload.data);
+							if (path.extension() == ".axmat") return Silica::EventReply::handled();
+						}
+						return Silica::EventReply::unhandled();
+					},
+					.onDrop = [entity, i, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+						if (payload.type == "AssetPath") {
+							auto path = std::any_cast<std::filesystem::path>(payload.data);
+							if (path.extension() == ".axmat") {
+								EditorActionQueue::push([entity, i, path, triggerRebuild]() mutable {
+									UUID assetUUID = AssetManager::getAssetUUID(path);
+									if (assetUUID.isValid()) {
+										entity.getComponent<MaterialComponent>().materials[i] = AssetManager::load<Material>(assetUUID);
+										triggerRebuild();
+									}
+								});
+								return Silica::EventReply::handled();
+							}
+						}
+						return Silica::EventReply::unhandled();
+					}
+				});
+
+				// -- Has Material Loaded --
 				if (materialComponent.materials[i].isValid()) {
 					Ref<Material> material = AssetManager::get<Material>(materialComponent.materials[i]);
 					Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(material->getPipelineHandle());
 
 					std::string pipelineName = pipeline ? pipeline->getSpecification().shader->getName() : "Internal Default Pipeline";
-
 					float* colorData = material->getAlbedoColor().data();
 					Vec4 albedoVec4(colorData[0], colorData[1], colorData[2], colorData[3]);
 
-					auto slotBox = Silica::MakeWidget<Silica::SBox>({
-						.padding = { 10.0f, 5.0f },
-						.backgroundColor = Silica::Color(35, 35, 35, 255),
-						.child = Silica::MakeWidget<Silica::SVerticalBox>({
-							.spacing = 8.0f,
-							.slots = {
-								{ {0,0}, MakePropertyRow(label, Silica::MakeWidget<Silica::STextBlock>({.text = material->getName(), .font = font }))},
-								{ {0,0}, MakePropertyRow("Pipeline", Silica::MakeWidget<Silica::STextBlock>({.text = pipelineName, .font = font }))},
-								{ {0,0}, MakePropertyRow("Albedo Color", MakeColorField(albedoVec4, [material](Silica::Color c) mutable {
-									material->setAlbedoColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
-								}))},
+					dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = 8.0f,
+						.slots = {
+							{ {0,0}, MakePropertyRow(label, Silica::MakeWidget<Silica::STextBlock>({.text = material->getName() }))},
+							{ {0,0}, MakePropertyRow("Pipeline", Silica::MakeWidget<Silica::STextBlock>({.text = pipelineName }))},
+							{ {0,0}, MakePropertyRow("Albedo Color", MakeColorField(albedoVec4, [material](Silica::Color c) mutable {
+								material->setAlbedoColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
+							}))},
 
-								{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-									.padding = { 8.0f, 4.0f },
-									.onClick = [entity, i, triggerRebuild]() mutable {
-										entity.getComponent<MaterialComponent>().materials[i].invalidate();
-										triggerRebuild();
-										return Silica::EventReply::handled();
-									},
-									.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Material", .font = font })
-								})}
-							}
-						})
-					});
-
-					materialList->addSlot({ .padding = {0,0}, .child = slotBox });
+							{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
+								.padding = { 8.0f, 4.0f },
+								.onClick = [entity, i, triggerRebuild]() mutable {
+									entity.getComponent<MaterialComponent>().materials[i].invalidate();
+									triggerRebuild();
+									return Silica::EventReply::handled();
+								},
+								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Material" })
+							})}
+						}
+					}));
 				}
+				// -- Has No Material Loaded --
 				else {
 					std::string btnLabel = "Open " + label + "...";
 
-					auto slotBox = Silica::MakeWidget<Silica::SBox>({
-						.padding = { 10.0f, 5.0f },
-						.child = Silica::MakeWidget<Silica::SButton>({
-							.padding = { 8.0f, 4.0f },
-							.onClick = [entity, i, triggerRebuild]() mutable {
-								std::filesystem::path materialDir = ProjectManager::getProject()->getAssetsPath() / "materials";
-								if (!std::filesystem::exists(materialDir)) materialDir = ProjectManager::getProject()->getAssetsPath();
+					dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
+						.padding = { 8.0f, 4.0f },
+						.onClick = [entity, i, triggerRebuild]() mutable {
+							std::filesystem::path materialDir = ProjectManager::getProject()->getAssetsPath() / "materials";
+							if (!std::filesystem::exists(materialDir)) materialDir = ProjectManager::getProject()->getAssetsPath();
+							std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir);
 
-								std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir);
-								if (!absPath.empty()) {
-									UUID assetUUID = AssetManager::getAssetUUID(absPath);
-									if (assetUUID.isValid()) {
-										entity.getComponent<MaterialComponent>().materials[i] = AssetManager::load<Material>(assetUUID);
-										triggerRebuild();
-									}
+							if (!absPath.empty()) {
+								UUID assetUUID = AssetManager::getAssetUUID(absPath);
+								if (assetUUID.isValid()) {
+									entity.getComponent<MaterialComponent>().materials[i] = AssetManager::load<Material>(assetUUID);
+									triggerRebuild();
 								}
-								return Silica::EventReply::handled();
-							},
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = btnLabel, .font = font })
-						})
-					});
-
-					materialList->addSlot({ .padding = {0,0}, .child = slotBox });
+							}
+							return Silica::EventReply::handled();
+						},
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = btnLabel })
+					}));
 				}
+
+				materialList->addSlot({ .padding = {0,0}, .child = dropZoneBox });
 			}
 
 			return Silica::MakeWidget<Silica::SBox>({
@@ -677,8 +753,38 @@ namespace Axion {
 
 
 		// -- SPRITE COMPONENT --
-		drawComponentBlock<SpriteComponent>("Sprite", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<SpriteComponent>("Sprite", entity, container, triggerRebuild, true, [&]() {
 			auto& spriteComponent = entity.getComponent<SpriteComponent>();
+
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axtex") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axtex") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									entity.getComponent<SpriteComponent>().texture = AssetManager::load<Texture2D>(assetUUID);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({
@@ -689,7 +795,7 @@ namespace Axion {
 
 			if (spriteComponent.texture.isValid()) {
 				std::string uuidStr = spriteComponent.texture.uuid.toString();
-				uiSlots.push_back({ {0,0}, MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr, .font = font })) });
+				uiSlots.push_back({ {0,0}, MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
 
 				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
 					.padding = { 8.0f, 4.0f },
@@ -698,7 +804,7 @@ namespace Axion {
 						triggerRebuild();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Texture", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Texture" })
 				}) });
 			}
 			else {
@@ -707,8 +813,8 @@ namespace Axion {
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / "textures";
 						if (!std::filesystem::exists(texDir)) texDir = ProjectManager::getProject()->getAssetsPath();
-
 						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir);
+
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
@@ -718,19 +824,19 @@ namespace Axion {
 						}
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Texture2D...", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Texture2D..." })
 				}) });
 			}
 
-			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
-				});
-			});
+			// -- Assemble --
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 8.0f, .slots = uiSlots }));
+
+			return dropZoneBox;
+		});
 
 
 		// -- DIRECTIONAL LIGHT COMPONENT --
-		drawComponentBlock<DirectionalLightComponent>("Directional Light", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<DirectionalLightComponent>("Directional Light", entity, container, triggerRebuild, true, [&]() {
 			auto& dirLightComponent = entity.getComponent<DirectionalLightComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { 10.0f, 5.0f },
@@ -747,7 +853,7 @@ namespace Axion {
 
 
 		// -- POINT LIGHT COMPONENT --
-		drawComponentBlock<PointLightComponent>("Point Light", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<PointLightComponent>("Point Light", entity, container, triggerRebuild, true, [&]() {
 			auto& pointLightComponent = entity.getComponent<PointLightComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { 10.0f, 5.0f },
@@ -759,17 +865,14 @@ namespace Axion {
 						}))},
 						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SFloatInput>({
 							.initialValue = pointLightComponent.intensity,
-							.font = font,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().intensity = val; }
 						}))},
 						{ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
 							.initialValue = pointLightComponent.radius,
-							.font = font,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().radius = val; }
 						}))},
 						{ {0,0}, MakePropertyRow("Falloff", Silica::MakeWidget<Silica::SFloatInput>({
 							.initialValue = pointLightComponent.falloff,
-							.font = font,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().falloff = val; }
 						}))}
 					}
@@ -779,7 +882,7 @@ namespace Axion {
 
 
 		// -- SPOT LIGHT COMPONENT --
-		drawComponentBlock<SpotLightComponent>("Spot Light", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<SpotLightComponent>("Spot Light", entity, container, triggerRebuild, true, [&]() {
 			auto& spotLightComponent = entity.getComponent<SpotLightComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { 10.0f, 5.0f },
@@ -791,22 +894,18 @@ namespace Axion {
 						}))},
 						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SFloatInput>({
 							.initialValue = spotLightComponent.intensity,
-							.font = font,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().intensity = val; }
 						}))},
 						{ {0,0}, MakePropertyRow("Range", Silica::MakeWidget<Silica::SFloatInput>({
 							.initialValue = spotLightComponent.range,
-							.font = font,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().range = val; }
 						}))},
 						{ {0,0}, MakePropertyRow("Inner Cone", Silica::MakeWidget<Silica::SFloatInput>({
 							.initialValue = spotLightComponent.innerConeAngle,
-							.font = font,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().innerConeAngle = val; }
 						}))},
 						{ {0,0}, MakePropertyRow("Outer Cone", Silica::MakeWidget<Silica::SFloatInput>({
 							.initialValue = spotLightComponent.outerConeAngle,
-							.font = font,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().outerConeAngle = val; }
 						}))}
 					}
@@ -816,7 +915,7 @@ namespace Axion {
 
 
 		// -- CAMERA COMPONENT --
-		drawComponentBlock<CameraComponent>("Camera", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<CameraComponent>("Camera", entity, container, triggerRebuild, true, [&]() {
 			auto& cameraComponent = entity.getComponent<CameraComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { 10.0f, 5.0f },
@@ -842,9 +941,39 @@ namespace Axion {
 
 
 		// -- AUDIO COMPONENT --
-		drawComponentBlock<AudioComponent>("Audio", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<AudioComponent>("Audio", entity, container, triggerRebuild, true, [&]() {
 			auto& audioComponent = entity.getComponent<AudioComponent>();
 
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axaudio") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axaudio") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
+									entity.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clipHandle);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Has Audio Loaded --
 			if (audioComponent.audio != nullptr) {
 				Ref<AudioClip> clip = AssetManager::get<AudioClip>(audioComponent.audio->getClipHandle());
 				std::string name = std::filesystem::path(clip->getPath()).filename().string();
@@ -852,161 +981,176 @@ namespace Axion {
 				std::string mode = EnumUtils::toString(clip->getMode());
 				bool isPaused = audioComponent.audio->isPaused();
 
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SVerticalBox>({
-						.spacing = 8.0f,
-						.slots = {
-							{ {0, 0}, MakePropertyRow("Name", Silica::MakeWidget<Silica::STextBlock>({.text = name, .font = font }))},
-							{ {0, 0}, MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuid, .font = font }))},
-							{ {0, 0}, MakePropertyRow("Mode", Silica::MakeWidget<Silica::STextBlock>({.text = mode, .font = font }))},
-							{ {0, 0}, MakePropertyRow("Playback", Silica::MakeWidget<Silica::SHorizontalBox>({
-								.spacing = 4.0f,
-								.slots = {
-									{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-										.padding = { 8.0f, 2.0f },
-										.onClick = [entity, triggerRebuild]() mutable {
-											entity.getComponent<AudioComponent>().audio->play();
-											triggerRebuild();
-											return Silica::EventReply::handled();
-										},
-										.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Play", .font = font })
-									})},
-									{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-										.padding = { 8.0f, 2.0f },
-										.onClick = [entity, triggerRebuild]() mutable {
-											entity.getComponent<AudioComponent>().audio->stop();
-											triggerRebuild();
-											return Silica::EventReply::handled();
-										},
-										.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Stop", .font = font })
-									})},
-									{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-										.padding = { 8.0f, 2.0f },
-										.onClick = [entity, isPaused, triggerRebuild]() mutable {
-											if (isPaused) entity.getComponent<AudioComponent>().audio->resume();
-											else entity.getComponent<AudioComponent>().audio->pause();
-											triggerRebuild();
-											return Silica::EventReply::handled();
-										},
-										.child = Silica::MakeWidget<Silica::STextBlock>({.text = isPaused ? "Resume" : "Pause", .font = font })
-									})}
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Volume", Silica::MakeWidget<Silica::SFloatInput>({
-								.initialValue = audioComponent.audio->getVolume(),
-								.font = font,
-								.onValueChanged = [entity](float val) mutable {
-									entity.getComponent<AudioComponent>().audio->setVolume(val);
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Pitch", Silica::MakeWidget<Silica::SFloatInput>({
-								.initialValue = audioComponent.audio->getPitch(),
-								.font = font,
-								.onValueChanged = [entity](float val) mutable {
-									entity.getComponent<AudioComponent>().audio->setPitch(val);
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Pan", Silica::MakeWidget<Silica::SFloatInput>({
-								.initialValue = audioComponent.audio->getPan(),
-								.font = font,
-								.onValueChanged = [entity](float val) mutable {
-									entity.getComponent<AudioComponent>().audio->setPan(val);
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Loop", Silica::MakeWidget<Silica::SCheckBox>({
-								.initialCheck = audioComponent.audio->isLooping(),
-								.onCheckChanged = [entity](bool checked) mutable {
-									entity.getComponent<AudioComponent>().audio->loop(checked);
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Spatialize", Silica::MakeWidget<Silica::SCheckBox>({
-								.initialCheck = audioComponent.audio->isSpatial(),
-								.onCheckChanged = [entity](bool checked) mutable {
-									if (checked) entity.getComponent<AudioComponent>().audio->enableSpatial();
-									else entity.getComponent<AudioComponent>().audio->disableSpatial();
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Min Distance", Silica::MakeWidget<Silica::SFloatInput>({
-								.initialValue = audioComponent.audio->getMinDistance(),
-								.font = font,
-								.onValueChanged = [entity](float val) mutable {
-									entity.getComponent<AudioComponent>().audio->setMinDistance(val);
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Max Distance", Silica::MakeWidget<Silica::SFloatInput>({
-								.initialValue = audioComponent.audio->getMaxDistance(),
-								.font = font,
-								.onValueChanged = [entity](float val) mutable {
-									entity.getComponent<AudioComponent>().audio->setMaxDistance(val);
-								}
-							}))},
-							{ {0, 0}, MakePropertyRow("Doppler", Silica::MakeWidget<Silica::SFloatInput>({
-								.initialValue = audioComponent.audio->getDopplerFactor(),
-								.font = font,
-								.onValueChanged = [entity](float val) mutable {
-									entity.getComponent<AudioComponent>().audio->setDopplerFactor(val);
-								}
-							}))},
-							{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
-								.onClick = [entity, triggerRebuild]() mutable {
-									entity.getComponent<AudioComponent>().audio = nullptr;
-									triggerRebuild();
-									return Silica::EventReply::handled();
-								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Audio Clip", .font = font })
-							})}
-						}
-					})
-				});
-			}
-			else {
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
-						.onClick = [entity, triggerRebuild]() mutable {
-							std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
-							std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, audioDir);
-
-							if (!absPath.empty()) {
-								UUID assetUUID = AssetManager::getAssetUUID(absPath);
-								if (assetUUID.isValid()) {
-									AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
-									entity.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clipHandle);
-									triggerRebuild();
-								}
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+					.spacing = 8.0f,
+					.slots = {
+						{ {0, 0}, MakePropertyRow("Name", Silica::MakeWidget<Silica::STextBlock>({.text = name }))},
+						{ {0, 0}, MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuid }))},
+						{ {0, 0}, MakePropertyRow("Mode", Silica::MakeWidget<Silica::STextBlock>({.text = mode }))},
+						{ {0, 0}, MakePropertyRow("Playback", Silica::MakeWidget<Silica::SHorizontalBox>({
+							.spacing = 4.0f,
+							.slots = {
+								{ {0,0}, Silica::MakeWidget<Silica::SButton>({
+									.padding = { 8.0f, 2.0f },
+									.onClick = [entity, triggerRebuild]() mutable {
+										entity.getComponent<AudioComponent>().audio->play();
+										triggerRebuild();
+										return Silica::EventReply::handled();
+									},
+									.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Play" })
+								})},
+								{ {0,0}, Silica::MakeWidget<Silica::SButton>({
+									.padding = { 8.0f, 2.0f },
+									.onClick = [entity, triggerRebuild]() mutable {
+										entity.getComponent<AudioComponent>().audio->stop();
+										triggerRebuild();
+										return Silica::EventReply::handled();
+									},
+									.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Stop" })
+								})},
+								{ {0,0}, Silica::MakeWidget<Silica::SButton>({
+									.padding = { 8.0f, 2.0f },
+									.onClick = [entity, isPaused, triggerRebuild]() mutable {
+										if (isPaused) entity.getComponent<AudioComponent>().audio->resume();
+										else entity.getComponent<AudioComponent>().audio->pause();
+										triggerRebuild();
+										return Silica::EventReply::handled();
+									},
+									.child = Silica::MakeWidget<Silica::STextBlock>({.text = isPaused ? "Resume" : "Pause" })
+								})}
 							}
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Audio Clip...", .font = font })
-					})
-				});
+						}))},
+						{ {0, 0}, MakePropertyRow("Volume", Silica::MakeWidget<Silica::SFloatInput>({
+							.initialValue = audioComponent.audio->getVolume(),
+							.onValueChanged = [entity](float val) mutable {
+								entity.getComponent<AudioComponent>().audio->setVolume(val);
+							}
+						}))},
+						{ {0, 0}, MakePropertyRow("Pitch", Silica::MakeWidget<Silica::SFloatInput>({
+							.initialValue = audioComponent.audio->getPitch(),
+							.onValueChanged = [entity](float val) mutable {
+								entity.getComponent<AudioComponent>().audio->setPitch(val);
+							}
+						}))},
+						{ {0, 0}, MakePropertyRow("Pan", Silica::MakeWidget<Silica::SFloatInput>({
+							.initialValue = audioComponent.audio->getPan(),
+							.onValueChanged = [entity](float val) mutable {
+								entity.getComponent<AudioComponent>().audio->setPan(val);
+							}
+						}))},
+						{ {0, 0}, MakePropertyRow("Loop", Silica::MakeWidget<Silica::SCheckBox>({
+							.initialCheck = audioComponent.audio->isLooping(),
+							.onCheckChanged = [entity](bool checked) mutable {
+								entity.getComponent<AudioComponent>().audio->loop(checked);
+							}
+						}))},
+						{ {0, 0}, MakePropertyRow("Spatialize", Silica::MakeWidget<Silica::SCheckBox>({
+							.initialCheck = audioComponent.audio->isSpatial(),
+							.onCheckChanged = [entity](bool checked) mutable {
+								if (checked) entity.getComponent<AudioComponent>().audio->enableSpatial();
+								else entity.getComponent<AudioComponent>().audio->disableSpatial();
+							}
+						}))},
+						{ {0, 0}, MakePropertyRow("Min Distance", Silica::MakeWidget<Silica::SFloatInput>({
+							.initialValue = audioComponent.audio->getMinDistance(),
+							.onValueChanged = [entity](float val) mutable {
+								entity.getComponent<AudioComponent>().audio->setMinDistance(val);
+							}
+						}))},
+						{ {0, 0}, MakePropertyRow("Max Distance", Silica::MakeWidget<Silica::SFloatInput>({
+							.initialValue = audioComponent.audio->getMaxDistance(),
+							.onValueChanged = [entity](float val) mutable {
+								entity.getComponent<AudioComponent>().audio->setMaxDistance(val);
+							}
+						}))},
+						{ {0, 0}, MakePropertyRow("Doppler", Silica::MakeWidget<Silica::SFloatInput>({
+							.initialValue = audioComponent.audio->getDopplerFactor(),
+							.onValueChanged = [entity](float val) mutable {
+								entity.getComponent<AudioComponent>().audio->setDopplerFactor(val);
+							}
+						}))},
+						{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
+							.padding = { 8.0f, 4.0f },
+							.onClick = [entity, triggerRebuild]() mutable {
+								entity.getComponent<AudioComponent>().audio = nullptr;
+								triggerRebuild();
+								return Silica::EventReply::handled();
+							},
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Audio Clip" })
+						})}
+					}
+				}));
 			}
+			// -- Has No Audio Loaded --
+			else {
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
+					.padding = { 8.0f, 4.0f },
+					.onClick = [entity, triggerRebuild]() mutable {
+						std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
+						if (!std::filesystem::exists(audioDir)) audioDir = ProjectManager::getProject()->getAssetsPath();
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Audio Asset", "*.axaudio"} }, audioDir);
+
+						if (!absPath.empty()) {
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) {
+								AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
+								entity.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clipHandle);
+								triggerRebuild();
+							}
+						}
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Audio Clip..." })
+				}));
+			}
+
+			return dropZoneBox;
 		});
 
 
 		// -- SCRIPT COMPONENT --
-		drawComponentBlock<ScriptComponent>("C# Script", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<ScriptComponent>("C# Script", entity, container, triggerRebuild, true, [&]() {
 			auto& scriptComponent = entity.getComponent<ScriptComponent>();
+
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axvs") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axvs") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								std::string className = path.stem().string();
+								entity.getComponent<ScriptComponent>().className = className;
+								triggerRebuild();
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Class Name", Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = scriptComponent.className,
-				.font = font,
 				.onTextCommitted = [entity](const std::string& newText) mutable {
 					entity.getComponent<ScriptComponent>().className = newText;
 				}
 			})) });
 
-			Silica::Color stateColor = scriptComponent.isInstantiated ? Silica::Color(50, 255, 50, 255) : Silica::Color(255, 200, 50, 255);
-			std::string stateText = scriptComponent.isInstantiated ? "Running" : "Waiting to start";
-
 			uiSlots.push_back({ {0,0}, MakePropertyRow("State", Silica::MakeWidget<Silica::STextBlock>({
-				.text = stateText,
-				.color = stateColor,
-				.font = font
+				.text = scriptComponent.isInstantiated ? "Running" : "Waiting to start",
+				.color = scriptComponent.isInstantiated ? Silica::GetTheme().Text_Success : Silica::GetTheme().Text_Warning
 			})) });
 
 			const auto& fields = ScriptEngine::getScriptFields(scriptComponent.className);
@@ -1014,8 +1158,7 @@ namespace Axion {
 			if (!fields.empty()) {
 				uiSlots.push_back({ {0, 10}, Silica::MakeWidget<Silica::STextBlock>({
 					.text = "Script Variables",
-					.color = Silica::Color(150, 150, 150, 255),
-					.font = font
+					.color = Silica::GetTheme().Text_Dim
 				}) });
 
 				if (scriptComponent.isInstantiated && scriptComponent.gcHandle) {
@@ -1024,7 +1167,6 @@ namespace Axion {
 							float val = ScriptEngine::getFieldValueFloat(scriptComponent.gcHandle, field.name);
 							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::SFloatInput>({
 								.initialValue = val,
-								.font = font,
 								.onValueChanged = [entity, fieldName = field.name](float newVal) mutable {
 									auto& sc = entity.getComponent<ScriptComponent>();
 									if (sc.isInstantiated && sc.gcHandle) {
@@ -1038,7 +1180,6 @@ namespace Axion {
 							uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 								.label = field.name,
 								.initialValue = Silica::Vec3(val.x, val.y, val.z),
-								.font = font,
 								.labelWidth = 120.0f,
 								.onValueChanged = [entity, fieldName = field.name](Silica::Vec3 newVal) mutable {
 									auto& sc = entity.getComponent<ScriptComponent>();
@@ -1055,33 +1196,31 @@ namespace Axion {
 						if (field.type == ScriptFieldType::Float) {
 							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
 								.text = "0.00 (Edit Mode)",
-								.color = Silica::Color(100, 100, 100, 255),
-								.font = font
+								.color = Silica::GetTheme().Text_Dim,
 							})) });
 						}
 						else if (field.type == ScriptFieldType::Vector3) {
 							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
 								.text = "[ 0.00, 0.00, 0.00 ] (Edit Mode)",
-								.color = Silica::Color(100, 100, 100, 255),
-								.font = font
+								.color = Silica::GetTheme().Text_Dim,
 							})) });
 						}
 					}
 				}
 			}
 
-			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
-					.slots = uiSlots
-				})
-			});
+			// -- Assemble --
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+				.spacing = 8.0f,
+				.slots = uiSlots
+			}));
+
+			return dropZoneBox;
 		});
 
 
 		// -- NATIVE SCRIPT COMPONENT --
-		drawComponentBlock<NativeScriptComponent>("Native Script", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<NativeScriptComponent>("Native Script", entity, container, triggerRebuild, true, [&]() {
 			auto& scriptComponent = entity.getComponent<NativeScriptComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { 10.0f, 5.0f },
@@ -1090,7 +1229,6 @@ namespace Axion {
 					.slots = {
 						{ {0,0}, MakePropertyRow("Class Name", Silica::MakeWidget<Silica::STextBlock>({
 							.text = scriptComponent.scriptName,
-							.font = font
 						}))}
 					}
 				})
@@ -1099,14 +1237,43 @@ namespace Axion {
 
 
 		// -- PARTICLE SYSTEM COMPONENT --
-		drawComponentBlock<ParticleSystemComponent>("Particle System", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<ParticleSystemComponent>("Particle System", entity, container, triggerRebuild, true, [&]() {
 			auto& particleSystemComponent = entity.getComponent<ParticleSystemComponent>();
+
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axtex") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axtex") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									entity.getComponent<ParticleSystemComponent>().texture = AssetManager::load<Texture2D>(assetUUID);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 				.label = "Velocity Var",
 				.initialValue = Silica::Vec3(particleSystemComponent.velocityVariation.x, particleSystemComponent.velocityVariation.y, particleSystemComponent.velocityVariation.z),
-				.font = font,
 				.labelWidth = 120.0f,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<ParticleSystemComponent>().velocityVariation = Vec3(val.x, val.y, val.z);
@@ -1123,25 +1290,22 @@ namespace Axion {
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Size", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = particleSystemComponent.sizeBegin,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeBegin = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("End Size", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = particleSystemComponent.sizeEnd,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeEnd = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Lifetime", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = particleSystemComponent.lifeTime,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().lifeTime = val; }
 			})) });
 
 			if (particleSystemComponent.texture.isValid()) {
 				std::string uuidStr = particleSystemComponent.texture.uuid.toString();
-				uiSlots.push_back({ {0,0}, MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr, .font = font })) });
+				uiSlots.push_back({ {0,0}, MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
 				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
 					.padding = { 8.0f, 4.0f },
 					.onClick = [entity, triggerRebuild]() mutable {
@@ -1149,7 +1313,7 @@ namespace Axion {
 						triggerRebuild();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Texture", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Texture" })
 				}) });
 			}
 			else {
@@ -1158,8 +1322,8 @@ namespace Axion {
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / "textures";
 						if (!std::filesystem::exists(texDir)) texDir = ProjectManager::getProject()->getAssetsPath();
-
 						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Texture Asset", "*.axtex"} }, texDir);
+
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
@@ -1169,35 +1333,64 @@ namespace Axion {
 						}
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Texture2D...", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Texture2D..." })
 				}) });
 			}
 
-			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
-			});
+			// -- Assemble --
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 8.0f, .slots = uiSlots }));
+
+			return dropZoneBox;
 		});
 
 
 		// -- ANIMATOR COMPONENT --
-		drawComponentBlock<AnimatorComponent>("Animator", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<AnimatorComponent>("Animator", entity, container, triggerRebuild, true, [&]() {
 			auto& animatorComponent = entity.getComponent<AnimatorComponent>();
 
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axanim") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axanim") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									entity.getComponent<AnimatorComponent>().currentClip = AssetManager::load<AnimationClip>(assetUUID);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Has Animation Clip Loaded --
 			if (animatorComponent.currentClip.isValid()) {
 				Ref<AnimationClip> clip = AssetManager::get<AnimationClip>(animatorComponent.currentClip);
 				std::vector<Silica::Slot> uiSlots;
 
 				std::string uuidStr = animatorComponent.currentClip.uuid.toString();
-				uiSlots.push_back({ {0,0}, MakePropertyRow("Clip UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr, .font = font })) });
+				uiSlots.push_back({ {0,0}, MakePropertyRow("Clip UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
 
 				if (clip) {
 					char durationBuf[64];
 					snprintf(durationBuf, sizeof(durationBuf), "%.2f seconds", clip->duration);
 					std::string durationStr = durationBuf;
 					std::string trackCount = std::to_string(clip->boneAnimations.size());
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Duration", Silica::MakeWidget<Silica::STextBlock>({.text = durationStr, .font = font })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Bone Tracks", Silica::MakeWidget<Silica::STextBlock>({.text = trackCount, .font = font })) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Duration", Silica::MakeWidget<Silica::STextBlock>({.text = durationStr })) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Bone Tracks", Silica::MakeWidget<Silica::STextBlock>({.text = trackCount })) });
 				}
 
 				uiSlots.push_back({ {0,0}, MakePropertyRow("Playing", Silica::MakeWidget<Silica::SCheckBox>({
@@ -1212,42 +1405,39 @@ namespace Axion {
 						triggerRebuild();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Animation Clip", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Animation Clip" })
 				}) });
 
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
-				});
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 8.0f, .slots = uiSlots }));
 			}
+			// -- Has No Animation Clip Loaded --
 			else {
-				return Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
-					.child = Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
-						.onClick = [entity, triggerRebuild]() mutable {
-							std::filesystem::path animDir = ProjectManager::getProject()->getAssetsPath() / "animations";
-							if (!std::filesystem::exists(animDir)) animDir = ProjectManager::getProject()->getAssetsPath();
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
+					.padding = { 8.0f, 4.0f },
+					.onClick = [entity, triggerRebuild]() mutable {
+						std::filesystem::path animDir = ProjectManager::getProject()->getAssetsPath() / "animations";
+						if (!std::filesystem::exists(animDir)) animDir = ProjectManager::getProject()->getAssetsPath();
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Animation", "*.axanim"} }, animDir);
 
-							std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Animation", "*.axanim"} }, animDir);
-							if (!absPath.empty()) {
-								UUID assetUUID = AssetManager::getAssetUUID(absPath);
-								if (assetUUID.isValid()) {
-									entity.getComponent<AnimatorComponent>().currentClip = AssetManager::load<AnimationClip>(assetUUID);
-									triggerRebuild();
-								}
+						if (!absPath.empty()) {
+							UUID assetUUID = AssetManager::getAssetUUID(absPath);
+							if (assetUUID.isValid()) {
+								entity.getComponent<AnimatorComponent>().currentClip = AssetManager::load<AnimationClip>(assetUUID);
+								triggerRebuild();
 							}
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Animation Clip...", .font = font })
-					})
-				});
+						}
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open Animation Clip..." })
+				}));
 			}
+
+			return dropZoneBox;
 		});
 
 
 		// -- RIGID BODY COMPONENT --
-		drawComponentBlock<RigidBodyComponent>("Rigid Body", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<RigidBodyComponent>("Rigid Body", entity, container, triggerRebuild, true, [&]() {
 			auto& rigidBodyComponent = entity.getComponent<RigidBodyComponent>();
 			std::vector<Silica::Slot> uiSlots;
 
@@ -1256,34 +1446,34 @@ namespace Axion {
 				.openOnHover = false,
 				.anchorContent = Silica::MakeWidget<Silica::SButton>({
 					.padding = { 8.0f, 4.0f },
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = currentTypeStr, .font = font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = currentTypeStr })
 				}),
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::Color(45, 45, 45, 255),
+					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = 0.0f,
 						.slots = {
 							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 								.padding = { 8.0f, 4.0f },
 								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::Color(70, 130, 200, 255),
+								.hoverColor = Silica::GetTheme().Accent_Primary,
 								.onClick = [entity, triggerRebuild]() mutable {
 									entity.getComponent<RigidBodyComponent>().type = RigidBodyComponent::BodyType::Static;
 									triggerRebuild();
 									return Silica::EventReply::handled();
 								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Static", .font = font})
+								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Static" })
 							})},
 							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 								.padding = { 8.0f, 4.0f },
 								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::Color(70, 130, 200, 255),
+								.hoverColor = Silica::GetTheme().Accent_Primary,
 								.onClick = [entity, triggerRebuild]() mutable {
 									entity.getComponent<RigidBodyComponent>().type = RigidBodyComponent::BodyType::Dynamic;
 									triggerRebuild();
 									return Silica::EventReply::handled();
 								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Dynamic", .font = font})
+								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Dynamic" })
 							})}
 						}
 					})
@@ -1309,19 +1499,16 @@ namespace Axion {
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Mass", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = rigidBodyComponent.mass,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().mass = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Linear Damping", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = rigidBodyComponent.linearDamping,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().linearDamping = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Angular Damping", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = rigidBodyComponent.angularDamping,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().angularDamping = val; }
 			})) });
 
@@ -1348,14 +1535,43 @@ namespace Axion {
 
 
 		// -- BOX COLLIDER COMPONENT --
-		drawComponentBlock<BoxColliderComponent>("Box Collider", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<BoxColliderComponent>("Box Collider", entity, container, triggerRebuild, true, [&]() {
 			auto& boxColliderComponent = entity.getComponent<BoxColliderComponent>();
+
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axpmat") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axpmat") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									entity.getComponent<BoxColliderComponent>().material = AssetManager::load<PhysicsMaterial>(assetUUID);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 				.label = "Half Extents",
 				.initialValue = Silica::Vec3(boxColliderComponent.halfExtents.x, boxColliderComponent.halfExtents.y, boxColliderComponent.halfExtents.z),
-				.font = font,
 				.labelWidth = 120.0f,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<BoxColliderComponent>().halfExtents = Vec3(val.x, val.y, val.z);
@@ -1365,7 +1581,6 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(boxColliderComponent.offset.x, boxColliderComponent.offset.y, boxColliderComponent.offset.z),
-				.font = font,
 				.labelWidth = 120.0f,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<BoxColliderComponent>().offset = Vec3(val.x, val.y, val.z);
@@ -1384,9 +1599,18 @@ namespace Axion {
 					char dfBuf[32]; snprintf(dfBuf, sizeof(dfBuf), "%.2f (Read-Only)", material->dynamicFriction);
 					char resBuf[32]; snprintf(resBuf, sizeof(resBuf), "%.2f (Read-Only)", material->restitution);
 
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({.text = sfBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({.text = dfBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({.text = resBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
+						.text = sfBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
+						.text = dfBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
+						.text = resBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
 				}
 
 				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
@@ -1396,7 +1620,7 @@ namespace Axion {
 						triggerRebuild();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove Material", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove Material" })
 				}) });
 			}
 			else {
@@ -1405,8 +1629,8 @@ namespace Axion {
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
 						if (!std::filesystem::exists(dir)) dir = ProjectManager::getProject()->getAssetsPath();
-
 						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir);
+
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
@@ -1416,32 +1640,63 @@ namespace Axion {
 						}
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Material...", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Material..." })
 				}) });
 			}
 
-			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
-			});
+			// -- Assemble --
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+				.spacing = 8.0f,
+				.slots = uiSlots
+			}));
+
+			return dropZoneBox;
 		});
 
 
 		// -- SPHERE COLLIDER COMPOONENT --
-		drawComponentBlock<SphereColliderComponent>("Sphere Collider", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<SphereColliderComponent>("Sphere Collider", entity, container, triggerRebuild, true, [&]() {
 			auto& sphereColliderComponent = entity.getComponent<SphereColliderComponent>();
+
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axpmat") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axpmat") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									entity.getComponent<SphereColliderComponent>().material = AssetManager::load<PhysicsMaterial>(assetUUID);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = sphereColliderComponent.radius,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<SphereColliderComponent>().radius = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(sphereColliderComponent.offset.x, sphereColliderComponent.offset.y, sphereColliderComponent.offset.z),
-				.font = font,
 				.labelWidth = 120.0f,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<SphereColliderComponent>().offset = Vec3(val.x, val.y, val.z);
@@ -1460,9 +1715,18 @@ namespace Axion {
 					char dfBuf[32]; snprintf(dfBuf, sizeof(dfBuf), "%.2f (Read-Only)", material->dynamicFriction);
 					char resBuf[32]; snprintf(resBuf, sizeof(resBuf), "%.2f (Read-Only)", material->restitution);
 
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({.text = sfBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({.text = dfBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({.text = resBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
+						.text = sfBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
+						.text = dfBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
+						.text = resBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
 				}
 
 				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
@@ -1472,7 +1736,7 @@ namespace Axion {
 						triggerRebuild();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove Material", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove Material" })
 				}) });
 			}
 			else {
@@ -1481,8 +1745,8 @@ namespace Axion {
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
 						if (!std::filesystem::exists(dir)) dir = ProjectManager::getProject()->getAssetsPath();
-
 						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir);
+
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
@@ -1492,38 +1756,68 @@ namespace Axion {
 						}
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Material...", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Material..." })
 				}) });
 			}
 
-			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
-			});
+			// -- Assemble --
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+				.spacing = 8.0f,
+				.slots = uiSlots
+			}));
+
+			return dropZoneBox;
 		});
 
 
 		// -- CAPSULE COLLIDER COMPONENT --
-		drawComponentBlock<CapsuleColliderComponent>("Capsule Collider", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<CapsuleColliderComponent>("Capsule Collider", entity, container, triggerRebuild, true, [&]() {
 			auto& capsuleColliderComponent = entity.getComponent<CapsuleColliderComponent>();
+
+			// -- Create Drop Zone Box --
+			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.onDragOver = [](const Silica::DragDropPayload& payload) {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axpmat") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [entity, triggerRebuild](const Silica::DragDropPayload& payload) mutable {
+					if (payload.type == "AssetPath") {
+						auto path = std::any_cast<std::filesystem::path>(payload.data);
+						if (path.extension() == ".axpmat") {
+							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
+								UUID assetUUID = AssetManager::getAssetUUID(path);
+								if (assetUUID.isValid()) {
+									entity.getComponent<CapsuleColliderComponent>().material = AssetManager::load<PhysicsMaterial>(assetUUID);
+									triggerRebuild();
+								}
+							});
+							return Silica::EventReply::handled();
+						}
+					}
+					return Silica::EventReply::unhandled();
+				}
+			});
+
+			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = capsuleColliderComponent.radius,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().radius = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Half Height", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = capsuleColliderComponent.halfHeight,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().halfHeight = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(capsuleColliderComponent.offset.x, capsuleColliderComponent.offset.y, capsuleColliderComponent.offset.z),
-				.font = font,
 				.labelWidth = 120.0f,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<CapsuleColliderComponent>().offset = Vec3(val.x, val.y, val.z);
@@ -1542,9 +1836,18 @@ namespace Axion {
 					char dfBuf[32]; snprintf(dfBuf, sizeof(dfBuf), "%.2f (Read-Only)", material->dynamicFriction);
 					char resBuf[32]; snprintf(resBuf, sizeof(resBuf), "%.2f (Read-Only)", material->restitution);
 
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({.text = sfBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({.text = dfBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({.text = resBuf, .color = Silica::Color(150, 150, 150, 255), .font = font })) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
+						.text = sfBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
+						.text = dfBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
+					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
+						.text = resBuf,
+						.color = Silica::GetTheme().Text_Dim
+					})) });
 				}
 
 				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
@@ -1554,7 +1857,7 @@ namespace Axion {
 						triggerRebuild();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove Material", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Remove Material" })
 				}) });
 			}
 			else {
@@ -1563,8 +1866,8 @@ namespace Axion {
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
 						if (!std::filesystem::exists(dir)) dir = ProjectManager::getProject()->getAssetsPath();
-
 						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Material Asset", "*.axpmat"} }, dir);
+
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
@@ -1574,19 +1877,22 @@ namespace Axion {
 						}
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Material...", .font = font })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Material..." })
 				}) });
 			}
 
-			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
-			});
+			// -- Assemble --
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+				.spacing = 8.0f,
+				.slots = uiSlots
+			}));
+
+			return dropZoneBox;
 		});
 
 
 		// -- GRAVITY SOURCE COMPONENT --
-		drawComponentBlock<GravitySourceComponent>("Gravity Source", entity, container, font, triggerRebuild, true, [&]() {
+		drawComponentBlock<GravitySourceComponent>("Gravity Source", entity, container, triggerRebuild, true, [&]() {
 			auto& gravitySourceComponent = entity.getComponent<GravitySourceComponent>();
 			std::vector<Silica::Slot> uiSlots;
 
@@ -1595,34 +1901,34 @@ namespace Axion {
 				.openOnHover = false,
 				.anchorContent = Silica::MakeWidget<Silica::SButton>({
 					.padding = { 8.0f, 4.0f },
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = currentTypeStr, .font = font})
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = currentTypeStr })
 				}),
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::Color(45, 45, 45, 255),
+					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = 0.0f,
 						.slots = {
 							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 								.padding = { 8.0f, 4.0f },
 								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::Color(70, 130, 200, 255),
+								.hoverColor = Silica::GetTheme().Accent_Primary,
 								.onClick = [entity, triggerRebuild]() mutable {
 									entity.getComponent<GravitySourceComponent>().type = GravitySourceComponent::Type::Directional;
 									triggerRebuild();
 									return Silica::EventReply::handled();
 								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Directional", .font = font})
+								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Directional" })
 							})},
 							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 								.padding = { 8.0f, 4.0f },
 								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::Color(70, 130, 200, 255),
+								.hoverColor = Silica::GetTheme().Accent_Primary,
 								.onClick = [entity, triggerRebuild]() mutable {
 									entity.getComponent<GravitySourceComponent>().type = GravitySourceComponent::Type::Point;
 									triggerRebuild();
 									return Silica::EventReply::handled();
 								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Point", .font = font})
+								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Point" })
 							})}
 						}
 					})
@@ -1638,13 +1944,11 @@ namespace Axion {
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Strength", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = gravitySourceComponent.strength,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().strength = val; }
 			})) });
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
 				.initialValue = gravitySourceComponent.radius,
-				.font = font,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().radius = val; }
 			})) });
 
@@ -1654,6 +1958,24 @@ namespace Axion {
 			});
 		});
 
+
+		// ----- Assemble Layout --
+		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 0.0f, 4.0f },
+				.child = container
+			})
+		});
+
+		auto borderLayout = Silica::MakeWidget<Silica::SBorderLayout>({
+			.topBar = topBarBox,
+			.contentArea = scrollBox
+		});
+
+		m_contentBox->addSlot({
+			.padding = {0.0f, 0.0f},
+			.child = borderLayout
+		});
 	}
 
 }

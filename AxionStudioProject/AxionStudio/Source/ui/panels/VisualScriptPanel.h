@@ -1,15 +1,11 @@
 #pragma once
-
 #include "axpch.h"
+
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
 #include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
 #include "AxionStudio/Vendor/Silica/include/SNodeEditor.h"
-
-#include <unordered_map>
-#include <functional>
 
 namespace Axion {
 
@@ -24,10 +20,13 @@ namespace Axion {
 		void setContext(const VisualGraph& graph, const std::filesystem::path& filePath);
 		void openScript(const std::filesystem::path& filePath);
 		void closeActiveScript();
+		void onAssetRenamed(const std::filesystem::path& oldPath, const std::filesystem::path& newPath);
+		void onAssetDeleted(const std::filesystem::path& path);
 
 		const std::filesystem::path& getActiveFilePath() const { return m_currentFilePath; }
 
 	private:
+
 		VisualGraph m_activeGraph;
 		std::filesystem::path m_currentFilePath;
 		std::string m_currentLayoutFilePath;
@@ -55,6 +54,7 @@ namespace Axion {
 
 		static Silica::Color getNodeTypeColor(NodeType type);
 		static Silica::Color getPinColor(PinType type);
+		bool hasNodeOfType(NodeType type) const;
 
 	};
 

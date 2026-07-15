@@ -17,13 +17,14 @@
 #include "AxionStudio/Source/ui/modals/CreateProjectModal.h"
 #include "AxionStudio/Source/ui/modals/ExportProjectModal.h"
 #include "AxionStudio/Source/ui/modals/SystemInfoModal.h"
+#include "AxionStudio/Source/ui/modals/SettingsModal.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
 
 namespace Axion {
 
-	constexpr Silica::Color menuBarCBg(40, 40, 40, 255);
-	constexpr Silica::Color dropDownBg(45, 45, 45, 255);
+	Silica::Color menuBarBg = Silica::GetTheme().Background_Panel;
+	Silica::Color dropDownBg = Silica::GetTheme().Background_Panel;
 	constexpr float dropdownSpacing = 0.0f;
 	constexpr Silica::Vec2 dropDownPadding = { 0.0f, 0.0f };
 	constexpr Silica::Vec2 menuButtonPadding = { 0.0f, 2.0f };
@@ -31,32 +32,32 @@ namespace Axion {
 
 
 	// ----- Helper Functions -----
-	Silica::WidgetPtr MakeMenuItem(const std::string& text, Silica::FontAtlas* font, std::function<Silica::EventReply()> onClick) {
+	Silica::WidgetPtr MakeMenuItem(const std::string& text, std::function<Silica::EventReply()> onClick) {
 		return Silica::MakeWidget<Silica::SButton>({
 			.padding = { 12.0f, 4.0f },
 			.color = dropDownBg,
-			.hoverColor = Silica::GetTheme().buttonHover,
-			.pressedColor = Silica::GetTheme().buttonPressed,
+			.hoverColor = Silica::GetTheme().Surface_Secondary,
 			.onClick = onClick,
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = text, .font = font })
+			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = text })
 		});
 	}
 
 
 
-	Silica::WidgetPtr EditorMenuBar::construct(Silica::FontAtlas* font, std::shared_ptr<Silica::SDockSpace> dockspace) {
+	Silica::WidgetPtr EditorMenuBar::construct(std::shared_ptr<Silica::SDockSpace> dockspace) {
 		// ----- FILE MENU -----
 		auto fileMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.openToRight = false,
-			.anchorContent = MakeMenuItem("File", font, []() { return Silica::EventReply::unhandled(); }),
+			.anchorContent = MakeMenuItem("File", []() { return Silica::EventReply::unhandled(); }),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
 						// -- NEW SCENE --
-						{ dropDownPadding, MakeMenuItem("New Scene", font, []() { 
+						{ dropDownPadding, MakeMenuItem("New Scene", []() { 
 							EditorActionQueue::push([]() {
 								SceneManager::newScene(); 
 							});
@@ -64,7 +65,7 @@ namespace Axion {
 						}) },
 
 						// -- LOAD SCENE --
-						{ dropDownPadding, MakeMenuItem("Load Scene", font, []() { 
+						{ dropDownPadding, MakeMenuItem("Load Scene", []() { 
 							std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
 							std::filesystem::path filepath = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} }, initialDir);
 							
@@ -77,7 +78,7 @@ namespace Axion {
 						}) },
 
 						// -- SAVE SCENE --
-						{ dropDownPadding, MakeMenuItem("Save Scene", font, []() { 
+						{ dropDownPadding, MakeMenuItem("Save Scene", []() { 
 							if (SceneManager::isNewScene() || SceneManager::getScenePath().empty()) {
 								std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
 								std::filesystem::path filepath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, initialDir);
@@ -97,7 +98,7 @@ namespace Axion {
 						}) },
 
 						// -- SAVE SCENE AS --
-						{ dropDownPadding, MakeMenuItem("Save Scene As...", font, []() { 
+						{ dropDownPadding, MakeMenuItem("Save Scene As...", []() { 
 							std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
 							std::filesystem::path filepath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, initialDir);
 							
@@ -111,7 +112,7 @@ namespace Axion {
 						}) },
 
 						// -- EXIT --
-						{ dropDownPadding, MakeMenuItem("Exit", font, []() { 
+						{ dropDownPadding, MakeMenuItem("Exit", []() { 
 							//Application::get().close();
 							// TODO: fix the crash
 							return Silica::EventReply::handled(); 
@@ -125,13 +126,25 @@ namespace Axion {
 		auto editMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.openToRight = false,
-			.anchorContent = MakeMenuItem("Edit", font, []() { return Silica::EventReply::unhandled(); }),
+			.anchorContent = MakeMenuItem("Edit", []() { return Silica::EventReply::unhandled(); }),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
-						{ dropDownPadding, MakeMenuItem("Nothing here...", font, []() { return Silica::EventReply::handled(); })},
+						// -- PREFERENCES --
+						{ dropDownPadding, MakeMenuItem("Preferences...", []() {
+							static std::shared_ptr<SettingsModal> s_settingsModal;
+							s_settingsModal = std::make_shared<SettingsModal>();
+
+							auto widget = s_settingsModal->getWidget([]() {
+								EditorModalManager::close();
+							});
+
+							EditorModalManager::open(widget);
+							return Silica::EventReply::handled();
+						})},
 					}
 				})
 			})
@@ -143,7 +156,7 @@ namespace Axion {
 		if (dockspace) {
 			std::vector<std::string> availableTabs = dockspace->getRegisteredTabNames();
 			for (const std::string& tabName : availableTabs) {
-				windowsListContent->addSlot({ dropDownPadding, MakeMenuItem(tabName, font, [dockspace, tabName]() {
+				windowsListContent->addSlot({ dropDownPadding, MakeMenuItem(tabName, [dockspace, tabName]() {
 					dockspace->openTab(tabName);
 					return Silica::EventReply::handled();
 				}) });
@@ -154,7 +167,7 @@ namespace Axion {
 			.openOnHover = true,
 			.openToRight = true,
 			.showArrow = true,
-			.anchorContent = MakeMenuItem("Windows", font, []() { return Silica::EventReply::unhandled(); }),
+			.anchorContent = MakeMenuItem("Windows", []() { return Silica::EventReply::unhandled(); }),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
 				.backgroundColor = dropDownBg,
 				.child = windowsListContent
@@ -164,8 +177,9 @@ namespace Axion {
 		auto viewMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.openToRight = false,
-			.anchorContent = MakeMenuItem("View", font, []() { return Silica::EventReply::unhandled(); }),
+			.anchorContent = MakeMenuItem("View", []() { return Silica::EventReply::unhandled(); }),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
@@ -181,25 +195,56 @@ namespace Axion {
 		auto projectMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.openToRight = false,
-			.anchorContent = MakeMenuItem("Project", font, []() { return Silica::EventReply::unhandled(); }),
+			.anchorContent = MakeMenuItem("Project", []() { return Silica::EventReply::unhandled(); }),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
-						{ dropDownPadding, MakeMenuItem("New...", font, [font]() {
+						// -- New Project --
+						{ dropDownPadding, MakeMenuItem("New...", []() {
 							auto modal = std::make_shared<CreateProjectModal>();
-							auto widget = modal->getWidget(font);
+							auto widget = modal->getWidget();
 							EditorModalManager::open(widget);
 						
 							return Silica::EventReply::handled();
 						})},
-						{ dropDownPadding, MakeMenuItem("Open...", font, []() { AX_CORE_LOG_TRACE("Add Open Proj func"); return Silica::EventReply::handled(); })},
-						{ dropDownPadding, MakeMenuItem("Save", font, []() { AX_CORE_LOG_TRACE("Add Save Proj func"); return Silica::EventReply::handled(); })},
-						{ dropDownPadding, MakeMenuItem("Close", font, []() { AX_CORE_LOG_TRACE("Add Close Proj func"); return Silica::EventReply::handled(); })},
-						{ dropDownPadding, MakeMenuItem("Export", font, [font]() {
+						// -- Open Project --
+						{ dropDownPadding, MakeMenuItem("Open...", []() {
+							std::filesystem::path filePath = FileDialogs::openFile({ {"Axion Project", "*.axproj"} });
+
+							if (!filePath.empty()) {
+								EditorActionQueue::push([filePath]() {
+									ProjectManager::loadProject(filePath);
+								});
+							}
+							return Silica::EventReply::handled();
+						})},
+						// -- Save Project --
+						{ dropDownPadding, MakeMenuItem("Save", []() {
+							std::filesystem::path filePath = FileDialogs::saveFile({ {"Axion Project", "*.axproj"} });
+
+							if (!filePath.empty()) {
+								EditorActionQueue::push([filePath]() {
+									ProjectManager::saveProject(filePath);
+								});
+							}
+							return Silica::EventReply::handled();
+							
+						})},
+						// -- Close Project --
+						{ dropDownPadding, MakeMenuItem("Close", []() {
+							EditorActionQueue::push([]() {
+								ProjectManager::unloadProject();
+								SceneManager::newScene();
+							});
+							return Silica::EventReply::handled();
+						})},
+						// -- Export Project --
+						{ dropDownPadding, MakeMenuItem("Export", []() {
 							auto modal = std::make_shared<ExportProjectModal>();
-							auto widget = modal->getWidget(font);
+							auto widget = modal->getWidget();
 							EditorModalManager::open(widget);
 
 							return Silica::EventReply::handled();
@@ -213,15 +258,16 @@ namespace Axion {
 		auto helpMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.openToRight = false,
-			.anchorContent = MakeMenuItem("Help", font, []() { return Silica::EventReply::unhandled(); }),
+			.anchorContent = MakeMenuItem("Help", []() { return Silica::EventReply::unhandled(); }),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
-						{ dropDownPadding, MakeMenuItem("System Info", font, [font]() {
+						{ dropDownPadding, MakeMenuItem("System Info", []() {
 							auto modal = std::make_shared<SystemInfoModal>();
-							auto widget = modal->getWidget(font);
+							auto widget = modal->getWidget();
 							EditorModalManager::open(widget);
 
 							return Silica::EventReply::handled();
@@ -233,10 +279,10 @@ namespace Axion {
 
 		// ----- ASSEMBLE -----
 		auto menuBar = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = menuBarCBg,
+			.backgroundColor = menuBarBg,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.slots = {
-					{ appTitlePadding, Silica::MakeWidget<Silica::STextBlock>({.text = "AXION STUDIO", .font = font}) },
+					{ appTitlePadding, Silica::MakeWidget<Silica::STextBlock>({.text = "AXION STUDIO" }) },
 					{ menuButtonPadding, fileMenu },
 					{ menuButtonPadding, editMenu },
 					{ menuButtonPadding, viewMenu },

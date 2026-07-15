@@ -23,6 +23,8 @@ namespace Silica {
 		EventReply onMouseButtonDown(const Geometry& geo, const Vec2& pos, MouseButton btn) override;
 		EventReply onMouseButtonUp(const Geometry& geo, const Vec2& pos, MouseButton btn) override;
 		EventReply onMouseWheel(const Geometry& geo, const Vec2& pos, float delta) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 	private:
 

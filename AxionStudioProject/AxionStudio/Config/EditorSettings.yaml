@@ -1,0 +1,5 @@
+MaxAssetsPerFrame: 2
+ContentBrowser:
+  ShowFileExtensions: true
+  OnlyEngineAssets: true
+  ThumbnailSize: 81

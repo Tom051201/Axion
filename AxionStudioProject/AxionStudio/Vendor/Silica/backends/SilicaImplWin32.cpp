@@ -29,6 +29,7 @@ namespace Silica {
 		void setCursor(Cursor cursor) {
 			switch (cursor) {
 				case Cursor::Arrow: { s_currentCursor = LoadCursor(NULL, IDC_ARROW); break; }
+				case Cursor::Hand: { s_currentCursor = LoadCursor(NULL, IDC_HAND); break; }
 				case Cursor::TextInput: { s_currentCursor = LoadCursor(NULL, IDC_IBEAM); break; }
 				case Cursor::ResizeEW: { s_currentCursor = LoadCursor(NULL, IDC_SIZEWE); break; }
 				case Cursor::ResizeNS: { s_currentCursor = LoadCursor(NULL, IDC_SIZENS); break; }
@@ -147,6 +148,26 @@ namespace Silica {
 				float y = static_cast<float>(GET_Y_LPARAM(lParam));
 
 				Renderer::processMouseUp(rootWidget, s_state.clientWidth, s_state.clientHeight, x, y, MouseButton::Middle);
+				return false;
+			}
+			case WM_XBUTTONDOWN: {
+				float mx = static_cast<float>(GET_X_LPARAM(lParam));
+				float my = static_cast<float>(GET_Y_LPARAM(lParam));
+
+				UINT xButton = GET_XBUTTON_WPARAM(wParam);
+				MouseButton button = (xButton == XBUTTON1) ? MouseButton::Side1 : MouseButton::Side2;
+
+				Renderer::processMouseDown(rootWidget, s_state.clientWidth, s_state.clientHeight, mx, my, button);
+				return false;
+			}
+			case WM_XBUTTONUP: {
+				float x = static_cast<float>(GET_X_LPARAM(lParam));
+				float y = static_cast<float>(GET_Y_LPARAM(lParam));
+
+				UINT xButton = GET_XBUTTON_WPARAM(wParam);
+				MouseButton button = (xButton == XBUTTON1) ? MouseButton::Side1 : MouseButton::Side2;
+
+				Renderer::processMouseUp(rootWidget, s_state.clientWidth, s_state.clientHeight, x, y, button);
 				return false;
 			}
 			case WM_CHAR: {

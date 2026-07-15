@@ -23,6 +23,7 @@ namespace Silica {
 		PinType type;
 		Color color = Color(200, 200, 200);
 		Vec2 screenPosition;
+		WidgetPtr inlineWidget = nullptr;
 	};
 
 	struct GraphNode {
@@ -62,12 +63,17 @@ namespace Silica {
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseWheel(const Geometry& allocatedGeometry, const Vec2& mousePos, float scrollDelta) override;
 		EventReply onKeyDown(Key key) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 		void addNode(const GraphNode& node);
 		void addLink(LinkID id, PinID startPin, PinID endPin, Color color = Color::white());
 
 		const std::vector<GraphNode>& getNodes() const;
 		const std::vector<GraphLink>& getLinks() const;
+
+		Vec2 screenToCanvas(const Vec2& screenPos) const;
+		bool isPinConnected(PinID pinID) const;
 
 		void clear();
 
@@ -109,6 +115,7 @@ namespace Silica {
 		PinID hitTestPins(const Vec2& mousePos);
 		NodeID hitTestNodes(const Vec2& mousePos);
 		LinkID hitTestLinks(const Vec2& mousePos);
+		float getTextWidth(const std::string& text) const;
 
 	};
 

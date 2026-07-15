@@ -2,7 +2,6 @@
 
 #include "AxionStudio/Vendor/Silica/include/SWidget.h"
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
 
 #include <string>
 #include <functional>
@@ -15,7 +14,7 @@ namespace Axion {
 		SystemInfoModal();
 		~SystemInfoModal() = default;
 
-		Silica::WidgetPtr getWidget(Silica::FontAtlas* font);
+		Silica::WidgetPtr getWidget();
 
 	private:
 
@@ -35,7 +34,6 @@ namespace Axion {
 
 		// -- Silica --
 		std::shared_ptr<Silica::SBox> m_uiRoot;
-		Silica::FontAtlas* m_font = nullptr;
 		bool m_rebuildQueued = false;
 
 	};

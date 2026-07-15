@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <vector>
 
@@ -18,10 +19,12 @@ namespace Silica {
 			bool initiallyOpen = false;
 			bool isSelected = false;
 			std::function<bool()> isDragged = nullptr;
-			std::vector<WidgetPtr> children;
 			std::function<void()> onClicked = nullptr;
 			std::function<void()> onDragStart = nullptr;
-			std::function<EventReply()> onDrop = nullptr;
+			std::function<EventReply(const DragDropPayload&)> onDragOver = nullptr;
+			std::function<EventReply(const DragDropPayload&)> onDrop = nullptr;
+			std::function<void(bool)> onToggleOpen = nullptr;
+			std::vector<WidgetPtr> children;
 		};
 
 		void construct(const Args& args);
@@ -33,6 +36,8 @@ namespace Silica {
 		EventReply onMouseMove(const Geometry& allocatedGeometry, const Vec2& mousePos) override;
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
+		EventReply onDragOver(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
+		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 		void addChild(WidgetPtr child);
 		void clearChildren();
@@ -51,6 +56,7 @@ namespace Silica {
 		bool m_isHovered = false;
 		std::function<bool()> m_isDragged;
 		std::function<void()> m_onClicked;
+		std::function<void(bool)> m_onToggleOpen;
 
 		std::vector<WidgetPtr> m_children;
 
@@ -58,10 +64,10 @@ namespace Silica {
 		float m_indentSize = 15.0f;
 
 		std::function<void()> m_onDragStart;
-		std::function<EventReply()> m_onDrop;
+		std::function<EventReply(const DragDropPayload&)> m_onDragOver;
+		std::function<EventReply(const DragDropPayload&)> m_onDrop;
 		bool m_isLeftMouseDown = false;
 
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
 		void drawTriangle(DrawList& drawList, const Vec2& center, float radius, Color color, bool pointDown) const;
 
 	};

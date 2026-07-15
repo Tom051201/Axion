@@ -48,9 +48,6 @@ namespace Silica {
 		Rect getHueBarRect(const Geometry& geo) const;
 		Rect getAlphaBarRect(const Geometry& geo) const;
 
-		void addGradientRect(DrawList& drawList, const Geometry& geo, Color tl, Color tr, Color br, Color bl) const;
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color) const;
-
 	};
 
 }
