@@ -257,7 +257,13 @@ namespace Axion {
 
 
 		// ----- Menu Bar -----
-		auto menuBar = EditorMenuBar::construct(m_dock);
+		EditorMenuBar::MenuBarCallbacks menuCallbacks;
+		menuCallbacks.newScene = [this]() { newScene(); };
+		menuCallbacks.openScene = [this]() { openScene(); };
+		menuCallbacks.saveScene = [this]() { saveScene(); };
+		menuCallbacks.saveSceneAs = [this]() { saveSceneAs(); };
+		menuCallbacks.exitEditor = []() { /* Application::get().close(); */ };
+		auto menuBar = EditorMenuBar::construct(m_dock, menuCallbacks);
 
 
 		// ----- Assemble -----

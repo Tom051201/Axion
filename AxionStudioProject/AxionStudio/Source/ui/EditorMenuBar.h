@@ -10,7 +10,15 @@ namespace Axion {
 	class EditorMenuBar {
 	public:
 
-		static Silica::WidgetPtr construct(std::shared_ptr<Silica::SDockSpace> dockspace);
+		struct MenuBarCallbacks {
+			std::function<void()> newScene;
+			std::function<void()> openScene;
+			std::function<void()> saveScene;
+			std::function<void()> saveSceneAs;
+			std::function<void()> exitEditor;
+		};
+
+		static Silica::WidgetPtr construct(std::shared_ptr<Silica::SDockSpace> dockspace, const MenuBarCallbacks& callbacks);
 
 	};
 

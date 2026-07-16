@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
+#include "AxionEngine/Source/core/JobSystem.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
 #include "AxionEngine/Source/scene/Animation.h"
@@ -43,93 +44,182 @@ namespace Axion {
 	}
 
 	void EditorAssetLoader::loadMesh(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<Mesh>().assets[handle] = nullptr;
+		AssetManager::storage<Mesh>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version <= ASSET_VERSION_MESH) {
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+		JobSystem::submit([handle, absolutePath]() {
 
-			std::string format = "OBJ";
-			if (data["Format"]) {
-				format = data["Format"].as<std::string>();
+			// -- Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open mesh asset file: {}", absolutePath.string());
+				return;
 			}
 
-			AssetManager::storage<Mesh>().assets[handle] = nullptr;
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse mesh YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
 
-			AssetManager::storage<Mesh>().loadQueue.push_back({ handle,
-				[sourcePath, format]() {
-					MeshData meshData;
-					if (format == "GLB" || format == "GLTF") {
-						meshData = AAP::GLTFImporter::extractMeshes(sourcePath);
-					}
-					else {
-						meshData = AAP::OBJImporter::extractMeshes(sourcePath);
-					}
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version > ASSET_VERSION_MESH) {
+				AX_CORE_LOG_ERROR("Unsupported Mesh Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
 
-					return Mesh::create(meshData);
-				}
+			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string format = data["Format"] ? data["Format"].as<std::string>() : "OBJ";
+
+			auto meshData = std::make_shared<MeshData>();
+
+			// -- Extract Mesh Off The Main Thread --
+			if (format == "GLB" || format == "GLTF") {
+				*meshData = AAP::GLTFImporter::extractMeshes(sourcePath);
+			}
+			else {
+				*meshData = AAP::OBJImporter::extractMeshes(sourcePath);
+			}
+
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Mesh>(handle, [meshData]() -> Ref<Mesh> {
+				return Mesh::create(*meshData);
 			});
 
-			AssetManager::storage<Mesh>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Mesh Version: {} in file {}", version, absolutePath.string());
-		}
+		});
 	}
 
 	void EditorAssetLoader::loadTexture2D(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<Texture2D>().assets[handle] = nullptr;
+		AssetManager::storage<Texture2D>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_TEXTURE2D) {
+		JobSystem::submit([handle, absolutePath]() {
+			// -- Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open texture asset file: {}", absolutePath.string());
+				return;
+			}
+
+			// -- Parse YAML Off The Main Thread --
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse texture YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_TEXTURE2D) {
+				AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
 			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
-			UUID uuid = data["UUID"].as<UUID>();
+			if (!std::filesystem::exists(sourcePath)) {
+				AX_CORE_LOG_ERROR("Texture source file missing: {}", sourcePath.string());
+				return;
+			}
 
-			AssetManager::storage<Texture2D>().assets[handle] = nullptr;
-			AssetManager::storage<Texture2D>().loadQueue.push_back({ handle,
-				[sourcePath, handle]() {
-					return Texture2D::create(sourcePath);
-				}
+			// -- Read Raw Image File From Disk Into RAM --
+			std::ifstream imageStream(sourcePath, std::ios::in | std::ios::binary);
+			imageStream.seekg(0, std::ios::end);
+			size_t fileSize = imageStream.tellg();
+			imageStream.seekg(0, std::ios::beg);
+
+			auto imageData = std::make_shared<std::vector<uint8_t>>(fileSize);
+			imageStream.read(reinterpret_cast<char*>(imageData->data()), fileSize);
+
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Texture2D>(handle, [imageData]() -> Ref<Texture2D> {
+				return Texture2D::create(imageData->data(), imageData->size());
 			});
-			AssetManager::storage<Texture2D>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath.string());
-		}
+		});
 	}
 
 	void EditorAssetLoader::loadTextureCube(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<TextureCube>().assets[handle] = nullptr;
+		AssetManager::storage<TextureCube>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_TEXTURE_CUBE) {
+		JobSystem::submit([handle, absolutePath]() {
+
+			// -- Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open TextureCube asset file: {}", absolutePath.string());
+				return;
+			}
+
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse TextureCube YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_TEXTURE_CUBE) {
+				AX_CORE_LOG_ERROR("Unsupported TextureCube Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
 			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
-			UUID uuid = data["UUID"].as<UUID>();
+			if (!std::filesystem::exists(sourcePath)) {
+				AX_CORE_LOG_ERROR("TextureCube source file missing: {}", sourcePath.string());
+				return;
+			}
 
-			AssetManager::storage<TextureCube>().assets[handle] = nullptr;
+			// -- Read Raw Image File From Disk Into RAM --
+			std::ifstream imageStream(sourcePath, std::ios::in | std::ios::binary);
+			imageStream.seekg(0, std::ios::end);
+			size_t fileSize = imageStream.tellg();
+			imageStream.seekg(0, std::ios::beg);
 
-			AssetManager::storage<TextureCube>().loadQueue.push_back({ handle,
-				[sourcePath, handle]() {
-					return TextureCube::create(sourcePath);
-				}
+			auto imageData = std::make_shared<std::vector<uint8_t>>(fileSize);
+			imageStream.read(reinterpret_cast<char*>(imageData->data()), fileSize);
+
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<TextureCube>(handle, [imageData]() -> Ref<TextureCube> {
+				return TextureCube::create(imageData->data(), imageData->size());
 			});
 
-			AssetManager::storage<TextureCube>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported TextureCube Version: {} in file {}", version, absolutePath.string());
-		}
+		});
 	}
 
 	void EditorAssetLoader::loadSkybox(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<Skybox>().assets[handle] = nullptr;
+		AssetManager::storage<Skybox>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_SKYBOX) {
+		JobSystem::submit([handle, absolutePath]() {
+
+			// -- YAML On Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open Skybox asset file: {}", absolutePath.string());
+				return;
+			}
+
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse Skybox YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_SKYBOX) {
+				AX_CORE_LOG_ERROR("Unsupported Skybox Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
 
 			UUID texUUID = data["TextureCube"].as<UUID>();
 			UUID pipeUUID = UUID(0, 0);
@@ -137,59 +227,53 @@ namespace Axion {
 				pipeUUID = data["Pipeline"].as<UUID>();
 			}
 
-			AssetManager::storage<Skybox>().assets[handle] = nullptr;
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Skybox>(handle, [texUUID, pipeUUID]() -> Ref<Skybox> {
 
-			AssetManager::storage<Skybox>().loadQueue.push_back({ handle,
-				[texUUID, pipeUUID]() {
-					AssetHandle<TextureCube> texHandle = AssetManager::load<TextureCube>(texUUID);
-					if (pipeUUID.isValid()) {
-						AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(pipeUUID);
-						return std::make_shared<Skybox>(texHandle, pipeHandle);
-					}
-					else {
-						return std::make_shared<Skybox>(texHandle);
-					}
+				AssetHandle<TextureCube> texHandle = AssetManager::load<TextureCube>(texUUID);
+
+				if (pipeUUID.isValid()) {
+					AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(pipeUUID);
+					return std::make_shared<Skybox>(texHandle, pipeHandle);
+				}
+				else {
+					return std::make_shared<Skybox>(texHandle);
 				}
 			});
 
-			AssetManager::storage<Skybox>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Skybox Version: {} in file {}", version, absolutePath.string());
-		}
+		});
 	}
 
 	void EditorAssetLoader::loadShader(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<Shader>().assets[handle] = nullptr;
+		AssetManager::storage<Shader>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_SHADER) {
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
-			UUID uuid = data["UUID"].as<UUID>();
+		JobSystem::submit([handle, absolutePath]() {
 
-			// -- Check format --
-			std::string format = data["Format"].as<std::string>();
-			RendererAPI api = Renderer::getAPI();
-
-			bool formatMatches = (format == "HLSL" && api == RendererAPI::DirectX12);
-
-			// -- Check extension --
-			std::string ext = sourcePath.extension().string();
-
-			bool extensionMatches = (api == RendererAPI::DirectX12 && ext == "HLSL");
-
-			if (!formatMatches) {
-				if (extensionMatches) {
-					AX_CORE_LOG_WARN("Shader format '{}' in '{}' does not match current RendererAPI, but file extension '{}' is valid. Attempting to load anyway.", format, absolutePath.string(), ext);
-				}
-				else {
-					AX_CORE_LOG_ERROR("Shader format '{}' in '{}' is not supported by current RendererAPI and file extension '{}' does not match expected format", format, absolutePath.string(), ext);
-				}
+			// -- YAML And Compilation On Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open Shader asset file: {}", absolutePath.string());
+				return;
 			}
 
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse Shader YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
 
-			// -- create shader specification --
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_SHADER) {
+				AX_CORE_LOG_ERROR("Unsupported Shader Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
+			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+
 			YAML::Node specData = data["Specification"];
 			ShaderSpecification spec = {};
 			spec.name = data["Name"].as<std::string>();
@@ -197,44 +281,66 @@ namespace Axion {
 				spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
 			}
 
-			Ref<Shader> shader = Shader::create(spec, sourcePath);
-			AssetManager::storage<Shader>().assets[handle] = shader;
-			AssetManager::storage<Shader>().loadQueue.push_back({ handle,
-				[sourcePath, handle]() {
-					Ref<Shader> shader = AssetManager::get<Shader>(handle);
-					shader->compileFromFile(sourcePath);
-					return shader;
+			// -- Compiling On Background Thread --
+			auto bytecode = std::make_shared<ShaderBytecode>(Shader::compileToBytecode(sourcePath));
+
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Shader>(handle, [spec, sourcePath, bytecode]() -> Ref<Shader> {
+				if (!bytecode->isValid()) {
+					AX_CORE_LOG_ERROR("Failed to compile shader bytecode for: {}", sourcePath.string());
+					return nullptr;
 				}
+
+				Ref<Shader> shader = Shader::create(spec, sourcePath);
+				shader->loadFromBytecode(bytecode->vertex.data(), bytecode->vertex.size(), bytecode->pixel.data(), bytecode->pixel.size());
+				return shader;
 			});
-			AssetManager::storage<Shader>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Shader Version: {} in file {}", version, absolutePath.string());
-		}
+
+		});
 	}
 
 	void EditorAssetLoader::loadPipeline(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<Pipeline>().assets[handle] = nullptr;
+		AssetManager::storage<Pipeline>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_PIPELINE) {
+		JobSystem::submit([handle, absolutePath]() {
+
+			// -- YAML And Parsing On Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open Pipeline asset file: {}", absolutePath.string());
+				return;
+			}
+
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse Pipeline YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_PIPELINE) {
+				AX_CORE_LOG_ERROR("Unsupported Pipeline Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
 			YAML::Node specData = data["Specification"];
-
 			UUID shaderUUID = specData["Shader"].as<UUID>();
-			AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(shaderUUID);
 
-			PipelineSpecification spec = {};
-			spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
-			spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
-			spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
-			spec.depthTest = specData["DepthTest"].as<bool>();
-			spec.depthWrite = specData["DepthWrite"].as<bool>();
-			spec.depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
-			spec.stencilEnabled = specData["StencilEnabled"].as<bool>();
-			spec.sampleCount = specData["SampleCount"].as<uint32_t>();
-			spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
-			spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
+			auto spec = std::make_shared<PipelineSpecification>();
+			spec->numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
+			spec->colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
+			spec->depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
+			spec->depthTest = specData["DepthTest"].as<bool>();
+			spec->depthWrite = specData["DepthWrite"].as<bool>();
+			spec->depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
+			spec->stencilEnabled = specData["StencilEnabled"].as<bool>();
+			spec->sampleCount = specData["SampleCount"].as<uint32_t>();
+			spec->cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
+			spec->topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
 
 			YAML::Node layoutData = specData["BufferLayout"];
 			if (layoutData && layoutData.IsSequence()) {
@@ -256,275 +362,396 @@ namespace Axion {
 
 				BufferLayout layout(elements);
 				layout.calculateOffsetAndStride();
-				spec.vertexLayout = layout;
+				spec->vertexLayout = layout;
 			}
 
-			AssetManager::storage<Pipeline>().assets[handle] = nullptr;
-			AssetManager::storage<Pipeline>().loadQueue.push_back({ handle,
-				[shaderHandle, spec]() mutable {
-					spec.shader = AssetManager::get<Shader>(shaderHandle);
-					AX_CORE_ASSERT(spec.shader, "Shader must be valid before creating pipeline!");
-					return Pipeline::create(spec);
-				}
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Pipeline>(handle, [spec, shaderUUID]() -> Ref<Pipeline> {
+				AssetHandle<Shader> shaderHandle = AssetManager::load<Shader>(shaderUUID);
+				spec->shader = AssetManager::get<Shader>(shaderHandle);
+
+				AX_CORE_ASSERT(spec->shader, "Shader must be valid before creating pipeline!");
+
+				return Pipeline::create(*spec);
 			});
-			AssetManager::storage<Pipeline>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Pipeline Version: {} in file {}", version, absolutePath.string());
-		}
+
+		});
 	}
 
 	void EditorAssetLoader::loadMaterial(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<Material>().assets[handle] = nullptr;
+		AssetManager::storage<Material>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_MATERIAL) {
+		JobSystem::submit([handle, absolutePath]() {
+
+			// -- YAML And Parsing On Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open Material asset file: {}", absolutePath.string());
+				return;
+			}
+
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse Material YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_MATERIAL) {
+				AX_CORE_LOG_ERROR("Unsupported Material Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
 			std::string name = data["Name"].as<std::string>();
 
-			MaterialProperties prop;
-			prop.albedoColor = data["AlbedoColor"].as<Vec4>();
-			prop.metalness = data["Metalness"].as<float>();
-			prop.roughness = data["Roughness"].as<float>();
-			prop.emissionStrength = data["Emission"].as<float>();
-			prop.tiling = data["Tiling"].as<float>();
-			prop.useNormalMap = data["UseNormalMap"].as<float>();
-			prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
-			prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
-			prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
-			prop.useEmissiveMap = data["UseEmissiveMap"].as<float>();
+			auto prop = std::make_shared<MaterialProperties>();
+			prop->albedoColor = data["AlbedoColor"].as<Vec4>();
+			prop->metalness = data["Metalness"].as<float>();
+			prop->roughness = data["Roughness"].as<float>();
+			prop->emissionStrength = data["Emission"].as<float>();
+			prop->tiling = data["Tiling"].as<float>();
+			prop->useNormalMap = data["UseNormalMap"].as<float>();
+			prop->useMetalnessMap = data["UseMetalnessMap"].as<float>();
+			prop->useRoughnessMap = data["UseRoughnessMap"].as<float>();
+			prop->useOcclusionMap = data["UseOcclusionMap"].as<float>();
+			prop->useEmissiveMap = data["UseEmissiveMap"].as<float>();
 
-			Ref<Material> material;
 			UUID pipelineUUID = UUID(0, 0);
 			if (data["Pipeline"]) {
 				pipelineUUID = data["Pipeline"].as<UUID>();
-				AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(pipelineUUID);
-				material = Material::create(name, pipelineHandle, prop);
 			}
-			else {
-				material = Material::create(name, prop);
-			}
+
+			auto texturesToLoad = std::make_shared<std::vector<std::pair<TextureSlot, UUID>>>();
 
 			if (data["Textures"]) {
 				auto textures = data["Textures"];
 
-				if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid()) {
-					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Albedo"].as<UUID>());
-					material->setTexture(TextureSlot::Albedo, handle);
-				}
+				if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid())
+					texturesToLoad->push_back({ TextureSlot::Albedo, textures["Albedo"].as<UUID>() });
 
-				if (textures["Normal"] && textures["Normal"].as<UUID>().isValid()) {
-					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Normal"].as<UUID>());
-					material->setTexture(TextureSlot::Normal, handle);
-				}
+				if (textures["Normal"] && textures["Normal"].as<UUID>().isValid())
+					texturesToLoad->push_back({ TextureSlot::Normal, textures["Normal"].as<UUID>() });
 
-				if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid()) {
-					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Metalness"].as<UUID>());
-					material->setTexture(TextureSlot::Metalness, handle);
-				}
+				if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid())
+					texturesToLoad->push_back({ TextureSlot::Metalness, textures["Metalness"].as<UUID>() });
 
-				if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid()) {
-					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Roughness"].as<UUID>());
-					material->setTexture(TextureSlot::Roughness, handle);
-				}
+				if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid())
+					texturesToLoad->push_back({ TextureSlot::Roughness, textures["Roughness"].as<UUID>() });
 
-				if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid()) {
-					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Occlusion"].as<UUID>());
-					material->setTexture(TextureSlot::Occlusion, handle);
-				}
+				if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid())
+					texturesToLoad->push_back({ TextureSlot::Occlusion, textures["Occlusion"].as<UUID>() });
 
-				if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid()) {
-					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(textures["Emissive"].as<UUID>());
-					material->setTexture(TextureSlot::Emissive, handle);
-				}
-
+				if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid())
+					texturesToLoad->push_back({ TextureSlot::Emissive, textures["Emissive"].as<UUID>() });
 			}
 
-			AssetManager::storage<Material>().assets[handle] = material;
-			AssetManager::storage<Material>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Material Version: {} in file {}", version, absolutePath.string());
-		}
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Material>(handle, [name, prop, pipelineUUID, texturesToLoad]() -> Ref<Material> {
+
+				Ref<Material> material;
+
+				if (pipelineUUID.isValid()) {
+					AssetHandle<Pipeline> pipelineHandle = AssetManager::load<Pipeline>(pipelineUUID);
+					material = Material::create(name, pipelineHandle, *prop);
+				}
+				else {
+					material = Material::create(name, *prop);
+				}
+
+				for (const auto& texInfo : *texturesToLoad) {
+					AssetHandle<Texture2D> handle = AssetManager::load<Texture2D>(texInfo.second);
+					material->setTexture(texInfo.first, handle);
+				}
+
+				return material;
+			});
+
+		});
 	}
 
 	void EditorAssetLoader::loadAudioClip(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<AudioClip>().assets[handle] = nullptr;
+		AssetManager::storage<AudioClip>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_AUDIO) {
+		JobSystem::submit([handle, absolutePath]() {
+
+			// -- YAML And Parsing On Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open AudioClip asset file: {}", absolutePath.string());
+				return;
+			}
+
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse AudioClip YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_AUDIO) {
+				AX_CORE_LOG_ERROR("Unsupported AudioClip Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
 			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
-			UUID uuid = data["UUID"].as<UUID>();
-
 			AudioClip::Mode mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
-			Ref<AudioClip> clip = std::make_shared<AudioClip>(sourcePath, mode);
 
-			AssetManager::storage<AudioClip>().assets[handle] = clip;
-			AssetManager::storage<AudioClip>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported AudioClip Version: {} in file {}", version, absolutePath.string());
-		}
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<AudioClip>(handle, [sourcePath, mode]() -> Ref<AudioClip> {
+				return std::make_shared<AudioClip>(sourcePath, mode);
+			});
+
+		});
 	}
 
 	void EditorAssetLoader::loadPhysicsMaterial(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<PhysicsMaterial>().assets[handle] = nullptr;
+		AssetManager::storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_PHYSICS_MATERIAL) {
-			UUID uuid = data["UUID"].as<UUID>();
+		JobSystem::submit([handle, absolutePath]() {
 
-			Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
+			// -- YAML And Parsing Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open PhysicsMaterial asset file: {}", absolutePath.string());
+				return;
+			}
 
-			material->staticFriction = data["StaticFriction"].as<float>();
-			material->dynamicFriction = data["DynamicFriction"].as<float>();
-			material->restitution = data["Restitution"].as<float>();
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse PhysicsMaterial YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
 
-			AssetManager::storage<PhysicsMaterial>().assets[handle] = material;
-			AssetManager::storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported PhysicsMaterial Version: {} in file {}", version, absolutePath.string());
-		}
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_PHYSICS_MATERIAL) {
+				AX_CORE_LOG_ERROR("Unsupported PhysicsMaterial Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
+			float staticFriction = data["StaticFriction"].as<float>();
+			float dynamicFriction = data["DynamicFriction"].as<float>();
+			float restitution = data["Restitution"].as<float>();
+
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<PhysicsMaterial>(handle, [staticFriction, dynamicFriction, restitution]() -> Ref<PhysicsMaterial> {
+				Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
+
+				material->staticFriction = staticFriction;
+				material->dynamicFriction = dynamicFriction;
+				material->restitution = restitution;
+
+				return material;
+			});
+
+		});
 	}
 
 	void EditorAssetLoader::loadPrefab(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<Prefab>().assets[handle] = nullptr;
+		AssetManager::storage<Prefab>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_PREFAB) {
-			UUID uuid = data["UUID"].as<UUID>();
+		JobSystem::submit([handle, absolutePath]() {
 
-			YAML::Node entityNode = data["Entity"];
-			Ref<Prefab> prefab = std::make_shared<Prefab>(entityNode);
+			// -- YAML And Parsing On Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open Prefab asset file: {}", absolutePath.string());
+				return;
+			}
 
-			AssetManager::storage<Prefab>().assets[handle] = prefab;
-			AssetManager::storage<Prefab>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Prefab Version: {} in file {}", version, absolutePath.string());
-		}
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse Prefab YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_PREFAB) {
+				AX_CORE_LOG_ERROR("Unsupported Prefab Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
+			auto entityNode = std::make_shared<YAML::Node>(data["Entity"]);
+
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Prefab>(handle, [entityNode]() -> Ref<Prefab> {
+				return std::make_shared<Prefab>(*entityNode);
+			});
+
+		});
 	}
 
 	void EditorAssetLoader::loadAnimationClip(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<AnimationClip>().assets[handle] = nullptr;
+		AssetManager::storage<AnimationClip>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-		if (version == ASSET_VERSION_ANIMATION_CLIP) {
+		JobSystem::submit([handle, absolutePath]() {
+
+			// -- YAML And GLTF Parsing Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open AnimationClip asset file: {}", absolutePath.string());
+				return;
+			}
+
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse AnimationClip YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version != ASSET_VERSION_ANIMATION_CLIP) {
+				AX_CORE_LOG_ERROR("Unsupported Animation Clip Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
 			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
-			UUID uuid = data["UUID"].as<UUID>();
 
-			AssetManager::storage<AnimationClip>().assets[handle] = nullptr;
+			Ref<AnimationClip> clip = AAP::GLTFImporter::extractAnimation(sourcePath);
 
-			AssetManager::storage<AnimationClip>().loadQueue.push_back({ handle,
-			[sourcePath]() {
-					return AAP::GLTFImporter::extractAnimation(sourcePath);
-				}
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<AnimationClip>(handle, [clip]() -> Ref<AnimationClip> {
+				return clip;
 			});
 
-			AssetManager::storage<AnimationClip>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Animation Clip Version: {} in file {}", version, absolutePath.string());
-		}
+		});
 	}
 
 	void EditorAssetLoader::loadSkeletalMesh(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		YAML::Node data = YAML::Load(stream);
+		AssetManager::storage<SkeletalMesh>().assets[handle] = nullptr;
+		AssetManager::storage<SkeletalMesh>().handleToPath[handle] = absolutePath;
 
-		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+		JobSystem::submit([handle, absolutePath]() {
 
-		if (version <= ASSET_VERSION_SKELETAL_MESH) {
+			// -- YAML And GLTF Parsing Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open SkeletalMesh asset file: {}", absolutePath.string());
+				return;
+			}
+
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse SkeletalMesh YAML {}: {}", absolutePath.string(), e.what());
+				return;
+			}
+
+			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
+			if (version > ASSET_VERSION_SKELETAL_MESH) {
+				AX_CORE_LOG_ERROR("Unsupported Skeletal Mesh Version: {} in file {}", version, absolutePath.string());
+				return;
+			}
+
 			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
 
-			AssetManager::storage<SkeletalMesh>().assets[handle] = nullptr;
+			auto meshData = std::make_shared<SkeletalMeshData>(AAP::GLTFImporter::extractSkeletalMesh(sourcePath));
 
-			AssetManager::storage<SkeletalMesh>().loadQueue.push_back({ handle,
-				[sourcePath]() {
-					SkeletalMeshData meshData = AAP::GLTFImporter::extractSkeletalMesh(sourcePath);
-					return SkeletalMesh::create(meshData);
-				}
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<SkeletalMesh>(handle, [meshData]() -> Ref<SkeletalMesh> {
+				return SkeletalMesh::create(*meshData);
 			});
 
-			AssetManager::storage<SkeletalMesh>().handleToPath[handle] = absolutePath;
-		}
-		else {
-			AX_CORE_LOG_ERROR("Unsupported Skeletal Mesh Version: {} in file {}", version, absolutePath.string());
-		}
+		});
 	}
 
 	void EditorAssetLoader::reloadMaterial(UUID handle, const std::filesystem::path& absolutePath) {
-		std::ifstream stream(absolutePath);
-		if (!stream.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open material file for reloading: {}", absolutePath.string());
-			return;
-		}
+		JobSystem::submit([handle, absolutePath]() {
 
-		YAML::Node data = YAML::Load(stream);
-		if (data["Type"].as<std::string>() != "Material") {
-			AX_CORE_LOG_ERROR("Reloading material failed, file is not a material asset file");
-			return;
-		}
-
-		AssetHandle<Material> assetHandle;
-		assetHandle.uuid = handle;
-		Ref<Material> material = AssetManager::get<Material>(assetHandle);
-
-		MaterialProperties prop;
-		prop.albedoColor = data["AlbedoColor"].as<Vec4>();
-		prop.metalness = data["Metalness"].as<float>();
-		prop.roughness = data["Roughness"].as<float>();
-		prop.emissionStrength = data["Emission"].as<float>();
-		prop.tiling = data["Tiling"].as<float>();
-		prop.useNormalMap = data["UseNormalMap"].as<float>();
-		prop.useMetalnessMap = data["UseMetalnessMap"].as<float>();
-		prop.useRoughnessMap = data["UseRoughnessMap"].as<float>();
-		prop.useOcclusionMap = data["UseOcclusionMap"].as<float>();
-		prop.useEmissiveMap = data["UseEmissiveMap"].as<float>();
-
-		material->setProperties(prop);
-		material->clearTextures();
-
-		if (data["Textures"]) {
-			auto textures = data["Textures"];
-
-			if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Albedo"].as<UUID>());
-				material->setTexture(TextureSlot::Albedo, texHandle);
+			// -- YAML And Parsing On Background Thread --
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) {
+				AX_CORE_LOG_ERROR("Failed to open material file for reloading: {}", absolutePath.string());
+				return;
 			}
 
-			if (textures["Normal"] && textures["Normal"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Normal"].as<UUID>());
-				material->setTexture(TextureSlot::Normal, texHandle);
+			YAML::Node data;
+			try {
+				data = YAML::Load(stream);
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_ERROR("Failed to parse Material YAML for reloading {}: {}", absolutePath.string(), e.what());
+				return;
 			}
 
-			if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Metalness"].as<UUID>());
-				material->setTexture(TextureSlot::Metalness, texHandle);
+			if (!data["Type"] || data["Type"].as<std::string>() != "Material") {
+				AX_CORE_LOG_ERROR("Reloading material failed, file is not a material asset file");
+				return;
 			}
 
-			if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Roughness"].as<UUID>());
-				material->setTexture(TextureSlot::Roughness, texHandle);
+			std::string name = data["Name"] ? data["Name"].as<std::string>() : "Unknown";
+
+			auto prop = std::make_shared<MaterialProperties>();
+			prop->albedoColor = data["AlbedoColor"].as<Vec4>();
+			prop->metalness = data["Metalness"].as<float>();
+			prop->roughness = data["Roughness"].as<float>();
+			prop->emissionStrength = data["Emission"].as<float>();
+			prop->tiling = data["Tiling"].as<float>();
+			prop->useNormalMap = data["UseNormalMap"].as<float>();
+			prop->useMetalnessMap = data["UseMetalnessMap"].as<float>();
+			prop->useRoughnessMap = data["UseRoughnessMap"].as<float>();
+			prop->useOcclusionMap = data["UseOcclusionMap"].as<float>();
+			prop->useEmissiveMap = data["UseEmissiveMap"].as<float>();
+
+			auto texturesToLoad = std::make_shared<std::vector<std::pair<TextureSlot, UUID>>>();
+			if (data["Textures"]) {
+				auto textures = data["Textures"];
+				if (textures["Albedo"] && textures["Albedo"].as<UUID>().isValid()) texturesToLoad->push_back({ TextureSlot::Albedo, textures["Albedo"].as<UUID>() });
+				if (textures["Normal"] && textures["Normal"].as<UUID>().isValid()) texturesToLoad->push_back({ TextureSlot::Normal, textures["Normal"].as<UUID>() });
+				if (textures["Metalness"] && textures["Metalness"].as<UUID>().isValid()) texturesToLoad->push_back({ TextureSlot::Metalness, textures["Metalness"].as<UUID>() });
+				if (textures["Roughness"] && textures["Roughness"].as<UUID>().isValid()) texturesToLoad->push_back({ TextureSlot::Roughness, textures["Roughness"].as<UUID>() });
+				if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid()) texturesToLoad->push_back({ TextureSlot::Occlusion, textures["Occlusion"].as<UUID>() });
+				if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid()) texturesToLoad->push_back({ TextureSlot::Emissive, textures["Emissive"].as<UUID>() });
 			}
 
-			if (textures["Occlusion"] && textures["Occlusion"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Occlusion"].as<UUID>());
-				material->setTexture(TextureSlot::Occlusion, texHandle);
-			}
+			// -- Submit To Main Thread --
+			AssetManager::submitToMainThread<Material>(handle, [handle, name, prop, texturesToLoad]() -> Ref<Material> {
 
-			if (textures["Emissive"] && textures["Emissive"].as<UUID>().isValid()) {
-				AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(textures["Emissive"].as<UUID>());
-				material->setTexture(TextureSlot::Emissive, texHandle);
-			}
-		}
+				AssetHandle<Material> assetHandle;
+				assetHandle.uuid = handle;
+				Ref<Material> material = AssetManager::get<Material>(assetHandle);
 
-		AX_CORE_LOG_INFO("Reloaded Material: {}", data["Name"].as<std::string>());
+				if (!material) {
+					AX_CORE_LOG_WARN("Attempted to reload a material that isn't currently loaded in RAM!");
+					return nullptr;
+				}
+
+				// -- Mutate Live Material Safely On Main Thread --
+				material->setProperties(*prop);
+				material->clearTextures();
+
+				for (const auto& texInfo : *texturesToLoad) {
+					AssetHandle<Texture2D> texHandle = AssetManager::load<Texture2D>(texInfo.second);
+					material->setTexture(texInfo.first, texHandle);
+				}
+
+				AX_CORE_LOG_INFO("Reloaded Material: {}", name);
+
+				return material;
+			});
+
+		});
 	}
 
 }

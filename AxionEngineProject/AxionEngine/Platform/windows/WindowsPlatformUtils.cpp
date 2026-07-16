@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <winternl.h>
 #include <shobjidl.h>
-#include <thread>
+#include <processthreadsapi.h>
 
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
@@ -274,6 +274,30 @@ namespace Axion {
 		wchar_t path[MAX_PATH];
 		GetModuleFileNameW(nullptr, path, MAX_PATH);
 		return std::filesystem::path(path).parent_path();
+	}
+
+	void PlatformUtils::setCurrentThreadName(const std::string& name) {
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, &name[0], (int)name.size(), NULL, 0);
+		std::wstring wname(size_needed, 0);
+		MultiByteToWideChar(CP_UTF8, 0, &name[0], (int)name.size(), &wname[0], size_needed);
+
+		SetThreadDescription(GetCurrentThread(), wname.c_str());
+	}
+
+	void PlatformUtils::setThreadPriority(ThreadPriority priority) {
+		int winPriority = THREAD_PRIORITY_NORMAL;
+
+		switch (priority) {
+			case ThreadPriority::Idle:			winPriority = THREAD_PRIORITY_IDLE; break;
+			case ThreadPriority::Lowest:		winPriority = THREAD_PRIORITY_LOWEST; break;
+			case ThreadPriority::BelowNormal:	winPriority = THREAD_PRIORITY_BELOW_NORMAL; break;
+			case ThreadPriority::Normal:		winPriority = THREAD_PRIORITY_NORMAL; break;
+			case ThreadPriority::AboveNormal:	winPriority = THREAD_PRIORITY_ABOVE_NORMAL; break;
+			case ThreadPriority::Highest:		winPriority = THREAD_PRIORITY_HIGHEST; break;
+			case ThreadPriority::TimeCritical:	winPriority = THREAD_PRIORITY_TIME_CRITICAL; break;
+		}
+
+		SetThreadPriority(GetCurrentThread(), winPriority);
 	}
 
 }

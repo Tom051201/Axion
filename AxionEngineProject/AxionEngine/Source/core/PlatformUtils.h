@@ -38,12 +38,25 @@ namespace Axion {
 
 
 
+	enum class ThreadPriority {
+		Idle,
+		Lowest,
+		BelowNormal,
+		Normal,
+		AboveNormal,
+		Highest,
+		TimeCritical
+	};
+
 	class PlatformUtils {
 	public:
 
 		static void showInFileExplorer(const std::filesystem::path& path);
 		static void openFolderInFileExplorer(const std::filesystem::path& path);
 		static std::filesystem::path getExecutableDirectory();
+
+		static void setCurrentThreadName(const std::string& name);
+		static void setThreadPriority(ThreadPriority priority);
 
 	};
 

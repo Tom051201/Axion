@@ -3,6 +3,7 @@
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EngineAssets.h"
+#include "AxionEngine/Source/core/JobSystem.h"
 #include "AxionEngine/Source/render/Renderer.h"
 #include "AxionEngine/Source/render/Renderer2D.h"
 #include "AxionEngine/Source/render/Renderer3D.h"
@@ -19,6 +20,8 @@ namespace Axion {
 	Application::Application(const ApplicationSpecification& spec)
 		: m_specification(spec) {
 		s_instance = this;
+
+		JobSystem::initialize();
 
 		m_window = Scope<Window>(Window::create(spec.windowProperties));
 		m_window->setEventCallback(AX_BIND_EVENT_FN(Application::onEvent));
@@ -67,6 +70,8 @@ namespace Axion {
 		Renderer::shutdown();
 
 		ScriptEngine::shutdown();
+
+		JobSystem::shutdown();
 	}
 
 	void Application::onEvent(Event& e) {

@@ -44,7 +44,7 @@ namespace Axion {
 
 
 
-	Silica::WidgetPtr EditorMenuBar::construct(std::shared_ptr<Silica::SDockSpace> dockspace) {
+	Silica::WidgetPtr EditorMenuBar::construct(std::shared_ptr<Silica::SDockSpace> dockspace, const MenuBarCallbacks& callbacks) {
 		// ----- FILE MENU -----
 		auto fileMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
@@ -57,65 +57,33 @@ namespace Axion {
 					.spacing = dropdownSpacing,
 					.slots = {
 						// -- NEW SCENE --
-						{ dropDownPadding, MakeMenuItem("New Scene", []() { 
-							EditorActionQueue::push([]() {
-								SceneManager::newScene(); 
-							});
-							return Silica::EventReply::handled(); 
+						{ dropDownPadding, MakeMenuItem("New Scene", [callbacks]() {
+							if (callbacks.newScene) callbacks.newScene();
+							return Silica::EventReply::handled();
 						}) },
 
 						// -- LOAD SCENE --
-						{ dropDownPadding, MakeMenuItem("Load Scene", []() { 
-							std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
-							std::filesystem::path filepath = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} }, initialDir);
-							
-							if (!filepath.empty()) {
-								EditorActionQueue::push([filepath]() {
-									SceneManager::loadScene(filepath);
-								});
-							}
-							return Silica::EventReply::handled(); 
+						{ dropDownPadding, MakeMenuItem("Load Scene", [callbacks]() {
+							if (callbacks.openScene) callbacks.openScene();
+							return Silica::EventReply::handled();
 						}) },
 
 						// -- SAVE SCENE --
-						{ dropDownPadding, MakeMenuItem("Save Scene", []() { 
-							if (SceneManager::isNewScene() || SceneManager::getScenePath().empty()) {
-								std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
-								std::filesystem::path filepath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, initialDir);
-								
-								if (!filepath.empty()) {
-									if (filepath.extension() != ".axscene") filepath += ".axscene";
-									EditorActionQueue::push([filepath]() {
-										SceneManager::saveScene(filepath);
-									});
-								}
-							} else {
-								EditorActionQueue::push([]() {
-									SceneManager::saveScene(SceneManager::getScenePath());
-								});
-							}
-							return Silica::EventReply::handled(); 
+						{ dropDownPadding, MakeMenuItem("Save Scene", [callbacks]() {
+							if (callbacks.saveScene) callbacks.saveScene();
+							return Silica::EventReply::handled();
 						}) },
 
 						// -- SAVE SCENE AS --
-						{ dropDownPadding, MakeMenuItem("Save Scene As...", []() { 
-							std::filesystem::path initialDir = ProjectManager::hasProject() ? ProjectManager::getProject()->getAssetsPath() : "";
-							std::filesystem::path filepath = FileDialogs::saveFile({ {"Axion Scene", "*.axscene"} }, initialDir);
-							
-							if (!filepath.empty()) {
-								if (filepath.extension() != ".axscene") filepath += ".axscene";
-								EditorActionQueue::push([filepath]() {
-									SceneManager::saveScene(filepath);
-								});
-							}
-							return Silica::EventReply::handled(); 
+						{ dropDownPadding, MakeMenuItem("Save Scene As...", [callbacks]() {
+							if (callbacks.saveSceneAs) callbacks.saveSceneAs();
+							return Silica::EventReply::handled();
 						}) },
 
 						// -- EXIT --
-						{ dropDownPadding, MakeMenuItem("Exit", []() { 
-							//Application::get().close();
-							// TODO: fix the crash
-							return Silica::EventReply::handled(); 
+						{ dropDownPadding, MakeMenuItem("Exit", [callbacks]() {
+							if (callbacks.exitEditor) callbacks.exitEditor();
+							return Silica::EventReply::handled();
 						}) }
 					}
 				})

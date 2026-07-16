@@ -71,6 +71,13 @@ namespace Axion {
 		static void setMaxAssetsPerFrame(uint32_t maxAssets);
 		static int getMaxAssetsPerFrame();
 
+		template<typename T>
+		static void submitToMainThread(UUID handle, std::function<Ref<T>()> gpuTask) {
+			auto& s = storage<T>();
+			std::lock_guard<std::recursive_mutex> lock(s.mutex);
+			s.loadQueue.push_back({ handle, gpuTask });
+		}
+
 		// -- Templated getter function --
 		template<typename T>
 		static Ref<T> get(const AssetHandle<T>& handle) {
