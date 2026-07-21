@@ -206,7 +206,7 @@ namespace Axion {
 		auto fullViewportPanel = m_viewportPanel->getWidget();
 
 		m_visualScriptPanel = std::make_shared<VisualScriptPanel>();
-		auto visualScriptWidget = m_visualScriptPanel->getWidget(&m_font);
+		auto visualScriptWidget = m_visualScriptPanel->getWidget();
 
 		m_assetManagerPanel = std::make_shared<AssetManagerPanel>();
 		auto assetManagerWidget = m_assetManagerPanel->getWidget();
@@ -275,14 +275,12 @@ namespace Axion {
 		// -- Script Compiler Toast --
 		auto compilationToast = Silica::MakeWidget<Silica::SLoadingToast>({
 			.text = "Compiling C# Scripts...",
-			.font = &m_font,
 			.isVisible = []() { return ProjectManager::isCompilingScripts(); }
 		});
 
 		// -- Scene Loading Toast ---
 		auto sceneLoadingToast = Silica::MakeWidget<Silica::SLoadingToast>({
 			.text = "Loading Scene & Assets...",
-			.font = &m_font,
 			.isVisible = []() {
 				return SceneManager::isLoadingScene() || AssetManager::isLoadingAssets();
 			}

@@ -36,6 +36,7 @@ namespace Axion {
 
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.consumePointerEvents = true,
 				.backgroundColor = Silica::Color(0, 0, 0, 180)
 			});
 			rebuildUI_Internal();
@@ -144,9 +145,10 @@ namespace Axion {
 					.padding = {8, 4}, .color = Silica::Color(50, 50, 50, 255),
 					.onClick = [this]() {
 						std::filesystem::path tex2dDir = ProjectManager::getProject()->getAssetsPath() / "textures";
-						std::filesystem::path absPath = std::filesystem::exists(tex2dDir) ?
-							FileDialogs::openFile({ {"Image File", "*.png;*.jpg;*.jpeg"} }, tex2dDir) :
-							FileDialogs::openFile({ {"Image File", "*.png;*.jpg;*.jpeg"} }, ProjectManager::getProject()->getAssetsPath());
+						if (!std::filesystem::exists(tex2dDir)) {
+							tex2dDir = ProjectManager::getProject()->getAssetsPath();
+						}
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Image File", "*.png;*.jpg;*.jpeg"} }, tex2dDir);
 						if (!absPath.empty()) { m_sourcePath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
@@ -172,8 +174,10 @@ namespace Axion {
 					.padding = {8, 4}, .color = Silica::Color(50, 50, 50, 255),
 					.onClick = [this]() {
 						std::filesystem::path tex2dDir = ProjectManager::getProject()->getAssetsPath() / "textures";
-						std::filesystem::path absPath = std::filesystem::exists(tex2dDir) ?
-							FileDialogs::openFolder(tex2dDir) : FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+						if (!std::filesystem::exists(tex2dDir)) {
+							tex2dDir = ProjectManager::getProject()->getAssetsPath();
+						}
+						std::filesystem::path absPath = FileDialogs::openFolder(tex2dDir);
 						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
@@ -282,11 +286,14 @@ namespace Axion {
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 550.0f, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::Color(30, 30, 30, 255),
-			.child = contentBox
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 20.0f, 20.0f },
+				.backgroundColor = Silica::Color::transparent(),
+				.child = contentBox
+			})
 		});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({

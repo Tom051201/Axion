@@ -1,15 +1,32 @@
 #pragma once
 
+#include <string>
+#include <functional>
+
 #include "SWidget.h"
+#include "MathTypes.h"
+#include "FontAtlas.h"
 
 namespace Silica {
 
-	class SBorderLayout : public SWidget {
+	class SInputFieldFloat;
+
+	class SInputFieldVec3Float : public SWidget {
 	public:
 
 		struct Args {
-			WidgetPtr topBar = nullptr;
-			WidgetPtr contentArea = nullptr;
+			std::string label;
+			Vec3 initialValue;
+			Vec3 resetValue = Vec3(0.0f, 0.0f, 0.0f);
+			float labelWidth = 70.0f;
+			Color firstColor = Color(200, 50, 50, 255);
+			Color secondColor = Color(50, 200, 50, 255);
+			Color thirdColor = Color(50, 50, 200, 255);
+			std::string firstText = "X";
+			std::string secondText = "Y";
+			std::string thirdText = "Z";
+			FontAtlas* font = nullptr;
+			std::function<void(Vec3)> onValueChanged = nullptr;
 		};
 
 		void construct(const Args& args);
@@ -20,6 +37,8 @@ namespace Silica {
 
 		void setRenderScale(float scale) override;
 
+		void setValue(const Vec3& newValue);
+
 		EventReply onMouseMove(const Geometry& allocatedGeometry, const Vec2& mousePos) override;
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
@@ -29,8 +48,13 @@ namespace Silica {
 
 	private:
 
-		WidgetPtr m_topBar;
-		WidgetPtr m_contentArea;
+		WidgetPtr m_rootAssembly;
+		Vec3 m_currentValue;
+		Vec3 m_resetValue;
+
+		std::shared_ptr<SInputFieldFloat> m_inputX;
+		std::shared_ptr<SInputFieldFloat> m_inputY;
+		std::shared_ptr<SInputFieldFloat> m_inputZ;
 
 	};
 

@@ -315,14 +315,12 @@ namespace Axion {
 		else if (str == "Math_BreakVector3") return NodeType::Math_BreakVector3;
 
 		// -- VARIABLES --
-		else if (str == "Variable_GetFloat") return NodeType::Variable_GetFloat;
-		else if (str == "Variable_SetFloat") return NodeType::Variable_SetFloat;
-		else if (str == "Variable_GetInt") return NodeType::Variable_GetInt;
-		else if (str == "Variable_SetInt") return NodeType::Variable_SetInt;
-		else if (str == "Variable_GetBool") return NodeType::Variable_GetBool;
-		else if (str == "Variable_SetBool") return NodeType::Variable_SetBool;
-		else if (str == "Variable_GetVector3") return NodeType::Variable_GetVector3;
-		else if (str == "Variable_SetVector3") return NodeType::Variable_SetVector3;
+		else if (str == "Variable_Get") return NodeType::Variable_Get;
+		else if (str == "Variable_Set") return NodeType::Variable_Set;
+
+		// Backwards compatibility for old saved graphs
+		else if (str == "Variable_GetFloat" || str == "Variable_GetInt" || str == "Variable_GetBool" || str == "Variable_GetVector3") return NodeType::Variable_Get;
+		else if (str == "Variable_SetFloat" || str == "Variable_SetInt" || str == "Variable_SetBool" || str == "Variable_SetVector3") return NodeType::Variable_Set;
 
 		else if (str == "None") return NodeType::None;
 
@@ -402,15 +400,8 @@ namespace Axion {
 			case NodeType::Math_BreakVector3: return "Math_BreakVector3";
 
 			// -- VARIABLES --
-			case NodeType::Variable_GetFloat: return "Variable_GetFloat";
-			case NodeType::Variable_SetFloat: return "Variable_SetFloat";
-			case NodeType::Variable_GetInt: return "Variable_GetInt";
-			case NodeType::Variable_SetInt: return "Variable_SetInt";
-
-			case NodeType::Variable_GetBool: return "Variable_GetBool";
-			case NodeType::Variable_SetBool: return "Variable_SetBool";
-			case NodeType::Variable_GetVector3: return "Variable_GetVector3";
-			case NodeType::Variable_SetVector3: return "Variable_SetVector3";
+			case NodeType::Variable_Get: return "Variable_Get";
+			case NodeType::Variable_Set: return "Variable_Set";
 
 			case NodeType::None: return "None";
 		}

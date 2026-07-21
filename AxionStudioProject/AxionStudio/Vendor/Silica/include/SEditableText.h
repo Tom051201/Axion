@@ -19,6 +19,7 @@ namespace Silica {
 			std::optional<Color> backgroundColor;
 			std::optional<Color> focusedColor;
 			FontAtlas* font = nullptr;
+			std::function<bool(char)> charFilter = nullptr;
 			std::function<void(const std::string&)> onTextChanged = nullptr;
 			std::function<void(const std::string&)> onTextCommitted = nullptr;
 		};
@@ -28,6 +29,8 @@ namespace Silica {
 		void computeDesiredSize() override;
 		void arrangeChildren(const Geometry& allocatedGeometry) override;
 		void onDraw(DrawList& outDrawList, const Geometry& allocatedGeometry) const override;
+
+		void setText(const std::string& text, bool moveToEnd = false);
 
 		EventReply onMouseMove(const Geometry& allocatedGeometry, const Vec2& mousePos) override;
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
@@ -52,6 +55,7 @@ namespace Silica {
 		bool m_isCtrlDown = false;
 		mutable float m_scrollOffset = 0.0f;
 
+		std::function<bool(char)> m_charFilter;
 		std::function<void(const std::string&)> m_onTextChanged;
 		std::function<void(const std::string&)> m_onTextCommitted;
 

@@ -134,7 +134,7 @@ namespace Axion {
 				auto it = storageRef.loadQueue.begin();
 
 				storageRef.assets[it->first] = it->second();
-				AX_CORE_LOG_TRACE("{} loaded: {}", typeid(T).name(), it->first.uuid.toString());
+				//AX_CORE_LOG_TRACE("{} loaded: {}", typeid(T).name(), it->first.uuid.toString());
 
 				storageRef.loadQueue.erase(it);
 				maxItems--;

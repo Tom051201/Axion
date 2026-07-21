@@ -4,6 +4,7 @@
 
 #include "SWidget.h"
 #include "Renderer.h"
+#include "Geometry.h"
 
 namespace Silica {
 
@@ -27,6 +28,8 @@ namespace Silica {
 		void arrangeChildren(const Geometry& allocatedGeometry) override;
 		void onDraw(DrawList& outDrawList, const Geometry& allocatedGeometry) const override;
 
+		void setRenderScale(float scale) override;
+
 		EventReply onMouseMove(const Geometry& allocatedGeometry, const Vec2& mousePos) override;
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
@@ -48,6 +51,8 @@ namespace Silica {
 		WidgetPtr m_child;
 
 		bool m_isPressed = false;
+
+		Geometry getChildGeometry(const Geometry& allocatedGeometry) const;
 
 	};
 

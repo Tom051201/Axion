@@ -4,11 +4,15 @@ using AxionScriptCore;
 
 public class test : Entity {
 
-
-	public override void OnCreate() {
-	}
+	public float Float = 0.0f;
+	public int Int = 0;
+	public bool Bool = false;
+	public Vector3 Vec3 = new Vector3(0.0f, 0.0f, 0.0f);
 
 	public override void OnUpdate(float timestep) {
+	}
+
+	public override void OnCreate() {
 	}
 
 	public override void OnCollisionEnter(Collision col) {

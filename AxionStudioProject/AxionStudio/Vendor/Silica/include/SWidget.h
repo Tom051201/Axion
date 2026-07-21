@@ -14,6 +14,9 @@ namespace Silica {
 		enum class Cursor { Arrow, Hand, TextInput, ResizeEW, ResizeNS };
 		extern void setCursor(Cursor cursor);
 		extern void setMouseCapture(bool capture);
+		extern bool isKeyDown(Key key);
+		extern void setClipboardText(const std::string& text);
+		extern std::string getClipboardText();
 	}
 
 	struct DrawList;
@@ -42,6 +45,9 @@ namespace Silica {
 			m_allocatedGeometry = allocatedGeometry;
 		}
 		virtual void onDraw(DrawList& outDrawList, const Geometry& allocatedGeometry) const = 0;
+
+		virtual void setRenderScale(float scale) { m_renderScale = scale; }
+		float getRenderScale() const { return m_renderScale; }
 
 		virtual EventReply onMouseMove(const Geometry& allocatedGeometry, const Vec2& mousePos) { return EventReply::unhandled(); }
 		virtual EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) { return EventReply::unhandled(); }
@@ -78,6 +84,7 @@ namespace Silica {
 		Vec2 m_desiredSize = Vec2::zero();
 		Geometry m_allocatedGeometry;
 		bool m_isHovered = false;
+		float m_renderScale = 1.0f;
 
 	};
 

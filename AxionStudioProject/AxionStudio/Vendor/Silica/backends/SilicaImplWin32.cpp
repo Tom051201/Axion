@@ -16,6 +16,40 @@ namespace Silica {
 	static BackendStateWin32 s_state;
 	static HCURSOR s_currentCursor = LoadCursor(NULL, IDC_ARROW);
 
+	// -- Helper to map Silica Keys to Win32 Virtual Keys --
+	static int getWin32VKCode(Key key) {
+		switch (key) {
+			case Key::Left: return VK_LEFT;
+			case Key::Right: return VK_RIGHT;
+			case Key::Up: return VK_UP;
+			case Key::Down: return VK_DOWN;
+			case Key::Backspace: return VK_BACK;
+			case Key::Delete: return VK_DELETE;
+			case Key::Enter: return VK_RETURN;
+			case Key::Escape: return VK_ESCAPE;
+			case Key::Space: return VK_SPACE;
+			case Key::Tab: return VK_TAB;
+			case Key::LeftShift: return VK_LSHIFT;
+			case Key::RightShift: return VK_RSHIFT;
+			case Key::LeftControl: return VK_LCONTROL;
+			case Key::RightControl: return VK_RCONTROL;
+			case Key::LeftAlt: return VK_LMENU;
+			case Key::RightAlt: return VK_RMENU;
+		}
+
+		// -- Letters --
+		if (key >= Key::A && key <= Key::Z) {
+			return 0x41 + (static_cast<int>(key) - static_cast<int>(Key::A));
+		}
+
+		// -- Numbers --
+		if (key >= Key::Num0 && key <= Key::Num9) {
+			return 0x30 + (static_cast<int>(key) - static_cast<int>(Key::Num0));
+		}
+
+		return 0;
+	}
+
 	namespace Platform {
 		void setMouseCapture(bool capture) {
 			if (capture) {
@@ -35,6 +69,44 @@ namespace Silica {
 				case Cursor::ResizeNS: { s_currentCursor = LoadCursor(NULL, IDC_SIZENS); break; }
 			}
 			::SetCursor(s_currentCursor);
+		}
+
+		bool isKeyDown(Key key) {
+			int vk = getWin32VKCode(key);
+			return (GetAsyncKeyState(vk) & 0x8000) != 0;
+		}
+
+		void setClipboardText(const std::string& text) {
+			if (!OpenClipboard(s_state.hwnd)) return;
+			EmptyClipboard();
+
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, text.size() + 1);
+			if (hMem) {
+				void* memPtr = GlobalLock(hMem);
+				if (memPtr) {
+					std::memcpy(memPtr, text.c_str(), text.size() + 1);
+					GlobalUnlock(hMem);
+					SetClipboardData(CF_TEXT, hMem);
+				}
+			}
+			CloseClipboard();
+		}
+
+		std::string getClipboardText() {
+			if (!IsClipboardFormatAvailable(CF_TEXT)) return "";
+			if (!OpenClipboard(s_state.hwnd)) return "";
+
+			std::string result = "";
+			HANDLE hData = GetClipboardData(CF_TEXT);
+			if (hData) {
+				char* textPtr = static_cast<char*>(GlobalLock(hData));
+				if (textPtr) {
+					result = textPtr;
+					GlobalUnlock(hData);
+				}
+			}
+			CloseClipboard();
+			return result;
 		}
 	}
 

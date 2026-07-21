@@ -1,88 +1,480 @@
 [SNodeEditor_v1]
-Pan 1939.95 1941.43
-Zoom 1.1
+Pan 255.39 293.746
+Zoom 0.8
 [Node]
-ID 1
-Title On Create
-Pos -1507.45 -1599.48
-Size 150 70
-Color 160 20 20 255
-Out 1000 255 255 255 255 Next
-[Node]
-ID 2
-Title On Destroy
-Pos -1506.97 -1513.34
-Size 150 70
-Color 160 20 20 255
-Out 1001 255 255 255 255 Next
-[Node]
-ID 3
+ID 60
 Title On Update
-Pos -1504.83 -1421.91
-Size 150 90
-Color 160 20 20 255
-Out 1002 255 255 255 255 Next
-Out 1003 147 226 74 255 Delta Time
+Pos -1542.47 -383.491
+Size 140 110
+Color 140 21 21 255
+Out 1156 255 255 255 255 Next
+Out 1157 139 195 74 255 Delta Time
 [Node]
-ID 4
+ID 59
+Title On Destroy
+Pos -1546.47 -502.824
+Size 140 80
+Color 140 21 21 255
+Out 1155 255 255 255 255 Next
+[Node]
+ID 58
+Title On Create
+Pos -1545.14 -614.158
+Size 140 80
+Color 140 21 21 255
+Out 1154 255 255 255 255 Next
+[Node]
+ID 61
 Title On Collision Enter
-Pos -1499.11 -1310.48
-Size 150 90
-Color 160 20 20 255
-Out 1004 255 255 255 255 Next
-Out 1005 200 200 200 255 Other Entity
+Pos -1541.14 -225.158
+Size 147.894 110
+Color 140 21 21 255
+Out 1158 255 255 255 255 Next
+Out 1159 100 181 246 255 Other Entity
 [Node]
-ID 5
+ID 62
 Title On Collision Exit
-Pos -1497.68 -1195.48
-Size 150 90
-Color 160 20 20 255
-Out 1006 255 255 255 255 Next
-Out 1007 200 200 200 255 Other Entity
+Pos -1543.14 -71.1578
+Size 145.307 110
+Color 140 21 21 255
+Out 1160 255 255 255 255 Next
+Out 1161 100 181 246 255 Other Entity
 [Node]
-ID 6
+ID 63
 Title Instantiate Entity
-Pos -1239.96 -1600.77
-Size 150 90
-Color 40 90 200 255
-In 1008 255 255 255 255 Execute
-In 1009 200 200 200 255 Name
-Out 1010 255 255 255 255 Next
-Out 1011 200 200 200 255 Entity
+Pos -1242.82 -597.223
+Size 315 110
+Color 30 136 229 255
+In 1162 255 255 255 255 Execute
+In 1163 233 30 99 255 Name
+Out 1164 255 255 255 255 Next
+Out 1165 100 181 246 255 Entity
 [Node]
-ID 7
+ID 64
 Title Instantiate Prefab
-Pos -1238.42 -1496.16
-Size 150 90
-Color 40 90 200 255
-In 1012 255 255 255 255 Execute
-In 1013 200 200 200 255 File Path
-Out 1014 255 255 255 255 Next
-Out 1015 200 200 200 255 Entity
+Pos -1243.73 -456.314
+Size 320.389 110
+Color 30 136 229 255
+In 1166 255 255 255 255 Execute
+In 1167 233 30 99 255 File Path
+Out 1168 255 255 255 255 Next
+Out 1169 100 181 246 255 Entity
 [Node]
-ID 8
+ID 65
 Title Destroy Entity
-Pos -1236.11 -1391.54
-Size 150 90
-Color 40 90 200 255
-In 1016 255 255 255 255 Execute
-In 1017 200 200 200 255 Target
-Out 1018 255 255 255 255 Next
+Pos -1241 -303.586
+Size 147.817 110
+Color 30 136 229 255
+In 1170 255 255 255 255 Execute
+In 1171 100 181 246 255 Target
+Out 1172 255 255 255 255 Next
 [Node]
-ID 9
+ID 66
 Title Find Entity by Name
-Pos -1236.11 -1283.85
-Size 150 70
-Color 40 90 200 255
-In 1019 200 200 200 255 Name
-Out 1020 200 200 200 255 Entity
+Pos -1241 -160.859
+Size 302.635 80
+Color 30 136 229 255
+In 1173 233 30 99 255 Name
+Out 1174 100 181 246 255 Entity
 [Node]
-ID 10
+ID 67
 Title Emit Particles
-Pos -1234.57 -1194.62
-Size 150 110
-Color 40 90 200 255
-In 1021 255 255 255 255 Execute
-In 1022 200 200 200 255 Target
-In 1023 200 200 200 255 Count
-Out 1024 255 255 255 255 Next
+Pos -1236.46 -55.4046
+Size 307.817 140
+Color 30 136 229 255
+In 1175 255 255 255 255 Execute
+In 1176 100 181 246 255 Target
+In 1177 0 191 165 255 Count
+Out 1178 255 255 255 255 Next
+[Node]
+ID 68
+Title Get Position
+Pos -741.003 -591.768
+Size 148.217 80
+Color 230 81 0 255
+In 1179 100 181 246 255 Target
+Out 1180 251 192 45 255 Result
+[Node]
+ID 69
+Title Get Rotation
+Pos -741.912 -488.132
+Size 148.217 80
+Color 230 81 0 255
+In 1181 100 181 246 255 Target
+Out 1182 251 192 45 255 Result
+[Node]
+ID 70
+Title Get Scale
+Pos -740.094 -380.859
+Size 148.217 80
+Color 230 81 0 255
+In 1183 100 181 246 255 Target
+Out 1184 251 192 45 255 Result
+[Node]
+ID 71
+Title Get Forward Vector
+Pos -740.094 -271.768
+Size 158.207 80
+Color 230 81 0 255
+In 1185 100 181 246 255 Target
+Out 1186 251 192 45 255 Result
+[Node]
+ID 72
+Title Get Right Vector
+Pos -737.625 -166.112
+Size 148.217 80
+Color 230 81 0 255
+In 1187 100 181 246 255 Target
+Out 1188 251 192 45 255 Result
+[Node]
+ID 73
+Title Get Up Vector
+Pos -739.291 -56.9456
+Size 148.217 80
+Color 230 81 0 255
+In 1189 100 181 246 255 Target
+Out 1190 251 192 45 255 Result
+[Node]
+ID 74
+Title Set Position
+Pos -740.958 52.2211
+Size 668.536 140
+Color 230 81 0 255
+In 1191 255 255 255 255 Execute
+In 1192 100 181 246 255 Target
+In 1193 251 192 45 255 Value
+Out 1194 255 255 255 255 Next
+[Node]
+ID 75
+Title Set Rotation
+Pos -737.625 216.388
+Size 668.536 140
+Color 230 81 0 255
+In 1195 255 255 255 255 Execute
+In 1196 100 181 246 255 Target
+In 1197 251 192 45 255 Value
+Out 1198 255 255 255 255 Next
+[Node]
+ID 76
+Title Set Scale
+Pos -742.625 388.054
+Size 668.536 140
+Color 230 81 0 255
+In 1199 255 255 255 255 Execute
+In 1200 100 181 246 255 Target
+In 1201 251 192 45 255 Value
+Out 1202 255 255 255 255 Next
+[Node]
+ID 77
+Title Add Force
+Pos 10.042 -593.612
+Size 668.536 140
+Color 67 160 71 255
+In 1203 255 255 255 255 Execute
+In 1204 100 181 246 255 Target
+In 1205 251 192 45 255 Force
+Out 1206 255 255 255 255 Next
+[Node]
+ID 78
+Title Add Torque
+Pos 11.7087 -416.946
+Size 668.536 140
+Color 67 160 71 255
+In 1207 255 255 255 255 Execute
+In 1208 100 181 246 255 Target
+In 1209 251 192 45 255 Torque
+Out 1210 255 255 255 255 Next
+[Node]
+ID 79
+Title Add Impulse
+Pos 11.7087 -245.834
+Size 668.536 140
+Color 67 160 71 255
+In 1211 255 255 255 255 Execute
+In 1212 100 181 246 255 Target
+In 1213 251 192 45 255 Force
+Out 1214 255 255 255 255 Next
+[Node]
+ID 80
+Title Add Radial Impulse
+Pos 12.8198 -72.5012
+Size 674.06 200
+Color 67 160 71 255
+In 1215 255 255 255 255 Execute
+In 1216 100 181 246 255 Target
+In 1217 251 192 45 255 Origin
+In 1218 139 195 74 255 Radius
+In 1219 139 195 74 255 Strength
+Out 1220 255 255 255 255 Next
+[Node]
+ID 81
+Title Get Linear Velocity
+Pos 13.9309 159.721
+Size 159.357 80
+Color 67 160 71 255
+In 1221 100 181 246 255 Target
+Out 1222 251 192 45 255 Velocity
+[Node]
+ID 82
+Title Set Linear Velocity
+Pos 9.48649 273.054
+Size 669.355 140
+Color 67 160 71 255
+In 1223 255 255 255 255 Execute
+In 1224 100 181 246 255 Target
+In 1225 251 192 45 255 Velocity
+Out 1226 255 255 255 255 Next
+[Node]
+ID 83
+Title Get Angular Velocity
+Pos 9.48649 440.832
+Size 164.668 80
+Color 67 160 71 255
+In 1227 100 181 246 255 Target
+Out 1228 251 192 45 255 Velocity
+[Node]
+ID 84
+Title Set Angular Velocity
+Pos 2.81982 550.832
+Size 669.355 140
+Color 67 160 71 255
+In 1229 255 255 255 255 Execute
+In 1230 100 181 246 255 Target
+In 1231 251 192 45 255 Velocity
+Out 1232 255 255 255 255 Next
+[Node]
+ID 85
+Title Get Mass
+Pos 6.15316 730.832
+Size 140.24 80
+Color 67 160 71 255
+In 1233 100 181 246 255 Target
+Out 1234 139 195 74 255 Mass
+[Node]
+ID 86
+Title Set Mass
+Pos 3.93094 843.054
+Size 307.817 140
+Color 67 160 71 255
+In 1235 255 255 255 255 Execute
+In 1236 100 181 246 255 Target
+In 1237 139 195 74 255 Mass
+Out 1238 255 255 255 255 Next
+[Node]
+ID 87
+Title Is Key Pressed
+Pos 809.027 -592.138
+Size 193.902 80
+Color 123 31 162 255
+In 1239 156 39 176 255 Key
+Out 1240 128 0 0 255 Result
+[Node]
+ID 88
+Title Is Mouse Button Pressed
+Pos 809.027 -483.249
+Size 203.608 80
+Color 123 31 162 255
+In 1241 156 39 176 255 Button
+Out 1242 128 0 0 255 Result
+[Node]
+ID 89
+Title Play Audio
+Pos 1109.03 -588.805
+Size 147.817 80
+Color 121 85 72 255
+In 1243 255 255 255 255 Execute
+Out 1244 255 255 255 255 Next
+[Node]
+ID 90
+Title Stop Audio
+Pos 1117.92 -483.249
+Size 147.817 110
+Color 121 85 72 255
+In 1245 255 255 255 255 Execute
+In 1246 100 181 246 255 Target
+Out 1247 255 255 255 255 Next
+[Node]
+ID 91
+Title Get Volume
+Pos 1112.36 -346.583
+Size 156.937 80
+Color 121 85 72 255
+In 1248 100 181 246 255 Target
+Out 1249 139 195 74 255 Volume
+[Node]
+ID 93
+Title Set Volume
+Pos 1109.03 -238.805
+Size 307.817 140
+Color 121 85 72 255
+In 1252 255 255 255 255 Execute
+In 1253 100 181 246 255 Target
+In 1254 139 195 74 255 Volume
+Out 1255 255 255 255 255 Next
+[Node]
+ID 94
+Title Play Animation
+Pos 1511.69 -592.249
+Size 147.817 110
+Color 0 172 193 255
+In 1256 255 255 255 255 Execute
+In 1257 100 181 246 255 Target
+Out 1258 255 255 255 255 Next
+[Node]
+ID 95
+Title Stop Animation
+Pos 1513.69 -467.249
+Size 147.817 110
+Color 0 172 193 255
+In 1259 255 255 255 255 Execute
+In 1260 100 181 246 255 Target
+Out 1261 255 255 255 255 Next
+[Node]
+ID 96
+Title Is Playing
+Pos 1512.69 -330.249
+Size 148.217 80
+Color 0 172 193 255
+In 1262 100 181 246 255 Target
+Out 1263 128 0 0 255 Result
+[Node]
+ID 97
+Title Branch
+Pos 1762.69 -596.249
+Size 221.634 110
+Color 96 125 139 255
+In 1264 255 255 255 255 Execute
+In 1265 128 0 0 255 Condition
+Out 1266 255 255 255 255 True
+Out 1267 255 255 255 255 False
+[Node]
+ID 98
+Title Sequence
+Pos 1769.69 -464.249
+Size 159.712 200
+Color 96 125 139 255
+In 1268 255 255 255 255 Execute
+Out 1269 255 255 255 255 Then 0
+Out 1270 255 255 255 255 Then 1
+Out 1271 255 255 255 255 Then 2
+Out 1272 255 255 255 255 Then 3
+Out 1273 255 255 255 255 Then 4
+[Node]
+ID 99
+Title And (&&)
+Pos 1763.69 -236.249
+Size 230.689 110
+Color 96 125 139 255
+In 1274 128 0 0 255 Condition A
+In 1275 128 0 0 255 Condition B
+Out 1276 128 0 0 255 True
+[Node]
+ID 100
+Title Or (||)
+Pos 1768.69 -106.249
+Size 230.689 110
+Color 96 125 139 255
+In 1277 128 0 0 255 Condition A
+In 1278 128 0 0 255 Condition B
+Out 1279 128 0 0 255 True
+[Node]
+ID 101
+Title Add (+)
+Pos 2108.69 -591.249
+Size 274.683 110
+Color 85 139 47 255
+In 1280 139 195 74 255 A
+In 1281 139 195 74 255 B
+Out 1282 139 195 74 255 Result
+[Node]
+ID 102
+Title Subtract (-)
+Pos 2114.69 -449.249
+Size 274.683 110
+Color 85 139 47 255
+In 1283 139 195 74 255 A
+In 1284 139 195 74 255 B
+Out 1285 139 195 74 255 Result
+[Node]
+ID 103
+Title Multiply (*)
+Pos 2111.69 -314.249
+Size 274.683 110
+Color 85 139 47 255
+In 1286 139 195 74 255 A
+In 1287 139 195 74 255 B
+Out 1288 139 195 74 255 Result
+[Node]
+ID 105
+Title Divide (/)
+Pos 2114.69 -177.249
+Size 274.683 110
+Color 85 139 47 255
+In 1292 139 195 74 255 A
+In 1293 139 195 74 255 B
+Out 1294 139 195 74 255 Result
+[Node]
+ID 106
+Title Equal (==)
+Pos 2108.69 -39.2493
+Size 274.683 110
+Color 85 139 47 255
+In 1295 139 195 74 255 A
+In 1296 139 195 74 255 B
+Out 1297 128 0 0 255 Result
+[Node]
+ID 107
+Title Greater (>)
+Pos 2108.69 96.7507
+Size 274.683 110
+Color 85 139 47 255
+In 1298 139 195 74 255 A
+In 1299 139 195 74 255 B
+Out 1300 128 0 0 255 Result
+[Node]
+ID 108
+Title Less (<)
+Pos 2111.69 248.751
+Size 274.683 110
+Color 85 139 47 255
+In 1301 139 195 74 255 A
+In 1302 139 195 74 255 B
+Out 1303 128 0 0 255 Result
+[Node]
+ID 109
+Title Make Vector3
+Pos 2110.69 376.751
+Size 275.935 140
+Color 85 139 47 255
+In 1304 139 195 74 255 X
+In 1305 139 195 74 255 Y
+In 1306 139 195 74 255 Z
+Out 1307 251 192 45 255 Vector
+[Node]
+ID 110
+Title Break Vector3
+Pos 2113.69 550.751
+Size 636.653 140
+Color 85 139 47 255
+In 1308 251 192 45 255 Vector
+Out 1309 139 195 74 255 X
+Out 1310 139 195 74 255 Y
+Out 1311 139 195 74 255 Z
+[Node]
+ID 112
+Title Set Variable
+Pos 2662.41 -486.311
+Size 307.817 140
+Color 139 195 74 255
+In 1314 255 255 255 255 Execute
+In 1315 233 30 99 255 Name
+In 1316 0 191 165 255 Value
+Out 1317 255 255 255 255 Next
+[Node]
+ID 111
+Title Get Variable
+Pos 2657.92 -592.044
+Size 199.814 80
+Color 139 195 74 255
+In 1312 233 30 99 255 Name
+Out 1313 139 195 74 255 Value

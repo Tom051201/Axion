@@ -82,14 +82,8 @@ namespace Axion {
 		Math_BreakVector3,
 
 		// -- VARIABLES --
-		Variable_GetFloat,
-		Variable_SetFloat,
-		Variable_GetInt,
-		Variable_SetInt,
-		Variable_GetBool,
-		Variable_SetBool,
-		Variable_GetVector3,
-		Variable_SetVector3
+		Variable_Get,
+		Variable_Set
 	};
 
 	struct Pin {

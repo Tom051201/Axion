@@ -43,6 +43,11 @@ namespace Silica {
 		Color Text_Warning = Accent_Warning;
 		Color Text_Danger = Accent_Danger;
 
+		Color NodeEditor_Background = Color(30, 30, 30);
+		Color NodeEditor_GridLine = Color(50, 50, 50);
+		Color NodeEditor_NodeBody = Color(45, 45, 45);
+		Color NodeEditor_Selected = Color(255, 165, 0);
+
 		FontAtlas* Font_Default = nullptr;
 
 	};

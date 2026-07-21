@@ -19,6 +19,8 @@ namespace Silica {
 		void arrangeChildren(const Geometry& allocatedGeometry) override;
 		void onDraw(DrawList& outDrawList, const Geometry& allocatedGeometry) const override;
 
+		void setRenderScale(float scale) override;
+
 		EventReply onMouseMove(const Geometry& geo, const Vec2& pos) override;
 		EventReply onMouseButtonDown(const Geometry& geo, const Vec2& pos, MouseButton btn) override;
 		EventReply onMouseButtonUp(const Geometry& geo, const Vec2& pos, MouseButton btn) override;

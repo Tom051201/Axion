@@ -50,8 +50,8 @@ namespace Axion {
 
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.consumePointerEvents = true,
 				.backgroundColor = Silica::Color(0, 0, 0, 180),
-//				.hoverColor = Silica::Color(0, 0, 0, 180)
 			});
 			rebuildUI_Internal();
 		}
@@ -103,7 +103,7 @@ namespace Axion {
 			});
 		};
 
-		auto MakeFileRow = [&](std::string& outPath, const std::string& typeDesc, const std::string& filter) {
+		auto MakeFileRow = [&](std::string& outPath, const std::string& typeDesc, const std::string& filter, const std::string& dir) {
 			return Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 8.0f,
 				.slots = {
@@ -115,9 +115,12 @@ namespace Axion {
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 						.padding = {8, 4},
-						.onClick = [this, &outPath, typeDesc, filter]() {
-							std::filesystem::path startDir = ProjectManager::getProject()->getAssetsPath();
-							std::filesystem::path absPath = FileDialogs::openFile({ {typeDesc, filter} }, startDir);
+						.onClick = [this, &outPath, typeDesc, filter, dir]() {
+							std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / dir;
+							if (!std::filesystem::exists(texDir)) {
+								texDir = ProjectManager::getProject()->getAssetsPath();
+							}
+							std::filesystem::path absPath = FileDialogs::openFile({ {typeDesc, filter} }, texDir);
 							if (!absPath.empty()) { outPath = absPath.string(); rebuildUI(); }
 							return Silica::EventReply::handled();
 						},
@@ -166,17 +169,17 @@ namespace Axion {
 
 
 		// -- Texture Maps --
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Albedo Map", MakeFileRow(m_albedoMapPath, "Texture", "*.axtex")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Normal Map", MakeFileRow(m_normalMapPath, "Texture", "*.axtex")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Metalness Map", MakeFileRow(m_metalnessMapPath, "Texture", "*.axtex")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Roughness Map", MakeFileRow(m_roughnessMapPath, "Texture", "*.axtex")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Occlusion Map", MakeFileRow(m_occlusionMapPath, "Texture", "*.axtex")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Emissive Map", MakeFileRow(m_emissiveMapPath, "Texture", "*.axtex")) });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Albedo Map", MakeFileRow(m_albedoMapPath, "Axion Texture Asset", "*.axtex", "textures"))});
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Normal Map", MakeFileRow(m_normalMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Metalness Map", MakeFileRow(m_metalnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Roughness Map", MakeFileRow(m_roughnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Occlusion Map", MakeFileRow(m_occlusionMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Emissive Map", MakeFileRow(m_emissiveMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
 
 
 		// -- Dependencies --
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Pipeline", MakeFileRow(m_pipelinePath, "Pipeline", "*.axpso")) });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Pipeline", MakeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
 
 		auto outFolderRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 8.0f,
@@ -190,8 +193,11 @@ namespace Axion {
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 					.padding = {8, 4},
 					.onClick = [this]() {
-						std::filesystem::path startDir = ProjectManager::getProject()->getAssetsPath();
-						std::filesystem::path absPath = FileDialogs::openFolder(startDir);
+						std::filesystem::path matDir = ProjectManager::getProject()->getAssetsPath() / "materials";
+						if (!std::filesystem::exists(matDir)) {
+							matDir = ProjectManager::getProject()->getAssetsPath();
+						}
+						std::filesystem::path absPath = FileDialogs::openFolder(matDir);
 						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
@@ -328,12 +334,14 @@ namespace Axion {
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 600.0f, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::GetTheme().Background_Panel,
-//			.hoverColor = Silica::GetTheme().Background_Panel,
-			.child = contentBox
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 20.0f, 20.0f },
+				.backgroundColor = Silica::Color::transparent(),
+				.child = contentBox
+			})
 		});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({

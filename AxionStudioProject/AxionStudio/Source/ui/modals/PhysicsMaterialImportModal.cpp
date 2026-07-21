@@ -38,8 +38,8 @@ namespace Axion {
 
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.consumePointerEvents = true,
 				.backgroundColor = Silica::Color(0, 0, 0, 180),
-//				.hoverColor = Silica::Color(0, 0, 0, 180)
 			});
 			rebuildUI_Internal();
 		}
@@ -124,8 +124,10 @@ namespace Axion {
 					.padding = {8, 4},
 					.onClick = [this]() {
 						std::filesystem::path phymatDir = ProjectManager::getProject()->getAssetsPath() / "physics";
-						std::filesystem::path absPath = std::filesystem::exists(phymatDir) ?
-							FileDialogs::openFolder(phymatDir) : FileDialogs::openFolder(ProjectManager::getProject()->getAssetsPath());
+						if (!std::filesystem::exists(phymatDir)) {
+							phymatDir = ProjectManager::getProject()->getAssetsPath();
+						}
+						std::filesystem::path absPath = FileDialogs::openFolder(phymatDir);
 						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
@@ -231,12 +233,14 @@ namespace Axion {
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 500.0f, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::GetTheme().Background_Panel,
-//			.hoverColor = Silica::GetTheme().Background_Panel,
-			.child = contentBox
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 20.0f, 20.0f },
+				.backgroundColor = Silica::Color::transparent(),
+				.child = contentBox
+			})
 		});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({

@@ -47,7 +47,7 @@ namespace Silica {
 		void addGradientRect(const Geometry& geo, Color tl, Color tr, Color br, Color bl);
 		void addThickLine(const Vec2& p0, const Vec2& p1, float thickness, Color color);
 		void addBezierCurve(const Vec2& p0, const Vec2& p1, const Vec2& p2, const Vec2& p3, float thickness, Color color);
-		void addText(FontAtlas* font, const std::string& text, Vec2 position, Color color, float lineHeight = 20.0f);
+		void addText(FontAtlas* font, const std::string& text, Vec2 position, Color color, float scale = 1.0f, float lineHeight = 20.0f);
 
 		Rect getCurrentClipRect() const;
 		void pushClipRect(const Rect& rect);

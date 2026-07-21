@@ -26,6 +26,7 @@ namespace Axion {
 			m_budgetText = std::to_string(AssetManager::getMaxAssetsPerFrame());
 
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.consumePointerEvents = true,
 				.backgroundColor = Silica::Color(0, 0, 0, 180),
 			});
 			rebuildUI_Internal();
@@ -117,11 +118,14 @@ namespace Axion {
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 500.0f, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::GetTheme().Background_Panel,
-			.child = contentBox
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 20.0f, 20.0f },
+				.backgroundColor = Silica::Color::transparent(),
+				.child = contentBox
+			})
 		});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({

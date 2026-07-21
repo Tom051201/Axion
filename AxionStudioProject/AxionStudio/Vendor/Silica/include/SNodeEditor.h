@@ -108,8 +108,6 @@ namespace Silica {
 		NodeID m_selectedNodeID = -1;
 		LinkID m_selectedLinkID = -1;
 
-		void addRectToDrawList(DrawList& drawList, const Geometry& geo, Color color, float rounding = 0.0f) const;
-		void drawText(DrawList& drawList, const std::string& text, Vec2 pos, Color color) const;
 		GraphNode* findNode(NodeID id);
 		NodePin* findPin(PinID id, GraphNode** outNode = nullptr);
 		PinID hitTestPins(const Vec2& mousePos);

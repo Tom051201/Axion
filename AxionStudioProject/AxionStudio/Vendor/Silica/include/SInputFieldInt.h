@@ -1,15 +1,19 @@
 #pragma once
 
+#include <string>
+
 #include "SWidget.h"
+#include "FontAtlas.h"
 
 namespace Silica {
 
-	class SBorderLayout : public SWidget {
+	class SInputFieldInt : public SWidget {
 	public:
 
 		struct Args {
-			WidgetPtr topBar = nullptr;
-			WidgetPtr contentArea = nullptr;
+			int initialValue = 0;
+			FontAtlas* font = nullptr;
+			std::function<void(int)> onValueChanged = nullptr;
 		};
 
 		void construct(const Args& args);
@@ -20,6 +24,8 @@ namespace Silica {
 
 		void setRenderScale(float scale) override;
 
+		void setValue(int newValue, bool moveCursorToEnd = false);
+
 		EventReply onMouseMove(const Geometry& allocatedGeometry, const Vec2& mousePos) override;
 		EventReply onMouseButtonDown(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
 		EventReply onMouseButtonUp(const Geometry& allocatedGeometry, const Vec2& mousePos, MouseButton button) override;
@@ -29,8 +35,9 @@ namespace Silica {
 
 	private:
 
-		WidgetPtr m_topBar;
-		WidgetPtr m_contentArea;
+		WidgetPtr m_editableText;
+		int m_currentValue;
+		std::function<void(int)> m_onValueChanged;
 
 	};
 

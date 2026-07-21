@@ -150,8 +150,7 @@ namespace Axion {
 							if (sourceNode.type == NodeType::Animator_IsPlaying) return target + ".Animator.IsPlaying";
 
 							// -- VARIABLES (GET) --
-							if (sourceNode.type == NodeType::Variable_GetFloat || sourceNode.type == NodeType::Variable_GetInt ||
-								sourceNode.type == NodeType::Variable_GetVector3 || sourceNode.type == NodeType::Variable_GetBool) {
+							if (sourceNode.type == NodeType::Variable_Get) {
 								std::string varName = safeResolve(0);
 								if (varName.size() >= 2 && varName.front() == '"' && varName.back() == '"') {
 									varName = varName.substr(1, varName.size() - 2);
@@ -327,10 +326,7 @@ namespace Axion {
 				case NodeType::Animator_Stop: cs << tabs << target << ".Animator.Stop();\n"; break;
 
 				// -- VARIABLES SETTERS --
-				case NodeType::Variable_SetFloat:
-				case NodeType::Variable_SetInt:
-				case NodeType::Variable_SetVector3:
-				case NodeType::Variable_SetBool: {
+				case NodeType::Variable_Set: {
 					std::string varName = safeResolve(1);
 					if (varName.size() >= 2 && varName.front() == '"' && varName.back() == '"') {
 						varName = varName.substr(1, varName.size() - 2);

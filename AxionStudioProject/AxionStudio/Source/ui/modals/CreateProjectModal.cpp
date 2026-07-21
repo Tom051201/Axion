@@ -31,8 +31,8 @@ namespace Axion {
 	Silica::WidgetPtr CreateProjectModal::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.consumePointerEvents = true,
 				.backgroundColor = Silica::Color(0, 0, 0, 180),
-//				.hoverColor = Silica::Color(0, 0, 0, 180)
 			});
 			rebuildUI_Internal();
 		}
@@ -230,12 +230,14 @@ namespace Axion {
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 20.0f },
 			.explicitSize = Silica::Vec2{ 550.0f, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::GetTheme().Background_Panel,
-//			.hoverColor = Silica::GetTheme().Background_Panel,
-			.child = contentBox
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 20.0f, 20.0f },
+				.backgroundColor = Silica::Color::transparent(),
+				.child = contentBox
+			})
 		});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({

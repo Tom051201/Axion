@@ -18,7 +18,7 @@
 #include "AxionStudio/Vendor/Silica/include/SSliderFloat.h"
 #include "AxionStudio/Vendor/Silica/include/SColorPicker.h"
 #include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
-#include "AxionStudio/Vendor/Silica/include/SVector3FloatInput.h"
+#include "AxionStudio/Vendor/Silica/include/SInputFieldVec3Float.h"
 
 namespace Axion {
 
@@ -271,7 +271,7 @@ namespace Axion {
 
 		// -- Global Gravity --
 		Vec3 currentGravity = m_activeScene->getGravity();
-		auto gravityInput = Silica::MakeWidget<Silica::SVector3FloatInput>({
+		auto gravityInput = Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 			.label = "",
 			.initialValue = Silica::Vec3(currentGravity.x, currentGravity.y, currentGravity.z),
 			.onValueChanged = [this](Silica::Vec3 val) {

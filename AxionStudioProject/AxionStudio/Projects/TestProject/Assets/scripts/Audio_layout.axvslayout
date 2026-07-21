@@ -1,20 +1,20 @@
 [SNodeEditor_v1]
-Pan 475.97 460.458
-Zoom 0.3
+Pan 207.153 447.038
+Zoom 1
 [Node]
 ID 2
 Title Play Audio
 Pos 267 -145.5
-Size 150 70
-Color 80 80 80 255
+Size 147.817 80
+Color 121 85 72 255
 In 1001 255 255 255 255 Execute
 Out 1002 255 255 255 255 Next
 [Node]
 ID 1
 Title On Create
 Pos -12.8571 -65.7143
-Size 150 70
-Color 160 20 20 255
+Size 140 80
+Color 140 21 21 255
 Out 1000 255 255 255 255 Next
 [Link]
 ID 100

@@ -15,7 +15,7 @@ namespace Axion {
 		VisualScriptPanel() = default;
 		~VisualScriptPanel() = default;
 
-		Silica::WidgetPtr getWidget(Silica::FontAtlas* font);
+		Silica::WidgetPtr getWidget();
 
 		void setContext(const VisualGraph& graph, const std::filesystem::path& filePath);
 		void openScript(const std::filesystem::path& filePath);
@@ -38,23 +38,28 @@ namespace Axion {
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		std::shared_ptr<Silica::SNodeEditor> m_nodeEditor;
 
-		Silica::FontAtlas* m_font = nullptr;
-
 		std::unordered_map<int, NodeType> m_nodeTypes;
 		std::unordered_map<int, Pin> m_pinMeta;
+
+		std::map<int, Silica::Vec2> m_nodePositions;
 
 		void rebuildUI();
 		void rebuildUI_Internal();
 		Silica::WidgetPtr buildToolbar();
 		Silica::WidgetPtr buildVariablesPanel();
 		Silica::WidgetPtr buildNodeContextMenu(Silica::Vec2 mousePos);
+		Silica::WidgetPtr buildNodeSpecificContextMenu(Silica::NodeID id, Silica::Vec2 mousePos);
 
 		void spawnNode(NodeType type, Silica::Vec2 canvasPosition);
 		void compileAndSave();
 
+		Silica::WidgetPtr createInlineWidgetForPin(const Pin& pin);
+
 		static Silica::Color getNodeTypeColor(NodeType type);
 		static Silica::Color getPinColor(PinType type);
 		bool hasNodeOfType(NodeType type) const;
+		void refreshVariableNodes();
+		void syncGraphState();
 
 	};
 

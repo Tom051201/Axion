@@ -9,9 +9,9 @@
 #include "AxionStudio/Vendor/Silica/include/SEditableText.h"
 #include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
 #include "AxionStudio/Vendor/Silica/include/SVector3Input.h"
-#include "AxionStudio/Vendor/Silica/include/SVector3FloatInput.h"
+#include "AxionStudio/Vendor/Silica/include/SInputFieldVec3Float.h"
 #include "AxionStudio/Vendor/Silica/include/SCheckBox.h"
-#include "AxionStudio/Vendor/Silica/include/SFloatInput.h"
+#include "AxionStudio/Vendor/Silica/include/SInputFieldFloat.h"
 #include "AxionStudio/Vendor/Silica/include/SColorPicker.h"
 #include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
@@ -426,21 +426,21 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 4.0f,
 					.slots = {
-						{ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Position",
 							.initialValue = Silica::Vec3(transform.position.x, transform.position.y, transform.position.z),
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().position = Vec3(val.x, val.y, val.z);
 							}
 						})},
-						{ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Rotation",
 							.initialValue = Silica::Vec3(transform.getEulerAngles().x, transform.getEulerAngles().y, transform.getEulerAngles().z),
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().setEulerAngles(Vec3(val.x, val.y, val.z));
 							}
 						})},
-						{ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Scale",
 							.initialValue = Silica::Vec3(transform.scale.x, transform.scale.y, transform.scale.z),
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
@@ -863,15 +863,15 @@ namespace Axion {
 						{ {0,0}, MakePropertyRow("Color", MakeColorField(pointLightComponent.color, [entity](Silica::Color c) mutable {
 							entity.getComponent<PointLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 						}))},
-						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.intensity,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().intensity = val; }
 						}))},
-						{ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.radius,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().radius = val; }
 						}))},
-						{ {0,0}, MakePropertyRow("Falloff", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0,0}, MakePropertyRow("Falloff", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.falloff,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().falloff = val; }
 						}))}
@@ -892,19 +892,19 @@ namespace Axion {
 						{ {0,0}, MakePropertyRow("Color", MakeColorField(spotLightComponent.color, [entity](Silica::Color c) mutable {
 							entity.getComponent<SpotLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 						}))},
-						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.intensity,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().intensity = val; }
 						}))},
-						{ {0,0}, MakePropertyRow("Range", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0,0}, MakePropertyRow("Range", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.range,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().range = val; }
 						}))},
-						{ {0,0}, MakePropertyRow("Inner Cone", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0,0}, MakePropertyRow("Inner Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.innerConeAngle,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().innerConeAngle = val; }
 						}))},
-						{ {0,0}, MakePropertyRow("Outer Cone", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0,0}, MakePropertyRow("Outer Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.outerConeAngle,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().outerConeAngle = val; }
 						}))}
@@ -1020,19 +1020,19 @@ namespace Axion {
 								})}
 							}
 						}))},
-						{ {0, 0}, MakePropertyRow("Volume", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0, 0}, MakePropertyRow("Volume", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getVolume(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setVolume(val);
 							}
 						}))},
-						{ {0, 0}, MakePropertyRow("Pitch", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0, 0}, MakePropertyRow("Pitch", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getPitch(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setPitch(val);
 							}
 						}))},
-						{ {0, 0}, MakePropertyRow("Pan", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0, 0}, MakePropertyRow("Pan", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getPan(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setPan(val);
@@ -1051,19 +1051,19 @@ namespace Axion {
 								else entity.getComponent<AudioComponent>().audio->disableSpatial();
 							}
 						}))},
-						{ {0, 0}, MakePropertyRow("Min Distance", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0, 0}, MakePropertyRow("Min Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getMinDistance(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setMinDistance(val);
 							}
 						}))},
-						{ {0, 0}, MakePropertyRow("Max Distance", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0, 0}, MakePropertyRow("Max Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getMaxDistance(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setMaxDistance(val);
 							}
 						}))},
-						{ {0, 0}, MakePropertyRow("Doppler", Silica::MakeWidget<Silica::SFloatInput>({
+						{ {0, 0}, MakePropertyRow("Doppler", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getDopplerFactor(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setDopplerFactor(val);
@@ -1165,7 +1165,7 @@ namespace Axion {
 					for (const auto& field : fields) {
 						if (field.type == ScriptFieldType::Float) {
 							float val = ScriptEngine::getFieldValueFloat(scriptComponent.gcHandle, field.name);
-							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::SFloatInput>({
+							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::SInputFieldFloat>({
 								.initialValue = val,
 								.onValueChanged = [entity, fieldName = field.name](float newVal) mutable {
 									auto& sc = entity.getComponent<ScriptComponent>();
@@ -1177,7 +1177,7 @@ namespace Axion {
 						}
 						else if (field.type == ScriptFieldType::Vector3) {
 							Vec3 val = ScriptEngine::getFieldValueVector3(scriptComponent.gcHandle, field.name);
-							uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+							uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 								.label = field.name,
 								.initialValue = Silica::Vec3(val.x, val.y, val.z),
 								.labelWidth = 120.0f,
@@ -1271,7 +1271,7 @@ namespace Axion {
 			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
-			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Velocity Var",
 				.initialValue = Silica::Vec3(particleSystemComponent.velocityVariation.x, particleSystemComponent.velocityVariation.y, particleSystemComponent.velocityVariation.z),
 				.labelWidth = 120.0f,
@@ -1288,17 +1288,17 @@ namespace Axion {
 				entity.getComponent<ParticleSystemComponent>().colorEnd = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Size", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.sizeBegin,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeBegin = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("End Size", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("End Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.sizeEnd,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeEnd = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Lifetime", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Lifetime", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.lifeTime,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().lifeTime = val; }
 			})) });
@@ -1497,17 +1497,17 @@ namespace Axion {
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().enableCCD = checked; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Mass", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Mass", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.mass,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().mass = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Linear Damping", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Linear Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.linearDamping,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().linearDamping = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Angular Damping", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Angular Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.angularDamping,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().angularDamping = val; }
 			})) });
@@ -1569,7 +1569,7 @@ namespace Axion {
 			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
-			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Half Extents",
 				.initialValue = Silica::Vec3(boxColliderComponent.halfExtents.x, boxColliderComponent.halfExtents.y, boxColliderComponent.halfExtents.z),
 				.labelWidth = 120.0f,
@@ -1578,7 +1578,7 @@ namespace Axion {
 				}
 			}) });
 
-			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(boxColliderComponent.offset.x, boxColliderComponent.offset.y, boxColliderComponent.offset.z),
 				.labelWidth = 120.0f,
@@ -1689,12 +1689,12 @@ namespace Axion {
 			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = sphereColliderComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<SphereColliderComponent>().radius = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(sphereColliderComponent.offset.x, sphereColliderComponent.offset.y, sphereColliderComponent.offset.z),
 				.labelWidth = 120.0f,
@@ -1805,17 +1805,17 @@ namespace Axion {
 			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = capsuleColliderComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().radius = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Half Height", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Half Height", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = capsuleColliderComponent.halfHeight,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().halfHeight = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SVector3FloatInput>({
+			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(capsuleColliderComponent.offset.x, capsuleColliderComponent.offset.y, capsuleColliderComponent.offset.z),
 				.labelWidth = 120.0f,
@@ -1942,12 +1942,12 @@ namespace Axion {
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<GravitySourceComponent>().affectKinematic = checked; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Strength", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Strength", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = gravitySourceComponent.strength,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().strength = val; }
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SFloatInput>({
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = gravitySourceComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().radius = val; }
 			})) });
