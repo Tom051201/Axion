@@ -164,11 +164,13 @@ Entities:
     TagComponent:
       Tag: Sun Light
     TransformComponent:
-      Translation: [0, 15.1050415, 0]
-      Rotation: [-0.057522703, -0.671047091, 0.182695687, 0.716246605]
+      Translation: [0.00799252465, 15.1880388, 0.230266944]
+      Rotation: [0.0427680649, 0.726034641, -0.186700895, -0.660444856]
       Scale: [0.999999881, 1, 1]
     DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
+      Color: [1, 0.329411775, 0, 1]
+    ScriptComponent:
+      ClassName: SunLight
   - Entity: 98041ebf061538d060b66a7ee930e574
     TagComponent:
       Tag: Floor

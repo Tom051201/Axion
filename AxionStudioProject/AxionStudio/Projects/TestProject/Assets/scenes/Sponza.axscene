@@ -5,32 +5,15 @@ Scene: Untitled
 Skybox: 5297c6f680e015a3e4d605fc0cf32c11
 AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
 Entities:
-  - Entity: 5c354e6cf44fad8ca2cb81c747bd18c9
+  - Entity: 98041ebf061538d060b66a7ee930e574
     TagComponent:
-      Tag: Music
+      Tag: Floor
     TransformComponent:
-      Translation: [0, 12.9213028, 0]
+      Translation: [0, 0, 0]
       Rotation: [-0, 0, -0, 1]
-      Scale: [1, 1, 1]
-  - Entity: ad123a69a7ae70c2275300cddfdc87a0
-    TagComponent:
-      Tag: Player
-    TransformComponent:
-      Translation: [-0.0714027882, 16.7279644, 0]
-      Rotation: [0, 0.709240913, 0, -0.704966187]
-      Scale: [28.5999622, 28.6000004, 28.5999622]
-    CameraComponent:
-      Primary: true
-      FixedAspectRatio: false
-      ProjectionType: Perspective
-      PerspectiveFOV: 0.785398185
-      PerspectiveNear: 0.100000001
-      PerspectiveFar: 100
-      OrthographicSize: 10
-      OrthographicNear: -1
-      OrthographicFar: 1
+      Scale: [353.788483, 1, 133.609726]
     RigidBodyComponent:
-      BodyType: Dynamic
+      BodyType: Static
       Mass: 1
       IsKinematic: false
       LinearDamping: 0
@@ -44,8 +27,17 @@ Entities:
       Offset: [0, 0, 0]
       IsTrigger: false
       Material: 0
+  - Entity: a0aefe56643b6b96579b0cec2f74b1ff
+    TagComponent:
+      Tag: Sun Light
+    TransformComponent:
+      Translation: [0.00799252465, 15.1880388, 0.230266944]
+      Rotation: [0.0427680649, 0.726034641, -0.186700895, -0.660444856]
+      Scale: [0.999999881, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 0.329411775, 0, 1]
     ScriptComponent:
-      ClassName: Player
+      ClassName: SunLight
   - Entity: c5ba5e3b0f63f0c2f56e012b573ee38f
     TagComponent:
       Tag: Sponza
@@ -160,24 +152,25 @@ Entities:
         - 43de292e4fbfc6a37c9b817904c6338d
         - 22bc38e36260460843adc659350d4dba
         - 43de292e4fbfc6a37c9b817904c6338d
-  - Entity: a0aefe56643b6b96579b0cec2f74b1ff
+  - Entity: ad123a69a7ae70c2275300cddfdc87a0
     TagComponent:
-      Tag: Sun Light
+      Tag: Player
     TransformComponent:
-      Translation: [0.00799252465, 15.1880388, 0.230266944]
-      Rotation: [0.0427680649, 0.726034641, -0.186700895, -0.660444856]
-      Scale: [0.999999881, 1, 1]
-    DirectionalLightComponent:
-      Color: [1, 0.329411775, 0, 1]
-  - Entity: 98041ebf061538d060b66a7ee930e574
-    TagComponent:
-      Tag: Floor
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [-0, 0, -0, 1]
-      Scale: [353.788483, 1, 133.609726]
+      Translation: [-0.0714027882, 16.7279644, 0]
+      Rotation: [0, 0.709240913, 0, -0.704966187]
+      Scale: [28.5999622, 28.6000004, 28.5999622]
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      ProjectionType: Perspective
+      PerspectiveFOV: 0.785398185
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 100
+      OrthographicSize: 10
+      OrthographicNear: -1
+      OrthographicFar: 1
     RigidBodyComponent:
-      BodyType: Static
+      BodyType: Dynamic
       Mass: 1
       IsKinematic: false
       LinearDamping: 0
@@ -191,3 +184,12 @@ Entities:
       Offset: [0, 0, 0]
       IsTrigger: false
       Material: 0
+    ScriptComponent:
+      ClassName: Player
+  - Entity: 5c354e6cf44fad8ca2cb81c747bd18c9
+    TagComponent:
+      Tag: Music
+    TransformComponent:
+      Translation: [0, 12.9213028, 0]
+      Rotation: [-0, 0, -0, 1]
+      Scale: [1, 1, 1]

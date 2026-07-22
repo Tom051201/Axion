@@ -1,0 +1,144 @@
+[SNodeEditor_v1]
+Pan -247.418 117.728
+Zoom 1
+[Node]
+ID 7
+Title On Update
+Pos 479.529 -149.723
+Size 140 110
+Color 140 21 21 255
+Out 1018 255 255 255 255 Next
+Out 1019 139 195 74 255 Delta Time
+[Node]
+ID 9
+Title Break Vector3
+Pos 366.146 106.536
+Size 140 140
+Color 85 139 47 255
+In 1024 251 192 45 255 Vector
+Out 1025 139 195 74 255 X
+Out 1026 139 195 74 255 Y
+Out 1027 139 195 74 255 Z
+[Node]
+ID 8
+Title Set Variable
+Pos 967.454 159.239
+Size 209.385 140
+Color 139 195 74 255
+In 1020 255 255 255 255 Execute
+In 1021 233 30 99 255 Name
+In 1022 139 195 74 255 Value
+Out 1023 255 255 255 255 Next
+[Node]
+ID 10
+Title Add (+)
+Pos 630.59 265.425
+Size 274.683 110
+Color 85 139 47 255
+In 1028 139 195 74 255 A
+In 1029 139 195 74 255 B
+Out 1030 139 195 74 255 Result
+[Node]
+ID 3
+Title Get Rotation
+Pos 55.8636 89.9258
+Size 148.217 80
+Color 230 81 0 255
+In 1005 100 181 246 255 Target
+Out 1006 251 192 45 255 Result
+[Node]
+ID 11
+Title Make Vector3
+Pos 1686.65 232.495
+Size 140 140
+Color 85 139 47 255
+In 1031 139 195 74 255 X
+In 1032 139 195 74 255 Y
+In 1033 139 195 74 255 Z
+Out 1034 251 192 45 255 Vector
+[Node]
+ID 13
+Title Break Vector3
+Pos 1411.94 435.496
+Size 140 140
+Color 85 139 47 255
+In 1037 251 192 45 255 Vector
+Out 1038 139 195 74 255 X
+Out 1039 139 195 74 255 Y
+Out 1040 139 195 74 255 Z
+[Node]
+ID 14
+Title Get Variable
+Pos 1355.58 242.768
+Size 202.189 80
+Color 139 195 74 255
+In 1041 233 30 99 255 Name
+Out 1042 139 195 74 255 Value
+[Node]
+ID 2
+Title Set Rotation
+Pos 1960.74 -60.557
+Size 147.817 140
+Color 230 81 0 255
+In 1001 255 255 255 255 Execute
+In 1002 100 181 246 255 Target
+In 1003 251 192 45 255 Value
+Out 1004 255 255 255 255 Next
+[Node]
+ID 12
+Title Get Rotation
+Pos 1084.36 538.926
+Size 148.217 80
+Color 230 81 0 255
+In 1035 100 181 246 255 Target
+Out 1036 251 192 45 255 Result
+[Link]
+ID 2
+Start 1006
+End 1024
+Color 255 255 255 255
+[Link]
+ID 2
+Start 1018
+End 1020
+Color 255 255 255 255
+[Link]
+ID 3
+Start 1026
+End 1028
+Color 255 255 255 255
+[Link]
+ID 4
+Start 1030
+End 1022
+Color 255 255 255 255
+[Link]
+ID 5
+Start 1023
+End 1001
+Color 255 255 255 255
+[Link]
+ID 6
+Start 1036
+End 1037
+Color 251 192 45 255
+[Link]
+ID 7
+Start 1038
+End 1031
+Color 139 195 74 255
+[Link]
+ID 8
+Start 1040
+End 1033
+Color 139 195 74 255
+[Link]
+ID 9
+Start 1042
+End 1032
+Color 139 195 74 255
+[Link]
+ID 10
+Start 1034
+End 1003
+Color 251 192 45 255

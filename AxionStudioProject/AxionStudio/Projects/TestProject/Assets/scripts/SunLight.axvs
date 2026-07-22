@@ -1,0 +1,411 @@
+VisualScript: SunLight
+Variables:
+  - Name: Var_0
+    Type: Float
+    FloatValue: 0
+    IntValue: 0
+    BoolValue: false
+    Vec3Value: [0, 0, 0]
+Nodes:
+  - ID: 7
+    Type: Event_OnUpdate
+    OperationType: Float
+    Name: On Update
+    Inputs:
+      []
+    Outputs:
+      - ID: 1018
+        NodeID: 7
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1019
+        NodeID: 7
+        Name: Delta Time
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 9
+    Type: Math_BreakVector3
+    OperationType: Float
+    Name: Break Vector3
+    Inputs:
+      - ID: 1024
+        NodeID: 9
+        Name: Vector
+        Kind: Input
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1025
+        NodeID: 9
+        Name: X
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1026
+        NodeID: 9
+        Name: Y
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1027
+        NodeID: 9
+        Name: Z
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 8
+    Type: Variable_Set
+    OperationType: Float
+    Name: Set Variable
+    Inputs:
+      - ID: 1020
+        NodeID: 8
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1021
+        NodeID: 8
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: Var_0
+        Vec3Value: [0, 0, 0]
+      - ID: 1022
+        NodeID: 8
+        Name: Value
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1023
+        NodeID: 8
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 10
+    Type: Math_Add
+    OperationType: Float
+    Name: Add (+)
+    Inputs:
+      - ID: 1028
+        NodeID: 10
+        Name: A
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1029
+        NodeID: 10
+        Name: B
+        Kind: Input
+        Type: Float
+        FloatValue: 0.200000003
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1030
+        NodeID: 10
+        Name: Result
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 3
+    Type: Transform_GetRotation
+    OperationType: Float
+    Name: Get Rotation
+    Inputs:
+      - ID: 1005
+        NodeID: 3
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1006
+        NodeID: 3
+        Name: Result
+        Kind: Output
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 11
+    Type: Math_MakeVector3
+    OperationType: Float
+    Name: Make Vector3
+    Inputs:
+      - ID: 1031
+        NodeID: 11
+        Name: X
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1032
+        NodeID: 11
+        Name: Y
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1033
+        NodeID: 11
+        Name: Z
+        Kind: Input
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1034
+        NodeID: 11
+        Name: Vector
+        Kind: Output
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 13
+    Type: Math_BreakVector3
+    OperationType: Float
+    Name: Break Vector3
+    Inputs:
+      - ID: 1037
+        NodeID: 13
+        Name: Vector
+        Kind: Input
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1038
+        NodeID: 13
+        Name: X
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1039
+        NodeID: 13
+        Name: Y
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1040
+        NodeID: 13
+        Name: Z
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 14
+    Type: Variable_Get
+    OperationType: Float
+    Name: Get Variable
+    Inputs:
+      - ID: 1041
+        NodeID: 14
+        Name: Name
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: Var_0
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1042
+        NodeID: 14
+        Name: Value
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 2
+    Type: Transform_SetRotation
+    OperationType: Float
+    Name: Set Rotation
+    Inputs:
+      - ID: 1001
+        NodeID: 2
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1002
+        NodeID: 2
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1003
+        NodeID: 2
+        Name: Value
+        Kind: Input
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1004
+        NodeID: 2
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 12
+    Type: Transform_GetRotation
+    OperationType: Float
+    Name: Get Rotation
+    Inputs:
+      - ID: 1035
+        NodeID: 12
+        Name: Target
+        Kind: Input
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1036
+        NodeID: 12
+        Name: Result
+        Kind: Output
+        Type: Vector3
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+Links:
+  - ID: 2
+    StartPin: 1006
+    EndPin: 1024
+  - ID: 2
+    StartPin: 1018
+    EndPin: 1020
+  - ID: 3
+    StartPin: 1026
+    EndPin: 1028
+  - ID: 4
+    StartPin: 1030
+    EndPin: 1022
+  - ID: 5
+    StartPin: 1023
+    EndPin: 1001
+  - ID: 6
+    StartPin: 1036
+    EndPin: 1037
+  - ID: 7
+    StartPin: 1038
+    EndPin: 1031
+  - ID: 8
+    StartPin: 1040
+    EndPin: 1033
+  - ID: 9
+    StartPin: 1042
+    EndPin: 1032
+  - ID: 10
+    StartPin: 1034
+    EndPin: 1003

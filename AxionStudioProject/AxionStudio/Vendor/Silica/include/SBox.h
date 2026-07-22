@@ -41,6 +41,7 @@ namespace Silica {
 		EventReply onDrop(const Geometry& allocatedGeometry, const Vec2& mousePos, const DragDropPayload& payload) override;
 
 		void setChild(WidgetPtr child);
+		void setBackgroundColor(const Color& color);
 
 	private:
 

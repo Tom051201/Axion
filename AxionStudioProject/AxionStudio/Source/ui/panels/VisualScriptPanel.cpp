@@ -156,7 +156,7 @@ namespace Axion {
 			}
 		}) });
 
-		varList->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({ .color = Silica::GetTheme().Border_Secondary })});
+		varList->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.color = Silica::GetTheme().Border_Secondary }) });
 
 		for (size_t i = 0; i < m_activeGraph.variables.size(); i++) {
 			auto& var = m_activeGraph.variables[i];
@@ -263,8 +263,8 @@ namespace Axion {
 						.text = label,
 						.color = canSpawn ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim
 					}),
-				});
-			};
+					});
+				};
 
 			if (!categories->empty()) {
 				categories->back().options.push_back({ label, type, btnGenerator });
@@ -373,7 +373,7 @@ namespace Axion {
 						.title = cat.name,
 						.initiallyOpen = false,
 						.content = catContentBox
-					});
+						});
 
 					menuBox->addSlot({ {0,0}, header });
 				}
@@ -502,33 +502,6 @@ namespace Axion {
 	void VisualScriptPanel::compileAndSave() {
 		if (!ProjectManager::hasProject() || m_currentFilePath.empty() || !m_nodeEditor) return;
 
-		for (auto& node : m_activeGraph.nodes) {
-			for (auto& pin : node.inputs) if (m_pinMeta.find(pin.id) != m_pinMeta.end()) pin = m_pinMeta[pin.id];
-			for (auto& pin : node.outputs) if (m_pinMeta.find(pin.id) != m_pinMeta.end()) pin = m_pinMeta[pin.id];
-		}
-
-		m_activeGraph.nodes.clear();
-		for (const auto& sNode : m_nodeEditor->getNodes()) {
-			Node node;
-			node.id = sNode.id;
-			node.name = sNode.title;
-			node.type = m_nodeTypes[sNode.id];
-
-			for (const auto& sPin : sNode.inputs) {
-				if (m_pinMeta.find(sPin.id) != m_pinMeta.end()) node.inputs.push_back(m_pinMeta[sPin.id]);
-			}
-			for (const auto& sPin : sNode.outputs) {
-				if (m_pinMeta.find(sPin.id) != m_pinMeta.end()) node.outputs.push_back(m_pinMeta[sPin.id]);
-			}
-			m_activeGraph.nodes.push_back(node);
-		}
-
-		m_activeGraph.links.clear();
-		for (const auto& sLink : m_nodeEditor->getLinks()) {
-			Link link; link.id = sLink.id; link.startPinID = sLink.startPin; link.endPinID = sLink.endPin;
-			m_activeGraph.links.push_back(link);
-		}
-
 		syncGraphState();
 
 		m_activeGraph.className = m_currentFilePath.stem().string();
@@ -565,7 +538,6 @@ namespace Axion {
 			node.outputs.push_back(pin);
 			m_pinMeta[pin.id] = pin;
 		};
-
 
 		switch (type) {
 			// -- EVENTS --
@@ -1169,15 +1141,39 @@ namespace Axion {
 				if (node.type == NodeType::Variable_Get || node.type == NodeType::Variable_Set) {
 
 					std::string targetVarName = "";
+					Pin* namePin = nullptr;
+
 					for (auto& pin : node.inputs) {
-						if (pin.name == "Name") targetVarName = pin.stringValue;
+						if (pin.name == "Name") {
+							targetVarName = pin.stringValue;
+							namePin = &pin;
+						}
 					}
 
+					bool found = false;
 					PinType actualType = PinType::Float;
+
 					for (const auto& var : m_activeGraph.variables) {
 						if (var.name == targetVarName) {
 							actualType = var.type;
+							found = true;
 							break;
+						}
+					}
+
+					if (!found) {
+						if (!m_activeGraph.variables.empty()) {
+							targetVarName = m_activeGraph.variables[0].name;
+							actualType = m_activeGraph.variables[0].type;
+						}
+						else {
+							targetVarName = "";
+							actualType = PinType::Float;
+						}
+
+						if (namePin) {
+							namePin->stringValue = targetVarName;
+							m_pinMeta[namePin->id].stringValue = targetVarName;
 						}
 					}
 

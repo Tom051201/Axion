@@ -253,6 +253,7 @@ namespace Axion {
 			std::string pathStr = filePath.string();
 			if (s_loadAppAssemblyFunc) s_loadAppAssemblyFunc(pathStr.c_str());
 
+			s_scriptMetadata.clear();
 			if (s_generateMetadataFunc) s_generateMetadataFunc();
 
 			AX_CORE_LOG_INFO("[ScriptEngine] Successfully loaded App Assembly from {}", pathStr);

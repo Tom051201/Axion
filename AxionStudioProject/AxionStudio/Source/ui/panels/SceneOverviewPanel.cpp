@@ -16,9 +16,10 @@
 #include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
 #include "AxionStudio/Vendor/Silica/include/SSliderFloat.h"
-#include "AxionStudio/Vendor/Silica/include/SColorPicker.h"
+#include "AxionStudio/Vendor/Silica/include/SColorField.h"
 #include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
 #include "AxionStudio/Vendor/Silica/include/SInputFieldVec3Float.h"
+#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 namespace Axion {
 
@@ -150,35 +151,6 @@ namespace Axion {
 			});
 		};
 
-		auto MakeColorField = [&](const Vec4& vecColor, auto onColorChanged) {
-			Silica::Color initialColor = Silica::Color(
-				(uint8_t)(std::clamp(vecColor.x, 0.0f, 1.0f) * 255.0f),
-				(uint8_t)(std::clamp(vecColor.y, 0.0f, 1.0f) * 255.0f),
-				(uint8_t)(std::clamp(vecColor.z, 0.0f, 1.0f) * 255.0f),
-				(uint8_t)(std::clamp(vecColor.w, 0.0f, 1.0f) * 255.0f)
-			);
-
-			return Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.anchorContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 2.0f, 2.0f },
-					.backgroundColor = Silica::GetTheme().Background_Popup,
-					.child = Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(100.0f, 24.0f),
-						.backgroundColor = initialColor
-					})
-				}),
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 10.0f },
-					.backgroundColor = Silica::GetTheme().Background_Popup,
-					.child = Silica::MakeWidget<Silica::SColorPicker>({
-						.initialColor = initialColor,
-						.onColorChanged = onColorChanged
-					})
-				})
-			});
-		};
-
 
 		// -- Skybox --
 		Silica::WidgetPtr skyboxContent;
@@ -282,8 +254,17 @@ namespace Axion {
 
 
 		// -- Ambient Color --
-		auto ambientColorInput = MakeColorField(m_activeScene->getAmbientColor(), [this](Silica::Color c) {
-			m_activeScene->setAmbientColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
+		Vec4 sceneColor = m_activeScene->getAmbientColor();
+		auto ambientColorInput = Silica::MakeWidget<Silica::SColorField>({
+			.initialColor = Silica::Color(
+				(uint8_t)(std::clamp(sceneColor.x, 0.0f, 1.0f) * 255.0f),
+				(uint8_t)(std::clamp(sceneColor.y, 0.0f, 1.0f) * 255.0f),
+				(uint8_t)(std::clamp(sceneColor.z, 0.0f, 1.0f) * 255.0f),
+				(uint8_t)(std::clamp(sceneColor.w, 0.0f, 1.0f) * 255.0f)
+			),
+			.onColorChanged = [this](Silica::Color c) {
+				m_activeScene->setAmbientColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
+			}
 		});
 		contentBox->addSlot({ {0, 0}, MakePropertyRow("Ambient Color", ambientColorInput) });
 

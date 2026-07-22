@@ -15,6 +15,8 @@
 #include "AxionStudio/Vendor/Silica/include/SColorPicker.h"
 #include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
+#include "AxionStudio/Vendor/Silica/include/SComboBox.h"
+#include "AxionStudio/Vendor/Silica/include/SColorField.h"
 
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -389,32 +391,13 @@ namespace Axion {
 			});
 		};
 
-		auto MakeColorField = [&](const Vec4& vecColor, auto onColorChanged) {
-			Silica::Color initialColor = Silica::Color(
+		auto Vec4ToColor = [](const Vec4& vecColor) {
+			return Silica::Color(
 				(uint8_t)(std::clamp(vecColor.x, 0.0f, 1.0f) * 255.0f),
 				(uint8_t)(std::clamp(vecColor.y, 0.0f, 1.0f) * 255.0f),
 				(uint8_t)(std::clamp(vecColor.z, 0.0f, 1.0f) * 255.0f),
 				(uint8_t)(std::clamp(vecColor.w, 0.0f, 1.0f) * 255.0f)
 			);
-
-			return Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.anchorContent = Silica::MakeWidget<Silica::SButton>({
-					.padding = { 2.0f, 2.0f },
-					.child = Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(100.0f, 20.0f),
-						.backgroundColor = initialColor
-					})
-				}),
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 10.0f },
-					.backgroundColor = Silica::GetTheme().Background_Popup,
-					.child = Silica::MakeWidget<Silica::SColorPicker>({
-						.initialColor = initialColor,
-						.onColorChanged = onColorChanged
-					})
-				})
-			});
 		};
 
 
@@ -702,10 +685,12 @@ namespace Axion {
 						.slots = {
 							{ {0,0}, MakePropertyRow(label, Silica::MakeWidget<Silica::STextBlock>({.text = material->getName() }))},
 							{ {0,0}, MakePropertyRow("Pipeline", Silica::MakeWidget<Silica::STextBlock>({.text = pipelineName }))},
-							{ {0,0}, MakePropertyRow("Albedo Color", MakeColorField(albedoVec4, [material](Silica::Color c) mutable {
-								material->setAlbedoColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
+							{ {0,0}, MakePropertyRow("Albedo Color", Silica::MakeWidget<Silica::SColorField>({
+								.initialColor = Vec4ToColor(albedoVec4),
+								.onColorChanged = [material](Silica::Color c) mutable {
+									material->setAlbedoColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
+								}
 							}))},
-
 							{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
 								.padding = { 8.0f, 4.0f },
 								.onClick = [entity, i, triggerRebuild]() mutable {
@@ -788,8 +773,11 @@ namespace Axion {
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({
-				{0,0}, MakePropertyRow("Tint", MakeColorField(spriteComponent.tint, [entity](Silica::Color c) mutable {
-					entity.getComponent<SpriteComponent>().tint = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+				{0,0}, MakePropertyRow("Tint", Silica::MakeWidget<Silica::SColorField>({
+					.initialColor = Vec4ToColor(spriteComponent.tint),
+					.onColorChanged = [entity](Silica::Color c) mutable {
+						entity.getComponent<SpriteComponent>().tint = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+					}
 				}))
 			});
 
@@ -843,8 +831,11 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 8.0f,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Color", MakeColorField(dirLightComponent.color, [entity](Silica::Color c) mutable {
-							entity.getComponent<DirectionalLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+						{ {0,0}, MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
+							.initialColor = Vec4ToColor(dirLightComponent.color),
+							.onColorChanged = [entity](Silica::Color c) mutable {
+								entity.getComponent<DirectionalLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+							}
 						}))}
 					}
 				})
@@ -860,8 +851,11 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 8.0f,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Color", MakeColorField(pointLightComponent.color, [entity](Silica::Color c) mutable {
-							entity.getComponent<PointLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+						{ {0,0}, MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
+							.initialColor = Vec4ToColor(pointLightComponent.color),
+							.onColorChanged = [entity](Silica::Color c) mutable {
+								entity.getComponent<PointLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+							}
 						}))},
 						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.intensity,
@@ -889,8 +883,11 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 8.0f,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Color", MakeColorField(spotLightComponent.color, [entity](Silica::Color c) mutable {
-							entity.getComponent<SpotLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+						{ {0,0}, MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
+							.initialColor = Vec4ToColor(spotLightComponent.color),
+							.onColorChanged = [entity](Silica::Color c) mutable {
+								entity.getComponent<SpotLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+							}
 						}))},
 						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.intensity,
@@ -1280,12 +1277,18 @@ namespace Axion {
 				}
 			}) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Color", MakeColorField(particleSystemComponent.colorBegin, [entity](Silica::Color c) mutable {
-				entity.getComponent<ParticleSystemComponent>().colorBegin = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Color", Silica::MakeWidget<Silica::SColorField>({
+				.initialColor = Vec4ToColor(particleSystemComponent.colorBegin),
+				.onColorChanged = [entity](Silica::Color c) mutable {
+					entity.getComponent<ParticleSystemComponent>().colorBegin = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+				}
 			})) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("End Color", MakeColorField(particleSystemComponent.colorEnd, [entity](Silica::Color c) mutable {
-				entity.getComponent<ParticleSystemComponent>().colorEnd = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+			uiSlots.push_back({ {0,0}, MakePropertyRow("End Color", Silica::MakeWidget<Silica::SColorField>({
+				.initialColor = Vec4ToColor(particleSystemComponent.colorEnd),
+				.onColorChanged = [entity](Silica::Color c) mutable {
+					entity.getComponent<ParticleSystemComponent>().colorEnd = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
+				}
 			})) });
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
@@ -1442,42 +1445,14 @@ namespace Axion {
 			std::vector<Silica::Slot> uiSlots;
 
 			std::string currentTypeStr = (rigidBodyComponent.type == RigidBodyComponent::BodyType::Static) ? "Static" : "Dynamic";
-			auto bodyTypeCombo = Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.anchorContent = Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = currentTypeStr })
-				}),
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::GetTheme().Background_Popup,
-					.child = Silica::MakeWidget<Silica::SVerticalBox>({
-						.spacing = 0.0f,
-						.slots = {
-							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
-								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::GetTheme().Accent_Primary,
-								.onClick = [entity, triggerRebuild]() mutable {
-									entity.getComponent<RigidBodyComponent>().type = RigidBodyComponent::BodyType::Static;
-									triggerRebuild();
-									return Silica::EventReply::handled();
-								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Static" })
-							})},
-							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
-								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::GetTheme().Accent_Primary,
-								.onClick = [entity, triggerRebuild]() mutable {
-									entity.getComponent<RigidBodyComponent>().type = RigidBodyComponent::BodyType::Dynamic;
-									triggerRebuild();
-									return Silica::EventReply::handled();
-								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Dynamic" })
-							})}
-						}
-					})
-				})
+			auto bodyTypeCombo = Silica::MakeWidget<Silica::SComboBox>({
+				.options = { "Static", "Dynamic" },
+				.initialValue = currentTypeStr,
+				.searchable = false,
+				.onValueChanged = [entity, triggerRebuild](const std::string& val) mutable {
+					entity.getComponent<RigidBodyComponent>().type = (val == "Static") ? RigidBodyComponent::BodyType::Static : RigidBodyComponent::BodyType::Dynamic;
+					triggerRebuild();
+				}
 			});
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Body Type", bodyTypeCombo) });
@@ -1897,42 +1872,14 @@ namespace Axion {
 			std::vector<Silica::Slot> uiSlots;
 
 			std::string currentTypeStr = (gravitySourceComponent.type == GravitySourceComponent::Type::Directional) ? "Directional" : "Point";
-			auto typeCombo = Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.anchorContent = Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = currentTypeStr })
-				}),
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::GetTheme().Background_Popup,
-					.child = Silica::MakeWidget<Silica::SVerticalBox>({
-						.spacing = 0.0f,
-						.slots = {
-							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
-								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::GetTheme().Accent_Primary,
-								.onClick = [entity, triggerRebuild]() mutable {
-									entity.getComponent<GravitySourceComponent>().type = GravitySourceComponent::Type::Directional;
-									triggerRebuild();
-									return Silica::EventReply::handled();
-								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Directional" })
-							})},
-							{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
-								.color = Silica::Color::transparent(),
-								.hoverColor = Silica::GetTheme().Accent_Primary,
-								.onClick = [entity, triggerRebuild]() mutable {
-									entity.getComponent<GravitySourceComponent>().type = GravitySourceComponent::Type::Point;
-									triggerRebuild();
-									return Silica::EventReply::handled();
-								},
-								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Point" })
-							})}
-						}
-					})
-				})
+			auto typeCombo = Silica::MakeWidget<Silica::SComboBox>({
+				.options = { "Directional", "Point" },
+				.initialValue = currentTypeStr,
+				.searchable = false,
+				.onValueChanged = [entity, triggerRebuild](const std::string& val) mutable {
+					entity.getComponent<GravitySourceComponent>().type = (val == "Directional") ? GravitySourceComponent::Type::Directional : GravitySourceComponent::Type::Point;
+					triggerRebuild();
+				}
 			});
 
 			uiSlots.push_back({ {0,0}, MakePropertyRow("Type", typeCombo) });
