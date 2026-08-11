@@ -11,6 +11,7 @@
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/EditorUtils.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
@@ -400,7 +401,6 @@ namespace Axion {
 		return Silica::MakeWidget<Silica::SBox>({
 			.padding = { 5.0f, 5.0f },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
-//			.hoverColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 8.0f,
 				.slots = {
@@ -427,7 +427,7 @@ namespace Axion {
 		for (const auto& item : m_directoryEntries) {
 			const auto& path = item.path;
 			if (!matchesSearch(item.displayName)) continue;
-			if (m_onlyEngineAssets && !item.isDir && !isEngineAssetExtension(path)) continue;
+			if (m_onlyEngineAssets && !item.isDir && !EditorUtils::isEngineAssetExtension(path)) continue;
 
 			Silica::TextureID iconTex = item.isDir ? SilicaContext::getIcon("FolderIcon") : SilicaContext::getIcon("FileIcon");
 
@@ -459,6 +459,90 @@ namespace Axion {
 					},
 					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Reload Material" })
 				}) });
+			}
+
+			if (!item.isDir) {
+				std::string ext = path.extension().string();
+				auto openInListContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+
+				// -- Open In Viewport --
+				if (ext == ".axscene") {
+					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+						.padding = {8, 4},
+						.color = Silica::Color::transparent(),
+						.hoverColor = Silica::GetTheme().Accent_Primary,
+						.onClick = [path]() {
+							SceneManager::loadScene(path);
+							return Silica::EventReply::handled();
+						},
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Viewport" })
+					}) });
+				}
+
+				// -- Open In Visual Script Editor --
+				if (ext == ".axvs") {
+					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+						.padding = {8, 4},
+						.color = Silica::Color::transparent(),
+						.hoverColor = Silica::GetTheme().Accent_Primary,
+						.onClick = [this, path]() {
+							if (m_openVisualScriptPanel) m_openVisualScriptPanel(path);
+							return Silica::EventReply::handled();
+						},
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Visual Script Editor" })
+					}) });
+				}
+
+				// -- Open In Quartz Editor --
+				if (EditorUtils::isTextEditorFile(ext)) {
+					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+						.padding = {8, 4},
+						.color = Silica::Color::transparent(),
+						.hoverColor = Silica::GetTheme().Accent_Primary,
+						.onClick = [this, path]() {
+							if (m_openTextFile) m_openTextFile(path);
+							return Silica::EventReply::handled();
+						},
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Quartz Editor" })
+					}) });
+				}
+
+				// -- Open In External Program --
+				std::string progName = PlatformUtils::getDefaultProgramName(path);
+				std::string btnText = progName.empty() ? "System Default (External)" : progName + " (External)";
+
+				openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+					.padding = {8, 4},
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::GetTheme().Accent_Primary,
+					.onClick = [path]() {
+						PlatformUtils::openExternally(path);
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = btnText })
+				}) });
+
+				// -- Create Submenu Anchor --
+				auto openInSubMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
+					.openOnHover = true,
+					.openToRight = true,
+					.showArrow = true,
+					.anchorContent = Silica::MakeWidget<Silica::SButton>({
+						.padding = {8, 4},
+						.color = Silica::Color::transparent(),
+						.hoverColor = Silica::GetTheme().Accent_Primary,
+						.onClick = []() { return Silica::EventReply::unhandled(); },
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open in..." })
+					}),
+					.menuContent = Silica::MakeWidget<Silica::SBox>({
+						.padding = {5, 5},
+						.borderThickness = Silica::GetTheme().Border_Thickness,
+						.backgroundColor = Silica::GetTheme().Background_Popup,
+						.child = openInListContent
+					})
+				});
+
+				ctxMenu->addSlot({ {0,0}, openInSubMenu });
 			}
 
 			ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
@@ -592,6 +676,9 @@ namespace Axion {
 						}
 						else if (path.extension() == ".axvs" && m_openVisualScriptPanel) {
 							m_openVisualScriptPanel(path);
+						}
+						else if (EditorUtils::isEngineAssetExtension(path.extension().string()) && m_openTextFile) {
+							m_openTextFile(path);
 						}
 					}
 					return Silica::EventReply::handled();
@@ -957,7 +1044,7 @@ namespace Axion {
 					.color = Silica::GetTheme().Accent_Danger,
 					.onClick = [this]() {
 						if (m_onAssetDeleted) m_onAssetDeleted(*m_pendingDelete);
-						if (isEngineAssetExtension(*m_pendingDelete)) {
+						if (EditorUtils::isEngineAssetExtension(*m_pendingDelete)) {
 							UUID assetUUID = AssetManager::getAssetUUID(*m_pendingDelete);
 							if (assetUUID.isValid()) {
 								AssetManager::removeAsset(assetUUID);
@@ -1038,12 +1125,6 @@ namespace Axion {
 		if (m_searchString.empty()) return true;
 		auto lower = [](std::string s) { std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
 		return lower(name).find(lower(m_searchString)) != std::string::npos;
-	}
-
-	bool ContentBrowser::isEngineAssetExtension(const std::filesystem::path& path) {
-		auto ext = path.extension().string();
-		std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-		return ext == ".axmesh" || ext == ".axsky" || ext == ".axshader" || ext == ".axmat" || ext == ".axaudio" || ext == ".axtex" || ext == ".axpmat" || ext == ".axprefab" || ext == ".axpso" || ext == ".axscene" || ext == ".axtcube" || ext == ".axanim" || ext == ".axskelmesh" || ext == ".axvs";
 	}
 
 	void ContentBrowser::deletePath(const std::filesystem::path& path) {

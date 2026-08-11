@@ -53,6 +53,10 @@ namespace Axion {
 
 		static void showInFileExplorer(const std::filesystem::path& path);
 		static void openFolderInFileExplorer(const std::filesystem::path& path);
+
+		static void openExternally(const std::filesystem::path& path);
+		static std::string getDefaultProgramName(const std::filesystem::path& path);
+
 		static std::filesystem::path getExecutableDirectory();
 
 		static void setCurrentThreadName(const std::string& name);

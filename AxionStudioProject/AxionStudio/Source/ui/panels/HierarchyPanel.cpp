@@ -83,6 +83,11 @@ namespace Axion {
 			tag = entity.getComponent<TagComponent>().tag;
 		}
 
+		bool hasChildren = false;
+		if (entity.hasComponent<RelationshipComponent>()) {
+			hasChildren = !entity.getComponent<RelationshipComponent>().children.empty();
+		}
+
 		// -- Right Click Context Menu --
 		auto contextMenu = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 5.0f, 5.0f },
@@ -185,6 +190,7 @@ namespace Axion {
 			.yTextOffset = 16.0f,
 			.initiallyOpen = m_openNodes.find((entt::entity)entity) != m_openNodes.end(),
 			.isSelected = m_selectedEntity == entity,
+			.isLeaf = !hasChildren,
 			.isDragged = [entity]() {
 				return Silica::DragDrop::isDraggingType("Entity") && std::any_cast<Entity>(Silica::DragDrop::getPayload().data) == entity;
 			},

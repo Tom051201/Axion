@@ -14,6 +14,8 @@
 #include "AxionStudio/Vendor/Silica/include/SImage.h"
 #include "AxionStudio/Vendor/Silica/include/SDockspace.h"
 
+#include "AxionStudio/Vendor/Quartz/include/SQuartzEditor.h"
+
 #include "AxionStudio/Source/core/EditorCamera.h"
 
 namespace Axion {
@@ -26,6 +28,7 @@ namespace Axion {
 	class HierarchyPanel;
 	class EntityPropertiesPanel;
 	class ViewportPanel;
+	class AssetLibraryPanel;
 
 	enum class EditorState {
 		Edit = 0,
@@ -79,7 +82,10 @@ namespace Axion {
 		Ref<HierarchyPanel> m_hierarchyPanel;
 		Ref<EntityPropertiesPanel> m_propertiesPanel;
 		Ref<ViewportPanel> m_viewportPanel;
+		Ref<AssetLibraryPanel> m_assetLibraryPanel;
 
+		// -- Text Editor Tabs --
+		std::unordered_map<std::string, std::string> m_openTextEditors;
 
 		// -- ImGuizmo --
 		int m_gizmoType = ImGuizmo::TRANSLATE;
@@ -95,6 +101,7 @@ namespace Axion {
 		void saveScene();
 		void saveSceneAs();
 		void drawOverlay();
+		void openTextEditorTab(const std::filesystem::path& filepath);
 
 		bool onKeyPressed(KeyPressedEvent& e);
 

@@ -42,6 +42,7 @@ namespace Axion {
 			m_closeGlobalModal = close;
 		}
 		void setAssetRenamedCallback(const std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)>& func) { m_onAssetRenamed = func; }
+		void setOpenTextFileCallback(std::function<void(const std::filesystem::path&)> callback) { m_openTextFile = callback; }
 
 		Silica::WidgetPtr getWidget();
 
@@ -90,6 +91,7 @@ namespace Axion {
 		std::function<void(Silica::WidgetPtr)> m_openGlobalModal;
 		std::function<void()> m_closeGlobalModal;
 		std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)> m_onAssetRenamed;
+		std::function<void(const std::filesystem::path&)> m_openTextFile;
 
 		// -- Modals --
 		std::shared_ptr<AudioImportModal> m_audioImportModal;
@@ -118,7 +120,6 @@ namespace Axion {
 		void refreshDirectory();
 		void resetRenaming();
 		bool matchesSearch(const std::string& name);
-		bool isEngineAssetExtension(const std::filesystem::path& path);
 		void deletePath(const std::filesystem::path& path);
 		std::vector<std::filesystem::path> findRelatedFiles(const std::filesystem::path& path);
 

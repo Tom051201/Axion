@@ -7,6 +7,9 @@
 #include <winternl.h>
 #include <shobjidl.h>
 #include <processthreadsapi.h>
+#include <shellapi.h>
+#include <Shlwapi.h>
+#pragma comment(lib, "Shlwapi.lib")
 
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
@@ -268,6 +271,59 @@ namespace Axion {
 
 		std::wstring command = L"explorer.exe \"" + path.wstring() + L"\"";
 		_wsystem(command.c_str());
+	}
+
+	void PlatformUtils::openExternally(const std::filesystem::path& path) {
+		if (!std::filesystem::exists(path)) return;
+
+		ShellExecuteW(nullptr, L"open", path.wstring().c_str(), nullptr, nullptr, SW_SHOW);
+	}
+
+	std::string PlatformUtils::getDefaultProgramName(const std::filesystem::path& path) {
+		if (!path.has_extension()) return "";
+		std::string extString = path.extension().string();
+
+		// -- Time Based Cache --
+		struct CacheEntry {
+			std::string name;
+			std::chrono::steady_clock::time_point timestamp;
+		};
+		static std::unordered_map<std::string, CacheEntry> s_ProgramCache;
+
+		auto now = std::chrono::steady_clock::now();
+		if (s_ProgramCache.find(extString) != s_ProgramCache.end()) {
+			if (std::chrono::duration_cast<std::chrono::seconds>(now - s_ProgramCache[extString].timestamp).count() < 5) {
+				return s_ProgramCache[extString].name;
+			}
+		}
+
+		std::wstring ext = path.extension().wstring();
+		DWORD bufferSize = 0;
+
+		// -- Create Text Buffer --
+		HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_FRIENDLYAPPNAME, ext.c_str(), NULL, NULL, &bufferSize);
+		if (FAILED(hr) && hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) {
+			s_ProgramCache[extString] = { "", now };
+			return "";
+		}
+
+		// -- Get Program Name --
+		std::vector<wchar_t> buffer(bufferSize);
+		hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_FRIENDLYAPPNAME, ext.c_str(), NULL, buffer.data(), &bufferSize);
+		if (SUCCEEDED(hr)) {
+			// -- Convert UTF-16 To UTF-8 --
+			int size_needed = WideCharToMultiByte(CP_UTF8, 0, buffer.data(), -1, NULL, 0, NULL, NULL);
+			if (size_needed > 0) {
+				std::string result(size_needed - 1, 0);
+				WideCharToMultiByte(CP_UTF8, 0, buffer.data(), -1, &result[0], size_needed - 1, NULL, NULL);
+
+				s_ProgramCache[extString] = { result, now };
+				return result;
+			}
+		}
+
+		s_ProgramCache[extString] = { "", now };
+		return "";
 	}
 
 	std::filesystem::path PlatformUtils::getExecutableDirectory() {

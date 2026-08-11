@@ -2,4 +2,9 @@ MaxAssetsPerFrame: 2
 ContentBrowser:
   ShowFileExtensions: true
   OnlyEngineAssets: true
-  ThumbnailSize: 81
+  ThumbnailSize: 86
+OpenTextEditors:
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\animations\CesiumMan\CesiumMan_Anim_0.axanim
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\scripts\test.axvs
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\scenes\TestScene.axscene
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\scripts\SunLight.axvs

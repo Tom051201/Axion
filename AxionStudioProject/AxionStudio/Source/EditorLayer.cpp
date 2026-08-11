@@ -21,11 +21,13 @@
 #include "AxionStudio/Source/ui/panels/AssetManagerPanel.h"
 #include "AxionStudio/Source/ui/panels/HierarchyPanel.h"
 #include "AxionStudio/Source/ui/panels/EntityPropertiesPanel.h"
+#include "AxionStudio/Source/ui/panels/AssetLibraryPanel.h"
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/core/WireframeRenderer.h"
+#include "AxionStudio/Source/core/EditorUtils.h"
 
 namespace Axion {
 
@@ -105,14 +107,9 @@ namespace Axion {
 				EditorModalManager::close();
 			}
 		);
-		m_contentBrowserPanel->setAssetRenamedCallback([this](const std::filesystem::path& oldPath, const std::filesystem::path& newPath) {
-			m_visualScriptPanel->onAssetRenamed(oldPath, newPath);
-			// Notify Other Panels Here As Well
-		});
-		m_contentBrowserPanel->setAssetDeletedCallback([this](const std::filesystem::path& path) {
-			m_visualScriptPanel->onAssetDeleted(path);
-			// Notify Other Panels Here As Well
-		});
+		m_contentBrowserPanel->setAssetRenamedCallback([this](const std::filesystem::path& oldPath, const std::filesystem::path& newPath) { m_visualScriptPanel->onAssetRenamed(oldPath, newPath); });
+		m_contentBrowserPanel->setAssetDeletedCallback([this](const std::filesystem::path& path) { m_visualScriptPanel->onAssetDeleted(path); });
+		m_contentBrowserPanel->setOpenTextFileCallback([this](const std::filesystem::path& path) { openTextEditorTab(path); });
 		auto contentBrowserWidget = m_contentBrowserPanel->getWidget();
 
 		m_projectOverviewPanel = std::make_shared<ProjectPanel>();
@@ -211,6 +208,9 @@ namespace Axion {
 		m_assetManagerPanel = std::make_shared<AssetManagerPanel>();
 		auto assetManagerWidget = m_assetManagerPanel->getWidget();
 
+		m_assetLibraryPanel = std::make_shared<AssetLibraryPanel>();
+		auto assetLibraryWidget = m_assetLibraryPanel->getWidget();
+
 		// ----- Setup Workspace And DockSpace -----
 		auto workspace = Silica::MakeWidget<Silica::SWorkspace>({
 			.initialTitle = "Hierarchy",
@@ -227,12 +227,18 @@ namespace Axion {
 		m_dock->registerTab("Project Settings", projectSettings);
 		m_dock->registerTab("Scene Settings", sceneSettings);
 		m_dock->registerTab("Asset Inspector", assetManagerWidget);
-
-		m_dock->loadLayout("AxionStudio/Config/EditorLayout.ini");
+		m_dock->registerTab("Asset Library", assetLibraryWidget);
 
 		if (!m_dock->getRootNode() || (m_dock->getRootNode()->tabs.size() <= 1 && m_dock->getRootNode()->splitDirection == Silica::SplitDirection::None)) {
 			auto root = m_dock->getRootNode();
 			m_dock->splitNode(root, Silica::SplitDirection::Vertical, 0.75f, "Content Browser", contentBrowserWidget, false);
+
+			root->child[1]->tabs.push_back({
+				.title = "Asset Library",
+				.content = assetLibraryWidget,
+				.hitRect = {}
+			});
+
 			auto topHalf = root->child[0];
 			m_dock->splitNode(topHalf, Silica::SplitDirection::Horizontal, 0.2f, "Viewport", fullViewportPanel, false);
 			auto viewportNode = topHalf->child[1];
@@ -330,12 +336,24 @@ namespace Axion {
 				}
 
 				m_contentBrowserPanel->loadSettings(config);
-				// Load Other Panels Here As Well
+
+				// -- Restore Open Text Editors --
+				if (config["OpenTextEditors"]) {
+					for (auto pathNode : config["OpenTextEditors"]) {
+						std::string pathStr = pathNode.as<std::string>();
+						if (std::filesystem::exists(pathStr)) {
+							openTextEditorTab(pathStr);
+						}
+					}
+				}
+
 			}
 			catch (const YAML::Exception& e) {
 				AX_CORE_LOG_WARN("Failed to parse Editor Settings: {}", e.what());
 			}
 		}
+
+		m_dock->loadLayout("AxionStudio/Config/EditorLayout.ini");
 
 	}
 
@@ -345,14 +363,19 @@ namespace Axion {
 		out << YAML::BeginMap;
 		out << YAML::Key << "MaxAssetsPerFrame" << YAML::Value << AssetManager::getMaxAssetsPerFrame();
 		m_contentBrowserPanel->saveSettings(out);
-		// Save Other Panels Here As Well
+
+		// -- Save Open Text Editors --
+		out << YAML::Key << "OpenTextEditors" << YAML::Value << YAML::BeginSeq;
+		for (const auto& [pathStr, tabName] : m_openTextEditors) {
+			out << pathStr;
+		}
+		out << YAML::EndSeq;
 		out << YAML::EndMap;
 		std::ofstream fout("AxionStudio/Config/EditorSettings.yaml");
 		if (fout.is_open()) {
 			fout << out.c_str();
 			fout.close();
 		}
-
 
 		m_selectedEntity = {};
 		if (m_propertiesPanel) m_propertiesPanel->setEntity({});
@@ -954,6 +977,59 @@ namespace Axion {
 		}
 
 		return false;
+	}
+
+	void EditorLayer::openTextEditorTab(const std::filesystem::path& filepath) {
+		std::string pathStr = filepath.string();
+
+		if (m_openTextEditors.find(pathStr) != m_openTextEditors.end()) {
+			std::string existingTabName = m_openTextEditors[pathStr];
+			if (m_dock) m_dock->openTab(existingTabName);
+			return;
+		}
+
+		// -- Setup Language Profile --
+		Quartz::LanguageProfile lang = Quartz::LanguageProfile::CPlusPlus();
+		std::string ext = filepath.extension().string();
+
+		if (ext == ".cs") {
+			lang = Quartz::LanguageProfile::CSharp();
+		}
+		else if (ext == ".hlsl" || ext == ".glsl") {
+			lang = Quartz::LanguageProfile::HLSL();
+		}
+		else if (ext == ".yaml" || ext == ".axscene" || ext == ".axproj" || EditorUtils::isEngineAssetExtension(filepath)) {
+			lang = Quartz::LanguageProfile::YAML();
+		}
+
+		auto textEditorWidget = Silica::MakeWidget<Quartz::SQuartzEditor>({
+			.initialText = "",
+			.font = &m_font,
+			.language = lang
+		});
+
+		Quartz::SQuartzEditor* editorRaw = textEditorWidget.get();
+
+		textEditorWidget->setSaveFileCallback([editorRaw]() {
+			if (editorRaw) {
+				editorRaw->saveFile();
+				AX_CORE_LOG_INFO("Saved file: {0}", editorRaw->getCurrentFilePath().filename().string());
+			}
+		});
+
+		// -- Load Actual File --
+		textEditorWidget->openFile(filepath);
+
+		// -- Register Tab --
+		std::string tabName = filepath.filename().string() + "##" + filepath.string();
+		m_openTextEditors[pathStr] = tabName;
+
+		if (m_dock) {
+			m_dock->registerTab(tabName, textEditorWidget);
+			m_dock->openTab(tabName);
+		}
+
+		Silica::SWidget::setFocusedWidget(editorRaw);
 	}
 
 }

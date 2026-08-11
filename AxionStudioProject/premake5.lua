@@ -16,7 +16,8 @@ project "AxionStudio"
 		"**.h",
 		"**.rc",
 		"AxionStudio/Vendor/Silica/**.h",
-		"AxionStudio/Vendor/Silica/**.cpp"
+		"AxionStudio/Vendor/Silica/**.cpp",
+		"AxionStudio/Vendor/Quartz/**.h"
 	}
 	
 	includedirs {
@@ -29,11 +30,13 @@ project "AxionStudio"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
 		"%{wks.location}/AxionSubsystems/AxionAssetPipelineProject",
-		"AxionStudio/Vendor/Silica/include"
+		"AxionStudio/Vendor/Silica/include",
+		"AxionStudio/Vendor/Quartz/include",
 	}
 
 	libdirs {
-		"AxionStudio/Vendor/Silica/libs"
+		"AxionStudio/Vendor/Silica/libs",
+		"AxionStudio/Vendor/Quartz/libs",
 	}
 
 	links {
@@ -58,21 +61,30 @@ project "AxionStudio"
 		defines "AX_DEBUG"
 		runtime "Debug"
 		symbols "on"
-		links { "Silica-Debug" }
+		links {
+			"Silica-Debug",
+			"Quartz-Debug",
+		}
 	
 	filter { "system:windows", "configurations:Release" }
 		kind "ConsoleApp"
 		defines "AX_RELEASE"
 		runtime "Release"
 		optimize "on"
-		links { "Silica-Release" }
+		links {
+			"Silica-Release",
+			"Quartz-Release",
+		}
 	
 	filter { "system:windows", "configurations:Distribution" }
 		kind "WindowedApp"
 		defines "AX_DISTRIBUTION"
 		runtime "Release"
 		optimize "on"
-		links { "Silica-Dist" }
+		links {
+			"Silica-Dist",
+			"Quartz-Distribution",
+		}
 
 
 	filter "configurations:Debug"
