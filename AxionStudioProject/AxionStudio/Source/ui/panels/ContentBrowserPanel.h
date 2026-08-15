@@ -8,6 +8,8 @@
 
 #include "AxionStudio/Vendor/Silica/include/SWidget.h"
 #include "AxionStudio/Vendor/Silica/include/SBox.h"
+#include "AxionStudio/Vendor/Silica/include/SHorizontalSplitBox.h"
+#include "AxionStudio/Vendor/Silica/include/SVerticalSplitBox.h"
 
 #include "AxionStudio/Source/ui/modals/AudioImportModal.h"
 #include "AxionStudio/Source/ui/modals/MaterialImportModal.h"
@@ -18,6 +20,8 @@
 #include "AxionStudio/Source/ui/modals/SkyboxImportModal.h"
 #include "AxionStudio/Source/ui/modals/Texture2DImportModal.h"
 #include "AxionStudio/Source/ui/modals/TextureCubeImportModal.h"
+
+#include "AxionStudio/Source/core/VirtualFileSystem.h"
 
 namespace Axion {
 
@@ -52,6 +56,7 @@ namespace Axion {
 			std::filesystem::path path;
 			bool isDir = false;
 			std::string displayName;
+			std::shared_ptr<VFSNode> vfsNode = nullptr;
 		};
 
 		// -- Content browser --
@@ -59,6 +64,18 @@ namespace Axion {
 		std::filesystem::path m_rootDirectory;
 		std::vector<DirItem> m_directoryEntries;
 		bool m_showFileExtensions = true;
+		std::unordered_set<std::string> m_expandedDirectories;
+		Silica::WidgetPtr buildDirectoryTree(const std::filesystem::path& dirPath);
+		float m_treeViewWidth = 220.0f;
+		float m_treeViewTopHeight = 250.0f;
+		std::shared_ptr<Silica::SHorizontalSplitBox> m_splitBox;
+		std::shared_ptr<Silica::SVerticalSplitBox> m_vSplitBox;
+
+		// -- VFS --
+		VirtualFileSystem m_vfs;
+		bool m_viewingCollection = false;
+		std::shared_ptr<VFSNode> m_currentCollection;
+		Silica::WidgetPtr buildCollectionTree(std::shared_ptr<VFSNode> node);
 
 		// -- Search / filtering --
 		std::string m_searchString;

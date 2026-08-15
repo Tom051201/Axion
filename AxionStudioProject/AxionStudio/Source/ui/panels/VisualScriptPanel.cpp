@@ -15,7 +15,7 @@
 #include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
 #include "AxionStudio/Vendor/Silica/include/SImage.h"
 #include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/SSplitBox.h"
+#include "AxionStudio/Vendor/Silica/include/SHorizontalSplitBox.h"
 #include "AxionStudio/Vendor/Silica/include/SCollapsingHeader.h"
 #include "AxionStudio/Vendor/Silica/include/Theme.h"
 #include "AxionStudio/Vendor/Silica/include/SInputFieldFloat.h"
@@ -84,7 +84,7 @@ namespace Axion {
 			return;
 		}
 
-		auto mainContent = Silica::MakeWidget<Silica::SSplitBox>({
+		auto mainContent = Silica::MakeWidget<Silica::SHorizontalSplitBox>({
 			.leftWidth = 250.0f,
 			.leftContent = buildVariablesPanel(),
 			.rightContent = m_nodeEditor

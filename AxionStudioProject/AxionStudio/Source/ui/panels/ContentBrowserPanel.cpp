@@ -31,14 +31,18 @@
 #include "AxionStudio/Vendor/Silica/include/SWrapBox.h"
 #include "AxionStudio/Vendor/Silica/include/SScrollCatcher.h"
 #include "AxionStudio/Vendor/Silica/include/Theme.h"
+#include "AxionStudio/Vendor/Silica/include/STreeNode.h"
 
 namespace Axion {
 
+	// ----- HELPER UI WIDGETS -----
 	class SAssetClickBox : public Silica::SWidget {
 	public:
 
 		struct Args {
 			std::function<void()> onDragStart;
+			std::function<Silica::EventReply(const Silica::DragDropPayload&)> onDragOver;
+			std::function<Silica::EventReply(const Silica::DragDropPayload&)> onDrop;
 			std::function<Silica::EventReply()> onClick;
 			Silica::WidgetPtr child;
 		};
@@ -46,17 +50,33 @@ namespace Axion {
 		void construct(const Args& args) {
 			m_child = args.child;
 			m_onDragStart = args.onDragStart;
+			m_onDragOver = args.onDragOver;
+			m_onDrop = args.onDrop;
 			m_onClick = args.onClick;
 		}
 
-		void computeDesiredSize() override { if (m_child) { m_child->computeDesiredSize(); m_desiredSize = m_child->getDesiredSize(); } }
+		void computeDesiredSize() override {
+			if (m_child) {
+				m_child->computeDesiredSize();
+				m_desiredSize = m_child->getDesiredSize();
+			}
+		}
 
-		void arrangeChildren(const Silica::Geometry& geom) override { SWidget::arrangeChildren(geom); if (m_child) m_child->arrangeChildren(geom); }
+		void arrangeChildren(const Silica::Geometry& geom) override {
+			SWidget::arrangeChildren(geom);
+			if (m_child) m_child->arrangeChildren(geom);
+		}
 
 		void onDraw(Silica::DrawList& dl, const Silica::Geometry& geom) const override {
 			Silica::Color color = Silica::Color::transparent();
 			if (m_isMouseDown) { color = Silica::GetTheme().Accent_Primary; color.setAlpha(150); }
 			else if (m_isHovered) color = Silica::Color(255, 255, 255, 20);
+
+			// -- Drop Zone Highlighting --
+			if (Silica::SWidget::getDragHoveredWidget() == this) {
+				color = Silica::GetTheme().Accent_Primary;
+				color.setAlpha(80);
+			}
 
 			if (color.a() > 0) {
 				uint32_t startIndex = (uint32_t)dl.vertices.size();
@@ -64,12 +84,40 @@ namespace Axion {
 				dl.vertices.push_back({ {geom.position.x + geom.size.x, geom.position.y}, {0, 0}, color });
 				dl.vertices.push_back({ {geom.position.x + geom.size.x, geom.position.y + geom.size.y}, {0, 0}, color });
 				dl.vertices.push_back({ {geom.position.x, geom.position.y + geom.size.y}, {0, 0}, color });
-				dl.indices.push_back(startIndex + 0); dl.indices.push_back(startIndex + 1); dl.indices.push_back(startIndex + 2);
-				dl.indices.push_back(startIndex + 0); dl.indices.push_back(startIndex + 2); dl.indices.push_back(startIndex + 3);
+				dl.indices.push_back(startIndex + 0);
+				dl.indices.push_back(startIndex + 1);
+				dl.indices.push_back(startIndex + 2);
+				dl.indices.push_back(startIndex + 0);
+				dl.indices.push_back(startIndex + 2);
+				dl.indices.push_back(startIndex + 3);
 				if (dl.commands.empty()) dl.commands.push_back({ 0, 0, 0 });
 				dl.commands.back().indexCount += 6;
 			}
 			if (m_child) m_child->onDraw(dl, m_child->getAllocatedGeometry());
+		}
+
+		Silica::EventReply onDragOver(const Silica::Geometry& geom, const Silica::Vec2& pos, const Silica::DragDropPayload& payload) override {
+			if (m_child) {
+				Silica::EventReply reply = m_child->onDragOver(m_child->getAllocatedGeometry(), pos, payload);
+				if (reply.isHandled) return reply;
+			}
+			if (geom.contains(pos) && m_onDragOver) {
+				auto reply = m_onDragOver(payload);
+				if (reply.isHandled) {
+					Silica::SWidget::setDragHoveredWidget(this);
+					return reply;
+				}
+			}
+			return Silica::EventReply::unhandled();
+		}
+
+		Silica::EventReply onDrop(const Silica::Geometry& geom, const Silica::Vec2& pos, const Silica::DragDropPayload& payload) override {
+			if (m_child) {
+				Silica::EventReply reply = m_child->onDrop(m_child->getAllocatedGeometry(), pos, payload);
+				if (reply.isHandled) return reply;
+			}
+			if (geom.contains(pos) && m_onDrop) return m_onDrop(payload);
+			return Silica::EventReply::unhandled();
 		}
 
 		Silica::EventReply onMouseWheel(const Silica::Geometry& geom, const Silica::Vec2& pos, float delta) override {
@@ -124,6 +172,8 @@ namespace Axion {
 
 		Silica::WidgetPtr m_child;
 		std::function<void()> m_onDragStart;
+		std::function<Silica::EventReply(const Silica::DragDropPayload&)> m_onDragOver;
+		std::function<Silica::EventReply(const Silica::DragDropPayload&)> m_onDrop;
 		std::function<Silica::EventReply()> m_onClick;
 		bool m_isMouseDown = false;
 		bool m_isHovered = false;
@@ -145,12 +195,36 @@ namespace Axion {
 			m_child = args.child;
 		}
 
-		void computeDesiredSize() override { if (m_child) { m_child->computeDesiredSize(); m_desiredSize = m_child->getDesiredSize(); } }
-		void arrangeChildren(const Silica::Geometry& geo) override { SWidget::arrangeChildren(geo); if (m_child) m_child->arrangeChildren(geo); }
-		void onDraw(Silica::DrawList& dl, const Silica::Geometry& geo) const override { if (m_child) m_child->onDraw(dl, geo); }
-		Silica::EventReply onMouseMove(const Silica::Geometry& geo, const Silica::Vec2& pos) override { if (m_child) return m_child->onMouseMove(geo, pos); return Silica::EventReply::unhandled(); }
-		Silica::EventReply onMouseWheel(const Silica::Geometry& geo, const Silica::Vec2& pos, float delta) override { if (m_child) return m_child->onMouseWheel(geo, pos, delta); return Silica::EventReply::unhandled(); }
-		Silica::EventReply onMouseButtonUp(const Silica::Geometry& geo, const Silica::Vec2& pos, Silica::MouseButton btn) override { if (m_child) return m_child->onMouseButtonUp(geo, pos, btn); return Silica::EventReply::unhandled(); }
+		void computeDesiredSize() override {
+			if (m_child) {
+				m_child->computeDesiredSize();
+				m_desiredSize = m_child->getDesiredSize();
+			}
+		}
+
+		void arrangeChildren(const Silica::Geometry& geo) override { 
+			SWidget::arrangeChildren(geo);
+			if (m_child) m_child->arrangeChildren(geo);
+		}
+
+		void onDraw(Silica::DrawList& dl, const Silica::Geometry& geo) const override {
+			if (m_child) m_child->onDraw(dl, geo);
+		}
+
+		Silica::EventReply onMouseMove(const Silica::Geometry& geo, const Silica::Vec2& pos) override {
+			if (m_child) return m_child->onMouseMove(m_child->getAllocatedGeometry(), pos);
+			return Silica::EventReply::unhandled();
+		}
+
+		Silica::EventReply onMouseWheel(const Silica::Geometry& geo, const Silica::Vec2& pos, float delta) override {
+			if (m_child) return m_child->onMouseWheel(m_child->getAllocatedGeometry(), pos, delta);
+			return Silica::EventReply::unhandled();
+		}
+
+		Silica::EventReply onMouseButtonUp(const Silica::Geometry& geo, const Silica::Vec2& pos, Silica::MouseButton btn) override {
+			if (m_child) return m_child->onMouseButtonUp(m_child->getAllocatedGeometry(), pos, btn);
+			return Silica::EventReply::unhandled();
+		}
 
 		Silica::EventReply onMouseButtonDown(const Silica::Geometry& geo, const Silica::Vec2& pos, Silica::MouseButton btn) override {
 			Silica::EventReply reply = Silica::EventReply::unhandled();
@@ -169,6 +243,16 @@ namespace Axion {
 			return Silica::EventReply::unhandled();
 		}
 
+		Silica::EventReply onDragOver(const Silica::Geometry& geo, const Silica::Vec2& pos, const Silica::DragDropPayload& payload) override {
+			if (m_child) return m_child->onDragOver(m_child->getAllocatedGeometry(), pos, payload);
+			return Silica::EventReply::unhandled();
+		}
+
+		Silica::EventReply onDrop(const Silica::Geometry& geo, const Silica::Vec2& pos, const Silica::DragDropPayload& payload) override {
+			if (m_child) return m_child->onDrop(m_child->getAllocatedGeometry(), pos, payload);
+			return Silica::EventReply::unhandled();
+		}
+
 	private:
 
 		std::function<void()> m_onBack;
@@ -184,7 +268,7 @@ namespace Axion {
 	// ----- CONTENT BROWSER PANEL IMPLEMENTION -----
 	void ContentBrowser::setup() {
 		if (ProjectManager::hasProject()) {
-			m_rootDirectory = ProjectManager::getProject()->getAssetsPath();
+			m_rootDirectory = ProjectManager::getProject()->getProjectPath();
 			m_currentDirectory = m_rootDirectory;
 			refreshDirectory();
 		}
@@ -213,6 +297,9 @@ namespace Axion {
 	void ContentBrowser::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
+		if (m_splitBox) m_treeViewWidth = m_splitBox->getLeftWidth();
+		if (m_vSplitBox) m_treeViewTopHeight = m_vSplitBox->getTopHeight();
+
 		if (!ProjectManager::hasProject()) {
 			m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
 				.horizontalAlign = Silica::HorizontalAlign::Center,
@@ -224,11 +311,192 @@ namespace Axion {
 			return;
 		}
 
-		auto mainLayout = Silica::MakeWidget<Silica::SBorderLayout>({
-			.topBar = buildToolbar(),
-			.contentArea = buildContentArea()
+		// -- Collections --
+		auto collectionsTreeContainer = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f});
+		if (m_vfs.getRoot()) {
+			for (const auto& child : m_vfs.getRoot()->children) {
+				if (child->isDirectory) {
+					collectionsTreeContainer->addSlot({ {0,0}, buildCollectionTree(child) });
+				}
+			}
+		}
+
+		auto collectionsBackgroundClicker = Silica::MakeWidget<SAssetClickBox>({
+			.onDragStart = []() {},
+			.onDragOver = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
+			.onDrop = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
+			.onClick = [this]() {
+				m_viewingCollection = true;
+				m_currentCollection = m_vfs.getRoot();
+				refresh();
+				return Silica::EventReply::handled();
+			},
+			.child = collectionsTreeContainer
 		});
 
+		auto collectionsTreeScroll = Silica::MakeWidget<Silica::SScrollBox>({
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 5.0f, 5.0f },
+				.child = collectionsBackgroundClicker
+			})
+		});
+
+		auto collectionsTreeBgMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+		collectionsTreeBgMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+			.padding = {8, 4},
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
+			.onClick = [this]() {
+				EditorActionQueue::push([this]() {
+					std::string baseName = "New Collection";
+					std::string finalName = baseName;
+					int counter = 1;
+					auto root = m_vfs.getRoot();
+					auto nameExists = [&](const std::string& n) { for (auto& c : root->children) if (c->name == n) return true; return false; };
+					while (nameExists(finalName)) finalName = baseName + " " + std::to_string(counter++);
+
+					m_vfs.createFolder(root, finalName);
+					m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+
+					m_viewingCollection = true;
+					m_currentCollection = root;
+					m_itemBeingRenamed = finalName;
+					m_itemRenameString = finalName;
+					m_startRenaming = true;
+					refresh();
+				});
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Collection" })
+		}) });
+
+		auto collectionsTreeScrollContext = Silica::MakeWidget<Silica::SMenuAnchor>({
+			.openOnHover = false,
+			.openOnRightClick = true,
+			.openAtMousePos = true,
+			.anchorContent = collectionsTreeScroll,
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.padding = {5, 5},
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup,
+				.child = collectionsTreeBgMenu
+			})
+		});
+
+		auto collectionsDropZone = Silica::MakeWidget<Silica::SBox>({
+			.onDragOver = [](const Silica::DragDropPayload& payload) {
+				if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
+				return Silica::EventReply::unhandled();
+			},
+			.onDrop = [this](const Silica::DragDropPayload& payload) mutable {
+				auto targetNode = m_vfs.getRoot();
+
+				EditorActionQueue::push([this, payload, targetNode]() mutable {
+					if (payload.type == "AssetPath") {
+						std::filesystem::path droppedPath = std::any_cast<std::filesystem::path>(payload.data);
+						if (!std::filesystem::is_directory(droppedPath)) m_vfs.addFile(targetNode, droppedPath);
+					}
+					else if (payload.type == "VFSNode") {
+						auto droppedNode = std::any_cast<std::shared_ptr<VFSNode>>(payload.data);
+						if (droppedNode != targetNode) m_vfs.moveNode(droppedNode, targetNode);
+					}
+
+					m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+					m_viewingCollection = true;
+					m_currentCollection = targetNode;
+					refresh();
+				});
+				return Silica::EventReply::handled();
+			},
+			.child = collectionsTreeScrollContext
+		});
+
+		// -- Physical Folder Layout --
+		auto physicalBackgroundClicker = Silica::MakeWidget<SAssetClickBox>({
+			.onDragStart = []() {},
+			.onDragOver = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
+			.onDrop = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
+			.onClick = [this]() {
+				m_viewingCollection = false;
+				m_currentDirectory = m_rootDirectory;
+				refresh();
+				return Silica::EventReply::handled();
+			},
+			.child = buildDirectoryTree(m_rootDirectory)
+		});
+
+		auto physicalTreeScroll = Silica::MakeWidget<Silica::SScrollBox>({
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.padding = { 5.0f, 5.0f },
+				.child = physicalBackgroundClicker
+			})
+		});
+
+		auto physicalTreeBgMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+		physicalTreeBgMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Primary,
+			.onClick = [this]() {
+				std::string baseName = "New Folder";
+				std::filesystem::path newFolderPath = m_rootDirectory / baseName;
+				int counter = 1;
+				while (std::filesystem::exists(newFolderPath)) {
+					newFolderPath = m_rootDirectory / (baseName + " " + std::to_string(counter));
+					++counter;
+				}
+				std::error_code ec;
+				std::filesystem::create_directory(newFolderPath, ec);
+				if (!ec) {
+					m_viewingCollection = false;
+					m_currentDirectory = m_rootDirectory;
+					m_itemBeingRenamed = newFolderPath;
+					m_itemRenameString = newFolderPath.filename().string();
+					m_startRenaming = true;
+					refresh();
+				}
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Folder in Root" })
+		}) });
+
+		auto physicalTreeScrollContext = Silica::MakeWidget<Silica::SMenuAnchor>({
+			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
+			.anchorContent = physicalTreeScroll,
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.padding = {5, 5}, .borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup, .child = physicalTreeBgMenu
+			})
+		});
+
+		// -- Vertically Split Collections And Physical Folder Layout --
+		m_vSplitBox = Silica::MakeWidget<Silica::SVerticalSplitBox>({
+			.topHeight = m_treeViewTopHeight,
+			.topContent = collectionsTreeScrollContext,
+			.bottomContent = physicalTreeScrollContext
+		});
+
+		// -- Grid View For Content --
+		auto gridView = buildContentArea();
+
+		// -- Horizontally Split Trees And Grid --
+		m_splitBox = Silica::MakeWidget<Silica::SHorizontalSplitBox>({
+			.leftWidth = m_treeViewWidth,
+			.leftContent = Silica::MakeWidget<Silica::SBox>({
+				.backgroundColor = Silica::GetTheme().Surface_Primary,
+				.child = m_vSplitBox
+			}),
+			.rightContent = Silica::MakeWidget<Silica::SBox>({
+				.backgroundColor = Silica::GetTheme().Surface_Primary,
+				.child = gridView
+			})
+		});
+
+		// -- Assemble Toolbar and Split Boxes --
+		auto mainLayout = Silica::MakeWidget<Silica::SBorderLayout>({
+			.topBar = buildToolbar(),
+			.contentArea = m_splitBox
+		});
+
+		// -- Mouse Navigation Catcher--
 		auto navCatcher = Silica::MakeWidget<SMouseNavCatcher>({
 			.onBack = [this]() {
 				if (!m_backHistory.empty()) {
@@ -258,7 +526,7 @@ namespace Axion {
 			});
 		}
 
-		// -- Assemble --
+		// -- Assemble All --
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
 			.horizontalAlign = Silica::HorizontalAlign::Fill,
 			.verticalAlign = Silica::VerticalAlign::Fill,
@@ -574,15 +842,28 @@ namespace Axion {
 				.padding = {8, 4},
 				.color = Silica::Color::transparent(),
 				.hoverColor = Silica::GetTheme().Accent_Danger,
-				.onClick = [this, path]() {
-					m_pendingDelete = path;
-					m_relatedFilesToDelete = findRelatedFiles(path);
-					m_deleteRelatedFiles = true;
-					m_openDeletePopup = true;
-					rebuildUI();
+				.onClick = [this, path, item]() {
+					if (m_viewingCollection && item.vfsNode) {
+						// -- VFS Delete --
+						EditorActionQueue::push([this, item]() {
+							auto& siblings = item.vfsNode->parent->children;
+							siblings.erase(std::remove(siblings.begin(), siblings.end(), item.vfsNode), siblings.end());
+							std::filesystem::path vfsPath = ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml";
+							m_vfs.save(vfsPath);
+							refresh();
+						});
+					}
+					else {
+						// -- Physical Delete --
+						m_pendingDelete = path;
+						m_relatedFilesToDelete = findRelatedFiles(path);
+						m_deleteRelatedFiles = true;
+						m_openDeletePopup = true;
+						rebuildUI();
+					}
 					return Silica::EventReply::handled();
 				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Delete" })
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete" })
 			}) });
 
 
@@ -594,6 +875,17 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_itemRenameString,
 						.onTextCommitted = [this, path, item](const std::string& newText) {
+							if (m_viewingCollection && item.vfsNode) {
+								// -- Rename Virtual Node --
+								item.vfsNode->name = newText;
+								std::filesystem::path vfsPath = ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml";
+								m_vfs.save(vfsPath);
+								resetRenaming();
+								refresh();
+								return;
+							}
+
+							// -- Rename Physical --
 							std::filesystem::path newPath = path.parent_path() / newText;
 							if (!item.isDir && path.has_extension()) {
 								std::string ext = path.extension().string();
@@ -656,32 +948,38 @@ namespace Axion {
 
 			// -- Clickable Folder / File --
 			auto assetClickBox = Silica::MakeWidget<SAssetClickBox>({
-				.onDragStart = [path]() {
-					Silica::DragDrop::beginDrag("AssetPath", path, path.filename().string(), Silica::GetTheme().Font_Default);
-				},
-				.onClick = [this, path, item]() {
-					auto now = std::chrono::steady_clock::now();
-					bool isDouble = (path == lastClickedPath) && (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastClickTime).count() < 300);
-					lastClickTime = now; lastClickedPath = path;
-
-					if (isDouble) {
-						if (item.isDir) {
-							m_backHistory.push_back(m_currentDirectory);
-							m_forwardHistory.clear();
-							m_currentDirectory = path;
-							refresh();
-						}
-						else if (path.extension() == ".axscene") {
-							SceneManager::loadScene(path);
-						}
-						else if (path.extension() == ".axvs" && m_openVisualScriptPanel) {
-							m_openVisualScriptPanel(path);
-						}
-						else if (EditorUtils::isEngineAssetExtension(path.extension().string()) && m_openTextFile) {
-							m_openTextFile(path);
-						}
+				.onDragStart = [this, path, item]() {
+					if (m_viewingCollection && item.vfsNode) {
+						Silica::DragDrop::beginDrag("VFSNode", item.vfsNode, item.displayName, Silica::GetTheme().Font_Default);
 					}
-					return Silica::EventReply::handled();
+					else {
+						Silica::DragDrop::beginDrag("AssetPath", path, path.filename().string(), Silica::GetTheme().Font_Default);
+					}
+				},
+				.onDragOver = [this, item](const Silica::DragDropPayload& payload) {
+					if (item.isDir && m_viewingCollection && item.vfsNode) {
+						if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
+				},
+				.onDrop = [this, item](const Silica::DragDropPayload& payload) mutable {
+					if (item.isDir && m_viewingCollection && item.vfsNode) {
+						auto targetNode = item.vfsNode;
+			
+						EditorActionQueue::push([this, payload, targetNode]() mutable {
+							if (payload.type == "AssetPath") {
+								m_vfs.addFile(targetNode, std::any_cast<std::filesystem::path>(payload.data));
+							}
+							else if (payload.type == "VFSNode") {
+								auto droppedNode = std::any_cast<std::shared_ptr<VFSNode>>(payload.data);
+								if (droppedNode != targetNode) m_vfs.moveNode(droppedNode, targetNode);
+							}
+							m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+							refresh();
+						});
+						return Silica::EventReply::handled();
+					}
+					return Silica::EventReply::unhandled();
 				},
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 4.0f,
@@ -1012,7 +1310,34 @@ namespace Axion {
 			.child = backgroundMenu
 		});
 
-		return zoomBox;
+		auto gridBackgroundDropZone = Silica::MakeWidget<Silica::SBox>({
+			.onDragOver = [this](const Silica::DragDropPayload& payload) {
+				if (m_viewingCollection && m_currentCollection) {
+					if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
+				}
+				return Silica::EventReply::unhandled();
+			},
+			.onDrop = [this](const Silica::DragDropPayload& payload) mutable {
+				if (m_viewingCollection && m_currentCollection) {
+					EditorActionQueue::push([this, payload]() mutable {
+						if (payload.type == "AssetPath") {
+							m_vfs.addFile(m_currentCollection, std::any_cast<std::filesystem::path>(payload.data));
+						}
+						else if (payload.type == "VFSNode") {
+							auto droppedNode = std::any_cast<std::shared_ptr<VFSNode>>(payload.data);
+							if (droppedNode != m_currentCollection) m_vfs.moveNode(droppedNode, m_currentCollection);
+						}
+						m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+						refresh();
+					});
+					return Silica::EventReply::handled();
+				}
+				return Silica::EventReply::unhandled();
+			},
+			.child = zoomBox
+		});
+
+		return gridBackgroundDropZone;
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildDeleteModal() {
@@ -1098,20 +1423,53 @@ namespace Axion {
 
 	void ContentBrowser::refreshDirectory() {
 		std::vector<DirItem> tmp;
-		std::error_code ec;
-		std::filesystem::directory_iterator it(m_currentDirectory, std::filesystem::directory_options::skip_permission_denied, ec);
-		if (ec) { m_directoryEntries.clear(); return; }
 
-		for (auto end = std::filesystem::directory_iterator(); it != end; it.increment(ec)) {
-			if (ec) { ec.clear(); continue; }
-			const auto p = it->path();
-			DirItem di;
-			di.path = p;
-			di.isDir = it->is_directory(ec);
-			auto rel = p.lexically_relative(m_rootDirectory);
-			di.displayName = rel.empty() ? p.filename().string() : rel.filename().string();
-			tmp.push_back(std::move(di));
+		if (m_viewingCollection && m_currentCollection) {
+			// -- Collections Grid --
+			for (const auto& child : m_currentCollection->children) {
+				DirItem di;
+				di.path = child->isDirectory ? child->name : child->physicalPath;
+				di.isDir = child->isDirectory;
+				di.displayName = child->name;
+				di.vfsNode = child;
+				tmp.push_back(std::move(di));
+			}
 		}
+		else {
+			// -- Physical Grid --
+			std::error_code ec;
+			std::filesystem::directory_iterator it(m_currentDirectory, std::filesystem::directory_options::skip_permission_denied, ec);
+			if (ec) { m_directoryEntries.clear(); return; }
+
+			for (auto end = std::filesystem::directory_iterator(); it != end; it.increment(ec)) {
+				if (ec) { ec.clear(); continue; }
+				const auto p = it->path();
+
+				// -- Hide Certain Files And Folders --
+				std::string filename = p.filename().string();
+				std::string ext = p.extension().string();
+				if (it->is_directory(ec)) {
+					// -- Compilation Folders And Hidden System Folders --
+					if (filename == "bin" || filename == "obj" || filename[0] == '.' || filename == "Export") {
+						continue;
+					}
+				}
+				else {
+					// -- Compilation Files And Project Files --
+					if (ext == ".dll" || ext == ".pdb" || ext == ".csproj" || ext == ".sln" || ext == ".cache" || ext == ".axproj") {
+						continue;
+					}
+				}
+
+				DirItem di;
+				di.path = p;
+				di.isDir = it->is_directory(ec);
+				auto rel = p.lexically_relative(m_rootDirectory);
+				di.displayName = rel.empty() ? p.filename().string() : rel.filename().string();
+				tmp.push_back(std::move(di));
+			}
+		}
+
 		m_directoryEntries.swap(tmp);
 	}
 
@@ -1136,15 +1494,37 @@ namespace Axion {
 	bool ContentBrowser::onProjectChanged(ProjectChangedEvent& e) {
 		if (ProjectManager::hasProject()) {
 			std::error_code ec;
-			m_rootDirectory = std::filesystem::weakly_canonical(ProjectManager::getProject()->getAssetsPath(), ec);
-			if (ec) m_rootDirectory = std::filesystem::absolute(ProjectManager::getProject()->getAssetsPath(), ec);
+			m_rootDirectory = std::filesystem::weakly_canonical(ProjectManager::getProject()->getProjectPath(), ec);
+			if (ec) m_rootDirectory = std::filesystem::absolute(ProjectManager::getProject()->getProjectPath(), ec);
 			m_currentDirectory = m_rootDirectory;
+
+			// -- Load Collections --
+			std::filesystem::path vfsPath = ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml";
+			if (std::filesystem::exists(vfsPath)) {
+				m_vfs.load(vfsPath);
+			}
+			else {
+				m_vfs.getRoot()->name = "Collections";
+				std::filesystem::create_directories(vfsPath.parent_path());
+				m_vfs.save(vfsPath);
+			}
+
+			m_viewingCollection = false;
+			m_currentCollection = m_vfs.getRoot();
+
+			m_expandedDirectories.clear();
+			m_expandedDirectories.insert(m_rootDirectory.string());
+
 			refresh();
 		}
 		else {
-			m_directoryEntries.clear(); m_rootDirectory.clear(); m_currentDirectory.clear();
+			m_directoryEntries.clear();
+			m_rootDirectory.clear();
+			m_currentDirectory.clear();
 		}
-		m_backHistory.clear(); m_forwardHistory.clear();
+
+		m_backHistory.clear();
+		m_forwardHistory.clear();
 		return false;
 	}
 
@@ -1181,15 +1561,277 @@ namespace Axion {
 			if (cbConfig["ShowFileExtensions"]) m_showFileExtensions = cbConfig["ShowFileExtensions"].as<bool>();
 			if (cbConfig["OnlyEngineAssets"]) m_onlyEngineAssets = cbConfig["OnlyEngineAssets"].as<bool>();
 			if (cbConfig["ThumbnailSize"]) m_thumbnailSize = cbConfig["ThumbnailSize"].as<float>();
+			if (cbConfig["TreeViewWidth"]) m_treeViewWidth = cbConfig["TreeViewWidth"].as<float>();
+			if (cbConfig["TreeViewTopHeight"]) m_treeViewTopHeight = cbConfig["TreeViewTopHeight"].as<float>();
 		}
 	}
 
 	void ContentBrowser::saveSettings(YAML::Emitter& out) const {
+		float currentWidth = m_splitBox ? m_splitBox->getLeftWidth() : m_treeViewWidth;
+		float currentTopHeight = m_vSplitBox ? m_vSplitBox->getTopHeight() : m_treeViewTopHeight;
 		out << YAML::Key << "ContentBrowser" << YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "ShowFileExtensions" << YAML::Value << m_showFileExtensions;
 		out << YAML::Key << "OnlyEngineAssets" << YAML::Value << m_onlyEngineAssets;
 		out << YAML::Key << "ThumbnailSize" << YAML::Value << m_thumbnailSize;
+		out << YAML::Key << "TreeViewWidth" << YAML::Value << currentWidth;
+		out << YAML::Key << "TreeViewTopHeight" << YAML::Value << currentTopHeight;
 		out << YAML::EndMap;
+	}
+
+	Silica::WidgetPtr ContentBrowser::buildDirectoryTree(const std::filesystem::path& dirPath) {
+		std::string pathStr = dirPath.string();
+
+		bool isOpen = m_expandedDirectories.find(pathStr) != m_expandedDirectories.end();
+		bool isSelected = (!m_viewingCollection && dirPath == m_currentDirectory);
+
+		std::vector<std::filesystem::path> subDirectories;
+		std::vector<std::filesystem::path> subFiles;
+		std::error_code ec;
+		std::filesystem::directory_iterator it(dirPath, std::filesystem::directory_options::skip_permission_denied, ec);
+
+		if (!ec) {
+			for (const auto& entry : it) {
+				std::string name = entry.path().filename().string();
+				std::string ext = entry.path().extension().string();
+
+				// -- Skip Hidden Items And Build Artifacts --
+				if (name[0] == '.' || name == "bin" || name == "obj") continue;
+				if (!entry.is_directory() && (ext == ".dll" || ext == ".pdb" || ext == ".csproj" || ext == ".sln" || ext == ".cache")) continue;
+
+				if (entry.is_directory()) {
+					subDirectories.push_back(entry.path());
+				}
+				else {
+					if (m_onlyEngineAssets && !EditorUtils::isEngineAssetExtension(ext)) continue;
+					if (matchesSearch(name)) {
+						subFiles.push_back(entry.path());
+					}
+				}
+			}
+		}
+
+		// -- Sort Alphabetically --
+		std::sort(subDirectories.begin(), subDirectories.end());
+		std::sort(subFiles.begin(), subFiles.end());
+
+		std::vector<Silica::WidgetPtr> childWidgets;
+		if (isOpen) {
+			// -- Add Subdirectories --
+			for (const auto& subDir : subDirectories) {
+				childWidgets.push_back(buildDirectoryTree(subDir));
+			}
+
+			// -- Add Files --
+			for (const auto& filePath : subFiles) {
+				auto fileIcon = Silica::MakeWidget<Silica::SImage>({
+					.textureID = SilicaContext::getIcon("FileIcon"),
+					.tint = Silica::GetTheme().Text_Main,
+					.desiredSize = { 16.0f, 16.0f },
+				});
+
+				std::string fileName = m_showFileExtensions ? filePath.filename().string() : filePath.stem().string();
+
+				auto fileNode = Silica::MakeWidget<Silica::STreeNode>({
+					.label = fileName,
+					.initiallyOpen = false,
+					.isSelected = false,
+					.isLeaf = true,
+					.isEmpty = true,
+					.isDragged = [filePath]() {
+						return Silica::DragDrop::isDraggingType("AssetPath") && std::any_cast<std::filesystem::path>(Silica::DragDrop::getPayload().data) == filePath;
+					},
+					.onDragStart = [filePath, fileName]() {
+						Silica::DragDrop::beginDrag("AssetPath", filePath, fileName, Silica::GetTheme().Font_Default);
+					},
+					.leadingWidget = fileIcon
+				});
+
+				childWidgets.push_back(fileNode);
+			}
+		}
+
+		// -- Icon For Folder --
+		auto folderIcon = Silica::MakeWidget<Silica::SImage>({
+			.textureID = SilicaContext::getIcon("FolderIcon"),
+			.tint = isSelected ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim,
+			.desiredSize = { 16.0f, 16.0f },
+		});
+
+		std::string label = (dirPath == m_rootDirectory) ? ProjectManager::getProject()->getName() : dirPath.filename().string();
+		bool hasChildren = !subDirectories.empty() || !subFiles.empty();
+
+		return Silica::MakeWidget<Silica::STreeNode>({
+			.label = label,
+			.initiallyOpen = isOpen,
+			.isSelected = isSelected,
+			.isLeaf = !hasChildren,
+			.isEmpty = !hasChildren,
+			.onClicked = [this, dirPath]() {
+				m_viewingCollection = false;
+
+				if (m_currentDirectory != dirPath) {
+					m_backHistory.push_back(m_currentDirectory);
+					m_forwardHistory.clear();
+					m_currentDirectory = dirPath;
+				}
+				refresh();
+			},
+			.onToggleOpen = [this, pathStr](bool open) {
+				if (open) m_expandedDirectories.insert(pathStr);
+				else m_expandedDirectories.erase(pathStr);
+				rebuildUI();
+			},
+			.leadingWidget = folderIcon,
+			.children = childWidgets
+		});
+	}
+
+	Silica::WidgetPtr ContentBrowser::buildCollectionTree(std::shared_ptr<VFSNode> node) {
+		if (!node) return nullptr;
+
+		std::vector<Silica::WidgetPtr> childWidgets;
+		for (const auto& child : node->children) {
+			if (child->isDirectory) childWidgets.push_back(buildCollectionTree(child));
+		}
+
+		auto folderIcon = Silica::MakeWidget<Silica::SImage>({
+			.textureID = SilicaContext::getIcon("FolderIcon"),
+			.tint = (m_viewingCollection && m_currentCollection == node) ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim,
+			.desiredSize = { 16.0f, 16.0f },
+		});
+
+		auto treeNode = Silica::MakeWidget<Silica::STreeNode>({
+			.label = node->name,
+			.initiallyOpen = true,
+			.isSelected = (m_viewingCollection && m_currentCollection == node),
+			.isLeaf = childWidgets.empty(),
+			.isEmpty = childWidgets.empty(),
+			.isDragged = [node]() {
+				return Silica::DragDrop::isDraggingType("VFSNode") && std::any_cast<std::shared_ptr<VFSNode>>(Silica::DragDrop::getPayload().data) == node;
+			},
+			.onClicked = [this, node]() {
+				m_viewingCollection = true;
+				m_currentCollection = node;
+				refresh();
+			},
+			.onDragStart = [node]() {
+				Silica::DragDrop::beginDrag("VFSNode", node, node->name, Silica::GetTheme().Font_Default);
+			},
+			.onDragOver = [](const Silica::DragDropPayload& payload) {
+				if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
+				return Silica::EventReply::unhandled();
+			},
+			.onDrop = [this, node](const Silica::DragDropPayload& payload) mutable {
+				if (payload.type == "AssetPath") {
+					std::filesystem::path droppedPath = std::any_cast<std::filesystem::path>(payload.data);
+					EditorActionQueue::push([this, node, droppedPath]() mutable {
+						if (!std::filesystem::is_directory(droppedPath)) {
+							bool exists = false;
+							for (const auto& child : node->children) {
+								if (!child->isDirectory && child->physicalPath == droppedPath) { exists = true; break; }
+							}
+							if (!exists) {
+								m_vfs.addFile(node, droppedPath);
+								m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+								m_viewingCollection = true;
+								m_currentCollection = node;
+								refresh();
+							}
+						}
+					});
+					return Silica::EventReply::handled();
+				}
+				else if (payload.type == "VFSNode") {
+					auto droppedNode = std::any_cast<std::shared_ptr<VFSNode>>(payload.data);
+					EditorActionQueue::push([this, node, droppedNode]() mutable {
+						if (droppedNode != node) {
+							bool isDescendant = false;
+							auto checkParent = node->parent;
+							while (checkParent) {
+								if (checkParent == droppedNode.get()) { isDescendant = true; break; }
+								checkParent = checkParent->parent;
+							}
+							if (!isDescendant) {
+								m_vfs.moveNode(droppedNode, node);
+								m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+								refresh();
+							}
+						}
+					});
+					return Silica::EventReply::handled();
+				}
+				return Silica::EventReply::unhandled();
+			},
+			.leadingWidget = folderIcon,
+			.children = childWidgets
+		});
+
+		auto ctxMenuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+
+		ctxMenuBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Primary,
+			.onClick = [this, node]() {
+				EditorActionQueue::push([this, node]() {
+					std::string baseName = "New Collection";
+					std::string finalName = baseName;
+					int counter = 1;
+					auto nameExists = [&](const std::string& n) { for (auto& c : node->children) if (c->name == n) return true; return false; };
+					while (nameExists(finalName)) finalName = baseName + " " + std::to_string(counter++);
+
+					m_vfs.createFolder(node, finalName);
+					m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+
+					m_viewingCollection = true;
+					m_currentCollection = node;
+					m_itemBeingRenamed = finalName;
+					m_itemRenameString = finalName;
+					m_startRenaming = true;
+					rebuildUI();
+				});
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Sub-Collection" })
+		}) });
+
+		// -- Delete Collection Option --
+		if (node != m_vfs.getRoot()) {
+			ctxMenuBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+				.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Danger,
+				.onClick = [this, node]() {
+					EditorActionQueue::push([this, node]() {
+						if (node->parent) {
+							bool isCurrentDescendant = false;
+							VFSNode* current = m_currentCollection.get();
+							while (current) {
+								if (current == node.get()) { isCurrentDescendant = true; break; }
+								current = current->parent;
+							}
+
+							auto& siblings = node->parent->children;
+							siblings.erase(std::remove(siblings.begin(), siblings.end(), node), siblings.end());
+							m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+
+							if (isCurrentDescendant) {
+								m_currentCollection = m_vfs.getRoot();
+								m_viewingCollection = true;
+							}
+							rebuildUI();
+						}
+					});
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete Collection" })
+			}) });
+		}
+
+		return Silica::MakeWidget<Silica::SMenuAnchor>({
+			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
+			.anchorContent = treeNode,
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.padding = {5, 5}, .borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup, .child = ctxMenuBox
+			})
+		});
 	}
 
 }
