@@ -6,7 +6,6 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
-#include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/input/Input.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
@@ -756,8 +755,8 @@ namespace Axion {
 						.padding = {8, 4},
 						.color = Silica::Color::transparent(),
 						.hoverColor = Silica::GetTheme().Accent_Primary,
-						.onClick = [path]() {
-							SceneManager::loadScene(path);
+						.onClick = [this, path]() {
+							m_openInViewportCallback(path);
 							return Silica::EventReply::handled();
 						},
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Viewport" })
@@ -1021,7 +1020,7 @@ namespace Axion {
 							std::string ext = path.extension().string();
 
 							if (ext == ".axscene") {
-								SceneManager::loadScene(path);
+								m_openInViewportCallback(path);
 							}
 							else if (ext == ".axvs" && m_openVisualScriptPanel) {
 								m_openVisualScriptPanel(path);

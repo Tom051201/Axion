@@ -98,6 +98,7 @@ namespace Axion {
 		m_contentBrowserPanel->setup();
 		m_contentBrowserPanel->setOpenVisualScriptPanelCallback([this](const std::filesystem::path& path) {
 			m_visualScriptPanel->openScript(path);
+			m_dock->openTab("Visual Script");
 			m_dock->focusTab("Visual Script");
 		});
 		m_contentBrowserPanel->setModalCallbacks(
@@ -113,7 +114,13 @@ namespace Axion {
 		m_contentBrowserPanel->setOpenTextFileCallback([this](const std::filesystem::path& path) { openTextEditorTab(path); });
 		m_contentBrowserPanel->setOpenMaterialPanelCallback([this](const std::filesystem::path& path) {
 			m_materialPanel->setMaterial(path);
-			if (m_dock) m_dock->focusTab("Material Editor");
+			m_dock->openTab("Material Editor");
+			m_dock->focusTab("Material Editor");
+		});
+		m_contentBrowserPanel->setOpenInViewportCallback([this](const std::filesystem::path& path) {
+			SceneManager::loadScene(path);
+			m_dock->openTab("Viewport");
+			m_dock->focusTab("Viewport");
 		});
 		auto contentBrowserWidget = m_contentBrowserPanel->getWidget();
 
@@ -202,7 +209,8 @@ namespace Axion {
 		m_viewportPanel->setVisualScriptDropCallback([this](const std::filesystem::path& path) {
 			if (m_visualScriptPanel) {
 				m_visualScriptPanel->openScript(path);
-				if (m_dock) m_dock->focusTab("Visual Script");
+				m_dock->openTab("Visual Script");
+				m_dock->focusTab("Visual Script");
 			}
 		});
 		auto fullViewportPanel = m_viewportPanel->getWidget();
@@ -426,6 +434,7 @@ namespace Axion {
 		}
 
 		EditorState activeState = (m_sceneState == EditorState::Pause) ? m_prePauseState : m_sceneState;
+		bool isViewportVisible = m_dock->isTabVisible("Viewport");
 
 		Silica::Vec2 currentViewSize = { 0.0f, 0.0f };
 		if (m_viewportPanel) {
@@ -434,7 +443,7 @@ namespace Axion {
 			m_editorCamera.setHoveringSceneViewport(isHovering);
 		}
 
-		if (currentViewSize.x > 0.0f && currentViewSize.y > 0.0f) {
+		if (isViewportVisible && currentViewSize.x > 0.0f && currentViewSize.y > 0.0f) {
 
 			// -- Resizing --
 			if (m_viewportSize.x != currentViewSize.x || m_viewportSize.y != currentViewSize.y) {
@@ -506,7 +515,7 @@ namespace Axion {
 		}
 
 		// -- Update Material Panel --
-		if (m_materialPanel) {
+		if (m_materialPanel && m_dock->isTabVisible("Material Editor")) {
 			m_materialPanel->onUpdate(ts);
 		}
 

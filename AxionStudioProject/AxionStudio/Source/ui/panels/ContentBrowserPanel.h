@@ -48,6 +48,7 @@ namespace Axion {
 		void setAssetRenamedCallback(const std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)>& func) { m_onAssetRenamed = func; }
 		void setOpenTextFileCallback(std::function<void(const std::filesystem::path&)> callback) { m_openTextFile = callback; }
 		void setOpenMaterialPanelCallback(std::function<void(const std::filesystem::path&)> callback) { m_openMaterialPanel = callback; }
+		void setOpenInViewportCallback(std::function<void(const std::filesystem::path&)> callback) { m_openInViewportCallback = callback; }
 
 		Silica::WidgetPtr getWidget();
 
@@ -111,6 +112,7 @@ namespace Axion {
 		std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)> m_onAssetRenamed;
 		std::function<void(const std::filesystem::path&)> m_openTextFile;
 		std::function<void(const std::filesystem::path&)> m_openMaterialPanel;
+		std::function<void(const std::filesystem::path&)> m_openInViewportCallback;
 
 		// -- Modals --
 		std::shared_ptr<AudioImportModal> m_audioImportModal;

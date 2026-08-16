@@ -2,10 +2,5 @@ VirtualFileSystem:
   - Name: CesiumMan_Anim_0_axanim.axbin
     IsDirectory: false
     PhysicalPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Export\animations\CesiumMan\CesiumMan_Anim_0_axanim.axbin
-  - Name: New Collection
+  - Name: Base
     IsDirectory: true
-  - Name: New Collection 1
-    IsDirectory: true
-    Children:
-      - Name: New Collection 2
-        IsDirectory: true

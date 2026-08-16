@@ -1,23 +1,24 @@
 MaxAssetsPerFrame: 2
 ContentBrowser:
   ShowFileExtensions: true
-  OnlyEngineAssets: true
+  OnlyEngineAssets: false
   ThumbnailSize: 97
   TreeViewWidth: 295
-  TreeViewTopHeight: 79
+  TreeViewTopHeight: 55
 OpenTextEditors:
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\animations\CesiumMan\CesiumMan_Anim_0.axanim
-  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\scripts\test.axvs
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\Player.cs
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\scenes\TestScene.axscene
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\scripts\test.axvs
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\scripts\SunLight.axvs
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\audio\spinz.axaudio
-  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\SunLight.cs
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\AssetRegistry.yaml
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\SunLight.cs
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\Enemy.cs
-  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\materials\BlueMetal.axmat
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\materials\Sponza\Sponza_Mat_1.axmat
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\materials\BlueMetal.axmat
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Scripts\Audio.cs
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Config\Collections.yaml
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\materials\Sponza\Sponza_Mat_11.axmat
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\meshes\DamagedHelmet\DamagedHelmet.axmesh
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\prefabs\CesiumMan\CesiumMan.axprefab
