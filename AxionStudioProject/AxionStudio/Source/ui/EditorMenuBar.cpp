@@ -102,15 +102,10 @@ namespace Axion {
 					.spacing = dropdownSpacing,
 					.slots = {
 						// -- PREFERENCES --
-						{ dropDownPadding, MakeMenuItem("Preferences...", []() {
-							static std::shared_ptr<SettingsModal> s_settingsModal;
-							s_settingsModal = std::make_shared<SettingsModal>();
-
-							auto widget = s_settingsModal->getWidget([]() {
-								EditorModalManager::close();
-							});
-
-							EditorModalManager::open(widget);
+						{ dropDownPadding, MakeMenuItem("Preferences...", [callbacks]() {
+							if (callbacks.openPreferences) {
+								callbacks.openPreferences();
+							}
 							return Silica::EventReply::handled();
 						})},
 					}

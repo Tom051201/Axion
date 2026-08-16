@@ -1,0 +1,6 @@
+Version: 1
+Name: AlbedoMap
+UUID: 2a4d473277b77f921a36499558eba271
+Type: Texture2D
+Format: PNG
+Source: textures/colormap.png

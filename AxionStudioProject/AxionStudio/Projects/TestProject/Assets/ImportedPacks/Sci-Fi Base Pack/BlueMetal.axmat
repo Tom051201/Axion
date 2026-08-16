@@ -1,0 +1,19 @@
+Version: 1
+Name: BlueMetal
+UUID: 8e1a55ea29e7f299e3079b9a56a7e33f
+Type: Material
+AlbedoColor: [0, 0.03861022, 1, 1]
+Metalness: 1
+Roughness: 0
+Emission: 0
+Tiling: 1
+UseNormalMap: 1
+UseMetalnessMap: 1
+UseRoughnessMap: 1
+UseOcclusionMap: 0
+UseEmissiveMap: 0
+Textures:
+  Albedo: 07aec876cff5c095186dc1977cbe8abd
+  Normal: b750ed00bcf40159ef2349a49aa86b05
+  Metalness: 328b6107f65674eb8912bfc82d277141
+  Roughness: 6a5ef409a542bea0ad7a485d11fd9fc9

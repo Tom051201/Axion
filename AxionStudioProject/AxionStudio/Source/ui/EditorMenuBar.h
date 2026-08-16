@@ -16,6 +16,7 @@ namespace Axion {
 			std::function<void()> saveScene;
 			std::function<void()> saveSceneAs;
 			std::function<void()> exitEditor;
+			std::function<void()> openPreferences;
 		};
 
 		static Silica::WidgetPtr construct(std::shared_ptr<Silica::SDockSpace> dockspace, const MenuBarCallbacks& callbacks);

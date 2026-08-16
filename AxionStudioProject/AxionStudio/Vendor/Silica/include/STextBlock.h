@@ -16,6 +16,7 @@ namespace Silica {
 			std::string text = "";
 			std::optional<Color> color;
 			FontAtlas* font = nullptr;
+			float truncateWidth = 0.0f;
 		};
 
 		void construct(const Args& args);
@@ -29,8 +30,12 @@ namespace Silica {
 	private:
 
 		std::string m_text;
+		std::string m_displayText;
 		Color m_color;
 		FontAtlas* m_font;
+		float m_truncateWidth = 0.0f;
+
+		void updateDisplayText();
 
 	};
 

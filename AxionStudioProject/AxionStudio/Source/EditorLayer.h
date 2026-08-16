@@ -30,6 +30,7 @@ namespace Axion {
 	class ViewportPanel;
 	class AssetLibraryPanel;
 	class MaterialPanel;
+	class SettingsModal;
 
 	enum class EditorState {
 		Edit = 0,
@@ -92,6 +93,8 @@ namespace Axion {
 		// -- ImGuizmo --
 		int m_gizmoType = ImGuizmo::TRANSLATE;
 
+		std::shared_ptr<SettingsModal> m_settingsModal;
+
 
 		void playScene();
 		void simScene();
@@ -104,6 +107,7 @@ namespace Axion {
 		void saveSceneAs();
 		void drawOverlay();
 		void openTextEditorTab(const std::filesystem::path& filepath);
+		void openPreferences();
 
 		bool onKeyPressed(KeyPressedEvent& e);
 

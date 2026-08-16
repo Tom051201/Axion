@@ -23,6 +23,7 @@
 #include "AxionStudio/Source/ui/panels/EntityPropertiesPanel.h"
 #include "AxionStudio/Source/ui/panels/AssetLibraryPanel.h"
 #include "AxionStudio/Source/ui/panels/MaterialPanel.h"
+#include "AxionStudio/Source/ui/modals/SettingsModal.h"
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
@@ -286,6 +287,7 @@ namespace Axion {
 		menuCallbacks.saveScene = [this]() { saveScene(); };
 		menuCallbacks.saveSceneAs = [this]() { saveSceneAs(); };
 		menuCallbacks.exitEditor = []() { /* Application::get().close(); */ };
+		menuCallbacks.openPreferences = [this]() { openPreferences(); };
 		auto menuBar = EditorMenuBar::construct(m_dock, menuCallbacks);
 
 
@@ -364,6 +366,17 @@ namespace Axion {
 					}
 				}
 
+				// -- Restore Asset Library Paths --
+				if (config["AssetLibraryPaths"]) {
+					std::vector<std::filesystem::path> savedPaths;
+					for (auto pathNode : config["AssetLibraryPaths"]) {
+						savedPaths.push_back(pathNode.as<std::string>());
+					}
+					if (m_assetLibraryPanel) {
+						m_assetLibraryPanel->setLibraryDirectories(savedPaths);
+					}
+				}
+
 			}
 			catch (const YAML::Exception& e) {
 				AX_CORE_LOG_WARN("Failed to parse Editor Settings: {}", e.what());
@@ -387,6 +400,16 @@ namespace Axion {
 			out << pathStr;
 		}
 		out << YAML::EndSeq;
+
+		// -- Save Asset Library Paths --
+		out << YAML::Key << "AssetLibraryPaths" << YAML::Value << YAML::BeginSeq;
+		if (m_assetLibraryPanel) {
+			for (const auto& path : m_assetLibraryPanel->getLibraryDirectories()) {
+				out << path.string();
+			}
+		}
+		out << YAML::EndSeq;
+
 		out << YAML::EndMap;
 		std::ofstream fout("AxionStudio/Config/EditorSettings.yaml");
 		if (fout.is_open()) {
@@ -540,6 +563,7 @@ namespace Axion {
 		if (m_contentBrowserPanel) m_contentBrowserPanel->onEvent(e);
 		if (m_sceneOverviewPanel) m_sceneOverviewPanel->onEvent(e);
 		if (m_projectOverviewPanel) m_projectOverviewPanel->onEvent(e);
+		if (m_assetLibraryPanel) m_assetLibraryPanel->onEvent(e);
 
 
 		// ----- Scene Changed Event -----
@@ -1053,6 +1077,30 @@ namespace Axion {
 		}
 
 		Silica::SWidget::setFocusedWidget(editorRaw);
+	}
+
+	void EditorLayer::openPreferences() {
+		if (!m_settingsModal) {
+			m_settingsModal = std::make_shared<SettingsModal>();
+		}
+
+		std::vector<std::string> currentPaths;
+		for (const auto& path : m_assetLibraryPanel->getLibraryDirectories()) {
+			currentPaths.push_back(path.string());
+		}
+
+		auto widget = m_settingsModal->getWidget(currentPaths,
+			[this](std::vector<std::string> newPaths) {
+				std::vector<std::filesystem::path> fsPaths;
+				for (const auto& p : newPaths) fsPaths.push_back(p);
+				m_assetLibraryPanel->setLibraryDirectories(fsPaths);
+			},
+			[]() {
+				EditorModalManager::close();
+			}
+		);
+
+		EditorModalManager::open(widget);
 	}
 
 }

@@ -108,6 +108,9 @@ AssetRegistry:
   - Handle: b3bda371c36a994af2c8ad48954c8fd4
     Type: Mesh
     FilePath: meshes/DamagedHelmet/DamagedHelmet.axmesh
+  - Handle: bb0676e4d591f15b78aedbf02bb7485e
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/MetalnessMap.axtex
   - Handle: eccddf704f8fc336bbc9693139b5b740
     Type: Material
     FilePath: materials/CesiumMan/Cesium_Man-effect.axmat
@@ -372,3 +375,36 @@ AssetRegistry:
   - Handle: 66ee7cbc8c0f79d9f1c15260a310463b
     Type: Scene
     FilePath: scenes/Sponza.axscene
+  - Handle: 1228303b85a5e8ea2e48c380d2af96aa
+    Type: Material
+    FilePath: ImportedPacks/Sci-Fi Base Pack/BlueMetal.axmat
+  - Handle: 5099f2cbf8fca48e0dbe5fe2db897d7f
+    Type: Mesh
+    FilePath: ImportedPacks/Sci-Fi Base Pack/Cube.axmesh
+  - Handle: 8acd0c1a68bf15c2e6f46c27c921bf73
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/AlbedoMap.axtex
+  - Handle: 1fbb747bcd584d3844ecb3ccac816bf3
+    Type: Material
+    FilePath: ImportedPacks/Sci-Fi Base Pack/BlueMetal.axmat
+  - Handle: fc4045d091666590bd0df20fec4be4d9
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/NormalMap.axtex
+  - Handle: 4d513bd5b2fe77b013a6c10d71d553d0
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/RoughnessMap.axtex
+  - Handle: 07aec876cff5c095186dc1977cbe8abd
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/AlbedoMap.axtex
+  - Handle: 8e1a55ea29e7f299e3079b9a56a7e33f
+    Type: Material
+    FilePath: ImportedPacks/Sci-Fi Base Pack/BlueMetal.axmat
+  - Handle: 328b6107f65674eb8912bfc82d277141
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/MetalnessMap.axtex
+  - Handle: b750ed00bcf40159ef2349a49aa86b05
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/NormalMap.axtex
+  - Handle: 6a5ef409a542bea0ad7a485d11fd9fc9
+    Type: Texture2D
+    FilePath: ImportedPacks/Sci-Fi Base Pack/RoughnessMap.axtex
