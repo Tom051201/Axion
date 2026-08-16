@@ -18,6 +18,9 @@ namespace Axion {
 		Vertex(float px, float py, float pz)
 			: position(px, py, pz), normal(0.0f, 0.0f, 0.0f), tangent(0.0f, 0.0f, 0.0f), texcoord(0.0f, 0.0f) {}
 
+		Vertex(const DirectX::XMFLOAT3& p, const DirectX::XMFLOAT3& n, const DirectX::XMFLOAT3& t, const DirectX::XMFLOAT2& uv)
+			: position(p), normal(n), tangent(t), texcoord(uv) {}
+
 		static void normalizeVertices(std::vector<Vertex>& vertices) {
 			if (vertices.empty()) return;
 

@@ -29,6 +29,7 @@ namespace Axion {
 	class EntityPropertiesPanel;
 	class ViewportPanel;
 	class AssetLibraryPanel;
+	class MaterialPanel;
 
 	enum class EditorState {
 		Edit = 0,
@@ -83,6 +84,7 @@ namespace Axion {
 		Ref<EntityPropertiesPanel> m_propertiesPanel;
 		Ref<ViewportPanel> m_viewportPanel;
 		Ref<AssetLibraryPanel> m_assetLibraryPanel;
+		Ref<MaterialPanel> m_materialPanel;
 
 		// -- Text Editor Tabs --
 		std::unordered_map<std::string, std::string> m_openTextEditors;

@@ -30,7 +30,6 @@ namespace Axion {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.borderThickness = Silica::GetTheme().Border_Thickness,
-				.backgroundColor = Silica::GetTheme().NodeEditor_Background,
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);

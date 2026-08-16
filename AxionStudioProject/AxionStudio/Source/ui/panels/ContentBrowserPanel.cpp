@@ -40,6 +40,7 @@ namespace Axion {
 	public:
 
 		struct Args {
+			std::optional<Silica::Color> hoverColor;
 			std::function<void()> onDragStart;
 			std::function<Silica::EventReply(const Silica::DragDropPayload&)> onDragOver;
 			std::function<Silica::EventReply(const Silica::DragDropPayload&)> onDrop;
@@ -48,6 +49,7 @@ namespace Axion {
 		};
 
 		void construct(const Args& args) {
+			m_hoverColor = args.hoverColor.value_or(Silica::Color(255, 255, 255, 20));
 			m_child = args.child;
 			m_onDragStart = args.onDragStart;
 			m_onDragOver = args.onDragOver;
@@ -70,7 +72,7 @@ namespace Axion {
 		void onDraw(Silica::DrawList& dl, const Silica::Geometry& geom) const override {
 			Silica::Color color = Silica::Color::transparent();
 			if (m_isMouseDown) { color = Silica::GetTheme().Accent_Primary; color.setAlpha(150); }
-			else if (m_isHovered) color = Silica::Color(255, 255, 255, 20);
+			else if (m_isHovered) color = m_hoverColor;
 
 			// -- Drop Zone Highlighting --
 			if (Silica::SWidget::getDragHoveredWidget() == this) {
@@ -171,6 +173,7 @@ namespace Axion {
 	private:
 
 		Silica::WidgetPtr m_child;
+		Silica::Color m_hoverColor;
 		std::function<void()> m_onDragStart;
 		std::function<Silica::EventReply(const Silica::DragDropPayload&)> m_onDragOver;
 		std::function<Silica::EventReply(const Silica::DragDropPayload&)> m_onDrop;
@@ -322,7 +325,7 @@ namespace Axion {
 		}
 
 		auto collectionsBackgroundClicker = Silica::MakeWidget<SAssetClickBox>({
-			.onDragStart = []() {},
+			.hoverColor = Silica::Color::transparent(),
 			.onDragOver = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
 			.onDrop = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
 			.onClick = [this]() {
@@ -413,7 +416,7 @@ namespace Axion {
 
 		// -- Physical Folder Layout --
 		auto physicalBackgroundClicker = Silica::MakeWidget<SAssetClickBox>({
-			.onDragStart = []() {},
+			.hoverColor = Silica::Color::transparent(),
 			.onDragOver = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
 			.onDrop = [](const Silica::DragDropPayload&) { return Silica::EventReply::unhandled(); },
 			.onClick = [this]() {
@@ -733,6 +736,20 @@ namespace Axion {
 				std::string ext = path.extension().string();
 				auto openInListContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
 
+				// -- Open In Material Editor --
+				if (ext == ".axmat") {
+					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
+						.padding = {8, 4},
+						.color = Silica::Color::transparent(),
+						.hoverColor = Silica::GetTheme().Accent_Primary,
+						.onClick = [this, path]() {
+							if (m_openMaterialPanel) m_openMaterialPanel(path);
+							return Silica::EventReply::handled();
+						},
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Material Editor" })
+					}) });
+				}
+
 				// -- Open In Viewport --
 				if (ext == ".axscene") {
 					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
@@ -980,6 +997,50 @@ namespace Axion {
 						return Silica::EventReply::handled();
 					}
 					return Silica::EventReply::unhandled();
+				},
+				.onClick = [this, path, item]() {
+					auto now = std::chrono::steady_clock::now();
+					bool isDouble = (path == lastClickedPath) && (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastClickTime).count() < 300);
+					lastClickTime = now;
+					lastClickedPath = path;
+
+					if (isDouble) {
+						if (item.isDir) {
+							if (m_viewingCollection && item.vfsNode) {
+								m_currentCollection = item.vfsNode;
+							}
+							else {
+								m_backHistory.push_back(m_currentDirectory);
+								m_forwardHistory.clear();
+								m_currentDirectory = path;
+								m_expandedDirectories.insert(path.string());
+							}
+							refresh();
+						}
+						else {
+							std::string ext = path.extension().string();
+
+							if (ext == ".axscene") {
+								SceneManager::loadScene(path);
+							}
+							else if (ext == ".axvs" && m_openVisualScriptPanel) {
+								m_openVisualScriptPanel(path);
+							}
+							else if (ext == ".axmat" && m_openMaterialPanel) {
+								m_openMaterialPanel(path);
+							}
+							else if (EditorUtils::isTextEditorFile(ext) && m_openTextFile) {
+								m_openTextFile(path);
+							}
+							else if (EditorUtils::isEngineAssetExtension(ext) && m_openTextFile) {
+								m_openTextFile(path);
+							}
+							else {
+								PlatformUtils::openExternally(path);
+							}
+						}
+					}
+					return Silica::EventReply::handled();
 				},
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 4.0f,

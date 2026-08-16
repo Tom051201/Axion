@@ -17,6 +17,7 @@ namespace Axion {
 	Ref<Texture2D> EngineAssets::s_whiteTexture = nullptr;
 	Ref<Texture2D> EngineAssets::s_errorTexture = nullptr;
 	Ref<Mesh> EngineAssets::s_cubeMesh = nullptr;
+	Ref<Mesh> EngineAssets::s_sphereMesh = nullptr;
 	Ref<Pipeline> EngineAssets::s_skyboxPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_shadowPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_standardPBRPipeline = nullptr;
@@ -39,29 +40,90 @@ namespace Axion {
 
 		// -- Cube Mesh --
 		std::vector<Vertex> vertices = {
-			{ -0.5,  0.5, -0.5 },
-			{ -0.5, -0.5, -0.5 },
-			{  0.5, -0.5, -0.5 },
-			{  0.5,  0.5, -0.5 },
-			{ -0.5,  0.5,  0.5 },
-			{ -0.5, -0.5,  0.5 },
-			{  0.5, -0.5,  0.5 },
-			{  0.5,  0.5,  0.5 }
+			{ {-0.5f, -0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 1.0f} },
+			{ { 0.5f, -0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f} },
+			{ { 0.5f,  0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 0.0f} },
+			{ {-0.5f,  0.5f,  0.5f}, { 0.0f,  0.0f,  1.0f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 0.0f} },
+
+			{ { 0.5f, -0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {-1.0f,  0.0f,  0.0f}, {0.0f, 1.0f} },
+			{ {-0.5f, -0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {-1.0f,  0.0f,  0.0f}, {1.0f, 1.0f} },
+			{ {-0.5f,  0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {-1.0f,  0.0f,  0.0f}, {1.0f, 0.0f} },
+			{ { 0.5f,  0.5f, -0.5f}, { 0.0f,  0.0f, -1.0f}, {-1.0f,  0.0f,  0.0f}, {0.0f, 0.0f} },
+
+			{ {-0.5f, -0.5f, -0.5f}, {-1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f,  1.0f}, {0.0f, 1.0f} },
+			{ {-0.5f, -0.5f,  0.5f}, {-1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f,  1.0f}, {1.0f, 1.0f} },
+			{ {-0.5f,  0.5f,  0.5f}, {-1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f,  1.0f}, {1.0f, 0.0f} },
+			{ {-0.5f,  0.5f, -0.5f}, {-1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f,  1.0f}, {0.0f, 0.0f} },
+
+			{ { 0.5f, -0.5f,  0.5f}, { 1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f, -1.0f}, {0.0f, 1.0f} },
+			{ { 0.5f, -0.5f, -0.5f}, { 1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f, -1.0f}, {1.0f, 1.0f} },
+			{ { 0.5f,  0.5f, -0.5f}, { 1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f, -1.0f}, {1.0f, 0.0f} },
+			{ { 0.5f,  0.5f,  0.5f}, { 1.0f,  0.0f,  0.0f}, { 0.0f,  0.0f, -1.0f}, {0.0f, 0.0f} },
+
+			{ {-0.5f,  0.5f,  0.5f}, { 0.0f,  1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 1.0f} },
+			{ { 0.5f,  0.5f,  0.5f}, { 0.0f,  1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f} },
+			{ { 0.5f,  0.5f, -0.5f}, { 0.0f,  1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 0.0f} },
+			{ {-0.5f,  0.5f, -0.5f}, { 0.0f,  1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 0.0f} },
+
+			{ {-0.5f, -0.5f, -0.5f}, { 0.0f, -1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 1.0f} },
+			{ { 0.5f, -0.5f, -0.5f}, { 0.0f, -1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f} },
+			{ { 0.5f, -0.5f,  0.5f}, { 0.0f, -1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {1.0f, 0.0f} },
+			{ {-0.5f, -0.5f,  0.5f}, { 0.0f, -1.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, {0.0f, 0.0f} }
 		};
 		std::vector<uint32_t> indices = {
-			// Back face		// Front face
-			0, 1, 2,			4, 7, 6,
-			2, 3, 0,			6, 5, 4,
-
-			// Left face		// Right face
-			4, 5, 1,			3, 2, 6,
-			1, 0, 4,			6, 7, 3,
-
-			// Top face			// Bottom face
-			4, 0, 3,			1, 5, 6,
-			3, 7, 4,			6, 2, 1
+			 0,  1,  2,  2,  3,  0,
+			 4,  5,  6,  6,  7,  4,
+			 8,  9, 10, 10, 11,  8,
+			12, 13, 14, 14, 15, 12,
+			16, 17, 18, 18, 19, 16,
+			20, 21, 22, 22, 23, 20
 		};
 		s_cubeMesh = Mesh::create(vertices, indices);
+
+		// -- Sphere Mesh --
+		std::vector<Vertex> sphereVerts;
+		std::vector<uint32_t> sphereIndices;
+		int sectorCount = 36;
+		int stackCount = 18;
+		float radius = 0.5f;
+
+		for (int i = 0; i <= stackCount; ++i) {
+			float v = (float)i / stackCount;
+			float phi = v * DirectX::XM_PI;
+			for (int j = 0; j <= sectorCount; ++j) {
+				float u = (float)j / sectorCount;
+				float theta = u * DirectX::XM_2PI;
+
+				float x = std::cos(theta) * std::sin(phi);
+				float y = std::cos(phi);
+				float z = std::sin(theta) * std::sin(phi);
+				float tx = -std::sin(theta);
+				float ty = 0.0f;
+				float tz = std::cos(theta);
+
+				sphereVerts.push_back({
+					{x * radius, y * radius, z * radius},
+					{x, y, z},
+					{tx, ty, tz},
+					{u, v}
+				});
+			}
+		}
+
+		for (int i = 0; i < stackCount; ++i) {
+			for (int j = 0; j < sectorCount; ++j) {
+				uint32_t k1 = i * (sectorCount + 1) + j;
+				uint32_t k2 = k1 + sectorCount + 1;
+
+				sphereIndices.push_back(k1);
+				sphereIndices.push_back(k2);
+				sphereIndices.push_back(k1 + 1);
+				sphereIndices.push_back(k1 + 1);
+				sphereIndices.push_back(k2);
+				sphereIndices.push_back(k2 + 1);
+			}
+		}
+		s_sphereMesh = Mesh::create(sphereVerts, sphereIndices);
 
 		// -- Shadow Shader --
 		ShaderSpecification shadowShaderSpec;
@@ -120,7 +182,7 @@ namespace Axion {
 		skyboxPipeSpec.depthFunction = DepthCompare::LessEqual;
 		skyboxPipeSpec.stencilEnabled = false;
 		skyboxPipeSpec.sampleCount = 1;
-		skyboxPipeSpec.cullMode = CullMode::Back;
+		skyboxPipeSpec.cullMode = CullMode::Front;
 		skyboxPipeSpec.topology = PrimitiveTopology::TriangleList;
 		skyboxPipeSpec.vertexLayout = {
 			{ "POSITION",	ShaderDataType::Float3 }
@@ -237,6 +299,7 @@ namespace Axion {
 		s_errorTexture->release();
 
 		s_cubeMesh->release();
+		s_sphereMesh->release();
 
 		s_skyboxShader->release();
 		s_shadowShader->release();

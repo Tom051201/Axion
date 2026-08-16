@@ -18,6 +18,7 @@ namespace Axion {
 
 		// ----- Meshes -----
 		static Ref<Mesh> getCubeMesh() { return s_cubeMesh; }
+		static Ref<Mesh> getSphereMesh() { return s_sphereMesh; }
 
 		// ----- Pipelines -----
 		static Ref<Pipeline> getSkyboxPipeline() { return s_skyboxPipeline; }
@@ -39,6 +40,7 @@ namespace Axion {
 		static Ref<Texture2D> s_errorTexture;
 
 		static Ref<Mesh> s_cubeMesh;
+		static Ref<Mesh> s_sphereMesh;
 
 		static Ref<Pipeline> s_skyboxPipeline;
 		static Ref<Pipeline> s_shadowPipeline;

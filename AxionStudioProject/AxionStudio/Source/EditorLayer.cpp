@@ -22,6 +22,7 @@
 #include "AxionStudio/Source/ui/panels/HierarchyPanel.h"
 #include "AxionStudio/Source/ui/panels/EntityPropertiesPanel.h"
 #include "AxionStudio/Source/ui/panels/AssetLibraryPanel.h"
+#include "AxionStudio/Source/ui/panels/MaterialPanel.h"
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
@@ -110,6 +111,10 @@ namespace Axion {
 		m_contentBrowserPanel->setAssetRenamedCallback([this](const std::filesystem::path& oldPath, const std::filesystem::path& newPath) { m_visualScriptPanel->onAssetRenamed(oldPath, newPath); });
 		m_contentBrowserPanel->setAssetDeletedCallback([this](const std::filesystem::path& path) { m_visualScriptPanel->onAssetDeleted(path); });
 		m_contentBrowserPanel->setOpenTextFileCallback([this](const std::filesystem::path& path) { openTextEditorTab(path); });
+		m_contentBrowserPanel->setOpenMaterialPanelCallback([this](const std::filesystem::path& path) {
+			m_materialPanel->setMaterial(path);
+			if (m_dock) m_dock->focusTab("Material Editor");
+		});
 		auto contentBrowserWidget = m_contentBrowserPanel->getWidget();
 
 		m_projectOverviewPanel = std::make_shared<ProjectPanel>();
@@ -211,6 +216,9 @@ namespace Axion {
 		m_assetLibraryPanel = std::make_shared<AssetLibraryPanel>();
 		auto assetLibraryWidget = m_assetLibraryPanel->getWidget();
 
+		m_materialPanel = std::make_shared<MaterialPanel>();
+		auto materialWidget = m_materialPanel->getWidget();
+
 		// ----- Setup Workspace And DockSpace -----
 		auto workspace = Silica::MakeWidget<Silica::SWorkspace>({
 			.initialTitle = "Hierarchy",
@@ -228,6 +236,7 @@ namespace Axion {
 		m_dock->registerTab("Scene Settings", sceneSettings);
 		m_dock->registerTab("Asset Inspector", assetManagerWidget);
 		m_dock->registerTab("Asset Library", assetLibraryWidget);
+		m_dock->registerTab("Material Editor", materialWidget);
 
 		if (!m_dock->getRootNode() || (m_dock->getRootNode()->tabs.size() <= 1 && m_dock->getRootNode()->splitDirection == Silica::SplitDirection::None)) {
 			auto root = m_dock->getRootNode();
@@ -494,6 +503,11 @@ namespace Axion {
 			);
 
 			m_viewportPanel->setStatsText(buffer);
+		}
+
+		// -- Update Material Panel --
+		if (m_materialPanel) {
+			m_materialPanel->onUpdate(ts);
 		}
 
 		Renderer::renderToSwapChain();
