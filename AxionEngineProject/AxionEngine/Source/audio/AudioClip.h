@@ -1,10 +1,10 @@
 #pragma once
 
-#include "AxionEngine/Vendor/miniaudio/miniaudio.h"
+#include <filesystem>
+
+#include <miniaudio/miniaudio.h>
 
 #include "AxionEngine/Source/core/Math.h"
-
-#include <filesystem>
 
 namespace Axion {
 

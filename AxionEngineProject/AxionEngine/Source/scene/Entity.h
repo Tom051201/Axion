@@ -1,10 +1,12 @@
 #pragma once
 
+#include <entt/entt.hpp>
+
+#include "AxionEngine/Source/core/Core.h"
+#include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Components.h"
-
-#include "AxionEngine/Vendor/entt/entt.hpp"
-
+#include "AxionEngine/Source/scene/Entity.h"
 
 namespace Axion {
 

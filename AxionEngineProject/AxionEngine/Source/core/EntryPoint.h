@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef AX_PLATFORM_WINDOWS
+#include <windows.h>
+#endif
+
+#include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/core/Logging.h"
 
 extern Axion::Application* Axion::createApplication();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/scene/Entity.h"
 
 namespace Axion {

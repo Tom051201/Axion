@@ -1,13 +1,13 @@
 #include "axpch.h"
 #include "ScriptEngine.h"
 
-#include "AxionEngine/Source/scripting/ScriptGlue.h"
-#include "AxionEngine/Source/scene/Scene.h"
-#include "AxionEngine/Source/project/ProjectManager.h"
-
 #include <nethost.h>
 #include <coreclr_delegates.h>
 #include <hostfxr.h>
+
+#include "AxionEngine/Source/scripting/ScriptGlue.h"
+#include "AxionEngine/Source/scene/Scene.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 namespace Axion {
 	

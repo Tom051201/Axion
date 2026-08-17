@@ -1,8 +1,9 @@
 #pragma once
 
-#include "AxionEngine/Source/render/Formats.h"
-#include "AxionEngine/Source/render/Pipeline.h"
-#include "AxionEngine/Source/render/Buffers.h"
+#include "AxionEngine/Source/graphics/Formats.h"
+#include "AxionEngine/Source/graphics/Pipeline.h"
+#include "AxionEngine/Source/graphics/Buffers.h"
+#include "AxionEngine/Source/graphics/Camera.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/scene/Components.h"
 
@@ -14,9 +15,9 @@ namespace Axion {
 		// --- CullMode ---
 		inline static const char* toString(Axion::CullMode mode) {
 			switch (mode) {
-			case Axion::CullMode::None:		return "None";
-			case Axion::CullMode::Front:	return "Front";
-			case Axion::CullMode::Back:		return "Back";
+				case Axion::CullMode::None:		return "None";
+				case Axion::CullMode::Front:	return "Front";
+				case Axion::CullMode::Back:		return "Back";
 			}
 			return "Unknown";
 		}
@@ -62,11 +63,11 @@ namespace Axion {
 		// --- PrimitiveTopology ---
 		inline static const char* toString(Axion::PrimitiveTopology topo) {
 			switch (topo) {
-			case Axion::PrimitiveTopology::PointList:		return "PointList";
-			case Axion::PrimitiveTopology::LineList:		return "LineList";
-			case Axion::PrimitiveTopology::LineStrip:		return "LineStrip";
-			case Axion::PrimitiveTopology::TriangleList:	return "TriangleList";
-			case Axion::PrimitiveTopology::TriangleStrip:	return "TriangleStrip";
+				case Axion::PrimitiveTopology::PointList:		return "PointList";
+				case Axion::PrimitiveTopology::LineList:		return "LineList";
+				case Axion::PrimitiveTopology::LineStrip:		return "LineStrip";
+				case Axion::PrimitiveTopology::TriangleList:	return "TriangleList";
+				case Axion::PrimitiveTopology::TriangleStrip:	return "TriangleStrip";
 			}
 			return "Unknown";
 		}
@@ -85,12 +86,12 @@ namespace Axion {
 		// --- ColorFormat ---
 		inline static const char* toString(Axion::ColorFormat fmt) {
 			switch (fmt) {
-			case Axion::ColorFormat::None:			return "None";
-			case Axion::ColorFormat::RGBA8:			return "RGBA8";
-			case Axion::ColorFormat::RED_INTEGER:	return "RED_INTEGER";
-			case Axion::ColorFormat::RGBA16F:		return "RGBA16F";
-			case Axion::ColorFormat::BGRA8:			return "BGRA8";
-			case Axion::ColorFormat::RGB10A2:		return "RGB10A2";
+				case Axion::ColorFormat::None:			return "None";
+				case Axion::ColorFormat::RGBA8:			return "RGBA8";
+				case Axion::ColorFormat::RED_INTEGER:	return "RED_INTEGER";
+				case Axion::ColorFormat::RGBA16F:		return "RGBA16F";
+				case Axion::ColorFormat::BGRA8:			return "BGRA8";
+				case Axion::ColorFormat::RGB10A2:		return "RGB10A2";
 			}
 			return "Unknown";
 		}
@@ -110,11 +111,11 @@ namespace Axion {
 		// --- DepthStencilFormat ---
 		inline static const char* toString(Axion::DepthStencilFormat fmt) {
 			switch (fmt) {
-			case Axion::DepthStencilFormat::None:				return "None";
-			case Axion::DepthStencilFormat::DEPTH24_STENCIL8:	return "DEPTH24_STENCIL8";
-			case Axion::DepthStencilFormat::DEPTH32F:			return "DEPTH32F";
-			case Axion::DepthStencilFormat::DEPTH32F_STENCIL8:	return "DEPTH32F_STENCIL8";
-			case Axion::DepthStencilFormat::DEPTH16:			return "DEPTH16";
+				case Axion::DepthStencilFormat::None:				return "None";
+				case Axion::DepthStencilFormat::DEPTH24_STENCIL8:	return "DEPTH24_STENCIL8";
+				case Axion::DepthStencilFormat::DEPTH32F:			return "DEPTH32F";
+				case Axion::DepthStencilFormat::DEPTH32F_STENCIL8:	return "DEPTH32F_STENCIL8";
+				case Axion::DepthStencilFormat::DEPTH16:			return "DEPTH16";
 			}
 			return "Unknown";
 		}
@@ -133,16 +134,16 @@ namespace Axion {
 		// --- ShaderDataType ---
 		inline static const char* toString(Axion::ShaderDataType type) {
 			switch (type) {
-			case Axion::ShaderDataType::None:   return "None";
-			case Axion::ShaderDataType::Float:  return "Float";
-			case Axion::ShaderDataType::Float2: return "Float2";
-			case Axion::ShaderDataType::Float3: return "Float3";
-			case Axion::ShaderDataType::Float4: return "Float4";
-			case Axion::ShaderDataType::Int:    return "Int";
-			case Axion::ShaderDataType::Int2:   return "Int2";
-			case Axion::ShaderDataType::Int3:   return "Int3";
-			case Axion::ShaderDataType::Int4:   return "Int4";
-			case Axion::ShaderDataType::Bool:   return "Bool";
+				case Axion::ShaderDataType::None:   return "None";
+				case Axion::ShaderDataType::Float:  return "Float";
+				case Axion::ShaderDataType::Float2: return "Float2";
+				case Axion::ShaderDataType::Float3: return "Float3";
+				case Axion::ShaderDataType::Float4: return "Float4";
+				case Axion::ShaderDataType::Int:    return "Int";
+				case Axion::ShaderDataType::Int2:   return "Int2";
+				case Axion::ShaderDataType::Int3:   return "Int3";
+				case Axion::ShaderDataType::Int4:   return "Int4";
+				case Axion::ShaderDataType::Bool:   return "Bool";
 			}
 			return "Unknown";
 		}
@@ -166,8 +167,8 @@ namespace Axion {
 		// --- Audio Mode ---
 		inline static const char* toString(AudioClip::Mode mode) {
 			switch (mode) {
-			case AudioClip::Mode::Memory: return "Memory";
-			case AudioClip::Mode::Stream: return "Stream";
+				case AudioClip::Mode::Memory: return "Memory";
+				case AudioClip::Mode::Stream: return "Stream";
 			}
 			return "Unknown";
 		}

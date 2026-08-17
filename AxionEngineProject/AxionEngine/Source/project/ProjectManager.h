@@ -1,10 +1,11 @@
 #pragma once
 
+#include <functional>
+#include <filesystem>
+
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/project/Project.h"
-
-#include <functional>
 
 namespace Axion {
 

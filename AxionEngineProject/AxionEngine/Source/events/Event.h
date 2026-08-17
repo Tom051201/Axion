@@ -1,5 +1,7 @@
 #pragma once
-#include "axpch.h"
+
+#include <string>
+#include <functional>
 
 #include "AxionEngine/Source/core/Core.h"
 

@@ -1,7 +1,10 @@
 #include "GLTFImporter.h"
 
+#include <fstream>
+#include <unordered_map>
+
 #define CGLTF_IMPLEMENTATION
-#include "AxionAssetPipeline/Vendor/cgltf/cgltf.h"
+#include <cgltf/cgltf.h>
 
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -16,9 +19,6 @@
 #include "AxionAssetPipeline/Source/parser/PrefabParser.h"
 #include "AxionAssetPipeline/Source/parser/SkeletalMeshParser.h"
 #include "AxionAssetPipeline/Source/parser/AnimationClipParser.h"
-
-#include <fstream>
-#include <unordered_map>
 
 namespace Axion::AAP {
 

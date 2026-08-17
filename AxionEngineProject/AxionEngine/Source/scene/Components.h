@@ -1,20 +1,24 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+#include <string>
+
+#include <entt/entt.hpp>
+
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/render/Camera.h"
-#include "AxionEngine/Source/render/Mesh.h"
-#include "AxionEngine/Source/render/Material.h"
-#include "AxionEngine/Source/render/Texture.h"
-#include "AxionEngine/Source/render/SkeletalMesh.h"
+#include "AxionEngine/Source/graphics/Camera.h"
+#include "AxionEngine/Source/graphics/Mesh.h"
+#include "AxionEngine/Source/graphics/Material.h"
+#include "AxionEngine/Source/graphics/Texture.h"
+#include "AxionEngine/Source/graphics/SkeletalMesh.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 #include "AxionEngine/Source/scene/ParticleSystem.h"
 #include "AxionEngine/Source/scene/Animation.h"
-
-#include "AxionEngine/Vendor/entt/entt.hpp"
 
 namespace Axion {
 
@@ -199,7 +203,7 @@ namespace Axion {
 
 
 	struct ScriptComponent {
-		std::string className = "AxionScriptCore.Player";
+		std::string className = "AxionScriptCore.Player"; // TODO: set a different default
 
 		void* gcHandle = nullptr;
 		bool isInstantiated = false;

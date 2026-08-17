@@ -1,8 +1,10 @@
 #pragma once
 
-#include "AxionEngine/Source/render/Camera.h"
+#include <cstdint>
 
 #include "AxionEngine/Source/core/Timestep.h"
+#include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/graphics/Camera.h"
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 #include "AxionEngine/Source/events/MouseEvent.h"

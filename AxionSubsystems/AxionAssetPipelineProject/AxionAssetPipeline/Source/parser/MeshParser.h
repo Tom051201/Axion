@@ -1,11 +1,11 @@
 #pragma once
 
+#include <string>
+#include <filesystem>
+
 #include "AxionEngine/Source/core/UUID.h"
 
 #include "AxionAssetPipeline/Source/core/AssetFormats.h"
-
-#include <string>
-#include <filesystem>
 
 namespace Axion::AAP {
 

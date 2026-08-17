@@ -1,5 +1,8 @@
 #pragma once
 
+#include <filesystem>
+
+#include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/AssetLoader.h"
 
 namespace Axion {

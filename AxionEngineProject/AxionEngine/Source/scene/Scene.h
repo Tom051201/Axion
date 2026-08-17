@@ -1,12 +1,17 @@
 #pragma once
 
+#include <string>
+#include <cstdint>
+#include <vector>
+#include <unordered_map>
+
+#include <entt/entt.hpp>
+
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/render/Camera.h"
+#include "AxionEngine/Source/graphics/Camera.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 #include "AxionEngine/Source/scene/Skybox.h"
-
-#include "AxionEngine/Vendor/entt/entt.hpp"
 
 namespace Axion {
 

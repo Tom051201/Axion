@@ -1,11 +1,19 @@
 #pragma once
 
-#include "AxionEngine/Source/render/Renderer.h"
-#include "AxionEngine/Source/render/Texture.h"
-#include "AxionEngine/Source/render/FrameBuffer.h"
+#include <string>
+#include <memory>
+#include <unordered_map>
 
-#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
+#include <Silica/include/FontAtlas.h>
+#include <Silica/include/Renderer.h>
+
+#include "AxionEngine/Source/core/Core.h"
+#include "AxionEngine/Source/graphics/Texture.h"
+#include "AxionEngine/Source/graphics/FrameBuffer.h"
+
+namespace Silica {
+	class SBox;
+}
 
 namespace Axion {
 

@@ -1,5 +1,10 @@
 #pragma once
-#include "axpch.h"
+
+#include <cstdint>
+#include <string>
+#include <typeinfo>
+
+#include <spdlog/fmt/fmt.h>
 
 namespace Axion {
 

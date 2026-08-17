@@ -1,7 +1,6 @@
 #pragma once
-#include "axpch.h"
 
-#include "AxionEngine/Vendor/spdlog/include/spdlog/fmt/fmt.h"
+#include <cstdint>
 
 namespace Axion {
 

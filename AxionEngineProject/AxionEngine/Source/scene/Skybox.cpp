@@ -1,10 +1,10 @@
 #include "axpch.h"
 #include "Skybox.h"
 
-#include "AxionEngine/Source/render/RenderCommand.h"
-#include "AxionEngine/Source/render/Renderer.h"
-#include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EngineAssets.h"
+#include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/graphics/RenderCommand.h"
+#include "AxionEngine/Source/graphics/Renderer.h"
 
 namespace Axion {
 

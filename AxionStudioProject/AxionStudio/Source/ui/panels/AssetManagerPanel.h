@@ -1,15 +1,12 @@
 #pragma once
 
-#include <functional>
-#include <string>
+#include <memory>
 
-#include "AxionEngine/Source/core/AssetManager.h"
+#include <Silica/include/SWidget.h>
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SCollapsingHeader.h"
+namespace Silica {
+	class SBox;
+}
 
 namespace Axion {
 

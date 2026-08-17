@@ -1,15 +1,15 @@
 #include "axpch.h"
 #include "SceneSerializer.h"
 
-#include "AxionEngine/Source/scene/Entity.h"
-#include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
+#include "AxionEngine/Source/graphics/Renderer3D.h"
+#include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
-#include "AxionEngine/Source/render/Renderer3D.h"
 #include "AxionEngine/Source/scripting/NativeScriptRegistry.h"
 
 namespace Axion {

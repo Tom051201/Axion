@@ -2,7 +2,7 @@
 #include "AudioManager.h"
 
 #define MINIAUDIO_IMPLEMENTATION
-#include "AxionEngine/Vendor/miniaudio/miniaudio.h"
+#include <miniaudio/miniaudio.h>
 
 namespace Axion {
 

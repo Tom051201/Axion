@@ -1,22 +1,30 @@
 #pragma once
 
-#include "Axion.h"
+#include <string>
+#include <filesystem>
+#include <unordered_map>
+#include <memory>
 
-#include "AxionEngine/Vendor/imgui/imgui.h"
-#include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
+#include <imgui/imgui.h>
+#include <ImGuizmo/ImGuizmo.h>
+#include <Silica/include/SWidget.h>
+#include <Silica/include/FontAtlas.h>
+#include <Silica/include/Renderer.h>
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SImage.h"
-#include "AxionStudio/Vendor/Silica/include/SDockspace.h"
-
-#include "AxionStudio/Vendor/Quartz/include/SQuartzEditor.h"
+#include "AxionEngine/Source/core/Core.h"
+#include "AxionEngine/Source/graphics/FrameBuffer.h"
+#include "AxionEngine/Source/layers/Layer.h"
+#include "AxionEngine/Source/scene/Scene.h"
+#include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/events/Event.h"
+#include "AxionEngine/Source/events/KeyEvent.h"
 
 #include "AxionStudio/Source/core/EditorCamera.h"
+
+namespace Silica {
+	class SBox;
+	class SDockSpace;
+}
 
 namespace Axion {
 

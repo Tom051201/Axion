@@ -1,11 +1,19 @@
 #pragma once
 
+#include <functional>
+#include <filesystem>
+#include <memory>
+
+#include <Silica/include/SWidget.h>
+
 #include "AxionStudio/Source/EditorLayer.h"
 #include "AxionStudio/Source/core/EditorCamera.h"
 
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SImage.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
+namespace Silica {
+	class SBox;
+	class SImage;
+	class STextBlock;
+}
 
 namespace Axion {
 

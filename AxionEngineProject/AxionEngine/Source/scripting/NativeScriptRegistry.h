@@ -1,12 +1,12 @@
 #pragma once
 
-#include "AxionEngine/Source/scene/Entity.h"
-#include "AxionEngine/Source/scene/Components.h"
-#include "AxionEngine/Source/core/Core.h"
-
 #include <unordered_map>
 #include <string>
 #include <functional>
+
+#include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/core/Core.h"
 
 namespace Axion {
 

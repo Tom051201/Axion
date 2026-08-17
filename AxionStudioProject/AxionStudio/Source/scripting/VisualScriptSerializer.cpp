@@ -1,7 +1,8 @@
-#include "axpch.h"
+#include "studiopch.h"
 #include "VisualScriptSerializer.h"
 
 #include "AxionEngine/Source/core/YamlHelper.h"
+#include "AxionEngine/Source/core/Logging.h"
 
 namespace Axion {
 

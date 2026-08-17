@@ -1,8 +1,5 @@
+#include "studiopch.h"
 #include "VirtualFileSystem.h"
-
-#include <fstream>
-
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
 namespace Axion {
 

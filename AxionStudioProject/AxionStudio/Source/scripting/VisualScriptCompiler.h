@@ -1,5 +1,7 @@
 #pragma once
-#include "axpch.h"
+
+#include <string>
+#include <iosfwd>
 
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 

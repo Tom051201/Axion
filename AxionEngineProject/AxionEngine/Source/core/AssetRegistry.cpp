@@ -1,9 +1,9 @@
 #include "axpch.h"
 #include "AssetRegistry.h"
 
-#include "AxionEngine/Source/core/YamlHelper.h"
+#include <yaml-cpp/yaml.h>
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include "AxionEngine/Source/core/YamlHelper.h"
 
 namespace Axion {
 

@@ -1,12 +1,22 @@
 #pragma once
 
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
+#include <memory>
+#include <string>
+#include <filesystem>
+
+#include <Silica/include/SWidget.h>
+#include <Silica/include/Renderer.h>
 
 #include "AxionEngine/Source/core/Timestep.h"
-#include "AxionEngine/Source/render/Material.h"
-#include "AxionEngine/Source/render/Framebuffer.h"
-#include "AxionEngine/Source/render/Camera.h"
-#include "AxionEngine/Source/render/Mesh.h"
+#include "AxionEngine/Source/core/AssetHandle.h"
+#include "AxionEngine/Source/graphics/Material.h"
+#include "AxionEngine/Source/graphics/Framebuffer.h"
+#include "AxionEngine/Source/graphics/Camera.h"
+#include "AxionEngine/Source/graphics/Mesh.h"
+
+namespace Silica {
+	class SBox;
+}
 
 namespace Axion {
 

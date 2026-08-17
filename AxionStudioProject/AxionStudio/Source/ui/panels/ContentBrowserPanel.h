@@ -1,27 +1,45 @@
 #pragma once
-#include "axpch.h"
+
+#include <memory>
+#include <filesystem>
+#include <functional>
+#include <string>
+#include <unordered_set>
+#include <vector>
+#include <optional>
+#include <utility>
+
+#include <Silica/include/SWidget.h>
 
 #include "AxionEngine/Source/project/Project.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
-
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalSplitBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalSplitBox.h"
-
-#include "AxionStudio/Source/ui/modals/AudioImportModal.h"
-#include "AxionStudio/Source/ui/modals/MaterialImportModal.h"
-#include "AxionStudio/Source/ui/modals/MeshImportModal.h"
-#include "AxionStudio/Source/ui/modals/PhysicsMaterialImportModal.h"
-#include "AxionStudio/Source/ui/modals/PipelineImportModal.h"
-#include "AxionStudio/Source/ui/modals/ShaderImportModal.h"
-#include "AxionStudio/Source/ui/modals/SkyboxImportModal.h"
-#include "AxionStudio/Source/ui/modals/Texture2DImportModal.h"
-#include "AxionStudio/Source/ui/modals/TextureCubeImportModal.h"
-
 #include "AxionStudio/Source/core/VirtualFileSystem.h"
+
+namespace YAML {
+	class Node;
+	class Emitter;
+}
+
+namespace Silica {
+	class SBox;
+	class SHorizontalSplitBox;
+	class SVerticalSplitBox;
+}
+
+namespace Axion {
+	class AudioImportModal;
+	class MaterialImportModal;
+	class MeshImportModal;
+	class PhysicsMaterialImportModal;
+	class PipelineImportModal;
+	class ShaderImportModal;
+	class SkyboxImportModal;
+	class Texture2DImportModal;
+	class TextureCubeImportModal;
+}
+
+
 
 namespace Axion {
 

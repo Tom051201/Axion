@@ -1,9 +1,8 @@
 #include "AnimationClipParser.h"
 
-#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
-
 #include "AxionEngine/Source/scene/Animation.h"
 
+#include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 #include "AxionAssetPipeline/Source/importer/GLTFImporter.h"
 
 namespace Axion::AAP {

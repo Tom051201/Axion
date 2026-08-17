@@ -1,3 +1,4 @@
+#include "studiopch.h"
 #include "EditorUtils.h"
 
 namespace Axion {

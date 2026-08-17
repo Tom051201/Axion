@@ -1,9 +1,16 @@
 #pragma once
 
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
+#include <functional>
+#include <memory>
+
+#include <Silica/include/SWidget.h>
 
 #include "AxionEngine/Source/scene/Entity.h"
+
+namespace Silica {
+	class SBox;
+	class SVerticalBox;
+}
 
 namespace Axion {
 

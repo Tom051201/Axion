@@ -1,6 +1,25 @@
+#include "studiopch.h"
 #include "ContentBrowserPanel.h"
 
-#include <chrono>
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SBorderLayout.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SImage.h>
+#include <Silica/include/SMenuAnchor.h>
+#include <Silica/include/SScrollBox.h>
+#include <Silica/include/SEditableText.h>
+#include <Silica/include/SCheckbox.h>
+#include <Silica/include/SOverlay.h>
+#include <Silica/include/SAlign.h>
+#include <Silica/include/SWrapBox.h>
+#include <Silica/include/SScrollCatcher.h>
+#include <Silica/include/STreeNode.h>
+#include <Silica/include/SHorizontalSplitBox.h>
+#include <Silica/include/SVerticalSplitBox.h>
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -14,23 +33,15 @@
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
-
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SImage.h"
-#include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SEditableText.h"
-#include "AxionStudio/Vendor/Silica/include/SCheckbox.h"
-#include "AxionStudio/Vendor/Silica/include/SOverlay.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/SWrapBox.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollCatcher.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
-#include "AxionStudio/Vendor/Silica/include/STreeNode.h"
+#include "AxionStudio/Source/ui/modals/AudioImportModal.h"
+#include "AxionStudio/Source/ui/modals/MaterialImportModal.h"
+#include "AxionStudio/Source/ui/modals/MeshImportModal.h"
+#include "AxionStudio/Source/ui/modals/PhysicsMaterialImportModal.h"
+#include "AxionStudio/Source/ui/modals/PipelineImportModal.h"
+#include "AxionStudio/Source/ui/modals/ShaderImportModal.h"
+#include "AxionStudio/Source/ui/modals/SkyboxImportModal.h"
+#include "AxionStudio/Source/ui/modals/Texture2DImportModal.h"
+#include "AxionStudio/Source/ui/modals/TextureCubeImportModal.h"
 
 namespace Axion {
 

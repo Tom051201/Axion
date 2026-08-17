@@ -3,7 +3,7 @@
 #include <filesystem>
 
 #include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/render/Shader.h"
+#include "AxionEngine/Source/graphics/Shader.h"
 
 #include "AxionAssetPipeline/Source/core/AssetFormats.h"
 

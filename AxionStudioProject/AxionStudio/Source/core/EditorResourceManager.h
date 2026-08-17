@@ -1,7 +1,10 @@
 #pragma once
-#include "axpch.h"
 
-#include "AxionEngine/Source/render/Texture.h"
+#include <string>
+#include <unordered_map>
+
+#include "AxionEngine/Source/core/Core.h"
+#include "AxionEngine/Source/graphics/Texture.h"
 
 namespace Axion {
 

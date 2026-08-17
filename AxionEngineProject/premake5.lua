@@ -8,7 +8,10 @@ project "AxionEngine"
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
 	buildoptions { "/utf-8", "/Zc:char8_t" }
-	defines { "FMT_UNICODE" }
+	defines {
+		"FMT_UNICODE",
+		"NOMINMAX",
+	}
 
 	pchheader "axpch.h"
 	pchsource "AxionEngine/Source/axpch.cpp"
@@ -30,6 +33,7 @@ project "AxionEngine"
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.PhysX}",
 		"AxionEngine/Source",
+		"AxionEngine/Vendor",
 		"AxionEngine/Vendor/spdlog/include",
 		"AxionEngine/Vendor/d3d12",
 		"AxionEngine/Vendor/yaml-cpp/include",

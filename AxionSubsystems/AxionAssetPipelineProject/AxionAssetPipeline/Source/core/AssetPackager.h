@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <filesystem>
 
 namespace Axion::AAP {

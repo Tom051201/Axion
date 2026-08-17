@@ -1,5 +1,7 @@
+#include "studiopch.h"
 #include "WireframeRenderer.h"
-#include "AxionEngine/Source/render/Renderer2D.h"
+
+#include "AxionEngine/Source/graphics/Renderer2D.h"
 
 namespace {
 

@@ -1,21 +1,27 @@
+#include "studiopch.h"
 #include "AssetManagerPanel.h"
+
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SScrollBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/SAlign.h>
+#include <Silica/include/SBorderLayout.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SCollapsingHeader.h>
 
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
-#include "AxionEngine/Source/render/Mesh.h"
-#include "AxionEngine/Source/render/Shader.h"
-#include "AxionEngine/Source/render/Material.h"
+#include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/graphics/Mesh.h"
+#include "AxionEngine/Source/graphics/Shader.h"
+#include "AxionEngine/Source/graphics/Material.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/scene/Prefab.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
-
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 

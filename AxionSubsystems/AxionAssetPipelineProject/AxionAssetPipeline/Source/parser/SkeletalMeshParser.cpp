@@ -1,6 +1,6 @@
 #include "SkeletalMeshParser.h"
 
-#include "AxionEngine/Source/render/SkeletalMesh.h"
+#include "AxionEngine/Source/graphics/SkeletalMesh.h"
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 #include "AxionAssetPipeline/Source/importer/GLTFImporter.h"

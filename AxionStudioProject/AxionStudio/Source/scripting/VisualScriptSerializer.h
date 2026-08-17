@@ -1,10 +1,13 @@
 #pragma once
 
 #include <filesystem>
-
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include <string>
 
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
+
+namespace YAML {
+	class Emitter;
+}
 
 namespace Axion {
 
@@ -22,6 +25,7 @@ namespace Axion {
 		static std::string pinTypeToString(const PinType& type);
 		static NodeType nodeTypeFromString(const std::string& str);
 		static std::string nodeTypeToString(const NodeType& type);
+
 	};
 
 }

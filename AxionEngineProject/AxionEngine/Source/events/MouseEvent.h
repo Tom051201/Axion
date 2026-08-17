@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/input/InputCodes.h"
 

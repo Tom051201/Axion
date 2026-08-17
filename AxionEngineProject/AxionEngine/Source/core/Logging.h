@@ -1,9 +1,11 @@
 #pragma once
 
-#include "AxionEngine/Source/core/Core.h"
+#include <memory>
 
-#include "AxionEngine/Vendor/spdlog/include/spdlog/spdlog.h"
-#include "AxionEngine/Vendor/spdlog/include/spdlog/fmt/ostr.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
+#include "AxionEngine/Source/core/Core.h"
 
 namespace Axion {
 

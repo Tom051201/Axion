@@ -1,4 +1,16 @@
+#include "studiopch.h"
 #include "ProjectOverviewPanel.h"
+
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SBorderLayout.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SEditableText.h>
+#include <Silica/include/SScrollBox.h>
+#include <Silica/include/SAlign.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -6,20 +18,10 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 
-#include "AxionStudio/Source/core/EditorConfig.h"
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-
 #include "AxionAssetPipeline/Source/core/AssetPackager.h"
 
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SEditableText.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
+#include "AxionStudio/Source/core/EditorConfig.h"
+#include "AxionStudio/Source/core/EditorActionQueue.h"
 
 namespace Axion {
 
@@ -35,9 +37,7 @@ namespace Axion {
 
 	Silica::WidgetPtr ProjectPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = 3.0f
-			});
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;

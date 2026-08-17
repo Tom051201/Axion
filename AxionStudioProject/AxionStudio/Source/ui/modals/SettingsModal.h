@@ -1,9 +1,14 @@
 #pragma once
 
 #include <functional>
+#include <vector>
+#include <string>
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
+#include <Silica/include/SWidget.h>
+
+namespace Silica {
+	class SBox;
+}
 
 namespace Axion {
 

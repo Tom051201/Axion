@@ -1,7 +1,19 @@
+#include "studiopch.h"
 #include "AssetLibraryPanel.h"
 
-#include <algorithm>
-#include <cctype>
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SBorderLayout.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/SScrollBox.h>
+#include <Silica/include/SAlign.h>
+#include <Silica/include/SImage.h>
+#include <Silica/include/SWrapBox.h>
+#include <Silica/include/SWrappedTextBlock.h>
+#include <Silica/include/SEditableText.h>
 
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/core/Logging.h"
@@ -9,22 +21,8 @@
 #include "AxionEngine/Source/core/YAMLHelper.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
 
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SImage.h"
-#include "AxionStudio/Vendor/Silica/include/SWrapBox.h"
-#include "AxionStudio/Vendor/Silica/include/SWrappedTextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SEditableText.h"
-
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
 namespace Axion {
 

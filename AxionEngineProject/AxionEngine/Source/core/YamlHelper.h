@@ -1,9 +1,9 @@
 #pragma once
 
+#include <yaml-cpp/yaml.h>
+
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/UUID.h"
-
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
 namespace YAML {
 

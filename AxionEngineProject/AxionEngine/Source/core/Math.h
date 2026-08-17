@@ -1,5 +1,9 @@
 #pragma once
-#include "axpch.h"
+
+#include <cmath>
+#include <utility>
+#include <cstring>
+#include <DirectXMath.h>
 
 namespace Axion {
 

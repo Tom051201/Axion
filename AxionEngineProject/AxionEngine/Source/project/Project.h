@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Source/core/AssetRegistry.h"
 #include "AxionEngine/Source/core/Version.h"
+#include "AxionEngine/Source/core/UUID.h"
 
 namespace Axion {
 

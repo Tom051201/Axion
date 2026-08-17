@@ -1,28 +1,26 @@
+#include "studiopch.h"
 #include "HierarchyPanel.h"
 
-#include <algorithm>
-#include <filesystem>
+#include <Silica/include/Theme.h>
+#include <Silica/include/SScrollBox.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/STreeNode.h>
+#include <Silica/include/SMenuAnchor.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SBorderLayout.h>
 
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/STreeNode.h"
-#include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
-
-#include "AxionEngine/Source/scene/Components.h"
-#include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/Application.h"
-
-#include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/parser/PrefabParser.h"
+
+#include "AxionStudio/Source/core/EditorActionQueue.h"
 
 namespace Axion {
 

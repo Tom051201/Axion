@@ -1,5 +1,7 @@
 #pragma once
-#include "axpch.h"
+
+#include <string>
+#include <vector>
 
 #include "AxionEngine/Source/core/Math.h"
 

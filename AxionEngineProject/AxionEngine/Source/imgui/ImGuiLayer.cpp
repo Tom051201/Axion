@@ -1,17 +1,16 @@
 #include "axpch.h"
 #include "ImGuiLayer.h"
 
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_win32.h>
+#include <imgui/backends/imgui_impl_dx12.h>
+#include <ImGuizmo/ImGuizmo.h>
+
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Application.h"
-#include "AxionEngine/Source/render/GraphicsContext.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
 #include "AxionEngine/Source/imgui/ImGuiInputMapper.h"
-
-#include "AxionEngine/Vendor/imgui/imgui.h"
-#include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
-#include "AxionEngine/Vendor/imgui/backends/imgui_impl_dx12.h"
-#include "AxionEngine/Vendor/imgui/backends/imgui_impl_opengl3.h"
-#include "AxionEngine/Vendor/ImGuizmo/ImGuizmo.h"
 
 namespace Axion {
 

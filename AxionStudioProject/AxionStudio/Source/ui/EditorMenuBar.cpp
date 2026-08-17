@@ -1,4 +1,14 @@
+#include "studiopch.h"
 #include "EditorMenuBar.h"
+
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/SMenuAnchor.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SDockSpace.h>
 
 #include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -6,20 +16,12 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/SMenuAnchor.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
-
+#include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/EditorModalManager.h"
 #include "AxionStudio/Source/ui/modals/CreateProjectModal.h"
 #include "AxionStudio/Source/ui/modals/ExportProjectModal.h"
 #include "AxionStudio/Source/ui/modals/SystemInfoModal.h"
 #include "AxionStudio/Source/ui/modals/SettingsModal.h"
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-#include "AxionStudio/Source/core/EditorModalManager.h"
 
 namespace Axion {
 

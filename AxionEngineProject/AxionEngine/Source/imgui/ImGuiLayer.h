@@ -1,15 +1,18 @@
 #pragma once
 
+#include <functional>
+#include <filesystem>
+#include <string>
+#include <cstdint>
+
 #include "AxionEngine/Source/layers/Layer.h"
 #include "AxionEngine/Source/core/Window.h"
-
-#include "AxionEngine/Source/render/Renderer.h"
-
+#include "AxionEngine/Source/graphics/Renderer.h"
 #include "AxionEngine/Source/events/MouseEvent.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
-#include "AxionEngine/Platform/directx/DX12Context.h"
+#include "AxionEngine/Platform/directx12/DX12Context.h"
 
 namespace Axion {
 

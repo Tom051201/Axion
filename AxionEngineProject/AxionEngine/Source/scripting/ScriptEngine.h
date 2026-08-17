@@ -1,5 +1,10 @@
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <unordered_map>
+
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/physics/PhysicsSystem.h"

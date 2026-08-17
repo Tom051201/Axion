@@ -1,4 +1,7 @@
+#include "studiopch.h"
 #include "EditorResourceManager.h"
+
+#include "AxionEngine/Source/core/Logging.h"
 
 namespace Axion {
 

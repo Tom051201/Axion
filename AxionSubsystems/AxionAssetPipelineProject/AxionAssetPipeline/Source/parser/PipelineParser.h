@@ -1,9 +1,10 @@
 #pragma once
 
-#include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/render/Pipeline.h"
-
 #include <filesystem>
+#include <string>
+
+#include "AxionEngine/Source/core/UUID.h"
+#include "AxionEngine/Source/graphics/Pipeline.h"
 
 namespace Axion::AAP {
 

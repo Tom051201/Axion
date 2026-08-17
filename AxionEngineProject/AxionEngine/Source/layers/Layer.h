@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <functional>
+
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/events/Event.h"

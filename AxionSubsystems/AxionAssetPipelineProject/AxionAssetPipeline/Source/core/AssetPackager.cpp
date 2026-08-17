@@ -1,12 +1,12 @@
 #include "AssetPackager.h"
 
+#include <yaml-cpp/yaml.h>
+
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/YAMLHelper.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
-
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
 #include "AxionAssetPipeline/Source/platform/PlatformPackager.h"
 #include "AxionAssetPipeline/Source/parser/MeshParser.h"

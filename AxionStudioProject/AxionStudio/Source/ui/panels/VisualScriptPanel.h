@@ -1,11 +1,20 @@
 #pragma once
-#include "axpch.h"
+
+#include <filesystem>
+#include <string>
+#include <memory>
+#include <unordered_map>
+#include <map>
+
+#include <Silica/include/SWidget.h>
+#include <Silica/include/SNodeEditor.h>
 
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/FontAtlas.h"
-#include "AxionStudio/Vendor/Silica/include/SNodeEditor.h"
+namespace Silica {
+	class SBox;
+	class SNodeEditor;
+}
 
 namespace Axion {
 

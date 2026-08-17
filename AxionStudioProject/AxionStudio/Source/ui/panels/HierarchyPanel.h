@@ -1,13 +1,20 @@
 #pragma once
 
 #include <unordered_set>
+#include <functional>
+#include <memory>
 
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
+#include <Silica/include/SWidget.h>
 
+#include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Entity.h"
+
+namespace Silica {
+	class SBox;
+	class SScrollBox;
+	class SVerticalBox;
+}
 
 namespace Axion {
 

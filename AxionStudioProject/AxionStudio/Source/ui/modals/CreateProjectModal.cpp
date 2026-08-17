@@ -1,18 +1,20 @@
+#include "studiopch.h"
 #include "CreateProjectModal.h"
+
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SBorderLayout.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SEditableText.h>
+#include <Silica/include/SAlign.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
-
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SEditableText.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/SSeparator.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"

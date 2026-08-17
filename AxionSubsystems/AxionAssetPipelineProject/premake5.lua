@@ -21,8 +21,10 @@ project "AxionAssetPipeline"
 	
 	includedirs {
 		".",
+		"AxionAssetPipeline/Vendor",
 		"%{wks.location}/AxionEngineProject",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Source",
+		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/spdlog/include",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12"

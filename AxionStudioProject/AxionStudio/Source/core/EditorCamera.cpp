@@ -1,7 +1,8 @@
+#include "studiopch.h"
 #include "EditorCamera.h"
 
-#include "AxionEngine/Source/input/Input.h"
 #include "AxionEngine/Source/core/Application.h"
+#include "AxionEngine/Source/input/Input.h"
 
 namespace Axion {
 

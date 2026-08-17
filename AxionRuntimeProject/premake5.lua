@@ -23,6 +23,7 @@ project "AxionRuntime"
 	includedirs {
 		".",
 		"%{wks.location}/AxionEngineProject",
+		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/spdlog/include",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Source",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/imgui",

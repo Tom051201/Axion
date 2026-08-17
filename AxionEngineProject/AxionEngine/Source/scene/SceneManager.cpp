@@ -5,9 +5,6 @@
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 
-#include <thread>
-#include <atomic>
-
 namespace Axion {
 
 	struct SceneManagerData {

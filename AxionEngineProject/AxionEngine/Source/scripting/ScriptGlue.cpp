@@ -1,6 +1,8 @@
 #include "axpch.h"
 #include "ScriptGlue.h"
 
+#include <yaml-cpp/yaml.h>
+
 #include "AxionEngine/Source/input/Input.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/physics/Physics.h"
@@ -8,8 +10,6 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/scene/Prefab.h"
-
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
 
 namespace Axion {
 

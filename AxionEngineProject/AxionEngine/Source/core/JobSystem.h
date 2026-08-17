@@ -1,5 +1,12 @@
 #pragma once
-#include "axpch.h"
+
+#include <functional>
+#include <cstdint>
+#include <thread>
+#include <mutex>
+#include <vector>
+#include <atomic>
+#include <queue>
 
 namespace Axion {
 

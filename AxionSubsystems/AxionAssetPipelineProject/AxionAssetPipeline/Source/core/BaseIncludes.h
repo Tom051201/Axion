@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 
 #include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/core/Core.h"

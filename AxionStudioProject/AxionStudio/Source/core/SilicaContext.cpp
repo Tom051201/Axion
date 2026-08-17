@@ -1,18 +1,22 @@
+#include "studiopch.h"
 #include "SilicaContext.h"
 
+#include <Silica/include/SBox.h>
+
 #include "AxionEngine/Source/core/Application.h"
-#include "AxionEngine/Source/render/GraphicsContext.h"
+#include "AxionEngine/Source/core/Logging.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 
 // ----- WINDOWS SPECIFIC INCLUDES --
 #ifdef AX_PLATFORM_WINDOWS
-#include "AxionStudio/Vendor/Silica/backends/SilicaImplWin32.h"
+#include <Silica/backends/SilicaImplWin32.h>
 #endif
 
 // ----- DIRECTX12 SPECIFIC INCLUDES -----
-#include "AxionStudio/Vendor/Silica/backends/SilicaImplDX12.h"
-#include "AxionEngine/Platform/directx/DX12Context.h"
+#include <Silica/backends/SilicaImplDX12.h>
+#include "AxionEngine/Platform/directx12/DX12Context.h"
 
 namespace Axion {
 

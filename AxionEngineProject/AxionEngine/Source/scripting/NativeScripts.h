@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/input/Input.h"

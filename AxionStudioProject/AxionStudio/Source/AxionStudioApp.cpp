@@ -1,8 +1,13 @@
-#include <Axion.h>
-#include <AxionEngine/Source/core/EntryPoint.h>
+#include "studiopch.h"
+#include "AxionEngine/Source/core/EntryPoint.h"
 
-#include "EditorLayer.h"
+#include "AxionEngine/Source/core/Application.h"
+#include "AxionEngine/Source/core/Window.h"
+#include "AxionEngine/Source/layers/LayerStack.h"
+
+#include "AxionStudio/Source/EditorLayer.h"
 #include "AxionStudio/Source/core/EditorAssetLoader.h"
+
 
 namespace Axion {
 

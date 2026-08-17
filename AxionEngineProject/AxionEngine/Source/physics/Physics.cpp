@@ -1,9 +1,9 @@
 #include "axpch.h"
 #include "Physics.h"
 
-#include "AxionEngine/Source/scene/Components.h"
+#include <physx/include/PxPhysicsAPI.h>
 
-#include "AxionEngine/Vendor/physx/include/PxPhysicsAPI.h"
+#include "AxionEngine/Source/scene/Components.h"
 
 namespace Axion {
 

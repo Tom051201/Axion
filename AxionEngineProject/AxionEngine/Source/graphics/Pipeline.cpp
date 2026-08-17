@@ -1,0 +1,22 @@
+#include "axpch.h"
+#include "Pipeline.h"
+
+#include "AxionEngine/Source/graphics/Renderer.h"
+
+#include "AxionEngine/Platform/directx12/DX12Pipeline.h"
+
+namespace Axion {
+
+	Ref<Pipeline> Pipeline::create(const PipelineSpecification& spec) {
+
+		switch (Renderer::getAPI()) {
+
+			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
+			case RendererAPI::DirectX12: { return std::make_shared<DX12Pipeline>(spec); }
+
+		}
+		return nullptr;
+
+	}
+
+}

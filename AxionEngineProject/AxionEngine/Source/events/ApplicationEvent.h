@@ -1,8 +1,9 @@
 #pragma once
 
-#include "AxionEngine/Source/events/Event.h"
-
+#include <cstdint>
 #include <filesystem>
+
+#include "AxionEngine/Source/events/Event.h"
 
 namespace Axion {
 

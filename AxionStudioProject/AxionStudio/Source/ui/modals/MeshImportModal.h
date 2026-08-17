@@ -1,11 +1,15 @@
 #pragma once
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-
 #include <filesystem>
 #include <string>
 #include <functional>
+#include <memory>
+
+#include <Silica/include/SWidget.h>
+
+namespace Silica {
+	class SBox;
+}
 
 namespace Axion {
 

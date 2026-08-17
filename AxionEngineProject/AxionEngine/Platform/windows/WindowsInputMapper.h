@@ -1,5 +1,6 @@
 #pragma once
-#include "axpch.h"
+
+#include <cstdint>
 
 #include "AxionEngine/Source/input/InputCodes.h"
 

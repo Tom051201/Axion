@@ -1,5 +1,9 @@
 #pragma once
-#include "axpch.h"
+
+#include <typeinfo>
+#include <functional>
+
+#include <spdlog/fmt/fmt.h>
 
 #include "AxionEngine/Source/core/UUID.h"
 

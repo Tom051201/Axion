@@ -1,10 +1,12 @@
 #pragma once
 
-#include "axpch.h"
+#include <vector>
+#include <string>
+#include <DirectXMath.h>
 
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/Timestep.h"
-#include "AxionEngine/Source/render/SkeletalMesh.h"
+#include "AxionEngine/Source/graphics/SkeletalMesh.h"
 
 namespace Axion {
 

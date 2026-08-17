@@ -1,9 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SDockSpace.h"
+#include <Silica/include/SWidget.h>
+
+namespace Silica {
+	class SDockSpace;
+}
 
 namespace Axion {
 

@@ -8,7 +8,13 @@ project "AxionStudio"
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
 	buildoptions { "/utf-8", "/Zc:char8_t" }
-	defines { "FMT_UNICODE" }
+	defines {
+		"FMT_UNICODE",
+		"NOMINMAX",
+	}
+
+	pchheader "studiopch.h"
+	pchsource "AxionStudio/Source/studiopch.cpp"
 
 	files {
 		"AxionStudio/Source/**.h",
@@ -23,6 +29,7 @@ project "AxionStudio"
 	includedirs {
 		".",
 		"%{wks.location}/AxionEngineProject",
+		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/spdlog/include",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Source",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/imgui",
@@ -30,6 +37,8 @@ project "AxionStudio"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
 		"%{wks.location}/AxionSubsystems/AxionAssetPipelineProject",
+		"AxionStudio/Source",
+		"AxionStudio/Vendor",
 		"AxionStudio/Vendor/Silica/include",
 		"AxionStudio/Vendor/Quartz/include",
 	}
@@ -47,6 +56,9 @@ project "AxionStudio"
 	prebuildcommands {
 		"dotnet build \"%{wks.location}/AxionScripting/AxionScriptCore/AxionScriptCore.csproj\" -c %{cfg.buildcfg}"
 	}
+
+	filter "files:AxionStudio/Vendor/Silica/backends/**.cpp"
+		enablepch "Off" 
 
 	filter "system:windows"
 		systemversion "latest"

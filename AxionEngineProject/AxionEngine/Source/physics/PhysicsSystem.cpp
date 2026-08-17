@@ -1,14 +1,14 @@
 #include "axpch.h"
 #include "PhysicsSystem.h"
 
+#include <physx/include/PxPhysicsAPI.h>
+
+#include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
-#include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scripting/ScriptEngine.h"
-
-#include "AxionEngine/Vendor/physx/include/PxPhysicsAPI.h"
 
 namespace Axion {
 

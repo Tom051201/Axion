@@ -2,9 +2,6 @@
 
 #ifdef AX_PLATFORM_WINDOWS
 
-#include "AxionEngine/Source/EngineConfig.h"
-#include "AxionEngine/Source/core/Application.h"
-
 namespace Axion {
 
 	class WindowsTitleBar {

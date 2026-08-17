@@ -1,7 +1,7 @@
 #include "axpch.h"
 #include "Project.h"
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"

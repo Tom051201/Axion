@@ -1,15 +1,17 @@
+#include "studiopch.h"
 #include "SystemInfoModal.h"
 
-#include "AxionEngine/Source/render/GraphicsContext.h"
-#include "AxionEngine/Source/render/Renderer.h"
-#include "AxionEngine/Source/core/PlatformUtils.h"
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SAlign.h>
 
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
+#include "AxionEngine/Source/core/PlatformUtils.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
+#include "AxionEngine/Source/graphics/Renderer.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "AxionEngine/Source/render/Mesh.h"
-#include "AxionEngine/Source/render/Texture.h"
-#include "AxionEngine/Source/render/Pipeline.h"
 #include "AxionEngine/Source/core/Timestep.h"
+#include "AxionEngine/Source/graphics/Mesh.h"
+#include "AxionEngine/Source/graphics/Texture.h"
+#include "AxionEngine/Source/graphics/Pipeline.h"
 
 namespace Axion {
 

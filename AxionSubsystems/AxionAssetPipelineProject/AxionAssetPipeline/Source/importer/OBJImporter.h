@@ -1,7 +1,9 @@
 #pragma once
 
 #include <filesystem>
-#include "AxionEngine/Source/render/Mesh.h"
+#include <DirectXMath.h>
+
+#include "AxionEngine/Source/graphics/Mesh.h"
 
 namespace Axion::AAP {
 

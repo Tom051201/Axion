@@ -1,6 +1,10 @@
 #include "axpch.h"
 #include "EngineAssets.h"
 
+#include "AxionEngine/Source/graphics/Vertex.h"
+#include "AxionEngine/Source/graphics/Formats.h"
+#include "AxionEngine/Source/graphics/Buffers.h"
+
 #include "AxionEngine/Resources/shaders/ShadowMap_VS.h"
 #include "AxionEngine/Resources/shaders/ShadowMap_PS.h"
 #include "AxionEngine/Resources/shaders/Skybox_VS.h"

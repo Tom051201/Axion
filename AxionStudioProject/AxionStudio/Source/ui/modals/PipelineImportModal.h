@@ -1,14 +1,17 @@
 #pragma once
 
-#include "AxionEngine/Source/render/Pipeline.h"
-
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-
 #include <string>
 #include <vector>
 #include <functional>
-#include <filesystem>
+#include <memory>
+
+#include <Silica/include/SWidget.h>
+
+#include "AxionEngine/Source/graphics/Pipeline.h"
+
+namespace Silica {
+	class SBox;
+}
 
 namespace Axion {
 

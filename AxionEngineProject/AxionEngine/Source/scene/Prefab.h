@@ -1,6 +1,9 @@
 #pragma once
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include <vector>
+#include <cstdint>
+
+#include <yaml-cpp/yaml.h>
 
 namespace Axion {
 

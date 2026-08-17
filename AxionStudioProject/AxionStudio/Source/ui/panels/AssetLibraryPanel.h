@@ -3,14 +3,19 @@
 #include <filesystem>
 #include <vector>
 #include <string>
+#include <memory>
 
-#include "AxionStudio/Vendor/Silica/include/SWidget.h"
-#include "AxionStudio/Vendor/Silica/include/SBox.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
+#include <Silica/include/SWidget.h>
+#include <Silica/include/Renderer.h>
 
-#include "AxionStudio/Source/core/SilicaContext.h"
+#include "AxionEngine/Source/core/Core.h"
+#include "AxionEngine/Source/graphics/Texture.h"
+#include "AxionEngine/Source/events/Event.h"
 
-#include "AxionEngine/Source/render/Texture.h"
+namespace Silica {
+	class SBox;
+	class STextBlock;
+}
 
 namespace Axion {
 

@@ -1,7 +1,13 @@
 #include "OBJImporter.h"
 
+#include <cstdint>
+#include <unordered_map>
+
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "AxionAssetPipeline/Vendor/tinyobjloader/tiny_obj_loader.h"
+#include <tinyobjloader/tiny_obj_loader.h>
+
+#include "AxionEngine/Source/core/Logging.h"
+#include "AxionEngine/Source/graphics/Vertex.h"
 
 namespace Axion::AAP {
 

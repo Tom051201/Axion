@@ -1,8 +1,12 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
+#include <utility>
+#include <cstdint>
+#include <fstream>
 
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 
 #include "AxionEngine/Source/scene/Scene.h"
 

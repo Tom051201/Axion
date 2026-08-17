@@ -1,19 +1,19 @@
 #include "axpch.h"
 #include "WindowsWindow.h"
 
+#include <shellapi.h>
+
+#include <imgui/backends/imgui_impl_win32.h>
+
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
 #include "AxionEngine/Source/events/MouseEvent.h"
-#include "AxionEngine/Source/render/GraphicsContext.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
 
 #include "AxionEngine/Platform/windows/WindowsInputMapper.h"
 #include "AxionEngine/Platform/windows/WindowsHelper.h"
-#include "AxionEngine/Platform/directx/DX12Context.h"
-
-#include "AxionEngine/Vendor/imgui/backends/imgui_impl_win32.h"
-
-#include <shellapi.h>
+#include "AxionEngine/Platform/directx12/DX12Context.h"
 
 // ----- Used for custom title bar -----
 #define WM_APP_MINIMIZE	(WM_APP + 1)

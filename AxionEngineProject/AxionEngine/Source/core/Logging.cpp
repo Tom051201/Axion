@@ -1,7 +1,7 @@
 #include "axpch.h"
 #include "Logging.h"
 
-#include "AxionEngine/Vendor/spdlog/include/spdlog/sinks/stdout_color_sinks.h"
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace Axion {
 

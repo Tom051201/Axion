@@ -2,6 +2,7 @@
 #include "Layer.h"
 
 #include <vector>
+#include <cstdint>
 
 namespace Axion {
 

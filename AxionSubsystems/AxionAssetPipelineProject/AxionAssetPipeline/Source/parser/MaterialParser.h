@@ -1,11 +1,12 @@
 #pragma once
 
-#include "AxionEngine/Source/core/UUID.h"
-#include "AxionEngine/Source/render/MaterialData.h"
-#include "AxionEngine/Source/render/Texture.h"
-
 #include <string>
 #include <filesystem>
+#include <map>
+
+#include "AxionEngine/Source/core/UUID.h"
+#include "AxionEngine/Source/graphics/MaterialData.h"
+#include "AxionEngine/Source/graphics/Texture.h"
 
 namespace Axion::AAP {
 

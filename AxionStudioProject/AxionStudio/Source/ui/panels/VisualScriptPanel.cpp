@@ -1,28 +1,30 @@
+#include "studiopch.h"
 #include "VisualScriptPanel.h"
+
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SBorderLayout.h>
+#include <Silica/include/SHorizontalBox.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SEditableText.h>
+#include <Silica/include/SScrollBox.h>
+#include <Silica/include/SImage.h>
+#include <Silica/include/SAlign.h>
+#include <Silica/include/SHorizontalSplitBox.h>
+#include <Silica/include/SCollapsingHeader.h>
+#include <Silica/include/SInputFieldFloat.h>
+#include <Silica/include/SInputFieldInt.h>
+#include <Silica/include/SInputFieldVec3Float.h>
+#include <Silica/include/SComboBox.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
 #include "AxionStudio/Source/scripting/VisualScriptCompiler.h"
-
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SVerticalBox.h"
-#include "AxionStudio/Vendor/Silica/include/SButton.h"
-#include "AxionStudio/Vendor/Silica/include/STextBlock.h"
-#include "AxionStudio/Vendor/Silica/include/SEditableText.h"
-#include "AxionStudio/Vendor/Silica/include/SScrollBox.h"
-#include "AxionStudio/Vendor/Silica/include/SImage.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/SHorizontalSplitBox.h"
-#include "AxionStudio/Vendor/Silica/include/SCollapsingHeader.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
-#include "AxionStudio/Vendor/Silica/include/SInputFieldFloat.h"
-#include "AxionStudio/Vendor/Silica/include/SInputFieldInt.h"
-#include "AxionStudio/Vendor/Silica/include/SInputFieldVec3Float.h"
-#include "AxionStudio/Vendor/Silica/include/SComboBox.h"
-#include "AxionStudio/Vendor/Silica/include/SSeparator.h"
 
 namespace Axion {
 

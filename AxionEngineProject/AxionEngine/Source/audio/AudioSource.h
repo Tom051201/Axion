@@ -1,6 +1,9 @@
 #pragma once
 
-#include "AxionEngine/Vendor/miniaudio/miniaudio.h"
+#include <fstream>
+#include <cstdint>
+
+#include <miniaudio/miniaudio.h>
 
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/core/Math.h"

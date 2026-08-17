@@ -1,3 +1,4 @@
+#include "studiopch.h"
 #include "VisualScriptCompiler.h"
 
 namespace Axion {

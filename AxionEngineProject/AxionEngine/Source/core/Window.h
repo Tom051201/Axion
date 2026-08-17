@@ -1,5 +1,9 @@
 #pragma once
-#include "axpch.h"
+
+#include <cstdint>
+#include <functional>
+#include <string>
+#include <filesystem>
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/events/Event.h"

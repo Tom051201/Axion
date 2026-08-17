@@ -1,5 +1,10 @@
 #pragma once
-#include "axpch.h"
+
+#include <mutex>
+#include <unordered_map>
+#include <vector>
+#include <functional>
+#include <filesystem>
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
@@ -132,10 +137,7 @@ namespace Axion {
 
 			while (!storageRef.loadQueue.empty() && maxItems > 0) {
 				auto it = storageRef.loadQueue.begin();
-
 				storageRef.assets[it->first] = it->second();
-				//AX_CORE_LOG_TRACE("{} loaded: {}", typeid(T).name(), it->first.uuid.toString());
-
 				storageRef.loadQueue.erase(it);
 				maxItems--;
 			}

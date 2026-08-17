@@ -1,10 +1,10 @@
+#include "studiopch.h"
 #include "WindowsTitleBar.h"
 
 #ifdef AX_PLATFORM_WINDOWS
 
-#include <Windows.h>
-
-#include "AxionEngine/Vendor/imgui/imgui.h"
+#include "AxionEngine/Source/EngineConfig.h"
+#include "AxionEngine/Source/core/Application.h"
 
 #include "AxionEngine/Platform/windows/WindowsWindow.h"
 

@@ -1,17 +1,32 @@
+#include "studiopch.h"
 #include "EditorLayer.h"
 
+#include <Quartz/include/SQuartzEditor.h>
+#include <Silica/include/Theme.h>
+#include <Silica/include/SBox.h>
+#include <Silica/include/SOverlay.h>
+#include <Silica/include/SAlign.h>
+#include <Silica/include/SWorkspace.h>
+#include <Silica/include/SBorderLayout.h>
+#include <Silica/include/SLoadingToast.h>
+#include <Silica/include/SVerticalBox.h>
+
+#include "AxionEngine/Source/core/Application.h"
+#include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
+#include "AxionEngine/Source/graphics/Renderer2D.h"
 #include "AxionEngine/Source/scene/Prefab.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/scene/SceneSerializer.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/input/Input.h"
 
-#include "AxionStudio/Vendor/Silica/include/SOverlay.h"
-#include "AxionStudio/Vendor/Silica/include/SAlign.h"
-#include "AxionStudio/Vendor/Silica/include/SWorkspace.h"
-#include "AxionStudio/Vendor/Silica/include/SBorderLayout.h"
-#include "AxionStudio/Vendor/Silica/include/Theme.h"
-#include "AxionStudio/Vendor/Silica/include/SLoadingToast.h"
-
-#include "AxionEngine/Vendor/yaml-cpp/include/yaml-cpp/yaml.h"
-
+#include "AxionStudio/Source/core/EditorResourceManager.h"
+#include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/EditorModalManager.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
+#include "AxionStudio/Source/core/WireframeRenderer.h"
+#include "AxionStudio/Source/core/EditorUtils.h"
 #include "AxionStudio/Source/ui/EditorMenuBar.h"
 #include "AxionStudio/Source/ui/panels/ViewportPanel.h"
 #include "AxionStudio/Source/ui/panels/ContentBrowserPanel.h"
@@ -24,12 +39,6 @@
 #include "AxionStudio/Source/ui/panels/AssetLibraryPanel.h"
 #include "AxionStudio/Source/ui/panels/MaterialPanel.h"
 #include "AxionStudio/Source/ui/modals/SettingsModal.h"
-#include "AxionStudio/Source/core/EditorResourceManager.h"
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-#include "AxionStudio/Source/core/EditorModalManager.h"
-#include "AxionStudio/Source/core/SilicaContext.h"
-#include "AxionStudio/Source/core/WireframeRenderer.h"
-#include "AxionStudio/Source/core/EditorUtils.h"
 
 namespace Axion {
 
@@ -716,7 +725,7 @@ namespace Axion {
 				Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
 				Vec3 worldScale = worldTransform.getScale();
 
-				float maxScale = std::max(std::abs(worldScale.x), std::max(std::abs(worldScale.y), std::abs(worldScale.z)));
+				float maxScale = (std::max)(std::abs(worldScale.x), (std::max)(std::abs(worldScale.y), std::abs(worldScale.z)));
 				float radius = sc.radius * maxScale;
 
 				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), Vec3::one());
@@ -733,7 +742,7 @@ namespace Axion {
 				Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
 				Vec3 worldScale = worldTransform.getScale();
 
-				float scaleXZ = std::max(std::abs(worldScale.x), std::abs(worldScale.z));
+				float scaleXZ = (std::max)(std::abs(worldScale.x), std::abs(worldScale.z));
 				float radius = cc.radius * scaleXZ;
 				float halfHeight = cc.halfHeight * std::abs(worldScale.y);
 

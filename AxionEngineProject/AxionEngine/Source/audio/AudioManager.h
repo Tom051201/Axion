@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AxionEngine/Vendor/miniaudio/miniaudio.h"
+#include <miniaudio/miniaudio.h>
 
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
