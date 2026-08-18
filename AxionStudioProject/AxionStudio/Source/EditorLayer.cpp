@@ -144,7 +144,7 @@ namespace Axion {
 
 		m_viewportTextureID = SilicaContext::getFrameBufferTextureID(m_frameBuffer);
 		m_viewportPanel = std::make_shared<ViewportPanel>();
-		m_viewportPanel->setup(&m_sceneState, &m_prePauseState, &m_stepFrames, &m_editorCamera);
+		m_viewportPanel->setup(&m_sceneState, &m_prePauseState, &m_stepFrames, &m_editorCamera, &m_transformGizmo);
 		m_viewportPanel->setCallbacks([this]() { playScene(); }, [this]() { simScene(); }, [this]() { stopScene(); });
 		m_viewportPanel->setSkyboxDropCallback([this](const std::filesystem::path& path) { setSkybox(path); });
 		m_viewportPanel->setSceneDropCallback([this](const std::filesystem::path& path) {
@@ -528,7 +528,56 @@ namespace Axion {
 			}
 
 			if (activeState == EditorState::Edit) {
+				Mat4 worldM;
+				if (m_selectedEntity.isValid()) {
+					worldM = m_activeScene->getWorldTransform(m_selectedEntity);
+
+					// -- Update Gizmo Math --
+					bool isMouseDown = Input::isMouseButtonPressed(MouseButton::Left);
+					bool snap = Input::isKeyPressed(KeyCode::LeftControl);
+					float snapValue = (m_transformGizmo.getMode() == GizmoMode::Rotate) ? 15.0f : 1.0f;
+					Silica::Vec2 mousePos = m_viewportPanel->getRelativeMousePos();
+					auto delta = m_transformGizmo.onUpdate(worldM, m_editorCamera, Vec2(mousePos.x, mousePos.y), Vec2(currentViewSize.x, currentViewSize.y), isMouseDown, snap, snapValue);
+
+					if (delta.has_value()) {
+						auto& tc = m_selectedEntity.getComponent<TransformComponent>();
+						Entity parent = m_selectedEntity.getParent();
+
+						if (m_transformGizmo.getMode() == GizmoMode::Translate) {
+							if (parent) {
+								Mat4 parentWorldInv = m_activeScene->getWorldTransform(parent).inverse();
+								Vec3 newWorldPos = worldM.getTranslation() + delta.value();
+								tc.position = (parentWorldInv * Vec4(newWorldPos.x, newWorldPos.y, newWorldPos.z, 1.0f)).xyz();
+							}
+							else {
+								tc.position += delta.value();
+							}
+						}
+						else if (m_transformGizmo.getMode() == GizmoMode::Rotate) {
+							float angleDegrees = delta.value().length();
+
+							if (angleDegrees > 0.001f) {
+								Vec3 rotationAxis = delta.value().normalized();
+								Quat deltaQuat = Quat::fromAxisAngle(rotationAxis, Math::toRadians(angleDegrees));
+
+								tc.rotation = deltaQuat * tc.rotation;
+								tc.rotation = tc.rotation.normalized();
+							}
+						}
+						else if (m_transformGizmo.getMode() == GizmoMode::Scale) {
+							tc.scale += delta.value();
+						}
+					}
+				}
+
+				// -- Draw Overlay --
+				m_frameBuffer->clearDepth();
 				drawOverlay();
+
+				// -- Draw Gizmo --
+				if (m_selectedEntity.isValid()) {
+					m_transformGizmo.onRender(worldM, m_editorCamera);
+				}
 			}
 
 			m_frameBuffer->unbind();
@@ -588,7 +637,34 @@ namespace Axion {
 			return false;
 		});
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
+		dispatcher.dispatch<KeyReleasedEvent>([this](KeyReleasedEvent& ev) {
 
+			// -- Handle Gizmo Mode Switching (Q, W, E, R, T) --
+			if (!Input::isMouseButtonPressed(MouseButton::Right) && m_selectedEntity.isValid()) {
+				bool changed = false;
+
+				if (ev.getKeyCode() == KeyCode::W && m_transformGizmo.getMode() != GizmoMode::Translate) {
+					m_transformGizmo.setMode(GizmoMode::Translate);
+					changed = true;
+				}
+				if (ev.getKeyCode() == KeyCode::E && m_transformGizmo.getMode() != GizmoMode::Rotate) {
+					m_transformGizmo.setMode(GizmoMode::Rotate);
+					changed = true;
+				}
+				if (ev.getKeyCode() == KeyCode::R && m_transformGizmo.getMode() != GizmoMode::Scale) {
+					m_transformGizmo.setMode(GizmoMode::Scale);
+					changed = true;
+				}
+				if (ev.getKeyCode() == KeyCode::T) {
+					m_transformGizmo.setSpace(m_transformGizmo.getSpace() == GizmoSpace::Local ? GizmoSpace::Global : GizmoSpace::Local);
+					changed = true;
+				}
+
+				if (changed && m_viewportPanel) m_viewportPanel->refreshToolbar();
+			}
+
+			return false;
+		});
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -600,97 +676,97 @@ namespace Axion {
 		SilicaContext::renderDrawData(width, height);
 
 		// ----- Render ImGuizmo Overlay -----
-		if (m_sceneState == EditorState::Edit && m_selectedEntity && m_gizmoType != -1) {
-
-			Silica::Vec2 viewPos = m_viewportPanel->getViewportPosition();
-			Silica::Vec2 viewSize = m_viewportPanel->getViewportSize();
-
-			if (viewSize.x > 0.0f && viewSize.y > 0.0f) {
-				// -- Create An Invisible Window --
-				ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-				ImGui::SetNextWindowPos({ viewPos.x + mainViewport->Pos.x, viewPos.y + mainViewport->Pos.y });
-				ImGui::SetNextWindowSize({ viewSize.x, viewSize.y });
-				ImGui::SetNextWindowViewport(mainViewport->ID);
-				ImGui::SetNextWindowBgAlpha(0.0f);
-
-				ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking |
-					ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoSavedSettings |
-					ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoFocusOnAppearing;
-
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-				ImGui::Begin("GizmoOverlay", nullptr, flags);
-
-				// -- Setup ImGuizmo --
-				ImGuizmo::SetOrthographic(m_editorCamera.is2D());
-				ImGuizmo::SetDrawlist();
-				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-
-				// -- Input: Mode Switching --
-				if (!ImGui::IsAnyItemActive() && !Input::isMouseButtonPressed(MouseButton::Right)) {
-					if (ImGui::IsKeyPressed(ImGuiKey_Q)) m_gizmoType = -1;
-					if (ImGui::IsKeyPressed(ImGuiKey_W)) m_gizmoType = ImGuizmo::TRANSLATE;
-					if (ImGui::IsKeyPressed(ImGuiKey_E)) m_gizmoType = ImGuizmo::ROTATE;
-					if (ImGui::IsKeyPressed(ImGuiKey_R)) m_gizmoType = ImGuizmo::SCALE;
-				}
-
-				// -- Camera --
-				const Mat4& cameraView = m_editorCamera.getViewMatrix();
-				const Mat4& cameraProjection = m_editorCamera.getProjectionMatrix();
-
-				// -- Entity Transform --
-				auto& tc = m_selectedEntity.getComponent<TransformComponent>();
-				Mat4 worldM = m_activeScene->getWorldTransform(m_selectedEntity);
-
-				// -- To float[16] for ImGuizmo --
-				DirectX::XMFLOAT4X4 objF4;
-				DirectX::XMStoreFloat4x4(&objF4, worldM.toXM());
-				float object[16];
-				memcpy(object, &objF4, sizeof(objF4));
-
-				// -- Snapping --
-				bool snap = Input::isKeyPressed(KeyCode::LeftControl);
-				float snapValue = 0.5f;
-				if (m_gizmoType == ImGuizmo::ROTATE) snapValue = 45.0f;
-				float snapValues[3] = { snapValue, snapValue, snapValue };
-
-				// -- Do gizmo stuff --
-				ImGuizmo::Manipulate(
-					cameraView.data(),
-					cameraProjection.data(),
-					(ImGuizmo::OPERATION)m_gizmoType,
-					ImGuizmo::LOCAL,
-					object,
-					nullptr,
-					snap ? snapValues : nullptr
-				);
-
-				// -- Apply changes --
-				if (ImGuizmo::IsUsing()) {
-					DirectX::XMMATRIX newM = DirectX::XMLoadFloat4x4(reinterpret_cast<DirectX::XMFLOAT4X4*>(object));
-					Mat4 updatedWorld = Mat4::fromXM(newM);
-
-					Entity parent = m_selectedEntity.getParent();
-					if (parent) {
-						Mat4 parentWorld = m_activeScene->getWorldTransform(parent);
-						Mat4 localM = parentWorld.inverse() * updatedWorld;
-
-						TRSData trs = localM.decompose();
-						tc.position = trs.translation;
-						tc.rotation = trs.rotation;
-						tc.scale = trs.scale;
-					}
-					else {
-						TRSData trs = updatedWorld.decompose();
-						tc.position = trs.translation;
-						tc.rotation = trs.rotation;
-						tc.scale = trs.scale;
-					}
-				}
-
-				ImGui::End();
-				ImGui::PopStyleVar();
-			}
-		}
+//		if (m_sceneState == EditorState::Edit && m_selectedEntity && m_gizmoType != -1) {
+//
+//			Silica::Vec2 viewPos = m_viewportPanel->getViewportPosition();
+//			Silica::Vec2 viewSize = m_viewportPanel->getViewportSize();
+//
+//			if (viewSize.x > 0.0f && viewSize.y > 0.0f) {
+//				// -- Create An Invisible Window --
+//				ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+//				ImGui::SetNextWindowPos({ viewPos.x + mainViewport->Pos.x, viewPos.y + mainViewport->Pos.y });
+//				ImGui::SetNextWindowSize({ viewSize.x, viewSize.y });
+//				ImGui::SetNextWindowViewport(mainViewport->ID);
+//				ImGui::SetNextWindowBgAlpha(0.0f);
+//
+//				ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking |
+//					ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoSavedSettings |
+//					ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoFocusOnAppearing;
+//
+//				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+//				ImGui::Begin("GizmoOverlay", nullptr, flags);
+//
+//				// -- Setup ImGuizmo --
+//				ImGuizmo::SetOrthographic(m_editorCamera.is2D());
+//				ImGuizmo::SetDrawlist();
+//				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+//
+//				// -- Input: Mode Switching --
+//				if (!ImGui::IsAnyItemActive() && !Input::isMouseButtonPressed(MouseButton::Right)) {
+//					if (ImGui::IsKeyPressed(ImGuiKey_Q)) m_gizmoType = -1;
+//					if (ImGui::IsKeyPressed(ImGuiKey_W)) m_gizmoType = ImGuizmo::TRANSLATE;
+//					if (ImGui::IsKeyPressed(ImGuiKey_E)) m_gizmoType = ImGuizmo::ROTATE;
+//					if (ImGui::IsKeyPressed(ImGuiKey_R)) m_gizmoType = ImGuizmo::SCALE;
+//				}
+//
+//				// -- Camera --
+//				const Mat4& cameraView = m_editorCamera.getViewMatrix();
+//				const Mat4& cameraProjection = m_editorCamera.getProjectionMatrix();
+//
+//				// -- Entity Transform --
+//				auto& tc = m_selectedEntity.getComponent<TransformComponent>();
+//				Mat4 worldM = m_activeScene->getWorldTransform(m_selectedEntity);
+//
+//				// -- To float[16] for ImGuizmo --
+//				DirectX::XMFLOAT4X4 objF4;
+//				DirectX::XMStoreFloat4x4(&objF4, worldM.toXM());
+//				float object[16];
+//				memcpy(object, &objF4, sizeof(objF4));
+//
+//				// -- Snapping --
+//				bool snap = Input::isKeyPressed(KeyCode::LeftControl);
+//				float snapValue = 0.5f;
+//				if (m_gizmoType == ImGuizmo::ROTATE) snapValue = 45.0f;
+//				float snapValues[3] = { snapValue, snapValue, snapValue };
+//
+//				// -- Do gizmo stuff --
+//				ImGuizmo::Manipulate(
+//					cameraView.data(),
+//					cameraProjection.data(),
+//					(ImGuizmo::OPERATION)m_gizmoType,
+//					ImGuizmo::LOCAL,
+//					object,
+//					nullptr,
+//					snap ? snapValues : nullptr
+//				);
+//
+//				// -- Apply changes --
+//				if (ImGuizmo::IsUsing()) {
+//					DirectX::XMMATRIX newM = DirectX::XMLoadFloat4x4(reinterpret_cast<DirectX::XMFLOAT4X4*>(object));
+//					Mat4 updatedWorld = Mat4::fromXM(newM);
+//
+//					Entity parent = m_selectedEntity.getParent();
+//					if (parent) {
+//						Mat4 parentWorld = m_activeScene->getWorldTransform(parent);
+//						Mat4 localM = parentWorld.inverse() * updatedWorld;
+//
+//						TRSData trs = localM.decompose();
+//						tc.position = trs.translation;
+//						tc.rotation = trs.rotation;
+//						tc.scale = trs.scale;
+//					}
+//					else {
+//						TRSData trs = updatedWorld.decompose();
+//						tc.position = trs.translation;
+//						tc.rotation = trs.rotation;
+//						tc.scale = trs.scale;
+//					}
+//				}
+//
+//				ImGui::End();
+//				ImGui::PopStyleVar();
+//			}
+//		}
 
 	}
 

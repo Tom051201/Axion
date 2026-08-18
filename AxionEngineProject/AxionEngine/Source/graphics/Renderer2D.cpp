@@ -470,6 +470,64 @@ namespace Axion {
 		Renderer::getStats().quadCount2D++;
 	}
 
+	void Renderer2D::drawQuad(const Mat4& transform, const Vec4& color) {
+		if (!s_initialized) return;
+		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices) {
+			nextBatch();
+		}
+
+		for (size_t i = 0; i < 4; i++) {
+			Vec3 pos = (transform * s_data.quadVertexPositions[i]).xyz();
+
+			s_data.quadVertexBufferPtr->position = { pos.x, pos.y, pos.z };
+			s_data.quadVertexBufferPtr->color = { color.x, color.y, color.z, color.w };
+			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
+			s_data.quadVertexBufferPtr->texIndex = 0.0f; // 0 = White Fallback
+			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
+			s_data.quadVertexBufferPtr++;
+		}
+
+		s_data.quadIndexCount += 6;
+		Renderer::getStats().quadCount2D++;
+	}
+
+	void Renderer2D::drawQuad(const Mat4& transform, const Ref<Texture2D>& texture, const Vec4& tint) {
+		if (!s_initialized) return;
+		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
+
+		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices || s_data.textureSlotIndex >= Renderer2DData::MaxTextureSlots) {
+			nextBatch();
+		}
+
+		float texIndex = -1.0f;
+		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
+			if (s_data.textureSlots[i]->getHandle() == validTexture->getHandle()) {
+				texIndex = static_cast<float>(i);
+				break;
+			}
+		}
+
+		if (texIndex == -1) {
+			texIndex = static_cast<float>(s_data.textureSlotIndex);
+			s_data.textureSlots[s_data.textureSlotIndex] = validTexture;
+			s_data.textureSlotIndex++;
+		}
+
+		for (size_t i = 0; i < 4; i++) {
+			Vec3 pos = (transform * s_data.quadVertexPositions[i]).xyz();
+
+			s_data.quadVertexBufferPtr->position = { pos.x, pos.y, pos.z };
+			s_data.quadVertexBufferPtr->color = { tint.x, tint.y, tint.z, tint.w };
+			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
+			s_data.quadVertexBufferPtr->texIndex = texIndex;
+			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
+			s_data.quadVertexBufferPtr++;
+		}
+
+		s_data.quadIndexCount += 6;
+		Renderer::getStats().quadCount2D++;
+	}
+
 	void Renderer2D::drawLine(const Vec3& p0, const Vec3& p1, const Vec4& color) {
 		if (!s_initialized) return;
 

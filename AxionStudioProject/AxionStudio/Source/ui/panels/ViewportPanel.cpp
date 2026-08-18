@@ -19,11 +19,12 @@
 
 namespace Axion {
 
-	void ViewportPanel::setup(EditorState* currentState, EditorState* prePauseState, int* stepFrames, EditorCamera* camera) {
+	void ViewportPanel::setup(EditorState* currentState, EditorState* prePauseState, int* stepFrames, EditorCamera* camera, TransformGizmo* gizmo) {
 		m_currentState = currentState;
 		m_prePauseState = prePauseState;
 		m_stepFrames = stepFrames;
 		m_camera = camera;
+		m_gizmo = gizmo;
 	}
 
 	void ViewportPanel::setCallbacks(std::function<void()> onPlay, std::function<void()> onSimulate, std::function<void()> onStop) {
@@ -129,7 +130,7 @@ namespace Axion {
 
 		float btnSize = 24.0f;
 
-		// -- Helper Function --
+		// -- Helper Functions --
 		auto makeImageButton = [btnSize](Silica::TextureID texID, bool isDisabled, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 4.0f },
@@ -149,6 +150,19 @@ namespace Axion {
 			});
 		};
 
+		auto makeTextButton = [](const std::string& text, bool isActive, std::function<void()> onClick) {
+			return Silica::MakeWidget<Silica::SButton>({
+				.padding = { 8.0f, 4.0f },
+				.color = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
+				.hoverColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color(100, 100, 100, 150),
+				.onClick = [onClick]() {
+					onClick();
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
+			});
+		};
+
 		auto makeSliderRow = [this](const std::string& label, float& val, float min, float max) {
 			return Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 10.0f,
@@ -159,16 +173,69 @@ namespace Axion {
 			});
 		};
 
+		auto makeSquareTextButton = [](const std::string& text, bool isActive, std::function<void()> onClick) {
+			return Silica::MakeWidget<Silica::SButton>({
+				.padding = { 0.0f, 0.0f },
+				.color = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
+				.hoverColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color(100, 100, 100, 150),
+				.onClick = [onClick]() {
+					onClick();
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::SBox>({
+					.explicitSize = Silica::Vec2{ 32.0f, 32.0f },
+					.backgroundColor = Silica::Color::transparent(),
+					.child = Silica::MakeWidget<Silica::SAlign>({
+						.horizontalAlign = Silica::HorizontalAlign::Center,
+						.verticalAlign = Silica::VerticalAlign::Center,
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
+					})
+				})
+			});
+		};
 
-		// -- 2D / 3D Toggle Button --
+
+		// -- Gizmo Tools --
+		Silica::WidgetPtr gizmoRow;
+		if (m_gizmo) {
+			auto translateBtn = makeSquareTextButton("T", m_gizmo->getMode() == GizmoMode::Translate, [this]() {
+				m_gizmo->setMode(GizmoMode::Translate);
+				refreshToolbar();
+			});
+			auto rotateBtn = makeSquareTextButton("R", m_gizmo->getMode() == GizmoMode::Rotate, [this]() {
+				m_gizmo->setMode(GizmoMode::Rotate);
+				refreshToolbar();
+			});
+			auto scaleBtn = makeSquareTextButton("S", m_gizmo->getMode() == GizmoMode::Scale, [this]() {
+				m_gizmo->setMode(GizmoMode::Scale);
+				refreshToolbar();
+			});
+
+			bool isLocal = m_gizmo->getSpace() == GizmoSpace::Local;
+			auto spaceBtn = makeTextButton(isLocal ? "Local" : "World", false, [this, isLocal]() {
+				m_gizmo->setSpace(isLocal ? GizmoSpace::Global : GizmoSpace::Local);
+				refreshToolbar();
+			});
+
+			gizmoRow = Silica::MakeWidget<Silica::SHorizontalBox>({
+				.spacing = 4.0f,
+				.slots = {
+					{ {0,0}, translateBtn },
+					{ {0,0}, rotateBtn },
+					{ {0,0}, scaleBtn },
+					{ {0,0}, spaceBtn }
+				}
+			});
+		}
+
+		// -- Play / Simulate / Camera Tools --
 		Silica::TextureID camTex = m_camera->is2D() ? SilicaContext::getIcon("2DCamIcon") : SilicaContext::getIcon("3DCamIcon");
 		auto camBtn = makeImageButton(camTex, !isEdit, [this]() {
-			if (m_camera->is2D()) m_camera->set3D(); else m_camera->set2D();
+			if (m_camera->is2D()) { m_camera->set3D(); }
+			else { m_camera->set2D(); }
 			refreshToolbar();
 		});
-		
 
-		// -- Camera Settings Menu --
 		auto camSettingsMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.anchorContent = Silica::MakeWidget<Silica::SButton>({
@@ -193,22 +260,20 @@ namespace Axion {
 			})
 		});
 
-
-		// -- Control Buttons --
 		auto simBtn = makeImageButton(isSim ? SilicaContext::getIcon("StopButton") : SilicaContext::getIcon("SimulateButton"), isPlay, [this, isSim]() {
-			if (isSim) m_onStop(); else m_onSimulate();
+			if (isSim) { m_onStop(); }
+			else { m_onSimulate(); }
 			refreshToolbar();
 		});
 
 		auto playBtn = makeImageButton(isPlay ? SilicaContext::getIcon("StopButton") : SilicaContext::getIcon("PlayButton"), isSim, [this, isPlay]() {
-			if (isPlay) m_onStop(); else m_onPlay();
+			if (isPlay) { m_onStop(); }
+			else { m_onPlay(); }
 			refreshToolbar();
 		});
 
 		auto pauseBtn = makeImageButton(isPaused ? SilicaContext::getIcon("PlayButton") : SilicaContext::getIcon("PauseButton"), isEdit, [this, isPaused]() {
-			if (isPaused) {
-				*m_currentState = *m_prePauseState;
-			}
+			if (isPaused) { *m_currentState = *m_prePauseState; }
 			else {
 				*m_prePauseState = *m_currentState;
 				*m_currentState = EditorState::Pause;
@@ -221,9 +286,7 @@ namespace Axion {
 			refreshToolbar();
 		});
 
-
-		// -- Assemble Toolbar --
-		auto buttonRow = Silica::MakeWidget<Silica::SHorizontalBox>({
+		auto centerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 8.0f,
 			.slots = {
 				{ {0, 0}, camBtn },
@@ -235,11 +298,24 @@ namespace Axion {
 			}
 		});
 
-		m_toolbarContainer->setChild(Silica::MakeWidget<Silica::SAlign>({
+		// -- Assemble Overlay --
+		auto toolbarOverlay = Silica::MakeWidget<Silica::SOverlay>({.children = {} });
+
+		if (gizmoRow) {
+			toolbarOverlay->addChild(Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Left,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = gizmoRow
+			}));
+		}
+
+		toolbarOverlay->addChild(Silica::MakeWidget<Silica::SAlign>({
 			.horizontalAlign = Silica::HorizontalAlign::Center,
 			.verticalAlign = Silica::VerticalAlign::Center,
-			.child = buttonRow
+			.child = centerRow
 		}));
+
+		m_toolbarContainer->setChild(toolbarOverlay);
 	}
 
 	void ViewportPanel::setViewportTexture(Silica::TextureID texID, Silica::Vec2 size) {
@@ -267,6 +343,12 @@ namespace Axion {
 	bool ViewportPanel::isHovered(const Silica::Vec2& mousePos) const {
 		if (m_viewportContainer) return m_viewportContainer->getAllocatedGeometry().contains(mousePos);
 		return false;
+	}
+
+	Silica::Vec2 ViewportPanel::getRelativeMousePos() const {
+		Silica::Vec2 globalMouse = Silica::Renderer::getMousePosition();
+		Silica::Vec2 viewPos = getViewportPosition();
+		return { globalMouse.x - viewPos.x, globalMouse.y - viewPos.y };
 	}
 
 }

@@ -2,11 +2,7 @@
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/graphics/Camera.h"
-#include "AxionEngine/Source/graphics/Mesh.h"
-#include "AxionEngine/Source/graphics/Buffers.h"
-#include "AxionEngine/Source/graphics/Material.h"
 #include "AxionEngine/Source/graphics/Texture.h"
-#include "AxionEngine/Source/events/Event.h"
 
 namespace Axion {
 
@@ -33,6 +29,9 @@ namespace Axion {
 
 		static void drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 		static void drawQuad(const Vec3& position, const Vec2& size, float rotation, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
+
+		static void drawQuad(const Mat4& transform, const Vec4& color);
+		static void drawQuad(const Mat4& transform, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 
 		static void drawLine(const Vec3& p0, const Vec3& p1, const Vec4& color);
 

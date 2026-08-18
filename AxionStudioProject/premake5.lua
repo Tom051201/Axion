@@ -58,7 +58,7 @@ project "AxionStudio"
 	}
 
 	filter "files:AxionStudio/Vendor/Silica/backends/**.cpp"
-		enablepch "Off" 
+		enablepch "Off"
 
 	filter "system:windows"
 		systemversion "latest"

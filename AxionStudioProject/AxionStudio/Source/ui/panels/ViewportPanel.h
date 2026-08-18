@@ -8,6 +8,7 @@
 
 #include "AxionStudio/Source/EditorLayer.h"
 #include "AxionStudio/Source/core/EditorCamera.h"
+#include "AxionStudio/Source/core/TransformGizmo.h"
 
 namespace Silica {
 	class SBox;
@@ -25,11 +26,12 @@ namespace Axion {
 
 		Silica::WidgetPtr getWidget();
 
-		void setup(EditorState* currentState, EditorState* prePauseState, int* stepFrames, EditorCamera* camera);
+		void setup(EditorState* currentState, EditorState* prePauseState, int* stepFrames, EditorCamera* camera, TransformGizmo* gizmo);
 		void setViewportTexture(Silica::TextureID texID, Silica::Vec2 size);
 		void setStatsText(const std::string& text);
 		Silica::Vec2 getViewportSize() const;
 		Silica::Vec2 getViewportPosition() const;
+		Silica::Vec2 getRelativeMousePos() const;
 		bool isHovered(const Silica::Vec2& mousePos) const;
 		void refreshToolbar();
 
@@ -45,6 +47,7 @@ namespace Axion {
 		EditorState* m_prePauseState = nullptr;
 		int* m_stepFrames = nullptr;
 		EditorCamera* m_camera = nullptr;
+		TransformGizmo* m_gizmo = nullptr;
 
 		std::function<void()> m_onPlay;
 		std::function<void()> m_onSimulate;

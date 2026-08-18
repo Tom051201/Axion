@@ -25,6 +25,7 @@ namespace Axion {
 
 		void clear() override;
 		void clear(const Vec4& clearColor) override;
+		void clearDepth() override;
 
 		void* getColorAttachmentHandle() const override;
 		void* getColorAttachmentNativeResource() const override { return (void*)m_colorResource.Get(); }

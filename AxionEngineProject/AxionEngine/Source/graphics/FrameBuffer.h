@@ -30,6 +30,7 @@ namespace Axion {
 
 		virtual void clear() = 0;
 		virtual void clear(const Vec4& clearColor) = 0;
+		virtual void clearDepth() = 0;
 
 		virtual void* getColorAttachmentHandle() const = 0;
 		virtual void* getColorAttachmentNativeResource() const = 0;

@@ -20,6 +20,7 @@
 #include "AxionEngine/Source/events/KeyEvent.h"
 
 #include "AxionStudio/Source/core/EditorCamera.h"
+#include "AxionStudio/Source/core/TransformGizmo.h"
 
 namespace Silica {
 	class SBox;
@@ -100,6 +101,9 @@ namespace Axion {
 
 		// -- ImGuizmo --
 		int m_gizmoType = ImGuizmo::TRANSLATE;
+
+		// -- Gizmo --
+		TransformGizmo m_transformGizmo;
 
 		std::shared_ptr<SettingsModal> m_settingsModal;
 

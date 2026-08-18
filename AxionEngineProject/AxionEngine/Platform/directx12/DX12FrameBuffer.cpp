@@ -241,6 +241,13 @@ namespace Axion {
 		clear(m_specification.clearColor);
 	}
 
+	void DX12FrameBuffer::clearDepth() {
+		auto* cmdList = m_context->getCommandList();
+		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
+
+		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	}
+
 	void* DX12FrameBuffer::getColorAttachmentHandle() const {
 		auto* device = m_context->getDevice();
 
