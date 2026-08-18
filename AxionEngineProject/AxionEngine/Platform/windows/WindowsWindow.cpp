@@ -3,8 +3,6 @@
 
 #include <shellapi.h>
 
-#include <imgui/backends/imgui_impl_win32.h>
-
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
@@ -19,8 +17,6 @@
 #define WM_APP_MINIMIZE	(WM_APP + 1)
 #define WM_APP_MAXIMIZE	(WM_APP + 2)
 #define WM_APP_RESTORE	(WM_APP + 3)
-
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Axion {
 
@@ -166,11 +162,6 @@ namespace Axion {
 	}
 
 	LRESULT CALLBACK WindowsWindow::staticWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-
-		// ----- ImGui win32 wndProc -----
-		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
-			return true;
-		}
 
 		WindowsWindow* window = (WindowsWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 		if (window && window->m_data.eventCallback) {

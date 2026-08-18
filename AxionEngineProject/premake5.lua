@@ -15,7 +15,7 @@ project "AxionEngine"
 
 	pchheader "axpch.h"
 	pchsource "AxionEngine/Source/axpch.cpp"
-	
+
 	files {
 		"AxionEngine/Source/**.h",
 		"AxionEngine/Source/**.cpp",
@@ -23,13 +23,10 @@ project "AxionEngine"
 		"AxionEngine/Platform/**.cpp",
 		"AxionEngine/Vendor/stb_image/stb_image.h",
 		"AxionEngine/Vendor/stb_image/stb_image.cpp",
-		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.h",
-		"AxionEngine/Vendor/ImGuizmo/ImGuizmo.cpp",
 	}
-	
+
 	includedirs {
 		".",
-		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.PhysX}",
 		"AxionEngine/Source",
@@ -37,14 +34,12 @@ project "AxionEngine"
 		"AxionEngine/Vendor/spdlog/include",
 		"AxionEngine/Vendor/d3d12",
 		"AxionEngine/Vendor/yaml-cpp/include",
-		"AxionEngine/Vendor/ImGuizmo",
 		"AxionEngine/Vendor/dotnet/include"
 	}
-	
+
 	libdirs {}
-	
+
 	links {
-		"ImGui",
 		"yaml-cpp",
 		"PhysXFoundation_64",
 		"PhysX_64",
@@ -60,12 +55,9 @@ project "AxionEngine"
 		"cd %{prj.location}/AxionEngine/Resources/shaders && call compile_shaders.bat"
 	}
 
-	filter "files:AxionEngine/Vendor/ImGuizmo/**.cpp"
-		enablepch "Off"
-
 	filter "files:AxionEngine/Vendor/cgltf/cgltf.cpp"
 		enablepch "Off"
-	
+
 	filter "system:windows"
 		systemversion "latest"
 		buildoptions { "/utf-8" }
@@ -75,7 +67,7 @@ project "AxionEngine"
 			"FMT_UNICODE",
 			"YAML_CPP_STATIC_DEFINE"
 		}
-	
+
 	filter "configurations:Debug"
 		defines {
 			"_DEBUG",
@@ -89,7 +81,7 @@ project "AxionEngine"
 			"/IGNORE:4006", 
 			"/IGNORE:4099"
 		}
-	
+
 	filter "configurations:Release"
 		defines {
 			"NDEBUG",
@@ -98,7 +90,7 @@ project "AxionEngine"
 		runtime "Release"
 		optimize "on"
 		libdirs { "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/lib/release" }
-	
+
 	filter "configurations:Distribution"
 		defines {
 			"NDEBUG",

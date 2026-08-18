@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <memory>
 
-#include <imgui/imgui.h>
-#include <ImGuizmo/ImGuizmo.h>
 #include <Silica/include/SWidget.h>
 #include <Silica/include/FontAtlas.h>
 #include <Silica/include/Renderer.h>
@@ -98,9 +96,6 @@ namespace Axion {
 
 		// -- Text Editor Tabs --
 		std::unordered_map<std::string, std::string> m_openTextEditors;
-
-		// -- ImGuizmo --
-		int m_gizmoType = ImGuizmo::TRANSLATE;
 
 		// -- Gizmo --
 		TransformGizmo m_transformGizmo;

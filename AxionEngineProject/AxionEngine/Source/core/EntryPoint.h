@@ -2,6 +2,7 @@
 
 #ifdef AX_PLATFORM_WINDOWS
 #include <windows.h>
+#include <objbase.h>
 #endif
 
 #include "AxionEngine/Source/core/Application.h"

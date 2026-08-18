@@ -46,15 +46,11 @@ namespace Axion {
 		SceneManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 		ProjectManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 
-		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter, m_specification.guiLayoutFilePath);
-		pushOverlay(m_imGuiLayer);
-		activeVsync();
+		activeVsync(); // TODO: Make this selectable
 	}
 
 	Application::~Application() {
-		removeOverlay(m_imGuiLayer);
 		m_layerStack.clear();
-		delete m_imGuiLayer;
 
 		SceneManager::shutdown();
 
@@ -123,11 +119,9 @@ namespace Axion {
 				layer->onUpdate(ts);
 			}
 
-			m_imGuiLayer->beginRender();
 			for (Layer* layer : m_layerStack) {
 				layer->onGuiRender();
 			}
-			m_imGuiLayer->endRender();
 
 			Renderer::finishRendering();
 		}
@@ -190,14 +184,9 @@ namespace Axion {
 		Renderer::setAPI(api);
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
-		m_layerStack.removeOverlay(m_imGuiLayer);
-
 		for (Layer* layer : m_layerStack) {
 			layer->onAttach();
 		}
-
-		m_imGuiLayer = new ImGuiLayer(m_specification.guiSyleSetter, m_specification.guiLayoutFilePath);
-		pushOverlay(m_imGuiLayer);
 
 	}
 

@@ -12,14 +12,12 @@ workspace "AxionEngineWorkspace"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
-IncludeDir["ImGui"] = "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/imgui"
 IncludeDir["yaml_cpp"] = "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp"
 IncludeDir["PhysX"] = "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx/include"
 
 PhysXDir = "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx"
 
 group "Dependencies"
-	include "AxionEngineProject/AxionEngine/Vendor/imgui"
 	include "AxionEngineProject/AxionEngine/Vendor/yaml-cpp"
 
 group "Subsystems"

@@ -7,12 +7,12 @@
 #include "AxionEngine/Source/core/Window.h"
 #include "AxionEngine/Source/core/Cursor.h"
 #include "AxionEngine/Source/core/AssetLoader.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
 #include "AxionEngine/Source/graphics/Renderer.h"
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
 #include "AxionEngine/Source/layers/LayerStack.h"
-#include "AxionEngine/Source/imgui/ImGuiLayer.h"
 
 namespace Axion {
 
@@ -67,7 +67,6 @@ namespace Axion {
 		Scope<Cursor> m_cursor;
 		bool m_running = true;
 		LayerStack m_layerStack;
-		ImGuiLayer* m_imGuiLayer;
 
 		bool onWindowClose(Event& e);
 		bool onKeyPressed(KeyPressedEvent& e);
