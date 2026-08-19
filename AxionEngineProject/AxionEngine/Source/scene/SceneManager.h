@@ -16,12 +16,12 @@ namespace Axion {
 		static void shutdown();
 		static void onEvent(Event& e);
 
-		static void setScene(const Ref<Scene>& scene);
+		static void setScene(const Shared<Scene>& scene);
 		static void newScene();
 		static void loadScene(const std::filesystem::path& filePath);
 		static void saveScene(const std::filesystem::path& filePath);
 		static void unloadScene();
-		static Ref<Scene> getScene();
+		static Shared<Scene> getScene();
 		static bool hasScene();
 		static bool isNewScene();
 		static const std::filesystem::path& getScenePath();

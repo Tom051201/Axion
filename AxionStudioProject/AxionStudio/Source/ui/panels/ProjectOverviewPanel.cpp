@@ -25,7 +25,7 @@
 
 namespace Axion {
 
-	void ProjectPanel::setProject(const Ref<Project>& project) {
+	void ProjectPanel::setProject(const Shared<Project>& project) {
 		m_project = project;
 		if (ProjectManager::hasProject()) {
 			m_rootDirectory = m_project->getProjectPath().parent_path();

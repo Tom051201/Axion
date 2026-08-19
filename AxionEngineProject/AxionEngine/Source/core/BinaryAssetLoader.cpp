@@ -177,10 +177,10 @@ namespace Axion {
 
 				if (pipeUUID.isValid()) {
 					AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(pipeUUID);
-					return std::make_shared<Skybox>(texHandle, pipeHandle);
+					return MakeRef<Skybox>(texHandle, pipeHandle);
 				}
 				else {
-					return std::make_shared<Skybox>(texHandle);
+					return MakeRef<Skybox>(texHandle);
 				}
 			});
 
@@ -377,7 +377,7 @@ namespace Axion {
 
 			if (mode == AudioClip::Mode::Stream) {
 				AssetManager::submitToMainThread<AudioClip>(handle, [absolutePath, mode]() -> Ref<AudioClip> {
-					return std::make_shared<AudioClip>(absolutePath, mode);
+					return MakeRef<AudioClip>(absolutePath, mode);
 				});
 			}
 			else {
@@ -386,7 +386,7 @@ namespace Axion {
 
 				// -- Submit To Main Thread --
 				AssetManager::submitToMainThread<AudioClip>(handle, [audioData, mode]() -> Ref<AudioClip> {
-					return std::make_shared<AudioClip>(std::move(*audioData), mode);
+					return MakeRef<AudioClip>(std::move(*audioData), mode);
 				});
 			}
 		});
@@ -419,7 +419,7 @@ namespace Axion {
 
 			// -- Submit To Main Thread --
 			AssetManager::submitToMainThread<PhysicsMaterial>(handle, [staticFriction, dynamicFriction, restitution]() -> Ref<PhysicsMaterial> {
-				Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
+				Ref<PhysicsMaterial> material = MakeRef<PhysicsMaterial>();
 
 				material->staticFriction = staticFriction;
 				material->dynamicFriction = dynamicFriction;
@@ -457,7 +457,7 @@ namespace Axion {
 
 			// -- Submit To Main Thread --
 			AssetManager::submitToMainThread<Prefab>(handle, [binaryData]() -> Ref<Prefab> {
-				return std::make_shared<Prefab>(std::move(*binaryData));
+				return MakeRef<Prefab>(std::move(*binaryData));
 			});
 		});
 	}
@@ -483,7 +483,7 @@ namespace Axion {
 			BinaryAssetHeader header;
 			in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
 
-			Ref<AnimationClip> clip = std::make_shared<AnimationClip>();
+			Ref<AnimationClip> clip = MakeRef<AnimationClip>();
 
 			uint32_t boneAnimationCount = 0;
 			in.read(reinterpret_cast<char*>(&clip->duration), sizeof(float));

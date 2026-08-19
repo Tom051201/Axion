@@ -4,6 +4,7 @@
 #include <string>
 #include <DirectXMath.h>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/graphics/SkeletalMesh.h"
@@ -23,7 +24,7 @@ namespace Axion {
 		std::vector<Keyframe<Vec3>> scales;
 	};
 
-	class AnimationClip {
+	class AnimationClip : public RefCounted {
 	public:
 
 		float duration;
@@ -33,7 +34,7 @@ namespace Axion {
 		const BoneAnimation* getBoneAnimation(const std::string& name) const;
 	};
 
-	class Animator {
+	class Animator : public RefCounted {
 	public:
 
 		Animator(const Skeleton& skeleton);

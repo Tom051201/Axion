@@ -16,7 +16,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Shader>(spec); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12Shader>(spec); }
 
 		}
 		return nullptr;
@@ -28,7 +28,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Shader>(spec, filePath); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12Shader>(spec, filePath); }
 
 		}
 		return nullptr;

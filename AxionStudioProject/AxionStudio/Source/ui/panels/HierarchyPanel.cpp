@@ -62,7 +62,7 @@ namespace Axion {
 		return m_uiRoot;
 	}
 
-	void HierarchyPanel::setScene(Ref<Scene> scene) {
+	void HierarchyPanel::setScene(Shared<Scene> scene) {
 		m_scene = scene;
 		refresh();
 	}

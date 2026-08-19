@@ -5,9 +5,11 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "AxionEngine/Source/core/Ref.h"
+
 namespace Axion {
 
-	class Prefab {
+	class Prefab : public RefCounted {
 	public:
 
 		Prefab() = default;

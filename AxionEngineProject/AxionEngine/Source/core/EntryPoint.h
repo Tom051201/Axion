@@ -7,6 +7,7 @@
 
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/core/Logging.h"
+#include "AxionEngine/Source/core/Ref.h"
 
 extern Axion::Application* Axion::createApplication();
 
@@ -18,6 +19,10 @@ namespace Axion {
 		auto app = Axion::createApplication();
 		app->run();
 		delete app;
+
+		#ifdef AX_DEBUG
+		RefTracker::dump();
+		#endif
 
 		return 0;
 	}

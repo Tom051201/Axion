@@ -672,7 +672,7 @@ namespace Axion {
 			if (!animComp.animator && skelMeshComp.handle.isValid()) {
 				Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(skelMeshComp.handle);
 				if (mesh) {
-					animComp.animator = std::make_shared<Animator>(mesh->getSkeleton());
+					animComp.animator = MakeRef<Animator>(mesh->getSkeleton());
 				}
 			}
 

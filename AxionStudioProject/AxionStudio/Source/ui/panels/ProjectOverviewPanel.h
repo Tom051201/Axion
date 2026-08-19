@@ -25,13 +25,13 @@ namespace Axion {
 		void onEvent(Event& e);
 
 		Silica::WidgetPtr getWidget();
-		void setProject(const Ref<Project>& project);
+		void setProject(const Shared<Project>& project);
 
 		void setOpenExportModalCallback(const std::function<void()>& callback) { m_openExportModalCallback = callback; }
 
 	private:
 
-		Ref<Project> m_project;
+		Shared<Project> m_project;
 		std::filesystem::path m_rootDirectory;
 		std::filesystem::path m_projectFileRelative;
 		std::filesystem::path m_assetsRelative;

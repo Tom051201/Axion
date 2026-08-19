@@ -122,11 +122,11 @@ namespace Axion {
 	}
 
 	Ref<Material> Material::create(const std::string& name, const MaterialProperties& properties) {
-		return std::make_shared<Material>(name, properties);
+		return MakeRef<Material>(name, properties);
 	}
 
 	Ref<Material> Material::create(const std::string& name, const AssetHandle<Pipeline>& pipelineHandle, const MaterialProperties& properties) {
-		return std::make_shared<Material>(name, pipelineHandle, properties);
+		return MakeRef<Material>(name, pipelineHandle, properties);
 	}
 
 }

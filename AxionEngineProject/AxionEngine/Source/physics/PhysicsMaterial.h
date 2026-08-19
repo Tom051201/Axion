@@ -1,8 +1,10 @@
 #pragma once
 
+#include "AxionEngine/Source/core/Ref.h"
+
 namespace Axion {
 
-	class PhysicsMaterial {
+	class PhysicsMaterial : public RefCounted {
 	public:
 
 		PhysicsMaterial() = default;

@@ -22,7 +22,7 @@ namespace Axion {
 		static void saveProject(const std::filesystem::path& filePath);
 		static void unloadProject();
 
-		static Ref<Project> getProject();
+		static Shared<Project> getProject();
 		static bool hasProject();
 		static const std::filesystem::path& getProjectFilePath();
 
@@ -34,7 +34,7 @@ namespace Axion {
 
 	private:
 
-		static void setProject(const Ref<Project>& project);
+		static void setProject(const Shared<Project>& project);
 
 	};
 

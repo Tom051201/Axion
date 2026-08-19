@@ -25,11 +25,11 @@ namespace Axion {
 		Silica::WidgetPtr getWidget();
 
 		void rebuildUI();
-		void setScene(const Ref<Scene>& scene);
+		void setScene(const Shared<Scene>& scene);
 
 	private:
 
-		Ref<Scene> m_activeScene;
+		Shared<Scene> m_activeScene;
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		bool m_rebuildQueued = false;
 

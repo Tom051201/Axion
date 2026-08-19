@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdint>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/graphics/Buffers.h"
@@ -22,7 +23,7 @@ namespace Axion {
 		std::vector<Submesh> submeshes;
 	};
 
-	class Mesh {
+	class Mesh : public RefCounted {
 	public:
 
 		Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);

@@ -1,6 +1,7 @@
 #include "axpch.h"
 #include "SceneSerializer.h"
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
@@ -37,7 +38,7 @@ namespace Axion {
 		return str;
 	}
 
-	SceneSerializer::SceneSerializer(const Ref<Scene>& scene) : m_scene(scene) {}
+	SceneSerializer::SceneSerializer(const Shared<Scene>& scene) : m_scene(scene) {}
 
 	void SceneSerializer::serializeEntity(YAML::Emitter& out, Entity entity) {
 		out << YAML::BeginMap; // Entity
@@ -699,7 +700,7 @@ namespace Axion {
 				if (clipUUID.isValid()) {
 					if (registry->contains(clipUUID)) {
 						AssetHandle<AudioClip> handle = AssetManager::load<AudioClip>(clipUUID);
-						ac.audio = std::make_shared<AudioSource>(handle);
+						ac.audio = MakeRef<AudioSource>(handle);
 						ac.audio->setVolume(as["Volume"].as<float>());
 						ac.audio->setPitch(as["Pitch"].as<float>());
 						ac.audio->setPan(as["Pan"].as<float>());
@@ -1336,7 +1337,7 @@ namespace Axion {
 					in.read(reinterpret_cast<char*>(&clipUUID), sizeof(UUID));
 					if (clipUUID.isValid()) {
 						AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(clipUUID);
-						component.audio = std::make_shared<AudioSource>(clipHandle);
+						component.audio = MakeRef<AudioSource>(clipHandle);
 						float vol;
 						float pitch;
 						float pan;

@@ -12,7 +12,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Pipeline>(spec); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12Pipeline>(spec); }
 
 		}
 		return nullptr;

@@ -46,7 +46,8 @@ namespace Axion {
 		SceneManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 		ProjectManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
 
-		activeVsync(); // TODO: Make this selectable
+		if (m_specification.vsync) { activeVsync(); }
+		else { deactiveVsync(); }
 	}
 
 	Application::~Application() {
@@ -68,6 +69,7 @@ namespace Axion {
 		ScriptEngine::shutdown();
 
 		JobSystem::shutdown();
+
 	}
 
 	void Application::onEvent(Event& e) {
@@ -111,6 +113,7 @@ namespace Axion {
 			// time calculation
 			QueryPerformanceCounter(&currentTime);
 			Timestep ts = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
+			if (ts > 0.1f) ts = 0.1f;
 			lastTime = currentTime;
 
 			Renderer::prepareRendering();

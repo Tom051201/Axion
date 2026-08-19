@@ -4,6 +4,7 @@
 #include <map>
 #include <cstdint>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
@@ -15,7 +16,7 @@
 
 namespace Axion {
 
-	class Material {
+	class Material : public RefCounted {
 	public:
 
 		Material(const std::string& name, const MaterialProperties& properties);

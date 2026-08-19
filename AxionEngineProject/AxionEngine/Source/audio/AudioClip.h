@@ -4,11 +4,12 @@
 
 #include <miniaudio/miniaudio.h>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Math.h"
 
 namespace Axion {
 
-	class AudioClip {
+	class AudioClip : public RefCounted {
 	public:
 
 		enum class Mode { Memory, Stream };

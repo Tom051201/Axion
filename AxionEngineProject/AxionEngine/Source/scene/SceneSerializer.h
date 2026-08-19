@@ -15,7 +15,7 @@ namespace Axion {
 	class SceneSerializer {
 	public:
 
-		SceneSerializer(const Ref<Scene>& scene);
+		SceneSerializer(const Shared<Scene>& scene);
 
 		void serializeText(const std::filesystem::path& filePath, bool autoRegister = true);
 		void serializeBinary(const std::filesystem::path& filePath);
@@ -31,7 +31,7 @@ namespace Axion {
 
 	private:
 
-		Ref<Scene> m_scene;
+		Shared<Scene> m_scene;
 
 	};
 

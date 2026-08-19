@@ -11,7 +11,7 @@ namespace Axion {
 
 	struct ProjectManagerData {
 		bool isRuntime = false;
-		Ref<Project> project = nullptr;
+		Shared<Project> project = nullptr;
 		std::filesystem::path projectPath;
 		std::function<void(Event&)> eventCallback;
 
@@ -111,7 +111,7 @@ namespace Axion {
 
 			// -- New Project --
 			if (s_managerData->newProjectRequest) {
-				Ref<Project> newProject = Project::createNew(s_managerData->newProjectSpecification);
+				Shared<Project> newProject = Project::createNew(s_managerData->newProjectSpecification);
 				if (newProject) {
 					AX_CORE_LOG_INFO("New Project created");
 
@@ -173,7 +173,7 @@ namespace Axion {
 		s_managerData->isRuntime = true;
 
 		// -- Load Runtime Project --
-		Ref<Project> runtimeProject = Project::loadBinary(configFilePath);
+		Shared<Project> runtimeProject = Project::loadBinary(configFilePath);
 		if (runtimeProject) {
 			setProject(runtimeProject);
 			s_managerData->projectPath = configFilePath;
@@ -199,13 +199,13 @@ namespace Axion {
 		s_managerData->unloadProjectRequest = true;
 	}
 
-	Ref<Project> ProjectManager::getProject() { return s_managerData->project; }
+	Shared<Project> ProjectManager::getProject() { return s_managerData->project; }
 
 	bool ProjectManager::hasProject() { return s_managerData && s_managerData->project != nullptr; }
 
 	const std::filesystem::path& ProjectManager::getProjectFilePath() { return s_managerData->projectPath; }
 
-	void ProjectManager::setProject(const Ref<Project>& project) {
+	void ProjectManager::setProject(const Shared<Project>& project) {
 		s_managerData->project = project;
 		AX_CORE_ASSERT(s_managerData->eventCallback, "Invalid event callback for project manager")
 		ProjectChangedEvent ev;

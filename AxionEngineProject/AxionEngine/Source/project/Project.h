@@ -47,12 +47,12 @@ namespace Axion {
 		const Version& getEngineVersion() const { return m_engineVersion; }
 		const std::filesystem::path& getAppIconPath() const { return m_appIconPath; }
 
-		Ref<AssetRegistry> getAssetRegistry() { return m_assetRegistry; }
+		Shared<AssetRegistry> getAssetRegistry() { return m_assetRegistry; }
 
 		void save(const std::filesystem::path& path); // TODO: rename to save text
-		static Ref<Project> load(const std::filesystem::path& path); // TODO: rename to loadText
-		static Ref<Project> loadBinary(const std::filesystem::path& path);
-		static Ref<Project> createNew(const ProjectSpecification& spec);
+		static Shared<Project> load(const std::filesystem::path& path); // TODO: rename to loadText
+		static Shared<Project> loadBinary(const std::filesystem::path& path);
+		static Shared<Project> createNew(const ProjectSpecification& spec);
 		static void generateScriptProject(const std::filesystem::path& projectDir);
 
 	private:
@@ -72,7 +72,7 @@ namespace Axion {
 		std::string m_description;
 		std::filesystem::path m_appIconPath;
 
-		Ref<AssetRegistry> m_assetRegistry;
+		Shared<AssetRegistry> m_assetRegistry;
 	};
 
 }

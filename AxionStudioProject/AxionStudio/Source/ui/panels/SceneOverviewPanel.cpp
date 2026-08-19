@@ -299,7 +299,7 @@ namespace Axion {
 		return false;
 	}
 
-	void SceneOverviewPanel::setScene(const Ref<Scene>& scene) {
+	void SceneOverviewPanel::setScene(const Shared<Scene>& scene) {
 		m_activeScene = scene;
 		rebuildUI();
 	}

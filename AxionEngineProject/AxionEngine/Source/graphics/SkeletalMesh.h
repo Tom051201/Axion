@@ -3,9 +3,9 @@
 #include <string>
 #include <cstdint>
 #include <vector>
-#include <string>
 #include <DirectXMath.h>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/graphics/Mesh.h"
 
 namespace Axion {
@@ -39,7 +39,7 @@ namespace Axion {
 		Skeleton skeleton;
 	};
 
-	class SkeletalMesh {
+	class SkeletalMesh : public RefCounted {
 	public:
 
 		SkeletalMesh(const SkeletalMeshData& meshData);

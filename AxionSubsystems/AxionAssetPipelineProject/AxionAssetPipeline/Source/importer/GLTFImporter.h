@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/graphics/Mesh.h"
 #include "AxionEngine/Source/graphics/SkeletalMesh.h"
 #include "AxionEngine/Source/scene/Animation.h"

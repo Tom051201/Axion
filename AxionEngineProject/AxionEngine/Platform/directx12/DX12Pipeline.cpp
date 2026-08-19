@@ -13,7 +13,7 @@ namespace Axion {
 		auto* device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 
 		AX_CORE_ASSERT(m_specification.shader, "PipelineSpecification must have a valid shader!");
-		Ref<DX12Shader> shader = std::static_pointer_cast<DX12Shader>(m_specification.shader);
+		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
 
 		std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
 		const auto& layout = m_specification.vertexLayout.getElements();
@@ -91,7 +91,7 @@ namespace Axion {
 
 	void DX12Pipeline::bind() {
 		auto* cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
-		Ref<DX12Shader> shader = std::static_pointer_cast<DX12Shader>(m_specification.shader);
+		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
 
 		cmdList->SetGraphicsRootSignature(shader->getRootSignature());
 		cmdList->SetPipelineState(m_pipelineState.Get());

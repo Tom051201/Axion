@@ -32,8 +32,6 @@ namespace Axion {
 
 		ApplicationSpecification spec;
 		spec.windowProperties = windowProperties;
-		spec.guiLayoutFilePath = "AxionStudio/Config/Layout.ini"; // TODO: check if still needed
-		spec.guiSyleSetter = []() {}; // TODO: check if still needed
 		spec.assetLoader = new EditorAssetLoader();
 
 		return new AxionStudio(spec);

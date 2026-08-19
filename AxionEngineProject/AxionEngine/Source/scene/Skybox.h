@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/graphics/Mesh.h"
 #include "AxionEngine/Source/graphics/Texture.h"
@@ -7,7 +8,7 @@
 
 namespace Axion {
 
-	class Skybox {
+	class Skybox : public RefCounted {
 	public:
 
 		Skybox(AssetHandle<TextureCube> textureHandle);

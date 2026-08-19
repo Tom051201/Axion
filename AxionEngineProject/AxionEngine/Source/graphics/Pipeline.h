@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/graphics/Shader.h"
 #include "AxionEngine/Source/graphics/Formats.h"
 
@@ -52,7 +53,7 @@ namespace Axion {
 		uint32_t numRenderTargets = 1;
 	};
 
-	class Pipeline {
+	class Pipeline : public RefCounted {
 	public:
 
 		virtual ~Pipeline() = default;

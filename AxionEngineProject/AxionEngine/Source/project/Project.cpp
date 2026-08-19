@@ -14,7 +14,7 @@ namespace Axion {
 		m_assetRegistry = std::make_shared<AssetRegistry>();
 	}
 
-	Ref<Project> Project::load(const std::filesystem::path& path) {
+	Shared<Project> Project::load(const std::filesystem::path& path) {
 		// ----- Load file data -----
 		std::ifstream stream(path);
 		if (!stream.is_open()) {
@@ -27,7 +27,7 @@ namespace Axion {
 			return nullptr;
 		}
 
-		Ref<Project> project = std::make_shared<Project>("");
+		Shared<Project> project = std::make_shared<Project>("");
 
 		// ----- Set name and versions -----
 		project->setName(data["Project"].as<std::string>());
@@ -53,7 +53,7 @@ namespace Axion {
 		return project;
 	}
 
-	Ref<Project> Project::loadBinary(const std::filesystem::path& path) {
+	Shared<Project> Project::loadBinary(const std::filesystem::path& path) {
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (!in.is_open()) {
 			AX_CORE_LOG_ERROR("Failed to open binary project config file: {}", path.string());
@@ -104,7 +104,7 @@ namespace Axion {
 		AX_CORE_LOG_INFO("Successfully Loaded GameConfig Binary");
 
 		// -- Construct the Runtime Project --
-		Ref<Project> project = std::make_shared<Project>(name);
+		Shared<Project> project = std::make_shared<Project>(name);
 
 		project->setProjectPath(".");
 		project->setAssetsPath(".");
@@ -142,12 +142,12 @@ namespace Axion {
 		m_assetRegistry->serialize(registryPath);
 	}
 
-	Ref<Project> Project::createNew(const ProjectSpecification& spec) {
+	Shared<Project> Project::createNew(const ProjectSpecification& spec) {
 		namespace fs = std::filesystem;
 
 		std::string projectName = spec.name;
 		std::replace(projectName.begin(), projectName.end(), ' ', '_');
-		Ref<Project> result = std::make_shared<Project>(spec.name);
+		Shared<Project> result = std::make_shared<Project>(spec.name);
 
 		try {
 			fs::path projectDir = spec.location / projectName;

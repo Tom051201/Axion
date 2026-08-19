@@ -5,6 +5,7 @@
 
 #include <miniaudio/miniaudio.h>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
@@ -17,7 +18,7 @@ namespace Axion {
 		uint64_t dataSize = 0;
 	};
 
-	class AudioSource {
+	class AudioSource : public RefCounted {
 	public:
 
 		AudioSource(AssetHandle<AudioClip> handle);

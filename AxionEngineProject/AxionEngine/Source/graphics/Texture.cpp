@@ -12,7 +12,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Texture2D>(path); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12Texture2D>(path); }
 
 		}
 
@@ -24,7 +24,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Texture2D>(width, height, data); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12Texture2D>(width, height, data); }
 
 		}
 
@@ -37,7 +37,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12Texture2D>(data, size); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12Texture2D>(data, size); }
 
 		}
 
@@ -52,7 +52,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12TextureCube>(paths); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12TextureCube>(paths); }
 
 		}
 
@@ -64,7 +64,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12TextureCube>(filePath); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12TextureCube>(filePath); }
 
 		}
 
@@ -76,7 +76,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12TextureCube>(data, size); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12TextureCube>(data, size); }
 
 		}
 
@@ -90,7 +90,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12DepthTexture>(width, height); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12DepthTexture>(width, height); }
 
 		}
 

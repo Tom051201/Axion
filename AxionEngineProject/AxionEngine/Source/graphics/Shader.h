@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/graphics/Formats.h"
 #include "AxionEngine/Source/graphics/Buffers.h"
 
@@ -27,7 +28,7 @@ namespace Axion {
 	///// Shader ///////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class Shader {
+	class Shader : public RefCounted {
 	public:
 
 		virtual ~Shader() = default;

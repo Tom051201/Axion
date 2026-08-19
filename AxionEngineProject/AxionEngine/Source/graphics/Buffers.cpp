@@ -31,7 +31,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12VertexBuffer>(data, size, stride); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12VertexBuffer>(data, size, stride); }
 
 		}
 		return nullptr;
@@ -41,7 +41,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12VertexBuffer>(size, stride); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12VertexBuffer>(size, stride); }
 
 		}
 		return nullptr;
@@ -56,7 +56,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12IndexBuffer>(indices); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12IndexBuffer>(indices); }
 			
 		}
 		return nullptr;
@@ -68,7 +68,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12IndexBuffer>(maxIndices); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12IndexBuffer>(maxIndices); }
 
 		}
 		return nullptr;
@@ -82,7 +82,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12ConstantBuffer>(size); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12ConstantBuffer>(size); }
 
 		}
 		return nullptr;
@@ -96,7 +96,7 @@ namespace Axion {
 		switch (Renderer::getAPI()) {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
-			case RendererAPI::DirectX12: { return std::make_shared<DX12StructuredBuffer>(elementSize, elementCount); }
+			case RendererAPI::DirectX12: { return MakeRef<DX12StructuredBuffer>(elementSize, elementCount); }
 
 		}
 		return nullptr;

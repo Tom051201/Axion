@@ -961,7 +961,7 @@ namespace Axion {
 								UUID assetUUID = AssetManager::getAssetUUID(path);
 								if (assetUUID.isValid()) {
 									AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
-									entity.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clipHandle);
+									entity.getComponent<AudioComponent>().audio = MakeRef<AudioSource>(clipHandle);
 									triggerRebuild();
 								}
 							});
@@ -1093,7 +1093,7 @@ namespace Axion {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
 								AssetHandle<AudioClip> clipHandle = AssetManager::load<AudioClip>(assetUUID);
-								entity.getComponent<AudioComponent>().audio = std::make_shared<AudioSource>(clipHandle);
+								entity.getComponent<AudioComponent>().audio = MakeRef<AudioSource>(clipHandle);
 								triggerRebuild();
 							}
 						}

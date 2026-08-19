@@ -234,10 +234,10 @@ namespace Axion {
 
 				if (pipeUUID.isValid()) {
 					AssetHandle<Pipeline> pipeHandle = AssetManager::load<Pipeline>(pipeUUID);
-					return std::make_shared<Skybox>(texHandle, pipeHandle);
+					return MakeRef<Skybox>(texHandle, pipeHandle);
 				}
 				else {
-					return std::make_shared<Skybox>(texHandle);
+					return MakeRef<Skybox>(texHandle);
 				}
 			});
 
@@ -506,7 +506,7 @@ namespace Axion {
 
 			// -- Submit To Main Thread --
 			AssetManager::submitToMainThread<AudioClip>(handle, [sourcePath, mode]() -> Ref<AudioClip> {
-				return std::make_shared<AudioClip>(sourcePath, mode);
+				return MakeRef<AudioClip>(sourcePath, mode);
 			});
 
 		});
@@ -546,7 +546,7 @@ namespace Axion {
 
 			// -- Submit To Main Thread --
 			AssetManager::submitToMainThread<PhysicsMaterial>(handle, [staticFriction, dynamicFriction, restitution]() -> Ref<PhysicsMaterial> {
-				Ref<PhysicsMaterial> material = std::make_shared<PhysicsMaterial>();
+				Ref<PhysicsMaterial> material = MakeRef<PhysicsMaterial>();
 
 				material->staticFriction = staticFriction;
 				material->dynamicFriction = dynamicFriction;
@@ -590,7 +590,7 @@ namespace Axion {
 
 			// -- Submit To Main Thread --
 			AssetManager::submitToMainThread<Prefab>(handle, [entityNode]() -> Ref<Prefab> {
-				return std::make_shared<Prefab>(*entityNode);
+				return MakeRef<Prefab>(*entityNode);
 			});
 
 		});

@@ -328,7 +328,7 @@ namespace Axion::AAP {
 		std::filesystem::create_directories(prefabOutputDir);
 		AX_CORE_LOG_INFO("Generating GLB Prefab: {}", baseName);
 
-		Ref<Scene> tempScene = std::make_shared<Scene>();
+		Shared<Scene> tempScene = std::make_shared<Scene>();
 		Entity prefabEntity = tempScene->createEntity(baseName);
 
 		if (isSkeletal) {
@@ -626,7 +626,7 @@ namespace Axion::AAP {
 			return nullptr;
 		}
 
-		Ref<AnimationClip> clip = std::make_shared<AnimationClip>();
+		Ref<AnimationClip> clip = MakeRef<AnimationClip>();
 		const cgltf_animation& anim = data->animations[0]; // Loading first animation
 		clip->ticksPerSecond = 1.0f; // GLTF uses seconds directly
 		clip->duration = 0.0f;

@@ -27,7 +27,7 @@ namespace Axion {
 		Silica::WidgetPtr getWidget();
 
 		void rebuildUI();
-		void setScene(Ref<Scene> scene);
+		void setScene(Shared<Scene> scene);
 		void refresh();
 
 		void setSelectionCallback(std::function<void(Entity)> callback);
@@ -36,7 +36,7 @@ namespace Axion {
 
 		Silica::WidgetPtr buildEntityNode(Entity entity);
 
-		Ref<Scene> m_scene;
+		Shared<Scene> m_scene;
 		std::function<void(Entity)> m_onEntitySelected;
 		Entity m_selectedEntity = {};
 		std::unordered_set<entt::entity> m_openNodes;

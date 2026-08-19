@@ -66,7 +66,7 @@ namespace Axion {
 
 		template<typename T> bool dispatch(EventFn<T> func) {
 			if (m_event.getEventType() == T::getStaticType()) {
-				m_event.handled = func(*(T*)&m_event);
+				m_event.handled = func(static_cast<T&>(m_event));
 				return true;
 			}
 			return false;

@@ -65,12 +65,12 @@ namespace Axion {
 		EditorCamera m_editorCamera;
 		Vec2 m_viewportSize = { 0.0f, 0.0f };
 		Ref<FrameBuffer> m_frameBuffer;
-		Ref<Scene> m_editorScene;
+		Shared<Scene> m_editorScene;
 		Entity m_selectedEntity;
 
 
 		// -- Scene --
-		Ref<Scene> m_activeScene;
+		Shared<Scene> m_activeScene;
 		EditorState m_sceneState = EditorState::Edit;
 		EditorState m_prePauseState = EditorState::Edit;
 		int m_stepFrames = 0;
@@ -83,16 +83,16 @@ namespace Axion {
 		Silica::WidgetPtr m_mainLayout;
 		Silica::FontAtlas m_font;
 		Silica::TextureID m_viewportTextureID = 0;
-		Ref<ContentBrowser> m_contentBrowserPanel;
-		Ref<VisualScriptPanel> m_visualScriptPanel;
-		Ref<SceneOverviewPanel> m_sceneOverviewPanel;
-		Ref<ProjectPanel> m_projectOverviewPanel;
-		Ref<AssetManagerPanel> m_assetManagerPanel;
-		Ref<HierarchyPanel> m_hierarchyPanel;
-		Ref<EntityPropertiesPanel> m_propertiesPanel;
-		Ref<ViewportPanel> m_viewportPanel;
-		Ref<AssetLibraryPanel> m_assetLibraryPanel;
-		Ref<MaterialPanel> m_materialPanel;
+		Shared<ContentBrowser> m_contentBrowserPanel;
+		Shared<VisualScriptPanel> m_visualScriptPanel;
+		Shared<SceneOverviewPanel> m_sceneOverviewPanel;
+		Shared<ProjectPanel> m_projectOverviewPanel;
+		Shared<AssetManagerPanel> m_assetManagerPanel;
+		Shared<HierarchyPanel> m_hierarchyPanel;
+		Shared<EntityPropertiesPanel> m_propertiesPanel;
+		Shared<ViewportPanel> m_viewportPanel;
+		Shared<AssetLibraryPanel> m_assetLibraryPanel;
+		Shared<MaterialPanel> m_materialPanel;
 
 		// -- Text Editor Tabs --
 		std::unordered_map<std::string, std::string> m_openTextEditors;

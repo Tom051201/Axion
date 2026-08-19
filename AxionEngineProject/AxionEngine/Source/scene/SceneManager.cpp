@@ -8,7 +8,7 @@
 namespace Axion {
 
 	struct SceneManagerData {
-		Ref<Scene> scene;
+		Shared<Scene> scene;
 		std::filesystem::path scenePath;
 		bool isNewScene = false;
 		std::function<void(Event&)> eventCallback;
@@ -31,7 +31,7 @@ namespace Axion {
 		// --- Async Load State ---
 		std::atomic<bool> isLoadingScene = false;
 		std::atomic<bool> sceneLoadFinished = false;
-		Ref<Scene> loadedSceneResult = nullptr;
+		Shared<Scene> loadedSceneResult = nullptr;
 		std::filesystem::path loadedScenePath;
 	};
 
@@ -62,7 +62,7 @@ namespace Axion {
 			if (s_managerData->loadSceneRequest) {
 				std::filesystem::path filePath = s_managerData->toLoadScenePath;
 				if (!filePath.empty() && std::filesystem::exists(filePath)) {
-					Ref<Scene> scene = std::make_shared<Scene>();
+					Shared<Scene> scene = std::make_shared<Scene>();
 					SceneSerializer serializer(scene);
 					serializer.deserializeText(filePath);
 
@@ -88,7 +88,7 @@ namespace Axion {
 
 			// -- New Scene --
 			if (s_managerData->newSceneRequest) {
-				Ref<Scene> scene = std::make_shared<Scene>();
+				Shared<Scene> scene = std::make_shared<Scene>();
 				s_managerData->isNewScene = true;
 				s_managerData->scenePath.clear();
 				setScene(scene);
@@ -130,7 +130,7 @@ namespace Axion {
 
 	void SceneManager::newScene() { s_managerData->newSceneRequest = true; }
 
-	void SceneManager::loadScene(const std::filesystem::path& filePath) {
+	void SceneManager::loadScene(const std::filesystem::path& filePath) { // TODO: check here for loading bug
 		if (s_managerData->isLoadingScene) return;
 
 		s_managerData->loadSceneRequest = true;
@@ -138,7 +138,7 @@ namespace Axion {
 
 		// -- Spin up a background thread to parse the YAML ---
 		std::thread([filePath]() {
-			Ref<Scene> newScene = std::make_shared<Scene>();
+			Shared<Scene> newScene = std::make_shared<Scene>();
 			SceneSerializer serializer(newScene);
 
 			bool success = false;
@@ -162,7 +162,7 @@ namespace Axion {
 		s_managerData->unloadSceneRequest = true;
 	}
 
-	Ref<Scene> SceneManager::getScene() { return s_managerData->scene; }
+	Shared<Scene> SceneManager::getScene() { return s_managerData->scene; }
 
 	bool SceneManager::hasScene() { return s_managerData && s_managerData->scene != nullptr; }
 
@@ -170,7 +170,7 @@ namespace Axion {
 
 	const std::filesystem::path& SceneManager::getScenePath() { return s_managerData->scenePath; }
 
-	void SceneManager::setScene(const Ref<Scene>& scene) {
+	void SceneManager::setScene(const Shared<Scene>& scene) {
 		s_managerData->scene = scene;
 
 		AX_CORE_ASSERT(s_managerData->eventCallback, "Invalid event callback for scene manager");

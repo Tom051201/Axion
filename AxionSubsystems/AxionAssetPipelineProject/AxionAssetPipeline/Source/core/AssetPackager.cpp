@@ -35,7 +35,7 @@ namespace Axion::AAP {
 			return;
 		}
 
-		Ref<AssetRegistry> inRegistry = project->getAssetRegistry();
+		Shared<AssetRegistry> inRegistry = project->getAssetRegistry();
 		AssetRegistry runtimeRegistry;
 
 		for (const auto& [uuid, metadata] : inRegistry->getMap()) {
@@ -263,7 +263,7 @@ namespace Axion::AAP {
 					break;
 				}
 				case AssetType::Scene: {
-					Ref<Scene> scene = std::make_shared<Scene>();
+					Shared<Scene> scene = std::make_shared<Scene>();
 					SceneSerializer serializer(scene);
 					if (serializer.deserializeText(inPath)) {
 						serializer.serializeBinary(runtimeAbsolutePath);

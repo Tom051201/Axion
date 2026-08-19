@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/graphics/Formats.h"
@@ -17,7 +18,7 @@ namespace Axion {
 		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
 	};
 
-	class FrameBuffer {
+	class FrameBuffer : public RefCounted {
 	public:
 
 		virtual ~FrameBuffer() = default;

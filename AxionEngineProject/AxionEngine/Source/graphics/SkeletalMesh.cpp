@@ -29,7 +29,7 @@ namespace Axion {
 	}
 
 	Ref<SkeletalMesh> SkeletalMesh::create(const SkeletalMeshData& meshData) {
-		return std::make_shared<SkeletalMesh>(meshData);
+		return MakeRef<SkeletalMesh>(meshData);
 	}
 
 	void SkeletalMesh::calculateBindPose(const Bone* bone, DirectX::XMMATRIX parentTransform) {

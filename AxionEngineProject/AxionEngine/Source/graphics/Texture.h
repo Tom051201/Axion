@@ -4,11 +4,12 @@
 #include <filesystem>
 #include <array>
 
-#include "AxionEngine/Source/core/Core.h"
+#include "AxionEngine/Source/core/Core.h" // TODO: maybe remove core from here cause technically its unneeded in the header
+#include "AxionEngine/Source/core/Ref.h"
 
 namespace Axion {
 
-	class Texture2D {
+	class Texture2D : public RefCounted {
 	public:
 
 		virtual ~Texture2D() = default;
@@ -31,7 +32,7 @@ namespace Axion {
 
 	};
 
-	class TextureCube {
+	class TextureCube : public RefCounted {
 	public:
 
 		virtual ~TextureCube() = default;

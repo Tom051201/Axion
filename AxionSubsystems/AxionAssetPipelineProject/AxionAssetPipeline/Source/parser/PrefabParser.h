@@ -12,7 +12,7 @@ namespace Axion::AAP {
 	struct PrefabAssetData {
 		UUID uuid;
 		std::string name;
-		Ref<Scene> scene;
+		Shared<Scene> scene;
 		Entity entity;
 	};
 

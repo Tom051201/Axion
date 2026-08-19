@@ -136,12 +136,12 @@ namespace Axion {
 
 
 
-	class  AppRenderEvent : public Event {
+	class AppRenderEvent : public Event {
 	public:
 
 		AppRenderEvent() {}
 
-		EVENT_CLASS_TYPE(ApplicationTick)
+		EVENT_CLASS_TYPE(ApplicationRender)
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 
 	};

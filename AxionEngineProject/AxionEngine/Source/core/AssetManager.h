@@ -6,6 +6,7 @@
 #include <functional>
 #include <filesystem>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/core/AssetRegistry.h"

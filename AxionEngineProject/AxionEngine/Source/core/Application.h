@@ -18,9 +18,8 @@ namespace Axion {
 
 	struct ApplicationSpecification {
 		WindowProperties windowProperties;
-		std::function<void()> guiSyleSetter = nullptr;
-		std::filesystem::path guiLayoutFilePath;
 		AssetLoader* assetLoader = nullptr;
+		bool vsync = true;
 	};
 
 	class Application {
@@ -59,14 +58,11 @@ namespace Axion {
 
 		static Application* s_instance;
 		ApplicationSpecification m_specification;
-		bool m_firstStart = false;
-
-		float m_lastFrameTime = 0.0f;
 
 		Scope<Window> m_window;
 		Scope<Cursor> m_cursor;
-		bool m_running = true;
 		LayerStack m_layerStack;
+		bool m_running = true;
 
 		bool onWindowClose(Event& e);
 		bool onKeyPressed(KeyPressedEvent& e);

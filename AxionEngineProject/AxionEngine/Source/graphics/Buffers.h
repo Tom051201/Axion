@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/graphics/Vertex.h"
@@ -89,7 +90,7 @@ namespace Axion {
 	///// VertexBuffer /////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class VertexBuffer {
+	class VertexBuffer : public RefCounted {
 	public:
 
 		virtual ~VertexBuffer() = default;
@@ -124,7 +125,7 @@ namespace Axion {
 	///// IndexBuffer //////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class IndexBuffer {
+	class IndexBuffer : public RefCounted {
 	public:
 
 		virtual ~IndexBuffer() = default;
@@ -147,7 +148,7 @@ namespace Axion {
 	///// ConstatBuffer ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class ConstantBuffer {
+	class ConstantBuffer : public RefCounted {
 	public:
 
 		virtual ~ConstantBuffer() = default;
@@ -172,7 +173,7 @@ namespace Axion {
 	///// StructuredBuffer /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	class StructuredBuffer {
+	class StructuredBuffer : public RefCounted {
 	public:
 
 		virtual ~StructuredBuffer() = default;
