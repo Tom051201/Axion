@@ -16,9 +16,12 @@
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
 
 #include "AxionStudio/Source/core/EditorCamera.h"
+#include "AxionStudio/Source/core/EditorState.h"
 #include "AxionStudio/Source/core/TransformGizmo.h"
+#include "AxionStudio/Source/core/EditorEvents.h"
 
 namespace Silica {
 	class SBox;
@@ -38,13 +41,6 @@ namespace Axion {
 	class AssetLibraryPanel;
 	class MaterialPanel;
 	class SettingsModal;
-
-	enum class EditorState {
-		Edit = 0,
-		Play,
-		Pause,
-		Simulate
-	};
 
 	class EditorLayer : public Layer {
 	public:
@@ -93,6 +89,7 @@ namespace Axion {
 		Shared<ViewportPanel> m_viewportPanel;
 		Shared<AssetLibraryPanel> m_assetLibraryPanel;
 		Shared<MaterialPanel> m_materialPanel;
+		Shared<SettingsModal> m_settingsModal;
 
 		// -- Text Editor Tabs --
 		std::unordered_map<std::string, std::string> m_openTextEditors;
@@ -100,14 +97,11 @@ namespace Axion {
 		// -- Gizmo --
 		TransformGizmo m_transformGizmo;
 
-		std::shared_ptr<SettingsModal> m_settingsModal;
 
 
 		void playScene();
 		void simScene();
 		void stopScene();
-		void setSkybox(const std::filesystem::path& path);
-		void selectEntity(Entity selectedEntity);
 		void newScene();
 		void openScene();
 		void saveScene();
@@ -115,8 +109,15 @@ namespace Axion {
 		void drawOverlay();
 		void openTextEditorTab(const std::filesystem::path& filepath);
 		void openPreferences();
+		void openMaterialEditor(const std::filesystem::path& filepath);
+		void openVisualScriptPanel(const std::filesystem::path& filepath);
+		void openSceneInViewport(const std::filesystem::path& filepath);
 
-		bool onKeyPressed(KeyPressedEvent& e);
+		EventReply onKeyPressed(KeyPressedEvent& ev);
+		EventReply onKeyReleased(KeyReleasedEvent& ev);
+		EventReply onSceneChanged(SceneChangedEvent& ev);
+		EventReply onEditorStateChanged(EditorStateChangedEvent& ev);
+		EventReply onEntitySelected(EntitySelectedEvent& ev);
 
 	};
 

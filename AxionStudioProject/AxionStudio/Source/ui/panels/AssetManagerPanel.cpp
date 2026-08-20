@@ -118,6 +118,16 @@ namespace Axion {
 		return m_uiRoot;
 	}
 
+	void AssetManagerPanel::onEvent(Event& ev) {
+		EventDispatcher dispatcher(ev);
+		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(onSceneChanged));
+	}
+
+	EventReply AssetManagerPanel::onSceneChanged(SceneChangedEvent& ev) {
+		refresh();
+		return EventReply::unhandled();
+	}
+
 	void AssetManagerPanel::refresh() {
 		if (m_rebuildQueued) return;
 		m_rebuildQueued = true;

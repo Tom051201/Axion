@@ -13,8 +13,7 @@
 
 #define BIT(x) (1 << x)
 
-#define AX_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
-
+#define AX_BIND_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
 
 
 #ifdef AX_PLATFORM_WINDOWS

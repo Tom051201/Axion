@@ -10,6 +10,8 @@
 #include "AxionStudio/Source/core/EditorCamera.h"
 #include "AxionStudio/Source/core/TransformGizmo.h"
 
+#include "AxionEngine/Source/events/Event.h"
+
 namespace Silica {
 	class SBox;
 	class SImage;
@@ -35,9 +37,7 @@ namespace Axion {
 		bool isHovered(const Silica::Vec2& mousePos) const;
 		void refreshToolbar();
 
-		void setCallbacks(std::function<void()> onPlay, std::function<void()> onSimulate, std::function<void()> onStop);
-		void setSkyboxDropCallback(std::function<void(const std::filesystem::path&)> callback) { m_onSkyboxDropped = callback; }
-		void setSceneDropCallback(std::function<void(const std::filesystem::path&)> callback) { m_onSceneDropped = callback; }
+		void setEventCallback(std::function<void(Event&)> callback) { m_eventCallback = callback; }
 		void setPrefabDropCallback(std::function<void(const std::filesystem::path&, Silica::Vec2)> callback) { m_onPrefabDropped = callback; }
 		void setVisualScriptDropCallback(std::function<void(const std::filesystem::path&)> callback) { m_onVisualScriptDropped = callback; }
 
@@ -49,11 +49,10 @@ namespace Axion {
 		EditorCamera* m_camera = nullptr;
 		TransformGizmo* m_gizmo = nullptr;
 
+		std::function<void(Event&)> m_eventCallback;
 		std::function<void()> m_onPlay;
 		std::function<void()> m_onSimulate;
 		std::function<void()> m_onStop;
-		std::function<void(const std::filesystem::path&)> m_onSkyboxDropped;
-		std::function<void(const std::filesystem::path&)> m_onSceneDropped;
 		std::function<void(const std::filesystem::path&, Silica::Vec2)> m_onPrefabDropped;
 		std::function<void(const std::filesystem::path&)> m_onVisualScriptDropped;
 

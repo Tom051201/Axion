@@ -64,8 +64,8 @@ namespace Axion {
 		LayerStack m_layerStack;
 		bool m_running = true;
 
-		bool onWindowClose(Event& e);
-		bool onKeyPressed(KeyPressedEvent& e);
+		EventReply onWindowClose(WindowCloseEvent& e);
+		EventReply onKeyPressed(KeyPressedEvent& e);
 
 	};
 

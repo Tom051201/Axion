@@ -14,6 +14,10 @@
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SOverlay.h>
 
+#include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
+
+#include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 
@@ -25,12 +29,6 @@ namespace Axion {
 		m_stepFrames = stepFrames;
 		m_camera = camera;
 		m_gizmo = gizmo;
-	}
-
-	void ViewportPanel::setCallbacks(std::function<void()> onPlay, std::function<void()> onSimulate, std::function<void()> onStop) {
-		m_onPlay = onPlay;
-		m_onSimulate = onSimulate;
-		m_onStop = onStop;
 	}
 
 	Silica::WidgetPtr ViewportPanel::getWidget() {
@@ -66,12 +64,33 @@ namespace Axion {
 			.onDrop = [this](const Silica::DragDropPayload& payload) {
 				if (payload.type == "AssetPath") {
 					auto path = std::any_cast<std::filesystem::path>(payload.data);
-					if (path.extension() == ".axsky" && m_onSkyboxDropped) {
-						EditorActionQueue::push([this, path]() { m_onSkyboxDropped(path); });
+					if (path.extension() == ".axsky") {
+						if (!SceneManager::hasScene()) return Silica::EventReply::unhandled();
+
+						// -- Load Skybox From DragDrop --
+						EditorActionQueue::push([this, path]() {
+							UUID skyboxUUID = AssetManager::getAssetUUID(path);
+							if (skyboxUUID.isValid()) {
+								Shared<Scene> scene = SceneManager::getScene();
+								scene->setSkybox(skyboxUUID);
+
+								SceneModifiedEvent ev(SceneModificationType::SkyboxChanged);
+								m_eventCallback(ev);
+
+								AX_CORE_LOG_INFO("Successfully applied Skybox: {0}", path.filename().string());
+							}
+							else {
+								AX_CORE_LOG_WARN("Attempted to drop an invalid Skybox asset!");
+							}
+						});
+
 						return Silica::EventReply::handled();
 					}
-					else if (path.extension() == ".axscene" && m_onSceneDropped) {
-						EditorActionQueue::push([this, path]() { m_onSceneDropped(path); });
+					else if (path.extension() == ".axscene") {
+						EditorActionQueue::push([this, path]() {
+							SceneManager::loadScene(path);
+							AX_CORE_LOG_INFO("Successfully loaded Scene from drop: {0}", path.filename().string());
+						});
 						return Silica::EventReply::handled();
 					}
 					else if (path.extension() == ".axprefab" && m_onPrefabDropped) {
@@ -261,22 +280,25 @@ namespace Axion {
 		});
 
 		auto simBtn = makeImageButton(isSim ? SilicaContext::getIcon("StopButton") : SilicaContext::getIcon("SimulateButton"), isPlay, [this, isSim]() {
-			if (isSim) { m_onStop(); }
-			else { m_onSimulate(); }
+			if (m_eventCallback) {
+				EditorStateChangedEvent e(isSim ? EditorState::Edit : EditorState::Simulate);
+				m_eventCallback(e);
+			}
 			refreshToolbar();
 		});
 
 		auto playBtn = makeImageButton(isPlay ? SilicaContext::getIcon("StopButton") : SilicaContext::getIcon("PlayButton"), isSim, [this, isPlay]() {
-			if (isPlay) { m_onStop(); }
-			else { m_onPlay(); }
+			if (m_eventCallback) {
+				EditorStateChangedEvent e(isPlay ? EditorState::Edit : EditorState::Play);
+				m_eventCallback(e);
+			}
 			refreshToolbar();
 		});
 
 		auto pauseBtn = makeImageButton(isPaused ? SilicaContext::getIcon("PlayButton") : SilicaContext::getIcon("PauseButton"), isEdit, [this, isPaused]() {
-			if (isPaused) { *m_currentState = *m_prePauseState; }
-			else {
-				*m_prePauseState = *m_currentState;
-				*m_currentState = EditorState::Pause;
+			if (m_eventCallback) {
+				EditorStateChangedEvent e(isPaused ? *m_prePauseState : EditorState::Pause);
+				m_eventCallback(e);
 			}
 			refreshToolbar();
 		});

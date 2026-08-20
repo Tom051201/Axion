@@ -43,7 +43,7 @@ namespace Axion {
 		void rebuildUI();
 		void rebuildUI_Internal();
 
-		bool onProjectChanged(ProjectChangedEvent& e);
+		EventReply onProjectChanged(ProjectChangedEvent& e);
 
 	};
 

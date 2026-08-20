@@ -116,8 +116,8 @@ namespace Axion {
 		}
 	}
 
-	bool EditorCamera::onMouseScrolled(MouseScrolledEvent& e) {
-		if (!m_hoveringSceneViewport) return false;
+	EventReply EditorCamera::onMouseScrolled(MouseScrolledEvent& e) {
+		if (!m_hoveringSceneViewport) return EventReply::unhandled();
 
 		float delta = e.getYOffset();
 
@@ -134,12 +134,12 @@ namespace Axion {
 		}
 
 		updateView();
-		return false;
+		return EventReply::unhandled();
 	}
 
-	bool EditorCamera::onMouseMoved(MouseMovedEvent& e) {
-		if (!m_isActive) return false;
-		if (!m_hoveringSceneViewport) return false;
+	EventReply EditorCamera::onMouseMoved(MouseMovedEvent& e) {
+		if (!m_isActive) return EventReply::unhandled();
+		if (!m_hoveringSceneViewport) return EventReply::unhandled();
 
 		auto& window = Application::get().getWindow();
 		float centerX = window.getWidth() * 0.5f;
@@ -147,7 +147,7 @@ namespace Axion {
 
 		float deltaX = e.getX() - centerX;
 		float deltaY = centerY - e.getY();
-		if (deltaX == 0.0f || deltaY == 0.0f) return false;
+		if (deltaX == 0.0f || deltaY == 0.0f) return EventReply::unhandled();
 
 		if (is3D()) {
 			m_yaw += deltaX * m_rotationSpeed3D;
@@ -166,10 +166,10 @@ namespace Axion {
 			Application::get().getCursor().centerInWindow();
 		}
 
-		return false;
+		return EventReply::unhandled();
 	}
 
-	bool EditorCamera::onMouseButtonPressed(MouseButtonPressedEvent& e) {
+	EventReply EditorCamera::onMouseButtonPressed(MouseButtonPressedEvent& e) {
 		if (e.getMouseButton() == MouseButton::Right && m_hoveringSceneViewport) {
 			m_isActive = true;
 			m_initialMousePosition = Input::getMousePosition();
@@ -177,17 +177,17 @@ namespace Axion {
 			Application::get().getCursor().hide();
 			Application::get().getCursor().centerInWindow();
 		}
-		return false;
+		return EventReply::unhandled();
 	}
 
-	bool EditorCamera::onMouseButtonReleased(MouseButtonReleasedEvent& e) {
+	EventReply EditorCamera::onMouseButtonReleased(MouseButtonReleasedEvent& e) {
 		if (e.getMouseButton() == MouseButton::Right && m_hoveringSceneViewport) {
 			m_isActive = false;
 
 			Application::get().getCursor().show();
 			Application::get().getCursor().setPositionInWindow((uint32_t)m_initialMousePosition.x, (uint32_t)m_initialMousePosition.y);
 		}
-		return false;
+		return EventReply::unhandled();
 	}
 
 	Vec3 EditorCamera::getForwardDirection() const {

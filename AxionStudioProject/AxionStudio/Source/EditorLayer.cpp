@@ -95,67 +95,36 @@ namespace Axion {
 
 
 		// ----- Build UI -----
-		m_hierarchyPanel = std::make_shared<HierarchyPanel>();
-		m_hierarchyPanel->setSelectionCallback([this](Entity e) { selectEntity(e); });
+		m_hierarchyPanel = MakeShared<HierarchyPanel>();
+		m_hierarchyPanel->setEventCallback(AX_BIND_EVENT_FN(EditorLayer::onEvent));
 		m_hierarchyPanel->setScene(m_activeScene);
 		auto hierarchyWidget = m_hierarchyPanel->getWidget();
 
-		m_propertiesPanel = std::make_shared<EntityPropertiesPanel>();
-		m_propertiesPanel->setHierarchyRefreshCallback([this]() { if (m_hierarchyPanel) m_hierarchyPanel->refresh(); });
+		m_propertiesPanel = MakeShared<EntityPropertiesPanel>();
 		auto propertiesWidget = m_propertiesPanel->getWidget();
 
-		m_contentBrowserPanel = std::make_shared<ContentBrowser>();
+		m_contentBrowserPanel = MakeShared<ContentBrowser>();
 		m_contentBrowserPanel->setup();
-		m_contentBrowserPanel->setOpenVisualScriptPanelCallback([this](const std::filesystem::path& path) {
-			m_visualScriptPanel->openScript(path);
-			m_dock->openTab("Visual Script");
-			m_dock->focusTab("Visual Script");
-		});
-		m_contentBrowserPanel->setModalCallbacks(
-			[this](Silica::WidgetPtr modalWidget) {
-				EditorModalManager::open(modalWidget);
-			},
-			[this]() {
-				EditorModalManager::close();
-			}
-		);
-		m_contentBrowserPanel->setAssetRenamedCallback([this](const std::filesystem::path& oldPath, const std::filesystem::path& newPath) { m_visualScriptPanel->onAssetRenamed(oldPath, newPath); });
-		m_contentBrowserPanel->setAssetDeletedCallback([this](const std::filesystem::path& path) { m_visualScriptPanel->onAssetDeleted(path); });
-		m_contentBrowserPanel->setOpenTextFileCallback([this](const std::filesystem::path& path) { openTextEditorTab(path); });
-		m_contentBrowserPanel->setOpenMaterialPanelCallback([this](const std::filesystem::path& path) {
-			m_materialPanel->setMaterial(path);
-			m_dock->openTab("Material Editor");
-			m_dock->focusTab("Material Editor");
-		});
-		m_contentBrowserPanel->setOpenInViewportCallback([this](const std::filesystem::path& path) {
-			SceneManager::loadScene(path);
-			m_dock->openTab("Viewport");
-			m_dock->focusTab("Viewport");
-		});
+		m_contentBrowserPanel->setEventCallback(AX_BIND_EVENT_FN(EditorLayer::onEvent));
+		m_contentBrowserPanel->setOpenVisualScriptPanelCallback(AX_BIND_FN(EditorLayer::openVisualScriptPanel));
+		m_contentBrowserPanel->setOpenTextEditorPanelCallback(AX_BIND_FN(EditorLayer::openTextEditorTab));
+		m_contentBrowserPanel->setOpenMaterialEditorPanelCallback(AX_BIND_FN(EditorLayer::openMaterialEditor));
+		m_contentBrowserPanel->setOpenSceneInViewportCallback(AX_BIND_FN(EditorLayer::openSceneInViewport));
 		auto contentBrowserWidget = m_contentBrowserPanel->getWidget();
 
-		m_projectOverviewPanel = std::make_shared<ProjectPanel>();
+		m_projectOverviewPanel = MakeShared<ProjectPanel>();
 		m_projectOverviewPanel->setProject(ProjectManager::getProject());
 		auto projectSettings = m_projectOverviewPanel->getWidget();
 
-		m_sceneOverviewPanel = std::make_shared<SceneOverviewPanel>();
+		m_sceneOverviewPanel = MakeShared<SceneOverviewPanel>();
+		m_sceneOverviewPanel->setEventCallback(AX_BIND_EVENT_FN(EditorLayer::onEvent));
 		m_sceneOverviewPanel->setScene(m_activeScene);
 		auto sceneSettings = m_sceneOverviewPanel->getWidget();
 
 		m_viewportTextureID = SilicaContext::getFrameBufferTextureID(m_frameBuffer);
-		m_viewportPanel = std::make_shared<ViewportPanel>();
+		m_viewportPanel = MakeShared<ViewportPanel>();
 		m_viewportPanel->setup(&m_sceneState, &m_prePauseState, &m_stepFrames, &m_editorCamera, &m_transformGizmo);
-		m_viewportPanel->setCallbacks([this]() { playScene(); }, [this]() { simScene(); }, [this]() { stopScene(); });
-		m_viewportPanel->setSkyboxDropCallback([this](const std::filesystem::path& path) { setSkybox(path); });
-		m_viewportPanel->setSceneDropCallback([this](const std::filesystem::path& path) {
-			SceneManager::loadScene(path);
-			m_activeScene = SceneManager::getScene();
-
-			if (m_hierarchyPanel) m_hierarchyPanel->setScene(m_activeScene);
-			if (m_sceneOverviewPanel) m_sceneOverviewPanel->setScene(m_activeScene);
-
-			AX_CORE_LOG_INFO("Successfully loaded Scene from drop: {0}", path.filename().string());
-		});
+		m_viewportPanel->setEventCallback(AX_BIND_EVENT_FN(EditorLayer::onEvent));
 		m_viewportPanel->setPrefabDropCallback([this](const std::filesystem::path& path, Silica::Vec2 localMouse) {
 			if (!m_activeScene) return;
 
@@ -210,31 +179,26 @@ namespace Axion {
 						}
 
 						AX_CORE_LOG_INFO("Successfully spawned Prefab: {0}", path.filename().string());
-						selectEntity(spawnedEntity);
+						EntitySelectedEvent e(spawnedEntity);
+						onEvent(e);
 						if (m_hierarchyPanel) m_hierarchyPanel->rebuildUI();
 					}
 				}
 			}
 		});
-		m_viewportPanel->setVisualScriptDropCallback([this](const std::filesystem::path& path) {
-			if (m_visualScriptPanel) {
-				m_visualScriptPanel->openScript(path);
-				m_dock->openTab("Visual Script");
-				m_dock->focusTab("Visual Script");
-			}
-		});
+		m_viewportPanel->setVisualScriptDropCallback(AX_BIND_FN(EditorLayer::openVisualScriptPanel));
 		auto fullViewportPanel = m_viewportPanel->getWidget();
 
-		m_visualScriptPanel = std::make_shared<VisualScriptPanel>();
+		m_visualScriptPanel = MakeShared<VisualScriptPanel>();
 		auto visualScriptWidget = m_visualScriptPanel->getWidget();
 
-		m_assetManagerPanel = std::make_shared<AssetManagerPanel>();
+		m_assetManagerPanel = MakeShared<AssetManagerPanel>();
 		auto assetManagerWidget = m_assetManagerPanel->getWidget();
 
-		m_assetLibraryPanel = std::make_shared<AssetLibraryPanel>();
+		m_assetLibraryPanel = MakeShared<AssetLibraryPanel>();
 		auto assetLibraryWidget = m_assetLibraryPanel->getWidget();
 
-		m_materialPanel = std::make_shared<MaterialPanel>();
+		m_materialPanel = MakeShared<MaterialPanel>();
 		auto materialWidget = m_materialPanel->getWidget();
 
 		// ----- Setup Workspace And DockSpace -----
@@ -606,65 +570,28 @@ namespace Axion {
 	void EditorLayer::onEvent(Event & e) {
 
 		// ----- Pass Events To Editor Camera -----
-		if (m_sceneState == EditorState::Edit || m_sceneState == EditorState::Simulate) {
-			m_editorCamera.onEvent(e);
-		}
-
+		if (m_sceneState == EditorState::Edit || m_sceneState == EditorState::Simulate) m_editorCamera.onEvent(e);
 
 		// ----- Pass Events To Scene -----
-		if (m_activeScene) {
-			m_activeScene->onEvent(e);
-		}
-
+		if (m_activeScene) m_activeScene->onEvent(e);
 
 		// ----- Pass Events To Panels -----
 		if (m_contentBrowserPanel) m_contentBrowserPanel->onEvent(e);
 		if (m_sceneOverviewPanel) m_sceneOverviewPanel->onEvent(e);
 		if (m_projectOverviewPanel) m_projectOverviewPanel->onEvent(e);
 		if (m_assetLibraryPanel) m_assetLibraryPanel->onEvent(e);
+		if (m_visualScriptPanel) m_visualScriptPanel->onEvent(e);
+		if (m_propertiesPanel) m_propertiesPanel->onEvent(e);
+		if (m_hierarchyPanel) m_hierarchyPanel->onEvent(e);
+		if (m_assetManagerPanel) m_assetManagerPanel->onEvent(e);
 
-
-		// ----- Scene Changed Event -----
+		// ----- Use Events In EditorLayer -----
 		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<SceneChangedEvent>([this](SceneChangedEvent& ev) {
-			m_activeScene = SceneManager::getScene();
-			m_currentScenePath = SceneManager::getScenePath();
-
-			if (m_hierarchyPanel) m_hierarchyPanel->setScene(m_activeScene);
-			if (m_sceneOverviewPanel) m_sceneOverviewPanel->setScene(m_activeScene);
-			if (m_assetManagerPanel) m_assetManagerPanel->refresh();
-
-			return false;
-		});
+		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(EditorLayer::onSceneChanged));
+		dispatcher.dispatch<EditorStateChangedEvent>(AX_BIND_EVENT_FN(EditorLayer::onEditorStateChanged));
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
-		dispatcher.dispatch<KeyReleasedEvent>([this](KeyReleasedEvent& ev) {
-
-			// -- Handle Gizmo Mode Switching (Q, W, E, R, T) --
-			if (!Input::isMouseButtonPressed(MouseButton::Right) && m_selectedEntity.isValid()) {
-				bool changed = false;
-
-				if (ev.getKeyCode() == KeyCode::W && m_transformGizmo.getMode() != GizmoMode::Translate) {
-					m_transformGizmo.setMode(GizmoMode::Translate);
-					changed = true;
-				}
-				if (ev.getKeyCode() == KeyCode::E && m_transformGizmo.getMode() != GizmoMode::Rotate) {
-					m_transformGizmo.setMode(GizmoMode::Rotate);
-					changed = true;
-				}
-				if (ev.getKeyCode() == KeyCode::R && m_transformGizmo.getMode() != GizmoMode::Scale) {
-					m_transformGizmo.setMode(GizmoMode::Scale);
-					changed = true;
-				}
-				if (ev.getKeyCode() == KeyCode::T) {
-					m_transformGizmo.setSpace(m_transformGizmo.getSpace() == GizmoSpace::Local ? GizmoSpace::Global : GizmoSpace::Local);
-					changed = true;
-				}
-
-				if (changed && m_viewportPanel) m_viewportPanel->refreshToolbar();
-			}
-
-			return false;
-		});
+		dispatcher.dispatch<KeyReleasedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyReleased));
+		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(EditorLayer::onEntitySelected));
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -674,100 +601,6 @@ namespace Axion {
 		float height = (float)Application::get().getWindow().getHeight();
 		Silica::Renderer::render(m_silicaRoot, width, height);
 		SilicaContext::renderDrawData(width, height);
-
-		// ----- Render ImGuizmo Overlay -----
-//		if (m_sceneState == EditorState::Edit && m_selectedEntity && m_gizmoType != -1) {
-//
-//			Silica::Vec2 viewPos = m_viewportPanel->getViewportPosition();
-//			Silica::Vec2 viewSize = m_viewportPanel->getViewportSize();
-//
-//			if (viewSize.x > 0.0f && viewSize.y > 0.0f) {
-//				// -- Create An Invisible Window --
-//				ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-//				ImGui::SetNextWindowPos({ viewPos.x + mainViewport->Pos.x, viewPos.y + mainViewport->Pos.y });
-//				ImGui::SetNextWindowSize({ viewSize.x, viewSize.y });
-//				ImGui::SetNextWindowViewport(mainViewport->ID);
-//				ImGui::SetNextWindowBgAlpha(0.0f);
-//
-//				ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking |
-//					ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoSavedSettings |
-//					ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoFocusOnAppearing;
-//
-//				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-//				ImGui::Begin("GizmoOverlay", nullptr, flags);
-//
-//				// -- Setup ImGuizmo --
-//				ImGuizmo::SetOrthographic(m_editorCamera.is2D());
-//				ImGuizmo::SetDrawlist();
-//				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-//
-//				// -- Input: Mode Switching --
-//				if (!ImGui::IsAnyItemActive() && !Input::isMouseButtonPressed(MouseButton::Right)) {
-//					if (ImGui::IsKeyPressed(ImGuiKey_Q)) m_gizmoType = -1;
-//					if (ImGui::IsKeyPressed(ImGuiKey_W)) m_gizmoType = ImGuizmo::TRANSLATE;
-//					if (ImGui::IsKeyPressed(ImGuiKey_E)) m_gizmoType = ImGuizmo::ROTATE;
-//					if (ImGui::IsKeyPressed(ImGuiKey_R)) m_gizmoType = ImGuizmo::SCALE;
-//				}
-//
-//				// -- Camera --
-//				const Mat4& cameraView = m_editorCamera.getViewMatrix();
-//				const Mat4& cameraProjection = m_editorCamera.getProjectionMatrix();
-//
-//				// -- Entity Transform --
-//				auto& tc = m_selectedEntity.getComponent<TransformComponent>();
-//				Mat4 worldM = m_activeScene->getWorldTransform(m_selectedEntity);
-//
-//				// -- To float[16] for ImGuizmo --
-//				DirectX::XMFLOAT4X4 objF4;
-//				DirectX::XMStoreFloat4x4(&objF4, worldM.toXM());
-//				float object[16];
-//				memcpy(object, &objF4, sizeof(objF4));
-//
-//				// -- Snapping --
-//				bool snap = Input::isKeyPressed(KeyCode::LeftControl);
-//				float snapValue = 0.5f;
-//				if (m_gizmoType == ImGuizmo::ROTATE) snapValue = 45.0f;
-//				float snapValues[3] = { snapValue, snapValue, snapValue };
-//
-//				// -- Do gizmo stuff --
-//				ImGuizmo::Manipulate(
-//					cameraView.data(),
-//					cameraProjection.data(),
-//					(ImGuizmo::OPERATION)m_gizmoType,
-//					ImGuizmo::LOCAL,
-//					object,
-//					nullptr,
-//					snap ? snapValues : nullptr
-//				);
-//
-//				// -- Apply changes --
-//				if (ImGuizmo::IsUsing()) {
-//					DirectX::XMMATRIX newM = DirectX::XMLoadFloat4x4(reinterpret_cast<DirectX::XMFLOAT4X4*>(object));
-//					Mat4 updatedWorld = Mat4::fromXM(newM);
-//
-//					Entity parent = m_selectedEntity.getParent();
-//					if (parent) {
-//						Mat4 parentWorld = m_activeScene->getWorldTransform(parent);
-//						Mat4 localM = parentWorld.inverse() * updatedWorld;
-//
-//						TRSData trs = localM.decompose();
-//						tc.position = trs.translation;
-//						tc.rotation = trs.rotation;
-//						tc.scale = trs.scale;
-//					}
-//					else {
-//						TRSData trs = updatedWorld.decompose();
-//						tc.position = trs.translation;
-//						tc.rotation = trs.rotation;
-//						tc.scale = trs.scale;
-//					}
-//				}
-//
-//				ImGui::End();
-//				ImGui::PopStyleVar();
-//			}
-//		}
-
 	}
 
 	void EditorLayer::drawOverlay() {
@@ -911,51 +744,17 @@ namespace Axion {
 		m_activeScene->onPhysicsStop();
 		m_activeScene = m_editorScene;
 
-		selectEntity({});
+		EntitySelectedEvent ev({});
+		onEvent(ev);
 
 		if (m_hierarchyPanel) m_hierarchyPanel->setScene(m_activeScene);
 		if (m_assetManagerPanel) m_assetManagerPanel->refresh();
 		if (m_viewportPanel) m_viewportPanel->refreshToolbar();
 	}
 
-	void EditorLayer::setSkybox(const std::filesystem::path& path) {
-		if (m_activeScene) {
-			UUID skyboxUUID = AssetManager::getAssetUUID(path);
-			if (skyboxUUID.isValid()) {
-				m_activeScene->setSkybox(skyboxUUID);
-				AX_CORE_LOG_INFO("Successfully applied Skybox: {0}", path.filename().string());
-
-				if (m_sceneOverviewPanel) {
-					m_sceneOverviewPanel->rebuildUI();
-				}
-			}
-			else {
-				AX_CORE_LOG_WARN("Attempted to drop an invalid Skybox asset!");
-			}
-		}
-	}
-
-	void EditorLayer::selectEntity(Entity selectedEntity) {
-		EditorActionQueue::push([this, selectedEntity]() {
-			m_selectedEntity = selectedEntity;
-
-			if (m_propertiesPanel) {
-				m_propertiesPanel->setEntity(selectedEntity);
-			}
-		});
-	}
-
 	void EditorLayer::newScene() {
 		if (m_sceneState != EditorState::Edit) return;
-
-		m_activeScene = std::make_shared<Scene>();
-		m_currentScenePath = "";
-
-		if (m_hierarchyPanel) m_hierarchyPanel->setScene(m_activeScene);
-		if (m_sceneOverviewPanel) m_sceneOverviewPanel->setScene(m_activeScene);
-		selectEntity({});
-
-		AX_CORE_LOG_INFO("Created New Scene");
+		SceneManager::newScene();
 	}
 
 	void EditorLayer::openScene() {
@@ -969,16 +768,9 @@ namespace Axion {
 		else {
 			path = FileDialogs::openFile({ {"Axion Scene", "*.axscene"} }, ProjectManager::getProject()->getAssetsPath());
 		}
+
 		if (!path.empty()) {
 			SceneManager::loadScene(path);
-			m_activeScene = SceneManager::getScene();
-			m_currentScenePath = path;
-
-			if (m_hierarchyPanel) m_hierarchyPanel->setScene(m_activeScene);
-			if (m_sceneOverviewPanel) m_sceneOverviewPanel->setScene(m_activeScene);
-			selectEntity({});
-
-			AX_CORE_LOG_INFO("Successfully loaded Scene: {0}", path.filename().string());
 		}
 	}
 
@@ -1015,8 +807,8 @@ namespace Axion {
 		}
 	}
 
-	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
-		if (Silica::SWidget::getFocusedWidget()) return false;
+	EventReply EditorLayer::onKeyPressed(KeyPressedEvent& e) {
+		if (Silica::SWidget::getFocusedWidget()) return EventReply::unhandled();
 
 		bool ctrl = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
 		bool shift = Input::isKeyPressed(KeyCode::LeftShift) || Input::isKeyPressed(KeyCode::RightShift);
@@ -1069,7 +861,8 @@ namespace Axion {
 					stopScene();
 				}
 				else if (m_selectedEntity) {
-					selectEntity({});
+					EntitySelectedEvent ev({});
+					onEvent(ev);
 				}
 				break;
 			}
@@ -1100,7 +893,8 @@ namespace Axion {
 
 						destroyHierarchy(m_selectedEntity, destroyHierarchy);
 
-						selectEntity({});
+						EntitySelectedEvent ev({});
+						onEvent(ev);
 						if (m_hierarchyPanel) m_hierarchyPanel->refresh();
 					});
 				}
@@ -1108,7 +902,50 @@ namespace Axion {
 			}
 		}
 
-		return false;
+		return EventReply::unhandled();
+	}
+
+	EventReply EditorLayer::onEditorStateChanged(EditorStateChangedEvent& ev) {
+		EditorState newState = ev.getState();
+
+		if (newState == EditorState::Play) playScene();
+		else if (newState == EditorState::Simulate) simScene();
+		else if (newState == EditorState::Edit) stopScene();
+		else if (newState == EditorState::Pause) {
+			m_prePauseState = m_sceneState;
+			m_sceneState = EditorState::Pause;
+		}
+
+		return EventReply::unhandled();
+	}
+
+	EventReply EditorLayer::onKeyReleased(KeyReleasedEvent& ev) {
+
+		// -- Handle Gizmo Mode Switching (Q, W, E, R, T) --
+		if (!Input::isMouseButtonPressed(MouseButton::Right) && m_selectedEntity.isValid()) {
+			bool changed = false;
+
+			if (ev.getKeyCode() == KeyCode::W && m_transformGizmo.getMode() != GizmoMode::Translate) {
+				m_transformGizmo.setMode(GizmoMode::Translate);
+				changed = true;
+			}
+			if (ev.getKeyCode() == KeyCode::E && m_transformGizmo.getMode() != GizmoMode::Rotate) {
+				m_transformGizmo.setMode(GizmoMode::Rotate);
+				changed = true;
+			}
+			if (ev.getKeyCode() == KeyCode::R && m_transformGizmo.getMode() != GizmoMode::Scale) {
+				m_transformGizmo.setMode(GizmoMode::Scale);
+				changed = true;
+			}
+			if (ev.getKeyCode() == KeyCode::T) {
+				m_transformGizmo.setSpace(m_transformGizmo.getSpace() == GizmoSpace::Local ? GizmoSpace::Global : GizmoSpace::Local);
+				changed = true;
+			}
+
+			if (changed && m_viewportPanel) m_viewportPanel->refreshToolbar();
+		}
+
+		return EventReply::unhandled();
 	}
 
 	void EditorLayer::openTextEditorTab(const std::filesystem::path& filepath) {
@@ -1166,7 +1003,7 @@ namespace Axion {
 
 	void EditorLayer::openPreferences() {
 		if (!m_settingsModal) {
-			m_settingsModal = std::make_shared<SettingsModal>();
+			m_settingsModal = MakeShared<SettingsModal>();
 		}
 
 		std::vector<std::string> currentPaths;
@@ -1186,6 +1023,41 @@ namespace Axion {
 		);
 
 		EditorModalManager::open(widget);
+	}
+
+	void EditorLayer::openMaterialEditor(const std::filesystem::path& filepath) {
+		m_materialPanel->setMaterial(filepath);
+		m_dock->openTab("Material Editor");
+		m_dock->focusTab("Material Editor");
+	}
+
+	void EditorLayer::openVisualScriptPanel(const std::filesystem::path& filepath) {
+		m_visualScriptPanel->openScript(filepath);
+		m_dock->openTab("Visual Script");
+		m_dock->focusTab("Visual Script");
+	}
+
+	void EditorLayer::openSceneInViewport(const std::filesystem::path& filepath) {
+		SceneManager::loadScene(filepath);
+		m_dock->openTab("Viewport");
+		m_dock->focusTab("Viewport");
+	}
+
+	EventReply EditorLayer::onSceneChanged(SceneChangedEvent& ev) {
+		m_activeScene = SceneManager::getScene();
+		m_currentScenePath = SceneManager::getScenePath();
+
+		// -- Create EntitySelectedEvent --
+		EntitySelectedEvent emptySelectionEv({});
+		onEvent(emptySelectionEv);
+
+		AX_CORE_LOG_INFO("EditorLayer successfully synced with new Scene!");
+		return EventReply::unhandled();
+	}
+
+	EventReply EditorLayer::onEntitySelected(EntitySelectedEvent& ev) {
+		m_selectedEntity = ev.getEntity();
+		return EventReply::unhandled();
 	}
 
 }

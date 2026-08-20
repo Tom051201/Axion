@@ -24,6 +24,4 @@ namespace Axion {
 		psc.poolIndex = --psc.poolIndex % psc.particlePool.size();
 	}
 
-
-
 }

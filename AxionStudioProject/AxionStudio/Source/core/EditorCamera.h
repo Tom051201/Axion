@@ -64,10 +64,10 @@ namespace Axion {
 		void updateCamera3D(Timestep ts);
 		void updateCamera2D(Timestep ts);
 
-		bool onMouseScrolled(MouseScrolledEvent& e);
-		bool onMouseMoved(MouseMovedEvent& e);
-		bool onMouseButtonPressed(MouseButtonPressedEvent& e);
-		bool onMouseButtonReleased(MouseButtonReleasedEvent& e);
+		EventReply onMouseScrolled(MouseScrolledEvent& e);
+		EventReply onMouseMoved(MouseMovedEvent& e);
+		EventReply onMouseButtonPressed(MouseButtonPressedEvent& e);
+		EventReply onMouseButtonReleased(MouseButtonReleasedEvent& e);
 
 		Vec3 getForwardDirection() const;
 		Vec3 getRightDirection() const;

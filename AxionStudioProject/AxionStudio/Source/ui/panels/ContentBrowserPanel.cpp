@@ -31,6 +31,8 @@
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorUtils.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
+#include "AxionStudio/Source/core/EditorEvents.h"
+#include "AxionStudio/Source/core/EditorModalManager.h"
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
 #include "AxionStudio/Source/ui/modals/AudioImportModal.h"
@@ -753,7 +755,7 @@ namespace Axion {
 						.color = Silica::Color::transparent(),
 						.hoverColor = Silica::GetTheme().Accent_Primary,
 						.onClick = [this, path]() {
-							if (m_openMaterialPanel) m_openMaterialPanel(path);
+							if (m_openMaterialEditorPanel) m_openMaterialEditorPanel(path);
 							return Silica::EventReply::handled();
 						},
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Material Editor" })
@@ -767,7 +769,7 @@ namespace Axion {
 						.color = Silica::Color::transparent(),
 						.hoverColor = Silica::GetTheme().Accent_Primary,
 						.onClick = [this, path]() {
-							m_openInViewportCallback(path);
+							m_openSceneInViewportCallback(path);
 							return Silica::EventReply::handled();
 						},
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Viewport" })
@@ -795,7 +797,7 @@ namespace Axion {
 						.color = Silica::Color::transparent(),
 						.hoverColor = Silica::GetTheme().Accent_Primary,
 						.onClick = [this, path]() {
-							if (m_openTextFile) m_openTextFile(path);
+							if (m_openTextEditorPanel) m_openTextEditorPanel(path);
 							return Silica::EventReply::handled();
 						},
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Quartz Editor" })
@@ -949,9 +951,11 @@ namespace Axion {
 										std::filesystem::rename(oldCSPath, newCSPath, csEc);
 									}
 
-									// -- Notify Editor That Rename Occurred --
-									if (m_onAssetRenamed) {
-										m_onAssetRenamed(path, newPath);
+									// -- Create AssetRenamedEvent --
+									if (m_eventCallback) {
+										AssetRenamedEvent e(path, newPath);
+										m_eventCallback(e);
+										AX_CORE_LOG_FATAL("Send Asset Created Event from CB");
 									}
 								}
 							}
@@ -1030,20 +1034,20 @@ namespace Axion {
 						else {
 							std::string ext = path.extension().string();
 
-							if (ext == ".axscene") {
-								m_openInViewportCallback(path);
+							if (ext == ".axscene" && m_openSceneInViewportCallback) {
+								m_openSceneInViewportCallback(path);
 							}
 							else if (ext == ".axvs" && m_openVisualScriptPanel) {
 								m_openVisualScriptPanel(path);
 							}
-							else if (ext == ".axmat" && m_openMaterialPanel) {
-								m_openMaterialPanel(path);
+							else if (ext == ".axmat" && m_openMaterialEditorPanel) {
+								m_openMaterialEditorPanel(path);
 							}
-							else if (EditorUtils::isTextEditorFile(ext) && m_openTextFile) {
-								m_openTextFile(path);
+							else if (EditorUtils::isTextEditorFile(ext) && m_openTextEditorPanel) {
+								m_openTextEditorPanel(path);
 							}
-							else if (EditorUtils::isEngineAssetExtension(ext) && m_openTextFile) {
-								m_openTextFile(path);
+							else if (EditorUtils::isEngineAssetExtension(ext) && m_openTextEditorPanel) {
+								m_openTextEditorPanel(path);
 							}
 							else {
 								PlatformUtils::openExternally(path);
@@ -1123,19 +1127,19 @@ namespace Axion {
 					FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir) :
 					FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, ProjectManager::getProject()->getAssetsPath());
 
-				if (!absPath.empty() && m_openGlobalModal) {
+				if (!absPath.empty()) {
 					m_audioImportModal = std::make_shared<AudioImportModal>();
 					m_audioImportModal->presetFromFile(absPath);
 
 					auto modalWidget = m_audioImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
+							EditorModalManager::close();
 							m_audioImportModal = nullptr;
 							refresh();
 						});
 					});
 
-					m_openGlobalModal(modalWidget);
+					EditorModalManager::open(modalWidget);
 				}
 				return Silica::EventReply::handled();
 			},
@@ -1149,19 +1153,18 @@ namespace Axion {
 			.color = Silica::Color::transparent(),
 			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
-				if (m_openGlobalModal) {
-					m_materialImportModal = std::make_shared<MaterialImportModal>();
+				m_materialImportModal = MakeShared<MaterialImportModal>();
 
-					auto modalWidget = m_materialImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
-							m_materialImportModal = nullptr;
-							refresh();
-						});
+				auto modalWidget = m_materialImportModal->getWidget([this]() {
+					EditorActionQueue::push([this]() {
+						EditorModalManager::close();
+						m_materialImportModal = nullptr;
+						refresh();
 					});
+				});
 
-					m_openGlobalModal(modalWidget);
-				}
+				EditorModalManager::open(modalWidget);
+
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Material" })
@@ -1179,19 +1182,19 @@ namespace Axion {
 					FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, meshDir) :
 					FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, ProjectManager::getProject()->getAssetsPath());
 
-				if (!absPath.empty() && m_openGlobalModal) {
-					m_meshImportModal = std::make_shared<MeshImportModal>();
+				if (!absPath.empty()) {
+					m_meshImportModal = MakeShared<MeshImportModal>();
 					m_meshImportModal->presetFromFile(absPath);
 
 					auto modalWidget = m_meshImportModal->getWidget([this]() {
 						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
+							EditorModalManager::close();
 							m_meshImportModal = nullptr;
 							refresh();
 						});
 					});
 
-					m_openGlobalModal(modalWidget);
+					EditorModalManager::open(modalWidget);
 				}
 
 				return Silica::EventReply::handled();
@@ -1206,19 +1209,18 @@ namespace Axion {
 			.color = Silica::Color::transparent(),
 			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
-				if (m_openGlobalModal) {
-					m_physicsMaterialModal = std::make_shared<PhysicsMaterialImportModal>();
+				m_physicsMaterialModal = MakeShared<PhysicsMaterialImportModal>();
 
-					auto modalWidget = m_physicsMaterialModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
-							m_physicsMaterialModal = nullptr;
-							refresh();
-						});
+				auto modalWidget = m_physicsMaterialModal->getWidget([this]() {
+					EditorActionQueue::push([this]() {
+						EditorModalManager::close();
+						m_physicsMaterialModal = nullptr;
+						refresh();
 					});
+				});
 
-					m_openGlobalModal(modalWidget);
-				}
+				EditorModalManager::open(modalWidget);
+
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Physics Material" })
@@ -1231,19 +1233,19 @@ namespace Axion {
 			.color = Silica::Color::transparent(),
 			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
-				if (m_openGlobalModal) {
-					m_pipelineImportModal = std::make_shared<PipelineImportModal>();
 
-					auto modalWidget = m_pipelineImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
-							m_pipelineImportModal = nullptr;
-							refresh();
-						});
+				m_pipelineImportModal = MakeShared<PipelineImportModal>();
+
+				auto modalWidget = m_pipelineImportModal->getWidget([this]() {
+					EditorActionQueue::push([this]() {
+						EditorModalManager::close();
+						m_pipelineImportModal = nullptr;
+						refresh();
 					});
+				});
 
-					m_openGlobalModal(modalWidget);
-				}
+				EditorModalManager::open(modalWidget);
+
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Pipeline" })
@@ -1256,19 +1258,18 @@ namespace Axion {
 			.color = Silica::Color::transparent(),
 			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
-				if (m_openGlobalModal) {
-					m_shaderImportModal = std::make_shared<ShaderImportModal>();
+				m_shaderImportModal = MakeShared<ShaderImportModal>();
 
-					auto modalWidget = m_shaderImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
-							m_shaderImportModal = nullptr;
-							refresh();
-						});
+				auto modalWidget = m_shaderImportModal->getWidget([this]() {
+					EditorActionQueue::push([this]() {
+						EditorModalManager::close();
+						m_shaderImportModal = nullptr;
+						refresh();
 					});
+				});
 
-					m_openGlobalModal(modalWidget);
-				}
+				EditorModalManager::open(modalWidget);
+
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Shader" })
@@ -1281,19 +1282,18 @@ namespace Axion {
 			.color = Silica::Color::transparent(),
 			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
-				if (m_openGlobalModal) {
-					m_skyboxImportModal = std::make_shared<SkyboxImportModal>();
+				m_skyboxImportModal = MakeShared<SkyboxImportModal>();
 
-					auto modalWidget = m_skyboxImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
-							m_skyboxImportModal = nullptr;
-							refresh();
-						});
+				auto modalWidget = m_skyboxImportModal->getWidget([this]() {
+					EditorActionQueue::push([this]() {
+						EditorModalManager::close();
+						m_skyboxImportModal = nullptr;
+						refresh();
 					});
+				});
 
-					m_openGlobalModal(modalWidget);
-				}
+				EditorModalManager::open(modalWidget);
+
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Skybox" })
@@ -1306,19 +1306,18 @@ namespace Axion {
 			.color = Silica::Color::transparent(),
 			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
-				if (m_openGlobalModal) {
-					m_texture2DImportModal = std::make_shared<Texture2DImportModal>();
+				m_texture2DImportModal = MakeShared<Texture2DImportModal>();
 
-					auto modalWidget = m_texture2DImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
-							m_texture2DImportModal = nullptr;
-							refresh();
-						});
+				auto modalWidget = m_texture2DImportModal->getWidget([this]() {
+					EditorActionQueue::push([this]() {
+						EditorModalManager::close();
+						m_texture2DImportModal = nullptr;
+						refresh();
 					});
+				});
 
-					m_openGlobalModal(modalWidget);
-				}
+				EditorModalManager::open(modalWidget);
+
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture 2D" })
@@ -1331,19 +1330,18 @@ namespace Axion {
 			.color = Silica::Color::transparent(),
 			.hoverColor = Silica::GetTheme().Accent_Primary,
 			.onClick = [this]() {
-				if (m_openGlobalModal) {
-					m_textureCubeImportModal = std::make_shared<TextureCubeImportModal>();
+				m_textureCubeImportModal = std::make_shared<TextureCubeImportModal>();
 
-					auto modalWidget = m_textureCubeImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							if (m_closeGlobalModal) m_closeGlobalModal();
-							m_textureCubeImportModal = nullptr;
-							refresh();
-						});
+				auto modalWidget = m_textureCubeImportModal->getWidget([this]() {
+					EditorActionQueue::push([this]() {
+						EditorModalManager::close();
+						m_textureCubeImportModal = nullptr;
+						refresh();
 					});
+				});
 
-					m_openGlobalModal(modalWidget);
-				}
+				EditorModalManager::open(modalWidget);
+
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture Cube" })
@@ -1439,7 +1437,13 @@ namespace Axion {
 					.padding = { 20.0f, 8.0f },
 					.color = Silica::GetTheme().Accent_Danger,
 					.onClick = [this]() {
-						if (m_onAssetDeleted) m_onAssetDeleted(*m_pendingDelete);
+						// -- Create AssetDeletedEvent --
+						if (m_eventCallback) {
+							AssetDeletedEvent e(*m_pendingDelete);
+							m_eventCallback(e);
+							AX_CORE_LOG_FATAL("Send Asset Deleted Event from CB");
+						}
+
 						if (EditorUtils::isEngineAssetExtension(*m_pendingDelete)) {
 							UUID assetUUID = AssetManager::getAssetUUID(*m_pendingDelete);
 							if (assetUUID.isValid()) {
@@ -1562,7 +1566,7 @@ namespace Axion {
 		else std::filesystem::remove(path, ec);
 	}
 
-	bool ContentBrowser::onProjectChanged(ProjectChangedEvent& e) {
+	EventReply ContentBrowser::onProjectChanged(ProjectChangedEvent& e) {
 		if (ProjectManager::hasProject()) {
 			std::error_code ec;
 			m_rootDirectory = std::filesystem::weakly_canonical(ProjectManager::getProject()->getProjectPath(), ec);
@@ -1596,7 +1600,7 @@ namespace Axion {
 
 		m_backHistory.clear();
 		m_forwardHistory.clear();
-		return false;
+		return EventReply::unhandled();
 	}
 
 	void ContentBrowser::refresh() {

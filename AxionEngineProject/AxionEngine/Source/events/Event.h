@@ -28,11 +28,29 @@ namespace Axion {
 	};
 
 
+	#define AX_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
+
 	#define EVENT_CLASS_TYPE(type)	static EventType getStaticType() { return EventType::##type; }\
 									virtual EventType getEventType() const override { return getStaticType(); }\
 									virtual const char* getName() const override { return #type; }
 
 	#define EVENT_CLASS_CATEGORY(category) virtual int getCategoryFlags() const override { return category; }
+
+	class EventReply {
+	public:
+
+		constexpr bool isHandled() const { return m_handled; }
+
+		static constexpr EventReply handled() { return EventReply(true); }
+		static constexpr EventReply unhandled() { return EventReply(false); }
+
+	private:
+
+		constexpr EventReply(bool handled) : m_handled(handled) {}
+		bool m_handled = false;
+
+	};
+
 
 	class Event {
 	public:
@@ -57,7 +75,7 @@ namespace Axion {
 	class EventDispatcher {
 	private:
 
-		template<typename T> using EventFn = std::function<bool(T&)>;
+		template<typename T> using EventFn = std::function<EventReply(T&)>;
 		Event& m_event;
 
 	public:
@@ -66,7 +84,7 @@ namespace Axion {
 
 		template<typename T> bool dispatch(EventFn<T> func) {
 			if (m_event.getEventType() == T::getStaticType()) {
-				m_event.handled = func(static_cast<T&>(m_event));
+				m_event.handled |= func(static_cast<T&>(m_event)).isHandled();
 				return true;
 			}
 			return false;

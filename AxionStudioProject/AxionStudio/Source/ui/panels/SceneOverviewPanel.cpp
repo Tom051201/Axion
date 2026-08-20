@@ -48,7 +48,9 @@ namespace Axion {
 								if (assetUUID.isValid()) {
 									AssetHandle<Skybox> handle = AssetManager::load<Skybox>(assetUUID);
 									m_activeScene->setSkybox(handle);
-									rebuildUI();
+
+									SceneModifiedEvent ev(SceneModificationType::SkyboxChanged);
+									m_eventCallback(ev);
 								}
 								else {
 									AX_CORE_LOG_WARN("Attempted to drop invalid Skybox asset!");
@@ -292,12 +294,19 @@ namespace Axion {
 	void SceneOverviewPanel::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(SceneOverviewPanel::onSceneChanged));
+		dispatcher.dispatch<SceneModifiedEvent>(AX_BIND_EVENT_FN(SceneOverviewPanel::onSceneModified));
 	}
 
-	bool SceneOverviewPanel::onSceneChanged(SceneChangedEvent& e) {
+	EventReply SceneOverviewPanel::onSceneChanged(SceneChangedEvent& ev) {
 		setScene(SceneManager::getScene());
-		return false;
+		return EventReply::unhandled();
 	}
+
+	EventReply SceneOverviewPanel::onSceneModified(SceneModifiedEvent& ev) {
+		rebuildUI_Internal();
+		return EventReply::unhandled();
+	}
+
 
 	void SceneOverviewPanel::setScene(const Shared<Scene>& scene) {
 		m_activeScene = scene;

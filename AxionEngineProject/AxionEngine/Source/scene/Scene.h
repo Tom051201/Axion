@@ -115,7 +115,7 @@ namespace Axion {
 
 		std::vector<entt::entity> m_scriptEntitiesCache;
 
-		bool onRenderingFinished(RenderingFinishedEvent& e);
+		EventReply onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();
 		void processPhysicsCallbacks();
 		void updateScripts(Timestep ts);

@@ -339,9 +339,9 @@ namespace Axion {
 		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(ProjectPanel::onProjectChanged));
 	}
 
-	bool ProjectPanel::onProjectChanged(ProjectChangedEvent& e) {
+	EventReply ProjectPanel::onProjectChanged(ProjectChangedEvent& e) {
 		setProject(ProjectManager::getProject());
-		return false;
+		return EventReply::unhandled();
 	}
 
 }

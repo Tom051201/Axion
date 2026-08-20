@@ -144,27 +144,23 @@ namespace Axion {
 				s_managerData->unloadProjectRequest = false;
 			}
 
-			return false;
+			return EventReply::unhandled();
 		});
 
 	}
 
 	void ProjectManager::newProject(const ProjectSpecification& spec) {
-		// -- Auto Save active Project and request a new Project --
-		if (hasProject()) {
-			saveProject(s_managerData->projectPath);
-		}
+		if (s_managerData->isCompiling) return;
 
+		if (hasProject()) saveProject(s_managerData->projectPath);
 		s_managerData->newProjectSpecification = spec;
 		s_managerData->newProjectRequest = true;
 	}
 
 	void ProjectManager::loadProject(const std::filesystem::path& filePath) {
-		// -- Auto Save active Project and request loading --
-		if (hasProject()) {
-			saveProject(s_managerData->projectPath);
-		}
+		if (s_managerData->isCompiling) return;
 
+		if (hasProject()) saveProject(s_managerData->projectPath);
 		s_managerData->toLoadProjectPath = filePath;
 		s_managerData->loadProjectRequest = true;
 	}
@@ -191,11 +187,9 @@ namespace Axion {
 	}
 
 	void ProjectManager::unloadProject() {
-		// -- Auto Save active Project and request saving --
-		if (hasProject()) {
-			saveProject(s_managerData->projectPath);
-		}
+		if (s_managerData->isCompiling) return;
 
+		if (hasProject()) saveProject(s_managerData->projectPath);
 		s_managerData->unloadProjectRequest = true;
 	}
 
@@ -221,6 +215,11 @@ namespace Axion {
 	}
 
 	void ProjectManager::triggerScriptAssemblyLoad() {
+		if (s_managerData->isCompiling) {
+			AX_CORE_LOG_WARN("Script compilation already in progress. Ignoring request.");
+			return;
+		}
+
 		std::filesystem::path gameAssemblyPath;
 
 		if (s_managerData->isRuntime) {

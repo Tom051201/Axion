@@ -27,6 +27,7 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scripting/ScriptEngine.h"
 
+#include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 
 namespace Axion {
@@ -170,8 +171,14 @@ namespace Axion {
 		EditorActionQueue::push([this]() { rebuildUI(); });
 	}
 
-	void EntityPropertiesPanel::setHierarchyRefreshCallback(std::function<void()> callback) {
-		m_onHierarchyNeedsRefresh = callback;
+	void EntityPropertiesPanel::onEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(onEntitySelected));
+	}
+
+	EventReply EntityPropertiesPanel::onEntitySelected(EntitySelectedEvent& e) {
+		setEntity(e.getEntity());
+		return EventReply::unhandled();
 	}
 
 	void EntityPropertiesPanel::rebuildUI() {
@@ -182,7 +189,6 @@ namespace Axion {
 
 		// -- Trigger Rebuild Helper Function --
 		auto triggerRebuild = [this]() {
-			if (m_onHierarchyNeedsRefresh) m_onHierarchyNeedsRefresh();
 			EditorActionQueue::push([this]() { rebuildUI(); });
 		};
 

@@ -12,14 +12,10 @@ namespace Axion {
 		std::filesystem::path scenePath;
 		bool isNewScene = false;
 		std::function<void(Event&)> eventCallback;
-		std::function<bool(RenderingFinishedEvent&)> onRenderingFinished;
+		std::function<EventReply(RenderingFinishedEvent&)> onRenderingFinished;
 
 		// -- New scene --
 		bool newSceneRequest = false;
-
-		// -- Load scene --
-		bool loadSceneRequest = false;
-		std::filesystem::path toLoadScenePath;
 
 		// -- Save scene --
 		bool saveSceneRequest = false;
@@ -40,8 +36,8 @@ namespace Axion {
 	void SceneManager::initialize(std::function<void(Event&)> eventCallback) {
 		s_managerData = new SceneManagerData();
 		s_managerData->eventCallback = eventCallback;
-		s_managerData->scene = std::make_shared<Scene>(); // load a blank scene
-		s_managerData->onRenderingFinished = [&](RenderingFinishedEvent& e) {
+		s_managerData->scene = MakeShared<Scene>();
+		s_managerData->onRenderingFinished = [&](RenderingFinishedEvent& e) -> EventReply {
 			// -- Save scene --
 			if (s_managerData->saveSceneRequest) {
 				std::filesystem::path filePath = s_managerData->toSaveScenePath;
@@ -56,26 +52,6 @@ namespace Axion {
 				}
 				s_managerData->saveSceneRequest = false;
 				s_managerData->toSaveScenePath.clear();
-			}
-
-			// -- Load scene --
-			if (s_managerData->loadSceneRequest) {
-				std::filesystem::path filePath = s_managerData->toLoadScenePath;
-				if (!filePath.empty() && std::filesystem::exists(filePath)) {
-					Shared<Scene> scene = std::make_shared<Scene>();
-					SceneSerializer serializer(scene);
-					serializer.deserializeText(filePath);
-
-					s_managerData->scenePath = filePath;
-					s_managerData->isNewScene = false;
-					setScene(scene);
-					AX_CORE_LOG_INFO("Scene loaded");
-				}
-				else {
-					AX_CORE_LOG_ERROR("Unable to load scene");
-				}
-				s_managerData->loadSceneRequest = false;
-				s_managerData->toLoadScenePath.clear();
 			}
 
 			// -- Unload scene --
@@ -114,7 +90,7 @@ namespace Axion {
 				s_managerData->isLoadingScene = false;
 			}
 
-			return false;
+			return EventReply::unhandled();
 		};
 	}
 
@@ -128,13 +104,16 @@ namespace Axion {
 		dispatcher.dispatch<RenderingFinishedEvent>(s_managerData->onRenderingFinished);
 	}
 
-	void SceneManager::newScene() { s_managerData->newSceneRequest = true; }
+	void SceneManager::newScene() {
+		if (s_managerData->isLoadingScene) return;
+		s_managerData->newSceneRequest = true;
+	}
 
-	void SceneManager::loadScene(const std::filesystem::path& filePath) { // TODO: check here for loading bug
+	void SceneManager::loadScene(const std::filesystem::path& filePath) {
 		if (s_managerData->isLoadingScene) return;
 
-		s_managerData->loadSceneRequest = true;
-		s_managerData->toLoadScenePath = filePath;
+		s_managerData->isLoadingScene = true;
+		s_managerData->loadedScenePath = filePath;
 
 		// -- Spin up a background thread to parse the YAML ---
 		std::thread([filePath]() {
@@ -154,11 +133,13 @@ namespace Axion {
 	}
 
 	void SceneManager::saveScene(const std::filesystem::path& filePath) {
+		if (s_managerData->isLoadingScene) return;
 		s_managerData->toSaveScenePath = filePath;
 		s_managerData->saveSceneRequest = true;
 	}
 
 	void SceneManager::unloadScene() {
+		if (s_managerData->isLoadingScene) return;
 		s_managerData->unloadSceneRequest = true;
 	}
 

@@ -144,13 +144,13 @@ namespace Axion {
 		AX_CORE_LOG_ERROR(msg);
 	}
 
-	bool Application::onWindowClose(Event& e) {
+	EventReply Application::onWindowClose(WindowCloseEvent& e) {
 		m_running = false;
-		return true;
+		return EventReply::handled();
 	}
 
-	bool Application::onKeyPressed(KeyPressedEvent& e) {
-		return true;
+	EventReply Application::onKeyPressed(KeyPressedEvent& e) {
+		return EventReply::handled();
 	}
 
 	void Application::pushLayer(Layer* layer) {

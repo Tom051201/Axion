@@ -9,6 +9,7 @@
 #include <Silica/include/SWidget.h>
 #include <Silica/include/SNodeEditor.h>
 
+#include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 
 namespace Silica {
@@ -26,11 +27,11 @@ namespace Axion {
 
 		Silica::WidgetPtr getWidget();
 
+		void onEvent(Event& e);
+
 		void setContext(const VisualGraph& graph, const std::filesystem::path& filePath);
 		void openScript(const std::filesystem::path& filePath);
 		void closeActiveScript();
-		void onAssetRenamed(const std::filesystem::path& oldPath, const std::filesystem::path& newPath);
-		void onAssetDeleted(const std::filesystem::path& path);
 
 		const std::filesystem::path& getActiveFilePath() const { return m_currentFilePath; }
 
@@ -69,6 +70,9 @@ namespace Axion {
 		bool hasNodeOfType(NodeType type) const;
 		void refreshVariableNodes();
 		void syncGraphState();
+
+		EventReply onAssetRenamed(AssetRenamedEvent& e);
+		EventReply onAssetDeleted(AssetDeletedEvent& e);
 
 	};
 

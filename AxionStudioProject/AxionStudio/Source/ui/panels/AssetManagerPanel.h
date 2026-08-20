@@ -4,6 +4,8 @@
 
 #include <Silica/include/SWidget.h>
 
+#include "AxionEngine/Source/events/ApplicationEvent.h"
+
 namespace Silica {
 	class SBox;
 }
@@ -18,6 +20,8 @@ namespace Axion {
 
 		Silica::WidgetPtr getWidget();
 
+		void onEvent(Event& ev);
+
 		void refresh();
 
 	private:
@@ -26,6 +30,8 @@ namespace Axion {
 
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		bool m_rebuildQueued = false;
+
+		EventReply onSceneChanged(SceneChangedEvent& ev);
 
 	};
 

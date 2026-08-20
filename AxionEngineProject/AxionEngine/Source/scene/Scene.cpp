@@ -516,10 +516,10 @@ namespace Axion {
 		dispatcher.dispatch<RenderingFinishedEvent>(AX_BIND_EVENT_FN(onRenderingFinished));
 	}
 
-	bool Scene::onRenderingFinished(RenderingFinishedEvent& e) {
+	EventReply Scene::onRenderingFinished(RenderingFinishedEvent& e) {
 		flushDestroyedEntities();
 
-		return false;
+		return EventReply::unhandled();
 	}
 
 	void Scene::setSkybox(const AssetHandle<Skybox>& handle) {

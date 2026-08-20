@@ -57,16 +57,11 @@ namespace Axion {
 		void loadSettings(const YAML::Node& editorConfig);
 		void saveSettings(YAML::Emitter& out) const;
 
-		void setOpenVisualScriptPanelCallback(const std::function<void(const std::filesystem::path& path)>& func) { m_openVisualScriptPanel = func; }
-		void setAssetDeletedCallback(const std::function<void(const std::filesystem::path& path)>& func) { m_onAssetDeleted = func; }
-		void setModalCallbacks(const std::function<void(Silica::WidgetPtr)>& open, const std::function<void()>& close) {
-			m_openGlobalModal = open;
-			m_closeGlobalModal = close;
-		}
-		void setAssetRenamedCallback(const std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)>& func) { m_onAssetRenamed = func; }
-		void setOpenTextFileCallback(std::function<void(const std::filesystem::path&)> callback) { m_openTextFile = callback; }
-		void setOpenMaterialPanelCallback(std::function<void(const std::filesystem::path&)> callback) { m_openMaterialPanel = callback; }
-		void setOpenInViewportCallback(std::function<void(const std::filesystem::path&)> callback) { m_openInViewportCallback = callback; }
+		void setEventCallback(std::function<void(Event&)> callback) { m_eventCallback = callback; }
+		void setOpenVisualScriptPanelCallback(const std::function<void(const std::filesystem::path& path)>& callback) { m_openVisualScriptPanel = callback; }
+		void setOpenTextEditorPanelCallback(std::function<void(const std::filesystem::path&)> callback) { m_openTextEditorPanel = callback; }
+		void setOpenMaterialEditorPanelCallback(std::function<void(const std::filesystem::path&)> callback) { m_openMaterialEditorPanel = callback; }
+		void setOpenSceneInViewportCallback(std::function<void(const std::filesystem::path&)> callback) { m_openSceneInViewportCallback = callback; }
 
 		Silica::WidgetPtr getWidget();
 
@@ -123,25 +118,22 @@ namespace Axion {
 		float m_thumbnailSize = 100.0f;
 
 		// -- Callbacks --
+		std::function<void(Event&)> m_eventCallback;
 		std::function<void(const std::filesystem::path& path)> m_openVisualScriptPanel;
-		std::function<void(const std::filesystem::path& path)> m_onAssetDeleted;
-		std::function<void(Silica::WidgetPtr)> m_openGlobalModal;
-		std::function<void()> m_closeGlobalModal;
-		std::function<void(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)> m_onAssetRenamed;
-		std::function<void(const std::filesystem::path&)> m_openTextFile;
-		std::function<void(const std::filesystem::path&)> m_openMaterialPanel;
-		std::function<void(const std::filesystem::path&)> m_openInViewportCallback;
+		std::function<void(const std::filesystem::path&)> m_openTextEditorPanel;
+		std::function<void(const std::filesystem::path&)> m_openMaterialEditorPanel;
+		std::function<void(const std::filesystem::path&)> m_openSceneInViewportCallback;
 
 		// -- Modals --
-		std::shared_ptr<AudioImportModal> m_audioImportModal;
-		std::shared_ptr<MaterialImportModal> m_materialImportModal;
-		std::shared_ptr<MeshImportModal> m_meshImportModal;
-		std::shared_ptr<PhysicsMaterialImportModal> m_physicsMaterialModal;
-		std::shared_ptr<PipelineImportModal> m_pipelineImportModal;
-		std::shared_ptr<ShaderImportModal> m_shaderImportModal;
-		std::shared_ptr<SkyboxImportModal> m_skyboxImportModal;
-		std::shared_ptr<Texture2DImportModal> m_texture2DImportModal;
-		std::shared_ptr<TextureCubeImportModal> m_textureCubeImportModal;
+		Shared<AudioImportModal> m_audioImportModal;
+		Shared<MaterialImportModal> m_materialImportModal;
+		Shared<MeshImportModal> m_meshImportModal;
+		Shared<PhysicsMaterialImportModal> m_physicsMaterialModal;
+		Shared<PipelineImportModal> m_pipelineImportModal;
+		Shared<ShaderImportModal> m_shaderImportModal;
+		Shared<SkyboxImportModal> m_skyboxImportModal;
+		Shared<Texture2DImportModal> m_texture2DImportModal;
+		Shared<TextureCubeImportModal> m_textureCubeImportModal;
 
 		// -- Silica --
 		bool m_rebuildQueued = false;
@@ -153,7 +145,7 @@ namespace Axion {
 		Silica::WidgetPtr buildDeleteModal();
 
 		// -- Events --
-		bool onProjectChanged(ProjectChangedEvent& e);
+		EventReply onProjectChanged(ProjectChangedEvent& e);
 
 		// -- Helper functions --
 		void refreshDirectory();

@@ -16,10 +16,12 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/scene/Components.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/parser/PrefabParser.h"
 
+#include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 
 namespace Axion {
@@ -71,8 +73,21 @@ namespace Axion {
 		EditorActionQueue::push([this]() { rebuildUI(); });
 	}
 
-	void HierarchyPanel::setSelectionCallback(std::function<void(Entity)> callback) {
-		m_onEntitySelected = callback;
+	void HierarchyPanel::onEvent(Event& ev) {
+		EventDispatcher dispatcher(ev);
+		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onSceneChanged));
+		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onEntitySelected));
+	}
+
+	EventReply HierarchyPanel::onSceneChanged(SceneChangedEvent& ev) {
+		setScene(SceneManager::getScene());
+		return EventReply::unhandled();
+	}
+
+	EventReply HierarchyPanel::onEntitySelected(EntitySelectedEvent& ev) {
+		m_selectedEntity = ev.getEntity();
+		refresh();
+		return EventReply::unhandled();
 	}
 
 	Silica::WidgetPtr HierarchyPanel::buildEntityNode(Entity entity) {
@@ -125,7 +140,10 @@ namespace Axion {
 
 								destroyHierarchy(entity, destroyHierarchy);
 
-								if (m_onEntitySelected) m_onEntitySelected({});
+//								if (m_onEntitySelected) m_onEntitySelected({});
+								// -- Create EntitySelectedEvent --
+								EntitySelectedEvent ev({});
+								m_eventCallback(ev);
 
 								rebuildUI();
 							});
@@ -195,7 +213,11 @@ namespace Axion {
 
 			.onClicked = [this, entity]() {
 				m_selectedEntity = entity;
-				if (m_onEntitySelected) m_onEntitySelected(entity);
+				// -- Create EntitySelectedEvent --
+				EntitySelectedEvent ev(entity);
+				m_eventCallback(ev);
+
+//				if (m_onEntitySelected) m_onEntitySelected(entity);
 				rebuildUI();
 			},
 

@@ -20,6 +20,7 @@
 #include <Silica/include/SComboBox.h>
 #include <Silica/include/SSeparator.h>
 
+#include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
@@ -1016,24 +1017,6 @@ namespace Axion {
 		return false;
 	}
 
-	void VisualScriptPanel::onAssetRenamed(const std::filesystem::path& oldPath, const std::filesystem::path& newPath) {
-		if (m_currentFilePath == oldPath) {
-			m_currentFilePath = newPath;
-
-			std::filesystem::path layoutPath = newPath.parent_path() / (newPath.stem().string() + "_layout.axvslayout");
-			m_currentLayoutFilePath = layoutPath.string();
-
-			m_activeGraph.className = newPath.stem().string();
-			rebuildUI();
-		}
-	}
-
-	void VisualScriptPanel::onAssetDeleted(const std::filesystem::path& path) {
-		if (m_currentFilePath == path) {
-			closeActiveScript();
-		}
-	}
-
 	Silica::WidgetPtr VisualScriptPanel::createInlineWidgetForPin(const Pin& pin) {
 		if (pin.type == PinType::Float) {
 			return Silica::MakeWidget<Silica::SInputFieldFloat>({
@@ -1340,6 +1323,34 @@ namespace Axion {
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.child = menuBox
 		});
+	}
+
+	void VisualScriptPanel::onEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<AssetRenamedEvent>(AX_BIND_EVENT_FN(VisualScriptPanel::onAssetRenamed));
+		dispatcher.dispatch<AssetDeletedEvent>(AX_BIND_EVENT_FN(VisualScriptPanel::onAssetDeleted));
+	}
+
+	EventReply VisualScriptPanel::onAssetRenamed(AssetRenamedEvent& e) {
+		if (m_currentFilePath == e.getOldPath()) {
+			m_currentFilePath = e.getNewPath();
+
+			std::filesystem::path layoutPath = e.getNewPath().parent_path() / (e.getNewPath().stem().string() + "_layout.axvslayout");
+			m_currentLayoutFilePath = layoutPath.string();
+
+			m_activeGraph.className = e.getNewPath().stem().string();
+			rebuildUI();
+		}
+
+		return EventReply::unhandled();
+	}
+
+	EventReply VisualScriptPanel::onAssetDeleted(AssetDeletedEvent& e) {
+		if (m_currentFilePath == e.getPath()) {
+			closeActiveScript();
+		}
+
+		return EventReply::unhandled();
 	}
 
 }

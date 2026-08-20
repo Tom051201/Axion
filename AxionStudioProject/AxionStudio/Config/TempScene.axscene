@@ -76,15 +76,15 @@ Entities:
     TagComponent:
       Tag: Light
     TransformComponent:
-      Translation: [-2.11123085, 0, -1.12987673]
+      Translation: [2.08396626, 0, -1.12987673]
       Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
     SpotLightComponent:
       Color: [1, 1, 1, 1]
-      Intensity: 20
+      Intensity: 254.400009
       Range: 100
-      InnerConeAngle: 17.5
-      OuterConeAngle: 20
+      InnerConeAngle: 34.8999939
+      OuterConeAngle: 34.8999977
   - Entity: b449f386f4cb2d49edf664f9328dc21c
     TagComponent:
       Tag: Cube

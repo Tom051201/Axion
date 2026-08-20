@@ -3,7 +3,7 @@ ContentBrowser:
   ShowFileExtensions: true
   OnlyEngineAssets: true
   ThumbnailSize: 97
-  TreeViewWidth: 275
+  TreeViewWidth: 340
   TreeViewTopHeight: 87
 OpenTextEditors:
   - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Assets\animations\CesiumMan\CesiumMan_Anim_0.axanim
