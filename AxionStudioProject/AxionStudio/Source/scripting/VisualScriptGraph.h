@@ -21,6 +21,11 @@ namespace Axion {
 		Event_OnCollisionEnter,
 		Event_OnCollisionExit,
 
+		// -- SCENE --
+		Scene_Load,
+		Scene_Save,
+		Scene_IsLoading,
+
 		// -- ENTITY --
 		Entity_Instantiate,
 		Entity_InstantiatePrefab,

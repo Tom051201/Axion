@@ -25,121 +25,6 @@ Variables:
     BoolValue: false
     Vec3Value: [0, 0, 0]
 Nodes:
-  - ID: 60
-    Type: Event_OnUpdate
-    OperationType: Float
-    Name: On Update
-    Inputs:
-      []
-    Outputs:
-      - ID: 1156
-        NodeID: 60
-        Name: Next
-        Kind: Output
-        Type: Flow
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
-      - ID: 1157
-        NodeID: 60
-        Name: Delta Time
-        Kind: Output
-        Type: Float
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
-  - ID: 59
-    Type: Event_OnDestroy
-    OperationType: Float
-    Name: On Destroy
-    Inputs:
-      []
-    Outputs:
-      - ID: 1155
-        NodeID: 59
-        Name: Next
-        Kind: Output
-        Type: Flow
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
-  - ID: 58
-    Type: Event_OnCreate
-    OperationType: Float
-    Name: On Create
-    Inputs:
-      []
-    Outputs:
-      - ID: 1154
-        NodeID: 58
-        Name: Next
-        Kind: Output
-        Type: Flow
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
-  - ID: 61
-    Type: Event_OnCollisionEnter
-    OperationType: Float
-    Name: On Collision Enter
-    Inputs:
-      []
-    Outputs:
-      - ID: 1158
-        NodeID: 61
-        Name: Next
-        Kind: Output
-        Type: Flow
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
-      - ID: 1159
-        NodeID: 61
-        Name: Other Entity
-        Kind: Output
-        Type: Entity
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
-  - ID: 62
-    Type: Event_OnCollisionExit
-    OperationType: Float
-    Name: On Collision Exit
-    Inputs:
-      []
-    Outputs:
-      - ID: 1160
-        NodeID: 62
-        Name: Next
-        Kind: Output
-        Type: Flow
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
-      - ID: 1161
-        NodeID: 62
-        Name: Other Entity
-        Kind: Output
-        Type: Entity
-        FloatValue: 0
-        IntValue: 0
-        BoolValue: false
-        StringValue: ""
-        Vec3Value: [0, 0, 0]
   - ID: 63
     Type: Entity_Instantiate
     OperationType: Float
@@ -1933,6 +1818,210 @@ Nodes:
         Name: Value
         Kind: Output
         Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 58
+    Type: Event_OnCreate
+    OperationType: Float
+    Name: On Create
+    Inputs:
+      []
+    Outputs:
+      - ID: 1154
+        NodeID: 58
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 59
+    Type: Event_OnDestroy
+    OperationType: Float
+    Name: On Destroy
+    Inputs:
+      []
+    Outputs:
+      - ID: 1155
+        NodeID: 59
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 60
+    Type: Event_OnUpdate
+    OperationType: Float
+    Name: On Update
+    Inputs:
+      []
+    Outputs:
+      - ID: 1156
+        NodeID: 60
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1157
+        NodeID: 60
+        Name: Delta Time
+        Kind: Output
+        Type: Float
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 61
+    Type: Event_OnCollisionEnter
+    OperationType: Float
+    Name: On Collision Enter
+    Inputs:
+      []
+    Outputs:
+      - ID: 1158
+        NodeID: 61
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1159
+        NodeID: 61
+        Name: Other Entity
+        Kind: Output
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 62
+    Type: Event_OnCollisionExit
+    OperationType: Float
+    Name: On Collision Exit
+    Inputs:
+      []
+    Outputs:
+      - ID: 1160
+        NodeID: 62
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1161
+        NodeID: 62
+        Name: Other Entity
+        Kind: Output
+        Type: Entity
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 113
+    Type: Scene_Load
+    OperationType: Float
+    Name: Load Scene
+    Inputs:
+      - ID: 1318
+        NodeID: 113
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1319
+        NodeID: 113
+        Name: File Path
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1320
+        NodeID: 113
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 114
+    Type: Scene_Save
+    OperationType: Float
+    Name: Save Scene
+    Inputs:
+      - ID: 1321
+        NodeID: 114
+        Name: Execute
+        Kind: Input
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+      - ID: 1322
+        NodeID: 114
+        Name: File Path
+        Kind: Input
+        Type: String
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+    Outputs:
+      - ID: 1323
+        NodeID: 114
+        Name: Next
+        Kind: Output
+        Type: Flow
+        FloatValue: 0
+        IntValue: 0
+        BoolValue: false
+        StringValue: ""
+        Vec3Value: [0, 0, 0]
+  - ID: 115
+    Type: Scene_IsLoading
+    OperationType: Float
+    Name: Is Loading Scene
+    Inputs:
+      []
+    Outputs:
+      - ID: 1324
+        NodeID: 115
+        Name: Result
+        Kind: Output
+        Type: Bool
         FloatValue: 0
         IntValue: 0
         BoolValue: false

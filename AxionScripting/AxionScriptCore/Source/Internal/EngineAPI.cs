@@ -57,6 +57,11 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, void> Animation_Stop;
 		public delegate* unmanaged<ulong, ulong, byte> Animation_IsPlaying;
 
+		// -- SCENE --
+		public delegate* unmanaged<IntPtr, void> Scene_Load;
+		public delegate* unmanaged<IntPtr, void> Scene_Save;
+		public delegate* unmanaged<byte> Scene_IsLoading;
+
 		// -- REFLECTION --
 		public delegate* unmanaged<IntPtr, IntPtr, int, void> Script_RegisterField;
 

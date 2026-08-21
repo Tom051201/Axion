@@ -73,6 +73,11 @@ namespace Axion {
 		void(*animation_stop)(uint64_t, uint64_t);
 		uint8_t(*animation_isPlaying)(uint64_t, uint64_t);
 
+		// -- SCENE --
+		void(*scene_load)(const char*);
+		void(*scene_save)(const char*);
+		uint8_t(*scene_isLoading)();
+
 		// -- REFLECTION --
 		void(*script_registerField)(const char*, const char*, int);
 

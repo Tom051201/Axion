@@ -10,6 +10,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/scene/Prefab.h"
+#include "AxionEngine/Source/scene/SceneManager.h"
 
 namespace Axion {
 
@@ -471,6 +472,20 @@ namespace Axion {
 		}
 
 
+		// -- SCENE --
+		extern "C" void scene_load(const char* path) {
+			if (path) SceneManager::loadScene(path);
+		}
+
+		extern "C" void scene_save(const char* path) {
+			if (path) SceneManager::saveScene(path);
+		}
+
+		extern "C" uint8_t scene_isLoading() {
+			return SceneManager::isLoadingScene() ? 1 : 0;
+		}
+
+
 		// -- REFLECTION --
 		extern "C" void script_registerField(const char* className, const char* fieldName, int type) {
 			ScriptEngine::registerScriptField(className, fieldName, static_cast<ScriptFieldType>(type));
@@ -538,6 +553,11 @@ namespace Axion {
 		REGISTER_API(apiStruct, animation_play);
 		REGISTER_API(apiStruct, animation_stop);
 		REGISTER_API(apiStruct, animation_isPlaying);
+
+		// -- SCENE --
+		REGISTER_API(apiStruct, scene_load);
+		REGISTER_API(apiStruct, scene_save);
+		REGISTER_API(apiStruct, scene_isLoading);
 
 		// -- REFLECTION --
 		REGISTER_API(apiStruct, script_registerField);

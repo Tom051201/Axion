@@ -1314,6 +1314,11 @@ namespace Axion {
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().lifeTime = val; }
 			})) });
 
+			uiSlots.push_back({ {0,0}, MakePropertyRow("Gravity Scale", Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = particleSystemComponent.gravityScale,
+				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().gravityScale = val; }
+			})) });
+
 			if (particleSystemComponent.texture.isValid()) {
 				std::string uuidStr = particleSystemComponent.texture.uuid.toString();
 				uiSlots.push_back({ {0,0}, MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });

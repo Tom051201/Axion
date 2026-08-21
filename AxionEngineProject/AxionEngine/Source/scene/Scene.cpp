@@ -455,12 +455,12 @@ namespace Axion {
 					particle.active = false;
 					continue;
 				}
-				particle.lifeRemaining -= ts.getSeconds();
 
+				particle.lifeRemaining -= ts.getSeconds();
+				particle.velocity += m_gravity * particleSystem.gravityScale * ts.getSeconds();
 				particle.position += particle.velocity * ts.getSeconds();
 
 				float lifePercentage = particle.lifeRemaining / particle.lifeTime;
-
 				float currentSize = particle.sizeEnd + (particle.sizeBegin - particle.sizeEnd) * lifePercentage;
 
 				Vec4 currentColor{

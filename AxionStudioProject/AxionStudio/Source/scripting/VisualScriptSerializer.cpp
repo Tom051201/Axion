@@ -253,6 +253,11 @@ namespace Axion {
 		else if (str == "Event_OnCollisionEnter") return NodeType::Event_OnCollisionEnter;
 		else if (str == "Event_OnCollisionExit") return NodeType::Event_OnCollisionExit;
 
+		// -- SCENE --
+		else if (str == "Scene_Load") return NodeType::Scene_Load;
+		else if (str == "Scene_Save") return NodeType::Scene_Save;
+		else if (str == "Scene_IsLoading") return NodeType::Scene_IsLoading;
+
 		// -- ENTITY --
 		else if (str == "Entity_Instantiate") return NodeType::Entity_Instantiate;
 		else if (str == "Entity_InstantiatePrefab") return NodeType::Entity_InstantiatePrefab;
@@ -337,6 +342,11 @@ namespace Axion {
 			case NodeType::Event_OnUpdate: return "Event_OnUpdate";
 			case NodeType::Event_OnCollisionEnter: return "Event_OnCollisionEnter";
 			case NodeType::Event_OnCollisionExit: return "Event_OnCollisionExit";
+
+			// -- SCENE --
+			case NodeType::Scene_Load: return "Scene_Load";
+			case NodeType::Scene_Save: return "Scene_Save";
+			case NodeType::Scene_IsLoading: return "Scene_IsLoading";
 
 			// -- ENTITY --
 			case NodeType::Entity_Instantiate: return "Entity_Instantiate";

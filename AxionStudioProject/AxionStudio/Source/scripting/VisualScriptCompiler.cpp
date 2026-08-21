@@ -96,6 +96,9 @@ namespace Axion {
 							if (sourceNode.type == NodeType::Event_OnUpdate && outputPin.name == "Delta Time") return "timestep";
 							if (sourceNode.type == NodeType::Event_OnCollisionEnter && outputPin.name == "Other Entity") return "col.OtherEntity";
 
+							// -- SCENE --
+							if (sourceNode.type == NodeType::Scene_IsLoading) return "SceneManager.IsLoading";
+
 							// -- ENTITY --
 							if (sourceNode.type == NodeType::Entity_Instantiate) return "Entity.Instantiate(" + safeResolve(1) + ")";
 							if (sourceNode.type == NodeType::Entity_InstantiatePrefab) return "Entity.InstantiatePrefab(" + safeResolve(1) + ")";
@@ -245,6 +248,18 @@ namespace Axion {
 						}
 					}
 					continue;
+				}
+
+				// -- SCENE --
+				case NodeType::Scene_Load: {
+					std::string path = safeResolve(1);
+					cs << tabs << "SceneManager.LoadScene(" << path << ");\n";
+					break;
+				}
+				case NodeType::Scene_Save: {
+					std::string path = safeResolve(1);
+					cs << tabs << "SceneManager.SaveScene(" << path << ");\n";
+					break;
 				}
 
 				case NodeType::Entity_Destroy: {

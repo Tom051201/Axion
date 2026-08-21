@@ -310,6 +310,7 @@ namespace Axion {
 		float sizeBegin = 0.5f;
 		float sizeEnd = 0.1f;
 		float lifeTime = 1.0f;
+		float gravityScale = 1.0f;
 
 		AssetHandle<Texture2D> texture;
 

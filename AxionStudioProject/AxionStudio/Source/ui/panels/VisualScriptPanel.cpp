@@ -280,6 +280,11 @@ namespace Axion {
 		addMenuOption("On Collision Enter", NodeType::Event_OnCollisionEnter);
 		addMenuOption("On Collision Exit", NodeType::Event_OnCollisionExit);
 
+		beginCategory("Scene");
+		addMenuOption("Load Scene", NodeType::Scene_Load);
+		addMenuOption("Save Scene", NodeType::Scene_Save);
+		addMenuOption("Is Loading", NodeType::Scene_IsLoading);
+
 		beginCategory("Entity");
 		addMenuOption("Instantiate Entity", NodeType::Entity_Instantiate);
 		addMenuOption("Instantiate Prefab", NodeType::Entity_InstantiatePrefab);
@@ -569,6 +574,27 @@ namespace Axion {
 				node.name = "On Collision Exit";
 				addOutput("Next", PinType::Flow);
 				addOutput("Other Entity", PinType::Entity);
+				break;
+			}
+
+			// -- SCENE --
+			case NodeType::Scene_Load: {
+				node.name = "Load Scene";
+				addInput("Execute", PinType::Flow);
+				addInput("File Path", PinType::String);
+				addOutput("Next", PinType::Flow);
+				break;
+			}
+			case NodeType::Scene_Save: {
+				node.name = "Save Scene";
+				addInput("Execute", PinType::Flow);
+				addInput("File Path", PinType::String);
+				addOutput("Next", PinType::Flow);
+				break;
+			}
+			case NodeType::Scene_IsLoading: {
+				node.name = "Is Loading Scene";
+				addOutput("Result", PinType::Bool);
 				break;
 			}
 
@@ -976,6 +1002,7 @@ namespace Axion {
 
 	Silica::Color VisualScriptPanel::getNodeTypeColor(NodeType type) {
 		if (type >= NodeType::Event_OnCreate && type <= NodeType::Event_OnCollisionExit) return Silica::Color(140, 21, 21);
+		if (type >= NodeType::Scene_Load && type <= NodeType::Scene_IsLoading) return Silica::Color(156, 39, 176);
 		if (type >= NodeType::Entity_Instantiate && type <= NodeType::Entity_EmitParticles) return Silica::Color(30, 136, 229);
 		if (type >= NodeType::Transform_GetPosition && type <= NodeType::Transform_GetUp) return Silica::Color(230, 81, 0);
 		if (type >= NodeType::RigidBody_AddForce && type <= NodeType::RigidBody_SetMass) return Silica::Color(67, 160, 71);
