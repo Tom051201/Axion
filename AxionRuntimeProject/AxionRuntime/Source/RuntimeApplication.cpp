@@ -16,7 +16,7 @@ namespace Axion {
 
 	};
 
-	Application* createApplication() {
+	Application* createApplication(ApplicationCommandLineArgs args) {
 
 		WindowProperties windowProperties;
 		windowProperties.title = "Game Name"; // TODO: read all from config file

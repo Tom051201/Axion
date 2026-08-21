@@ -9,6 +9,7 @@
 #include <processthreadsapi.h>
 #include <shellapi.h>
 #include <Shlwapi.h>
+#include <shlobj.h>
 #pragma comment(lib, "Shlwapi.lib")
 
 #include "AxionEngine/Source/core/Application.h"
@@ -354,6 +355,33 @@ namespace Axion {
 		}
 
 		SetThreadPriority(GetCurrentThread(), winPriority);
+	}
+
+	static void WriteRegistryString(HKEY hKeyRoot, const char* subKey, const char* valueName, const char* data) {
+		HKEY hKey;
+		if (RegCreateKeyExA(hKeyRoot, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS) {
+			RegSetValueExA(hKey, valueName, 0, REG_SZ, (const BYTE*)data, (DWORD)strlen(data) + 1);
+			RegCloseKey(hKey);
+		}
+	}
+
+	void PlatformUtils::registerProjectFileExtension() {
+		char exePath[MAX_PATH];
+		GetModuleFileNameA(NULL, exePath, MAX_PATH);
+
+		std::string command = std::string("\"") + exePath + "\" \"%1\"";
+
+		// -- Register .axproj --
+		WriteRegistryString(HKEY_CURRENT_USER, "Software\\Classes\\.axproj", NULL, "AxionProject");
+
+		// -- Define AxionProject Class And Icon --
+		WriteRegistryString(HKEY_CURRENT_USER, "Software\\Classes\\AxionProject", NULL, "Axion Engine Project");
+		WriteRegistryString(HKEY_CURRENT_USER, "Software\\Classes\\AxionProject\\DefaultIcon", NULL, exePath);
+
+		WriteRegistryString(HKEY_CURRENT_USER, "Software\\Classes\\AxionProject\\shell\\open\\command", NULL, command.c_str());
+		SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
+
+		AX_CORE_LOG_INFO("Successfully registered .axproj file association.");
 	}
 
 }

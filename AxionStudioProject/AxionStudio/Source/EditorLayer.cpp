@@ -46,6 +46,8 @@ namespace Axion {
 
 	void EditorLayer::onAttach() {
 
+		//PlatformUtils::registerProjectFileExtension();
+
 		// ----- Load Editor Resources -----
 		EditorResourceManager::initialize();
 		EditorResourceManager::loadIcon("PlayButton", "AxionStudio/Resources/toolbar/PlayIcon.png");
@@ -357,6 +359,17 @@ namespace Axion {
 		}
 
 		m_dock->loadLayout("AxionStudio/Config/EditorLayout.ini");
+
+		// -- Command Line Arguments --
+		auto commandLineArgs = Application::get().getCommandLineArgs();
+
+		if (commandLineArgs.count > 1) {
+			std::filesystem::path projectPath = commandLineArgs[1];
+			if (projectPath.extension() == ".axproj") {
+				AX_CORE_LOG_INFO("Loading project from command line: {0}", projectPath.string());
+				ProjectManager::loadProject(projectPath);
+			}
+		}
 
 	}
 

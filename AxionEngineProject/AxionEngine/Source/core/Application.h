@@ -16,9 +16,19 @@
 
 namespace Axion {
 
+	struct ApplicationCommandLineArgs {
+		int count = 0;
+		char** args = nullptr;
+
+		const char* operator[](int index) const {
+			return args[index];
+		}
+	};
+
 	struct ApplicationSpecification {
 		WindowProperties windowProperties;
 		AssetLoader* assetLoader = nullptr;
+		ApplicationCommandLineArgs commandLineArgs;
 		bool vsync = true;
 	};
 
@@ -54,6 +64,8 @@ namespace Axion {
 		Window& getWindow() { return *m_window; }
 		Cursor& getCursor() { return *m_cursor; }
 
+		const ApplicationCommandLineArgs& getCommandLineArgs() const { return m_specification.commandLineArgs; }
+
 	private:
 
 		static Application* s_instance;
@@ -70,6 +82,6 @@ namespace Axion {
 	};
 
 	// define in client
-	Application* createApplication();
+	Application* createApplication(ApplicationCommandLineArgs args);
 
 }

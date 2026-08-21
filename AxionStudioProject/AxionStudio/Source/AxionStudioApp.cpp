@@ -24,7 +24,7 @@ namespace Axion {
 	};
 
 
-	Application* createApplication() {
+	Application* createApplication(ApplicationCommandLineArgs args) {
 		WindowProperties windowProperties;
 		windowProperties.title = "Axion Studio";
 		windowProperties.dragAcceptFiles = true;
@@ -33,6 +33,7 @@ namespace Axion {
 		ApplicationSpecification spec;
 		spec.windowProperties = windowProperties;
 		spec.assetLoader = new EditorAssetLoader();
+		spec.commandLineArgs = args;
 
 		return new AxionStudio(spec);
 	}

@@ -62,6 +62,8 @@ namespace Axion {
 		static void setCurrentThreadName(const std::string& name);
 		static void setThreadPriority(ThreadPriority priority);
 
+		static void registerProjectFileExtension();
+
 	};
 
 }
