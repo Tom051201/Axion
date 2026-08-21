@@ -12,6 +12,11 @@ struct PS_Input {
 	float4 color : COLOR;
 };
 
+struct PixelOutput {
+	float4 color : SV_TARGET0;
+	int entityID : SV_TARGET1;
+};
+
 PS_Input VSMain(VS_Input input) {
 	PS_Input output;
 
@@ -21,6 +26,11 @@ PS_Input VSMain(VS_Input input) {
 	return output;
 }
 
-float4 PSMain(PS_Input input) : SV_TARGET{
-	return input.color;
+PixelOutput PSMain(PS_Input input) {
+
+	PixelOutput output;
+	output.color = input.color;
+	output.entityID = -1;
+
+	return output;
 }

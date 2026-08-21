@@ -27,6 +27,9 @@ namespace Axion {
 		void clear(const Vec4& clearColor) override;
 		void clearDepth() override;
 
+		void clearAttachment(uint32_t attachmentIndex, int value) override;
+		int readPixel(uint32_t attachementIndex, int x, int y);
+
 		void* getColorAttachmentHandle() const override;
 		void* getColorAttachmentNativeResource() const override { return (void*)m_colorResource.Get(); }
 		const FrameBufferSpecification& getSpecification() const override { return m_specification; }
@@ -46,7 +49,13 @@ namespace Axion {
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_colorResource;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthResource;
-		
+
+		// -- Entity ID Resources --
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_entityIdResource;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_readbackBuffer;
+		uint32_t m_entityIdRtvHeapIndex = 0;
+		mutable D3D12_RESOURCE_STATES m_entityIdState;
+
 		uint32_t m_rtvHeapIndex = 0;
 		uint32_t m_srvHeapIndex = 0;
 		uint32_t m_dsvHeapIndex = 0;

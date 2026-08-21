@@ -78,6 +78,7 @@ namespace Axion {
 		fbs.height = 720;
 		fbs.textureFormat = ColorFormat::RGBA8;
 		fbs.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		fbs.useEntityIDAttachment = true;
 		m_frameBuffer = FrameBuffer::create(fbs);
 		m_viewportSize = { (float)fbs.width, (float)fbs.height };
 
@@ -446,9 +447,10 @@ namespace Axion {
 		bool isViewportVisible = m_dock->isTabVisible("Viewport");
 
 		Silica::Vec2 currentViewSize = { 0.0f, 0.0f };
+		bool isHovering = false;
 		if (m_viewportPanel) {
 			currentViewSize = m_viewportPanel->getViewportSize();
-			bool isHovering = m_viewportPanel->isHovered(Silica::Renderer::getMousePosition());
+			isHovering = m_viewportPanel->isHovered(Silica::Renderer::getMousePosition());
 			m_editorCamera.setHoveringSceneViewport(isHovering);
 		}
 
@@ -466,6 +468,15 @@ namespace Axion {
 				if (m_viewportPanel) {
 					m_viewportPanel->setViewportTexture(m_viewportTextureID, currentViewSize);
 				}
+			}
+
+			// -- Update Hover Picking --
+			if (m_viewportPanel && isHovering && activeState == EditorState::Edit) {
+				Silica::Vec2 localMouse = m_viewportPanel->getRelativeMousePos();
+				m_hoveredEntityID = m_frameBuffer->readPixel(1, (int)localMouse.x, (int)localMouse.y);
+			}
+			else {
+				m_hoveredEntityID = -1;
 			}
 
 
@@ -605,6 +616,7 @@ namespace Axion {
 		dispatcher.dispatch<KeyPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 		dispatcher.dispatch<KeyReleasedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyReleased));
 		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(EditorLayer::onEntitySelected));
+		dispatcher.dispatch<MouseButtonPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -1070,6 +1082,31 @@ namespace Axion {
 
 	EventReply EditorLayer::onEntitySelected(EntitySelectedEvent& ev) {
 		m_selectedEntity = ev.getEntity();
+		return EventReply::unhandled();
+	}
+
+	EventReply EditorLayer::onMouseButtonPressed(MouseButtonPressedEvent& ev) {
+		if (ev.getMouseButton() == MouseButton::Left) {
+			if (m_viewportPanel && m_viewportPanel->isHovered(Silica::Renderer::getMousePosition())) {
+
+				if (m_selectedEntity.isValid() && m_transformGizmo.isHovered()) {
+					return EventReply::unhandled();
+				}
+
+				int pixelData = m_hoveredEntityID;
+				Entity clickedEntity = {};
+
+				if (pixelData != -1) {
+					clickedEntity = { (entt::entity)pixelData, m_activeScene.get() };
+				}
+
+				EntitySelectedEvent selectedEv(clickedEntity);
+				onEvent(selectedEv);
+
+				if (m_hierarchyPanel) m_hierarchyPanel->rebuildUI();
+				
+			}
+		}
 		return EventReply::unhandled();
 	}
 

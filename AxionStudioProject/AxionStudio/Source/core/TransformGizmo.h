@@ -27,6 +27,8 @@ namespace Axion {
 		std::optional<Vec3> onUpdate(const Mat4& entityWorldTransform, const Camera& camera, const Vec2& mousePos, const Vec2& viewportSize, bool isMouseDown, bool snap = false, float snapValue = 1.0f);
 		void onRender(const Mat4& entityWorldTransform, const Camera& camera);
 
+		bool isHovered() const { return m_hoveredAxis != GizmoAxis::None; }
+
 	private:
 
 		GizmoMode m_mode = GizmoMode::Translate;

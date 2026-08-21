@@ -284,6 +284,7 @@ namespace Axion {
 				Mat4 worldTransform = getWorldTransform({ entity, this });
 				ObjectBuffer objData;
 				objData.modelMatrix = worldTransform.transposed().toXM();
+				objData.entityID = (int)entity;
 
 				uint32_t submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
 
@@ -313,6 +314,7 @@ namespace Axion {
 				Mat4 worldTransform = getWorldTransform({ entity, this });
 				SkeletalObjectBuffer objData;
 				objData.modelMatrix = worldTransform.transposed().toFloat4x4();
+				objData.entityID = (int)entity;
 
 				AnimatorComponent* animComp = m_registry.try_get<AnimatorComponent>(entity);
 				if (animComp && animComp->animator) {

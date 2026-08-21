@@ -12,7 +12,8 @@ namespace Axion {
 		DirectX::XMFLOAT4X4 modelMatrix;
 		DirectX::XMFLOAT4 color;
 		uint32_t boneOffset;
-		uint32_t padding[3];
+		int entityID;
+		uint32_t padding[2];
 	};
 
 	// -- Static Mesh --
@@ -33,7 +34,8 @@ namespace Axion {
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
-			{ "ROW", ShaderDataType::Float4, false, true }
+			{ "ROW", ShaderDataType::Float4, false, true },
+			{ "ENTITY_ID", ShaderDataType::Int, false, true }
 		});
 
 		s_skeletalInstanceBuffer = StructuredBuffer::create(sizeof(GPUInstanceData), MAX_SKELETAL_INSTANCES);
@@ -138,6 +140,7 @@ namespace Axion {
 			gpuInstances[i].modelMatrix = instanceData[i].modelMatrix;
 			gpuInstances[i].color = instanceData[i].color;
 			gpuInstances[i].boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
+			gpuInstances[i].entityID = instanceData[i].entityID;
 
 			for (int b = 0; b < 100; ++b) {
 				flatBones.push_back(instanceData[i].boneTransforms[b]);
@@ -223,6 +226,7 @@ namespace Axion {
 			gpuInstances[i].modelMatrix = instanceData[i].modelMatrix;
 			gpuInstances[i].color = instanceData[i].color;
 			gpuInstances[i].boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
+			gpuInstances[i].entityID = instanceData[i].entityID;
 
 			for (int b = 0; b < 100; ++b) {
 				flatBones.push_back(instanceData[i].boneTransforms[b]);

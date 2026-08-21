@@ -21,6 +21,11 @@ struct PS_Input {
 	float tiling : TILING;
 };
 
+struct PixelOutput {
+	float4 color : SV_TARGET0;
+	int entityID : SV_TARGET1;
+};
+
 PS_Input VSMain(VS_Input input) {
 	PS_Input output;
 
@@ -33,7 +38,7 @@ PS_Input VSMain(VS_Input input) {
 	return output;
 }
 
-float4 PSMain(PS_Input input) : SV_TARGET{
+PixelOutput PSMain(PS_Input input) {
 	float2 tiledUV = input.texCoord * input.tiling;
 	int index = (int)(input.texIndex + 0.5f);
 	float4 texColor = textures[NonUniformResourceIndex(index)].Sample(texSampler, tiledUV);
@@ -41,5 +46,9 @@ float4 PSMain(PS_Input input) : SV_TARGET{
 
 	if (finalColor.a < 0.05f) discard;
 
-	return finalColor;
+	PixelOutput output;
+	output.color = finalColor;
+	output.entityID = -1;
+
+	return output;
 }

@@ -52,7 +52,8 @@ struct SkeletalInstanceData {
 	float4x4 modelMatrix;
 	float4 color;
 	uint boneOffset;
-	float3 padding;
+	int entityID;
+	float2 padding;
 };
 
 Texture2D t_albedo : register(t0);
@@ -86,6 +87,7 @@ struct PixelInput {
 	float2 texCoord : TEXCOORD;
 	float3x3 tbn : TANGENT;
 	float4 color : COLOR;
+	nointerpolation int entityID : ENTITY_ID;
 };
 
 // Distribution: How many microfacets are aligned with the light?
@@ -162,6 +164,11 @@ float3 getNormalFromMap(PixelInput input, float2 uv) {
 	return normalize(mul(tangentNormal, input.tbn));
 }
 
+struct PixelOutput {
+	float4 color : SV_TARGET0;
+	int entityID : SV_TARGET1;
+};
+
 PixelInput VSMain(VertexInput input) {
 	PixelInput output;
 
@@ -203,10 +210,12 @@ PixelInput VSMain(VertexInput input) {
 	output.normal = N;
 	output.tbn = float3x3(T, B, N);
 
+	output.entityID = instance.entityID;
+
 	return output;
 }
 
-float4 PSMain(PixelInput input) : SV_TARGET{
+PixelOutput PSMain(PixelInput input) {
 	float2 uv = input.texCoord * max(u_tiling, 1.0f);
 
 	float4 albedoSample = t_albedo.Sample(s_sampler, uv);
@@ -336,5 +345,8 @@ float4 PSMain(PixelInput input) : SV_TARGET{
 	color = color / (color + float3(1.0, 1.0, 1.0));
 	color = pow(max(color, 0.0), 1.0 / 2.2);
 
-	return float4(color, 1.0);
+	PixelOutput output;
+	output.color = float4(color, 1.0);
+	output.entityID = input.entityID;
+	return output;
 }

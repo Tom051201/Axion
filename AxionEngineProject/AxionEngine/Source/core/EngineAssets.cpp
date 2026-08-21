@@ -178,7 +178,7 @@ namespace Axion {
 		// -- Skybox Pipeline --
 		PipelineSpecification skyboxPipeSpec;
 		skyboxPipeSpec.shader = s_skyboxShader;
-		skyboxPipeSpec.numRenderTargets = 1;
+		skyboxPipeSpec.numRenderTargets = 2;
 		skyboxPipeSpec.colorFormat = ColorFormat::RGBA8;
 		skyboxPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		skyboxPipeSpec.depthTest = true;
@@ -206,7 +206,7 @@ namespace Axion {
 		// -- Standard PBR Pipeline --
 		PipelineSpecification standardPBRPipeSpec;
 		standardPBRPipeSpec.shader = s_standardPBRShader;
-		standardPBRPipeSpec.numRenderTargets = 1;
+		standardPBRPipeSpec.numRenderTargets = 2;
 		standardPBRPipeSpec.colorFormat = ColorFormat::RGBA8;
 		standardPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		standardPBRPipeSpec.depthTest = true;
@@ -226,6 +226,7 @@ namespace Axion {
 			{ "ROW",		ShaderDataType::Float4, false, true },
 			{ "ROW",		ShaderDataType::Float4, false, true },
 			{ "ROW",		ShaderDataType::Float4, false, true },
+			{ "ENTITY_ID",	ShaderDataType::Int,    false, true }
 		};
 		s_standardPBRPipeline = Pipeline::create(standardPBRPipeSpec);
 
@@ -242,7 +243,7 @@ namespace Axion {
 		// -- Skeletal PBR Pipeline --
 		PipelineSpecification skeletalPBRPipeSpec;
 		skeletalPBRPipeSpec.shader = s_skeletalPBRShader;
-		skeletalPBRPipeSpec.numRenderTargets = 1;
+		skeletalPBRPipeSpec.numRenderTargets = 2;
 		skeletalPBRPipeSpec.colorFormat = ColorFormat::RGBA8;
 		skeletalPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		skeletalPBRPipeSpec.depthTest = true;

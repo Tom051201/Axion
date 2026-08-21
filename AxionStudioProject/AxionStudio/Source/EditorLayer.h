@@ -17,6 +17,7 @@
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/events/KeyEvent.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
+#include "AxionEngine/Source/events/MouseEvent.h"
 
 #include "AxionStudio/Source/core/EditorCamera.h"
 #include "AxionStudio/Source/core/EditorState.h"
@@ -63,6 +64,7 @@ namespace Axion {
 		Ref<FrameBuffer> m_frameBuffer;
 		Shared<Scene> m_editorScene;
 		Entity m_selectedEntity;
+		int m_hoveredEntityID = -1;
 
 
 		// -- Scene --
@@ -115,6 +117,7 @@ namespace Axion {
 
 		EventReply onKeyPressed(KeyPressedEvent& ev);
 		EventReply onKeyReleased(KeyReleasedEvent& ev);
+		EventReply onMouseButtonPressed(MouseButtonPressedEvent& ev);
 		EventReply onSceneChanged(SceneChangedEvent& ev);
 		EventReply onEditorStateChanged(EditorStateChangedEvent& ev);
 		EventReply onEntitySelected(EntitySelectedEvent& ev);

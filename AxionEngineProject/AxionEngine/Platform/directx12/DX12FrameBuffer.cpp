@@ -38,6 +38,12 @@ namespace Axion {
 			m_depthResource.Reset();
 			m_context->getDsvHeapWrapper().free(m_dsvHeapIndex);
 		}
+
+		if (m_entityIdResource) {
+			m_entityIdResource.Reset();
+			m_readbackBuffer.Reset();
+			m_context->getRtvHeapWrapper().free(m_entityIdRtvHeapIndex);
+		}
 	}
 
 	void DX12FrameBuffer::resize(uint32_t width, uint32_t height) {
@@ -94,6 +100,44 @@ namespace Axion {
 			IID_PPV_ARGS(&m_colorResource)
 		);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer color resource");
+
+
+		// ----- Optional Entity ID Attachment -----
+		if (m_specification.useEntityIDAttachment) {
+			m_entityIdRtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
+			m_entityIdState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+			D3D12_RESOURCE_DESC idDesc = texDesc;
+			idDesc.Format = DXGI_FORMAT_R32_SINT;
+
+			D3D12_CLEAR_VALUE idClear = {};
+			idClear.Format = idDesc.Format;
+			int clearID = -1;
+			idClear.Color[0] = reinterpret_cast<float&>(clearID);
+			idClear.Color[1] = 0.0f;
+			idClear.Color[2] = 0.0f;
+			idClear.Color[3] = 0.0f;
+
+			hr = device->CreateCommittedResource(
+				&heapProps, D3D12_HEAP_FLAG_NONE, &idDesc,
+				m_entityIdState, &idClear, IID_PPV_ARGS(&m_entityIdResource)
+			);
+			AX_THROW_IF_FAILED_HR(hr, "Failed to create Entity ID resource");
+
+			// -- Create RTV --
+			D3D12_RENDER_TARGET_VIEW_DESC idRtvDesc = {};
+			idRtvDesc.Format = idDesc.Format;
+			idRtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+			device->CreateRenderTargetView(m_entityIdResource.Get(), &idRtvDesc, m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex));
+
+			// -- Create 1-Pixel Readback Buffer --
+			CD3DX12_HEAP_PROPERTIES readbackHeapProps(D3D12_HEAP_TYPE_READBACK);
+			D3D12_RESOURCE_DESC readbackDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(int));
+			device->CreateCommittedResource(
+				&readbackHeapProps, D3D12_HEAP_FLAG_NONE, &readbackDesc,
+				D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_readbackBuffer)
+			);
+		}
 
 
 		// ----- Depth -----
@@ -178,9 +222,17 @@ namespace Axion {
 
 
 		// ----- Set Render Target -----
-		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
+		rtvHandles[0] = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
+		uint32_t numTargets = 1;
+
+		if (m_specification.useEntityIDAttachment) {
+			rtvHandles[1] = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
+			numTargets = 2;
+		}
+
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
-		cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+		cmdList->OMSetRenderTargets(numTargets, rtvHandles, FALSE, &dsvHandle);
 
 
 		// ----- Set viewport and scissor -----
@@ -232,9 +284,18 @@ namespace Axion {
 		}
 		#endif
 
+		// -- Clear Color Attachment --
 		float color[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
 		cmdList->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
 		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+		// -- Clear Entity ID Attachment --
+		if (m_specification.useEntityIDAttachment) {
+			auto idHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
+			int clearID = -1;
+			float idClearColor[4] = { reinterpret_cast<float&>(clearID), 0.0f, 0.0f, 0.0f };
+			cmdList->ClearRenderTargetView(idHandle, idClearColor, 0, nullptr);
+		}
 	}
 
 	void DX12FrameBuffer::clear() {
@@ -259,6 +320,57 @@ namespace Axion {
 		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		return reinterpret_cast<void*>(m_context->getSrvHeapWrapper().getGpuHandle(viewIndex).ptr);
+	}
+
+	void DX12FrameBuffer::clearAttachment(uint32_t attachmentIndex, int value) {
+		if (attachmentIndex == 1 && m_specification.useEntityIDAttachment) {
+			auto* cmdList = m_context->getCommandList();
+			auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
+
+			float clearVal = reinterpret_cast<float&>(value);
+			float clearColor[4] = { clearVal, 0.0f, 0.0f, 0.0f };
+
+			cmdList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		}
+	}
+
+	int DX12FrameBuffer::readPixel(uint32_t attachmentIndex, int x, int y) {
+		if (attachmentIndex != 1 || !m_specification.useEntityIDAttachment) return -1;
+
+		// 1. Read the pixel data from the PREVIOUS frame (100% safe, no stalls required!)
+		int entityID = -1;
+		int* mappedData;
+		if (SUCCEEDED(m_readbackBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mappedData)))) {
+			entityID = mappedData[0];
+			m_readbackBuffer->Unmap(0, nullptr);
+		}
+
+		// 2. Queue a new copy command for THIS frame
+		if (x >= 0 && y >= 0 && x < (int)m_specification.width && y < (int)m_specification.height) {
+			auto* cmdList = m_context->getCommandList();
+
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_entityIdResource.Get(), m_entityIdState, D3D12_RESOURCE_STATE_COPY_SOURCE);
+			cmdList->ResourceBarrier(1, &barrier);
+
+			D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint = {};
+			footprint.Offset = 0;
+			footprint.Footprint.Format = DXGI_FORMAT_R32_SINT;
+			footprint.Footprint.Width = 1;
+			footprint.Footprint.Height = 1;
+			footprint.Footprint.Depth = 1;
+			footprint.Footprint.RowPitch = 256;
+
+			CD3DX12_TEXTURE_COPY_LOCATION dst(m_readbackBuffer.Get(), footprint);
+			CD3DX12_TEXTURE_COPY_LOCATION src(m_entityIdResource.Get(), 0);
+			D3D12_BOX box = { (UINT)x, (UINT)y, 0, (UINT)x + 1, (UINT)y + 1, 1 };
+
+			cmdList->CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
+
+			auto barrierBack = CD3DX12_RESOURCE_BARRIER::Transition(m_entityIdResource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, m_entityIdState);
+			cmdList->ResourceBarrier(1, &barrierBack);
+		}
+
+		return entityID;
 	}
 
 }

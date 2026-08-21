@@ -28,6 +28,7 @@ namespace Axion {
 		DirectX::XMFLOAT2 texCoord;
 		float texIndex;
 		float tilingFactor;
+		int entityID;
 	};
 
 	struct Renderer2DData {
@@ -82,7 +83,8 @@ namespace Axion {
 			{ "COLOR",		ShaderDataType::Float4, },
 			{ "TEXCOORD",	ShaderDataType::Float2, },
 			{ "TEXINDEX",	ShaderDataType::Float,  },
-			{ "TILING",		ShaderDataType::Float,  }
+			{ "TILING",		ShaderDataType::Float,  },
+			{ "ENTITY_ID",	ShaderDataType::Int     }
 		});
 
 
@@ -131,7 +133,7 @@ namespace Axion {
 		);
 		PipelineSpecification qpSpec;
 		qpSpec.shader = s_data.quadShader;
-		qpSpec.numRenderTargets = 1;
+		qpSpec.numRenderTargets = 2;
 		qpSpec.colorFormat = ColorFormat::RGBA8;
 		qpSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		qpSpec.depthTest = true;
@@ -146,7 +148,8 @@ namespace Axion {
 			{ "COLOR",		ShaderDataType::Float4 },
 			{ "TEXCOORD",	ShaderDataType::Float2 },
 			{ "TEXINDEX",	ShaderDataType::Float  },
-			{ "TILING",		ShaderDataType::Float  }
+			{ "TILING",		ShaderDataType::Float  },
+			{ "ENTITY_ID",	ShaderDataType::Int    }
 		};
 		s_data.quadPipeline = Pipeline::create(qpSpec);
 
@@ -161,7 +164,7 @@ namespace Axion {
 		);
 		PipelineSpecification lpSpec;
 		lpSpec.shader = s_data.lineShader;
-		lpSpec.numRenderTargets = 1;
+		lpSpec.numRenderTargets = 2;
 		lpSpec.colorFormat = ColorFormat::RGBA8;
 		lpSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		lpSpec.depthTest = true;
@@ -378,6 +381,7 @@ namespace Axion {
 			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
 			s_data.quadVertexBufferPtr->texIndex = texIndex;
 			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
+			s_data.quadVertexBufferPtr->entityID = -1;
 			s_data.quadVertexBufferPtr++;
 		}
 
@@ -462,6 +466,7 @@ namespace Axion {
 			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
 			s_data.quadVertexBufferPtr->texIndex = texIndex;
 			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
+			s_data.quadVertexBufferPtr->entityID = -1;
 
 			s_data.quadVertexBufferPtr++;
 		}
@@ -521,6 +526,7 @@ namespace Axion {
 			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
 			s_data.quadVertexBufferPtr->texIndex = texIndex;
 			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
+			s_data.quadVertexBufferPtr->entityID = -1;
 			s_data.quadVertexBufferPtr++;
 		}
 

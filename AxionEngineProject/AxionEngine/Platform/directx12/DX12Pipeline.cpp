@@ -56,6 +56,7 @@ namespace Axion {
 		blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+		psoDesc.BlendState.IndependentBlendEnable = TRUE;
 		psoDesc.BlendState.RenderTarget[0] = blendDesc;
 
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -70,6 +71,9 @@ namespace Axion {
 		psoDesc.NumRenderTargets = m_specification.numRenderTargets;
 		if (m_specification.numRenderTargets > 0) {
 			psoDesc.RTVFormats[0] = DX12Helpers::toDX12ColorFormat(m_specification.colorFormat);
+		}
+		if (m_specification.numRenderTargets > 1) {
+			psoDesc.RTVFormats[1] = DXGI_FORMAT_R32_SINT;
 		}
 		psoDesc.SampleDesc.Count = m_specification.sampleCount;
 

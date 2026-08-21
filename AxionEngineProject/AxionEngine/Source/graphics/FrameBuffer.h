@@ -16,6 +16,7 @@ namespace Axion {
 		Vec4 clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		ColorFormat textureFormat = ColorFormat::RGBA8;
 		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		bool useEntityIDAttachment = false;
 	};
 
 	class FrameBuffer : public RefCounted {
@@ -32,6 +33,9 @@ namespace Axion {
 		virtual void clear() = 0;
 		virtual void clear(const Vec4& clearColor) = 0;
 		virtual void clearDepth() = 0;
+
+		virtual void clearAttachment(uint32_t attachmentIndex, int value) = 0;
+		virtual int readPixel(uint32_t attachmentIndex, int x, int y) = 0;
 
 		virtual void* getColorAttachmentHandle() const = 0;
 		virtual void* getColorAttachmentNativeResource() const = 0;
