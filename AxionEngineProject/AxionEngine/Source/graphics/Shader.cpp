@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/graphics/Renderer.h"
 
 #include "AxionEngine/Platform/directx12/DX12Shader.h"
+#include "AxionEngine/Platform/directx11/DX11Shader.h"
 
 namespace Axion {
 
@@ -17,6 +18,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12Shader>(spec); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11Shader>(spec); }
 
 		}
 		return nullptr;
@@ -29,6 +31,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12Shader>(spec, filePath); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11Shader>(spec, filePath); }
 
 		}
 		return nullptr;

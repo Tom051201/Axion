@@ -7,6 +7,7 @@
 #include "AxionEngine/Source/graphics/Renderer3D.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 
+#include "AxionEngine/Platform/directx11/DX11Context.h"
 #include "AxionEngine/Platform/directx12/DX12Context.h"
 
 namespace Axion {
@@ -60,7 +61,7 @@ namespace Axion {
 	static SceneData* s_sceneData;
 	static Ref<ConstantBuffer> s_sceneUploadBuffer;
 
-	RendererAPI Renderer::s_api = RendererAPI::DirectX12;
+	RendererAPI Renderer::s_api = RendererAPI::DirectX11;
 
 	void Renderer::initialize(Window* window, std::function<void(Event&)> eventCallback) {
 
@@ -68,6 +69,7 @@ namespace Axion {
 		switch (s_api) {
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return; }
 			case RendererAPI::DirectX12: { GraphicsContext::set(new DX12Context()); break; }
+			case RendererAPI::DirectX11: { GraphicsContext::set(new DX11Context()); break; }
 		}
 		GraphicsContext::get()->initialize(window->getNativeHandle(), window->getWidth(), window->getHeight());
 
@@ -245,6 +247,10 @@ namespace Axion {
 
 		if (s_api == RendererAPI::DirectX12) {
 			auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+			context->bindSrvTable(rootIndex, finalTextures, count);
+		}
+		else if (s_api == RendererAPI::DirectX11) {
+			auto* context = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext());
 			context->bindSrvTable(rootIndex, finalTextures, count);
 		}
 	}

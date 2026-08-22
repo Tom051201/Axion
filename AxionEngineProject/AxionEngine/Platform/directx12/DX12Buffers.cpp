@@ -51,7 +51,7 @@ namespace Axion {
 		m_view.SizeInBytes = m_size;
 
 		#ifdef AX_DEBUG
-		m_buffer->SetName(L"VertexBuffer");
+		m_buffer->SetName(L"DX12 Static VertexBuffer");
 		#endif
 	}
 
@@ -91,7 +91,7 @@ namespace Axion {
 		m_view.SizeInBytes = m_size;
 
 		#ifdef AX_DEBUG
-		m_buffer->SetName(L"VertexBuffer");
+		m_buffer->SetName(L"DX12 Dynamic VertexBuffer");
 		#endif
 	}
 
@@ -182,7 +182,7 @@ namespace Axion {
 		m_view.SizeInBytes = bufferSize;
 
 		#ifdef AX_DEBUG
-		m_buffer->SetName(L"IndexBuffer");
+		m_buffer->SetName(L"DX12 Static IndexBuffer");
 		#endif
 	}
 
@@ -217,7 +217,7 @@ namespace Axion {
 		m_view.SizeInBytes = bufferSize;
 
 		#ifdef AX_DEBUG
-		m_buffer->SetName(L"IndexBuffer");
+		m_buffer->SetName(L"DX12 Dynamic IndexBuffer");
 		#endif
 	}
 
@@ -280,7 +280,7 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to map constant buffer");
 
 		#ifdef AX_DEBUG
-		m_buffer->SetName(L"ConstantBuffer");
+		m_buffer->SetName(L"DX12 Dynamic ConstantBuffer");
 		#endif
 	}
 
@@ -358,7 +358,7 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to map structured buffer");
 
 		#ifdef AX_DEBUG
-		m_buffer->SetName(L"StructuredBuffer");
+		m_buffer->SetName(L"DX12 Dynamic StructuredBuffer");
 		#endif
 	}
 

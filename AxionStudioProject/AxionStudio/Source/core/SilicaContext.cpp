@@ -18,6 +18,10 @@
 #include <Silica/backends/SilicaImplDX12.h>
 #include "AxionEngine/Platform/directx12/DX12Context.h"
 
+// ----- DIRECTX11 SPECIFIC INCLUDES -----
+#include <Silica/backends/SilicaImplDX11.h>
+#include "AxionEngine/Platform/directx11/DX11Context.h"
+
 namespace Axion {
 
 	void SilicaContext::initialize() {
@@ -37,6 +41,11 @@ namespace Axion {
 				Silica::ImplDX12_init(dx12Context->getDevice(), 3, DXGI_FORMAT_R8G8B8A8_UNORM);
 				break;
 			}
+			case RendererAPI::DirectX11: {
+				auto dx11Context = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext());
+				Silica::ImplDX11_init(dx11Context->getDevice(), dx11Context->getDeviceContext());
+				break;
+			}
 			default: {
 				AX_CORE_LOG_FATAL("SilicaContext: Unsupported Renderer API!");
 				break;
@@ -52,6 +61,10 @@ namespace Axion {
 				Silica::ImplDX12_shutdown();
 				break;
 			}
+			case RendererAPI::DirectX11: {
+				Silica::ImplDX11_shutdown();
+				break;
+			}
 		}
 
 		// ----- SHUTDOWN WINDOWS BACKEND -----
@@ -64,9 +77,12 @@ namespace Axion {
 	void SilicaContext::newFrame() {
 		switch (Renderer::getAPI()) {
 
-			// ----- DIRECTX12 IMPLEMENTATION -----
 			case RendererAPI::DirectX12: {
 				Silica::ImplDX12_newFrame();
+				break;
+			}
+			case RendererAPI::DirectX11: {
+				Silica::ImplDX11_newFrame();
 				break;
 			}
 
@@ -78,10 +94,13 @@ namespace Axion {
 
 		switch (Renderer::getAPI()) {
 
-			// ----- DIRECTX12 IMPLEMENTATION -----
 			case RendererAPI::DirectX12: {
 				auto cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
 				Silica::ImplDX12_renderDrawData(drawData, cmdList, width, height);
+				break;
+			}
+			case RendererAPI::DirectX11: {
+				Silica::ImplDX11_renderDrawData(drawData, width, height);
 				break;
 			}
 
@@ -91,7 +110,6 @@ namespace Axion {
 	void SilicaContext::uploadFontAtlas(Silica::FontAtlas& font) {
 		switch (Renderer::getAPI()) {
 
-			// ----- DIRECTX12 IMPLEMENTATION -----
 			case RendererAPI::DirectX12: {
 				auto dx12Context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 				ID3D12GraphicsCommandList* cmdList = dx12Context->getCommandList();
@@ -107,6 +125,10 @@ namespace Axion {
 				ID3D12CommandList* ppCommandLists[] = { cmdList };
 				cmdQueue->ExecuteCommandLists(1, ppCommandLists);
 				dx12Context->waitForPreviousFrame();
+				break;
+			}
+			case RendererAPI::DirectX11: {
+				Silica::ImplDX11_uploadFontAtlas(font.getPixels(), font.getWidth(), font.getHeight());
 				break;
 			}
 
@@ -141,13 +163,8 @@ namespace Axion {
 
 		Silica::TextureID id = 0;
 		switch (Renderer::getAPI()) {
-
-			// ----- DIRECTX12 IMPLEMENTATION -----
-			case RendererAPI::DirectX12: {
-				id = Silica::ImplDX12_registerTexture((ID3D12Resource*)nativeResource);
-				break;
-			}
-
+			case RendererAPI::DirectX12: id = Silica::ImplDX12_registerTexture((ID3D12Resource*)nativeResource); break;
+			case RendererAPI::DirectX11: id = Silica::ImplDX11_registerTexture((ID3D11ShaderResourceView*)texture->getHandle()); break;
 		}
 
 		s_textureCache[nativeResource] = id;
@@ -157,25 +174,19 @@ namespace Axion {
 	Silica::TextureID SilicaContext::getFrameBufferTextureID(const Ref<FrameBuffer>& frameBuffer, Silica::TextureID currentId) {
 		if (!frameBuffer) return 0;
 
-		void* nativeResource = frameBuffer->getColorAttachmentNativeResource();
-		if (!nativeResource) return 0;
-
 		switch (Renderer::getAPI()) {
-
-			// ----- DIRECTX12 IMPLEMENTATION -----
 			case RendererAPI::DirectX12: {
-				if (currentId == 0) {
-					currentId = Silica::ImplDX12_registerTexture((ID3D12Resource*)nativeResource);
-				}
-				else {
-					Silica::ImplDX12_updateTexture(currentId, (ID3D12Resource*)nativeResource);
-				}
-				break;
+				void* nativeResource = frameBuffer->getColorAttachmentNativeResource();
+				if (currentId == 0) return Silica::ImplDX12_registerTexture((ID3D12Resource*)nativeResource);
+				else { Silica::ImplDX12_updateTexture(currentId, (ID3D12Resource*)nativeResource); return currentId; }
 			}
-
+			case RendererAPI::DirectX11: {
+				void* handle = frameBuffer->getColorAttachmentHandle();
+				if (currentId == 0) return Silica::ImplDX11_registerTexture((ID3D11ShaderResourceView*)handle);
+				else { Silica::ImplDX11_updateTexture(currentId, (ID3D11ShaderResourceView*)handle); return currentId; }
+			}
 		}
-
-		return currentId;
+		return 0;
 	}
 
 	Silica::TextureID SilicaContext::getIcon(const std::string& name) {

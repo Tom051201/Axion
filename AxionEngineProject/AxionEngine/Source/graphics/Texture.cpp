@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/graphics/Renderer.h"
 
 #include "AxionEngine/Platform/directx12/DX12Texture.h"
+#include "AxionEngine/Platform/directx11/DX11Texture.h"
 
 namespace Axion {
 
@@ -13,6 +14,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12Texture2D>(path); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11Texture2D>(path); }
 
 		}
 
@@ -25,6 +27,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12Texture2D>(width, height, data); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11Texture2D>(width, height, data); }
 
 		}
 
@@ -38,6 +41,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12Texture2D>(data, size); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11Texture2D>(data, size); }
 
 		}
 
@@ -53,6 +57,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12TextureCube>(paths); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11TextureCube>(paths); }
 
 		}
 
@@ -65,6 +70,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12TextureCube>(filePath); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11TextureCube>(filePath); }
 
 		}
 
@@ -77,6 +83,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12TextureCube>(data, size); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11TextureCube>(data, size); }
 
 		}
 
@@ -91,6 +98,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet!"); break; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12DepthTexture>(width, height); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11DepthTexture>(width, height); }
 
 		}
 

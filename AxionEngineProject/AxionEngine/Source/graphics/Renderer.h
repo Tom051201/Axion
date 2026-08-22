@@ -18,6 +18,7 @@ namespace Axion {
 	enum class RendererAPI {
 		None = 0,
 		DirectX12 = 1,
+		DirectX11 = 2
 	};
 
 	constexpr uint32_t MAX_DIR_LIGHTS = 4;

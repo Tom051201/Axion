@@ -31,7 +31,7 @@ namespace Axion {
 		ScriptEngine::initialize();
 
 		// Sets startup backend
-		Renderer::setAPI(RendererAPI::DirectX12);
+		Renderer::setAPI(RendererAPI::DirectX11);
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
 		EngineAssets::initialize();
@@ -174,23 +174,8 @@ namespace Axion {
 	}
 
 	void Application::setGraphicsBackend(RendererAPI api) {
-		
-		// shutting down and releasing
-		Renderer::shutdown();
-
-		for (Layer* layer : m_layerStack) {
-			layer->onDetach();
-		}
-
-
-		// reinitializing everything
-		Renderer::setAPI(api);
-		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
-
-		for (Layer* layer : m_layerStack) {
-			layer->onAttach();
-		}
-
+		// TODO: Add Graphics Backend Hot-Swapping
+		AX_CORE_ASSERT(false, "Setting a Graphics Backend is not supported yet!");
 	}
 
 	void Application::setWindowTitle(const std::string& title) {

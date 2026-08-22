@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/graphics/Renderer.h"
 
 #include "AxionEngine/Platform/directx12/DX12Pipeline.h"
+#include "AxionEngine/Platform/directx11/DX11Pipeline.h"
 
 namespace Axion {
 
@@ -13,6 +14,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12Pipeline>(spec); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11Pipeline>(spec); }
 
 		}
 		return nullptr;

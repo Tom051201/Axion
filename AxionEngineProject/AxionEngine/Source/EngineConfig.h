@@ -28,6 +28,11 @@ namespace Axion::Config {
 
 
 
+	// ----- DIRECTX11 ------
+	inline constexpr bool D11EnableDebugSeverityWarning = false;
+
+
+
 	// ----- WIN32 -----
 	inline constexpr bool WinUsingCustomTitleBar = false;
 

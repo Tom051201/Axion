@@ -4,6 +4,7 @@
 #include "AxionEngine/Source/graphics/Renderer.h"
 
 #include "AxionEngine/Platform/directx12/DX12Buffers.h"
+#include "AxionEngine/Platform/directx11/DX11Buffers.h"
 
 namespace Axion {
 
@@ -32,6 +33,7 @@ namespace Axion {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12VertexBuffer>(data, size, stride); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11VertexBuffer>(data, size, stride); }
 
 		}
 		return nullptr;
@@ -42,6 +44,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12VertexBuffer>(size, stride); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11VertexBuffer>(size, stride); }
 
 		}
 		return nullptr;
@@ -57,6 +60,7 @@ namespace Axion {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12IndexBuffer>(indices); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11IndexBuffer>(indices); }
 			
 		}
 		return nullptr;
@@ -69,6 +73,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12IndexBuffer>(maxIndices); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11IndexBuffer>(maxIndices); }
 
 		}
 		return nullptr;
@@ -83,6 +88,7 @@ namespace Axion {
 			
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12ConstantBuffer>(size); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11ConstantBuffer>(size); }
 
 		}
 		return nullptr;
@@ -97,6 +103,7 @@ namespace Axion {
 
 			case RendererAPI::None: { AX_CORE_ASSERT(false, "None is not supported yet"); return nullptr; }
 			case RendererAPI::DirectX12: { return MakeRef<DX12StructuredBuffer>(elementSize, elementCount); }
+			case RendererAPI::DirectX11: { return MakeRef<DX11StructuredBuffer>(elementSize, elementCount); }
 
 		}
 		return nullptr;
