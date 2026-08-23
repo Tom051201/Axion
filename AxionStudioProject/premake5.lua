@@ -61,7 +61,10 @@ project "AxionStudio"
 
 	filter "system:windows"
 		systemversion "latest"
-		buildoptions { "/utf-8" }
+		buildoptions {
+			"/utf-8",
+			"/bigobj" -- TODO: remove this and split EntityPropertiesPanel.cpp into smaller files
+		}
 		defines {
 			"AX_PLATFORM_WINDOWS",
 			"YAML_CPP_STATIC_DEFINE"

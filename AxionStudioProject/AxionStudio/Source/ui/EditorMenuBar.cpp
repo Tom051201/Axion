@@ -17,6 +17,7 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
 #include "AxionStudio/Source/ui/modals/CreateProjectModal.h"
 #include "AxionStudio/Source/ui/modals/ExportProjectModal.h"
@@ -103,6 +104,15 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
+						// -- UNDO / REDO --
+						{ dropDownPadding, MakeMenuItem("Undo", []() {
+							EditorCommandManager::undo();
+							return Silica::EventReply::handled();
+						})},
+						{ dropDownPadding, MakeMenuItem("Redo", []() {
+							EditorCommandManager::redo();
+							return Silica::EventReply::handled();
+						})},
 						// -- PREFERENCES --
 						{ dropDownPadding, MakeMenuItem("Preferences...", [callbacks]() {
 							if (callbacks.openPreferences) {

@@ -24,7 +24,8 @@ namespace Axion {
 		}
 	}
 
-	DX11FrameBuffer::DX11FrameBuffer(const FrameBufferSpecification& spec) {
+	DX11FrameBuffer::DX11FrameBuffer(const FrameBufferSpecification& spec)
+		: m_specification(spec) {
 		m_context = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext());
 		AX_CORE_ASSERT(m_context, "Failed to acquire DirectX11 context");
 
@@ -177,7 +178,7 @@ namespace Axion {
 		clear(m_specification.clearColor);
 	}
 
-	void DX11FrameBuffer::clear(const Vec4 & clearColor) {
+	void DX11FrameBuffer::clear(const Vec4& clearColor) {
 		auto* ctx = m_context->getDeviceContext();
 
 		float color[4] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
@@ -185,9 +186,8 @@ namespace Axion {
 		ctx->ClearDepthStencilView(m_depthDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 		if (m_specification.useEntityIDAttachment && m_entityIdRTV) {
-			int clearID = -1;
-			float idColor[4] = { reinterpret_cast<float&>(clearID), 0.0f, 0.0f, 0.0f };
-			ctx->ClearRenderTargetView(m_entityIdRTV.Get(), idColor);
+			UINT clearID[4] = { static_cast<UINT>(-1), 0, 0, 0 };
+			ctx->ClearRenderTargetView(m_entityIdRTV.Get(), reinterpret_cast<float*>(clearID));
 		}
 	}
 
@@ -199,41 +199,38 @@ namespace Axion {
 	void DX11FrameBuffer::clearAttachment(uint32_t attachmentIndex, int value) {
 		if (attachmentIndex == 1 && m_specification.useEntityIDAttachment && m_entityIdRTV) {
 			auto* ctx = m_context->getDeviceContext();
-			float clearVal = reinterpret_cast<float&>(value);
-			float clearColor[4] = { clearVal, 0.0f, 0.0f, 0.0f };
-			ctx->ClearRenderTargetView(m_entityIdRTV.Get(), clearColor);
+			UINT clearID[4] = { static_cast<UINT>(value), 0, 0, 0 };
+			ctx->ClearRenderTargetView(m_entityIdRTV.Get(), reinterpret_cast<float*>(clearID));
 		}
 	}
 
 	int DX11FrameBuffer::readPixel(uint32_t attachmentIndex, int x, int y) {
 		if (attachmentIndex != 1 || !m_specification.useEntityIDAttachment) return -1;
+		if (x < 0 || y < 0 || x >= (int)m_specification.width || y >= (int)m_specification.height) return -1;
+
 		auto* ctx = m_context->getDeviceContext();
 
-		// -- Read Pixel Data From Previous Frame --
+		D3D11_BOX box;
+		box.left = x;
+		box.right = x + 1;
+		box.top = y;
+		box.bottom = y + 1;
+		box.front = 0;
+		box.back = 1;
+
+		ctx->CopySubresourceRegion(
+			m_readbackTexture.Get(), 0,
+			0, 0, 0,
+			m_entityIdTexture.Get(), 0,
+			&box
+		);
+
 		int entityID = -1;
 		D3D11_MAPPED_SUBRESOURCE mapped;
 		if (SUCCEEDED(ctx->Map(m_readbackTexture.Get(), 0, D3D11_MAP_READ, 0, &mapped))) {
 			int* data = reinterpret_cast<int*>(mapped.pData);
 			entityID = data[0];
 			ctx->Unmap(m_readbackTexture.Get(), 0);
-		}
-
-		// -- Queue New Copy Command For This Frame --
-		if (x >= 0 && y >= 0 && x < (int)m_specification.width && y < (int)m_specification.height) {
-			D3D11_BOX box;
-			box.left = x;
-			box.right = x + 1;
-			box.top = y;
-			box.bottom = y + 1;
-			box.front = 0;
-			box.back = 1;
-
-			ctx->CopySubresourceRegion(
-				m_readbackTexture.Get(), 0,
-				0, 0, 0,
-				m_entityIdTexture.Get(), 0,
-				&box
-			);
 		}
 
 		return entityID;

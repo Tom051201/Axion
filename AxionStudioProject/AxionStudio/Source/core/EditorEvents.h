@@ -17,7 +17,8 @@ namespace Axion {
 		AssetDeleted,
 		EntitySelected,
 		EditorStateChanged,
-		SceneModified
+		SceneModified,
+		EditorHistoryChanged
 	};
 
 	#define EDITOR_EVENT_CLASS_TYPE(type) \
@@ -139,6 +140,20 @@ namespace Axion {
 	private:
 
 		SceneModificationType m_modType;
+
+	};
+
+	class EditorHistoryChangedEvent : public Event {
+	public:
+
+		EditorHistoryChangedEvent() = default;
+
+		std::string toString() const override {
+			return "EditorHistoryChangedEvent";
+		}
+
+		EDITOR_EVENT_CLASS_TYPE(EditorHistoryChanged)
+		EVENT_CLASS_CATEGORY(EventCategoryEditor)
 
 	};
 

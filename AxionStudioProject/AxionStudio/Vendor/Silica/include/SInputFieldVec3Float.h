@@ -27,6 +27,8 @@ namespace Silica {
 			std::string thirdText = "Z";
 			FontAtlas* font = nullptr;
 			std::function<void(Vec3)> onValueChanged = nullptr;
+			std::function<void()> onEditBegin = nullptr;
+			std::function<void()> onEditComplete = nullptr;
 		};
 
 		void construct(const Args& args);

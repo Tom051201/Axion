@@ -41,6 +41,7 @@ namespace Axion {
 	class ViewportPanel;
 	class AssetLibraryPanel;
 	class MaterialPanel;
+	class HistoryPanel;
 	class SettingsModal;
 
 	class EditorLayer : public Layer {
@@ -91,6 +92,7 @@ namespace Axion {
 		Shared<ViewportPanel> m_viewportPanel;
 		Shared<AssetLibraryPanel> m_assetLibraryPanel;
 		Shared<MaterialPanel> m_materialPanel;
+		Shared<HistoryPanel> m_historyPanel;
 		Shared<SettingsModal> m_settingsModal;
 
 		// -- Text Editor Tabs --
@@ -98,6 +100,8 @@ namespace Axion {
 
 		// -- Gizmo --
 		TransformGizmo m_transformGizmo;
+		bool m_isDraggingGizmo = false;
+		TransformComponent m_dragStartTransform;
 
 
 
@@ -121,6 +125,7 @@ namespace Axion {
 		EventReply onSceneChanged(SceneChangedEvent& ev);
 		EventReply onEditorStateChanged(EditorStateChangedEvent& ev);
 		EventReply onEntitySelected(EntitySelectedEvent& ev);
+		EventReply onProjectChanged(ProjectChangedEvent& ev);
 
 	};
 

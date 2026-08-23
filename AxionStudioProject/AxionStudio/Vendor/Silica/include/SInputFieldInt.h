@@ -14,6 +14,8 @@ namespace Silica {
 			int initialValue = 0;
 			FontAtlas* font = nullptr;
 			std::function<void(int)> onValueChanged = nullptr;
+			std::function<void()> onEditBegin = nullptr;
+			std::function<void()> onEditComplete = nullptr;
 		};
 
 		void construct(const Args& args);
@@ -38,6 +40,8 @@ namespace Silica {
 		WidgetPtr m_editableText;
 		int m_currentValue;
 		std::function<void(int)> m_onValueChanged;
+		std::function<void()> m_onEditBegin;
+		std::function<void()> m_onEditComplete;
 
 	};
 

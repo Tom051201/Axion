@@ -52,6 +52,7 @@ namespace Axion {
 
 		EventReply onSceneChanged(SceneChangedEvent& ev);
 		EventReply onEntitySelected(EntitySelectedEvent& ev);
+		EventReply onEditorHistoryChanged(EditorHistoryChangedEvent& ev);
 
 	};
 

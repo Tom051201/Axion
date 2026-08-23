@@ -22,6 +22,7 @@
 #include "AxionEngine/Source/input/Input.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
+#include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
@@ -38,6 +39,7 @@
 #include "AxionStudio/Source/ui/panels/EntityPropertiesPanel.h"
 #include "AxionStudio/Source/ui/panels/AssetLibraryPanel.h"
 #include "AxionStudio/Source/ui/panels/MaterialPanel.h"
+#include "AxionStudio/Source/ui/panels/HistoryPanel.h"
 #include "AxionStudio/Source/ui/modals/SettingsModal.h"
 
 namespace Axion {
@@ -95,6 +97,12 @@ namespace Axion {
 		else {
 			AX_CORE_LOG_WARN("Silica: Failed to load OpenSans font!");
 		}
+
+
+		EditorCommandManager::setHistoryChangedCallback([this]() {
+			EditorHistoryChangedEvent ev;
+			onEvent(ev);
+		});
 
 
 		// ----- Build UI -----
@@ -204,6 +212,9 @@ namespace Axion {
 		m_materialPanel = MakeShared<MaterialPanel>();
 		auto materialWidget = m_materialPanel->getWidget();
 
+		m_historyPanel = MakeShared<HistoryPanel>();
+		auto historyWidget = m_historyPanel->getWidget();
+
 		// ----- Setup Workspace And DockSpace -----
 		auto workspace = Silica::MakeWidget<Silica::SWorkspace>({
 			.initialTitle = "Hierarchy",
@@ -222,6 +233,7 @@ namespace Axion {
 		m_dock->registerTab("Asset Inspector", assetManagerWidget);
 		m_dock->registerTab("Asset Library", assetLibraryWidget);
 		m_dock->registerTab("Material Editor", materialWidget);
+		m_dock->registerTab("Editor History", historyWidget);
 
 		if (!m_dock->getRootNode() || (m_dock->getRootNode()->tabs.size() <= 1 && m_dock->getRootNode()->splitDirection == Silica::SplitDirection::None)) {
 			auto root = m_dock->getRootNode();
@@ -525,6 +537,12 @@ namespace Axion {
 					bool snap = Input::isKeyPressed(KeyCode::LeftControl);
 					float snapValue = (m_transformGizmo.getMode() == GizmoMode::Rotate) ? 15.0f : 1.0f;
 					Silica::Vec2 mousePos = m_viewportPanel->getRelativeMousePos();
+
+					if (isMouseDown && m_transformGizmo.isHovered() && !m_isDraggingGizmo) {
+						m_isDraggingGizmo = true;
+						m_dragStartTransform = m_selectedEntity.getComponent<TransformComponent>();
+					}
+
 					auto delta = m_transformGizmo.onUpdate(worldM, m_editorCamera, Vec2(mousePos.x, mousePos.y), Vec2(currentViewSize.x, currentViewSize.y), isMouseDown, snap, snapValue);
 
 					if (delta.has_value()) {
@@ -554,6 +572,18 @@ namespace Axion {
 						}
 						else if (m_transformGizmo.getMode() == GizmoMode::Scale) {
 							tc.scale += delta.value();
+						}
+					}
+
+					if (!isMouseDown && m_isDraggingGizmo) {
+						m_isDraggingGizmo = false;
+						auto endTransform = m_selectedEntity.getComponent<TransformComponent>();
+
+						if (m_dragStartTransform.position != endTransform.position ||
+							m_dragStartTransform.rotation != endTransform.rotation ||
+							m_dragStartTransform.scale != endTransform.scale) {
+
+							EditorCommandManager::push(MakeShared<TransformCommand>(m_selectedEntity, m_dragStartTransform, endTransform));
 						}
 					}
 				}
@@ -608,6 +638,7 @@ namespace Axion {
 		if (m_propertiesPanel) m_propertiesPanel->onEvent(e);
 		if (m_hierarchyPanel) m_hierarchyPanel->onEvent(e);
 		if (m_assetManagerPanel) m_assetManagerPanel->onEvent(e);
+		if (m_historyPanel) m_historyPanel->onEvent(e);
 
 		// ----- Use Events In EditorLayer -----
 		EventDispatcher dispatcher(e);
@@ -617,6 +648,7 @@ namespace Axion {
 		dispatcher.dispatch<KeyReleasedEvent>(AX_BIND_EVENT_FN(EditorLayer::onKeyReleased));
 		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(EditorLayer::onEntitySelected));
 		dispatcher.dispatch<MouseButtonPressedEvent>(AX_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(EditorLayer::onProjectChanged));
 	}
 
 	void EditorLayer::onGuiRender() {
@@ -852,6 +884,18 @@ namespace Axion {
 				else if (ctrl) saveScene();
 				break;
 			}
+			case KeyCode::Z: {
+				if (ctrl && !shift) {
+					EditorCommandManager::undo();
+				}
+				break;
+			}
+			case KeyCode::Y: {
+				if (ctrl) {
+					EditorCommandManager::redo();
+				}
+				break;
+			}
 			case KeyCode::F5: {
 				if (m_sceneState == EditorState::Edit) playScene();
 				else stopScene();
@@ -894,35 +938,15 @@ namespace Axion {
 			case KeyCode::Delete: {
 				if (m_sceneState == EditorState::Edit && m_selectedEntity) {
 					EditorActionQueue::push([this]() {
-						// -- Remove From Parent --
-						if (m_selectedEntity.hasComponent<RelationshipComponent>()) {
-							auto& rel = m_selectedEntity.getComponent<RelationshipComponent>();
-							if (rel.parent != entt::null) {
-								Entity parent = { rel.parent, m_activeScene.get() };
-								auto& parentRel = parent.getComponent<RelationshipComponent>();
-								auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)m_selectedEntity);
-								if (it != parentRel.children.end()) parentRel.children.erase(it);
-							}
-						}
-
-						// --Destroy Entity And All Descendants --
-						auto destroyHierarchy = [this](Entity e, auto& self) -> void {
-							if (e.hasComponent<RelationshipComponent>()) {
-								auto childrenCopy = e.getComponent<RelationshipComponent>().children;
-								for (auto childHandle : childrenCopy) {
-									self(Entity{ childHandle, m_activeScene.get() }, self);
-								}
-							}
-							m_activeScene->destroyEntity(e);
-						};
-
-						destroyHierarchy(m_selectedEntity, destroyHierarchy);
+						auto cmd = MakeShared<DeleteEntityCommand>(m_activeScene, m_selectedEntity);
+						cmd->execute();
+						EditorCommandManager::push(cmd);
 
 						EntitySelectedEvent ev({});
 						onEvent(ev);
-						if (m_hierarchyPanel) m_hierarchyPanel->refresh();
 					});
 				}
+				break;
 				break;
 			}
 		}
@@ -1069,6 +1093,8 @@ namespace Axion {
 	}
 
 	EventReply EditorLayer::onSceneChanged(SceneChangedEvent& ev) {
+		EditorCommandManager::clear();
+
 		m_activeScene = SceneManager::getScene();
 		m_currentScenePath = SceneManager::getScenePath();
 
@@ -1077,6 +1103,11 @@ namespace Axion {
 		onEvent(emptySelectionEv);
 
 		AX_CORE_LOG_INFO("EditorLayer successfully synced with new Scene!");
+		return EventReply::unhandled();
+	}
+
+	EventReply EditorLayer::onProjectChanged(ProjectChangedEvent& ev) {
+		EditorCommandManager::clear();
 		return EventReply::unhandled();
 	}
 

@@ -22,6 +22,8 @@ namespace Silica {
 			std::function<bool(char)> charFilter = nullptr;
 			std::function<void(const std::string&)> onTextChanged = nullptr;
 			std::function<void(const std::string&)> onTextCommitted = nullptr;
+			std::function<void()> onEditBegin = nullptr;
+			std::function<void()> onEditComplete = nullptr;
 		};
 
 		void construct(const Args& args);
@@ -58,6 +60,8 @@ namespace Silica {
 		std::function<bool(char)> m_charFilter;
 		std::function<void(const std::string&)> m_onTextChanged;
 		std::function<void(const std::string&)> m_onTextCommitted;
+		std::function<void()> m_onEditBegin;
+		std::function<void()> m_onEditComplete;
 
 		int getIndexFromMousePos(const Geometry& geo, const Vec2& pos) const;
 		bool hasSelection() const;

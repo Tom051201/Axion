@@ -24,6 +24,8 @@ namespace Silica {
 			std::string secondText = "Y";
 			std::string thirdText = "Z";
 			std::function<void(Vec3)> onValueChanged = nullptr;
+			std::function<void()> onEditBegin = nullptr;
+			std::function<void()> onEditComplete = nullptr;
 		};
 
 		void construct(const Args& args);

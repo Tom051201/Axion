@@ -22,6 +22,8 @@ namespace Silica {
 			std::optional<Color> thumbColor;
 			std::optional<Color> thumbDraggingColor;
 			std::function<void(float)> onValueChanged = nullptr;
+			std::function<void()> onEditBegin = nullptr;
+			std::function<void()> onEditComplete = nullptr;
 		};
 
 		void construct(const Args& args);
@@ -53,6 +55,8 @@ namespace Silica {
 		Color m_thumbDraggingColor;
 
 		std::function<void(float)> m_onValueChanged;
+		std::function<void()> m_onEditBegin;
+		std::function<void()> m_onEditComplete;
 
 		void updateValueFromMouse(float mouseX);
 

@@ -33,11 +33,13 @@ namespace Axion {
 		void rebuildUI();
 
 		Entity m_selectedEntity;
+		TransformComponent m_editStartTransform;
 
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		std::shared_ptr<Silica::SVerticalBox> m_contentBox;
 
 		EventReply onEntitySelected(EntitySelectedEvent& e);
+		EventReply onEditorHistoryChanged(EditorHistoryChangedEvent& ev);
 
 	};
 

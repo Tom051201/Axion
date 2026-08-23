@@ -291,6 +291,8 @@ namespace Axion {
 
 		Quat operator*(const Quat& other) const { return fromXM(DirectX::XMQuaternionMultiply(toXM(), other.toXM())); }
 		Quat& operator*=(const Quat& other) { *this = *this * other; return *this; }
+		bool operator==(const Quat& other) const { return DirectX::XMVector4Equal(toXM(), other.toXM()); }
+		bool operator!=(const Quat& other) const { return DirectX::XMVector4NotEqual(toXM(), other.toXM()); }
 
 		Quat normalized() const {
 			return fromXM(DirectX::XMQuaternionNormalize(toXM()));

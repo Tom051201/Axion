@@ -28,9 +28,24 @@
 #include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 #include "AxionStudio/Source/core/EditorEvents.h"
+#include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 
 namespace Axion {
+
+	// ----- Global Component Clipboard -----
+	namespace {
+
+		struct ComponentClipboardData {
+			std::string componentName;
+			std::function<Shared<EditorCommand>(Entity)> createPasteCommand;
+		};
+
+		static std::optional<ComponentClipboardData> s_componentClipboard;
+
+	}
+
+
 
 	// ----- CUSTOM WIDGETS -----
 	class SEntityHeaderLayout : public Silica::SWidget {
@@ -38,65 +53,65 @@ namespace Axion {
 
 		struct Args {
 			Silica::WidgetPtr textInput;
-			Silica::WidgetPtr addComponentButton;
+			Silica::WidgetPtr trailingWidget;
 		};
 
 		void construct(const Args& args) {
 			m_textInput = args.textInput;
-			m_addButton = args.addComponentButton;
+			m_trailingWidget = args.trailingWidget;
 		}
 
 		void computeDesiredSize() override {
 			m_textInput->computeDesiredSize();
-			m_addButton->computeDesiredSize();
-			m_desiredSize.x = m_textInput->getDesiredSize().x + m_addButton->getDesiredSize().x + 10.0f;
-			m_desiredSize.y = std::max(m_textInput->getDesiredSize().y, m_addButton->getDesiredSize().y);
+			m_trailingWidget->computeDesiredSize();
+			m_desiredSize.x = m_textInput->getDesiredSize().x + m_trailingWidget->getDesiredSize().x + 10.0f;
+			m_desiredSize.y = std::max(m_textInput->getDesiredSize().y, m_trailingWidget->getDesiredSize().y);
 		}
 
 		void arrangeChildren(const Silica::Geometry& allocatedGeometry) override {
 			SWidget::arrangeChildren(allocatedGeometry);
 
-			float btnWidth = m_addButton->getDesiredSize().x;
+			float trailingWidth = m_trailingWidget->getDesiredSize().x;
 			float spacing = 10.0f;
 
 			Silica::Geometry textGeo;
 			textGeo.position = allocatedGeometry.position;
-			textGeo.size.x = std::max(0.0f, allocatedGeometry.size.x - btnWidth - spacing);
+			textGeo.size.x = std::max(0.0f, allocatedGeometry.size.x - trailingWidth - spacing);
 			textGeo.size.y = allocatedGeometry.size.y;
 			m_textInput->arrangeChildren(textGeo);
 
-			Silica::Geometry btnGeo;
-			btnGeo.position.x = allocatedGeometry.position.x + allocatedGeometry.size.x - btnWidth;
-			btnGeo.position.y = allocatedGeometry.position.y;
-			btnGeo.size.x = btnWidth;
-			btnGeo.size.y = allocatedGeometry.size.y;
-			m_addButton->arrangeChildren(btnGeo);
+			Silica::Geometry trailingGeo;
+			trailingGeo.position.x = allocatedGeometry.position.x + allocatedGeometry.size.x - trailingWidth;
+			trailingGeo.position.y = allocatedGeometry.position.y;
+			trailingGeo.size.x = trailingWidth;
+			trailingGeo.size.y = allocatedGeometry.size.y;
+			m_trailingWidget->arrangeChildren(trailingGeo);
 		}
 
 		void onDraw(Silica::DrawList& outDrawList, const Silica::Geometry& allocatedGeometry) const override {
 			m_textInput->onDraw(outDrawList, m_textInput->getAllocatedGeometry());
-			m_addButton->onDraw(outDrawList, m_addButton->getAllocatedGeometry());
+			m_trailingWidget->onDraw(outDrawList, m_trailingWidget->getAllocatedGeometry());
 		}
 
 		Silica::EventReply onMouseMove(const Silica::Geometry& allocatedGeometry, const Silica::Vec2& mousePos) override {
-			if (m_addButton->onMouseMove(m_addButton->getAllocatedGeometry(), mousePos).isHandled) return Silica::EventReply::handled();
+			if (m_trailingWidget->onMouseMove(m_trailingWidget->getAllocatedGeometry(), mousePos).isHandled) return Silica::EventReply::handled();
 			return m_textInput->onMouseMove(m_textInput->getAllocatedGeometry(), mousePos);
 		}
 
 		Silica::EventReply onMouseButtonDown(const Silica::Geometry& allocatedGeometry, const Silica::Vec2& mousePos, Silica::MouseButton button) override {
-			if (m_addButton->onMouseButtonDown(m_addButton->getAllocatedGeometry(), mousePos, button).isHandled) return Silica::EventReply::handled();
+			if (m_trailingWidget->onMouseButtonDown(m_trailingWidget->getAllocatedGeometry(), mousePos, button).isHandled) return Silica::EventReply::handled();
 			return m_textInput->onMouseButtonDown(m_textInput->getAllocatedGeometry(), mousePos, button);
 		}
 
 		Silica::EventReply onMouseButtonUp(const Silica::Geometry& allocatedGeometry, const Silica::Vec2& mousePos, Silica::MouseButton button) override {
-			if (m_addButton->onMouseButtonUp(m_addButton->getAllocatedGeometry(), mousePos, button).isHandled) return Silica::EventReply::handled();
+			if (m_trailingWidget->onMouseButtonUp(m_trailingWidget->getAllocatedGeometry(), mousePos, button).isHandled) return Silica::EventReply::handled();
 			return m_textInput->onMouseButtonUp(m_textInput->getAllocatedGeometry(), mousePos, button);
 		}
 
 	private:
 
 		Silica::WidgetPtr m_textInput;
-		Silica::WidgetPtr m_addButton;
+		Silica::WidgetPtr m_trailingWidget;
 
 	};
 
@@ -112,27 +127,63 @@ namespace Axion {
 	void drawComponentBlock(const std::string& title, Entity entity, std::shared_ptr<Silica::SVerticalBox> container, std::function<void()> triggerRebuild, bool isRemovable, UIBuilderFunc buildContent) {
 		if (!entity.hasComponent<T>()) return;
 
-		Silica::WidgetPtr removeButton = nullptr;
-		if (isRemovable) {
-			removeButton = Silica::MakeWidget<Silica::SButton>({
+		std::vector<Silica::Slot> headerSlots;
+
+		// -- Copy Button --
+		headerSlots.push_back({
+			{0,0}, Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 0.0f },
 				.color = Silica::Color::transparent(),
-				.hoverColor = Silica::GetTheme().Accent_Danger,
-				.onClick = [entity, triggerRebuild]() mutable {
-					entity.removeComponent<T>();
+				.hoverColor = Silica::GetTheme().Element_Hover,
+				.onClick = [title, entity, triggerRebuild]() mutable {
+					auto compData = entity.getComponent<T>();
+					s_componentClipboard = {
+						title,
+						[compData, title](Entity target) -> Shared<EditorCommand> {
+							return MakeShared<PasteComponentCommand<T>>(target, title, compData);
+						}
+					};
+
 					if (triggerRebuild) triggerRebuild();
 					return Silica::EventReply::handled();
 				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "X" })
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "C" })
+			})
+		});
+
+		// -- Remove Button --
+		if (isRemovable) {
+			headerSlots.push_back({
+				{0,0}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { 4.0f, 0.0f },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::GetTheme().Accent_Danger,
+					.onClick = [title, entity, triggerRebuild]() mutable {
+						EditorActionQueue::push([title, entity, triggerRebuild]() mutable {
+							auto cmd = MakeShared<RemoveComponentCommand<T>>(entity, title);
+							cmd->execute();
+							EditorCommandManager::push(cmd);
+							if (triggerRebuild) triggerRebuild();
+						});
+
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X" })
+				})
 			});
 		}
+
+		auto trailingBox = Silica::MakeWidget<Silica::SHorizontalBox>({
+			.spacing = 2.0f,
+			.slots = headerSlots
+		});
 
 		container->addSlot({
 			.padding = { 0.0f, 0.0f },
 			.child = Silica::MakeWidget<Silica::SCollapsingHeader>({
 				.title = title,
 				.initiallyOpen = true,
-				.trailingWidget = removeButton,
+				.trailingWidget = trailingBox,
 				.content = buildContent()
 			})
 		});
@@ -174,10 +225,16 @@ namespace Axion {
 	void EntityPropertiesPanel::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(onEntitySelected));
+		dispatcher.dispatch<EditorHistoryChangedEvent>(AX_BIND_EVENT_FN(onEditorHistoryChanged));
 	}
 
 	EventReply EntityPropertiesPanel::onEntitySelected(EntitySelectedEvent& e) {
 		setEntity(e.getEntity());
+		return EventReply::unhandled();
+	}
+
+	EventReply EntityPropertiesPanel::onEditorHistoryChanged(EditorHistoryChangedEvent& ev) {
+		rebuildUI();
 		return EventReply::unhandled();
 	}
 
@@ -237,35 +294,39 @@ namespace Axion {
 
 		std::vector<CompDef> availableComps;
 
-		auto registerComp = [&](const std::string& name, const std::string& category, auto addAction) {
-			availableComps.push_back({ name, category, [addAction, triggerRebuild]() mutable {
-				addAction();
-				triggerRebuild();
+		auto registerComp = [&]<typename T>(const std::string& name, const std::string & category) {
+			availableComps.push_back({ name, category, [name, entity, triggerRebuild]() mutable {
+				EditorActionQueue::push([name, entity, triggerRebuild]() mutable {
+					auto cmd = MakeShared<AddComponentCommand<T>>(entity, name);
+					cmd->execute();
+					EditorCommandManager::push(cmd);
+					triggerRebuild();
+				});
 			} });
 		};
 
-		if (!entity.hasComponent<MeshComponent>()) registerComp("Mesh", "Rendering", [=]() mutable { entity.addComponent<MeshComponent>(); });
-		if (!entity.hasComponent<SkeletalMeshComponent>()) registerComp("Skeletal Mesh", "Rendering", [=]() mutable { entity.addComponent<SkeletalMeshComponent>(); });
-		if (!entity.hasComponent<MaterialComponent>()) registerComp("Material", "Rendering", [=]() mutable { entity.addComponent<MaterialComponent>(); });
-		if (!entity.hasComponent<SpriteComponent>()) registerComp("Sprite", "Rendering", [=]() mutable { entity.addComponent<SpriteComponent>(); });
+		if (!entity.hasComponent<MeshComponent>()) registerComp.operator()<MeshComponent>("Mesh", "Rendering");
+		if (!entity.hasComponent<SkeletalMeshComponent>()) registerComp.operator()<SkeletalMeshComponent>("Skeletal Mesh", "Rendering");
+		if (!entity.hasComponent<MaterialComponent>()) registerComp.operator()<MaterialComponent>("Material", "Rendering");
+		if (!entity.hasComponent<SpriteComponent>()) registerComp.operator()<SpriteComponent>("Sprite", "Rendering");
 
-		if (!entity.hasComponent<DirectionalLightComponent>()) registerComp("Directional Light", "Lighting", [=]() mutable { entity.addComponent<DirectionalLightComponent>(); });
-		if (!entity.hasComponent<PointLightComponent>()) registerComp("Point Light", "Lighting", [=]() mutable { entity.addComponent<PointLightComponent>(); });
-		if (!entity.hasComponent<SpotLightComponent>()) registerComp("Spot Light", "Lighting", [=]() mutable { entity.addComponent<SpotLightComponent>(); });
+		if (!entity.hasComponent<DirectionalLightComponent>()) registerComp.operator()<DirectionalLightComponent>("Directional Light", "Lighting");
+		if (!entity.hasComponent<PointLightComponent>()) registerComp.operator()<PointLightComponent>("Point Light", "Lighting");
+		if (!entity.hasComponent<SpotLightComponent>()) registerComp.operator()<SpotLightComponent>("Spot Light", "Lighting");
 
-		if (!entity.hasComponent<RigidBodyComponent>()) registerComp("Rigid Body", "Physics", [=]() mutable { entity.addComponent<RigidBodyComponent>(); });
-		if (!entity.hasComponent<BoxColliderComponent>()) registerComp("Box Collider", "Physics", [=]() mutable { entity.addComponent<BoxColliderComponent>(); });
-		if (!entity.hasComponent<SphereColliderComponent>()) registerComp("Sphere Collider", "Physics", [=]() mutable { entity.addComponent<SphereColliderComponent>(); });
-		if (!entity.hasComponent<CapsuleColliderComponent>()) registerComp("Capsule Collider", "Physics", [=]() mutable { entity.addComponent<CapsuleColliderComponent>(); });
-		if (!entity.hasComponent<GravitySourceComponent>()) registerComp("Gravity Source", "Physics", [=]() mutable { entity.addComponent<GravitySourceComponent>(); });
+		if (!entity.hasComponent<RigidBodyComponent>()) registerComp.operator()<RigidBodyComponent>("Rigid Body", "Physics");
+		if (!entity.hasComponent<BoxColliderComponent>()) registerComp.operator()<BoxColliderComponent>("Box Collider", "Physics");
+		if (!entity.hasComponent<SphereColliderComponent>()) registerComp.operator()<SphereColliderComponent>("Sphere Collider", "Physics");
+		if (!entity.hasComponent<CapsuleColliderComponent>()) registerComp.operator()<CapsuleColliderComponent>("Capsule Collider", "Physics");
+		if (!entity.hasComponent<GravitySourceComponent>()) registerComp.operator()<GravitySourceComponent>("Gravity Source", "Physics");
 
-		if (!entity.hasComponent<CameraComponent>()) registerComp("Camera", "General", [=]() mutable { entity.addComponent<CameraComponent>(); });
-		if (!entity.hasComponent<AudioComponent>()) registerComp("Audio", "General", [=]() mutable { entity.addComponent<AudioComponent>(); });
-		if (!entity.hasComponent<ParticleSystemComponent>()) registerComp("Particle System", "General", [=]() mutable { entity.addComponent<ParticleSystemComponent>(); });
-		if (!entity.hasComponent<AnimatorComponent>()) registerComp("Animator", "General", [=]() mutable { entity.addComponent<AnimatorComponent>(); });
+		if (!entity.hasComponent<CameraComponent>()) registerComp.operator()<CameraComponent>("Camera", "General");
+		if (!entity.hasComponent<AudioComponent>()) registerComp.operator()<AudioComponent>("Audio", "General");
+		if (!entity.hasComponent<ParticleSystemComponent>()) registerComp.operator()<ParticleSystemComponent>("Particle System", "General");
+		if (!entity.hasComponent<AnimatorComponent>()) registerComp.operator()<AnimatorComponent>("Animator", "General");
 
-		if (!entity.hasComponent<NativeScriptComponent>()) registerComp("Native Script", "Scripting", [=]() mutable { entity.addComponent<NativeScriptComponent>(); });
-		if (!entity.hasComponent<ScriptComponent>()) registerComp("C# Script", "Scripting", [=]() mutable { entity.addComponent<ScriptComponent>(); });
+		if (!entity.hasComponent<NativeScriptComponent>()) registerComp.operator()<NativeScriptComponent>("Native Script", "Scripting");
+		if (!entity.hasComponent<ScriptComponent>()) registerComp.operator()<ScriptComponent>("C# Script", "Scripting");
 
 		auto menuListContainer = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
 
@@ -362,6 +423,36 @@ namespace Axion {
 			})
 		});
 
+		// -- Build the Trailing Widget for the Header --
+		std::vector<Silica::Slot> headerTrailingSlots;
+		if (s_componentClipboard.has_value()) {
+			headerTrailingSlots.push_back({
+				{0,0}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { 8.0f, 4.0f },
+					.hoverColor = Silica::GetTheme().Element_Hover,
+					.onClick = [entity, triggerRebuild]() mutable {
+						if (s_componentClipboard.has_value()) {
+							EditorActionQueue::push([entity, triggerRebuild]() mutable {
+								auto cmd = s_componentClipboard->createPasteCommand(entity);
+								cmd->execute();
+								EditorCommandManager::push(cmd);
+								triggerRebuild();
+							});
+						}
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Paste: " + s_componentClipboard->componentName })
+				})
+			});
+		}
+
+		headerTrailingSlots.push_back({ {0,0}, addComponentMenu });
+
+		auto headerTrailingBox = Silica::MakeWidget<Silica::SHorizontalBox>({
+			.spacing = 5.0f,
+			.slots = headerTrailingSlots
+		});
+
 		// -- Build Top Bar --
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 10.0f, 10.0f },
@@ -371,7 +462,7 @@ namespace Axion {
 				.slots = {
 					{ { 0.0f, 0.0f }, Silica::MakeWidget<SEntityHeaderLayout>({
 						.textInput = nameInput,
-						.addComponentButton = addComponentMenu
+						.trailingWidget = headerTrailingBox
 					})},
 					{ { 0.0f, 0.0f }, Silica::MakeWidget<Silica::STextBlock>({
 						.text = uuidStr,
@@ -417,25 +508,56 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = 4.0f,
 					.slots = {
+						// -- POSITION --
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Position",
 							.initialValue = Silica::Vec3(transform.position.x, transform.position.y, transform.position.z),
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().position = Vec3(val.x, val.y, val.z);
+							},
+							.onEditBegin = [this, entity]() mutable {
+								m_editStartTransform = entity.getComponent<TransformComponent>();
+							},
+							.onEditComplete = [this, entity]() mutable {
+								auto endTransform = entity.getComponent<TransformComponent>();
+								if (m_editStartTransform.position != endTransform.position) {
+									EditorCommandManager::push(MakeShared<TransformCommand>(entity, m_editStartTransform, endTransform));
+								}
 							}
 						})},
+						// -- ROTATION --
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Rotation",
 							.initialValue = Silica::Vec3(transform.getEulerAngles().x, transform.getEulerAngles().y, transform.getEulerAngles().z),
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().setEulerAngles(Vec3(val.x, val.y, val.z));
+							},
+							.onEditBegin = [this, entity]() mutable {
+								m_editStartTransform = entity.getComponent<TransformComponent>();
+							},
+							.onEditComplete = [this, entity]() mutable {
+								auto endTransform = entity.getComponent<TransformComponent>();
+								if (m_editStartTransform.rotation != endTransform.rotation) {
+									EditorCommandManager::push(MakeShared<TransformCommand>(entity, m_editStartTransform, endTransform));
+								}
 							}
 						})},
+
+						// --- SCALE ---
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Scale",
 							.initialValue = Silica::Vec3(transform.scale.x, transform.scale.y, transform.scale.z),
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().scale = Vec3(val.x, val.y, val.z);
+							},
+							.onEditBegin = [this, entity]() mutable {
+								m_editStartTransform = entity.getComponent<TransformComponent>();
+							},
+							.onEditComplete = [this, entity]() mutable {
+								auto endTransform = entity.getComponent<TransformComponent>();
+								if (m_editStartTransform.scale != endTransform.scale) {
+									EditorCommandManager::push(MakeShared<TransformCommand>(entity, m_editStartTransform, endTransform));
+								}
 							}
 						})}
 					}

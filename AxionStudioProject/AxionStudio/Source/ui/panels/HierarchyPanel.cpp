@@ -22,6 +22,7 @@
 #include "AxionAssetPipeline/Source/parser/PrefabParser.h"
 
 #include "AxionStudio/Source/core/EditorEvents.h"
+#include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 
 namespace Axion {
@@ -77,6 +78,7 @@ namespace Axion {
 		EventDispatcher dispatcher(ev);
 		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onSceneChanged));
 		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onEntitySelected));
+		dispatcher.dispatch<EditorHistoryChangedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onEditorHistoryChanged));
 	}
 
 	EventReply HierarchyPanel::onSceneChanged(SceneChangedEvent& ev) {
@@ -86,6 +88,11 @@ namespace Axion {
 
 	EventReply HierarchyPanel::onEntitySelected(EntitySelectedEvent& ev) {
 		m_selectedEntity = ev.getEntity();
+		refresh();
+		return EventReply::unhandled();
+	}
+
+	EventReply HierarchyPanel::onEditorHistoryChanged(EditorHistoryChangedEvent& ev) {
 		refresh();
 		return EventReply::unhandled();
 	}
@@ -116,36 +123,12 @@ namespace Axion {
 						.hoverColor = Silica::GetTheme().Accent_Danger,
 						.onClick = [this, entity]() mutable {
 							EditorActionQueue::push([this, entity]() mutable {
-								// -- Remove From Parent --
-								if (entity.hasComponent<RelationshipComponent>()) {
-									auto& rel = entity.getComponent<RelationshipComponent>();
-									if (rel.parent != entt::null) {
-										Entity parent = { rel.parent, m_scene.get() };
-										auto& parentRel = parent.getComponent<RelationshipComponent>();
-										auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)entity);
-										if (it != parentRel.children.end()) parentRel.children.erase(it);
-									}
-								}
+								auto cmd = MakeShared<DeleteEntityCommand>(m_scene, entity);
+								cmd->execute();
+								EditorCommandManager::push(cmd);
 
-								// -- Destroy Entity And All Descendants --
-								auto destroyHierarchy = [this](Entity e, auto& self) -> void {
-									if (e.hasComponent<RelationshipComponent>()) {
-										auto childrenCopy = e.getComponent<RelationshipComponent>().children;
-										for (auto childHandle : childrenCopy) {
-											self(Entity{ childHandle, m_scene.get() }, self);
-										}
-									}
-									m_scene->destroyEntity(e);
-								};
-
-								destroyHierarchy(entity, destroyHierarchy);
-
-//								if (m_onEntitySelected) m_onEntitySelected({});
-								// -- Create EntitySelectedEvent --
 								EntitySelectedEvent ev({});
 								m_eventCallback(ev);
-
-								rebuildUI();
 							});
 							return Silica::EventReply::handled();
 						},
