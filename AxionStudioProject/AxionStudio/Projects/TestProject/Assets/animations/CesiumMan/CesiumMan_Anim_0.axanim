@@ -1,5 +1,5 @@
-Version: 1
+Version: 2
 Name: CesiumMan_Anim_0
 UUID: 6ede705ff9d667248b4ba52ec0528c83
 Type: Animation
-Source: meshes/CesiumMan/CesiumMan.glb
+Source: "{assetsdir}/meshes/CesiumMan/CesiumMan.glb"

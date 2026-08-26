@@ -1,5 +1,6 @@
 #include "SkeletalMeshParser.h"
 
+#include "AxionEngine/Source/core/PathResolver.h"
 #include "AxionEngine/Source/graphics/SkeletalMesh.h"
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
@@ -17,7 +18,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "SkeletalMesh";
-		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
 
 		out << YAML::Key << "Submeshes" << YAML::Value << YAML::BeginSeq;
 		for (const auto& submesh : meshData.submeshes) {

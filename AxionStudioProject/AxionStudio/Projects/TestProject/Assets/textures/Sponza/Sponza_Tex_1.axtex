@@ -1,6 +1,6 @@
-Version: 1
+Version: 2
 Name: Sponza_Tex_1
 UUID: b6eeba3080fadb25431235f589b959c7
 Type: Texture2D
 Format: PNG
-Source: textures/Sponza/Sponza_Tex_1.png
+Source: "{assetsdir}/textures/Sponza/Sponza_Tex_1.png"

@@ -4,6 +4,8 @@
 #include <yaml-cpp/yaml.h>
 
 #include "AxionEngine/Source/core/YamlHelper.h"
+#include "AxionEngine/Source/core/PathResolver.h"
+#include "AxionEngine/Source/core/AssetVersions.h"
 
 namespace Axion {
 
@@ -31,14 +33,14 @@ namespace Axion {
 	void AssetRegistry::serialize(const std::filesystem::path& filepath) {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
-		out << YAML::Key << "Version" << YAML::Value << 1;
+		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_REGISTRY;
 		out << YAML::Key << "AssetRegistry" << YAML::Value << YAML::BeginSeq;
 
 		for (const auto& [uuid, metadata] : m_registry) {
 			out << YAML::BeginMap;
 			out << YAML::Key << "Handle" << YAML::Value << uuid.toString();
 			out << YAML::Key << "Type" << YAML::Value << assetTypeToString(metadata.type);
-			out << YAML::Key << "FilePath" << YAML::Value << metadata.filePath.generic_string();
+			out << YAML::Key << "FilePath" << YAML::Value << PathResolver::virtualize(metadata.filePath);
 			out << YAML::EndMap;
 		}
 
@@ -56,9 +58,7 @@ namespace Axion {
 		if (!stream.is_open()) return;
 
 		YAML::Node data;
-		try {
-			data = YAML::Load(stream);
-		}
+		try { data = YAML::Load(stream); }
 		catch (YAML::ParserException& e) {
 			AX_CORE_LOG_ERROR("Failed to parse Asset Registry YAML: {}", e.what());
 			return;
@@ -69,13 +69,20 @@ namespace Axion {
 
 		uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
 
-		if (version == 1) {
+		if (version == 1 || version == 2) {
 			for (auto asset : registryNode) {
 				AssetMetadata metadata;
 				metadata.handle = asset["Handle"].as<UUID>();
 				metadata.type = assetTypeFromString(asset["Type"].as<std::string>());
-				metadata.filePath = asset["FilePath"].as<std::string>();
 
+				std::string rawPath = asset["FilePath"].as<std::string>();
+
+				// -- Upgrade Legacy V1 Data --
+				if (version == 1 && !rawPath.empty() && rawPath[0] != '{') {
+					rawPath = "{assetsdir}/" + rawPath;
+				}
+
+				metadata.filePath = PathResolver::resolve(rawPath);
 				m_registry[metadata.handle] = metadata;
 			}
 		}
@@ -89,35 +96,25 @@ namespace Axion {
 
 	void AssetRegistry::serializeBinary(const std::filesystem::path& filepath) {
 		std::filesystem::create_directories(filepath.parent_path());
-
 		std::ofstream out(filepath, std::ios::out | std::ios::binary);
-		if (!out.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open file for binary registry serialization: {}", filepath.string());
-			return;
-		}
+		if (!out.is_open()) return;
 
-		// -- Write Header --
 		char magic[4] = { 'A', 'X', 'A', 'R' };
 		out.write(magic, 4);
 
-		uint32_t version = 1;
+		uint32_t version = ASSET_VERSION_REGISTRY;
 		out.write(reinterpret_cast<const char*>(&version), sizeof(uint32_t));
 
-		// -- Write Asset Count --
 		uint32_t count = static_cast<uint32_t>(m_registry.size());
 		out.write(reinterpret_cast<const char*>(&count), sizeof(uint32_t));
 
-		// -- Write Entries --
 		for (auto const& [uuid, metadata] : m_registry) {
-			// -- Write UUID --
 			out.write(reinterpret_cast<const char*>(&metadata.handle), sizeof(UUID));
 
-			// -- Write Asset Type --
 			uint32_t type = static_cast<uint32_t>(metadata.type);
 			out.write(reinterpret_cast<const char*>(&type), sizeof(uint32_t));
 
-			// -- Write File Path --
-			std::string pathStr = metadata.filePath.generic_string();
+			std::string pathStr = PathResolver::virtualize(metadata.filePath);
 			uint32_t pathLength = static_cast<uint32_t>(pathStr.size());
 			out.write(reinterpret_cast<const char*>(&pathLength), sizeof(uint32_t));
 			out.write(pathStr.data(), pathLength);
@@ -129,52 +126,44 @@ namespace Axion {
 
 	void AssetRegistry::deserializeBinary(const std::filesystem::path& filepath) {
 		std::ifstream in(filepath, std::ios::in | std::ios::binary);
-		if (!in.is_open()) {
-			AX_CORE_LOG_ERROR("Failed to open binary AssetRegistry: {}", filepath.string());
-			return;
-		}
+		if (!in.is_open()) return;
 
-		// -- Validate Magic Header --
 		char magic[4];
 		in.read(magic, 4);
-		if (memcmp(magic, "AXAR", 4) != 0) {
-			AX_CORE_LOG_ERROR("Invalid binary registry file: {}", filepath.string());
-			return;
-		}
+		if (memcmp(magic, "AXAR", 4) != 0) return;
 
-		// -- Validate Version --
 		uint32_t version;
 		in.read(reinterpret_cast<char*>(&version), sizeof(uint32_t));
-		if (version != 1) {
+
+		if (version != 1 && version != 2) {
 			AX_CORE_LOG_ERROR("Unsupported AssetRegistry binary version: {}", version);
 			return;
 		}
 
 		m_registry.clear();
 
-		// -- Read Asset Count --
 		uint32_t count;
 		in.read(reinterpret_cast<char*>(&count), sizeof(uint32_t));
 
-		// -- Read Entries --
 		for (uint32_t i = 0; i < count; i++) {
 			AssetMetadata metadata;
-
-			// -- Read UUID --
 			in.read(reinterpret_cast<char*>(&metadata.handle), sizeof(UUID));
 
-			// -- Read Type --
 			uint32_t typeInt;
 			in.read(reinterpret_cast<char*>(&typeInt), sizeof(uint32_t));
 			metadata.type = static_cast<AssetType>(typeInt);
 
-			// -- Read File Path --
 			uint32_t pathLength;
 			in.read(reinterpret_cast<char*>(&pathLength), sizeof(uint32_t));
 			std::string pathStr(pathLength, '\0');
 			in.read(&pathStr[0], pathLength);
-			metadata.filePath = pathStr;
 
+			// -- Upgrade Legacy V1 Data --
+			if (version == 1 && !pathStr.empty() && pathStr[0] != '{') {
+				pathStr = "{assetsdir}/" + pathStr;
+			}
+
+			metadata.filePath = PathResolver::resolve(pathStr);
 			m_registry[metadata.handle] = metadata;
 		}
 

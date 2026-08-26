@@ -21,6 +21,8 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/input/Input.h"
 
+#include "AxionAssetPipeline/Source/core/AssetMigrator.h"
+
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
@@ -1108,6 +1110,12 @@ namespace Axion {
 
 	EventReply EditorLayer::onProjectChanged(ProjectChangedEvent& ev) {
 		EditorCommandManager::clear();
+
+		// -- Call AAP Asset Migrator --
+		if (ProjectManager::hasProject()) {
+			AAP::AssetMigrator::upgradeLegacyAssets(ProjectManager::getProject());
+		}
+
 		return EventReply::unhandled();
 	}
 

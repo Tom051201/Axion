@@ -1,5 +1,6 @@
 #include "AnimationClipParser.h"
 
+#include "AxionEngine/Source/core/PathResolver.h"
 #include "AxionEngine/Source/scene/Animation.h"
 
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
@@ -18,7 +19,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Animation";
-		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
 
 		out << YAML::EndMap;
 

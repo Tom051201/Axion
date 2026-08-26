@@ -134,7 +134,6 @@ namespace Axion {
 			{0,0}, Silica::MakeWidget<Silica::SButton>({
 				.padding = { 4.0f, 0.0f },
 				.color = Silica::Color::transparent(),
-				.hoverColor = Silica::GetTheme().Element_Hover,
 				.onClick = [title, entity, triggerRebuild]() mutable {
 					auto compData = entity.getComponent<T>();
 					s_componentClipboard = {

@@ -1,5 +1,7 @@
 #include "MeshParser.h"
 
+#include "AxionEngine/Source/core/PathResolver.h"
+
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 #include "AxionAssetPipeline/Source/importer/OBJImporter.h"
 #include "AxionAssetPipeline/Source/importer/GLTFImporter.h"
@@ -34,7 +36,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Mesh";
 		out << YAML::Key << "Format" << YAML::Value << FormatUtils::meshFormatToString(data.fileFormat);
-		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
 
 		out << YAML::Key << "Submeshes" << YAML::Value << YAML::BeginSeq;
 		for (const auto& submesh : meshData.submeshes) {

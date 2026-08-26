@@ -7,6 +7,7 @@
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/core/JobSystem.h"
 #include "AxionEngine/Source/core/Logging.h"
+#include "AxionEngine/Source/core/PathResolver.h"
 #include "AxionEngine/Source/graphics/Mesh.h"
 #include "AxionEngine/Source/graphics/Shader.h"
 #include "AxionEngine/Source/graphics/Material.h"
@@ -71,7 +72,16 @@ namespace Axion {
 				return;
 			}
 
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string rawSource = data["Source"].as<std::string>();
+
+			// -- Upgrade Legacy Data --
+			if (!rawSource.empty() && rawSource[0] != '{') {
+				if (!std::filesystem::path(rawSource).is_absolute()) {
+					rawSource = "{assetsdir}/" + rawSource;
+				}
+			}
+
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
 			std::string format = data["Format"] ? data["Format"].as<std::string>() : "OBJ";
 
 			auto meshData = std::make_shared<MeshData>();
@@ -115,12 +125,21 @@ namespace Axion {
 			}
 
 			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-			if (version != ASSET_VERSION_TEXTURE2D) {
+			if (version > ASSET_VERSION_TEXTURE2D) {
 				AX_CORE_LOG_ERROR("Unsupported Texture2D Version: {} in file {}", version, absolutePath.string());
 				return;
 			}
 
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string rawSource = data["Source"].as<std::string>();
+
+			// -- Upgrade Legacy Data --
+			if (!rawSource.empty() && rawSource[0] != '{') {
+				if (!std::filesystem::path(rawSource).is_absolute()) {
+					rawSource = "{assetsdir}/" + rawSource;
+				}
+			}
+
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
 			if (!std::filesystem::exists(sourcePath)) {
 				AX_CORE_LOG_ERROR("Texture source file missing: {}", sourcePath.string());
 				return;
@@ -165,12 +184,21 @@ namespace Axion {
 			}
 
 			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-			if (version != ASSET_VERSION_TEXTURE_CUBE) {
+			if (version > ASSET_VERSION_TEXTURE_CUBE) {
 				AX_CORE_LOG_ERROR("Unsupported TextureCube Version: {} in file {}", version, absolutePath.string());
 				return;
 			}
 
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string rawSource = data["Source"].as<std::string>();
+
+			// -- Upgrade Legacy Data --
+			if (!rawSource.empty() && rawSource[0] != '{') {
+				if (!std::filesystem::path(rawSource).is_absolute()) {
+					rawSource = "{assetsdir}/" + rawSource;
+				}
+			}
+
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
 			if (!std::filesystem::exists(sourcePath)) {
 				AX_CORE_LOG_ERROR("TextureCube source file missing: {}", sourcePath.string());
 				return;
@@ -267,12 +295,21 @@ namespace Axion {
 			}
 
 			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-			if (version != ASSET_VERSION_SHADER) {
+			if (version > ASSET_VERSION_SHADER) {
 				AX_CORE_LOG_ERROR("Unsupported Shader Version: {} in file {}", version, absolutePath.string());
 				return;
 			}
 
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string rawSource = data["Source"].as<std::string>();
+
+			// -- Upgrade Legacy Data --
+			if (!rawSource.empty() && rawSource[0] != '{') {
+				if (!std::filesystem::path(rawSource).is_absolute()) {
+					rawSource = "{assetsdir}/" + rawSource;
+				}
+			}
+
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
 
 			YAML::Node specData = data["Specification"];
 			ShaderSpecification spec = {};
@@ -496,12 +533,21 @@ namespace Axion {
 			}
 
 			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-			if (version != ASSET_VERSION_AUDIO) {
+			if (version > ASSET_VERSION_AUDIO) {
 				AX_CORE_LOG_ERROR("Unsupported AudioClip Version: {} in file {}", version, absolutePath.string());
 				return;
 			}
 
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string rawSource = data["Source"].as<std::string>();
+
+			// -- Upgrade Legacy Data --
+			if (!rawSource.empty() && rawSource[0] != '{') {
+				if (!std::filesystem::path(rawSource).is_absolute()) {
+					rawSource = "{assetsdir}/" + rawSource;
+				}
+			}
+
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
 			AudioClip::Mode mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
 
 			// -- Submit To Main Thread --
@@ -619,12 +665,21 @@ namespace Axion {
 			}
 
 			uint32_t version = data["Version"] ? data["Version"].as<uint32_t>() : 1;
-			if (version != ASSET_VERSION_ANIMATION_CLIP) {
+			if (version > ASSET_VERSION_ANIMATION_CLIP) {
 				AX_CORE_LOG_ERROR("Unsupported Animation Clip Version: {} in file {}", version, absolutePath.string());
 				return;
 			}
 
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string rawSource = data["Source"].as<std::string>();
+
+			// -- Upgrade Legacy Data --
+			if (!rawSource.empty() && rawSource[0] != '{') {
+				if (!std::filesystem::path(rawSource).is_absolute()) {
+					rawSource = "{assetsdir}/" + rawSource;
+				}
+			}
+
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
 
 			Ref<AnimationClip> clip = AAP::GLTFImporter::extractAnimation(sourcePath);
 
@@ -664,7 +719,16 @@ namespace Axion {
 				return;
 			}
 
-			std::filesystem::path sourcePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+			std::string rawSource = data["Source"].as<std::string>();
+
+			// -- Upgrade Legacy Data --
+			if (!rawSource.empty() && rawSource[0] != '{') {
+				if (!std::filesystem::path(rawSource).is_absolute()) {
+					rawSource = "{assetsdir}/" + rawSource;
+				}
+			}
+
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
 
 			auto meshData = std::make_shared<SkeletalMeshData>(AAP::GLTFImporter::extractSkeletalMesh(sourcePath));
 

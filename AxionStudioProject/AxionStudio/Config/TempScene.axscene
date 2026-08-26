@@ -108,7 +108,7 @@ Entities:
     TagComponent:
       Tag: CesiumMan
     TransformComponent:
-      Translation: [1, -0.498720646, -1.09349322]
+      Translation: [1, -0.900461257, -1.09349322]
       Rotation: [-0, 0, -0, 1]
       Scale: [1, 1, 1]
     MaterialComponent:

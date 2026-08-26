@@ -1,5 +1,7 @@
 #include "ShaderParser.h"
 
+#include "AxionEngine/Source/core/PathResolver.h"
+
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
 namespace Axion::AAP {
@@ -13,7 +15,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Shader";
 		out << YAML::Key << "Format" << YAML::Value << FormatUtils::shaderFormatToString(data.fileFormat);
-		out << YAML::Key << "Source" << YAML::Value << data.filePath.generic_string();
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
 		
 		out << YAML::Key << "Specification" << YAML::BeginMap;
 		out << YAML::Key << "Name" << YAML::Value << data.spec.name;

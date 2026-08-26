@@ -1,5 +1,7 @@
 #include "AudioParser.h"
 
+#include "AxionEngine/Source/core/PathResolver.h"
+
 #include "AxionAssetPipeline/Source/core/BaseIncludes.h"
 
 namespace Axion::AAP {
@@ -15,7 +17,7 @@ namespace Axion::AAP {
 
 		out << YAML::Key << "Format" << YAML::Value << FormatUtils::audioFormatToString(data.fileFormat);
 		out << YAML::Key << "Mode" << YAML::Value << EnumUtils::toString(data.mode);
-		out << YAML::Key << "Source" << YAML::Value << data.audioFilePath.generic_string();
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.audioFilePath);
 
 		out << YAML::EndMap;
 

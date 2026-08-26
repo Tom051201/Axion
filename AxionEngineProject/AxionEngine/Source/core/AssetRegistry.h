@@ -11,7 +11,7 @@ namespace Axion {
 		None = 0,
 		Mesh,
 		Texture2D,
-		TextureCube,	
+		TextureCube,
 		Material,
 		Shader,
 		Pipeline,

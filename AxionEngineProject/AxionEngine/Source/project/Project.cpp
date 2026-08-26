@@ -5,13 +5,14 @@
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
+#include "AxionEngine/Source/core/PathResolver.h"
 
 namespace Axion {
 
 	Project::Project(const std::string& name)
 		: m_name(name) {
 	
-		m_assetRegistry = std::make_shared<AssetRegistry>();
+		m_assetRegistry = MakeShared<AssetRegistry>();
 	}
 
 	Shared<Project> Project::load(const std::filesystem::path& path) {
@@ -39,15 +40,38 @@ namespace Axion {
 		if (data["Company"]) project->setCompany(data["Company"].as<std::string>());
 		if (data["Description"]) project->setDescription(data["Description"].as<std::string>());
 
-		// ----- Project-, Assetspath -----
-		project->setProjectPath(path.parent_path());
-		if (data["AssetsPath"]) project->setAssetsPath(data["AssetsPath"].as<std::string>());
+		// ----- Path Resolution Chain -----
+		std::filesystem::path absProjectDir = std::filesystem::absolute(path.parent_path());
+		project->setProjectPath(absProjectDir);
+		PathResolver::setAlias("{projdir}", absProjectDir);
 
-		// ----- Default scene -----
-		if (data["DefaultScene"]) project->setDefaultScene(data["DefaultScene"].as<std::string>());
-		if (data["AppIcon"]) project->setAppIconPath(data["AppIcon"].as<std::string>());
+		if (data["AssetsPath"]) {
+			std::string rawAssets = data["AssetsPath"].as<std::string>();
+			std::filesystem::path resolvedAssets = PathResolver::resolve(rawAssets);
+			project->setAssetsPath(resolvedAssets);
+			AX_CORE_LOG_TRACE("VFS: Resolved AssetsPath [{0}] -> [{1}]", rawAssets, resolvedAssets.string());
+		}
+		else {
+			project->setAssetsPath(absProjectDir / "Assets");
+		}
 
-		std::filesystem::path registryPath = path.parent_path() / "AssetRegistry.yaml";
+		PathResolver::setAlias("{assetsdir}", project->getAssetsPath());
+
+		if (data["DefaultScene"]) {
+			std::string rawScene = data["DefaultScene"].as<std::string>();
+			std::filesystem::path resolvedScene = PathResolver::resolve(rawScene);
+			project->setDefaultScene(resolvedScene);
+			AX_CORE_LOG_TRACE("VFS: Resolved DefaultScene [{0}] -> [{1}]", rawScene, resolvedScene.string());
+		}
+
+		if (data["AppIcon"]) {
+			std::string rawIcon = data["AppIcon"].as<std::string>();
+			std::filesystem::path resolvedIcon = PathResolver::resolve(rawIcon);
+			project->setAppIconPath(resolvedIcon);
+			AX_CORE_LOG_TRACE("VFS: Resolved AppIcon [{0}] -> [{1}]", rawIcon, resolvedIcon.string());
+		}
+
+		std::filesystem::path registryPath = absProjectDir / "AssetRegistry.yaml";
 		project->getAssetRegistry()->deserialize(registryPath);
 
 		return project;
@@ -104,13 +128,17 @@ namespace Axion {
 		AX_CORE_LOG_INFO("Successfully Loaded GameConfig Binary");
 
 		// -- Construct the Runtime Project --
-		Shared<Project> project = std::make_shared<Project>(name);
+		Shared<Project> project = MakeShared<Project>(name);
 
 		project->setProjectPath(".");
 		project->setAssetsPath(".");
+
+		PathResolver::setAlias("{projdir}", ".");
+		PathResolver::setAlias("{assetsdir}", ".");
+
 		project->setDefaultSceneUUID(defaultSceneUUID);
 		project->getAssetRegistry()->deserializeBinary("AssetRegistry.bin"); // TODO: maybe move this inside the assets folder or a config folder
-		project->setAppIconPath(iconPath);
+		project->setAppIconPath(PathResolver::resolve(iconPath));
 
 		return project;
 	}
@@ -127,11 +155,11 @@ namespace Axion {
 		if (!m_company.empty()) out << YAML::Key << "Company" << YAML::Value << m_company;
 		if (!m_description.empty()) out << YAML::Key << "Description" << YAML::Value << m_description;
 
-		out << YAML::Key << "ProjectPath" << YAML::Value << m_projectPath.generic_string();
-		out << YAML::Key << "AssetsPath" << YAML::Value << m_assetsPath.generic_string();
+		std::string relAssets = std::filesystem::relative(m_assetsPath, m_projectPath).generic_string();
+		out << YAML::Key << "AssetsPath" << YAML::Value << ("{projdir}/" + relAssets);
 
-		if (!m_defaultScene.empty()) out << YAML::Key << "DefaultScene" << YAML::Value << m_defaultScene.generic_string();
-		if (!m_appIconPath.empty()) out << YAML::Key << "AppIcon" << YAML::Value << m_appIconPath.generic_string();
+		if (!m_defaultScene.empty()) out << YAML::Key << "DefaultScene" << YAML::Value << PathResolver::virtualize(m_defaultScene);
+		if (!m_appIconPath.empty()) out << YAML::Key << "AppIcon" << YAML::Value << PathResolver::virtualize(m_appIconPath);
 
 		out << YAML::EndMap;
 
@@ -150,26 +178,16 @@ namespace Axion {
 		Shared<Project> result = std::make_shared<Project>(spec.name);
 
 		try {
-			fs::path projectDir = spec.location / projectName;
+			fs::path projectDir = std::filesystem::absolute(spec.location / projectName);
+			if (!fs::exists(projectDir)) fs::create_directories(projectDir);
 
-			// -- Create Project Directory --
-			if (!fs::exists(projectDir)) {
-				fs::create_directories(projectDir);
-			}
-
-
-			// -- Create Assets Directory --
 			fs::path assetsDir = projectDir / "Assets";
 			fs::create_directories(assetsDir);
 
-
-			// -- Create Export Directory --
 			fs::path exportDir = projectDir / "Export";
 			fs::create_directories(exportDir);
 
-
 			Project::generateScriptProject(projectDir);
-
 
 			// -- Setup Project --
 			result->setName(spec.name);
@@ -177,6 +195,9 @@ namespace Axion {
 			result->setEngineVersion(Config::EngineVersion);
 			result->setProjectPath(projectDir);
 			result->setAssetsPath(assetsDir);
+
+			PathResolver::setAlias("{projdir}", projectDir);
+			PathResolver::setAlias("{assetsdir}", assetsDir);
 
 			if (!spec.author.empty()) result->setAuthor(spec.author);
 			if (!spec.company.empty()) result->setCompany(spec.company);
