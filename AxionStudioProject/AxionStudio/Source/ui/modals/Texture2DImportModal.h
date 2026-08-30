@@ -8,6 +8,8 @@
 
 namespace Silica {
 	class SBox;
+	class STextBlock;
+	class SButton;
 }
 
 namespace Axion {
@@ -25,6 +27,7 @@ namespace Axion {
 		void rebuildUI();
 		void rebuildUI_Internal();
 		void resetInputs();
+		void validate();
 
 		std::string m_name;
 		std::string m_sourcePath;
@@ -35,6 +38,8 @@ namespace Axion {
 
 		// -- Silica --
 		std::shared_ptr<Silica::SBox> m_uiRoot;
+		std::shared_ptr<Silica::STextBlock> m_validationText;
+		std::shared_ptr<Silica::SButton> m_createBtn;
 		std::function<void()> m_onClose;
 		bool m_rebuildQueued = false;
 

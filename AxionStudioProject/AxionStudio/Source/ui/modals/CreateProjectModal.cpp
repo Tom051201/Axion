@@ -30,6 +30,45 @@ namespace Axion {
 		m_version = Version(1, 0, 0);
 	}
 
+	void CreateProjectModal::validate() {
+		if (!m_validationText || !m_createBtn) return;
+
+		bool validLocation = false;
+		bool invalidName = false;
+
+		std::error_code ec;
+		std::filesystem::path outpath = m_outputPath;
+
+		if (!m_outputPath.empty()) {
+			validLocation = std::filesystem::is_directory(outpath, ec);
+		}
+
+		if (validLocation && !m_name.empty()) {
+			std::filesystem::path projectFolder = outpath / m_name;
+			invalidName = std::filesystem::exists(projectFolder, ec);
+		}
+
+		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
+
+		bool disabled = (m_name.empty() || m_outputPath.empty() || !validLocation || invalidName || nameTooLong);
+
+		std::string validationMsg = "Ready to create project.";
+		Silica::Color validationColor = Silica::GetTheme().Text_Success;
+
+		if (disabled) {
+			validationColor = Silica::GetTheme().Text_Danger;
+			if (m_name.empty()) validationMsg = "Name needs to be set.";
+			else if (m_outputPath.empty()) validationMsg = "Location needs to be set.";
+			else if (!validLocation) validationMsg = "Selected Location is not a folder.";
+			else if (invalidName) validationMsg = "Project with this name already exists.";
+			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
+		}
+
+		m_validationText->setText(validationMsg);
+		m_validationText->setColor(validationColor);
+		m_createBtn->setEnabled(!disabled);
+	}
+
 	Silica::WidgetPtr CreateProjectModal::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
@@ -54,7 +93,7 @@ namespace Axion {
 	void CreateProjectModal::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 12.0f });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 12.0f });
 
 		// -- Header --
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Create New Project" }) });
@@ -82,7 +121,7 @@ namespace Axion {
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = m_name ,
-				.onTextChanged = [this](const std::string& val) { m_name = val; rebuildUI(); }
+				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
 			})
 		});
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Project Name", nameInput) });
@@ -95,7 +134,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_outputPath ,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; rebuildUI(); }
+						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
@@ -161,39 +200,14 @@ namespace Axion {
 		});
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Description", descInput) });
 
-		// -- Validation --
-		std::filesystem::path outpath = m_outputPath;
-		bool validLocation = std::filesystem::is_directory(outpath);
-		std::filesystem::path projectFolder = outpath / m_name;
-		bool invalidName = std::filesystem::exists(projectFolder);
-		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
 
-		bool disabled = (m_name.empty() || m_outputPath.empty() || !validLocation || invalidName || nameTooLong);
+		// -- Initialize Dynamic UI References --
+		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
 
-		std::string validationMsg = "Ready to create project.";
-		Silica::Color validationColor = Silica::GetTheme().Text_Success;
-
-		if (disabled) {
-			validationColor = Silica::GetTheme().Text_Danger;
-			if (m_name.empty()) validationMsg = "Name needs to be set.";
-			else if (!validLocation) validationMsg = "Selected Location is not a folder.";
-			else if (invalidName) validationMsg = "Project with this name already exists.";
-			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
-		}
-
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
-			.text = validationMsg,
-			.color = validationColor
-		}) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Footer Buttons --
-		auto createBtn = Silica::MakeWidget<Silica::SButton>({
+		m_createBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
-			.enabled = !disabled,
-			.onClick = [this, disabled]() {
-				if (disabled) return Silica::EventReply::unhandled();
+			.onClick = [this]() {
+				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
 
 				ProjectSpecification spec;
 				spec.name = m_name;
@@ -208,22 +222,27 @@ namespace Axion {
 				EditorModalManager::close();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Project" })
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Project" })
 		});
 
+		contentBox->addSlot({ {0,0}, m_validationText });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+
+
+		// -- Footer Buttons --
 		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
 			.onClick = []() {
 				EditorModalManager::close();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Cancel" })
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
 		});
 
 		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 10.0f,
 			.slots = {
-				{ {0,0}, createBtn },
+				{ {0,0}, m_createBtn },
 				{ {0,0}, cancelBtn }
 			}
 		});
@@ -247,5 +266,8 @@ namespace Axion {
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = modalPanel
 		}));
+
+		validate();
 	}
+
 }

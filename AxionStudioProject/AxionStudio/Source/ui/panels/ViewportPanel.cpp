@@ -8,6 +8,8 @@
 #include <Silica/include/SVerticalBox.h>
 #include <Silica/include/SButton.h>
 #include <Silica/include/STextBlock.h>
+#include <Silica/include/SWrappedTextBlock.h>
+#include <Silica/include/SScissorBox.h>
 #include <Silica/include/SImage.h>
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SSliderFloat.h>
@@ -15,6 +17,7 @@
 #include <Silica/include/SOverlay.h>
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 
 #include "AxionStudio/Source/core/EditorEvents.h"
@@ -32,6 +35,71 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr ViewportPanel::getWidget() {
+		if (!m_uiRoot) {
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+			});
+			rebuildUI_Internal();
+		}
+		return m_uiRoot;
+	}
+
+	void ViewportPanel::onEvent(Event& ev) {
+		EventDispatcher dispatcher(ev);
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(onProjectChanged));
+	}
+
+	EventReply ViewportPanel::onProjectChanged(ProjectChangedEvent& ev) {
+		rebuildUI();
+		return EventReply::unhandled();
+	}
+
+	void ViewportPanel::refresh() {
+		rebuildUI();
+	}
+
+	void ViewportPanel::refreshToolbar() {
+		EditorActionQueue::push([this]() { rebuildToolbar(); });
+	}
+
+	void ViewportPanel::rebuildUI() {
+		if (m_rebuildQueued) return;
+		m_rebuildQueued = true;
+
+		EditorActionQueue::push([this]() {
+			m_rebuildQueued = false;
+			rebuildUI_Internal();
+		});
+	}
+
+	void ViewportPanel::rebuildUI_Internal() {
+		if (!m_uiRoot) return;
+
+		// -- No Project Loaded --
+		if (!ProjectManager::hasProject()) {
+			m_viewportImage = nullptr;
+			m_viewportContainer = nullptr;
+			m_toolbarContainer = nullptr;
+			m_statsText = nullptr;
+
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to access the 3D Viewport.",
+				.wrapWidth = 350.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
+			return;
+		}
+
+
+		// -- Normal Active Viewport --
 		m_toolbarContainer = Silica::MakeWidget<Silica::SBox>({
 			.padding = { 2.0f, 4.0f },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
@@ -71,8 +139,9 @@ namespace Axion {
 						EditorActionQueue::push([this, path]() {
 							UUID skyboxUUID = AssetManager::getAssetUUID(path);
 							if (skyboxUUID.isValid()) {
+								AssetHandle<Skybox> handle = AssetManager::load<Skybox>(skyboxUUID);
 								Shared<Scene> scene = SceneManager::getScene();
-								scene->setSkybox(skyboxUUID);
+								scene->setSkybox(handle);
 
 								SceneModifiedEvent ev(SceneModificationType::SkyboxChanged);
 								m_eventCallback(ev);
@@ -128,14 +197,10 @@ namespace Axion {
 			})
 		});
 
-		return Silica::MakeWidget<Silica::SBorderLayout>({
+		m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = m_toolbarContainer,
 			.contentArea = m_viewportContainer
-		});
-	}
-
-	void ViewportPanel::refreshToolbar() {
-		EditorActionQueue::push([this]() { rebuildToolbar(); });
+		}));
 	}
 
 	void ViewportPanel::rebuildToolbar() {

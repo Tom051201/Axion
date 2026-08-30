@@ -1,5 +1,0 @@
-Project: TestProject
-Version: v1.0.0
-EngineVersion: v0.2.0
-AssetsPath: "{projdir}/Assets"
-DefaultScene: "{assetsdir}/scenes/TestScene.axscene"

@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/YamlHelper.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
+#include "AxionEngine/Source/core/PathResolver.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/graphics/Renderer3D.h"
 #include "AxionEngine/Source/scene/Entity.h"
@@ -351,37 +352,46 @@ namespace Axion {
 
 	void SceneSerializer::serializeText(const std::filesystem::path& absoluteFilePath, bool autoRegister) {
 		// ----- Register Scene to Asset Registry -----
-		UUID sceneUUID = UUID(0, 0);
+		UUID sceneUUID = m_scene->getUUID();
+		if (!sceneUUID.isValid()) {
+			sceneUUID = UUID::generate();
+			m_scene->setUUID(sceneUUID);
+			AX_CORE_LOG_WARN("Scene had invalid UUID at save time. Generated fresh UUID.");
+		}
+
 		if (autoRegister) {
 			std::filesystem::path relPath = AssetManager::getRelativeToAssets(absoluteFilePath);
+			std::string standardizedPath = relPath.generic_string();
+
 			auto registry = ProjectManager::getProject()->getAssetRegistry();
 
+			bool foundInRegistry = false;
 			for (const auto& [uuid, metadata] : registry->getMap()) {
-				if (metadata.filePath == relPath) {
+				if (metadata.filePath.generic_string() == standardizedPath) {
 					sceneUUID = uuid;
+					m_scene->setUUID(uuid);
+					foundInRegistry = true;
 					break;
 				}
 			}
 
-			// -- If not found --
-			if (!sceneUUID.isValid()) {
-				sceneUUID = UUID::generate();
+			if (!foundInRegistry) {
 				AssetMetadata metadata;
 				metadata.handle = sceneUUID;
 				metadata.type = AssetType::Scene;
 				metadata.filePath = relPath;
 				registry->add(metadata);
-
 				std::filesystem::path registryPath = ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml";
+
 				registry->serialize(registryPath);
-				AX_CORE_LOG_INFO("Registered new Scene in AssetRegistry: {}", relPath.string());
+				AX_CORE_LOG_INFO("Successfully registered Scene [{}] to AssetRegistry", standardizedPath);
 			}
 		}
 
 		// ----- Serialize to YAML -----
 		YAML::Emitter out;
 		out << YAML::BeginMap;
-		
+
 		out << YAML::Key << "Version" << YAML::Value << ASSET_VERSION_SCENE;
 		out << YAML::Key << "UUID" << YAML::Value << sceneUUID.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Scene";
@@ -461,6 +471,11 @@ namespace Axion {
 		// ----- Title -----
 		std::string sceneName = data["Scene"].as<std::string>();
 		m_scene->setTitle(sceneName);
+
+		// ----- UUID -----
+		if (data["UUID"]) {
+			m_scene->setUUID(data["UUID"].as<UUID>());
+		}
 
 
 

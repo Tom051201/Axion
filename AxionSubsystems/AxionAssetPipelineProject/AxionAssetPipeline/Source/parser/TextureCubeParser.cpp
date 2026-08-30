@@ -7,6 +7,8 @@
 namespace Axion::AAP {
 
 	void TextureCubeParser::createTextFile(const TextureCubeAssetData& data, const std::filesystem::path& outputPath) {
+		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -15,7 +17,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "TextureCube";
 		out << YAML::Key << "Format" << YAML::Value << FormatUtils::textureFormatToString(data.fileFormat);
-		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(absoluteSourcePath);
 
 		out << YAML::EndMap;
 

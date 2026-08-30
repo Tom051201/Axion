@@ -1,0 +1,15 @@
+Version: 3
+Name: SubmeshCube
+UUID: 65699dc6b8e32c69d05385da4dc3be7e
+Type: Mesh
+Format: OBJ
+Source: "BasePack_SubmeshCube.obj"
+Submeshes:
+  - BaseVertex: 0
+    StartIndex: 0
+    IndexCount: 30
+    MaterialIndex: 0
+  - BaseVertex: 0
+    StartIndex: 30
+    IndexCount: 6
+    MaterialIndex: 0

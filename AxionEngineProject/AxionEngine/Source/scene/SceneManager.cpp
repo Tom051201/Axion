@@ -43,7 +43,7 @@ namespace Axion {
 				std::filesystem::path filePath = s_managerData->toSaveScenePath;
 				if (!filePath.empty()) {
 					SceneSerializer serializer(s_managerData->scene);
-					serializer.serializeText(filePath);
+					serializer.serializeText(filePath, true);
 					s_managerData->isNewScene = false;
 					AX_CORE_LOG_INFO("Scene saved");
 				}

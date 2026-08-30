@@ -80,8 +80,12 @@ namespace Axion {
 		void queueCollision(entt::entity target, entt::entity other, const Vec3& contactPoint, const Vec3& contactNormal, const Vec3& impulse, bool isEnter);
 		void queueTrigger(entt::entity target, entt::entity other, bool isEnter);
 
+		UUID getUUID() const { return m_sceneID; }
+		void setUUID(UUID id) { m_sceneID = id; }
+
 	private:
 
+		UUID m_sceneID;
 		std::string m_title = "Untitled";
 		entt::registry m_registry;
 		std::unordered_map<UUID, entt::entity> m_entityMap;

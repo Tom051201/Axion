@@ -1,0 +1,6 @@
+Version: 2
+Name: Normalmap
+UUID: f9be3a14f3395d41573f537a4a7ccd9d
+Type: Texture2D
+Format: PNG
+Source: "BasePack_Normalmap.png"

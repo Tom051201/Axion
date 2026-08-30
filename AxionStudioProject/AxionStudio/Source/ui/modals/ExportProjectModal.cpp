@@ -24,6 +24,47 @@
 
 namespace Axion {
 
+	void ExportProjectModal::validate() {
+		if (!m_validationText || !m_exportBtn) return;
+
+		auto project = ProjectManager::getProject();
+		if (!project) return;
+
+		bool validExportPath = false;
+		bool validDefaultScene = false;
+		bool hasDefaultScene = !project->getDefaultScene().empty();
+
+		// -- Safe Filesystem Validation --
+		try {
+			std::error_code ec;
+			std::filesystem::path exportDirPath = m_exportPath;
+			if (!m_exportPath.empty()) {
+				validExportPath = std::filesystem::exists(exportDirPath, ec);
+			}
+			if (hasDefaultScene) {
+				validDefaultScene = std::filesystem::exists(project->getDefaultScene(), ec);
+			}
+		}
+		catch (...) {}
+
+		bool disabled = (m_exportPath.empty() || !hasDefaultScene || !validDefaultScene || !validExportPath);
+
+		std::string validationMsg = "Ready to package project.";
+		Silica::Color validationColor = Silica::GetTheme().Text_Success;
+
+		if (disabled) {
+			validationColor = Silica::GetTheme().Text_Danger;
+			if (m_exportPath.empty()) validationMsg = "Export path needs to be set.";
+			else if (!validExportPath) validationMsg = "Export directory does not exist.";
+			else if (!hasDefaultScene) validationMsg = "Unable to export without a default scene.";
+			else if (!validDefaultScene) validationMsg = "Default scene does not exist.";
+		}
+
+		m_validationText->setText(validationMsg);
+		m_validationText->setColor(validationColor);
+		m_exportBtn->setEnabled(!disabled);
+	}
+
 	Silica::WidgetPtr ExportProjectModal::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
@@ -63,7 +104,7 @@ namespace Axion {
 					EditorModalManager::close();
 					return Silica::EventReply::handled();
 				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Close" })
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Close" })
 			}) });
 		}
 		else {
@@ -113,7 +154,6 @@ namespace Axion {
 				});
 			};
 
-
 			// -- Export Path --
 			auto exportRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 8.0f,
@@ -123,7 +163,7 @@ namespace Axion {
 							.initialText = m_exportPath ,
 							.onTextChanged = [this](const std::string& val) {
 								m_exportPath = val;
-								rebuildUI();
+								validate();
 							}
 						})
 					})},
@@ -149,7 +189,7 @@ namespace Axion {
 						.verticalAlign = Silica::VerticalAlign::Center,
 						.child = Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = m_openAfterExport,
-							.onCheckChanged = [this](bool val) { m_openAfterExport = val; rebuildUI(); }
+							.onCheckChanged = [this](bool val) { m_openAfterExport = val; }
 						})
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
@@ -161,38 +201,13 @@ namespace Axion {
 			contentBox->addSlot({ {0,0}, MakePropertyRow("Options", optionsRow) });
 
 
-			// -- Validation --
-			std::filesystem::path exportDirPath = m_exportPath;
-			bool validExportPath = std::filesystem::exists(exportDirPath);
-			bool hasDefaultScene = !project->getDefaultScene().empty();
-			bool validDefaultScene = std::filesystem::exists(project->getDefaultScene());
+			// -- Initialize Dynamic UI References --
+			m_validationText = Silica::MakeWidget<Silica::STextBlock>({.text = "" });
 
-			bool disabled = (m_exportPath.empty() || !hasDefaultScene || !validDefaultScene || !validExportPath);
-
-			std::string validationMsg = "Ready to package project.";
-			Silica::Color validationColor = Silica::GetTheme().Text_Success;
-
-			if (disabled) {
-				validationColor = Silica::GetTheme().Text_Danger;
-				if (m_exportPath.empty()) validationMsg = "Export path needs to be set.";
-				else if (!validExportPath) validationMsg = "Export directory does not exist.";
-				else if (!hasDefaultScene) validationMsg = "Unable to export without a default scene.";
-				else if (!validDefaultScene) validationMsg = "Default scene does not exist.";
-			}
-
-			contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
-				.text = validationMsg,
-				.color = validationColor
-			}) });
-			contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-			// -- Footer Buttons --
-			auto createBtn = Silica::MakeWidget<Silica::SButton>({
+			m_exportBtn = Silica::MakeWidget<Silica::SButton>({
 				.padding = { 20.0f, 8.0f },
-				.enabled = !disabled,
-				.onClick = [this, disabled]() {
-					if (disabled) return Silica::EventReply::unhandled();
+				.onClick = [this]() {
+					if (!m_exportBtn->isEnabled()) return Silica::EventReply::unhandled();
 
 					AAP::AssetPackager::packageProject(m_exportPath);
 					if (m_openAfterExport) PlatformUtils::openFolderInFileExplorer(m_exportPath);
@@ -200,9 +215,13 @@ namespace Axion {
 					EditorModalManager::close();
 					return Silica::EventReply::handled();
 				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Package Project" })
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Package Project" })
 			});
 
+			contentBox->addSlot({ {0,0}, m_validationText });
+			contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+
+			// -- Footer Buttons --
 			auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
 				.padding = { 20.0f, 8.0f },
 				.onClick = []() {
@@ -215,13 +234,12 @@ namespace Axion {
 			auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 10.0f,
 				.slots = {
-					{ {0,0}, createBtn },
+					{ {0,0}, m_exportBtn },
 					{ {0,0}, cancelBtn }
 				}
 			});
 			contentBox->addSlot({ {0,0}, footerRow });
 		}
-
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
@@ -240,6 +258,8 @@ namespace Axion {
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = modalPanel
 		}));
+
+		validate();
 	}
 
 }

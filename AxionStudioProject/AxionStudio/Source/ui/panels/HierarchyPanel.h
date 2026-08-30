@@ -51,6 +51,7 @@ namespace Axion {
 		std::shared_ptr<Silica::SVerticalBox> m_contentBox;
 
 		EventReply onSceneChanged(SceneChangedEvent& ev);
+		EventReply onProjectChanged(ProjectChangedEvent& ev);
 		EventReply onEntitySelected(EntitySelectedEvent& ev);
 		EventReply onEditorHistoryChanged(EditorHistoryChangedEvent& ev);
 

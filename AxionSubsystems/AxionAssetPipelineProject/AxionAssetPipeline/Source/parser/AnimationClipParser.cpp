@@ -9,6 +9,7 @@
 namespace Axion::AAP {
 
 	void AnimationClipParser::createTextFile(const AnimationClipAssetData& data, const std::filesystem::path& outputPath) {
+		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
 
 		Ref<AnimationClip> clip = GLTFImporter::extractAnimation(AssetManager::getAbsolute(data.filePath));
 
@@ -19,7 +20,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Animation";
-		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(absoluteSourcePath);
 
 		out << YAML::EndMap;
 

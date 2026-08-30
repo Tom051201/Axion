@@ -1,6 +1,0 @@
-VirtualFileSystem:
-  - Name: CesiumMan_Anim_0_axanim.axbin
-    IsDirectory: false
-    PhysicalPath: D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Projects\TestProject\Export\animations\CesiumMan\CesiumMan_Anim_0_axanim.axbin
-  - Name: Base
-    IsDirectory: true

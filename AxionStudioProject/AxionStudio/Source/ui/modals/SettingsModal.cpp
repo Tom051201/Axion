@@ -16,7 +16,6 @@
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
-
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 
 namespace Axion {
@@ -32,7 +31,7 @@ namespace Axion {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.consumePointerEvents = true,
 				.backgroundColor = Silica::Color(0, 0, 0, 180),
-			});
+				});
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -45,7 +44,7 @@ namespace Axion {
 		EditorActionQueue::push([this]() {
 			m_rebuildQueued = false;
 			rebuildUI_Internal();
-		});
+			});
 	}
 
 	Silica::WidgetPtr SettingsModal::buildEditorPreferencesTab() {
@@ -68,7 +67,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_budgetText,
-						.onTextChanged = [this](const std::string& val) {
+						.onTextCommitted = [this](const std::string& val) {
 							m_budgetText = val;
 							try {
 								int parsed = std::stoi(val);
@@ -81,7 +80,7 @@ namespace Axion {
 					})
 				})}
 			}
-		});
+			});
 
 		contentBox->addSlot({ {0,0}, inputRow });
 		return contentBox;
@@ -170,8 +169,8 @@ namespace Axion {
 					.text = label,
 					.color = isActive ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim
 				})
-			});
-		};
+				});
+			};
 
 		// -- Left Sidebar --
 		auto sidebar = Silica::MakeWidget<Silica::SBox>({
@@ -184,7 +183,7 @@ namespace Axion {
 					{ {0,0}, makeTabButton("File Paths", Tab::FilePaths) }
 				}
 			})
-		});
+			});
 
 		// -- Right Content Area --
 		Silica::WidgetPtr activeContent = nullptr;
@@ -195,7 +194,7 @@ namespace Axion {
 			.padding = { 20.0f, 20.0f },
 			.backgroundColor = Silica::Color::transparent(),
 			.child = activeContent
-		});
+			});
 
 		// -- Split Layout --
 		auto splitLayout = Silica::MakeWidget<Silica::SHorizontalBox>({
@@ -203,12 +202,12 @@ namespace Axion {
 				{ {0,0}, sidebar },
 				{ {1,0}, contentArea }
 			}
-		});
+			});
 
 		auto topSection = Silica::MakeWidget<Silica::SBox>({
 			.explicitSize = Silica::Vec2{ 850.0f, 534.0f },
 			.child = splitLayout
-		});
+			});
 
 		// -- Footer --
 		auto footerBox = Silica::MakeWidget<Silica::SBox>({
@@ -230,7 +229,7 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Done" })
 				})
 			})
-		});
+			});
 
 		// -- Stack Top Section And Footer Cleanly --
 		auto fullLayout = Silica::MakeWidget<Silica::SVerticalBox>({
@@ -238,20 +237,20 @@ namespace Axion {
 				{ {0,0}, topSection },
 				{ {0,0}, footerBox }
 			}
-		});
+			});
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.explicitSize = Silica::Vec2{ 850.0f, 600.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.child = fullLayout
-		});
+			});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
 			.horizontalAlign = Silica::HorizontalAlign::Center,
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = modalPanel
-		}));
+			}));
 	}
 
 }

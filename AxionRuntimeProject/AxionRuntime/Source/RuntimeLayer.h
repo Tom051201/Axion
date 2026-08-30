@@ -17,9 +17,9 @@ namespace Axion {
 
 	private:
 
-		Ref<Scene> m_activeScene;
+		Shared<Scene> m_activeScene;
 
-		bool onWindowResize(WindowResizeEvent& e);
+		EventReply onWindowResize(WindowResizeEvent& e);
 
 	};
 

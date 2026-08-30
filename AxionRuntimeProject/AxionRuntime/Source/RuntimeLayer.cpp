@@ -9,7 +9,7 @@ namespace Axion {
 	void RuntimeLayer::onAttach() {
 		ProjectManager::loadRuntimeProject();
 
-		Ref<Project> project = ProjectManager::getProject();
+		Shared<Project> project = ProjectManager::getProject();
 		if (!project) return;
 
 		Application::get().setWindowTitle(project->getName());
@@ -17,7 +17,7 @@ namespace Axion {
 			Application::get().setWindowIcon(project->getAppIconPath());
 		}
 
-		m_activeScene = std::make_shared<Scene>();
+		m_activeScene = MakeShared<Scene>();
 		UUID sceneUUID = project->getDefaultSceneUUID();
 
 		if (sceneUUID.isValid() && project->getAssetRegistry()->contains(sceneUUID)) {
@@ -56,12 +56,12 @@ namespace Axion {
 		dispatcher.dispatch<WindowResizeEvent>(AX_BIND_EVENT_FN(RuntimeLayer::onWindowResize));
 	}
 
-	bool RuntimeLayer::onWindowResize(WindowResizeEvent& e) {
+	EventReply RuntimeLayer::onWindowResize(WindowResizeEvent& e) {
 		if (m_activeScene && e.getWidth() > 0 && e.getHeight() > 0) {
 			m_activeScene->onViewportResized(e.getWidth(), e.getHeight());
 		}
 
-		return false;
+		return EventReply::unhandled();
 	}
 
 }

@@ -16,7 +16,9 @@
 
 namespace Axion {
 
-	Scene::Scene() {}
+	Scene::Scene() {
+		m_sceneID = UUID::generate();
+	}
 
 	Scene::~Scene() {
 		release();
@@ -200,7 +202,6 @@ namespace Axion {
 	}
 
 	void Scene::onUpdate(Timestep ts, const Camera& cam) {
-
 		// ----- Setup Scene Lighting -----
 		LightingData lightData;
 		lightData.ambientColor = m_sceneAmbientColor;

@@ -26,6 +26,7 @@ namespace Silica {
 		void onDraw(DrawList& outDrawList, const Geometry& allocatedGeometry) const override;
 
 		void setText(const std::string& text);
+		void setColor(const Color& color);
 
 	private:
 

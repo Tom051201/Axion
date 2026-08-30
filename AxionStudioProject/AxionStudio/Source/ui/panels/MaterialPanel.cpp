@@ -16,6 +16,8 @@
 #include <Silica/include/SColorField.h>
 #include <Silica/include/SVerticalBox.h>
 #include <Silica/include/SSeparator.h>
+#include <Silica/include/SWrappedTextBlock.h>
+#include <Silica/include/SScissorBox.h>
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EngineAssets.h"
@@ -311,13 +313,39 @@ namespace Axion {
 	void MaterialPanel::rebuildUI() {
 		if (!m_uiRoot) return;
 
-		// -- No Material --
-		if (!m_material) {
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
+		// -- No Project Loaded --
+		if (!ProjectManager::hasProject()) {
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view material properties.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
 				.horizontalAlign = Silica::HorizontalAlign::Center,
 				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "No Material Loaded.\nOpen a .axmat file from the Content Browser." })
-			}));
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
+			return;
+		}
+
+		// -- No Material loaded --
+		if (!m_material) {
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Material Loaded.\n\nPlease open a .axmat file from the Content Browser to view and edit its properties.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
 			return;
 		}
 
@@ -802,6 +830,16 @@ namespace Axion {
 		Renderer3D::endScene();
 
 		m_previewFramebuffer->unbind();
+	}
+
+	void MaterialPanel::onEvent(Event& ev) {
+		EventDispatcher dispatcher(ev);
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(onProjectChanged));
+	}
+
+	EventReply MaterialPanel::onProjectChanged(ProjectChangedEvent& ev) {
+		rebuildUI();
+		return EventReply::unhandled();
 	}
 
 }

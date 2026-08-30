@@ -9,7 +9,6 @@
 namespace Axion::AAP {
 
 	void MeshParser::createTextFile(const MeshAssetData& data, const std::filesystem::path& outputPath) {
-
 		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
 
 		MeshData meshData;
@@ -36,7 +35,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "Mesh";
 		out << YAML::Key << "Format" << YAML::Value << FormatUtils::meshFormatToString(data.fileFormat);
-		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(absoluteSourcePath);
 
 		out << YAML::Key << "Submeshes" << YAML::Value << YAML::BeginSeq;
 		for (const auto& submesh : meshData.submeshes) {

@@ -11,6 +11,8 @@
 #include <Silica/include/SEditableText.h>
 #include <Silica/include/SScrollBox.h>
 #include <Silica/include/SAlign.h>
+#include <Silica/include/SWrappedTextBlock.h>
+#include <Silica/include/SScissorBox.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -58,12 +60,20 @@ namespace Axion {
 
 		// -- No project loaded --
 		if (!ProjectManager::hasProject()) {
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view project settings.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
 				.horizontalAlign = Silica::HorizontalAlign::Center,
 				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = Silica::MakeWidget<Silica::STextBlock>({
-					.text = "No Project Loaded.\nPlease load or create a project first."
-				})
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({
+				.child = centeredState
 			}));
 			return;
 		}

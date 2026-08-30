@@ -155,11 +155,6 @@ namespace Axion {
 		m_deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 	}
 
-	void* DX11Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
-		// TODO remove this in the future because imgui was removed from the engine!
-		return nullptr;
-	}
-
 	void DX11Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
 		if (count == 0) return;
 
@@ -177,7 +172,6 @@ namespace Axion {
 			}
 		}
 
-		// ---> IGNORE rootIndex! DX11 maps directly to HLSL register t0 <---
 		m_deviceContext->PSSetShaderResources(0, count, srvs);
 		m_deviceContext->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
 	}

@@ -9,6 +9,8 @@
 #include <Silica/include/SWidget.h>
 #include <Silica/include/SNodeEditor.h>
 
+#include "AxionEngine/Source/events/ApplicationEvent.h"
+
 #include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 
@@ -71,6 +73,7 @@ namespace Axion {
 		void refreshVariableNodes();
 		void syncGraphState();
 
+		EventReply onProjectChanged(ProjectChangedEvent& e);
 		EventReply onAssetRenamed(AssetRenamedEvent& e);
 		EventReply onAssetDeleted(AssetDeletedEvent& e);
 

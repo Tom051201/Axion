@@ -36,6 +36,50 @@ namespace Axion {
 		m_restitution = 0.05f;
 	}
 
+	void PhysicsMaterialImportModal::validate() {
+		if (!m_validationText || !m_createBtn) return;
+
+		std::string finalName = m_name + ".axpmat";
+		std::filesystem::path finalPath;
+
+		bool outputExists = false;
+		bool outputIsDirectory = false;
+		bool invalidOutFileName = false;
+
+		// -- Safe Filesystem Checks --
+		try {
+			std::error_code ec;
+			if (!m_outputPath.empty()) {
+				outputExists = std::filesystem::exists(m_outputPath, ec);
+				outputIsDirectory = std::filesystem::is_directory(m_outputPath, ec);
+				finalPath = std::filesystem::path(m_outputPath) / finalName;
+				invalidOutFileName = std::filesystem::exists(finalPath, ec);
+			}
+		}
+		catch (...) {}
+
+		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
+
+		bool disabled = (m_name.empty() || m_outputPath.empty() || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
+
+		std::string validationMsg = "Ready to create asset.";
+		Silica::Color validationColor = Silica::GetTheme().Text_Success;
+
+		if (disabled) {
+			validationColor = Silica::GetTheme().Text_Danger;
+			if (m_name.empty()) validationMsg = "Name needs to be set.";
+			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
+			else if (!outputExists) validationMsg = "Output directory does not exist.";
+			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
+			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
+			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
+		}
+
+		m_validationText->setText(validationMsg);
+		m_validationText->setColor(validationColor);
+		m_createBtn->setEnabled(!disabled);
+	}
+
 	Silica::WidgetPtr PhysicsMaterialImportModal::getWidget(std::function<void()> onClose) {
 		m_onClose = onClose;
 
@@ -54,8 +98,8 @@ namespace Axion {
 		m_rebuildQueued = true;
 
 		EditorActionQueue::push([this]() {
-			 m_rebuildQueued = false;
-			 rebuildUI_Internal();
+			m_rebuildQueued = false;
+			rebuildUI_Internal();
 		});
 	}
 
@@ -84,8 +128,8 @@ namespace Axion {
 					})},
 					{ {1, 0}, valueWidget }
 				}
-			});
-		};
+				});
+			};
 
 		auto MakeSliderRow = [&](float& val, float maxVal) {
 			return Silica::MakeWidget<Silica::SSliderFloat>({
@@ -99,18 +143,18 @@ namespace Axion {
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = m_name,
-				.onTextChanged = [this](const std::string& val) { m_name = val; rebuildUI(); }
+				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
 			})
-		});
+			});
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Name", nameInput) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({ .thickness = 2.0f }) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
 
 
 		// -- Physics Properties --
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Static Friction", MakeSliderRow(m_staticFriction, 10.0f)) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Dynamic Friction", MakeSliderRow(m_dynamicFriction, 10.0f)) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Restitution", MakeSliderRow(m_restitution, 1.0f)) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({ .thickness = 2.0f }) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
 
 
 		// -- Output Path --
@@ -120,7 +164,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_outputPath,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; rebuildUI(); }
+						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
@@ -141,43 +185,16 @@ namespace Axion {
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Output Location", outputRow) });
 
 
-		// -- Validation Logic --
-		std::string finalName = m_name + ".axpmat";
-		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+		// -- Initialize Dynamic UI References --
+		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
 
-		bool outputExists = std::filesystem::exists(m_outputPath);
-		bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
-		bool invalidOutFileName = std::filesystem::exists(finalPath);
-		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
-
-		bool disabled = (m_name.empty() || m_outputPath.empty() || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
-
-		std::string validationMsg = "Ready to create asset.";
-		Silica::Color validationColor = Silica::GetTheme().Text_Success;
-
-		if (disabled) {
-			validationColor = Silica::GetTheme().Text_Danger;
-			if (m_name.empty()) validationMsg = "Name needs to be set.";
-			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
-			else if (!outputExists) validationMsg = "Output directory does not exist.";
-			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
-			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
-			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
-		}
-
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
-			.text = validationMsg,
-			.color = validationColor
-		}) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Footer Buttons --
-		auto createBtn = Silica::MakeWidget<Silica::SButton>({
+		m_createBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
-			.enabled = !disabled,
-			.onClick = [this, disabled, finalPath]() {
-				if (disabled) return Silica::EventReply::unhandled();
+			.onClick = [this]() {
+				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
+
+				std::string finalName = m_name + ".axpmat";
+				std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
 				UUID newAssetUUID = UUID::generate();
 
@@ -202,9 +219,14 @@ namespace Axion {
 				if (m_onClose) m_onClose();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create" })
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create" })
 		});
 
+		contentBox->addSlot({ {0,0}, m_validationText });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+
+
+		// -- Footer Buttons --
 		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
 			.onClick = [this]() {
@@ -219,9 +241,9 @@ namespace Axion {
 		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 10.0f,
 			.slots = {
-				{ {0,0}, createBtn },
+				{ {0,0}, m_createBtn },
 				{ {0,0}, cancelBtn },
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({ .backgroundColor = Silica::Color::transparent()}) },
+				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
 					.child = Silica::MakeWidget<Silica::STextBlock>({
@@ -251,6 +273,8 @@ namespace Axion {
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = modalPanel
 		}));
+
+		validate();
 	}
 
 }

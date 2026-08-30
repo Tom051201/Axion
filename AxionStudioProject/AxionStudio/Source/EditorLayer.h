@@ -43,6 +43,9 @@ namespace Axion {
 	class MaterialPanel;
 	class HistoryPanel;
 	class SettingsModal;
+	class CreateProjectModal;
+	class ExportProjectModal;
+	class SystemInfoModal;
 
 	class EditorLayer : public Layer {
 	public:
@@ -66,6 +69,7 @@ namespace Axion {
 		Shared<Scene> m_editorScene;
 		Entity m_selectedEntity;
 		int m_hoveredEntityID = -1;
+		const std::filesystem::path m_editorSettingsPath = "AxionStudio/Config/EditorSettings.yaml";
 
 
 		// -- Scene --
@@ -94,6 +98,9 @@ namespace Axion {
 		Shared<MaterialPanel> m_materialPanel;
 		Shared<HistoryPanel> m_historyPanel;
 		Shared<SettingsModal> m_settingsModal;
+		Shared<CreateProjectModal> m_createProjectModal;
+		Shared<ExportProjectModal> m_exportProjectModal;
+		Shared<SystemInfoModal> m_systemInfoModal;
 
 		// -- Text Editor Tabs --
 		std::unordered_map<std::string, std::string> m_openTextEditors;
@@ -118,6 +125,9 @@ namespace Axion {
 		void openMaterialEditor(const std::filesystem::path& filepath);
 		void openVisualScriptPanel(const std::filesystem::path& filepath);
 		void openSceneInViewport(const std::filesystem::path& filepath);
+		void openCreateProjectModal();
+		void openExportProjectModal();
+		void openSystemInfoModal();
 
 		EventReply onKeyPressed(KeyPressedEvent& ev);
 		EventReply onKeyReleased(KeyReleasedEvent& ev);

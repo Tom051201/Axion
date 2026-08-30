@@ -8,6 +8,7 @@
 #include <Silica/include/SButton.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SAlign.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/graphics/GraphicsContext.h"
@@ -58,8 +59,11 @@ namespace Axion {
 		// -- Helper Functions --
 		auto MakeHeader = [&](const std::string& title) {
 			auto box = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 4.0f });
-			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = title, .color = Silica::Color(100, 200, 255, 255) }) });
-			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 1}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
+			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
+				.text = title,
+				.color = Silica::GetTheme().Accent_Primary
+			}) });
+			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
 			return box;
 		};
 
@@ -70,7 +74,10 @@ namespace Axion {
 					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
 						.explicitSize = Silica::Vec2(100.0f, 0.0f),
 						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label, .color = Silica::Color(180, 180, 180, 255) })
+						.child = Silica::MakeWidget<Silica::STextBlock>({
+							.text = label,
+							.color = Silica::GetTheme().Text_Dim
+						})
 					})},
 					{ {1, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = value }) }
 				}
@@ -103,10 +110,10 @@ namespace Axion {
 
 
 		// -- Footer Buttons --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 1}, .backgroundColor = Silica::Color(60, 60, 60, 255)}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
 
 		auto closeBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 30.0f, 8.0f }, .color = Silica::Color(80, 80, 80, 255),
+			.padding = { 30.0f, 8.0f },
 			.onClick = []() {
 				EditorModalManager::close();
 				return Silica::EventReply::handled();
@@ -124,7 +131,7 @@ namespace Axion {
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.explicitSize = Silica::Vec2{ 500.0f, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
-			.backgroundColor = Silica::Color(30, 30, 30, 255),
+			.backgroundColor = Silica::GetTheme().Background_Panel,
 			.child = Silica::MakeWidget<Silica::SBox>({
 				.padding = { 20.0f, 20.0f },
 				.backgroundColor = Silica::Color::transparent(),

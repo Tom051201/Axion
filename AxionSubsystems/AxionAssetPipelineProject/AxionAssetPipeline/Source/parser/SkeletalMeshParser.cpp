@@ -9,6 +9,8 @@
 namespace Axion::AAP {
 
 	void SkeletalMeshParser::createTextFile(const SkeletalMeshAssetData& data, const std::filesystem::path& outputPath) {
+		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
+
 		SkeletalMeshData meshData = GLTFImporter::extractSkeletalMesh(AssetManager::getAbsolute(data.filePath));
 
 		YAML::Emitter out;
@@ -18,7 +20,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "Name" << YAML::Value << data.name;
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid;
 		out << YAML::Key << "Type" << YAML::Value << "SkeletalMesh";
-		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(absoluteSourcePath);
 
 		out << YAML::Key << "Submeshes" << YAML::Value << YAML::BeginSeq;
 		for (const auto& submesh : meshData.submeshes) {

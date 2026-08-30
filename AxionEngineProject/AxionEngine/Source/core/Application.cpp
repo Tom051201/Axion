@@ -31,7 +31,7 @@ namespace Axion {
 		ScriptEngine::initialize();
 
 		// Sets startup backend
-		Renderer::setAPI(RendererAPI::DirectX11);
+		Renderer::setAPI(RendererAPI::DirectX12);
 		Renderer::initialize(m_window.get(), AX_BIND_EVENT_FN(Application::onEvent));
 
 		EngineAssets::initialize();

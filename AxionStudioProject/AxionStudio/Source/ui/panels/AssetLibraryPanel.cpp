@@ -19,6 +19,7 @@
 #include "AxionEngine/Source/core/Logging.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/YAMLHelper.h"
+#include "AxionEngine/Source/core/PathResolver.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
@@ -52,7 +53,7 @@ namespace Axion {
 				pack.sourcePath = entry.path();
 				pack.description = "A collection of assets ready to be imported into your project.";
 				pack.thumbnailID = 0;
-				
+
 				// -- Load Thumbnail --
 				std::filesystem::path thumbnailPath = entry.path() / "thumbnail.png";
 				if (std::filesystem::exists(thumbnailPath)) {
@@ -132,9 +133,9 @@ namespace Axion {
 			});
 
 			// -- Grid Container --
-			m_gridContainer = Silica::MakeWidget<Silica::SBox>({.padding = { 20.0f, 20.0f } });
+			m_gridContainer = Silica::MakeWidget<Silica::SBox>({ .padding = { 20.0f, 20.0f } });
 
-			auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({.child = m_gridContainer });
+			auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({ .child = m_gridContainer });
 
 			m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 				.topBar = topBarBox,
@@ -205,7 +206,7 @@ namespace Axion {
 							.text = "No Image",
 							.color = Silica::GetTheme().Text_Dim
 						})
-						});
+					});
 				}
 
 				auto packCard = Silica::MakeWidget<Silica::SBox>({
@@ -294,11 +295,12 @@ namespace Axion {
 					if (ext == ".axshader") return AssetType::Shader;
 					if (ext == ".axskelmesh") return AssetType::SkeletalMesh;
 					if (ext == ".axtcube") return AssetType::TextureCube;
+					if (ext == ".axsky") return AssetType::Skybox;
 					return AssetType::None;
-				};
+					};
 
-				// -- Pass 1 : Generate UUID Mappings --
-				std::unordered_map<UUID, UUID> uuidRemap;
+				// -- Pass 1 : Generate UUID Mappings (STRING BASED FOR SAFETY) --
+				std::unordered_map<std::string, std::string> uuidRemap;
 
 				for (const auto& entry : std::filesystem::recursive_directory_iterator(pack.sourcePath)) {
 					if (entry.is_directory()) continue;
@@ -308,15 +310,17 @@ namespace Axion {
 					if (getAssetTypeFromExtension(ext) != AssetType::None) {
 						try {
 							YAML::Node node = YAML::LoadFile(entry.path().string());
-							UUID oldUUID;
-							oldUUID.invalidate();
+							std::string oldUUIDStr = "";
 
-							if (node["UUID"]) oldUUID = node["UUID"].as<UUID>();
-							else if (node["Asset"]) oldUUID = node["Asset"].as<UUID>();
-							else if (node["ID"]) oldUUID = node["ID"].as<UUID>();
+							// Extract as raw string to avoid parser crashes on hex formats
+							if (node["UUID"]) oldUUIDStr = node["UUID"].as<std::string>();
+							else if (node["Asset"]) oldUUIDStr = node["Asset"].as<std::string>();
+							else if (node["ID"]) oldUUIDStr = node["ID"].as<std::string>();
 
-							if (oldUUID.isValid()) {
-								uuidRemap[oldUUID] = UUID::generate();
+							// Safeguard: Only remap if it's a valid string and not "0"
+							if (!oldUUIDStr.empty() && oldUUIDStr != "0") {
+								UUID newId = UUID::generate();
+								uuidRemap[oldUUIDStr] = newId.toString();
 							}
 						}
 						catch (const YAML::Exception& e) {
@@ -328,6 +332,7 @@ namespace Axion {
 
 				// -- Pass 2 : Copy, Rewrite, And Register --
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				std::vector<std::string> rawPathKeys = { "Source", "ShaderPath", "TextureCubePath", "FilePath", "Shader" };
 
 				for (const auto& entry : std::filesystem::recursive_directory_iterator(pack.sourcePath)) {
 					if (entry.is_directory()) continue;
@@ -349,13 +354,11 @@ namespace Axion {
 						in.close();
 
 						// -- Safely Replace All Internal UUID References --
-						for (const auto& [oldId, newId] : uuidRemap) {
-							std::string oldStr = oldId.toString();
-							std::string newStr = newId.toString();
+						for (const auto& [oldStr, newStr] : uuidRemap) {
 							size_t pos = 0;
 							while ((pos = content.find(oldStr, pos)) != std::string::npos) {
 								content.replace(pos, oldStr.length(), newStr);
-								pos += newStr.length();
+								pos += newStr.length(); // Advance past the newly inserted UUID
 							}
 						}
 
@@ -363,44 +366,41 @@ namespace Axion {
 						out << content;
 						out.close();
 
-						// -- Inject Into Asset Registry And Fix Source Paths --
+						// -- Inject Into Asset Registry And Fix Raw Source Paths --
 						try {
 							YAML::Node targetNode = YAML::LoadFile(targetFilePath.string());
 							bool yamlNeedsResave = false;
 
-							// -- Smart Path Resolver --
-							if (targetNode["Source"]) {
-								std::string oldSource = targetNode["Source"].as<std::string>();
-								std::string targetFileName = std::filesystem::path(oldSource).filename().string();
-								std::filesystem::path resolvedNewSource = "";
+							// -- Smart Raw File Path Resolver --
+							for (const auto& key : rawPathKeys) {
+								if (targetNode[key]) {
+									std::string oldSourceStr = targetNode[key].as<std::string>();
+									std::string targetFileName = std::filesystem::path(oldSourceStr).filename().string();
+									std::string resolvedNewSource = "";
 
-								// -- Root-Relative --
-								if (std::filesystem::exists(destFolder / oldSource)) {
-									resolvedNewSource = std::filesystem::path("ImportedPacks") / pack.name / oldSource;
-								}
+									// Deep Search inside the SOURCE folder instead of DESTINATION folder
+									// This makes it completely immune to file copying order!
+									for (const auto& searchEntry : std::filesystem::recursive_directory_iterator(pack.sourcePath)) {
+										if (searchEntry.is_regular_file() && searchEntry.path().filename().string() == targetFileName) {
 
-								// -- Sibling-Relative --
-								else if (std::filesystem::exists(targetFilePath.parent_path() / oldSource)) {
-									resolvedNewSource = std::filesystem::relative(targetFilePath.parent_path() / oldSource, projectAssetsPath);
-								}
+											// Calculate where this file WILL be in the destination
+											std::filesystem::path relToPack = std::filesystem::relative(searchEntry.path(), pack.sourcePath);
+											std::filesystem::path finalDestPath = destFolder / relToPack;
 
-								// -- Deep Search --
-								else {
-									for (const auto& searchEntry : std::filesystem::recursive_directory_iterator(destFolder)) {
-										if (searchEntry.path().filename().string() == targetFileName) {
-											resolvedNewSource = std::filesystem::relative(searchEntry.path(), projectAssetsPath);
+											// Virtualize the calculated path!
+											resolvedNewSource = PathResolver::virtualize(finalDestPath);
 											break;
 										}
 									}
-								}
 
-								// -- Update YAML --
-								if (!resolvedNewSource.empty()) {
-									targetNode["Source"] = resolvedNewSource.generic_string();
-									yamlNeedsResave = true;
-								}
-								else {
-									AX_CORE_LOG_WARN("Could not resolve Source file '{}' for asset '{}'", targetFileName, targetFilePath.filename().string());
+									// -- Update YAML --
+									if (!resolvedNewSource.empty()) {
+										targetNode[key] = resolvedNewSource;
+										yamlNeedsResave = true;
+									}
+									else {
+										AX_CORE_LOG_WARN("Could not resolve raw file '{0}' for asset '{1}'", targetFileName, targetFilePath.filename().string());
+									}
 								}
 							}
 
@@ -411,8 +411,7 @@ namespace Axion {
 							}
 
 							UUID fileUUID;
-							fileUUID.invalidate();
-
+							// Now that we string-replaced the file, it contains a standard engine UUID!
 							if (targetNode["UUID"]) fileUUID = targetNode["UUID"].as<UUID>();
 							else if (targetNode["Asset"]) fileUUID = targetNode["Asset"].as<UUID>();
 							else if (targetNode["ID"]) fileUUID = targetNode["ID"].as<UUID>();
@@ -442,7 +441,7 @@ namespace Axion {
 			catch (const std::exception& e) {
 				AX_CORE_LOG_ERROR("Failed to import asset pack: {0}", e.what());
 			}
-		});
+			});
 	}
 
 	void AssetLibraryPanel::onEvent(Event& e) {

@@ -1,0 +1,11 @@
+Version: 3
+Name: Cube
+UUID: 47ee9ce0aa0fa000171462527419dde7
+Type: Mesh
+Format: OBJ
+Source: "BasePack_Cube.obj"
+Submeshes:
+  - BaseVertex: 0
+    StartIndex: 0
+    IndexCount: 36
+    MaterialIndex: 0

@@ -6,6 +6,7 @@
 #include <Silica/include/SWidget.h>
 
 #include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
 
 #include "AxionStudio/Source/core/EditorEvents.h"
 
@@ -24,7 +25,7 @@ namespace Axion {
 
 		Silica::WidgetPtr getWidget();
 
-		void onEvent(Event& e);
+		void onEvent(Event& ev);
 
 		void setEntity(Entity entity);
 
@@ -38,7 +39,8 @@ namespace Axion {
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		std::shared_ptr<Silica::SVerticalBox> m_contentBox;
 
-		EventReply onEntitySelected(EntitySelectedEvent& e);
+		EventReply onProjectChanged(ProjectChangedEvent& ev);
+		EventReply onEntitySelected(EntitySelectedEvent& ev);
 		EventReply onEditorHistoryChanged(EditorHistoryChangedEvent& ev);
 
 	};

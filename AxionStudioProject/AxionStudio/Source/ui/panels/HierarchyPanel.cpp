@@ -11,6 +11,9 @@
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SBox.h>
 #include <Silica/include/SBorderLayout.h>
+#include <Silica/include/SWrappedTextBlock.h>
+#include <Silica/include/SScissorBox.h>
+#include <Silica/include/SAlign.h>
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -77,11 +80,17 @@ namespace Axion {
 	void HierarchyPanel::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);
 		dispatcher.dispatch<SceneChangedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onSceneChanged));
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onProjectChanged));
 		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onEntitySelected));
 		dispatcher.dispatch<EditorHistoryChangedEvent>(AX_BIND_EVENT_FN(HierarchyPanel::onEditorHistoryChanged));
 	}
 
 	EventReply HierarchyPanel::onSceneChanged(SceneChangedEvent& ev) {
+		setScene(SceneManager::getScene());
+		return EventReply::unhandled();
+	}
+
+	EventReply HierarchyPanel::onProjectChanged(ProjectChangedEvent& ev) {
 		setScene(SceneManager::getScene());
 		return EventReply::unhandled();
 	}
@@ -200,7 +209,6 @@ namespace Axion {
 				EntitySelectedEvent ev(entity);
 				m_eventCallback(ev);
 
-//				if (m_onEntitySelected) m_onEntitySelected(entity);
 				rebuildUI();
 			},
 
@@ -304,7 +312,28 @@ namespace Axion {
 	}
 
 	void HierarchyPanel::rebuildUI() {
-		if (!m_contentBox) return;
+		if (!m_uiRoot || !m_contentBox) return;
+
+		// -- No project loaded --
+		if (!ProjectManager::hasProject()) {
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view entities.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({ .child = centeredState }));
+			return;
+		}
+
+		// -- Project loaded --
+		m_uiRoot->setChild(m_contentBox);
 		m_contentBox->clearSlots();
 
 		if (!m_scene) return;
@@ -378,7 +407,7 @@ namespace Axion {
 				treeContainer->addSlot({
 					.padding = {0.0f, 0.0f},
 					.child = buildEntityNode(entity)
-				});
+					});
 			}
 		}
 

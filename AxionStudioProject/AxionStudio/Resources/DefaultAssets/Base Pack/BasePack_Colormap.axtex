@@ -1,0 +1,6 @@
+Version: 2
+Name: Colormap
+UUID: 87204dce98cd543e4313b3a3473eba66
+Type: Texture2D
+Format: PNG
+Source: "BasePack_Colormap.png"

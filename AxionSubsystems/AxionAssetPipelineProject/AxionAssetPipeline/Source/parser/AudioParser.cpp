@@ -7,6 +7,8 @@
 namespace Axion::AAP {
 
 	void AudioParser::createTextFile(const AudioAssetData& data, const std::filesystem::path& outputPath) {
+		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.audioFilePath);
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -17,7 +19,7 @@ namespace Axion::AAP {
 
 		out << YAML::Key << "Format" << YAML::Value << FormatUtils::audioFormatToString(data.fileFormat);
 		out << YAML::Key << "Mode" << YAML::Value << EnumUtils::toString(data.mode);
-		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.audioFilePath);
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(absoluteSourcePath);
 
 		out << YAML::EndMap;
 

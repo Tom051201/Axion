@@ -19,6 +19,8 @@
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SComboBox.h>
 #include <Silica/include/SColorField.h>
+#include <Silica/include/SWrappedTextBlock.h>
+#include <Silica/include/SScissorBox.h>
 
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -223,8 +225,14 @@ namespace Axion {
 
 	void EntityPropertiesPanel::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(onProjectChanged));
 		dispatcher.dispatch<EntitySelectedEvent>(AX_BIND_EVENT_FN(onEntitySelected));
 		dispatcher.dispatch<EditorHistoryChangedEvent>(AX_BIND_EVENT_FN(onEditorHistoryChanged));
+	}
+
+	EventReply EntityPropertiesPanel::onProjectChanged(ProjectChangedEvent& ev) {
+		rebuildUI();
+		return EventReply::unhandled();
 	}
 
 	EventReply EntityPropertiesPanel::onEntitySelected(EntitySelectedEvent& e) {
@@ -238,7 +246,28 @@ namespace Axion {
 	}
 
 	void EntityPropertiesPanel::rebuildUI() {
-		if (!m_contentBox) return;
+		if (!m_uiRoot || !m_contentBox) return;
+
+		// -- No project loaded --
+		if (!ProjectManager::hasProject()) {
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view entity properties.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
+			return;
+		}
+
+		// -- Project loaded --
+		m_uiRoot->setChild(m_contentBox);
 		m_contentBox->clearSlots();
 
 		Entity entity = m_selectedEntity;
@@ -250,16 +279,19 @@ namespace Axion {
 
 		// -- No Entity Selected --
 		if (!entity) {
-			m_contentBox->addSlot({
-				.padding = {0.0f, 0.0f},
-				.child = Silica::MakeWidget<Silica::SAlign>({
-					.horizontalAlign = Silica::HorizontalAlign::Center,
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({
-						.text = "Select an entity to view properties."
-					})
-				})
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Entity Selected.\n\nPlease select an entity from the Hierarchy Panel or Viewport to view and edit its properties.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
 			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
 			return;
 		}
 
@@ -801,8 +833,12 @@ namespace Axion {
 				});
 
 				// -- Has Material Loaded --
+				Ref<Material> material = nullptr;
 				if (materialComponent.materials[i].isValid()) {
-					Ref<Material> material = AssetManager::get<Material>(materialComponent.materials[i]);
+					material = AssetManager::get<Material>(materialComponent.materials[i]);
+				}
+
+				if (material) {
 					Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(material->getPipelineHandle());
 
 					std::string pipelineName = pipeline ? pipeline->getSpecification().shader->getName() : "Internal Default Pipeline";
@@ -823,8 +859,10 @@ namespace Axion {
 							{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
 								.padding = { 8.0f, 4.0f },
 								.onClick = [entity, i, triggerRebuild]() mutable {
-									entity.getComponent<MaterialComponent>().materials[i].invalidate();
-									triggerRebuild();
+									EditorActionQueue::push([entity, i, triggerRebuild]() mutable {
+										entity.getComponent<MaterialComponent>().materials[i].invalidate();
+										triggerRebuild();
+									});
 									return Silica::EventReply::handled();
 								},
 								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Material" })
@@ -844,11 +882,13 @@ namespace Axion {
 							std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Material Asset", "*.axmat"} }, materialDir);
 
 							if (!absPath.empty()) {
-								UUID assetUUID = AssetManager::getAssetUUID(absPath);
-								if (assetUUID.isValid()) {
-									entity.getComponent<MaterialComponent>().materials[i] = AssetManager::load<Material>(assetUUID);
-									triggerRebuild();
-								}
+								EditorActionQueue::push([entity, i, absPath, triggerRebuild]() mutable {
+									UUID assetUUID = AssetManager::getAssetUUID(absPath);
+									if (assetUUID.isValid()) {
+										entity.getComponent<MaterialComponent>().materials[i] = AssetManager::load<Material>(assetUUID);
+										triggerRebuild();
+									}
+								});
 							}
 							return Silica::EventReply::handled();
 						},

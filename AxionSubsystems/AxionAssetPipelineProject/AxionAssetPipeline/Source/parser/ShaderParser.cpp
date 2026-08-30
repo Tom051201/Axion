@@ -7,6 +7,8 @@
 namespace Axion::AAP {
 
 	void ShaderParser::createTextFile(const ShaderAssetData& data, const std::filesystem::path& outputPath) {
+		std::filesystem::path absoluteSourcePath = AssetManager::getAbsolute(data.filePath);
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
@@ -15,7 +17,7 @@ namespace Axion::AAP {
 		out << YAML::Key << "UUID" << YAML::Value << data.uuid.toString();
 		out << YAML::Key << "Type" << YAML::Value << "Shader";
 		out << YAML::Key << "Format" << YAML::Value << FormatUtils::shaderFormatToString(data.fileFormat);
-		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(data.filePath);
+		out << YAML::Key << "Source" << YAML::Value << PathResolver::virtualize(absoluteSourcePath);
 		
 		out << YAML::Key << "Specification" << YAML::BeginMap;
 		out << YAML::Key << "Name" << YAML::Value << data.spec.name;

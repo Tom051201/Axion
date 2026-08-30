@@ -183,18 +183,6 @@ namespace Axion {
 		cmd->ResourceBarrier(1, &barrier);
 	}
 
-	void* DX12Context::getImGuiTextureID(const Ref<Texture2D>& texture) {
-		uint32_t viewIndex = m_gpuSrvHeap.allocate();
-
-		auto destHandle = m_gpuSrvHeap.getCpuHandle(viewIndex);
-		auto srcHandle = m_stagingSrvHeap.getCpuHandle(texture->getSrvHeapIndex());
-
-		m_device.getDevice()->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		auto gpuHandle = m_gpuSrvHeap.getGpuHandle(viewIndex);
-		return (void*)gpuHandle.ptr;
-	}
-
 	void DX12Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
 		auto* device = m_device.getDevice();
 

@@ -1,6 +1,0 @@
-Version: 2
-Name: NormalMap
-UUID: b5f080dcbc66687fbaa0bbe91b24f108
-Type: Texture2D
-Format: PNG
-Source: "{assetsdir}/textures/normalmap.png"

@@ -11,6 +11,7 @@
 #include "AxionStudio/Source/core/TransformGizmo.h"
 
 #include "AxionEngine/Source/events/Event.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
 
 namespace Silica {
 	class SBox;
@@ -28,6 +29,8 @@ namespace Axion {
 
 		Silica::WidgetPtr getWidget();
 
+		void onEvent(Event& ev);
+
 		void setup(EditorState* currentState, EditorState* prePauseState, int* stepFrames, EditorCamera* camera, TransformGizmo* gizmo);
 		void setViewportTexture(Silica::TextureID texID, Silica::Vec2 size);
 		void setStatsText(const std::string& text);
@@ -36,12 +39,17 @@ namespace Axion {
 		Silica::Vec2 getRelativeMousePos() const;
 		bool isHovered(const Silica::Vec2& mousePos) const;
 		void refreshToolbar();
+		void refresh();
 
 		void setEventCallback(std::function<void(Event&)> callback) { m_eventCallback = callback; }
 		void setPrefabDropCallback(std::function<void(const std::filesystem::path&, Silica::Vec2)> callback) { m_onPrefabDropped = callback; }
 		void setVisualScriptDropCallback(std::function<void(const std::filesystem::path&)> callback) { m_onVisualScriptDropped = callback; }
 
 	private:
+
+		void rebuildUI();
+		void rebuildUI_Internal();
+		void rebuildToolbar();
 
 		EditorState* m_currentState = nullptr;
 		EditorState* m_prePauseState = nullptr;
@@ -56,12 +64,15 @@ namespace Axion {
 		std::function<void(const std::filesystem::path&, Silica::Vec2)> m_onPrefabDropped;
 		std::function<void(const std::filesystem::path&)> m_onVisualScriptDropped;
 
+		std::shared_ptr<Silica::SBox> m_uiRoot;
+		bool m_rebuildQueued = false;
+
 		std::shared_ptr<Silica::SBox> m_toolbarContainer;
 		std::shared_ptr<Silica::SBox> m_viewportContainer;
 		std::shared_ptr<Silica::SImage> m_viewportImage;
 		std::shared_ptr<Silica::STextBlock> m_statsText;
 
-		void rebuildToolbar();
+		EventReply onProjectChanged(ProjectChangedEvent& ev);
 
 	};
 

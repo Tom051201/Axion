@@ -48,6 +48,69 @@ namespace Axion {
 		m_emissiveMapPath.clear();
 	}
 
+	void MaterialImportModal::validate() {
+		if (!m_validationText || !m_createBtn) return;
+
+		std::string finalName = m_name + ".axmat";
+		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+
+		auto checkFile = [](const std::string& path, bool& has, bool& exists, bool& isFile) {
+			has = !path.empty();
+			exists = true; isFile = true;
+			if (has) {
+				std::error_code ec;
+				exists = std::filesystem::exists(path, ec);
+				isFile = std::filesystem::is_regular_file(path, ec);
+			}
+		};
+
+		bool hasPipe, pipeExists, pipeFile; checkFile(m_pipelinePath, hasPipe, pipeExists, pipeFile);
+		bool hasAlbedo, albedoExists, albedoFile; checkFile(m_albedoMapPath, hasAlbedo, albedoExists, albedoFile);
+		bool hasNormal, normalExists, normalFile; checkFile(m_normalMapPath, hasNormal, normalExists, normalFile);
+		bool hasMetal, metalExists, metalFile; checkFile(m_metalnessMapPath, hasMetal, metalExists, metalFile);
+		bool hasRough, roughExists, roughFile; checkFile(m_roughnessMapPath, hasRough, roughExists, roughFile);
+		bool hasOcc, occExists, occFile; checkFile(m_occlusionMapPath, hasOcc, occExists, occFile);
+		bool hasEmiss, emissExists, emissFile; checkFile(m_emissiveMapPath, hasEmiss, emissExists, emissFile);
+
+		bool outputExists = false;
+		bool outputIsDirectory = false;
+		bool invalidOutFileName = false;
+
+		try {
+			std::error_code ec;
+			if (!m_outputPath.empty()) {
+				outputExists = std::filesystem::exists(m_outputPath, ec);
+				outputIsDirectory = std::filesystem::is_directory(m_outputPath, ec);
+				invalidOutFileName = std::filesystem::exists(finalPath, ec);
+			}
+		}
+		catch (...) {}
+
+		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
+
+		bool disabled = (m_name.empty() || m_outputPath.empty() || !pipeExists || !pipeFile || !albedoExists || !albedoFile ||
+			!normalExists || !normalFile || !metalExists || !metalFile || !roughExists || !roughFile || !occExists || !occFile ||
+			!emissExists || !emissFile || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
+
+		std::string validationMsg = "Ready to create asset.";
+		Silica::Color validationColor = Silica::GetTheme().Text_Success;
+
+		if (disabled) {
+			validationColor = Silica::GetTheme().Text_Danger;
+			if (m_name.empty()) validationMsg = "No name is set.";
+			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
+			else if (!pipeExists) validationMsg = "Pipeline file does not exist.";
+			else if (!albedoExists || !normalExists || !metalExists || !roughExists || !occExists || !emissExists) validationMsg = "A texture map does not exist.";
+			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
+			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
+			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
+		}
+
+		m_validationText->setText(validationMsg);
+		m_validationText->setColor(validationColor);
+		m_createBtn->setEnabled(!disabled);
+	}
+
 	Silica::WidgetPtr MaterialImportModal::getWidget(std::function<void()> onClose) {
 		m_onClose = onClose;
 
@@ -77,7 +140,7 @@ namespace Axion {
 		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 10.0f });
 
 		// -- Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Material" }) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Create Material" }) });
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
 
 
@@ -113,7 +176,7 @@ namespace Axion {
 					{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 						.child = Silica::MakeWidget<Silica::SEditableText>({
 							.initialText = outPath,
-							.onTextChanged = [this, &outPath](const std::string& val) { outPath = val; rebuildUI(); }
+							.onTextChanged = [this, &outPath](const std::string& val) { outPath = val; validate(); }
 						})
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
@@ -127,7 +190,7 @@ namespace Axion {
 							if (!absPath.empty()) { outPath = absPath.string(); rebuildUI(); }
 							return Silica::EventReply::handled();
 						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Browse..."})
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..."})
 					})}
 				}
 			});
@@ -156,7 +219,7 @@ namespace Axion {
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = m_name,
-				.onTextChanged = [this](const std::string& val) { m_name = val; rebuildUI(); }
+				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
 			})
 		});
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Name", nameInput) });
@@ -168,11 +231,11 @@ namespace Axion {
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Roughness", MakeSliderRow(m_roughness, 1.0f)) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Emission", MakeSliderRow(m_emission, 10.0f)) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Tiling", MakeSliderRow(m_tiling, 100.0f)) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({ .thickness = 2.0f })});
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
 
 
 		// -- Texture Maps --
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Albedo Map", MakeFileRow(m_albedoMapPath, "Axion Texture Asset", "*.axtex", "textures"))});
+		contentBox->addSlot({ {0,0}, MakePropertyRow("Albedo Map", MakeFileRow(m_albedoMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Normal Map", MakeFileRow(m_normalMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Metalness Map", MakeFileRow(m_metalnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Roughness Map", MakeFileRow(m_roughnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
@@ -190,7 +253,7 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_outputPath,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; rebuildUI(); }
+						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
@@ -204,67 +267,31 @@ namespace Axion {
 						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Browse..." })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
 				})}
 			}
 		});
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Output Location", outFolderRow) });
 
 
-		// -- Validation Logic --
-		std::string finalName = m_name + ".axmat";
-		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+		// -- Initialize Dynamic UI References --
+		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
 
-		auto checkFile = [](const std::string& path, bool& has, bool& exists, bool& isFile) {
-			has = !path.empty();
-			exists = true; isFile = true;
-			if (has) { exists = std::filesystem::exists(path); isFile = std::filesystem::is_regular_file(path); }
-		};
-
-		bool hasPipe, pipeExists, pipeFile; checkFile(m_pipelinePath, hasPipe, pipeExists, pipeFile);
-		bool hasAlbedo, albedoExists, albedoFile; checkFile(m_albedoMapPath, hasAlbedo, albedoExists, albedoFile);
-		bool hasNormal, normalExists, normalFile; checkFile(m_normalMapPath, hasNormal, normalExists, normalFile);
-		bool hasMetal, metalExists, metalFile; checkFile(m_metalnessMapPath, hasMetal, metalExists, metalFile);
-		bool hasRough, roughExists, roughFile; checkFile(m_roughnessMapPath, hasRough, roughExists, roughFile);
-		bool hasOcc, occExists, occFile; checkFile(m_occlusionMapPath, hasOcc, occExists, occFile);
-		bool hasEmiss, emissExists, emissFile; checkFile(m_emissiveMapPath, hasEmiss, emissExists, emissFile);
-
-		bool outputExists = std::filesystem::exists(m_outputPath);
-		bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
-		bool invalidOutFileName = std::filesystem::exists(finalPath);
-		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
-
-		bool disabled = (m_name.empty() || m_outputPath.empty() || !pipeExists || !pipeFile || !albedoExists || !albedoFile ||
-			!normalExists || !normalFile || !metalExists || !metalFile || !roughExists || !roughFile || !occExists || !occFile ||
-			!emissExists || !emissFile || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
-
-		std::string validationMsg = "Ready to create asset.";
-		Silica::Color validationColor = Silica::GetTheme().Text_Success;
-
-		if (disabled) {
-			validationColor = Silica::GetTheme().Text_Danger;
-			if (m_name.empty()) validationMsg = "No name is set.";
-			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
-			else if (!pipeExists) validationMsg = "Pipeline file does not exist.";
-			else if (!albedoExists || !normalExists || !metalExists || !roughExists || !occExists || !emissExists) validationMsg = "A texture map does not exist.";
-			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
-			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
-			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
-		}
-
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
-			.text = validationMsg,
-			.color = validationColor
-		}) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Footer Buttons --
-		auto createBtn = Silica::MakeWidget<Silica::SButton>({
+		m_createBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
-			.enabled = !disabled,
-			.onClick = [this, disabled, finalPath, hasPipe, hasAlbedo, hasNormal, hasMetal, hasRough, hasOcc, hasEmiss]() {
-				if (disabled) return Silica::EventReply::unhandled();
+			.onClick = [this]() {
+				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
+
+				std::string finalName = m_name + ".axmat";
+				std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+
+				bool hasPipe = !m_pipelinePath.empty();
+				bool hasAlbedo = !m_albedoMapPath.empty();
+				bool hasNormal = !m_normalMapPath.empty();
+				bool hasMetal = !m_metalnessMapPath.empty();
+				bool hasRough = !m_roughnessMapPath.empty();
+				bool hasOcc = !m_occlusionMapPath.empty();
+				bool hasEmiss = !m_emissiveMapPath.empty();
 
 				UUID newAssetUUID = UUID::generate();
 				AAP::MaterialAssetData data;
@@ -302,9 +329,14 @@ namespace Axion {
 				if (m_onClose) m_onClose();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create" })
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create" })
 		});
 
+		contentBox->addSlot({ {0,0}, m_validationText });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+
+
+		// -- Footer Buttons --
 		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
 			.onClick = [this]() {
@@ -319,9 +351,9 @@ namespace Axion {
 		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 10.0f,
 			.slots = {
-				{ {0,0}, createBtn },
+				{ {0,0}, m_createBtn },
 				{ {0,0}, cancelBtn },
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({ .backgroundColor = Silica::Color::transparent()}) },
+				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
 					.child = Silica::MakeWidget<Silica::STextBlock>({
@@ -352,6 +384,8 @@ namespace Axion {
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = modalPanel
 		}));
+
+		validate();
 	}
 
 }

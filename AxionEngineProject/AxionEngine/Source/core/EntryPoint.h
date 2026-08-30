@@ -16,45 +16,40 @@ namespace Axion {
 
 	inline void SetupWorkingDirectory() {
 		#ifdef AX_PLATFORM_WINDOWS
-		// -- Check If Already In The Right Directory --
-		if (std::filesystem::exists("AxionStudio/Resources")) {
+		char exePath[MAX_PATH];
+		GetModuleFileNameA(NULL, exePath, MAX_PATH);
+		std::filesystem::path currentPath = std::filesystem::path(exePath).parent_path();
+		std::string exeName = std::filesystem::path(exePath).stem().string();
+
+		// -- PACKAGED GAME MODE --
+		if (std::filesystem::exists(currentPath / "GameConfig.axbin")) {
+			std::filesystem::current_path(currentPath);
 			return;
 		}
 
-		char exePath[MAX_PATH];
-		GetModuleFileNameA(NULL, exePath, MAX_PATH);
-		std::filesystem::path currentPath = exePath;
-		bool foundRoot = false;
+		// -- DEV/EDITOR MODE --
+		std::filesystem::path searchPath = currentPath;
+		while (searchPath.has_parent_path()) {
+			if (std::filesystem::exists(searchPath / ".axionroot")) {
+				std::filesystem::path targetProjectDir = searchPath / (exeName + "Project");
 
-		while (currentPath.has_parent_path()) {
-			std::filesystem::path parent = currentPath.parent_path();
-			if (parent == currentPath) break;
-			currentPath = parent;
-
-			// -- Check For Developer Folder Structure --
-			if (std::filesystem::exists(currentPath / "AxionStudioProject" / "AxionStudio" / "Resources")) {
-				std::filesystem::current_path(currentPath / "AxionStudioProject");
-				foundRoot = true;
-				break;
+				if (std::filesystem::exists(targetProjectDir)) {
+					std::filesystem::current_path(targetProjectDir);
+				}
+				else {
+					std::filesystem::current_path(searchPath);
+				}
+				return;
 			}
 
-			// -- Check For Deployed/Packaged Folder Structure --
-			if (std::filesystem::exists(currentPath / "AxionStudio" / "Resources")) {
-				std::filesystem::current_path(currentPath);
-				foundRoot = true;
-				break;
-			}
+			std::filesystem::path parent = searchPath.parent_path();
+			if (parent == searchPath) break;
+			searchPath = parent;
 		}
 
-		if (!foundRoot) {
-			std::string errorMsg = "CRITICAL ERROR: Could not find Engine Root Directory!\n\n"
-				"Exe Path was:\n" + std::string(exePath) + "\n\n"
-				"Make sure 'AxionStudio/Resources' exists in the project hierarchy.";
-
-			MessageBoxA(NULL, errorMsg.c_str(), "Axion Engine Boot Failure", MB_OK | MB_ICONERROR);
-			exit(-1);
-		}
-	#endif
+		// -- FALLBACK --
+		std::filesystem::current_path(currentPath);
+		#endif
 	}
 
 	inline int EngineMain(int argc, char** argv) {

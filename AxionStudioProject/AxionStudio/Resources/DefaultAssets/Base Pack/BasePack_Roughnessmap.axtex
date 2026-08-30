@@ -1,0 +1,6 @@
+Version: 2
+Name: Roughnessmap
+UUID: 0127f55e3e9c31fd2ae54ccedc5f9ea9
+Type: Texture2D
+Format: PNG
+Source: "BasePack_Roughnessmap.png"

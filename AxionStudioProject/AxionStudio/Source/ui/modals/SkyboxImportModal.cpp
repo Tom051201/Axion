@@ -10,6 +10,7 @@
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SEditableText.h>
 #include <Silica/include/SAlign.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -32,6 +33,68 @@ namespace Axion {
 		m_outputPath = dir.string();
 	}
 
+	void SkyboxImportModal::validate() {
+		if (!m_validationText || !m_createBtn) return;
+
+		std::string finalName = m_name + ".axsky";
+		std::filesystem::path finalPath;
+
+		bool hasPipeline = !m_pipelinePath.empty();
+		bool pipelineExists = true;
+		bool pipelineIsFile = true;
+		bool textureExists = false;
+		bool textureIsFile = false;
+		bool outputExists = false;
+		bool outputIsDirectory = false;
+		bool invalidOutFileName = false;
+
+		// -- Safe Filesystem Checks --
+		try {
+			std::error_code ec;
+			if (hasPipeline) {
+				pipelineExists = std::filesystem::exists(m_pipelinePath, ec);
+				pipelineIsFile = std::filesystem::is_regular_file(m_pipelinePath, ec);
+			}
+			if (!m_texturePath.empty()) {
+				textureExists = std::filesystem::exists(m_texturePath, ec);
+				textureIsFile = std::filesystem::is_regular_file(m_texturePath, ec);
+			}
+			if (!m_outputPath.empty()) {
+				outputExists = std::filesystem::exists(m_outputPath, ec);
+				outputIsDirectory = std::filesystem::is_directory(m_outputPath, ec);
+				finalPath = std::filesystem::path(m_outputPath) / finalName;
+				invalidOutFileName = std::filesystem::exists(finalPath, ec);
+			}
+		}
+		catch (...) {}
+
+		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
+
+		bool disabled = (m_name.empty() || m_texturePath.empty() || m_outputPath.empty() || !pipelineExists || !pipelineIsFile || !textureExists || !textureIsFile || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
+
+		std::string validationMsg = "Ready to create asset.";
+		Silica::Color validationColor = Silica::GetTheme().Text_Success;
+
+		if (disabled) {
+			validationColor = Silica::GetTheme().Text_Danger;
+			if (m_name.empty()) validationMsg = "No Name is set.";
+			else if (m_texturePath.empty()) validationMsg = "No texture file is set.";
+			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
+			else if (!pipelineExists) validationMsg = "Pipeline file does not exist.";
+			else if (!pipelineIsFile) validationMsg = "Pipeline is not a file.";
+			else if (!textureExists) validationMsg = "Texture file does not exist.";
+			else if (!textureIsFile) validationMsg = "Texture is not a file.";
+			else if (!outputExists) validationMsg = "Output directory does not exist.";
+			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
+			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
+			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
+		}
+
+		m_validationText->setText(validationMsg);
+		m_validationText->setColor(validationColor);
+		m_createBtn->setEnabled(!disabled);
+	}
+
 	Silica::WidgetPtr SkyboxImportModal::getWidget(std::function<void()> onClose) {
 		m_onClose = onClose;
 
@@ -48,7 +111,7 @@ namespace Axion {
 	void SkyboxImportModal::rebuildUI() {
 		if (m_rebuildQueued) return;
 		m_rebuildQueued = true;
-		
+
 		EditorActionQueue::push([this]() {
 			m_rebuildQueued = false;
 			rebuildUI_Internal();
@@ -60,11 +123,9 @@ namespace Axion {
 
 		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 12.0f });
 
-
 		// -- Header --
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Import Skybox Asset" }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 2}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
-
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
 
 		// -- Helper Functions --
 		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
@@ -87,10 +148,9 @@ namespace Axion {
 
 		// -- Name --
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color(35, 35, 35, 255),
 			.child = Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = m_name ,
-				.onTextChanged = [this](const std::string& val) { m_name = val; rebuildUI(); }
+				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
 			})
 		});
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Name", nameInput) });
@@ -101,14 +161,13 @@ namespace Axion {
 			.spacing = 8.0f,
 			.slots = {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::Color(35, 35, 35, 255),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_texturePath ,
-						.onTextChanged = [this](const std::string& val) { m_texturePath = val; rebuildUI(); }
+						.onTextChanged = [this](const std::string& val) { m_texturePath = val; validate(); }
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4}, .color = Silica::Color(50, 50, 50, 255),
+					.padding = {8, 4},
 					.onClick = [this]() {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
 						if (!std::filesystem::exists(dir)) {
@@ -130,14 +189,13 @@ namespace Axion {
 			.spacing = 8.0f,
 			.slots = {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::Color(35, 35, 35, 255),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_pipelinePath ,
-						.onTextChanged = [this](const std::string& val) { m_pipelinePath = val; rebuildUI(); }
+						.onTextChanged = [this](const std::string& val) { m_pipelinePath = val; validate(); }
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4}, .color = Silica::Color(50, 50, 50, 255),
+					.padding = {8, 4},
 					.onClick = [this]() {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "pipelines";
 						if (!std::filesystem::exists(dir)) {
@@ -159,14 +217,13 @@ namespace Axion {
 			.spacing = 8.0f,
 			.slots = {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.backgroundColor = Silica::Color(35, 35, 35, 255),
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_outputPath ,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; rebuildUI(); }
+						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4}, .color = Silica::Color(50, 50, 50, 255),
+					.padding = {8, 4},
 					.onClick = [this]() {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "skybox";
 						if (!std::filesystem::exists(dir)) {
@@ -183,56 +240,17 @@ namespace Axion {
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Output Location", outputRow) });
 
 
-		// -- Validation Logic --
-		std::string finalName = m_name + ".axsky";
-		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+		// -- Initialize Dynamic UI References --
+		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
 
-		bool hasPipeline = !m_pipelinePath.empty();
-		bool pipelineExists = true;
-		bool pipelineIsFile = true;
-		if (hasPipeline) {
-			pipelineExists = std::filesystem::exists(m_pipelinePath);
-			pipelineIsFile = std::filesystem::is_regular_file(m_pipelinePath);
-		}
-
-		bool textureExists = std::filesystem::exists(m_texturePath);
-		bool textureIsFile = std::filesystem::is_regular_file(m_texturePath);
-		bool outputExists = std::filesystem::exists(m_outputPath);
-		bool outputIsDirectory = std::filesystem::is_directory(m_outputPath);
-		bool invalidOutFileName = std::filesystem::exists(finalPath);
-		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
-
-		bool disabled = (m_name.empty() || m_texturePath.empty() || m_outputPath.empty() || !pipelineExists || !pipelineIsFile || !textureExists || !textureIsFile || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
-
-		std::string validationMsg = "Ready to create asset.";
-		Silica::Color validationColor = Silica::Color(50, 255, 50, 255);
-
-		if (disabled) {
-			validationColor = Silica::Color(255, 50, 50, 255);
-			if (m_name.empty()) validationMsg = "No Name is set.";
-			else if (m_texturePath.empty()) validationMsg = "No texture file is set.";
-			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
-			else if (!pipelineExists) validationMsg = "Pipeline file does not exist.";
-			else if (!pipelineIsFile) validationMsg = "Pipeline is not a file.";
-			else if (!textureExists) validationMsg = "Texture file does not exist.";
-			else if (!textureIsFile) validationMsg = "Texture is not a file.";
-			else if (!outputExists) validationMsg = "Output directory does not exist.";
-			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
-			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
-			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
-		}
-
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = validationMsg, .color = validationColor }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{0, 2}, .backgroundColor = Silica::Color(80, 80, 80, 255)}) });
-
-
-		// -- Footer Buttons --
-		auto createBtn = Silica::MakeWidget<Silica::SButton>({
+		m_createBtn = Silica::MakeWidget<Silica::SButton>({
 			.padding = { 20.0f, 8.0f },
-			.color = disabled ? Silica::Color(60, 60, 60, 255) : Silica::Color(50, 150, 50, 255),
-			.hoverColor = disabled ? Silica::Color::transparent() : Silica::Color(70, 180, 70, 255),
-			.onClick = [this, disabled, finalPath, hasPipeline]() {
-				if (disabled) return Silica::EventReply::unhandled();
+			.onClick = [this]() {
+				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
+
+				std::string finalName = m_name + ".axsky";
+				std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+				bool hasPipeline = !m_pipelinePath.empty();
 
 				UUID newAssetUUID = UUID::generate();
 
@@ -258,14 +276,16 @@ namespace Axion {
 				if (m_onClose) m_onClose();
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({
-				.text = "Create",
-				.color = disabled ? Silica::Color(120, 120, 120, 255) : Silica::Color::white()
-			})
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create" })
 		});
 
+		contentBox->addSlot({ {0,0}, m_validationText });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+
+
+		// -- Footer Buttons --
 		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f }, .color = Silica::Color(80, 80, 80, 255),
+			.padding = { 20.0f, 8.0f },
 			.onClick = [this]() {
 				if (m_onClose) m_onClose();
 				return Silica::EventReply::handled();
@@ -278,12 +298,15 @@ namespace Axion {
 		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 10.0f,
 			.slots = {
-				{ {0,0}, createBtn },
+				{ {0,0}, m_createBtn },
 				{ {0,0}, cancelBtn },
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = versionText, .color = Silica::Color(100,100,100,255) })
+					.child = Silica::MakeWidget<Silica::STextBlock>({
+						.text = versionText,
+						.color = Silica::GetTheme().Text_Dim
+					})
 				})}
 			}
 		});
@@ -295,7 +318,7 @@ namespace Axion {
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.explicitSize = Silica::Vec2{ 550.0f, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
-			.backgroundColor = Silica::Color(30, 30, 30, 255),
+			.backgroundColor = Silica::GetTheme().Background_Panel,
 			.child = Silica::MakeWidget<Silica::SBox>({
 				.padding = { 20.0f, 20.0f },
 				.backgroundColor = Silica::Color::transparent(),
@@ -308,6 +331,8 @@ namespace Axion {
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = modalPanel
 		}));
+
+		validate();
 	}
 
 }

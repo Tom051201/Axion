@@ -1,6 +1,0 @@
-Version: 2
-Name: Skybox
-UUID: c90ff323161f10d1093cc0b6535d716c
-Type: TextureCube
-Format: PNG
-Source: "{assetsdir}/textures/Skybox.png"

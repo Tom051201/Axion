@@ -13,6 +13,7 @@
 #include "AxionEngine/Source/graphics/Framebuffer.h"
 #include "AxionEngine/Source/graphics/Camera.h"
 #include "AxionEngine/Source/graphics/Mesh.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
 
 namespace Silica {
 	class SBox;
@@ -28,6 +29,7 @@ namespace Axion {
 
 		Silica::WidgetPtr getWidget();
 
+		void onEvent(Event& ev);
 		void onUpdate(Timestep ts);
 		void setMaterial(const std::filesystem::path& materialPath);
 
@@ -58,6 +60,8 @@ namespace Axion {
 		void rebuildUI();
 		Silica::WidgetPtr buildProperties();
 		Silica::WidgetPtr buildTextureSlot(const std::string& label, TextureSlot slot);
+
+		EventReply onProjectChanged(ProjectChangedEvent& ev);
 
 	};
 

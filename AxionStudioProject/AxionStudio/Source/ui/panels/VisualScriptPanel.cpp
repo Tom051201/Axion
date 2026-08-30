@@ -19,6 +19,8 @@
 #include <Silica/include/SInputFieldVec3Float.h>
 #include <Silica/include/SComboBox.h>
 #include <Silica/include/SSeparator.h>
+#include <Silica/include/SWrappedTextBlock.h>
+#include <Silica/include/SScissorBox.h>
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -77,12 +79,39 @@ namespace Axion {
 	void VisualScriptPanel::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
-		if (m_currentFilePath.empty()) {
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
+		// -- No project loaded --
+		if (!ProjectManager::hasProject()) {
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view visual scripts.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
 				.horizontalAlign = Silica::HorizontalAlign::Center,
 				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "No Visual Script Loaded.\nOpen a .axvs file from the Content Browser." })
-			}));
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
+			return;
+		}
+
+		// -- No visual script loaded --
+		if (m_currentFilePath.empty()) {
+			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+				.text = "No Visual Script Loaded.\n\nOpen a .axvs file from the Content Browser.",
+				.wrapWidth = 250.0f,
+				.color = Silica::GetTheme().Text_Dim
+			});
+
+			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = emptyText
+			});
+
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
 			return;
 		}
 
@@ -1354,8 +1383,14 @@ namespace Axion {
 
 	void VisualScriptPanel::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(VisualScriptPanel::onProjectChanged));
 		dispatcher.dispatch<AssetRenamedEvent>(AX_BIND_EVENT_FN(VisualScriptPanel::onAssetRenamed));
 		dispatcher.dispatch<AssetDeletedEvent>(AX_BIND_EVENT_FN(VisualScriptPanel::onAssetDeleted));
+	}
+
+	EventReply VisualScriptPanel::onProjectChanged(ProjectChangedEvent& ev) {
+		rebuildUI();
+		return EventReply::unhandled();
 	}
 
 	EventReply VisualScriptPanel::onAssetRenamed(AssetRenamedEvent& e) {

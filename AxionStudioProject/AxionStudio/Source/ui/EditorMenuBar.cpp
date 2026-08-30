@@ -18,11 +18,6 @@
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorCommand.h"
-#include "AxionStudio/Source/core/EditorModalManager.h"
-#include "AxionStudio/Source/ui/modals/CreateProjectModal.h"
-#include "AxionStudio/Source/ui/modals/ExportProjectModal.h"
-#include "AxionStudio/Source/ui/modals/SystemInfoModal.h"
-#include "AxionStudio/Source/ui/modals/SettingsModal.h"
 
 namespace Axion {
 
@@ -133,6 +128,7 @@ namespace Axion {
 			for (const std::string& tabName : availableTabs) {
 				windowsListContent->addSlot({ dropDownPadding, MakeMenuItem(tabName, [dockspace, tabName]() {
 					dockspace->openTab(tabName);
+					dockspace->focusTab(tabName);
 					return Silica::EventReply::handled();
 				}) });
 			}
@@ -178,11 +174,8 @@ namespace Axion {
 					.spacing = dropdownSpacing,
 					.slots = {
 						// -- New Project --
-						{ dropDownPadding, MakeMenuItem("New...", []() {
-							auto modal = std::make_shared<CreateProjectModal>();
-							auto widget = modal->getWidget();
-							EditorModalManager::open(widget);
-						
+						{ dropDownPadding, MakeMenuItem("New...", [callbacks]() {
+							if (callbacks.openCreateProjectModal) callbacks.openCreateProjectModal();
 							return Silica::EventReply::handled();
 						})},
 						// -- Open Project --
@@ -217,11 +210,8 @@ namespace Axion {
 							return Silica::EventReply::handled();
 						})},
 						// -- Export Project --
-						{ dropDownPadding, MakeMenuItem("Export", []() {
-							auto modal = std::make_shared<ExportProjectModal>();
-							auto widget = modal->getWidget();
-							EditorModalManager::open(widget);
-
+						{ dropDownPadding, MakeMenuItem("Export", [callbacks]() {
+							if (callbacks.openExportProjectModal) callbacks.openExportProjectModal();
 							return Silica::EventReply::handled();
 						})},
 					}
@@ -240,11 +230,9 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = dropdownSpacing,
 					.slots = {
-						{ dropDownPadding, MakeMenuItem("System Info", []() {
-							auto modal = std::make_shared<SystemInfoModal>();
-							auto widget = modal->getWidget();
-							EditorModalManager::open(widget);
-
+						// -- System Info --
+						{ dropDownPadding, MakeMenuItem("System Info", [callbacks]() {
+							if (callbacks.openSystemInfoModal) callbacks.openSystemInfoModal();
 							return Silica::EventReply::handled();
 						})},
 					}

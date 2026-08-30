@@ -30,6 +30,7 @@
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/core/WireframeRenderer.h"
 #include "AxionStudio/Source/core/EditorUtils.h"
+#include "AxionStudio/Source/core/EditorConfig.h"
 #include "AxionStudio/Source/ui/EditorMenuBar.h"
 #include "AxionStudio/Source/ui/panels/ViewportPanel.h"
 #include "AxionStudio/Source/ui/panels/ContentBrowserPanel.h"
@@ -43,6 +44,9 @@
 #include "AxionStudio/Source/ui/panels/MaterialPanel.h"
 #include "AxionStudio/Source/ui/panels/HistoryPanel.h"
 #include "AxionStudio/Source/ui/modals/SettingsModal.h"
+#include "AxionStudio/Source/ui/modals/CreateProjectModal.h"
+#include "AxionStudio/Source/ui/modals/ExportProjectModal.h"
+#include "AxionStudio/Source/ui/modals/SystemInfoModal.h"
 
 namespace Axion {
 
@@ -54,27 +58,51 @@ namespace Axion {
 
 		// ----- Load Editor Resources -----
 		EditorResourceManager::initialize();
-		EditorResourceManager::loadIcon("PlayButton", "AxionStudio/Resources/toolbar/PlayIcon.png");
-		EditorResourceManager::loadIcon("StopButton", "AxionStudio/Resources/toolbar/StopIcon.png");
-		EditorResourceManager::loadIcon("PauseButton", "AxionStudio/Resources/toolbar/PauseIcon.png");
-		EditorResourceManager::loadIcon("SimulateButton", "AxionStudio/Resources/toolbar/SimulateIcon.png");
-		EditorResourceManager::loadIcon("StepButton", "AxionStudio/Resources/toolbar/StepIcon.png");
-		EditorResourceManager::loadIcon("CameraIcon", "AxionStudio/Resources/CameraIcon.png");
-		EditorResourceManager::loadIcon("LightIcon", "AxionStudio/Resources/LightIcon.png");
-		EditorResourceManager::loadIcon("2DCamIcon", "AxionStudio/Resources/toolbar/2dIcon.png");
-		EditorResourceManager::loadIcon("3DCamIcon", "AxionStudio/Resources/toolbar/3dIcon.png");
-		EditorResourceManager::loadIcon("FolderIcon", "AxionStudio/Resources/contentbrowser/FolderIcon.png");
-		EditorResourceManager::loadIcon("FileIcon", "AxionStudio/Resources/contentbrowser/FileIcon.png");
-		EditorResourceManager::loadIcon("BackIcon", "AxionStudio/Resources/contentbrowser/BackIcon.png");
-		EditorResourceManager::loadIcon("ForwardIcon", "AxionStudio/Resources/contentbrowser/ForwardIcon.png");
-		EditorResourceManager::loadIcon("RefreshIcon", "AxionStudio/Resources/contentbrowser/RefreshIcon.png");
-		EditorResourceManager::loadIcon("AddFolderIcon", "AxionStudio/Resources/contentbrowser/AddFolderIcon.png");
+		EditorResourceManager::loadIcon("AddFolderIcon", "AxionStudio/Resources/Editor/UI/AddFolderIcon.png");
+		EditorResourceManager::loadIcon("BackIcon", "AxionStudio/Resources/Editor/UI/BackIcon.png");
+		EditorResourceManager::loadIcon("FileIcon", "AxionStudio/Resources/Editor/UI/FileIcon.png");
+		EditorResourceManager::loadIcon("FolderIcon", "AxionStudio/Resources/Editor/UI/FolderIcon.png");
+		EditorResourceManager::loadIcon("ForwardIcon", "AxionStudio/Resources/Editor/UI/ForwardIcon.png");
+		EditorResourceManager::loadIcon("RefreshIcon", "AxionStudio/Resources/Editor/UI/RefreshIcon.png");
+		EditorResourceManager::loadIcon("2DCamIcon", "AxionStudio/Resources/Editor/UI/2dIcon.png");
+		EditorResourceManager::loadIcon("3DCamIcon", "AxionStudio/Resources/Editor/UI/3dIcon.png");
+		EditorResourceManager::loadIcon("CameraIcon", "AxionStudio/Resources/Editor/UI/CameraIcon.png");
+		EditorResourceManager::loadIcon("LightIcon", "AxionStudio/Resources/Editor/UI/LightIcon.png");
+		EditorResourceManager::loadIcon("PauseButton", "AxionStudio/Resources/Editor/UI/PauseIcon.png");
+		EditorResourceManager::loadIcon("PlayButton", "AxionStudio/Resources/Editor/UI/PlayIcon.png");
+		EditorResourceManager::loadIcon("SimulateButton", "AxionStudio/Resources/Editor/UI/SimulateIcon.png");
+		EditorResourceManager::loadIcon("StepButton", "AxionStudio/Resources/Editor/UI/StepIcon.png");
+		EditorResourceManager::loadIcon("StopButton", "AxionStudio/Resources/Editor/UI/StopIcon.png");
 
 
 		// ----- Setup Project And Scene -----
-		ProjectManager::loadProject("AxionStudio/Projects/TestProject/TestProject.axproj");
-		m_activeScene = SceneManager::getScene();
+		if (std::filesystem::exists(m_editorSettingsPath)) {
+			try {
+				YAML::Node config = YAML::LoadFile(m_editorSettingsPath.string());
 
+				if (config["StartupProject"]) {
+					if (std::filesystem::exists(config["StartupProject"].as<std::string>())) {
+						ProjectManager::loadProject(config["StartupProject"].as<std::string>());
+						m_activeScene = SceneManager::getScene();
+						EditorConfig::startupProjectPath = config["StartupProject"].as<std::string>();
+					}
+					else {
+						SceneManager::newScene();
+						m_activeScene = SceneManager::getScene();
+						AX_CORE_LOG_WARN("Startup Project From Settings File Does Not Exist!");
+					}
+				}
+				else {
+					SceneManager::newScene();
+					m_activeScene = SceneManager::getScene();
+					AX_CORE_LOG_WARN("No Startup Project Set In Settings File!");
+				}
+
+			}
+			catch (const YAML::Exception& e) {
+				AX_CORE_LOG_WARN("Failed to parse Editor Settings: {}", e.what());
+			}
+		}
 
 		// ----- Setup Framebuffer -----
 		FrameBufferSpecification fbs;
@@ -92,7 +120,7 @@ namespace Axion {
 
 
 		// ----- Load Font -----
-		if (m_font.loadFromFile("AxionStudio/Resources/fonts/openSans/OpenSans-Bold.ttf", 18.0f)) {
+		if (m_font.loadFromFile("AxionStudio/Resources/Editor/Fonts/openSans/OpenSans-Bold.ttf", 18.0f)) {
 			SilicaContext::uploadFontAtlas(m_font);
 			Silica::GetTheme().Font_Default = &m_font;
 		}
@@ -278,6 +306,9 @@ namespace Axion {
 		menuCallbacks.saveSceneAs = [this]() { saveSceneAs(); };
 		menuCallbacks.exitEditor = []() { /* Application::get().close(); */ };
 		menuCallbacks.openPreferences = [this]() { openPreferences(); };
+		menuCallbacks.openCreateProjectModal = AX_BIND_FN(openCreateProjectModal);
+		menuCallbacks.openExportProjectModal = AX_BIND_FN(openExportProjectModal);
+		menuCallbacks.openSystemInfoModal = AX_BIND_FN(openSystemInfoModal);
 		auto menuBar = EditorMenuBar::construct(m_dock, menuCallbacks);
 
 
@@ -335,10 +366,9 @@ namespace Axion {
 
 
 		// -- Load Editor State --
-		std::string settingsPath = "AxionStudio/Config/EditorSettings.yaml";
-		if (std::filesystem::exists(settingsPath)) {
+		if (std::filesystem::exists(m_editorSettingsPath)) {
 			try {
-				YAML::Node config = YAML::LoadFile(settingsPath);
+				YAML::Node config = YAML::LoadFile(m_editorSettingsPath.string());
 
 				if (config["MaxAssetsPerFrame"]) {
 					AssetManager::setMaxAssetsPerFrame(config["MaxAssetsPerFrame"].as<uint32_t>());
@@ -392,6 +422,9 @@ namespace Axion {
 		// -- Save Editor State --
 		YAML::Emitter out;
 		out << YAML::BeginMap;
+		if (!EditorConfig::startupProjectPath.empty()) {
+			out << YAML::Key << "StartupProject" << YAML::Value << EditorConfig::startupProjectPath.generic_string();
+		}
 		out << YAML::Key << "MaxAssetsPerFrame" << YAML::Value << AssetManager::getMaxAssetsPerFrame();
 		m_contentBrowserPanel->saveSettings(out);
 
@@ -412,7 +445,7 @@ namespace Axion {
 		out << YAML::EndSeq;
 
 		out << YAML::EndMap;
-		std::ofstream fout("AxionStudio/Config/EditorSettings.yaml");
+		std::ofstream fout(m_editorSettingsPath);
 		if (fout.is_open()) {
 			fout << out.c_str();
 			fout.close();
@@ -641,6 +674,8 @@ namespace Axion {
 		if (m_hierarchyPanel) m_hierarchyPanel->onEvent(e);
 		if (m_assetManagerPanel) m_assetManagerPanel->onEvent(e);
 		if (m_historyPanel) m_historyPanel->onEvent(e);
+		if (m_viewportPanel) m_viewportPanel->onEvent(e);
+		if (m_materialPanel) m_materialPanel->onEvent(e);
 
 		// ----- Use Events In EditorLayer -----
 		EventDispatcher dispatcher(e);
@@ -838,7 +873,7 @@ namespace Axion {
 
 		if (!m_currentScenePath.empty()) {
 			SceneSerializer serializer(m_activeScene);
-			serializer.serializeText(m_currentScenePath, false);
+			serializer.serializeText(m_currentScenePath, true);
 			AX_CORE_LOG_INFO("Successfully saved Scene: {0}", m_currentScenePath.filename().string());
 		}
 		else {
@@ -859,7 +894,7 @@ namespace Axion {
 		}
 		if (!path.empty()) {
 			SceneSerializer serializer(m_activeScene);
-			serializer.serializeText(path, false);
+			serializer.serializeText(path, true);
 			m_currentScenePath = path;
 
 			AX_CORE_LOG_INFO("Successfully saved Scene As: {0}", path.filename().string());
@@ -973,7 +1008,7 @@ namespace Axion {
 	EventReply EditorLayer::onKeyReleased(KeyReleasedEvent& ev) {
 
 		// -- Handle Gizmo Mode Switching (Q, W, E, R, T) --
-		if (!Input::isMouseButtonPressed(MouseButton::Right) && m_selectedEntity.isValid()) {
+		if (!Input::isMouseButtonPressed(MouseButton::Right) && m_selectedEntity.isValid() && m_viewportPanel->isHovered(Silica::Renderer::getMousePosition())) {
 			bool changed = false;
 
 			if (ev.getKeyCode() == KeyCode::W && m_transformGizmo.getMode() != GizmoMode::Translate) {
@@ -1147,6 +1182,30 @@ namespace Axion {
 			}
 		}
 		return EventReply::unhandled();
+	}
+
+	void EditorLayer::openCreateProjectModal() {
+		if (!m_createProjectModal) {
+			m_createProjectModal = MakeShared<CreateProjectModal>();
+		}
+
+		EditorModalManager::open(m_createProjectModal->getWidget());
+	}
+
+	void EditorLayer::openExportProjectModal() {
+		if (!m_exportProjectModal) {
+			m_exportProjectModal = MakeShared<ExportProjectModal>();
+		}
+
+		EditorModalManager::open(m_exportProjectModal->getWidget());
+	}
+
+	void EditorLayer::openSystemInfoModal() {
+		if (!m_systemInfoModal) {
+			m_systemInfoModal = MakeShared<SystemInfoModal>();
+		}
+
+		EditorModalManager::open(m_systemInfoModal->getWidget());
 	}
 
 }

@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/YAMLHelper.h"
+#include "AxionEngine/Source/core/PathResolver.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 
@@ -54,7 +55,7 @@ namespace Axion::AAP {
 					meshData.uuid = uuid;
 					meshData.name = data["Name"].as<std::string>();
 					meshData.fileFormat = FormatUtils::meshFormatFromString(data["Format"].as<std::string>());
-					meshData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					meshData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
 					MeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
 					break;
@@ -66,7 +67,7 @@ namespace Axion::AAP {
 					AudioAssetData audioData;
 					audioData.uuid = uuid;
 					audioData.name = data["Name"].as<std::string>();
-					audioData.audioFilePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					audioData.audioFilePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 					audioData.fileFormat = FormatUtils::audioFormatFromString(data["Format"].as<std::string>());
 					audioData.mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
 
@@ -89,7 +90,7 @@ namespace Axion::AAP {
 					matData.properties.useMetalnessMap = data["UseMetalnessMap"].as<float>();
 					matData.properties.useRoughnessMap = data["UseRoughnessMap"].as<float>();
 					matData.properties.useOcclusionMap = data["UseOcclusionMap"].as<float>();
-					
+
 					auto registry = ProjectManager::getProject()->getAssetRegistry();
 
 					if (data["Pipeline"]) {
@@ -184,7 +185,7 @@ namespace Axion::AAP {
 					ShaderAssetData shaderData;
 					shaderData.uuid = uuid;
 					shaderData.fileFormat = FormatUtils::shaderFormatFromString(data["Format"].as<std::string>());
-					shaderData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					shaderData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
 					YAML::Node specData = data["Specification"];
 					shaderData.spec.name = specData["Name"].as<std::string>();
@@ -229,7 +230,7 @@ namespace Axion::AAP {
 					texData.uuid = uuid;
 					texData.name = data["Name"].as<std::string>();
 					texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
-					texData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					texData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
 					TextureCubeParser::createBinaryFile(texData, runtimeAbsolutePath);
 					break;
@@ -242,7 +243,7 @@ namespace Axion::AAP {
 					texData.uuid = uuid;
 					texData.name = data["Name"].as<std::string>();
 					texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
-					texData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					texData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
 					Texture2DParser::createBinaryFile(texData, runtimeAbsolutePath);
 					break;
@@ -280,7 +281,7 @@ namespace Axion::AAP {
 					AnimationClipAssetData clipData;
 					clipData.uuid = uuid;
 					clipData.name = data["Name"].as<std::string>();
-					clipData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					clipData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
 					AnimationClipParser::createBinaryFile(clipData, runtimeAbsolutePath);
 					break;
@@ -292,7 +293,7 @@ namespace Axion::AAP {
 					SkeletalMeshAssetData meshData;
 					meshData.uuid = uuid;
 					meshData.name = data["Name"].as<std::string>();
-					meshData.filePath = AssetManager::getAbsolute(data["Source"].as<std::string>());
+					meshData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
 					SkeletalMeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
 					break;
@@ -335,9 +336,11 @@ namespace Axion::AAP {
 			// -- Write Default Scene UUID --
 			UUID defaultSceneUUID = UUID(0, 0);
 			if (!project->getDefaultScene().empty()) {
-				std::filesystem::path normalizedPath = AssetManager::getRelativeToAssets(AssetManager::getAbsolute(project->getDefaultScene()));
+				std::filesystem::path relDefault = AssetManager::getRelativeToAssets(project->getDefaultScene());
+				std::string standardizedDefault = relDefault.generic_string();
+
 				for (const auto& [uuid, metadata] : inRegistry->getMap()) {
-					if (metadata.filePath == normalizedPath) {
+					if (metadata.filePath.generic_string() == standardizedDefault) {
 						defaultSceneUUID = uuid;
 						break;
 					}
