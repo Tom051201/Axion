@@ -40,16 +40,19 @@ project "AxionStudio"
 		"AxionStudio/Vendor",
 		"AxionStudio/Vendor/Silica/include",
 		"AxionStudio/Vendor/Quartz/include",
+		"AxionStudio/Vendor/Discord/include"
 	}
 
 	libdirs {
 		"AxionStudio/Vendor/Silica/libs",
 		"AxionStudio/Vendor/Quartz/libs",
+		"AxionStudio/Vendor/Discord/lib"
 	}
 
 	links {
 		"AxionEngine",
-		"AxionAssetPipeline"
+		"AxionAssetPipeline",
+		"discord-rpc"
 	}
 
 	prebuildcommands {
@@ -106,7 +109,8 @@ project "AxionStudio"
 			"{COPY} " .. PhysXDir .. "/lib/debug/*.dll %{cfg.buildtarget.directory}",
 			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/dotnet/lib/nethost.dll %{cfg.buildtarget.directory}",
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
-			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}"
+			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}",
+			"{COPY} %{wks.location}/AxionStudioProject/AxionStudio/Vendor/Discord/lib/discord-rpc.dll %{cfg.buildtarget.directory}",
 		}
 
 	filter "configurations:Release or Distribution"
@@ -114,5 +118,6 @@ project "AxionStudio"
 			"{COPY} " .. PhysXDir .. "/lib/release/*.dll %{cfg.buildtarget.directory}",
 			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/dotnet/lib/nethost.dll %{cfg.buildtarget.directory}",
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
-			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}"
+			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}",
+			"{COPY} %{wks.location}/AxionStudioProject/AxionStudio/Vendor/Discord/lib/discord-rpc.dll %{cfg.buildtarget.directory}",
 		}

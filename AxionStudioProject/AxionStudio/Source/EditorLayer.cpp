@@ -31,6 +31,7 @@
 #include "AxionStudio/Source/core/WireframeRenderer.h"
 #include "AxionStudio/Source/core/EditorUtils.h"
 #include "AxionStudio/Source/core/EditorConfig.h"
+#include "AxionStudio/Source/core/DiscordManager.h"
 #include "AxionStudio/Source/ui/EditorMenuBar.h"
 #include "AxionStudio/Source/ui/panels/ViewportPanel.h"
 #include "AxionStudio/Source/ui/panels/ContentBrowserPanel.h"
@@ -55,6 +56,18 @@ namespace Axion {
 	void EditorLayer::onAttach() {
 
 		//PlatformUtils::registerProjectFileExtension();
+
+		// ----- Initialize Discord -----
+		DiscordManager::initialize("1543660033210851368");
+
+		if (ProjectManager::hasProject()) {
+			std::string projName = ProjectManager::getProject()->getName();
+			std::string sceneName = m_activeScene ? m_activeScene->getTitle() : "Untitled";
+			DiscordManager::setPresence("Editing: " + sceneName, "Project: " + projName);
+		}
+		else {
+			DiscordManager::setPresence("In Hub / No Project", "Idle");
+		}
 
 		// ----- Load Editor Resources -----
 		EditorResourceManager::initialize();
@@ -475,9 +488,15 @@ namespace Axion {
 		EditorModalManager::shutdown();
 		EditorResourceManager::shutdown();
 		SilicaContext::shutdown();
+
+		DiscordManager::shutdown();
 	}
 
 	void EditorLayer::onUpdate(Timestep ts) {
+
+		// ----- Update Discord Rich Presence -----
+		DiscordManager::onUpdate();
+
 
 		// ----- Process Action Queue -----
 		EditorActionQueue::execute();
@@ -1138,6 +1157,13 @@ namespace Axion {
 		// -- Create EntitySelectedEvent --
 		EntitySelectedEvent emptySelectionEv({});
 		onEvent(emptySelectionEv);
+
+		// -- Update Discord Rich Presence --
+		if (ProjectManager::hasProject()) {
+			std::string projName = ProjectManager::getProject()->getName();
+			std::string sceneName = m_activeScene ? m_activeScene->getTitle() : "Untitled";
+			DiscordManager::setPresence("Editing: " + sceneName, "Project: " + projName);
+		}
 
 		AX_CORE_LOG_INFO("EditorLayer successfully synced with new Scene!");
 		return EventReply::unhandled();
