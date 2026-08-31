@@ -35,6 +35,8 @@ namespace AxionScriptCore {
 		public virtual void OnCollisionEnter(Collision collision) {}
 		public virtual void OnCollisionExit(Collision collision) {}
 
+		public virtual void OnNetworkEvent(uint eventID, byte[] payload) { }
+
 		public static unsafe Entity Instantiate(string name = "New Entity") {
 			IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
 

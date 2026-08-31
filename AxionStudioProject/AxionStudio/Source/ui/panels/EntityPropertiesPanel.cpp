@@ -21,6 +21,7 @@
 #include <Silica/include/SColorField.h>
 #include <Silica/include/SWrappedTextBlock.h>
 #include <Silica/include/SScissorBox.h>
+#include <Silica/include/SInputFieldInt.h>
 
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -351,6 +352,7 @@ namespace Axion {
 		if (!entity.hasComponent<CapsuleColliderComponent>()) registerComp.operator()<CapsuleColliderComponent>("Capsule Collider", "Physics");
 		if (!entity.hasComponent<GravitySourceComponent>()) registerComp.operator()<GravitySourceComponent>("Gravity Source", "Physics");
 
+		if (!entity.hasComponent<NetworkIdentityComponent>()) registerComp.operator()<NetworkIdentityComponent>("Network Identity", "General");
 		if (!entity.hasComponent<CameraComponent>()) registerComp.operator()<CameraComponent>("Camera", "General");
 		if (!entity.hasComponent<AudioComponent>()) registerComp.operator()<AudioComponent>("Audio", "General");
 		if (!entity.hasComponent<ParticleSystemComponent>()) registerComp.operator()<ParticleSystemComponent>("Particle System", "General");
@@ -1073,6 +1075,32 @@ namespace Axion {
 						{ {0,0}, MakePropertyRow("Outer Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.outerConeAngle,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().outerConeAngle = val; }
+						}))}
+					}
+				})
+			});
+		});
+
+
+		// -- NETWORK IDENTITY COMPONENT --
+		drawComponentBlock<NetworkIdentityComponent>("Network Identity", entity, container, triggerRebuild, true, [&]() {
+			auto& netIdentityComponent = entity.getComponent<NetworkIdentityComponent>();
+			return Silica::MakeWidget<Silica::SBox>({
+				.padding = { 10.0f, 5.0f },
+				.child = Silica::MakeWidget<Silica::SVerticalBox>({
+					.spacing = 8.0f,
+					.slots = {
+						{ {0,0}, MakePropertyRow("Owner Client ID", Silica::MakeWidget<Silica::SInputFieldInt>({
+							.initialValue = (int)netIdentityComponent.ownerClientID,
+							.onValueChanged = [entity](int val) mutable {
+								entity.getComponent<NetworkIdentityComponent>().ownerClientID = (uint32_t)std::max(0, val);
+							}
+						}))},
+						{ {0,0}, MakePropertyRow("Is Local Player", Silica::MakeWidget<Silica::SCheckBox>({
+							.initialCheck = netIdentityComponent.isLocalPlayer,
+							.onCheckChanged = [entity](bool checked) mutable {
+								entity.getComponent<NetworkIdentityComponent>().isLocalPlayer = checked;
+							}
 						}))}
 					}
 				})

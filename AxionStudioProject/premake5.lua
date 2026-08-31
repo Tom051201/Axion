@@ -36,6 +36,8 @@ project "AxionStudio"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
 		"%{wks.location}/AxionSubsystems/AxionAssetPipelineProject",
+		"%{wks.location}/AxionSubsystems/AxionNetworkProject",
+		"%{wks.location}/AxionSubsystems/AxionNetworkProject/AxionNetwork/Vendor/GNS/include",
 		"AxionStudio/Source",
 		"AxionStudio/Vendor",
 		"AxionStudio/Vendor/Silica/include",
@@ -52,6 +54,7 @@ project "AxionStudio"
 	links {
 		"AxionEngine",
 		"AxionAssetPipeline",
+		"AxionNetwork",
 		"discord-rpc"
 	}
 
@@ -111,6 +114,7 @@ project "AxionStudio"
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionStudioProject/AxionStudio/Vendor/Discord/lib/discord-rpc.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionSubsystems/AxionNetworkProject/AxionNetwork/Vendor/GNS/bin/*.dll %{cfg.buildtarget.directory}"
 		}
 
 	filter "configurations:Release or Distribution"
@@ -120,4 +124,5 @@ project "AxionStudio"
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionStudioProject/AxionStudio/Vendor/Discord/lib/discord-rpc.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionSubsystems/AxionNetworkProject/AxionNetwork/Vendor/GNS/bin/*.dll %{cfg.buildtarget.directory}"
 		}

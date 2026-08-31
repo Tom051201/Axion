@@ -212,6 +212,20 @@ namespace AxionScriptCore {
 			}
 		}
 
+		[UnmanagedCallersOnly(EntryPoint = "OnNetworkEventScript")]
+		public static unsafe void OnNetworkEventScript(IntPtr gcHandlePtr, uint eventID, byte* payload, ushort payloadSize) {
+			GCHandle handle = GCHandle.FromIntPtr(gcHandlePtr);
+			if (handle.Target is Entity script) {
+
+				byte[] payloadArray = new byte[payloadSize];
+				if (payloadSize > 0 && payload != null) {
+					Marshal.Copy((IntPtr)payload, payloadArray, 0, payloadSize);
+				}
+
+				script.OnNetworkEvent(eventID, payloadArray);
+			}
+		}
+
 	}
 
 }

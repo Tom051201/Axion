@@ -71,6 +71,10 @@ namespace Axion {
 		Animator_Stop,
 		Animator_IsPlaying,
 
+		// -- NETWORK --
+		Network_IsLocalPlayer,
+		Network_SendEvent,
+
 		// -- LOGIC --
 		Logic_Branch,
 		Logic_Sequence,

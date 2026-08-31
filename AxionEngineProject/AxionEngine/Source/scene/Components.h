@@ -41,6 +41,17 @@ namespace Axion {
 
 
 
+	struct NetworkIdentityComponent { // TODO: add to serializer etc
+		uint32_t ownerClientID = 0; // 0 = Server authoritative. > 0 = Client controlled.
+		bool isLocalPlayer = false; // True if the current application instance controls it
+
+		NetworkIdentityComponent() = default;
+		NetworkIdentityComponent(const NetworkIdentityComponent&) = default;
+		NetworkIdentityComponent(uint32_t owner) : ownerClientID(owner) {}
+	};
+
+
+
 	struct RelationshipComponent {
 		entt::entity parent = entt::null;
 		std::vector<entt::entity> children;

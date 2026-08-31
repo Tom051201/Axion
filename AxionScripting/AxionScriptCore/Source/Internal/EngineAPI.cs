@@ -62,6 +62,10 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<IntPtr, void> Scene_Save;
 		public delegate* unmanaged<byte> Scene_IsLoading;
 
+		// -- NETWORK --
+		public delegate* unmanaged<ulong, ulong, byte> Network_IsLocalPlayer;
+		public delegate* unmanaged<ulong, ulong, uint, byte*, ushort, void> Network_SendEvent;
+
 		// -- REFLECTION --
 		public delegate* unmanaged<IntPtr, IntPtr, int, void> Script_RegisterField;
 

@@ -28,11 +28,13 @@ project "AxionRuntime"
 		"%{wks.location}/AxionEngineProject/AxionEngine/Source",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12",
 		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/entt",
-		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include"
+		"%{wks.location}/AxionEngineProject/AxionEngine/Vendor/yaml-cpp/include",
+		"%{wks.location}/AxionSubsystems/AxionNetworkProject",
 	}
 
 	links {
-		"AxionEngine"
+		"AxionEngine",
+		"AxionNetwork",
 	}
 
 	prebuildcommands {

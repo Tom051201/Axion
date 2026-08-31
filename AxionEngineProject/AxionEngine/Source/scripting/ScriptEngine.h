@@ -78,6 +78,10 @@ namespace Axion {
 		void(*scene_save)(const char*);
 		uint8_t(*scene_isLoading)();
 
+		// -- NETWORK --
+		uint8_t(*network_isLocalPlayer)(uint64_t, uint64_t);
+		void(*network_sendEvent)(uint64_t, uint64_t, uint32_t, uint8_t*, uint16_t);
+
 		// -- REFLECTION --
 		void(*script_registerField)(const char*, const char*, int);
 
@@ -112,6 +116,10 @@ namespace Axion {
 		static void setFieldValueFloat(void* gcHandle, const std::string& fieldName, float value);
 		static Vec3 getFieldValueVector3(void* gcHandle, const std::string& fieldName);
 		static void setFieldValueVector3(void* gcHandle, const std::string& fieldName, const Vec3& value);
+
+		// -- Axion Network --
+		static void onNetworkEvent(void* gcHandle, uint32_t eventID, uint8_t* payload, uint16_t payloadSize);
+		static inline std::function<void(UUID, uint32_t, uint8_t*, uint16_t)> s_networkSendEventCallback;
 
 	private:
 

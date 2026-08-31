@@ -153,6 +153,8 @@ namespace Axion {
 							if (sourceNode.type == NodeType::Audio_GetVolume) return target + ".Audio.Volume";
 							if (sourceNode.type == NodeType::Animator_IsPlaying) return target + ".Animator.IsPlaying";
 
+							if (sourceNode.type == NodeType::Network_IsLocalPlayer) return "Network.IsLocalPlayer(" + target + ")";
+
 							// -- VARIABLES (GET) --
 							if (sourceNode.type == NodeType::Variable_Get) {
 								std::string varName = safeResolve(0);
@@ -340,6 +342,13 @@ namespace Axion {
 				// -- ANIMATOR --
 				case NodeType::Animator_Play: cs << tabs << target << ".Animator.Play();\n"; break;
 				case NodeType::Animator_Stop: cs << tabs << target << ".Animator.Stop();\n"; break;
+
+				// -- NETWORK --
+				case NodeType::Network_SendEvent: {
+					std::string eventID = safeResolve(2);
+					cs << tabs << "Network.SendEvent(" << target << ", (uint)(" << eventID << "));\n";
+					break;
+				}
 
 				// -- VARIABLES SETTERS --
 				case NodeType::Variable_Set: {

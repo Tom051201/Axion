@@ -20,8 +20,11 @@
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/input/Input.h"
+#include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 #include "AxionAssetPipeline/Source/core/AssetMigrator.h"
+
+#include "AxionNetwork/Source/NetworkManager.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
 #include "AxionStudio/Source/core/EditorCommand.h"
@@ -44,6 +47,7 @@
 #include "AxionStudio/Source/ui/panels/AssetLibraryPanel.h"
 #include "AxionStudio/Source/ui/panels/MaterialPanel.h"
 #include "AxionStudio/Source/ui/panels/HistoryPanel.h"
+#include "AxionStudio/Source/ui/panels/NetworkPanel.h"
 #include "AxionStudio/Source/ui/modals/SettingsModal.h"
 #include "AxionStudio/Source/ui/modals/CreateProjectModal.h"
 #include "AxionStudio/Source/ui/modals/ExportProjectModal.h"
@@ -56,6 +60,14 @@ namespace Axion {
 	void EditorLayer::onAttach() {
 
 		//PlatformUtils::registerProjectFileExtension();
+
+		// ----- Initialize Axion Network -----
+		AXNetwork::NetworkManager::initialize();
+
+		ScriptEngine::s_networkSendEventCallback = [this](UUID id, uint32_t eventID, uint8_t* payload, uint16_t size) {
+			m_testClient.sendNetworkEvent(id, eventID, payload, size);
+		};
+
 
 		// ----- Initialize Discord -----
 		DiscordManager::initialize("1543660033210851368");
@@ -258,6 +270,9 @@ namespace Axion {
 		m_historyPanel = MakeShared<HistoryPanel>();
 		auto historyWidget = m_historyPanel->getWidget();
 
+		m_networkPanel = MakeShared<NetworkPanel>(&m_testServer, &m_testClient);
+		auto networkWidget = m_networkPanel->getWidget();
+
 		// ----- Setup Workspace And DockSpace -----
 		auto workspace = Silica::MakeWidget<Silica::SWorkspace>({
 			.initialTitle = "Hierarchy",
@@ -277,6 +292,7 @@ namespace Axion {
 		m_dock->registerTab("Asset Library", assetLibraryWidget);
 		m_dock->registerTab("Material Editor", materialWidget);
 		m_dock->registerTab("Editor History", historyWidget);
+		m_dock->registerTab("Network Test", networkWidget);
 
 		if (!m_dock->getRootNode() || (m_dock->getRootNode()->tabs.size() <= 1 && m_dock->getRootNode()->splitDirection == Silica::SplitDirection::None)) {
 			auto root = m_dock->getRootNode();
@@ -490,9 +506,19 @@ namespace Axion {
 		SilicaContext::shutdown();
 
 		DiscordManager::shutdown();
+
+		m_testClient.disconnect();
+		m_testServer.stop();
+
+		AXNetwork::NetworkManager::shutdown();
 	}
 
 	void EditorLayer::onUpdate(Timestep ts) {
+
+		// TODO: TEMP
+		m_testClient.onUpdate(m_activeScene.get());
+		m_testServer.onUpdate(m_activeScene.get());
+
 
 		// ----- Update Discord Rich Presence -----
 		DiscordManager::onUpdate();

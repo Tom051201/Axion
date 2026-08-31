@@ -359,6 +359,10 @@ namespace Axion {
 		addMenuOption("Stop Animation", NodeType::Animator_Stop);
 		addMenuOption("Is Playing", NodeType::Animator_IsPlaying);
 
+		beginCategory("Network");
+		addMenuOption("Is Local Player", NodeType::Network_IsLocalPlayer);
+		addMenuOption("Send Network Event", NodeType::Network_SendEvent);
+
 		beginCategory("Logic");
 		addMenuOption("Branch", NodeType::Logic_Branch);
 		addMenuOption("Sequence", NodeType::Logic_Sequence);
@@ -871,6 +875,22 @@ namespace Axion {
 				break;
 			}
 
+			// -- NETWORK --
+			case NodeType::Network_IsLocalPlayer: {
+				node.name = "Is Local Player";
+				addInput("Target", PinType::Entity);
+				addOutput("Result", PinType::Bool);
+				break;
+			}
+			case NodeType::Network_SendEvent: {
+				node.name = "Send Network Event";
+				addInput("Execute", PinType::Flow);
+				addInput("Target", PinType::Entity);
+				addInput("Event ID", PinType::Int);
+				addOutput("Next", PinType::Flow);
+				break;
+			}
+
 			// -- LOGIC --
 			case NodeType::Logic_Branch: {
 				node.name = "Branch";
@@ -1038,6 +1058,7 @@ namespace Axion {
 		if (type >= NodeType::Input_IsKeyPressed && type <= NodeType::Input_IsMouseButtonPressed) return Silica::Color(123, 31, 162);
 		if (type >= NodeType::Audio_Play && type <= NodeType::Audio_SetVolume) return Silica::Color(121, 85, 72);
 		if (type >= NodeType::Animator_Play && type <= NodeType::Animator_IsPlaying) return Silica::Color(0, 172, 193);
+		if (type >= NodeType::Network_IsLocalPlayer && type <= NodeType::Network_SendEvent) return Silica::Color(0, 150, 136);
 		if (type >= NodeType::Logic_Branch && type <= NodeType::Logic_Or) return Silica::Color(96, 125, 139);
 		if (type >= NodeType::Math_Add && type <= NodeType::Math_BreakVector3) return Silica::Color(85, 139, 47);
 

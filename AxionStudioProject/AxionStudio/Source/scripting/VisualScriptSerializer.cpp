@@ -303,6 +303,10 @@ namespace Axion {
 		else if (str == "Animator_Stop") return NodeType::Animator_Stop;
 		else if (str == "Animator_IsPlaying") return NodeType::Animator_IsPlaying;
 
+		// -- NETWORK --
+		else if (str == "Network_IsLocalPlayer") return NodeType::Network_IsLocalPlayer;
+		else if (str == "Network_SendEvent") return NodeType::Network_SendEvent;
+
 		// -- LOGIC --
 		else if (str == "Logic_Branch") return NodeType::Logic_Branch;
 		else if (str == "Logic_Sequence") return NodeType::Logic_Sequence;
@@ -392,6 +396,10 @@ namespace Axion {
 			case NodeType::Animator_Play: return "Animator_Play";
 			case NodeType::Animator_Stop: return "Animator_Stop";
 			case NodeType::Animator_IsPlaying: return "Animator_IsPlaying";
+
+			// -- NETWORK --
+			case NodeType::Network_IsLocalPlayer: return "Network_IsLocalPlayer";
+			case NodeType::Network_SendEvent: return "Network_SendEvent";
 
 			// -- LOGIC --
 			case NodeType::Logic_Branch: return "Logic_Branch";

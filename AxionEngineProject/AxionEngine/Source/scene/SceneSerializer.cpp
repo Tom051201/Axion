@@ -22,7 +22,8 @@ namespace Axion {
 		DirectionalLight, PointLight, SpotLight,
 		RigidBody, BoxCollider, SphereCollider, CapsuleCollider, GravitySource,
 		Script, NativeScript, ParticleSystem,
-		SkeletalMesh, Animator
+		SkeletalMesh, Animator,
+		NetworkIdentity
 	};
 
 	static void writeString(std::ofstream& out, const std::string& str) {
@@ -287,6 +288,16 @@ namespace Axion {
 			out << YAML::Key << "Strength" << YAML::Value << gsc.strength;
 			out << YAML::Key << "Radius" << YAML::Value << gsc.radius;
 			out << YAML::Key << "AffectKinematic" << YAML::Value << gsc.affectKinematic;
+			out << YAML::EndMap;
+		}
+
+		// -- NetworkIdentityComponent --
+		if (entity.hasComponent<NetworkIdentityComponent>()) {
+			out << YAML::Key << "NetworkIdentityComponent";
+			out << YAML::BeginMap;
+			auto& netID = entity.getComponent<NetworkIdentityComponent>();
+			out << YAML::Key << "OwnerClientID" << YAML::Value << netID.ownerClientID;
+			out << YAML::Key << "IsLocalPlayer" << YAML::Value << netID.isLocalPlayer;
 			out << YAML::EndMap;
 		}
 
@@ -881,6 +892,14 @@ namespace Axion {
 			gsc.affectKinematic = gravitySourceComponent["AffectKinematic"].as<bool>();
 		}
 
+		// -- NetworkIdentityComponent --
+		auto netIdentityComponent = entityNode["NetworkIdentityComponent"];
+		if (netIdentityComponent) {
+			auto& netID = deserializedEntity.addComponent<NetworkIdentityComponent>();
+			netID.ownerClientID = netIdentityComponent["OwnerClientID"].as<uint32_t>();
+			netID.isLocalPlayer = netIdentityComponent["IsLocalPlayer"].as<bool>();
+		}
+
 		// -- ScriptComponent --
 		auto scriptComponent = entityNode["ScriptComponent"];
 		if (scriptComponent) {
@@ -1197,6 +1216,15 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
 		}
 
+		// -- Write Network Identity Component --
+		if (entity.hasComponent<NetworkIdentityComponent>()) {
+			ComponentID id = ComponentID::NetworkIdentity;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			auto& component = entity.getComponent<NetworkIdentityComponent>();
+			out.write(reinterpret_cast<const char*>(&component.ownerClientID), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&component.isLocalPlayer), sizeof(bool));
+		}
+
 		// -- Write C# Script Component --
 		if (entity.hasComponent<ScriptComponent>()) {
 			ComponentID id = ComponentID::Script;
@@ -1509,6 +1537,13 @@ namespace Axion {
 				uint8_t flags;
 				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
 				component.affectKinematic = (flags & 1) != 0;
+				break;
+			}
+			case ComponentID::NetworkIdentity: {
+				// -- Read Network Identity Component --
+				auto& component = entity.addComponent<NetworkIdentityComponent>();
+				in.read(reinterpret_cast<char*>(&component.ownerClientID), sizeof(uint32_t));
+				in.read(reinterpret_cast<char*>(&component.isLocalPlayer), sizeof(bool));
 				break;
 			}
 			case ComponentID::Script: {

@@ -42,6 +42,7 @@ namespace Axion {
 	typedef void(*getVec3Func)(void*, const char*, float*);
 	typedef void(*setVec3Func)(void*, const char*, float*);
 	typedef void(*loadAppAssemblyFunc)(const char*);
+	typedef void(*networkEventFunc)(void*, uint32_t, uint8_t*, uint16_t);
 
 	static createScriptFunc s_createEntityScriptFunc = nullptr;
 	static destroyScriptFunc s_destroyEntityScriptFunc = nullptr;
@@ -55,6 +56,7 @@ namespace Axion {
 	static getVec3Func s_getVec3Func = nullptr;
 	static setVec3Func s_setVec3Func = nullptr;
 	static loadAppAssemblyFunc s_loadAppAssemblyFunc = nullptr;
+	static networkEventFunc s_onNetworkEventFunc = nullptr;
 
 	void ScriptEngine::initialize() {
 		bool loadHostSuccess = loadHostFxr();
@@ -147,6 +149,11 @@ namespace Axion {
 		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"UpdateDeltaTime", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_updateTimeFunc);
 		if (rc != 0 || s_updateTimeFunc == nullptr) {
 			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load UpdateDeltaTime.");
+		}
+
+		rc = s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"OnNetworkEventScript", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_onNetworkEventFunc);
+		if (rc != 0 || s_onNetworkEventFunc == nullptr) {
+			AX_CORE_LOG_ERROR("[ScriptEngine] Failed to load OnNetworkEventScript.");
 		}
 
 		s_loadAssemblyAndGetFuncPtr(assemblyPath, managerTypeName, L"GenerateScriptMetadata", UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&s_generateMetadataFunc);
@@ -328,6 +335,12 @@ namespace Axion {
 
 	Scene* ScriptEngine::getSceneContext() {
 		return s_sceneContext;
+	}
+
+	void ScriptEngine::onNetworkEvent(void* gcHandle, uint32_t eventID, uint8_t* payload, uint16_t payloadSize) {
+		if (s_onNetworkEventFunc && gcHandle != nullptr) {
+			s_onNetworkEventFunc(gcHandle, eventID, payload, payloadSize);
+		}
 	}
 
 }

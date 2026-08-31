@@ -24,6 +24,10 @@
 #include "AxionStudio/Source/core/TransformGizmo.h"
 #include "AxionStudio/Source/core/EditorEvents.h"
 
+// TODO: TEMP
+#include "AxionNetwork/Source/NetworkServer.h"
+#include "AxionNetwork/Source/NetworkClient.h"
+
 namespace Silica {
 	class SBox;
 	class SDockSpace;
@@ -42,6 +46,7 @@ namespace Axion {
 	class AssetLibraryPanel;
 	class MaterialPanel;
 	class HistoryPanel;
+	class NetworkPanel;
 	class SettingsModal;
 	class CreateProjectModal;
 	class ExportProjectModal;
@@ -97,6 +102,7 @@ namespace Axion {
 		Shared<AssetLibraryPanel> m_assetLibraryPanel;
 		Shared<MaterialPanel> m_materialPanel;
 		Shared<HistoryPanel> m_historyPanel;
+		Shared<NetworkPanel> m_networkPanel;
 		Shared<SettingsModal> m_settingsModal;
 		Shared<CreateProjectModal> m_createProjectModal;
 		Shared<ExportProjectModal> m_exportProjectModal;
@@ -109,6 +115,10 @@ namespace Axion {
 		TransformGizmo m_transformGizmo;
 		bool m_isDraggingGizmo = false;
 		TransformComponent m_dragStartTransform;
+
+		// -- Networking Test -- TODO TEMP
+		AXNetwork::NetworkServer m_testServer;
+		AXNetwork::NetworkClient m_testClient;
 
 
 

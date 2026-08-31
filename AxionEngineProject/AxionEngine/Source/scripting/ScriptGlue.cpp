@@ -486,6 +486,22 @@ namespace Axion {
 		}
 
 
+		// -- NETWORK --
+		extern "C" uint8_t network_isLocalPlayer(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<NetworkIdentityComponent>()) {
+				return entity.getComponent<NetworkIdentityComponent>().isLocalPlayer ? 1 : 0;
+			}
+			return 0;
+		}
+
+		extern "C" void network_sendEvent(uint64_t uuidHi, uint64_t uuidLo, uint32_t eventID, uint8_t* payload, uint16_t payloadSize) {
+			if (ScriptEngine::s_networkSendEventCallback) {
+				ScriptEngine::s_networkSendEventCallback(UUID(uuidHi, uuidLo), eventID, payload, payloadSize);
+			}
+		}
+
+
 		// -- REFLECTION --
 		extern "C" void script_registerField(const char* className, const char* fieldName, int type) {
 			ScriptEngine::registerScriptField(className, fieldName, static_cast<ScriptFieldType>(type));
@@ -558,6 +574,10 @@ namespace Axion {
 		REGISTER_API(apiStruct, scene_load);
 		REGISTER_API(apiStruct, scene_save);
 		REGISTER_API(apiStruct, scene_isLoading);
+
+		// -- NETWORK --
+		REGISTER_API(apiStruct, network_isLocalPlayer);
+		REGISTER_API(apiStruct, network_sendEvent);
 
 		// -- REFLECTION --
 		REGISTER_API(apiStruct, script_registerField);

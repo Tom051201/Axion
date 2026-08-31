@@ -22,6 +22,7 @@ group "Dependencies"
 
 group "Subsystems"
 	include "AxionSubsystems/AxionAssetPipelineProject"
+	include "AxionSubsystems/AxionNetworkProject"
 
 group ""
 
