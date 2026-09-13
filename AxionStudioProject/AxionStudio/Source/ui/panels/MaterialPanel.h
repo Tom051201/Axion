@@ -57,10 +57,15 @@ namespace Axion {
 		float m_cameraYaw = 0.0f;
 		float m_cameraDistance = 3.0f;
 
+		// -- Core UI Builders --
 		void rebuildUI();
 		Silica::WidgetPtr buildProperties();
 		Silica::WidgetPtr buildTextureSlot(const std::string& label, TextureSlot slot);
 
+		// -- Commands --
+		void cmdSaveMaterial();
+
+		// -- Events --
 		EventReply onProjectChanged(ProjectChangedEvent& ev);
 
 	};

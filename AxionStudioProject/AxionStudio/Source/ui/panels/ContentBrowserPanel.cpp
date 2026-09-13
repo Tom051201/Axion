@@ -2,6 +2,7 @@
 #include "ContentBrowserPanel.h"
 
 #include <Silica/include/Theme.h>
+#include <Silica/include/Renderer.h>
 #include <Silica/include/SBox.h>
 #include <Silica/include/SBorderLayout.h>
 #include <Silica/include/SHorizontalBox.h>
@@ -30,13 +31,12 @@
 #include "AxionEngine/Source/input/Input.h"
 
 #include "AxionStudio/Source/core/EditorResourceManager.h"
-#include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorUtils.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/core/EditorEvents.h"
-#include "AxionStudio/Source/core/EditorModalManager.h"
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 #include "AxionStudio/Source/ui/modals/AudioImportModal.h"
 #include "AxionStudio/Source/ui/modals/MaterialImportModal.h"
 #include "AxionStudio/Source/ui/modals/MeshImportModal.h"
@@ -46,6 +46,29 @@
 #include "AxionStudio/Source/ui/modals/SkyboxImportModal.h"
 #include "AxionStudio/Source/ui/modals/Texture2DImportModal.h"
 #include "AxionStudio/Source/ui/modals/TextureCubeImportModal.h"
+
+namespace {
+	constexpr float TOOLBAR_PADDING = 5.0f;
+	constexpr float TOOLBAR_SPACING = 8.0f;
+	constexpr float BUTTON_PAD_X = 8.0f;
+	constexpr float BUTTON_PAD_Y = 4.0f;
+
+	constexpr float ICON_SIZE_LARGE = 24.0f;
+	constexpr float ICON_SIZE_SMALL = 16.0f;
+	constexpr float GRID_SPACING = 16.0f;
+	constexpr float CTX_MENU_SPACING = 2.0f;
+	constexpr float CTX_MENU_PADDING = 5.0f;
+	constexpr float RENAME_BOX_EXTRA_WIDTH = 30.0f;
+	constexpr float SEARCH_BOX_WIDTH = 200.0f;
+	constexpr float MODAL_PAD = 20.0f;
+	constexpr float MODAL_BTN_PAD_X = 20.0f;
+	constexpr float MODAL_BTN_PAD_Y = 8.0f;
+
+	constexpr float THUMBNAIL_MIN = 32.0f;
+	constexpr float THUMBNAIL_MAX = 256.0f;
+	constexpr float THUMBNAIL_ZOOM_SPEED = 5.0f;
+	constexpr float SHOW_NAME_THRESHOLD = 50.0f;
+}
 
 namespace Axion {
 
@@ -88,7 +111,6 @@ namespace Axion {
 			if (m_isMouseDown) { color = Silica::GetTheme().Accent_Primary; color.setAlpha(150); }
 			else if (m_isHovered) color = m_hoverColor;
 
-			// -- Drop Zone Highlighting --
 			if (Silica::SWidget::getDragHoveredWidget() == this) {
 				color = Silica::GetTheme().Accent_Primary;
 				color.setAlpha(80);
@@ -169,12 +191,10 @@ namespace Axion {
 
 		Silica::EventReply onMouseButtonUp(const Silica::Geometry& geom, const Silica::Vec2& pos, Silica::MouseButton btn) override {
 			bool wasClicked = m_isMouseDown;
-
 			if (m_isMouseDown) {
 				m_isMouseDown = false;
 				Silica::SWidget::setCapturedWidget(nullptr);
 			}
-
 			Silica::EventReply reply = Silica::EventReply::unhandled();
 			if (m_child) reply = m_child->onMouseButtonUp(m_child->getAllocatedGeometry(), pos, btn);
 
@@ -219,7 +239,7 @@ namespace Axion {
 			}
 		}
 
-		void arrangeChildren(const Silica::Geometry& geo) override { 
+		void arrangeChildren(const Silica::Geometry& geo) override {
 			SWidget::arrangeChildren(geo);
 			if (m_child) m_child->arrangeChildren(geo);
 		}
@@ -278,11 +298,132 @@ namespace Axion {
 
 	};
 
+	// ----- COMMAND IMPLEMENTATIONS -----
+	void ContentBrowser::cmdCreateCollection(std::shared_ptr<VFSNode> parentNode) {
+		std::string baseName = "New Collection";
+		std::string finalName = baseName;
+		int counter = 1;
+		auto nameExists = [&](const std::string& n) { for (auto& c : parentNode->children) if (c->name == n) return true; return false; };
+		while (nameExists(finalName)) finalName = baseName + " " + std::to_string(counter++);
 
+		m_vfs.createFolder(parentNode, finalName);
+		m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
 
+		m_viewingCollection = true;
+		m_currentCollection = parentNode;
+		m_itemBeingRenamed = finalName;
+		m_itemRenameString = finalName;
+		m_startRenaming = true;
+		refresh();
+	}
 
+	void ContentBrowser::cmdDeleteCollection(std::shared_ptr<VFSNode> node) {
+		if (node->parent) {
+			bool isCurrentDescendant = false;
+			VFSNode* current = m_currentCollection.get();
+			while (current) {
+				if (current == node.get()) { isCurrentDescendant = true; break; }
+				current = current->parent;
+			}
 
-	// ----- CONTENT BROWSER PANEL IMPLEMENTION -----
+			auto& siblings = node->parent->children;
+			siblings.erase(std::remove(siblings.begin(), siblings.end(), node), siblings.end());
+			m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+
+			if (isCurrentDescendant) {
+				m_currentCollection = m_vfs.getRoot();
+				m_viewingCollection = true;
+			}
+			rebuildUI();
+		}
+	}
+
+	void ContentBrowser::cmdCreateFolder() {
+		std::string baseName = "New Folder";
+		std::filesystem::path newFolderPath = m_currentDirectory / baseName;
+		int counter = 1;
+		while (std::filesystem::exists(newFolderPath)) {
+			newFolderPath = m_currentDirectory / (baseName + " " + std::to_string(counter));
+			++counter;
+		}
+		std::error_code ec;
+		std::filesystem::create_directory(newFolderPath, ec);
+		if (!ec) {
+			m_viewingCollection = false;
+			m_itemBeingRenamed = newFolderPath;
+			m_itemRenameString = newFolderPath.filename().string();
+			m_startRenaming = true;
+			refresh();
+		}
+	}
+
+	void ContentBrowser::cmdCreateVisualScript() {
+		std::string baseName = "NewVisualScript";
+		std::filesystem::path newScriptPath = m_currentDirectory / (baseName + ".axvs");
+		int counter = 1;
+		while (std::filesystem::exists(newScriptPath)) {
+			newScriptPath = m_currentDirectory / (baseName + "_" + std::to_string(counter) + ".axvs");
+			counter++;
+		}
+		VisualGraph newGraph;
+		newGraph.className = newScriptPath.stem().string();
+		VisualScriptSerializer::serialize(newGraph, newScriptPath);
+
+		m_itemBeingRenamed = newScriptPath;
+		m_itemRenameString = newScriptPath.filename().string();
+		m_startRenaming = true;
+		refresh();
+	}
+
+	void ContentBrowser::cmdRenameItem(const std::filesystem::path& path) {
+		m_itemBeingRenamed = path;
+		m_itemRenameString = path.filename().string();
+		m_startRenaming = true;
+		rebuildUI();
+	}
+
+	void ContentBrowser::cmdDeleteItem(const std::filesystem::path& path, std::shared_ptr<VFSNode> vfsNode) {
+		if (m_viewingCollection && vfsNode) {
+			auto& siblings = vfsNode->parent->children;
+			siblings.erase(std::remove(siblings.begin(), siblings.end(), vfsNode), siblings.end());
+			m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+			refresh();
+		}
+		else {
+			m_pendingDelete = path;
+			m_relatedFilesToDelete = findRelatedFiles(path);
+			m_deleteRelatedFiles = true;
+			m_openDeletePopup = true;
+			rebuildUI();
+		}
+	}
+
+	void ContentBrowser::cmdOpenItem(const std::filesystem::path& path, bool isDir, std::shared_ptr<VFSNode> vfsNode) {
+		if (isDir) {
+			if (m_viewingCollection && vfsNode) {
+				m_currentCollection = vfsNode;
+			}
+			else {
+				m_backHistory.push_back(m_currentDirectory);
+				m_forwardHistory.clear();
+				m_currentDirectory = path;
+				m_expandedDirectories.insert(path.string());
+			}
+			refresh();
+		}
+		else {
+			std::string ext = path.extension().string();
+
+			if (ext == ".axscene" && m_openSceneInViewportCallback) m_openSceneInViewportCallback(path);
+			else if (ext == ".axvs" && m_openVisualScriptPanel) m_openVisualScriptPanel(path);
+			else if (ext == ".axmat" && m_openMaterialEditorPanel) m_openMaterialEditorPanel(path);
+			else if (EditorUtils::isTextEditorFile(ext) && m_openTextEditorPanel) m_openTextEditorPanel(path);
+			else if (EditorUtils::isEngineAssetExtension(ext) && m_openTextEditorPanel) m_openTextEditorPanel(path);
+			else PlatformUtils::openExternally(path);
+		}
+	}
+
+	// ----- CONTENT BROWSER PANEL IMPLEMENTATION -----
 	void ContentBrowser::setup() {
 		if (ProjectManager::hasProject()) {
 			m_rootDirectory = ProjectManager::getProject()->getProjectPath();
@@ -293,9 +434,7 @@ namespace Axion {
 
 	Silica::WidgetPtr ContentBrowser::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness
-			});
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -319,31 +458,15 @@ namespace Axion {
 
 		// -- No project loaded --
 		if (!ProjectManager::hasProject()) {
-			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
-				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view assets.",
-				.wrapWidth = 250.0f,
-				.color = Silica::GetTheme().Text_Dim
-			});
-
-			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Center,
-				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = emptyText
-			});
-
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({
-				.child = centeredState
-			}));
+			m_uiRoot->setChild(SilicaHelpers::MakeEmptyState("No Project Loaded.\n\nPlease load or create a project from the top menu bar to view assets.", 250.0f));
 			return;
 		}
 
-		// -- Collections --
-		auto collectionsTreeContainer = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f});
+		// -- Collections Tree Setup --
+		auto collectionsTreeContainer = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
 		if (m_vfs.getRoot()) {
 			for (const auto& child : m_vfs.getRoot()->children) {
-				if (child->isDirectory) {
-					collectionsTreeContainer->addSlot({ {0,0}, buildCollectionTree(child) });
-				}
+				if (child->isDirectory) collectionsTreeContainer->addSlot({ {0,0}, buildCollectionTree(child) });
 			}
 		}
 
@@ -360,77 +483,40 @@ namespace Axion {
 			.child = collectionsTreeContainer
 		});
 
-		auto collectionsTreeScroll = Silica::MakeWidget<Silica::SScrollBox>({
-			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 5.0f, 5.0f },
-				.child = collectionsBackgroundClicker
-			})
-		});
-
-		auto collectionsTreeBgMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
-		collectionsTreeBgMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				EditorActionQueue::push([this]() {
-					std::string baseName = "New Collection";
-					std::string finalName = baseName;
-					int counter = 1;
-					auto root = m_vfs.getRoot();
-					auto nameExists = [&](const std::string& n) { for (auto& c : root->children) if (c->name == n) return true; return false; };
-					while (nameExists(finalName)) finalName = baseName + " " + std::to_string(counter++);
-
-					m_vfs.createFolder(root, finalName);
-					m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
-
-					m_viewingCollection = true;
-					m_currentCollection = root;
-					m_itemBeingRenamed = finalName;
-					m_itemRenameString = finalName;
-					m_startRenaming = true;
-					refresh();
-				});
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Collection" })
-		}) });
-
 		auto collectionsTreeScrollContext = Silica::MakeWidget<Silica::SMenuAnchor>({
-			.openOnHover = false,
-			.openOnRightClick = true,
-			.openAtMousePos = true,
-			.anchorContent = collectionsTreeScroll,
+			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
+			.anchorContent = Silica::MakeWidget<Silica::SScrollBox>({
+				.child = Silica::MakeWidget<Silica::SBox>({
+					.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+					.child = collectionsBackgroundClicker
+				})
+			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {5, 5},
+				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
-				.child = collectionsTreeBgMenu
+				.child = Silica::MakeWidget<Silica::SVerticalBox>({
+					.spacing = CTX_MENU_SPACING,
+					.slots = {{ {0,0}, makeContextMenuItem("Create Collection", [this]() { cmdCreateCollection(m_vfs.getRoot()); }) }}
+				})
 			})
 		});
 
 		auto collectionsDropZone = Silica::MakeWidget<Silica::SBox>({
-			.onDragOver = [](const Silica::DragDropPayload& payload) {
-				if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
-				return Silica::EventReply::unhandled();
-			},
+			.onDragOver = [](const Silica::DragDropPayload& payload) { return (payload.type == "AssetPath" || payload.type == "VFSNode") ? Silica::EventReply::handled() : Silica::EventReply::unhandled(); },
 			.onDrop = [this](const Silica::DragDropPayload& payload) mutable {
 				auto targetNode = m_vfs.getRoot();
-
 				EditorActionQueue::push([this, payload, targetNode]() mutable {
 					if (payload.type == "AssetPath") {
-						std::filesystem::path droppedPath = std::any_cast<std::filesystem::path>(payload.data);
+						auto droppedPath = std::any_cast<std::filesystem::path>(payload.data);
 						if (!std::filesystem::is_directory(droppedPath)) m_vfs.addFile(targetNode, droppedPath);
 					}
 					else if (payload.type == "VFSNode") {
 						auto droppedNode = std::any_cast<std::shared_ptr<VFSNode>>(payload.data);
 						if (droppedNode != targetNode) m_vfs.moveNode(droppedNode, targetNode);
 					}
-
 					m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
-					m_viewingCollection = true;
-					m_currentCollection = targetNode;
-					refresh();
+					m_viewingCollection = true; m_currentCollection = targetNode; refresh();
 				});
 				return Silica::EventReply::handled();
 			},
@@ -451,78 +537,78 @@ namespace Axion {
 			.child = buildDirectoryTree(m_rootDirectory)
 		});
 
-		auto physicalTreeScroll = Silica::MakeWidget<Silica::SScrollBox>({
-			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 5.0f, 5.0f },
-				.child = physicalBackgroundClicker
-			})
-		});
-
-		auto physicalTreeBgMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
-		physicalTreeBgMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				std::string baseName = "New Folder";
-				std::filesystem::path newFolderPath = m_rootDirectory / baseName;
-				int counter = 1;
-				while (std::filesystem::exists(newFolderPath)) {
-					newFolderPath = m_rootDirectory / (baseName + " " + std::to_string(counter));
-					++counter;
-				}
-				std::error_code ec;
-				std::filesystem::create_directory(newFolderPath, ec);
-				if (!ec) {
-					m_viewingCollection = false;
-					m_currentDirectory = m_rootDirectory;
-					m_itemBeingRenamed = newFolderPath;
-					m_itemRenameString = newFolderPath.filename().string();
-					m_startRenaming = true;
-					refresh();
-				}
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Folder in Root" })
-		}) });
-
 		auto physicalTreeScrollContext = Silica::MakeWidget<Silica::SMenuAnchor>({
-			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
-			.anchorContent = physicalTreeScroll,
-			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {5, 5}, .borderThickness = Silica::GetTheme().Border_Thickness,
-				.backgroundColor = Silica::GetTheme().Background_Popup, .child = physicalTreeBgMenu
-			})
-		});
-
-		// -- Vertically Split Collections And Physical Folder Layout --
-		m_vSplitBox = Silica::MakeWidget<Silica::SVerticalSplitBox>({
-			.topHeight = m_treeViewTopHeight,
-			.topContent = collectionsTreeScrollContext,
-			.bottomContent = physicalTreeScrollContext
-		});
-
-		// -- Grid View For Content --
-		auto gridView = buildContentArea();
-
-		// -- Horizontally Split Trees And Grid --
-		m_splitBox = Silica::MakeWidget<Silica::SHorizontalSplitBox>({
-			.leftWidth = m_treeViewWidth,
-			.leftContent = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::GetTheme().Surface_Primary,
-				.child = m_vSplitBox
+			.openOnHover = false,
+			.openOnRightClick = true,
+			.openAtMousePos = true,
+			.anchorContent = Silica::MakeWidget<Silica::SScrollBox>({
+				.child = Silica::MakeWidget<Silica::SBox>({
+					.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+					.child = physicalBackgroundClicker
+				})
 			}),
-			.rightContent = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::GetTheme().Surface_Primary,
-				.child = gridView
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup,
+				.child = Silica::MakeWidget<Silica::SVerticalBox>({
+					.spacing = CTX_MENU_SPACING,
+					.slots = {{ {0,0}, makeContextMenuItem("Create Folder in Root", [this]() { m_currentDirectory = m_rootDirectory; cmdCreateFolder(); }) }}
+				})
 			})
 		});
 
-		// -- Assemble Toolbar and Split Boxes --
-		auto mainLayout = Silica::MakeWidget<Silica::SBorderLayout>({
-			.topBar = buildToolbar(),
-			.contentArea = m_splitBox
-		});
+		Silica::WidgetPtr treeContent = nullptr;
 
-		// -- Mouse Navigation Catcher--
+		// -- Build Left Tree Layout based on toggles --
+		if (m_showVFSTree && m_showPhysicalTree) {
+			m_vSplitBox = Silica::MakeWidget<Silica::SVerticalSplitBox>({
+				.topHeight = m_treeViewTopHeight,
+				.topContent = collectionsDropZone,
+				.bottomContent = physicalTreeScrollContext
+			});
+			treeContent = m_vSplitBox;
+		}
+		else {
+			m_vSplitBox = nullptr;
+			if (m_showVFSTree) treeContent = collectionsDropZone;
+			else if (m_showPhysicalTree) treeContent = physicalTreeScrollContext;
+		}
+
+		if (treeContent) {
+			treeContent = Silica::MakeWidget<Silica::SBox>({
+				.backgroundColor = Silica::GetTheme().Surface_Primary,
+				.child = treeContent
+			});
+		}
+
+		// -- Build Right Grid Layout based on toggle --
+		Silica::WidgetPtr gridContent = nullptr;
+		if (m_showContentArea) {
+			gridContent = Silica::MakeWidget<Silica::SBox>({
+				.backgroundColor = Silica::GetTheme().Surface_Primary,
+				.child = buildContentArea()
+			});
+		}
+
+		// -- Assemble the Center Area --
+		Silica::WidgetPtr centerArea = nullptr;
+		if (treeContent && gridContent) {
+			m_splitBox = Silica::MakeWidget<Silica::SHorizontalSplitBox>({
+				.leftWidth = m_treeViewWidth,
+				.leftContent = treeContent,
+				.rightContent = gridContent
+			});
+			centerArea = m_splitBox;
+		}
+		else {
+			m_splitBox = nullptr;
+			if (treeContent) centerArea = treeContent;
+			else if (gridContent) centerArea = gridContent;
+			else centerArea = SilicaHelpers::MakeEmptyState("All Content Browser panels are hidden.\n\nRe-enable them in Preferences -> Panels.", 350.0f);
+		}
+
+		// -- Mouse Navigation Catcher --
 		auto navCatcher = Silica::MakeWidget<SMouseNavCatcher>({
 			.onBack = [this]() {
 				if (!m_backHistory.empty()) {
@@ -540,19 +626,19 @@ namespace Axion {
 					refresh();
 				}
 			},
-			.child = mainLayout
+			.child = Silica::MakeWidget<Silica::SBorderLayout>({
+				.topBar = buildToolbar(),
+				.contentArea = centerArea
+			})
 		});
 
 		Silica::WidgetPtr finalContent = navCatcher;
 
 		// -- Delete Popup Modal --
 		if (m_openDeletePopup) {
-			finalContent = Silica::MakeWidget<Silica::SOverlay>({
-				.children = { finalContent, buildDeleteModal() }
-			});
+			finalContent = Silica::MakeWidget<Silica::SOverlay>({.children = { finalContent, buildDeleteModal() } });
 		}
 
-		// -- Assemble All --
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
 			.horizontalAlign = Silica::HorizontalAlign::Fill,
 			.verticalAlign = Silica::VerticalAlign::Fill,
@@ -561,35 +647,24 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildToolbar() {
-		float iconSize = 24.0f;
-
-		// -- Helper Functions --
 		auto makeIconBtn = [=](const std::string& iconName, bool isDisabled, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { 4.0f, 4.0f },
+				.padding = { BUTTON_PAD_X / 2.0f, BUTTON_PAD_X / 2.0f },
 				.enabled = !isDisabled,
 				.color = Silica::Color::transparent(),
 				.hoverColor = Silica::Color(100, 100, 100, 150),
 				.disabledColor = Silica::Color::transparent(),
-				.onClick = [onClick]() {
-					onClick();
-					return Silica::EventReply::handled();
-				},
+				.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
 				.child = Silica::MakeWidget<Silica::SImage>({
 					.textureID = SilicaContext::getIcon(iconName),
 					.tint = isDisabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
-					.desiredSize = { iconSize, iconSize }
+					.desiredSize = { ICON_SIZE_LARGE, ICON_SIZE_LARGE }
 				})
 			});
 		};
 
-		auto makeSpacer = []() { return Silica::MakeWidget<Silica::SBox>({
-			.backgroundColor = Silica::Color::transparent()
-		}); };
+		auto makeSpacer = []() { return Silica::MakeWidget<Silica::SBox>({ .backgroundColor = Silica::Color::transparent() }); };
 
-
-
-		// -- Back Button --
 		auto backBtn = makeIconBtn("BackIcon", m_backHistory.empty(), [this]() {
 			m_forwardHistory.push_back(m_currentDirectory);
 			m_currentDirectory = m_backHistory.back();
@@ -597,7 +672,6 @@ namespace Axion {
 			refresh();
 		});
 
-		// -- Forward Button --
 		auto fwdBtn = makeIconBtn("ForwardIcon", m_forwardHistory.empty(), [this]() {
 			m_backHistory.push_back(m_currentDirectory);
 			m_currentDirectory = m_forwardHistory.back();
@@ -605,64 +679,46 @@ namespace Axion {
 			refresh();
 		});
 
-		// -- Refresh Button --
-		auto refreshBtn = makeIconBtn("RefreshIcon", false, [this]() {
-			refresh();
-		});
+		auto refreshBtn = makeIconBtn("RefreshIcon", false, [this]() { refresh(); });
 
-		// -- Add Folder Button --
-		auto addBtn = makeIconBtn("AddFolderIcon", false, [this]() {
-			std::string baseName = "New Folder";
-			std::filesystem::path newFolderPath = m_currentDirectory / baseName;
-			int counter = 1;
-			while (std::filesystem::exists(newFolderPath)) {
-				newFolderPath = m_currentDirectory / (baseName + " " + std::to_string(counter));
-				++counter;
-			}
-			std::error_code ec;
-			std::filesystem::create_directory(newFolderPath, ec);
-			if (!ec) {
-				m_itemBeingRenamed = newFolderPath;
-				m_itemRenameString = newFolderPath.filename().string();
-				m_startRenaming = true;
-				refresh();
-			}
-		});
+		auto addBtn = makeIconBtn("AddFolderIcon", false, [this]() { cmdCreateFolder(); });
 
-		// -- Search Box --
-		auto searchBox = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2(200.0f, 0.0f),
-			.child = Silica::MakeWidget<Silica::SEditableText>({
+		if (!m_searchBoxWidget) {
+			m_searchBoxWidget = Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = m_searchString,
 				.hintText = "Search...",
-				.onTextCommitted = [this](const std::string& val) {
-					m_searchString = val;
-					rebuildUI();
-				}
-			})
+				.onTextChanged = [this](const std::string& val) { m_searchString = val; rebuildUI(); }
+			});
+		}
+
+		auto searchBox = Silica::MakeWidget<Silica::SBox>({
+			.explicitSize = Silica::Vec2(SEARCH_BOX_WIDTH, 0.0f),
+			.child = m_searchBoxWidget
 		});
 
-		// -- Clear Search Button --
 		auto clearSearchBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 8.0f, 4.0f },
+			.padding = { BUTTON_PAD_X, BUTTON_PAD_Y },
 			.color = m_searchString.empty() ? Silica::Color::transparent() : Silica::Color(50, 50, 50, 255),
 			.onClick = [this]() {
 				m_searchString.clear();
+				m_searchBoxWidget.reset();
 				rebuildUI();
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X" })
 		});
 
-		// -- Only Engine Assets Checkbox --
 		auto onlyEngineAssetsCheckbox = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 5.0f,
+			.spacing = TOOLBAR_PADDING,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
 					.child = Silica::MakeWidget<Silica::SCheckBox>({
 						.initialCheck = m_onlyEngineAssets,
-						.onCheckChanged = [this](bool val) { m_onlyEngineAssets = val; rebuildUI(); }
+						.onCheckChanged = [this](bool val) {
+							m_onlyEngineAssets = val;
+							rebuildUI();
+						}
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
@@ -670,11 +726,10 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Assets Only" })
 				})}
 			}
-		});
+			});
 
-		// -- Show Extensions Checkbox --
 		auto showExtensionsCheckbox = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 5.0f,
+			.spacing = TOOLBAR_PADDING,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
@@ -688,15 +743,13 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Show Ext" })
 				})}
 			}
-		});
+			});
 
-
-		// -- Assemble --
 		return Silica::MakeWidget<Silica::SBox>({
-			.padding = { 5.0f, 5.0f },
+			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 8.0f,
+				.spacing = TOOLBAR_SPACING,
 				.slots = {
 					{ {0, 0}, backBtn },
 					{ {0, 0}, fwdBtn },
@@ -709,657 +762,20 @@ namespace Axion {
 					{ {0, 0}, showExtensionsCheckbox }
 				}
 			})
-		});
+			});
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildContentArea() {
-		static auto lastClickTime = std::chrono::steady_clock::now();
-		static std::filesystem::path lastClickedPath = "";
-
-		auto grid = Silica::MakeWidget<Silica::SWrapBox>({ .spacing = 16.0f });
+		auto grid = Silica::MakeWidget<Silica::SWrapBox>({ .spacing = GRID_SPACING });
 
 		for (const auto& item : m_directoryEntries) {
-			const auto& path = item.path;
 			if (!matchesSearch(item.displayName)) continue;
-			if (m_onlyEngineAssets && !item.isDir && !EditorUtils::isEngineAssetExtension(path)) continue;
-
-			Silica::TextureID iconTex = item.isDir ? SilicaContext::getIcon("FolderIcon") : SilicaContext::getIcon("FileIcon");
-
-			// -- Context Menu Builder --
-			auto ctxMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
-
-			if (path.extension() == ".axscene") {
-				ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.color = Silica::Color::transparent(),
-					.hoverColor = Silica::GetTheme().Accent_Primary,
-					.onClick = [path]() {
-						ProjectManager::getProject()->setDefaultScene(path);
-						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Set as Default Scene" })
-				}) });
-			}
-
-			if (path.extension() == ".axmat") {
-				ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.color = Silica::Color::transparent(),
-					.hoverColor = Silica::GetTheme().Accent_Primary,
-					.onClick = [path]() {
-						AssetManager::reload<Material>(AssetManager::getAssetUUID(path));
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Reload Material" })
-				}) });
-			}
-
-			if (!item.isDir) {
-				std::string ext = path.extension().string();
-				auto openInListContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
-
-				// -- Open In Material Editor --
-				if (ext == ".axmat") {
-					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {8, 4},
-						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::GetTheme().Accent_Primary,
-						.onClick = [this, path]() {
-							if (m_openMaterialEditorPanel) m_openMaterialEditorPanel(path);
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Material Editor" })
-					}) });
-				}
-
-				// -- Open In Viewport --
-				if (ext == ".axscene") {
-					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {8, 4},
-						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::GetTheme().Accent_Primary,
-						.onClick = [this, path]() {
-							m_openSceneInViewportCallback(path);
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Viewport" })
-					}) });
-				}
-
-				// -- Open In Visual Script Editor --
-				if (ext == ".axvs") {
-					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {8, 4},
-						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::GetTheme().Accent_Primary,
-						.onClick = [this, path]() {
-							if (m_openVisualScriptPanel) m_openVisualScriptPanel(path);
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Visual Script Editor" })
-					}) });
-				}
-
-				// -- Open In Quartz Editor --
-				if (EditorUtils::isTextEditorFile(ext)) {
-					openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {8, 4},
-						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::GetTheme().Accent_Primary,
-						.onClick = [this, path]() {
-							if (m_openTextEditorPanel) m_openTextEditorPanel(path);
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Quartz Editor" })
-					}) });
-				}
-
-				// -- Open In External Program --
-				std::string progName = PlatformUtils::getDefaultProgramName(path);
-				std::string btnText = progName.empty() ? "System Default (External)" : progName + " (External)";
-
-				openInListContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.color = Silica::Color::transparent(),
-					.hoverColor = Silica::GetTheme().Accent_Primary,
-					.onClick = [path]() {
-						PlatformUtils::openExternally(path);
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = btnText })
-				}) });
-
-				// -- Create Submenu Anchor --
-				auto openInSubMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
-					.openOnHover = true,
-					.openToRight = true,
-					.showArrow = true,
-					.anchorContent = Silica::MakeWidget<Silica::SButton>({
-						.padding = {8, 4},
-						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::GetTheme().Accent_Primary,
-						.onClick = []() { return Silica::EventReply::unhandled(); },
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open in..." })
-					}),
-					.menuContent = Silica::MakeWidget<Silica::SBox>({
-						.padding = {5, 5},
-						.borderThickness = Silica::GetTheme().Border_Thickness,
-						.backgroundColor = Silica::GetTheme().Background_Popup,
-						.child = openInListContent
-					})
-				});
-
-				ctxMenu->addSlot({ {0,0}, openInSubMenu });
-			}
-
-			ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-				.padding = {8, 4},
-				.color = Silica::Color::transparent(),
-				.hoverColor = Silica::GetTheme().Accent_Primary,
-				.onClick = [path]() {
-					PlatformUtils::showInFileExplorer(path);
-					return Silica::EventReply::handled();
-				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Show in Explorer" })
-			}) });
-
-			ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-				.padding = {8, 4},
-				.color = Silica::Color::transparent(),
-				.hoverColor = Silica::GetTheme().Accent_Primary,
-				.onClick = [this, path, item]() {
-					m_itemBeingRenamed = path;
-					m_itemRenameString = path.filename().string();
-					m_startRenaming = true;
-					rebuildUI();
-					return Silica::EventReply::handled();
-				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Rename" })
-			}) });
-
-			ctxMenu->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-				.padding = {8, 4},
-				.color = Silica::Color::transparent(),
-				.hoverColor = Silica::GetTheme().Accent_Danger,
-				.onClick = [this, path, item]() {
-					if (m_viewingCollection && item.vfsNode) {
-						// -- VFS Delete --
-						EditorActionQueue::push([this, item]() {
-							auto& siblings = item.vfsNode->parent->children;
-							siblings.erase(std::remove(siblings.begin(), siblings.end(), item.vfsNode), siblings.end());
-							std::filesystem::path vfsPath = ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml";
-							m_vfs.save(vfsPath);
-							refresh();
-						});
-					}
-					else {
-						// -- Physical Delete --
-						m_pendingDelete = path;
-						m_relatedFilesToDelete = findRelatedFiles(path);
-						m_deleteRelatedFiles = true;
-						m_openDeletePopup = true;
-						rebuildUI();
-					}
-					return Silica::EventReply::handled();
-				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete" })
-			}) });
-
-
-			// -- Item Label Or Rename Box --
-			Silica::WidgetPtr labelWidget = nullptr;
-			if (m_itemBeingRenamed == path) {
-				labelWidget = Silica::MakeWidget<Silica::SBox>({
-					.explicitSize = Silica::Vec2(m_thumbnailSize + 30.0f, 0.0f),
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_itemRenameString,
-						.onTextCommitted = [this, path, item](const std::string& newText) {
-							if (m_viewingCollection && item.vfsNode) {
-								// -- Rename Virtual Node --
-								item.vfsNode->name = newText;
-								std::filesystem::path vfsPath = ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml";
-								m_vfs.save(vfsPath);
-								resetRenaming();
-								refresh();
-								return;
-							}
-
-							// -- Rename Physical --
-							std::filesystem::path newPath = path.parent_path() / newText;
-							if (!item.isDir && path.has_extension()) {
-								std::string ext = path.extension().string();
-								if (newPath.extension().string() != ext) newPath += ext;
-							}
-
-							std::error_code ec;
-							if (!std::filesystem::exists(newPath, ec)) {
-
-								std::filesystem::path oldLayoutPath, newLayoutPath;
-								std::filesystem::path oldCSPath, newCSPath;
-								if (path.extension() == ".axvs") {
-									oldLayoutPath = path.parent_path() / (path.stem().string() + "_layout.axvslayout");
-									newLayoutPath = newPath.parent_path() / (newPath.stem().string() + "_layout.axvslayout");
-
-									std::filesystem::path scriptsDir = ProjectManager::getProject()->getProjectPath() / "Scripts";
-									oldCSPath = scriptsDir / (path.stem().string() + ".cs");
-									newCSPath = scriptsDir / (newPath.stem().string() + ".cs");
-								}
-
-								// -- Rename Main Asset --
-								std::filesystem::rename(path, newPath, ec);
-
-								if (!ec) {
-									// -- Rename Layout File --
-									if (!oldLayoutPath.empty() && std::filesystem::exists(oldLayoutPath)) {
-										std::error_code layoutEc;
-										std::filesystem::rename(oldLayoutPath, newLayoutPath, layoutEc);
-									}
-
-									// -- Rename C# Script --
-									if (!oldCSPath.empty() && std::filesystem::exists(oldCSPath)) {
-										std::error_code csEc;
-										std::filesystem::rename(oldCSPath, newCSPath, csEc);
-									}
-
-									// -- Create AssetRenamedEvent --
-									if (m_eventCallback) {
-										AssetRenamedEvent e(path, newPath);
-										m_eventCallback(e);
-										AX_CORE_LOG_FATAL("Send Asset Created Event from CB");
-									}
-								}
-							}
-							resetRenaming();
-							refresh();
-						}
-					})
-				});
-			}
-			else {
-				std::string displayName = m_showFileExtensions ? path.filename().string() : path.stem().string();
-				labelWidget = Silica::MakeWidget<Silica::SBox>({
-					.explicitSize = Silica::Vec2(m_thumbnailSize + 30.0f, 0.0f),
-					.child = Silica::MakeWidget<Silica::SAlign>({
-						.horizontalAlign = Silica::HorizontalAlign::Center,
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = displayName })
-					})
-				});
-			}
-
-
-			// -- Clickable Folder / File --
-			auto assetClickBox = Silica::MakeWidget<SAssetClickBox>({
-				.onDragStart = [this, path, item]() {
-					if (m_viewingCollection && item.vfsNode) {
-						Silica::DragDrop::beginDrag("VFSNode", item.vfsNode, item.displayName, Silica::GetTheme().Font_Default);
-					}
-					else {
-						Silica::DragDrop::beginDrag("AssetPath", path, path.filename().string(), Silica::GetTheme().Font_Default);
-					}
-				},
-				.onDragOver = [this, item](const Silica::DragDropPayload& payload) {
-					if (item.isDir && m_viewingCollection && item.vfsNode) {
-						if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
-					}
-					return Silica::EventReply::unhandled();
-				},
-				.onDrop = [this, item](const Silica::DragDropPayload& payload) mutable {
-					if (item.isDir && m_viewingCollection && item.vfsNode) {
-						auto targetNode = item.vfsNode;
-			
-						EditorActionQueue::push([this, payload, targetNode]() mutable {
-							if (payload.type == "AssetPath") {
-								m_vfs.addFile(targetNode, std::any_cast<std::filesystem::path>(payload.data));
-							}
-							else if (payload.type == "VFSNode") {
-								auto droppedNode = std::any_cast<std::shared_ptr<VFSNode>>(payload.data);
-								if (droppedNode != targetNode) m_vfs.moveNode(droppedNode, targetNode);
-							}
-							m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
-							refresh();
-						});
-						return Silica::EventReply::handled();
-					}
-					return Silica::EventReply::unhandled();
-				},
-				.onClick = [this, path, item]() {
-					auto now = std::chrono::steady_clock::now();
-					bool isDouble = (path == lastClickedPath) && (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastClickTime).count() < 300);
-					lastClickTime = now;
-					lastClickedPath = path;
-
-					if (isDouble) {
-						if (item.isDir) {
-							if (m_viewingCollection && item.vfsNode) {
-								m_currentCollection = item.vfsNode;
-							}
-							else {
-								m_backHistory.push_back(m_currentDirectory);
-								m_forwardHistory.clear();
-								m_currentDirectory = path;
-								m_expandedDirectories.insert(path.string());
-							}
-							refresh();
-						}
-						else {
-							std::string ext = path.extension().string();
-
-							if (ext == ".axscene" && m_openSceneInViewportCallback) {
-								m_openSceneInViewportCallback(path);
-							}
-							else if (ext == ".axvs" && m_openVisualScriptPanel) {
-								m_openVisualScriptPanel(path);
-							}
-							else if (ext == ".axmat" && m_openMaterialEditorPanel) {
-								m_openMaterialEditorPanel(path);
-							}
-							else if (EditorUtils::isTextEditorFile(ext) && m_openTextEditorPanel) {
-								m_openTextEditorPanel(path);
-							}
-							else if (EditorUtils::isEngineAssetExtension(ext) && m_openTextEditorPanel) {
-								m_openTextEditorPanel(path);
-							}
-							else {
-								PlatformUtils::openExternally(path);
-							}
-						}
-					}
-					return Silica::EventReply::handled();
-				},
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 4.0f,
-					.slots = {
-						{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-							.horizontalAlign = Silica::HorizontalAlign::Center,
-							.child = Silica::MakeWidget<Silica::SImage>({
-								.textureID = iconTex,
-								.desiredSize = {m_thumbnailSize, m_thumbnailSize} 
-							})
-						})},
-						{ {0,0}, labelWidget }
-					}
-				}),
-			});
-
-			auto itemBox = Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.openOnRightClick = true,
-				.openAtMousePos = true,
-				.anchorContent = assetClickBox,
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = {5,5},
-					.borderThickness = Silica::GetTheme().Border_Thickness,
-					.backgroundColor = Silica::GetTheme().Background_Popup,
-					.child = ctxMenu
-				})
-			});
-
-			grid->addChild(itemBox);
+			if (m_onlyEngineAssets && !item.isDir && !EditorUtils::isEngineAssetExtension(item.path)) continue;
+			grid->addChild(createAssetItemWidget(item));
 		}
 
-		// -- Background Area Context Menu --
-		auto bgMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+		auto createAssetSubMenu = buildCreateAssetSubMenu();
 
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				std::string baseName = "NewVisualScript";
-				std::filesystem::path newScriptPath = m_currentDirectory / (baseName + ".axvs");
-				int counter = 1;
-				while (std::filesystem::exists(newScriptPath)) {
-					newScriptPath = m_currentDirectory / (baseName + "_" + std::to_string(counter) + ".axvs");
-					counter++;
-				}
-				VisualGraph newGraph;
-				newGraph.className = newScriptPath.stem().string();
-				VisualScriptSerializer::serialize(newGraph, newScriptPath);
-
-				m_itemBeingRenamed = newScriptPath;
-				m_itemRenameString = newScriptPath.filename().string();
-				m_startRenaming = true;
-				refresh();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Visual Script" })
-		}) });
-
-
-		// -- Audio Import --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
-				std::filesystem::path absPath = std::filesystem::exists(audioDir) ?
-					FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir) :
-					FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, ProjectManager::getProject()->getAssetsPath());
-
-				if (!absPath.empty()) {
-					m_audioImportModal = std::make_shared<AudioImportModal>();
-					m_audioImportModal->presetFromFile(absPath);
-
-					auto modalWidget = m_audioImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							EditorModalManager::close();
-							m_audioImportModal = nullptr;
-							refresh();
-						});
-					});
-
-					EditorModalManager::open(modalWidget);
-				}
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Import Audio" })
-		}) });
-
-
-		// -- Material Import --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				m_materialImportModal = MakeShared<MaterialImportModal>();
-
-				auto modalWidget = m_materialImportModal->getWidget([this]() {
-					EditorActionQueue::push([this]() {
-						EditorModalManager::close();
-						m_materialImportModal = nullptr;
-						refresh();
-					});
-				});
-
-				EditorModalManager::open(modalWidget);
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Create Material" })
-		}) });
-
-
-		// -- Mesh Import --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
-				std::filesystem::path absPath = std::filesystem::exists(meshDir) ?
-					FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, meshDir) :
-					FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, ProjectManager::getProject()->getAssetsPath());
-
-				if (!absPath.empty()) {
-					m_meshImportModal = MakeShared<MeshImportModal>();
-					m_meshImportModal->presetFromFile(absPath);
-
-					auto modalWidget = m_meshImportModal->getWidget([this]() {
-						EditorActionQueue::push([this]() {
-							EditorModalManager::close();
-							m_meshImportModal = nullptr;
-							refresh();
-						});
-					});
-
-					EditorModalManager::open(modalWidget);
-				}
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Mesh" })
-		}) });
-
-
-		// -- Create Physics Material --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				m_physicsMaterialModal = MakeShared<PhysicsMaterialImportModal>();
-
-				auto modalWidget = m_physicsMaterialModal->getWidget([this]() {
-					EditorActionQueue::push([this]() {
-						EditorModalManager::close();
-						m_physicsMaterialModal = nullptr;
-						refresh();
-					});
-				});
-
-				EditorModalManager::open(modalWidget);
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Physics Material" })
-		}) });
-
-
-		// -- Create Pipeline --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-
-				m_pipelineImportModal = MakeShared<PipelineImportModal>();
-
-				auto modalWidget = m_pipelineImportModal->getWidget([this]() {
-					EditorActionQueue::push([this]() {
-						EditorModalManager::close();
-						m_pipelineImportModal = nullptr;
-						refresh();
-					});
-				});
-
-				EditorModalManager::open(modalWidget);
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Pipeline" })
-		}) });
-
-
-		// -- Shader Import --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				m_shaderImportModal = MakeShared<ShaderImportModal>();
-
-				auto modalWidget = m_shaderImportModal->getWidget([this]() {
-					EditorActionQueue::push([this]() {
-						EditorModalManager::close();
-						m_shaderImportModal = nullptr;
-						refresh();
-					});
-				});
-
-				EditorModalManager::open(modalWidget);
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Shader" })
-		}) });
-
-
-		// -- Create Skybox --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				m_skyboxImportModal = MakeShared<SkyboxImportModal>();
-
-				auto modalWidget = m_skyboxImportModal->getWidget([this]() {
-					EditorActionQueue::push([this]() {
-						EditorModalManager::close();
-						m_skyboxImportModal = nullptr;
-						refresh();
-					});
-				});
-
-				EditorModalManager::open(modalWidget);
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Skybox" })
-		}) });
-
-
-		// -- Texture2D Import --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				m_texture2DImportModal = MakeShared<Texture2DImportModal>();
-
-				auto modalWidget = m_texture2DImportModal->getWidget([this]() {
-					EditorActionQueue::push([this]() {
-						EditorModalManager::close();
-						m_texture2DImportModal = nullptr;
-						refresh();
-					});
-				});
-
-				EditorModalManager::open(modalWidget);
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture 2D" })
-		}) });
-
-
-		// -- Texture Cube Import --
-		bgMenuContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4},
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				m_textureCubeImportModal = std::make_shared<TextureCubeImportModal>();
-
-				auto modalWidget = m_textureCubeImportModal->getWidget([this]() {
-					EditorActionQueue::push([this]() {
-						EditorModalManager::close();
-						m_textureCubeImportModal = nullptr;
-						refresh();
-					});
-				});
-
-				EditorModalManager::open(modalWidget);
-
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Texture Cube" })
-		}) });
-
-
-		// -- Assemble --
 		auto backgroundMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.openOnRightClick = true,
@@ -1368,20 +784,22 @@ namespace Axion {
 				.child = grid
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {5,5},
+				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
-				.child = bgMenuContent
+				.child = buildBackgroundContextMenu(createAssetSubMenu)
 			})
 		});
+
+		createAssetSubMenu->setParentMenu(backgroundMenu.get());
 
 		auto zoomBox = Silica::MakeWidget<Silica::SScrollCatcher>({
 			.onMouseWheel = [this](float delta) {
 				bool isCtrlDown = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
 				if (isCtrlDown) {
-					m_thumbnailSize += delta * 5.0f;
-					m_thumbnailSize = std::clamp(m_thumbnailSize, 32.0f, 256.0f);
-					m_showNames = m_thumbnailSize >= 50.0f;
+					m_thumbnailSize += delta * THUMBNAIL_ZOOM_SPEED;
+					m_thumbnailSize = std::clamp(m_thumbnailSize, THUMBNAIL_MIN, THUMBNAIL_MAX);
+					m_showNames = m_thumbnailSize >= SHOW_NAME_THRESHOLD;
 					rebuildUI();
 					return Silica::EventReply::handled();
 				}
@@ -1390,7 +808,7 @@ namespace Axion {
 			.child = backgroundMenu
 		});
 
-		auto gridBackgroundDropZone = Silica::MakeWidget<Silica::SBox>({
+		return Silica::MakeWidget<Silica::SBox>({
 			.onDragOver = [this](const Silica::DragDropPayload& payload) {
 				if (m_viewingCollection && m_currentCollection) {
 					if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
@@ -1416,8 +834,297 @@ namespace Axion {
 			},
 			.child = zoomBox
 		});
+	}
 
-		return gridBackgroundDropZone;
+	Silica::WidgetPtr ContentBrowser::createAssetItemWidget(const DirItem& item) {
+		static auto lastClickTime = std::chrono::steady_clock::now();
+		static std::filesystem::path lastClickedPath = "";
+
+		const auto& path = item.path;
+		Silica::TextureID iconTex = item.isDir ? SilicaContext::getIcon("FolderIcon") : SilicaContext::getIcon("FileIcon");
+
+		// -- Context Menu Builder --
+		auto ctxMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+
+		if (path.extension() == ".axscene") {
+			ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Set as Default Scene", [path]() {
+				ProjectManager::getProject()->setDefaultScene(path);
+				ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+			}) });
+		}
+
+		if (path.extension() == ".axmat") {
+			ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Reload Material", [path]() {
+				AssetManager::reload<Material>(AssetManager::getAssetUUID(path));
+			}) });
+		}
+
+		std::shared_ptr<Silica::SMenuAnchor> openInSubMenu = nullptr;
+
+		if (!item.isDir) {
+			std::string ext = path.extension().string();
+			auto openInListContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+
+			if (ext == ".axmat") {
+				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Material Editor", [this, path]() {
+					if (m_openMaterialEditorPanel) m_openMaterialEditorPanel(path);
+				}) });
+			}
+			if (ext == ".axscene") {
+				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Viewport", [this, path]() {
+					m_openSceneInViewportCallback(path);
+				}) });
+			}
+			if (ext == ".axvs") {
+				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Visual Script Editor", [this, path]() {
+					if (m_openVisualScriptPanel) m_openVisualScriptPanel(path);
+				}) });
+			}
+
+			if (EditorUtils::isTextEditorFile(ext) || EditorUtils::isEngineAssetExtension(ext)) {
+				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Quartz Editor", [this, path]() {
+					if (m_openTextEditorPanel) m_openTextEditorPanel(path);
+				}) });
+			}
+
+			std::string progName = PlatformUtils::getDefaultProgramName(path);
+			std::string btnText = progName.empty() ? "System Default (External)" : progName + " (External)";
+			openInListContent->addSlot({ {0,0}, makeContextMenuItem(btnText, [path]() {
+				PlatformUtils::openExternally(path);
+			}) });
+
+			openInSubMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = true, .openToRight = true, .showArrow = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = {BUTTON_PAD_X, BUTTON_PAD_Y}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Primary,
+					.onClick = []() { return Silica::EventReply::handled(); },
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open in..." })
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING}, .borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup, .child = openInListContent
+				})
+			});
+			ctxMenu->addSlot({ {0,0}, openInSubMenu });
+		}
+
+		ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Show in Explorer", [path]() { PlatformUtils::showInFileExplorer(path); }) });
+		ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Rename", [this, path]() { cmdRenameItem(path); }) });
+		ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Delete", [this, path, item]() { cmdDeleteItem(path, item.vfsNode); }, Silica::GetTheme().Accent_Danger) });
+
+		Silica::WidgetPtr labelWidget = nullptr;
+		if (m_itemBeingRenamed == path) {
+			labelWidget = Silica::MakeWidget<Silica::SBox>({
+				.explicitSize = Silica::Vec2(m_thumbnailSize + RENAME_BOX_EXTRA_WIDTH, 0.0f),
+				.child = Silica::MakeWidget<Silica::SEditableText>({
+					.initialText = m_itemRenameString,
+					.onTextCommitted = [this, path, item](const std::string& newText) {
+						if (m_viewingCollection && item.vfsNode) {
+							item.vfsNode->name = newText;
+							std::filesystem::path vfsPath = ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml";
+							m_vfs.save(vfsPath);
+						}
+						else {
+							std::filesystem::path newPath = path.parent_path() / newText;
+							if (!item.isDir && path.has_extension()) {
+								std::string ext = path.extension().string();
+								if (newPath.extension().string() != ext) newPath += ext;
+							}
+							std::error_code ec;
+							if (!std::filesystem::exists(newPath, ec)) {
+								std::filesystem::path oldLayoutPath, newLayoutPath, oldCSPath, newCSPath;
+								if (path.extension() == ".axvs") {
+									oldLayoutPath = path.parent_path() / (path.stem().string() + "_layout.axvslayout");
+									newLayoutPath = newPath.parent_path() / (newPath.stem().string() + "_layout.axvslayout");
+									std::filesystem::path scriptsDir = ProjectManager::getProject()->getProjectPath() / "Scripts";
+									oldCSPath = scriptsDir / (path.stem().string() + ".cs");
+									newCSPath = scriptsDir / (newPath.stem().string() + ".cs");
+								}
+								std::filesystem::rename(path, newPath, ec);
+								if (!ec) {
+									if (!oldLayoutPath.empty() && std::filesystem::exists(oldLayoutPath)) std::filesystem::rename(oldLayoutPath, newLayoutPath, ec);
+									if (!oldCSPath.empty() && std::filesystem::exists(oldCSPath)) std::filesystem::rename(oldCSPath, newCSPath, ec);
+									if (m_eventCallback) {
+										AssetRenamedEvent e(path, newPath);
+										m_eventCallback(e);
+									}
+								}
+							}
+						}
+						resetRenaming();
+						refresh();
+					}
+				})
+			});
+		}
+		else {
+			std::string displayName = m_showFileExtensions ? path.filename().string() : path.stem().string();
+			labelWidget = Silica::MakeWidget<Silica::SBox>({
+				.explicitSize = Silica::Vec2(m_thumbnailSize + RENAME_BOX_EXTRA_WIDTH, 0.0f),
+				.child = Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Center,
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = displayName })
+				})
+			});
+		}
+
+		auto assetClickBox = Silica::MakeWidget<SAssetClickBox>({
+			.onDragStart = [this, path, item]() {
+				if (m_viewingCollection && item.vfsNode) Silica::DragDrop::beginDrag("VFSNode", item.vfsNode, item.displayName, Silica::GetTheme().Font_Default);
+				else Silica::DragDrop::beginDrag("AssetPath", path, path.filename().string(), Silica::GetTheme().Font_Default);
+			},
+			.onDragOver = [this, item](const Silica::DragDropPayload& payload) {
+				if (item.isDir && m_viewingCollection && item.vfsNode) {
+					if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
+				}
+				return Silica::EventReply::unhandled();
+			},
+			.onDrop = [this, item](const Silica::DragDropPayload& payload) mutable {
+				if (item.isDir && m_viewingCollection && item.vfsNode) {
+					auto targetNode = item.vfsNode;
+					EditorActionQueue::push([this, payload, targetNode]() mutable {
+						if (payload.type == "AssetPath") m_vfs.addFile(targetNode, std::any_cast<std::filesystem::path>(payload.data));
+						else if (payload.type == "VFSNode") {
+							auto droppedNode = std::any_cast<std::shared_ptr<VFSNode>>(payload.data);
+							if (droppedNode != targetNode) m_vfs.moveNode(droppedNode, targetNode);
+						}
+						m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
+						refresh();
+					});
+					return Silica::EventReply::handled();
+				}
+				return Silica::EventReply::unhandled();
+			},
+			.onClick = [this, path, item]() {
+				auto now = std::chrono::steady_clock::now();
+				bool isDouble = (path == lastClickedPath) && (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastClickTime).count() < 300);
+				lastClickTime = now;
+				lastClickedPath = path;
+
+				if (isDouble) cmdOpenItem(path, item.isDir, item.vfsNode);
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::SVerticalBox>({
+				.spacing = 4.0f,
+				.slots = {
+					{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
+						.horizontalAlign = Silica::HorizontalAlign::Center,
+						.child = Silica::MakeWidget<Silica::SImage>({
+							.textureID = iconTex,
+							.desiredSize = {m_thumbnailSize, m_thumbnailSize}
+						})
+					})},
+					{ {0,0}, labelWidget }
+				}
+			}),
+		});
+
+		auto itemBox = Silica::MakeWidget<Silica::SMenuAnchor>({
+			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
+			.anchorContent = assetClickBox,
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING}, .borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup, .child = ctxMenu
+			})
+		});
+
+		if (openInSubMenu) openInSubMenu->setParentMenu(itemBox.get());
+		return itemBox;
+	}
+
+	std::shared_ptr<Silica::SMenuAnchor> ContentBrowser::buildCreateAssetSubMenu() {
+		auto createAssetMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Visual Script", [this]() { cmdCreateVisualScript(); }) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Audio", [this]() {
+			std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
+			std::filesystem::path absPath = std::filesystem::exists(audioDir) ? FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir) : FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, ProjectManager::getProject()->getAssetsPath());
+			if (!absPath.empty()) {
+				openAssetModal(&ContentBrowser::m_audioImportModal, [absPath](std::shared_ptr<AudioImportModal>& modal) {
+					modal->presetFromFile(absPath);
+				});
+			}
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Material", [this]() {
+			openAssetModal(&ContentBrowser::m_materialImportModal);
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Mesh", [this]() {
+			std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
+			std::filesystem::path absPath = std::filesystem::exists(meshDir) ? FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, meshDir) : FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, ProjectManager::getProject()->getAssetsPath());
+			if (!absPath.empty()) {
+				openAssetModal(&ContentBrowser::m_meshImportModal, [absPath](std::shared_ptr<MeshImportModal>& modal) {
+					modal->presetFromFile(absPath);
+				});
+			}
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Physics Material", [this]() {
+			openAssetModal(&ContentBrowser::m_physicsMaterialModal);
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Pipeline", [this]() {
+			openAssetModal(&ContentBrowser::m_pipelineImportModal);
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Shader", [this]() {
+			openAssetModal(&ContentBrowser::m_shaderImportModal);
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Skybox", [this]() {
+			openAssetModal(&ContentBrowser::m_skyboxImportModal);
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Texture 2D", [this]() {
+			openAssetModal(&ContentBrowser::m_texture2DImportModal);
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Texture Cube", [this]() {
+			openAssetModal(&ContentBrowser::m_textureCubeImportModal);
+		}) });
+
+		return Silica::MakeWidget<Silica::SMenuAnchor>({
+			.openOnHover = true,
+			.openToRight = true,
+			.showArrow = true,
+			.anchorContent = makeContextMenuItem("Create Asset", []() {}),
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup,
+				.child = createAssetMenuContent
+			})
+		});
+	}
+
+	Silica::WidgetPtr ContentBrowser::buildBackgroundContextMenu(Silica::WidgetPtr createAssetSubMenuWidget) {
+		auto bgMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+
+		bgMenuContent->addSlot({ {0,0}, makeContextMenuItem("Create Folder", [this]() { cmdCreateFolder(); }) });
+		bgMenuContent->addSlot({ {0,0}, createAssetSubMenuWidget });
+
+		return bgMenuContent;
+	}
+
+	Silica::WidgetPtr ContentBrowser::makeContextMenuItem(const std::string& text, std::function<void()> onClickAction, std::optional<Silica::Color> textColor) {
+		return Silica::MakeWidget<Silica::SButton>({
+			.padding = { BUTTON_PAD_X, BUTTON_PAD_Y },
+			.color = Silica::Color::transparent(),
+			.hoverColor = Silica::GetTheme().Accent_Primary,
+			.onClick = [onClickAction]() {
+				EditorActionQueue::push([onClickAction]() {
+					Silica::Renderer::closePopups();
+					if (onClickAction) onClickAction();
+				});
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::STextBlock>({
+				.text = text,
+				.color = textColor.value_or(Silica::GetTheme().Text_Main)
+			})
+		});
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildDeleteModal() {
@@ -1445,14 +1152,12 @@ namespace Axion {
 			.spacing = 10.0f,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 20.0f, 8.0f },
+					.padding = { MODAL_BTN_PAD_X, MODAL_BTN_PAD_Y },
 					.color = Silica::GetTheme().Accent_Danger,
 					.onClick = [this]() {
-						// -- Create AssetDeletedEvent --
 						if (m_eventCallback) {
 							AssetDeletedEvent e(*m_pendingDelete);
 							m_eventCallback(e);
-							AX_CORE_LOG_FATAL("Send Asset Deleted Event from CB");
 						}
 
 						if (EditorUtils::isEngineAssetExtension(*m_pendingDelete)) {
@@ -1478,7 +1183,7 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete" })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 20.0f, 8.0f },
+					.padding = { MODAL_BTN_PAD_X, MODAL_BTN_PAD_Y },
 					.onClick = [this]() {
 						m_pendingDelete.reset(); m_openDeletePopup = false; rebuildUI();
 						return Silica::EventReply::handled();
@@ -1491,7 +1196,7 @@ namespace Axion {
 		modalContent->addSlot({ {0,0}, buttons });
 
 		auto modalBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 20.0f },
+			.padding = { MODAL_PAD, MODAL_PAD },
 			.child = modalContent
 		});
 
@@ -1511,7 +1216,6 @@ namespace Axion {
 		std::vector<DirItem> tmp;
 
 		if (m_viewingCollection && m_currentCollection) {
-			// -- Collections Grid --
 			for (const auto& child : m_currentCollection->children) {
 				DirItem di;
 				di.path = child->isDirectory ? child->name : child->physicalPath;
@@ -1522,7 +1226,6 @@ namespace Axion {
 			}
 		}
 		else {
-			// -- Physical Grid --
 			std::error_code ec;
 			std::filesystem::directory_iterator it(m_currentDirectory, std::filesystem::directory_options::skip_permission_denied, ec);
 			if (ec) { m_directoryEntries.clear(); return; }
@@ -1531,20 +1234,13 @@ namespace Axion {
 				if (ec) { ec.clear(); continue; }
 				const auto p = it->path();
 
-				// -- Hide Certain Files And Folders --
 				std::string filename = p.filename().string();
 				std::string ext = p.extension().string();
 				if (it->is_directory(ec)) {
-					// -- Compilation Folders And Hidden System Folders --
-					if (filename == "bin" || filename == "obj" || filename[0] == '.' || filename == "Export") {
-						continue;
-					}
+					if (filename == "bin" || filename == "obj" || filename[0] == '.' || filename == "Export") continue;
 				}
 				else {
-					// -- Compilation Files And Project Files --
-					if (ext == ".dll" || ext == ".pdb" || ext == ".csproj" || ext == ".sln" || ext == ".cache" || ext == ".axproj") {
-						continue;
-					}
+					if (ext == ".dll" || ext == ".pdb" || ext == ".csproj" || ext == ".sln" || ext == ".cache" || ext == ".axproj") continue;
 				}
 
 				DirItem di;
@@ -1555,7 +1251,6 @@ namespace Axion {
 				tmp.push_back(std::move(di));
 			}
 		}
-
 		m_directoryEntries.swap(tmp);
 	}
 
@@ -1584,11 +1279,8 @@ namespace Axion {
 			if (ec) m_rootDirectory = std::filesystem::absolute(ProjectManager::getProject()->getProjectPath(), ec);
 			m_currentDirectory = m_rootDirectory;
 
-			// -- Load Collections --
 			std::filesystem::path vfsPath = ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml";
-			if (std::filesystem::exists(vfsPath)) {
-				m_vfs.load(vfsPath);
-			}
+			if (std::filesystem::exists(vfsPath)) m_vfs.load(vfsPath);
 			else {
 				m_vfs.getRoot()->name = "Collections";
 				std::filesystem::create_directories(vfsPath.parent_path());
@@ -1597,10 +1289,8 @@ namespace Axion {
 
 			m_viewingCollection = false;
 			m_currentCollection = m_vfs.getRoot();
-
 			m_expandedDirectories.clear();
 			m_expandedDirectories.insert(m_rootDirectory.string());
-
 			refresh();
 		}
 		else {
@@ -1621,24 +1311,16 @@ namespace Axion {
 
 	std::vector<std::filesystem::path> ContentBrowser::findRelatedFiles(const std::filesystem::path& path) {
 		std::vector<std::filesystem::path> related;
-
 		if (path.extension() == ".axvs") {
-			// -- Delete Layout File --
 			std::filesystem::path layoutPath = path.parent_path() / (path.stem().string() + "_layout.axvslayout");
-			if (std::filesystem::exists(layoutPath)) {
-				related.push_back(layoutPath);
-			}
+			if (std::filesystem::exists(layoutPath)) related.push_back(layoutPath);
 
-			// -- Delete C# Script --
 			if (ProjectManager::hasProject()) {
 				std::filesystem::path scriptsDir = ProjectManager::getProject()->getProjectPath() / "Scripts";
 				std::filesystem::path csPath = scriptsDir / (path.stem().string() + ".cs");
-				if (std::filesystem::exists(csPath)) {
-					related.push_back(csPath);
-				}
+				if (std::filesystem::exists(csPath)) related.push_back(csPath);
 			}
 		}
-
 		return related;
 	}
 
@@ -1649,6 +1331,9 @@ namespace Axion {
 			if (cbConfig["ThumbnailSize"]) m_thumbnailSize = cbConfig["ThumbnailSize"].as<float>();
 			if (cbConfig["TreeViewWidth"]) m_treeViewWidth = cbConfig["TreeViewWidth"].as<float>();
 			if (cbConfig["TreeViewTopHeight"]) m_treeViewTopHeight = cbConfig["TreeViewTopHeight"].as<float>();
+			if (cbConfig["ShowContentArea"]) m_showContentArea = cbConfig["ShowContentArea"].as<bool>();
+			if (cbConfig["ShowVFSTree"]) m_showVFSTree = cbConfig["ShowVFSTree"].as<bool>();
+			if (cbConfig["ShowPhysicalTree"]) m_showPhysicalTree = cbConfig["ShowPhysicalTree"].as<bool>();
 		}
 	}
 
@@ -1661,6 +1346,9 @@ namespace Axion {
 		out << YAML::Key << "ThumbnailSize" << YAML::Value << m_thumbnailSize;
 		out << YAML::Key << "TreeViewWidth" << YAML::Value << currentWidth;
 		out << YAML::Key << "TreeViewTopHeight" << YAML::Value << currentTopHeight;
+		out << YAML::Key << "ShowContentArea" << YAML::Value << m_showContentArea;
+		out << YAML::Key << "ShowVFSTree" << YAML::Value << m_showVFSTree;
+		out << YAML::Key << "ShowPhysicalTree" << YAML::Value << m_showPhysicalTree;
 		out << YAML::EndMap;
 	}
 
@@ -1680,39 +1368,29 @@ namespace Axion {
 				std::string name = entry.path().filename().string();
 				std::string ext = entry.path().extension().string();
 
-				// -- Skip Hidden Items And Build Artifacts --
 				if (name[0] == '.' || name == "bin" || name == "obj") continue;
 				if (!entry.is_directory() && (ext == ".dll" || ext == ".pdb" || ext == ".csproj" || ext == ".sln" || ext == ".cache")) continue;
 
-				if (entry.is_directory()) {
-					subDirectories.push_back(entry.path());
-				}
+				if (entry.is_directory()) subDirectories.push_back(entry.path());
 				else {
 					if (m_onlyEngineAssets && !EditorUtils::isEngineAssetExtension(ext)) continue;
-					if (matchesSearch(name)) {
-						subFiles.push_back(entry.path());
-					}
+					if (matchesSearch(name)) subFiles.push_back(entry.path());
 				}
 			}
 		}
 
-		// -- Sort Alphabetically --
 		std::sort(subDirectories.begin(), subDirectories.end());
 		std::sort(subFiles.begin(), subFiles.end());
 
 		std::vector<Silica::WidgetPtr> childWidgets;
 		if (isOpen) {
-			// -- Add Subdirectories --
-			for (const auto& subDir : subDirectories) {
-				childWidgets.push_back(buildDirectoryTree(subDir));
-			}
+			for (const auto& subDir : subDirectories) childWidgets.push_back(buildDirectoryTree(subDir));
 
-			// -- Add Files --
 			for (const auto& filePath : subFiles) {
 				auto fileIcon = Silica::MakeWidget<Silica::SImage>({
 					.textureID = SilicaContext::getIcon("FileIcon"),
 					.tint = Silica::GetTheme().Text_Main,
-					.desiredSize = { 16.0f, 16.0f },
+					.desiredSize = { ICON_SIZE_SMALL, ICON_SIZE_SMALL },
 				});
 
 				std::string fileName = m_showFileExtensions ? filePath.filename().string() : filePath.stem().string();
@@ -1723,12 +1401,8 @@ namespace Axion {
 					.isSelected = false,
 					.isLeaf = true,
 					.isEmpty = true,
-					.isDragged = [filePath]() {
-						return Silica::DragDrop::isDraggingType("AssetPath") && std::any_cast<std::filesystem::path>(Silica::DragDrop::getPayload().data) == filePath;
-					},
-					.onDragStart = [filePath, fileName]() {
-						Silica::DragDrop::beginDrag("AssetPath", filePath, fileName, Silica::GetTheme().Font_Default);
-					},
+					.isDragged = [filePath]() { return Silica::DragDrop::isDraggingType("AssetPath") && std::any_cast<std::filesystem::path>(Silica::DragDrop::getPayload().data) == filePath; },
+					.onDragStart = [filePath, fileName]() { Silica::DragDrop::beginDrag("AssetPath", filePath, fileName, Silica::GetTheme().Font_Default); },
 					.leadingWidget = fileIcon
 				});
 
@@ -1736,12 +1410,11 @@ namespace Axion {
 			}
 		}
 
-		// -- Icon For Folder --
 		auto folderIcon = Silica::MakeWidget<Silica::SImage>({
 			.textureID = SilicaContext::getIcon("FolderIcon"),
 			.tint = isSelected ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim,
-			.desiredSize = { 16.0f, 16.0f },
-		});
+			.desiredSize = { ICON_SIZE_SMALL, ICON_SIZE_SMALL },
+			});
 
 		std::string label = (dirPath == m_rootDirectory) ? ProjectManager::getProject()->getName() : dirPath.filename().string();
 		bool hasChildren = !subDirectories.empty() || !subFiles.empty();
@@ -1754,7 +1427,6 @@ namespace Axion {
 			.isEmpty = !hasChildren,
 			.onClicked = [this, dirPath]() {
 				m_viewingCollection = false;
-
 				if (m_currentDirectory != dirPath) {
 					m_backHistory.push_back(m_currentDirectory);
 					m_forwardHistory.clear();
@@ -1783,7 +1455,7 @@ namespace Axion {
 		auto folderIcon = Silica::MakeWidget<Silica::SImage>({
 			.textureID = SilicaContext::getIcon("FolderIcon"),
 			.tint = (m_viewingCollection && m_currentCollection == node) ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim,
-			.desiredSize = { 16.0f, 16.0f },
+			.desiredSize = { ICON_SIZE_SMALL, ICON_SIZE_SMALL },
 		});
 
 		auto treeNode = Silica::MakeWidget<Silica::STreeNode>({
@@ -1792,17 +1464,13 @@ namespace Axion {
 			.isSelected = (m_viewingCollection && m_currentCollection == node),
 			.isLeaf = childWidgets.empty(),
 			.isEmpty = childWidgets.empty(),
-			.isDragged = [node]() {
-				return Silica::DragDrop::isDraggingType("VFSNode") && std::any_cast<std::shared_ptr<VFSNode>>(Silica::DragDrop::getPayload().data) == node;
-			},
+			.isDragged = [node]() { return Silica::DragDrop::isDraggingType("VFSNode") && std::any_cast<std::shared_ptr<VFSNode>>(Silica::DragDrop::getPayload().data) == node; },
 			.onClicked = [this, node]() {
 				m_viewingCollection = true;
 				m_currentCollection = node;
 				refresh();
 			},
-			.onDragStart = [node]() {
-				Silica::DragDrop::beginDrag("VFSNode", node, node->name, Silica::GetTheme().Font_Default);
-			},
+			.onDragStart = [node]() { Silica::DragDrop::beginDrag("VFSNode", node, node->name, Silica::GetTheme().Font_Default); },
 			.onDragOver = [](const Silica::DragDropPayload& payload) {
 				if (payload.type == "AssetPath" || payload.type == "VFSNode") return Silica::EventReply::handled();
 				return Silica::EventReply::unhandled();
@@ -1852,70 +1520,24 @@ namespace Axion {
 			.children = childWidgets
 		});
 
-		auto ctxMenuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+		auto ctxMenuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
 
-		ctxMenuBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this, node]() {
-				EditorActionQueue::push([this, node]() {
-					std::string baseName = "New Collection";
-					std::string finalName = baseName;
-					int counter = 1;
-					auto nameExists = [&](const std::string& n) { for (auto& c : node->children) if (c->name == n) return true; return false; };
-					while (nameExists(finalName)) finalName = baseName + " " + std::to_string(counter++);
+		ctxMenuBox->addSlot({ {0,0}, makeContextMenuItem("Create Sub-Collection", [this, node]() { cmdCreateCollection(node); }) });
 
-					m_vfs.createFolder(node, finalName);
-					m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
-
-					m_viewingCollection = true;
-					m_currentCollection = node;
-					m_itemBeingRenamed = finalName;
-					m_itemRenameString = finalName;
-					m_startRenaming = true;
-					rebuildUI();
-				});
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create Sub-Collection" })
-		}) });
-
-		// -- Delete Collection Option --
 		if (node != m_vfs.getRoot()) {
-			ctxMenuBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-				.padding = {8, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Danger,
-				.onClick = [this, node]() {
-					EditorActionQueue::push([this, node]() {
-						if (node->parent) {
-							bool isCurrentDescendant = false;
-							VFSNode* current = m_currentCollection.get();
-							while (current) {
-								if (current == node.get()) { isCurrentDescendant = true; break; }
-								current = current->parent;
-							}
-
-							auto& siblings = node->parent->children;
-							siblings.erase(std::remove(siblings.begin(), siblings.end(), node), siblings.end());
-							m_vfs.save(ProjectManager::getProject()->getProjectPath() / "Config" / "Collections.yaml");
-
-							if (isCurrentDescendant) {
-								m_currentCollection = m_vfs.getRoot();
-								m_viewingCollection = true;
-							}
-							rebuildUI();
-						}
-					});
-					return Silica::EventReply::handled();
-				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete Collection" })
-			}) });
+			ctxMenuBox->addSlot({ {0,0}, makeContextMenuItem("Delete Collection", [this, node]() { cmdDeleteCollection(node); }, Silica::GetTheme().Accent_Danger) });
 		}
 
 		return Silica::MakeWidget<Silica::SMenuAnchor>({
-			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
+			.openOnHover = false,
+			.openOnRightClick = true,
+			.openAtMousePos = true,
 			.anchorContent = treeNode,
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {5, 5}, .borderThickness = Silica::GetTheme().Border_Thickness,
-				.backgroundColor = Silica::GetTheme().Background_Popup, .child = ctxMenuBox
+				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.backgroundColor = Silica::GetTheme().Background_Popup,
+				.child = ctxMenuBox
 			})
 		});
 	}

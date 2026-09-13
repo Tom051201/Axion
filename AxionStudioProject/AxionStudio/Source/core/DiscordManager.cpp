@@ -46,6 +46,7 @@ namespace Axion {
 		if (!s_initialized) return;
 
 		Discord_ClearPresence();
+		Discord_RunCallbacks();
 		Discord_Shutdown();
 		s_initialized = false;
 		AX_CORE_LOG_INFO("Discord RPC Shutdown");

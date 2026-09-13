@@ -1,11 +1,15 @@
 StartupProject: D:/Projects/TestProject/TestProject.axproj
 MaxAssetsPerFrame: 2
+EnableDiscordRPC: true
 ContentBrowser:
-  ShowFileExtensions: true
+  ShowFileExtensions: false
   OnlyEngineAssets: true
-  ThumbnailSize: 107
+  ThumbnailSize: 141
   TreeViewWidth: 340
-  TreeViewTopHeight: 87
+  TreeViewTopHeight: 50
+  ShowContentArea: true
+  ShowVFSTree: true
+  ShowPhysicalTree: true
 OpenTextEditors:
   - D:\Projects\TestProject\AssetRegistry.yaml
 AssetLibraryPaths:

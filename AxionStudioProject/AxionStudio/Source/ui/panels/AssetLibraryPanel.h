@@ -58,6 +58,7 @@ namespace Axion {
 		void scanLibraries();
 		void rebuildUI_Internal();
 		void importAssetPackToProject(const AssetPack& pack);
+		Silica::WidgetPtr createPackCardWidget(const AssetPack& pack);
 
 	};
 

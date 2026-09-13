@@ -2,6 +2,7 @@
 #include "ViewportPanel.h"
 
 #include <Silica/include/Theme.h>
+#include <Silica/include/Renderer.h>
 #include <Silica/include/SBox.h>
 #include <Silica/include/SBorderLayout.h>
 #include <Silica/include/SHorizontalBox.h>
@@ -23,6 +24,25 @@
 #include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+
+namespace {
+	constexpr float TOOLBAR_PAD_X = 2.0f;
+	constexpr float TOOLBAR_PAD_Y = 4.0f;
+	constexpr float BTN_ICON_PAD = 4.0f;
+	constexpr float BTN_TEXT_PAD_X = 8.0f;
+	constexpr float BTN_TEXT_PAD_Y = 4.0f;
+	constexpr float ICON_SIZE = 24.0f;
+	constexpr float GIZMO_BTN_SIZE = 32.0f;
+	constexpr float SPACING_SMALL = 4.0f;
+	constexpr float SPACING_MEDIUM = 8.0f;
+	constexpr float CAM_MENU_PAD = 10.0f;
+	constexpr float CAM_MENU_WIDTH = 250.0f;
+	constexpr float SLIDER_LABEL_WIDTH = 100.0f;
+	constexpr float STATS_PAD = 8.0f;
+	constexpr float DEFAULT_VP_WIDTH = 1280.0f;
+	constexpr float DEFAULT_VP_HEIGHT = 720.0f;
+}
 
 namespace Axion {
 
@@ -36,9 +56,7 @@ namespace Axion {
 
 	Silica::WidgetPtr ViewportPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
-			});
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -46,7 +64,7 @@ namespace Axion {
 
 	void ViewportPanel::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);
-		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(onProjectChanged));
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(ViewportPanel::onProjectChanged));
 	}
 
 	EventReply ViewportPanel::onProjectChanged(ProjectChangedEvent& ev) {
@@ -82,26 +100,13 @@ namespace Axion {
 			m_toolbarContainer = nullptr;
 			m_statsText = nullptr;
 
-			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
-				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to access the 3D Viewport.",
-				.wrapWidth = 350.0f,
-				.color = Silica::GetTheme().Text_Dim
-			});
-
-			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Center,
-				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = emptyText
-			});
-
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
+			m_uiRoot->setChild(SilicaHelpers::MakeEmptyState("No Project Loaded.\n\nPlease load or create a project from the top menu bar to access the 3D Viewport.", 350.0f));
 			return;
 		}
 
-
 		// -- Normal Active Viewport --
 		m_toolbarContainer = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 2.0f, 4.0f },
+			.padding = { TOOLBAR_PAD_X, TOOLBAR_PAD_Y },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 		});
 
@@ -115,7 +120,7 @@ namespace Axion {
 
 		m_viewportImage = Silica::MakeWidget<Silica::SImage>({
 			.textureID = 0,
-			.desiredSize = { 1280.0f, 720.0f }
+			.desiredSize = { DEFAULT_VP_WIDTH, DEFAULT_VP_HEIGHT }
 		});
 
 		m_viewportContainer = Silica::MakeWidget<Silica::SBox>({
@@ -135,7 +140,6 @@ namespace Axion {
 					if (path.extension() == ".axsky") {
 						if (!SceneManager::hasScene()) return Silica::EventReply::unhandled();
 
-						// -- Load Skybox From DragDrop --
 						EditorActionQueue::push([this, path]() {
 							UUID skyboxUUID = AssetManager::getAssetUUID(path);
 							if (skyboxUUID.isValid()) {
@@ -145,14 +149,12 @@ namespace Axion {
 
 								SceneModifiedEvent ev(SceneModificationType::SkyboxChanged);
 								m_eventCallback(ev);
-
 								AX_CORE_LOG_INFO("Successfully applied Skybox: {0}", path.filename().string());
 							}
 							else {
 								AX_CORE_LOG_WARN("Attempted to drop an invalid Skybox asset!");
 							}
 						});
-
 						return Silica::EventReply::handled();
 					}
 					else if (path.extension() == ".axscene") {
@@ -188,7 +190,7 @@ namespace Axion {
 						.horizontalAlign = Silica::HorizontalAlign::Left,
 						.verticalAlign = Silica::VerticalAlign::Top,
 						.child = Silica::MakeWidget<Silica::SBox>({
-							.padding = { 8.0f, 8.0f },
+							.padding = { STATS_PAD, STATS_PAD },
 							.backgroundColor = Silica::Color(0, 0, 0, 150),
 							.child = m_statsText
 						})
@@ -212,48 +214,30 @@ namespace Axion {
 		bool isSim = *m_currentState == EditorState::Simulate || (*m_currentState == EditorState::Pause && *m_prePauseState == EditorState::Simulate);
 		bool isPaused = *m_currentState == EditorState::Pause;
 
-		float btnSize = 24.0f;
-
 		// -- Helper Functions --
-		auto makeImageButton = [btnSize](Silica::TextureID texID, bool isDisabled, std::function<void()> onClick) {
+		auto makeImageButton = [](Silica::TextureID texID, bool isDisabled, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { 4.0f, 4.0f },
+				.padding = { BTN_ICON_PAD, BTN_ICON_PAD },
 				.enabled = !isDisabled,
 				.color = Silica::Color::transparent(),
 				.hoverColor = Silica::Color(100, 100, 100, 150),
 				.disabledColor = Silica::Color::transparent(),
-				.onClick = [onClick]() {
-					onClick();
-					return Silica::EventReply::handled();
-				},
+				.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
 				.child = Silica::MakeWidget<Silica::SImage>({
 					.textureID = texID,
 					.tint = isDisabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
-					.desiredSize = { btnSize, btnSize }
+					.desiredSize = { ICON_SIZE, ICON_SIZE }
 				})
 			});
 		};
 
 		auto makeTextButton = [](const std::string& text, bool isActive, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { 8.0f, 4.0f },
+				.padding = { BTN_TEXT_PAD_X, BTN_TEXT_PAD_Y },
 				.color = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
 				.hoverColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color(100, 100, 100, 150),
-				.onClick = [onClick]() {
-					onClick();
-					return Silica::EventReply::handled();
-				},
+				.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
-			});
-		};
-
-		auto makeSliderRow = [this](const std::string& label, float& val, float min, float max) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0,0}, Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{ 100,0 }, .child = Silica::MakeWidget<Silica::STextBlock>({.text = label }) }) },
-					{ {1,0}, Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = val, .minValue = min, .maxValue = max, .onValueChanged = [&val](float v) { val = v; } }) }
-				}
 			});
 		};
 
@@ -262,12 +246,9 @@ namespace Axion {
 				.padding = { 0.0f, 0.0f },
 				.color = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
 				.hoverColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color(100, 100, 100, 150),
-				.onClick = [onClick]() {
-					onClick();
-					return Silica::EventReply::handled();
-				},
+				.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
 				.child = Silica::MakeWidget<Silica::SBox>({
-					.explicitSize = Silica::Vec2{ 32.0f, 32.0f },
+					.explicitSize = Silica::Vec2{ GIZMO_BTN_SIZE, GIZMO_BTN_SIZE },
 					.backgroundColor = Silica::Color::transparent(),
 					.child = Silica::MakeWidget<Silica::SAlign>({
 						.horizontalAlign = Silica::HorizontalAlign::Center,
@@ -283,62 +264,53 @@ namespace Axion {
 		Silica::WidgetPtr gizmoRow;
 		if (m_gizmo) {
 			auto translateBtn = makeSquareTextButton("T", m_gizmo->getMode() == GizmoMode::Translate, [this]() {
-				m_gizmo->setMode(GizmoMode::Translate);
-				refreshToolbar();
+				m_gizmo->setMode(GizmoMode::Translate); refreshToolbar();
 			});
 			auto rotateBtn = makeSquareTextButton("R", m_gizmo->getMode() == GizmoMode::Rotate, [this]() {
-				m_gizmo->setMode(GizmoMode::Rotate);
-				refreshToolbar();
+				m_gizmo->setMode(GizmoMode::Rotate); refreshToolbar();
 			});
 			auto scaleBtn = makeSquareTextButton("S", m_gizmo->getMode() == GizmoMode::Scale, [this]() {
-				m_gizmo->setMode(GizmoMode::Scale);
-				refreshToolbar();
+				m_gizmo->setMode(GizmoMode::Scale); refreshToolbar();
 			});
 
 			bool isLocal = m_gizmo->getSpace() == GizmoSpace::Local;
 			auto spaceBtn = makeTextButton(isLocal ? "Local" : "World", false, [this, isLocal]() {
-				m_gizmo->setSpace(isLocal ? GizmoSpace::Global : GizmoSpace::Local);
-				refreshToolbar();
+				m_gizmo->setSpace(isLocal ? GizmoSpace::Global : GizmoSpace::Local); refreshToolbar();
 			});
 
 			gizmoRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 4.0f,
-				.slots = {
-					{ {0,0}, translateBtn },
-					{ {0,0}, rotateBtn },
-					{ {0,0}, scaleBtn },
-					{ {0,0}, spaceBtn }
-				}
+				.spacing = SPACING_SMALL,
+				.slots = { { {0,0}, translateBtn }, { {0,0}, rotateBtn }, { {0,0}, scaleBtn }, { {0,0}, spaceBtn } }
 			});
 		}
 
 		// -- Play / Simulate / Camera Tools --
 		Silica::TextureID camTex = m_camera->is2D() ? SilicaContext::getIcon("2DCamIcon") : SilicaContext::getIcon("3DCamIcon");
 		auto camBtn = makeImageButton(camTex, !isEdit, [this]() {
-			if (m_camera->is2D()) { m_camera->set3D(); }
-			else { m_camera->set2D(); }
+			if (m_camera->is2D()) m_camera->set3D();
+			else m_camera->set2D();
 			refreshToolbar();
 		});
 
 		auto camSettingsMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.anchorContent = Silica::MakeWidget<Silica::SButton>({
-				.padding = { 4.0f, 4.0f },
+				.padding = { BTN_ICON_PAD, BTN_ICON_PAD },
 				.color = Silica::Color::transparent(),
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cam" })
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 10.0f },
-				.explicitSize = Silica::Vec2{ 250.0f, 0.0f },
+				.padding = { CAM_MENU_PAD, CAM_MENU_PAD },
+				.explicitSize = Silica::Vec2{ CAM_MENU_WIDTH, 0.0f },
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, makeSliderRow("Speed (3D)", m_camera->m_translationSpeed3D, 0.0f, 25.0f) },
-						{ {0,0}, makeSliderRow("Rotate (3D)", m_camera->m_rotationSpeed3D, 0.0f, 0.01f) },
-						{ {0,0}, makeSliderRow("Speed (2D)", m_camera->m_keyboardSpeed2D, 0.0f, 25.0f) },
-						{ {0,0}, makeSliderRow("Drag (2D)", m_camera->m_dragSpeed2D, 0.0f, 0.1f) }
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_translationSpeed3D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_translationSpeed3D = v; } }), SLIDER_LABEL_WIDTH) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Rotate (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_rotationSpeed3D, .minValue = 0.0f, .maxValue = 0.01f, .onValueChanged = [this](float v) { m_camera->m_rotationSpeed3D = v; } }), SLIDER_LABEL_WIDTH) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_keyboardSpeed2D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_keyboardSpeed2D = v; } }), SLIDER_LABEL_WIDTH) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Drag (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_dragSpeed2D, .minValue = 0.0f, .maxValue = 0.1f, .onValueChanged = [this](float v) { m_camera->m_dragSpeed2D = v; } }), SLIDER_LABEL_WIDTH) }
 					}
 				})
 			})
@@ -374,7 +346,7 @@ namespace Axion {
 		});
 
 		auto centerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
+			.spacing = SPACING_MEDIUM,
 			.slots = {
 				{ {0, 0}, camBtn },
 				{ {0, 0}, camSettingsMenu },
@@ -421,15 +393,15 @@ namespace Axion {
 		return { 0.0f, 0.0f };
 	}
 
-
 	Silica::Vec2 ViewportPanel::getViewportPosition() const {
 		if (m_viewportContainer) return m_viewportContainer->getAllocatedGeometry().position;
 		return { 0.0f, 0.0f };
 	}
 
 	bool ViewportPanel::isHovered(const Silica::Vec2& mousePos) const {
-		if (m_viewportContainer) return m_viewportContainer->getAllocatedGeometry().contains(mousePos);
-		return false;
+		if (!m_viewportContainer) return false;
+		if (Silica::Renderer::getOverlayManager().blocksInputAt(mousePos)) return false;
+		return m_viewportContainer->getAllocatedGeometry().contains(mousePos);
 	}
 
 	Silica::Vec2 ViewportPanel::getRelativeMousePos() const {

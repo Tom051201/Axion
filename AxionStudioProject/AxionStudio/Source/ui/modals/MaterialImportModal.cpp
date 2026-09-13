@@ -3,30 +3,31 @@
 
 #include <Silica/include/Theme.h>
 #include <Silica/include/SBox.h>
-#include <Silica/include/SBorderLayout.h>
-#include <Silica/include/SHorizontalBox.h>
 #include <Silica/include/SVerticalBox.h>
-#include <Silica/include/SButton.h>
-#include <Silica/include/STextBlock.h>
+#include <Silica/include/SHorizontalBox.h>
 #include <Silica/include/SEditableText.h>
-#include <Silica/include/SScrollBox.h>
 #include <Silica/include/SAlign.h>
-#include <Silica/include/SSliderFloat.h>
 #include <Silica/include/SColorPicker.h>
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SSeparator.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SButton.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
-
 #include "AxionAssetPipeline/Source/parser/MaterialParser.h"
 
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-
 namespace Axion {
+
+	MaterialImportModal::MaterialImportModal() {
+		m_modalTitle = "Create Material";
+		m_versionText = "v" + std::to_string(ASSET_VERSION_MATERIAL);
+		m_modalWidth = 600.0f;
+		resetInputs();
+	}
 
 	void MaterialImportModal::resetInputs() {
 		m_name.clear();
@@ -48,15 +49,70 @@ namespace Axion {
 		m_emissiveMapPath.clear();
 	}
 
+	void MaterialImportModal::buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) {
+
+		auto makeColorPicker = [&](Vec4& vecColor) {
+			Silica::Color initialColor = Silica::Color((uint8_t)(vecColor.x * 255), (uint8_t)(vecColor.y * 255), (uint8_t)(vecColor.z * 255), (uint8_t)(vecColor.w * 255));
+			return Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.anchorContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { 2.0f, 2.0f }, .backgroundColor = Silica::Color(45, 45, 45, 255),
+					.child = Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{100.0f, 24.0f}, .backgroundColor = initialColor })
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { 10.0f, 10.0f }, .backgroundColor = Silica::Color(45, 45, 45, 255),
+					.child = Silica::MakeWidget<Silica::SColorPicker>({
+						.initialColor = initialColor,
+						.onColorChanged = [this, &vecColor](Silica::Color c) { vecColor = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f); }
+					})
+				})
+			});
+			};
+
+		// -- Name --
+		auto nameInput = Silica::MakeWidget<Silica::SBox>({
+			.child = Silica::MakeWidget<Silica::SEditableText>({
+				.initialText = m_name,
+				.onTextChanged = [this](const std::string& val) {
+					m_name = val;
+					validate();
+				}
+			})
+		});
+		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
+
+		// -- Base Values --
+		contentBox->addSlot({ {0,0}, makePropertyRow("Albedo Color", makeColorPicker(m_albedoColor)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Metalness", makeSliderRow(m_metalness, 1.0f)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Roughness", makeSliderRow(m_roughness, 1.0f)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Emission", makeSliderRow(m_emission, 10.0f)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Tiling", makeSliderRow(m_tiling, 100.0f)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
+
+		// -- Texture Maps --
+		contentBox->addSlot({ {0,0}, makePropertyRow("Albedo Map", makeFileRow(m_albedoMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Normal Map", makeFileRow(m_normalMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Metalness Map", makeFileRow(m_metalnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Roughness Map", makeFileRow(m_roughnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Occlusion Map", makeFileRow(m_occlusionMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Emissive Map", makeFileRow(m_emissiveMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
+
+		// -- Dependencies and Output --
+		contentBox->addSlot({ {0,0}, makePropertyRow("Pipeline", makeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "materials")) });
+	}
+
 	void MaterialImportModal::validate() {
-		if (!m_validationText || !m_createBtn) return;
+		if (!m_validationText || !m_confirmBtn) return;
 
 		std::string finalName = m_name + ".axmat";
 		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
 		auto checkFile = [](const std::string& path, bool& has, bool& exists, bool& isFile) {
 			has = !path.empty();
-			exists = true; isFile = true;
+			exists = true;
+			isFile = true;
 			if (has) {
 				std::error_code ec;
 				exists = std::filesystem::exists(path, ec);
@@ -108,284 +164,56 @@ namespace Axion {
 
 		m_validationText->setText(validationMsg);
 		m_validationText->setColor(validationColor);
-		m_createBtn->setEnabled(!disabled);
+		m_confirmBtn->setEnabled(!disabled);
 	}
 
-	Silica::WidgetPtr MaterialImportModal::getWidget(std::function<void()> onClose) {
-		m_onClose = onClose;
+	void MaterialImportModal::onConfirm() {
+		std::string finalName = m_name + ".axmat";
+		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.consumePointerEvents = true,
-				.backgroundColor = Silica::Color(0, 0, 0, 180),
-			});
-			rebuildUI_Internal();
-		}
-		return m_uiRoot;
-	}
+		bool hasPipe = !m_pipelinePath.empty();
+		bool hasAlbedo = !m_albedoMapPath.empty();
+		bool hasNormal = !m_normalMapPath.empty();
+		bool hasMetal = !m_metalnessMapPath.empty();
+		bool hasRough = !m_roughnessMapPath.empty();
+		bool hasOcc = !m_occlusionMapPath.empty();
+		bool hasEmiss = !m_emissiveMapPath.empty();
 
-	void MaterialImportModal::rebuildUI() {
-		if (m_rebuildQueued) return;
-		m_rebuildQueued = true;
+		UUID newAssetUUID = UUID::generate();
+		AAP::MaterialAssetData data;
+		data.uuid = newAssetUUID;
+		data.name = m_name;
+		if (hasPipe) data.pipelineAsset = AssetManager::getRelativeToAssets(m_pipelinePath);
 
-		EditorActionQueue::push([this]() {
-			m_rebuildQueued = false;
-			rebuildUI_Internal();
-		});
-	}
+		MaterialProperties prop;
+		prop.albedoColor = m_albedoColor;
+		prop.metalness = m_metalness;
+		prop.roughness = m_roughness;
+		prop.emissionStrength = m_emission;
+		prop.tiling = m_tiling;
+		prop.useNormalMap = 0.0f;
+		prop.useMetalnessMap = 0.0f;
+		prop.useRoughnessMap = 0.0f;
+		prop.useOcclusionMap = 0.0f;
 
-	void MaterialImportModal::rebuildUI_Internal() {
-		if (!m_uiRoot) return;
+		if (hasAlbedo) data.textures[TextureSlot::Albedo] = AssetManager::getRelativeToAssets(m_albedoMapPath);
+		if (hasNormal) { data.textures[TextureSlot::Normal] = AssetManager::getRelativeToAssets(m_normalMapPath); prop.useNormalMap = 1.0f; }
+		if (hasMetal) { data.textures[TextureSlot::Metalness] = AssetManager::getRelativeToAssets(m_metalnessMapPath); prop.useMetalnessMap = 1.0f; }
+		if (hasRough) { data.textures[TextureSlot::Roughness] = AssetManager::getRelativeToAssets(m_roughnessMapPath); prop.useRoughnessMap = 1.0f; }
+		if (hasOcc) { data.textures[TextureSlot::Occlusion] = AssetManager::getRelativeToAssets(m_occlusionMapPath); prop.useOcclusionMap = 1.0f; }
+		if (hasEmiss) { data.textures[TextureSlot::Emissive] = AssetManager::getRelativeToAssets(m_emissiveMapPath); prop.useEmissiveMap = 1.0f; }
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 10.0f });
+		data.properties = prop;
+		AAP::MaterialParser::createTextFile(data, finalPath);
 
-		// -- Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Create Material" }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+		AssetMetadata metadata;
+		metadata.handle = newAssetUUID;
+		metadata.type = AssetType::Material;
+		metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
-
-		// -- Helper Functions --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(120.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::SAlign>({
-							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-						})
-					})},
-					{ {1, 0}, valueWidget }
-				}
-			});
-		};
-
-		auto MakeSliderRow = [&](float& val, float maxVal) {
-			return Silica::MakeWidget<Silica::SSliderFloat>({
-				.initialValue = val, .minValue = 0.0f, .maxValue = maxVal,
-				.onValueChanged = [this, &val](float v) { val = v; }
-			});
-		};
-
-		auto MakeFileRow = [&](std::string& outPath, const std::string& typeDesc, const std::string& filter, const std::string& dir) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 8.0f,
-				.slots = {
-					{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-						.child = Silica::MakeWidget<Silica::SEditableText>({
-							.initialText = outPath,
-							.onTextChanged = [this, &outPath](const std::string& val) { outPath = val; validate(); }
-						})
-					})},
-					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {8, 4},
-						.onClick = [this, &outPath, typeDesc, filter, dir]() {
-							std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / dir;
-							if (!std::filesystem::exists(texDir)) {
-								texDir = ProjectManager::getProject()->getAssetsPath();
-							}
-							std::filesystem::path absPath = FileDialogs::openFile({ {typeDesc, filter} }, texDir);
-							if (!absPath.empty()) { outPath = absPath.string(); rebuildUI(); }
-							return Silica::EventReply::handled();
-						},
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..."})
-					})}
-				}
-			});
-		};
-
-		auto MakeColorPicker = [&](Vec4& vecColor) {
-			Silica::Color initialColor = Silica::Color((uint8_t)(vecColor.x * 255), (uint8_t)(vecColor.y * 255), (uint8_t)(vecColor.z * 255), (uint8_t)(vecColor.w * 255));
-			return Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.anchorContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 2.0f, 2.0f }, .backgroundColor = Silica::Color(45, 45, 45, 255),
-					.child = Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{100.0f, 24.0f}, .backgroundColor = initialColor })
-				}),
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 10.0f }, .backgroundColor = Silica::Color(45, 45, 45, 255),
-					.child = Silica::MakeWidget<Silica::SColorPicker>({
-						.initialColor = initialColor,
-						.onColorChanged = [this, &vecColor](Silica::Color c) { vecColor = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f); }
-					})
-				})
-			});
-		};
-
-
-		// -- Name --
-		auto nameInput = Silica::MakeWidget<Silica::SBox>({
-			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_name,
-				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
-			})
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Name", nameInput) });
-
-
-		// -- Base Values --
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Albedo Color", MakeColorPicker(m_albedoColor)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Metalness", MakeSliderRow(m_metalness, 1.0f)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Roughness", MakeSliderRow(m_roughness, 1.0f)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Emission", MakeSliderRow(m_emission, 10.0f)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Tiling", MakeSliderRow(m_tiling, 100.0f)) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
-
-
-		// -- Texture Maps --
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Albedo Map", MakeFileRow(m_albedoMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Normal Map", MakeFileRow(m_normalMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Metalness Map", MakeFileRow(m_metalnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Roughness Map", MakeFileRow(m_roughnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Occlusion Map", MakeFileRow(m_occlusionMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Emissive Map", MakeFileRow(m_emissiveMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
-
-
-		// -- Dependencies --
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Pipeline", MakeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
-
-		auto outFolderRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
-			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_outputPath,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.onClick = [this]() {
-						std::filesystem::path matDir = ProjectManager::getProject()->getAssetsPath() / "materials";
-						if (!std::filesystem::exists(matDir)) {
-							matDir = ProjectManager::getProject()->getAssetsPath();
-						}
-						std::filesystem::path absPath = FileDialogs::openFolder(matDir);
-						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
-				})}
-			}
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Output Location", outFolderRow) });
-
-
-		// -- Initialize Dynamic UI References --
-		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
-
-		m_createBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
-
-				std::string finalName = m_name + ".axmat";
-				std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
-
-				bool hasPipe = !m_pipelinePath.empty();
-				bool hasAlbedo = !m_albedoMapPath.empty();
-				bool hasNormal = !m_normalMapPath.empty();
-				bool hasMetal = !m_metalnessMapPath.empty();
-				bool hasRough = !m_roughnessMapPath.empty();
-				bool hasOcc = !m_occlusionMapPath.empty();
-				bool hasEmiss = !m_emissiveMapPath.empty();
-
-				UUID newAssetUUID = UUID::generate();
-				AAP::MaterialAssetData data;
-				data.uuid = newAssetUUID;
-				data.name = m_name;
-				if (hasPipe) data.pipelineAsset = AssetManager::getRelativeToAssets(m_pipelinePath);
-
-				MaterialProperties prop;
-				prop.albedoColor = m_albedoColor;
-				prop.metalness = m_metalness;
-				prop.roughness = m_roughness;
-				prop.emissionStrength = m_emission;
-				prop.tiling = m_tiling;
-				prop.useNormalMap = 0.0f; prop.useMetalnessMap = 0.0f; prop.useRoughnessMap = 0.0f; prop.useOcclusionMap = 0.0f;
-
-				if (hasAlbedo) data.textures[TextureSlot::Albedo] = AssetManager::getRelativeToAssets(m_albedoMapPath);
-				if (hasNormal) { data.textures[TextureSlot::Normal] = AssetManager::getRelativeToAssets(m_normalMapPath); prop.useNormalMap = 1.0f; }
-				if (hasMetal) { data.textures[TextureSlot::Metalness] = AssetManager::getRelativeToAssets(m_metalnessMapPath); prop.useMetalnessMap = 1.0f; }
-				if (hasRough) { data.textures[TextureSlot::Roughness] = AssetManager::getRelativeToAssets(m_roughnessMapPath); prop.useRoughnessMap = 1.0f; }
-				if (hasOcc) { data.textures[TextureSlot::Occlusion] = AssetManager::getRelativeToAssets(m_occlusionMapPath); prop.useOcclusionMap = 1.0f; }
-				if (hasEmiss) { data.textures[TextureSlot::Emissive] = AssetManager::getRelativeToAssets(m_emissiveMapPath); prop.useEmissiveMap = 1.0f; }
-
-				data.properties = prop;
-				AAP::MaterialParser::createTextFile(data, finalPath);
-
-				AssetMetadata metadata;
-				metadata.handle = newAssetUUID;
-				metadata.type = AssetType::Material;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
-
-				auto registry = ProjectManager::getProject()->getAssetRegistry();
-				registry->add(metadata);
-				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
-
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create" })
-		});
-
-		contentBox->addSlot({ {0,0}, m_validationText });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Footer Buttons --
-		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
-		});
-
-		std::string versionText = "v" + std::to_string(ASSET_VERSION_MATERIAL);
-
-		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 10.0f,
-			.slots = {
-				{ {0,0}, m_createBtn },
-				{ {0,0}, cancelBtn },
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({
-						.text = versionText,
-						.color = Silica::GetTheme().Text_Dim
-					})
-				})}
-			}
-		});
-
-		contentBox->addSlot({ {0,0}, footerRow });
-
-
-		// -- Assemble Modal --
-		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 600.0f, 0.0f },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
-			.backgroundColor = Silica::GetTheme().Background_Panel,
-			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 20.0f, 20.0f },
-				.backgroundColor = Silica::Color::transparent(),
-				.child = contentBox
-			})
-		});
-
-		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
-			.horizontalAlign = Silica::HorizontalAlign::Center,
-			.verticalAlign = Silica::VerticalAlign::Center,
-			.child = modalPanel
-		}));
-
-		validate();
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		registry->add(metadata);
+		registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 	}
 
 }

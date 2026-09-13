@@ -69,18 +69,6 @@ namespace Axion {
 		};
 
 
-		// ----- Initialize Discord -----
-		DiscordManager::initialize("1543660033210851368");
-
-		if (ProjectManager::hasProject()) {
-			std::string projName = ProjectManager::getProject()->getName();
-			std::string sceneName = m_activeScene ? m_activeScene->getTitle() : "Untitled";
-			DiscordManager::setPresence("Editing: " + sceneName, "Project: " + projName);
-		}
-		else {
-			DiscordManager::setPresence("In Hub / No Project", "Idle");
-		}
-
 		// ----- Load Editor Resources -----
 		EditorResourceManager::initialize();
 		EditorResourceManager::loadIcon("AddFolderIcon", "AxionStudio/Resources/Editor/UI/AddFolderIcon.png");
@@ -105,6 +93,10 @@ namespace Axion {
 			try {
 				YAML::Node config = YAML::LoadFile(m_editorSettingsPath.string());
 
+				if (config["EnableDiscordRPC"]) {
+					EditorConfig::enableDiscordRPC = config["EnableDiscordRPC"].as<bool>();
+				}
+
 				if (config["StartupProject"]) {
 					if (std::filesystem::exists(config["StartupProject"].as<std::string>())) {
 						ProjectManager::loadProject(config["StartupProject"].as<std::string>());
@@ -128,6 +120,22 @@ namespace Axion {
 				AX_CORE_LOG_WARN("Failed to parse Editor Settings: {}", e.what());
 			}
 		}
+
+
+		// ----- Initialize Discord -----
+		if (EditorConfig::enableDiscordRPC) {
+			DiscordManager::initialize("1543660033210851368");
+
+			if (ProjectManager::hasProject()) {
+				std::string projName = ProjectManager::getProject()->getName();
+				std::string sceneName = m_activeScene ? m_activeScene->getTitle() : "Untitled";
+				DiscordManager::setPresence("Editing: " + sceneName, "Project: " + projName);
+			}
+			else {
+				DiscordManager::setPresence("In Hub / No Project", "Idle");
+			}
+		}
+
 
 		// ----- Setup Framebuffer -----
 		FrameBufferSpecification fbs;
@@ -356,9 +364,7 @@ namespace Axion {
 		// -- Scene Loading Toast ---
 		auto sceneLoadingToast = Silica::MakeWidget<Silica::SLoadingToast>({
 			.text = "Loading Scene & Assets...",
-			.isVisible = []() {
-				return SceneManager::isLoadingScene() || AssetManager::isLoadingAssets();
-			}
+			.isVisible = []() { return SceneManager::isLoadingScene() || AssetManager::isLoadingAssets(); }
 		});
 
 		auto toastContainer = Silica::MakeWidget<Silica::SVerticalBox>({
@@ -390,7 +396,6 @@ namespace Axion {
 		});
 
 
-		EditorModalManager::initialize(m_silicaRoot, m_mainLayout);
 		SilicaContext::bindWndProcCallback(m_silicaRoot);
 
 
@@ -455,6 +460,7 @@ namespace Axion {
 			out << YAML::Key << "StartupProject" << YAML::Value << EditorConfig::startupProjectPath.generic_string();
 		}
 		out << YAML::Key << "MaxAssetsPerFrame" << YAML::Value << AssetManager::getMaxAssetsPerFrame();
+		out << YAML::Key << "EnableDiscordRPC" << YAML::Value << EditorConfig::enableDiscordRPC;
 		m_contentBrowserPanel->saveSettings(out);
 
 		// -- Save Open Text Editors --
@@ -1029,7 +1035,6 @@ namespace Axion {
 					});
 				}
 				break;
-				break;
 			}
 		}
 
@@ -1137,16 +1142,61 @@ namespace Axion {
 			m_settingsModal = MakeShared<SettingsModal>();
 		}
 
-		std::vector<std::string> currentPaths;
+		// -- Build input struct --
+		SettingsPayload currentSettings;
+		currentSettings.maxAssetsPerFrame = AssetManager::getMaxAssetsPerFrame();
+		currentSettings.enableDiscordRPC = EditorConfig::enableDiscordRPC;
+		if (m_contentBrowserPanel) {
+			currentSettings.contentBrowserShowContentArea = m_contentBrowserPanel->getShowContentArea();
+			currentSettings.contentBrowserShowVFSTree = m_contentBrowserPanel->getShowVFSTree();
+			currentSettings.contentBrowserShowPhysicalTree = m_contentBrowserPanel->getShowPhysicalTree();
+		}
 		for (const auto& path : m_assetLibraryPanel->getLibraryDirectories()) {
-			currentPaths.push_back(path.string());
+			currentSettings.assetLibraryPaths.push_back(path.string());
 		}
 
-		auto widget = m_settingsModal->getWidget(currentPaths,
-			[this](std::vector<std::string> newPaths) {
+		auto widget = m_settingsModal->getWidget(currentSettings,
+			[this](const SettingsPayload& newSettings) {
+				// -- Apply file paths --
 				std::vector<std::filesystem::path> fsPaths;
-				for (const auto& p : newPaths) fsPaths.push_back(p);
+				for (const auto& p : newSettings.assetLibraryPaths) fsPaths.push_back(p);
 				m_assetLibraryPanel->setLibraryDirectories(fsPaths);
+
+				// -- Apply asset load budget --
+				AssetManager::setMaxAssetsPerFrame(newSettings.maxAssetsPerFrame);
+
+				// -- Apply Discord RPC toggle --
+				if (newSettings.enableDiscordRPC && !EditorConfig::enableDiscordRPC) {
+					DiscordManager::initialize("1543660033210851368");
+					if (ProjectManager::hasProject()) {
+						std::string projName = ProjectManager::getProject()->getName();
+						std::string sceneName = m_activeScene ? m_activeScene->getTitle() : "Untitled";
+						DiscordManager::setPresence("Editing: " + sceneName, "Project: " + projName);
+					}
+					else {
+						DiscordManager::setPresence("In Hub / No Project", "Idle");
+					}
+				}
+				else if (!newSettings.enableDiscordRPC && EditorConfig::enableDiscordRPC) {
+					DiscordManager::shutdown();
+				}
+
+				// -- Apply Content Browser settings --
+				if (m_contentBrowserPanel) {
+					if (newSettings.contentBrowserShowContentArea != m_contentBrowserPanel->getShowContentArea()) {
+						m_contentBrowserPanel->setShowContentArea(newSettings.contentBrowserShowContentArea);
+					}
+					if (newSettings.contentBrowserShowVFSTree != m_contentBrowserPanel->getShowVFSTree()) {
+						m_contentBrowserPanel->setShowVFSTree(newSettings.contentBrowserShowVFSTree);
+					}
+					if (newSettings.contentBrowserShowPhysicalTree != m_contentBrowserPanel->getShowPhysicalTree()) {
+						m_contentBrowserPanel->setShowPhysicalTree(newSettings.contentBrowserShowPhysicalTree);
+					}
+				}
+
+				// -- Update global config --
+				EditorConfig::enableDiscordRPC = newSettings.enableDiscordRPC;
+				EditorConfig::materialEditorInvertCamera = newSettings.materialEditorInvertCamera;
 			},
 			[]() {
 				EditorModalManager::close();

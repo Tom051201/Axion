@@ -1,34 +1,25 @@
 #pragma once
 
-#include <string>
-#include <memory>
-
-#include <Silica/include/SWidget.h>
-
 #include "AxionEngine/Source/core/Version.h"
 
-namespace Silica {
-	class SBox;
-	class STextBlock;
-	class SButton;
-}
+#include "AxionStudio/Source/ui/ModalBase.h"
 
 namespace Axion {
 
-	class CreateProjectModal {
+	class CreateProjectModal : public ModalBase {
 	public:
 
-		CreateProjectModal() { resetInputs(); }
-		~CreateProjectModal() = default;
+		CreateProjectModal();
 
 		Silica::WidgetPtr getWidget();
 
-	private:
+	protected:
 
-		void rebuildUI();
-		void rebuildUI_Internal();
-		void resetInputs();
-		void validate();
+		void buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) override;
+		void validate() override;
+		void onConfirm() override;
+
+	private:
 
 		std::string m_name;
 		std::string m_outputPath;
@@ -37,11 +28,7 @@ namespace Axion {
 		std::string m_description;
 		Version m_version = Version(1, 0, 0);
 
-		// -- Silica --
-		std::shared_ptr<Silica::SBox> m_uiRoot;
-		std::shared_ptr<Silica::STextBlock> m_validationText;
-		std::shared_ptr<Silica::SButton> m_createBtn;
-		bool m_rebuildQueued = false;
+		void resetInputs();
 
 	};
 

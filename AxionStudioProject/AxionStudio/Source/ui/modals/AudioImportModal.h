@@ -1,56 +1,40 @@
 #pragma once
 
-#include <string>
 #include <filesystem>
-#include <functional>
-#include <memory>
-
-#include <Silica/include/SWidget.h>
 
 #include "AxionEngine/Source/audio/AudioClip.h"
 
-namespace Silica {
-	class SBox;
-	class STextBlock;
-	class SButton;
-}
+#include "AxionStudio/Source/ui/ModalBase.h"
 
 namespace Axion {
 
-	class AudioImportModal {
+	class AudioImportModal : public ModalBase {
 	public:
 
-		AudioImportModal() = default;
-		~AudioImportModal() = default;
+		AudioImportModal();
 
 		void presetFromFile(const std::filesystem::path& sourceFile);
 
-		Silica::WidgetPtr getWidget(std::function<void()> onClose);
+	protected:
+
+		void buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) override;
+		void validate() override;
+		void onConfirm() override;
 
 	private:
-
-		void rebuildUI();
-		void rebuildUI_Internal();
-		void resetInputs();
-		void validate();
 
 		std::string m_name;
 		std::string m_sourcePath;
 		std::string m_outputPath;
 
 		int m_importFormat = 0;
-		const char* m_formatNames[3] = { "MP3", "WAV", "OGG" };
+		const std::vector<std::string> m_formatNames = { "MP3", "WAV", "OGG" };
 
 		int m_loadType = 0;
 		AudioClip::Mode m_types[2] = { AudioClip::Mode::Stream, AudioClip::Mode::Memory };
-		const char* m_typesNames[2] = { "Stream", "Memory" };
+		const std::vector<std::string> m_typesNames = { "Stream", "Memory" };
 
-		// -- Silica --
-		std::shared_ptr<Silica::SBox> m_uiRoot;
-		std::function<void()> m_onClose;
-		std::shared_ptr<Silica::STextBlock> m_validationText;
-		std::shared_ptr<Silica::SButton> m_createBtn;
-		bool m_rebuildQueued = false;
+		void resetInputs();
 
 	};
 

@@ -24,6 +24,27 @@
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 
+namespace {
+	constexpr float SEARCH_BAR_WIDTH = 250.0f;
+	constexpr float TOP_BAR_SPACING = 20.0f;
+	constexpr float GRID_PADDING = 20.0f;
+	constexpr float WRAP_BOX_SPACING = 15.0f;
+
+	constexpr float CARD_WIDTH = 220.0f;
+	constexpr float CARD_HEIGHT = 300.0f;
+	constexpr float CARD_SPACING = 8.0f;
+	constexpr float CARD_PADDING_X = 8.0f;
+
+	constexpr float CONTENT_WIDTH = CARD_WIDTH - (CARD_PADDING_X * 2.0f);
+
+	constexpr float THUMBNAIL_HEIGHT = 140.0f;
+	constexpr float TITLE_HEIGHT = 20.0f;
+	constexpr float DESC_HEIGHT = 60.0f;
+	constexpr uint32_t DESC_MAX_LINES = 3;
+
+	constexpr float BUTTON_AREA_PAD_Y = 12.0f;
+	constexpr float BUTTON_INNER_PAD_Y = 6.0f;
+}
 
 namespace Axion {
 
@@ -68,12 +89,8 @@ namespace Axion {
 				if (std::filesystem::exists(infoPath)) {
 					try {
 						YAML::Node info = YAML::LoadFile(infoPath.string());
-						if (info["Name"]) {
-							pack.name = info["Name"].as<std::string>();
-						}
-						if (info["Description"]) {
-							pack.description = info["Description"].as<std::string>();
-						}
+						if (info["Name"]) pack.name = info["Name"].as<std::string>();
+						if (info["Description"]) pack.description = info["Description"].as<std::string>();
 					}
 					catch (const YAML::Exception& e) {
 						AX_CORE_LOG_WARN("Failed to parse info.yaml in pack {0}: {1}", pack.sourcePath.string(), e.what());
@@ -87,7 +104,7 @@ namespace Axion {
 
 	Silica::WidgetPtr AssetLibraryPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({ .borderThickness = Silica::GetTheme().Border_Thickness });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
 
 			// -- Pack Count --
 			m_packCountText = Silica::MakeWidget<Silica::STextBlock>({
@@ -97,7 +114,7 @@ namespace Axion {
 
 			// -- Search Bar --
 			auto searchBar = Silica::MakeWidget<Silica::SBox>({
-				.explicitSize = Silica::Vec2{ 250.0f, 0.0f },
+				.explicitSize = Silica::Vec2{ SEARCH_BAR_WIDTH, 0.0f },
 				.child = Silica::MakeWidget<Silica::SEditableText>({
 					.initialText = m_searchQuery,
 					.hintText = "Search Packs...",
@@ -113,7 +130,7 @@ namespace Axion {
 				.padding = { 8.0f, 5.0f },
 				.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 				.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-					.spacing = 20.0f,
+					.spacing = TOP_BAR_SPACING,
 					.slots = {
 						{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 							.verticalAlign = Silica::VerticalAlign::Center,
@@ -133,9 +150,9 @@ namespace Axion {
 			});
 
 			// -- Grid Container --
-			m_gridContainer = Silica::MakeWidget<Silica::SBox>({ .padding = { 20.0f, 20.0f } });
+			m_gridContainer = Silica::MakeWidget<Silica::SBox>({.padding = { GRID_PADDING, GRID_PADDING } });
 
-			auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({ .child = m_gridContainer });
+			auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({.child = m_gridContainer });
 
 			m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 				.topBar = topBarBox,
@@ -167,17 +184,12 @@ namespace Axion {
 		for (const auto& pack : m_availablePacks) {
 			std::string nameLower = pack.name;
 			std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-
-			if (!queryLower.empty() && nameLower.find(queryLower) == std::string::npos) {
-				continue;
-			}
+			if (!queryLower.empty() && nameLower.find(queryLower) == std::string::npos) continue;
 			filteredPacks.push_back(pack);
 		}
 
-		// -- Update Count Text --
 		m_packCountText->setText((filteredPacks.size() == 1) ? "1 Pack Found" : std::to_string(filteredPacks.size()) + " Packs Found");
 
-		// -- Generate Grid Content --
 		Silica::WidgetPtr contentAreaWidget = nullptr;
 
 		if (filteredPacks.empty()) {
@@ -192,76 +204,12 @@ namespace Axion {
 		}
 		else {
 			std::vector<Silica::WidgetPtr> cardWidgets;
-
 			for (const AssetPack& pack : filteredPacks) {
-				Silica::WidgetPtr thumbnail;
-				if (pack.thumbnailID != 0) {
-					thumbnail = Silica::MakeWidget<Silica::SImage>({ .textureID = pack.thumbnailID });
-				}
-				else {
-					thumbnail = Silica::MakeWidget<Silica::SAlign>({
-						.horizontalAlign = Silica::HorizontalAlign::Center,
-						.verticalAlign = Silica::VerticalAlign::Center,
-						.child = Silica::MakeWidget<Silica::STextBlock>({
-							.text = "No Image",
-							.color = Silica::GetTheme().Text_Dim
-						})
-					});
-				}
-
-				auto packCard = Silica::MakeWidget<Silica::SBox>({
-					.explicitSize = Silica::Vec2{ 220.0f, 300.0f },
-					.borderThickness = Silica::GetTheme().Border_Thickness,
-					.child = Silica::MakeWidget<Silica::SVerticalBox>({
-						.spacing = 8.0f,
-						.slots = {
-							{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-								.explicitSize = Silica::Vec2{ 220.0f, 140.0f },
-								.backgroundColor = Silica::GetTheme().Surface_Secondary,
-								.child = thumbnail
-							})},
-							{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-								.padding = {8.0f, 0.0f},
-								.explicitSize = Silica::Vec2{ 204.0f, 20.0f },
-								.child = Silica::MakeWidget<Silica::STextBlock>({
-									.text = pack.name,
-									.truncateWidth = 204.0f
-								})
-							})},
-							{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-								.padding = {8.0f, 0.0f},
-								.explicitSize = Silica::Vec2{ 204.0f, 60.0f },
-								.child = Silica::MakeWidget<Silica::SWrappedTextBlock>({
-									.text = pack.description,
-									.wrapWidth = 204.0f,
-									.maxLines = 3,
-									.color = Silica::GetTheme().Text_Dim
-								})
-							})},
-							{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-								.padding = {8.0f, 12.0f},
-								.child = Silica::MakeWidget<Silica::SButton>({
-									.padding = { 0.0f, 6.0f },
-									.enabled = m_projectIsLoaded,
-									.color = Silica::GetTheme().Accent_Primary,
-									.onClick = [this, pack]() {
-										importAssetPackToProject(pack);
-										return Silica::EventReply::handled();
-									},
-									.child = Silica::MakeWidget<Silica::SAlign>({
-										.horizontalAlign = Silica::HorizontalAlign::Center,
-										.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Pack"})
-									})
-								})
-							})}
-						}
-					})
-				});
-				cardWidgets.push_back(packCard);
+				cardWidgets.push_back(createPackCardWidget(pack));
 			}
 
 			contentAreaWidget = Silica::MakeWidget<Silica::SWrapBox>({
-				.spacing = 15.0f,
+				.spacing = WRAP_BOX_SPACING,
 				.children = cardWidgets
 			});
 		}
@@ -297,7 +245,7 @@ namespace Axion {
 					if (ext == ".axtcube") return AssetType::TextureCube;
 					if (ext == ".axsky") return AssetType::Skybox;
 					return AssetType::None;
-					};
+				};
 
 				// -- Pass 1 : Generate UUID Mappings (STRING BASED FOR SAFETY) --
 				std::unordered_map<std::string, std::string> uuidRemap;
@@ -312,12 +260,10 @@ namespace Axion {
 							YAML::Node node = YAML::LoadFile(entry.path().string());
 							std::string oldUUIDStr = "";
 
-							// Extract as raw string to avoid parser crashes on hex formats
 							if (node["UUID"]) oldUUIDStr = node["UUID"].as<std::string>();
 							else if (node["Asset"]) oldUUIDStr = node["Asset"].as<std::string>();
 							else if (node["ID"]) oldUUIDStr = node["ID"].as<std::string>();
 
-							// Safeguard: Only remap if it's a valid string and not "0"
 							if (!oldUUIDStr.empty() && oldUUIDStr != "0") {
 								UUID newId = UUID::generate();
 								uuidRemap[oldUUIDStr] = newId.toString();
@@ -329,7 +275,6 @@ namespace Axion {
 					}
 				}
 
-
 				// -- Pass 2 : Copy, Rewrite, And Register --
 				auto registry = ProjectManager::getProject()->getAssetRegistry();
 				std::vector<std::string> rawPathKeys = { "Source", "ShaderPath", "TextureCubePath", "FilePath", "Shader" };
@@ -340,7 +285,6 @@ namespace Axion {
 					std::string filename = entry.path().filename().string();
 					if (filename == "info.yaml" || filename == "thumbnail.png") continue;
 
-					// -- Replicate Folder Structure --
 					std::filesystem::path relativePath = std::filesystem::relative(entry.path(), pack.sourcePath);
 					std::filesystem::path targetFilePath = destFolder / relativePath;
 					std::filesystem::create_directories(targetFilePath.parent_path());
@@ -353,12 +297,11 @@ namespace Axion {
 						std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 						in.close();
 
-						// -- Safely Replace All Internal UUID References --
 						for (const auto& [oldStr, newStr] : uuidRemap) {
 							size_t pos = 0;
 							while ((pos = content.find(oldStr, pos)) != std::string::npos) {
 								content.replace(pos, oldStr.length(), newStr);
-								pos += newStr.length(); // Advance past the newly inserted UUID
+								pos += newStr.length();
 							}
 						}
 
@@ -366,34 +309,25 @@ namespace Axion {
 						out << content;
 						out.close();
 
-						// -- Inject Into Asset Registry And Fix Raw Source Paths --
 						try {
 							YAML::Node targetNode = YAML::LoadFile(targetFilePath.string());
 							bool yamlNeedsResave = false;
 
-							// -- Smart Raw File Path Resolver --
 							for (const auto& key : rawPathKeys) {
 								if (targetNode[key]) {
 									std::string oldSourceStr = targetNode[key].as<std::string>();
 									std::string targetFileName = std::filesystem::path(oldSourceStr).filename().string();
 									std::string resolvedNewSource = "";
 
-									// Deep Search inside the SOURCE folder instead of DESTINATION folder
-									// This makes it completely immune to file copying order!
 									for (const auto& searchEntry : std::filesystem::recursive_directory_iterator(pack.sourcePath)) {
 										if (searchEntry.is_regular_file() && searchEntry.path().filename().string() == targetFileName) {
-
-											// Calculate where this file WILL be in the destination
 											std::filesystem::path relToPack = std::filesystem::relative(searchEntry.path(), pack.sourcePath);
 											std::filesystem::path finalDestPath = destFolder / relToPack;
-
-											// Virtualize the calculated path!
 											resolvedNewSource = PathResolver::virtualize(finalDestPath);
 											break;
 										}
 									}
 
-									// -- Update YAML --
 									if (!resolvedNewSource.empty()) {
 										targetNode[key] = resolvedNewSource;
 										yamlNeedsResave = true;
@@ -411,7 +345,6 @@ namespace Axion {
 							}
 
 							UUID fileUUID;
-							// Now that we string-replaced the file, it contains a standard engine UUID!
 							if (targetNode["UUID"]) fileUUID = targetNode["UUID"].as<UUID>();
 							else if (targetNode["Asset"]) fileUUID = targetNode["Asset"].as<UUID>();
 							else if (targetNode["ID"]) fileUUID = targetNode["ID"].as<UUID>();
@@ -421,27 +354,23 @@ namespace Axion {
 								metadata.handle = fileUUID;
 								metadata.type = type;
 								metadata.filePath = AssetManager::getRelativeToAssets(targetFilePath);
-
 								registry->add(metadata);
 							}
 						}
 						catch (...) {}
 					}
 					else {
-						// -- Copy Raw Files --
 						std::filesystem::copy(entry.path(), targetFilePath, std::filesystem::copy_options::overwrite_existing);
 					}
 				}
 
-				// --- Finalize ---
 				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
-
 				AX_CORE_LOG_INFO("Successfully Deep-Imported Pack '{0}' to Project!", pack.name);
 			}
 			catch (const std::exception& e) {
 				AX_CORE_LOG_ERROR("Failed to import asset pack: {0}", e.what());
 			}
-			});
+		});
 	}
 
 	void AssetLibraryPanel::onEvent(Event& e) {
@@ -455,6 +384,69 @@ namespace Axion {
 		m_libraryPaths = paths;
 		scanLibraries();
 		rebuildUI();
+	}
+
+	Silica::WidgetPtr AssetLibraryPanel::createPackCardWidget(const AssetPack& pack) {
+		Silica::WidgetPtr thumbnail;
+		if (pack.thumbnailID != 0) {
+			thumbnail = Silica::MakeWidget<Silica::SImage>({ .textureID = pack.thumbnailID });
+		}
+		else {
+			thumbnail = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "No Image", .color = Silica::GetTheme().Text_Dim })
+				});
+		}
+
+		return Silica::MakeWidget<Silica::SBox>({
+			.explicitSize = Silica::Vec2{ CARD_WIDTH, CARD_HEIGHT },
+			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.child = Silica::MakeWidget<Silica::SVerticalBox>({
+				.spacing = CARD_SPACING,
+				.slots = {
+					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
+						.explicitSize = Silica::Vec2{ CARD_WIDTH, THUMBNAIL_HEIGHT },
+						.backgroundColor = Silica::GetTheme().Surface_Secondary,
+						.child = thumbnail
+					})},
+					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
+						.padding = { CARD_PADDING_X, 0.0f },
+						.explicitSize = Silica::Vec2{ CONTENT_WIDTH, TITLE_HEIGHT },
+						.child = Silica::MakeWidget<Silica::STextBlock>({
+							.text = pack.name,
+							.truncateWidth = CONTENT_WIDTH
+						})
+					})},
+					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
+						.padding = { CARD_PADDING_X, 0.0f },
+						.explicitSize = Silica::Vec2{ CONTENT_WIDTH, DESC_HEIGHT },
+						.child = Silica::MakeWidget<Silica::SWrappedTextBlock>({
+							.text = pack.description,
+							.wrapWidth = CONTENT_WIDTH,
+							.maxLines = DESC_MAX_LINES,
+							.color = Silica::GetTheme().Text_Dim
+						})
+					})},
+					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
+						.padding = { CARD_PADDING_X, BUTTON_AREA_PAD_Y },
+						.child = Silica::MakeWidget<Silica::SButton>({
+							.padding = { 0.0f, BUTTON_INNER_PAD_Y },
+							.enabled = m_projectIsLoaded,
+							.color = Silica::GetTheme().Accent_Primary,
+							.onClick = [this, pack]() {
+								importAssetPackToProject(pack);
+								return Silica::EventReply::handled();
+							},
+							.child = Silica::MakeWidget<Silica::SAlign>({
+								.horizontalAlign = Silica::HorizontalAlign::Center,
+								.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Import Pack"})
+							})
+						})
+					})}
+				}
+			})
+		});
 	}
 
 }

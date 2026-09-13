@@ -8,31 +8,29 @@
 
 namespace Axion {
 
-	void EditorModalManager::initialize(std::shared_ptr<Silica::SBox> root, Silica::WidgetPtr mainLayout) {
-		s_root = root;
-		s_mainLayout = mainLayout;
-	}
-
 	void EditorModalManager::shutdown() {
-		s_root = nullptr;
-		s_mainLayout = nullptr;
-		s_currentModal = nullptr;
+		close();
 	}
 
 	void EditorModalManager::open(Silica::WidgetPtr modalWidget) {
 		EditorActionQueue::push([modalWidget]() {
-			s_currentModal = modalWidget;
-			s_root->setChild(Silica::MakeWidget<Silica::SOverlay>({
-				.children = { s_mainLayout, s_currentModal }
-			}));
+			if (s_activeModalID != 0) {
+				Silica::Renderer::closeOverlay(s_activeModalID);
+			}
+
+			Silica::Geometry emptyGeo = { {0.0f, 0.0f}, {0.0f, 0.0f} };
+			s_activeModalID = Silica::Renderer::openModal(modalWidget, emptyGeo, []() {
+				s_activeModalID = 0;
+			});
+
 		});
 	}
 
 	void EditorModalManager::close() {
 		EditorActionQueue::push([]() {
-			s_currentModal = nullptr;
-			if (s_root && s_mainLayout) {
-				s_root->setChild(s_mainLayout);
+			if (s_activeModalID != 0) {
+				Silica::Renderer::closeOverlay(s_activeModalID);
+				s_activeModalID = 0;
 			}
 		});
 	}

@@ -3,14 +3,10 @@
 
 #include <Silica/include/Theme.h>
 #include <Silica/include/SBox.h>
-#include <Silica/include/SBorderLayout.h>
-#include <Silica/include/SHorizontalBox.h>
-#include <Silica/include/SVerticalBox.h>
-#include <Silica/include/SButton.h>
-#include <Silica/include/STextBlock.h>
 #include <Silica/include/SEditableText.h>
-#include <Silica/include/SAlign.h>
-#include <Silica/include/SSeparator.h>
+#include <Silica/include/SVerticalBox.h>
+#include <Silica/include/STextBlock.h>
+#include <Silica/include/SButton.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -20,9 +16,14 @@
 
 #include "AxionAssetPipeline/Source/parser/SkyboxParser.h"
 
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-
 namespace Axion {
+
+	SkyboxImportModal::SkyboxImportModal() {
+		m_modalTitle = "Import Skybox Asset";
+		m_versionText = "v" + std::to_string(ASSET_VERSION_SKYBOX);
+		m_modalWidth = 550.0f;
+		resetInputs();
+	}
 
 	void SkyboxImportModal::resetInputs() {
 		m_name.clear();
@@ -33,8 +34,26 @@ namespace Axion {
 		m_outputPath = dir.string();
 	}
 
+	void SkyboxImportModal::buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) {
+		// -- Name --
+		auto nameInput = Silica::MakeWidget<Silica::SBox>({
+			.child = Silica::MakeWidget<Silica::SEditableText>({
+				.initialText = m_name ,
+				.onTextChanged = [this](const std::string& val) {
+					m_name = val;
+					validate();
+				}
+			})
+		});
+		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
+
+		contentBox->addSlot({ {0,0}, makePropertyRow("Texture Cube", makeFileRow(m_texturePath, "Axion Texture File", "*.axtcube", "textures")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Pipeline", makeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "skybox")) });
+	}
+
 	void SkyboxImportModal::validate() {
-		if (!m_validationText || !m_createBtn) return;
+		if (!m_validationText || !m_confirmBtn) return;
 
 		std::string finalName = m_name + ".axsky";
 		std::filesystem::path finalPath;
@@ -92,247 +111,34 @@ namespace Axion {
 
 		m_validationText->setText(validationMsg);
 		m_validationText->setColor(validationColor);
-		m_createBtn->setEnabled(!disabled);
+		m_confirmBtn->setEnabled(!disabled);
 	}
 
-	Silica::WidgetPtr SkyboxImportModal::getWidget(std::function<void()> onClose) {
-		m_onClose = onClose;
+	void SkyboxImportModal::onConfirm() {
+		std::string finalName = m_name + ".axsky";
+		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+		bool hasPipeline = !m_pipelinePath.empty();
 
-		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.consumePointerEvents = true,
-				.backgroundColor = Silica::Color(0, 0, 0, 180)
-			});
-			rebuildUI_Internal();
+		UUID newAssetUUID = UUID::generate();
+
+		AAP::SkyboxAssetData data;
+		data.uuid = newAssetUUID;
+		data.name = m_name;
+		data.textureCubePath = AssetManager::getRelativeToAssets(m_texturePath);
+		if (hasPipeline) {
+			data.pipelinePath = AssetManager::getRelativeToAssets(m_pipelinePath);
 		}
-		return m_uiRoot;
-	}
 
-	void SkyboxImportModal::rebuildUI() {
-		if (m_rebuildQueued) return;
-		m_rebuildQueued = true;
+		AAP::SkyboxParser::createTextFile(data, finalPath);
 
-		EditorActionQueue::push([this]() {
-			m_rebuildQueued = false;
-			rebuildUI_Internal();
-		});
-	}
+		AssetMetadata metadata;
+		metadata.handle = newAssetUUID;
+		metadata.type = AssetType::Skybox;
+		metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
-	void SkyboxImportModal::rebuildUI_Internal() {
-		if (!m_uiRoot) return;
-
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 12.0f });
-
-		// -- Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Import Skybox Asset" }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-		// -- Helper Functions --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(120.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::SAlign>({
-							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-						})
-					})},
-					{ {1, 0}, valueWidget }
-				}
-			});
-		};
-
-
-		// -- Name --
-		auto nameInput = Silica::MakeWidget<Silica::SBox>({
-			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_name ,
-				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
-			})
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Name", nameInput) });
-
-
-		// -- Texture Cube Path --
-		auto textureRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
-			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_texturePath ,
-						.onTextChanged = [this](const std::string& val) { m_texturePath = val; validate(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.onClick = [this]() {
-						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "textures";
-						if (!std::filesystem::exists(dir)) {
-							dir = ProjectManager::getProject()->getAssetsPath();
-						}
-						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Texture File", "*.axtcube"} }, dir);
-						if (!absPath.empty()) { m_texturePath = absPath.string(); rebuildUI(); }
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
-				})}
-			}
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Texture Cube", textureRow) });
-
-
-		// -- Pipeline Path --
-		auto pipelineRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
-			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_pipelinePath ,
-						.onTextChanged = [this](const std::string& val) { m_pipelinePath = val; validate(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.onClick = [this]() {
-						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "pipelines";
-						if (!std::filesystem::exists(dir)) {
-							dir = ProjectManager::getProject()->getAssetsPath();
-						}
-						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Pipeline Asset", "*.axpso"} }, dir);
-						if (!absPath.empty()) { m_pipelinePath = absPath.string(); rebuildUI(); }
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
-				})}
-			}
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Pipeline", pipelineRow) });
-
-
-		// -- Output Path --
-		auto outputRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
-			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_outputPath ,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.onClick = [this]() {
-						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "skybox";
-						if (!std::filesystem::exists(dir)) {
-							dir = ProjectManager::getProject()->getAssetsPath();
-						}
-						std::filesystem::path absPath = FileDialogs::openFolder(dir);
-						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
-				})}
-			}
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Output Location", outputRow) });
-
-
-		// -- Initialize Dynamic UI References --
-		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
-
-		m_createBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
-
-				std::string finalName = m_name + ".axsky";
-				std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
-				bool hasPipeline = !m_pipelinePath.empty();
-
-				UUID newAssetUUID = UUID::generate();
-
-				AAP::SkyboxAssetData data;
-				data.uuid = newAssetUUID;
-				data.name = m_name;
-				data.textureCubePath = AssetManager::getRelativeToAssets(m_texturePath);
-				if (hasPipeline) {
-					data.pipelinePath = AssetManager::getRelativeToAssets(m_pipelinePath);
-				}
-
-				AAP::SkyboxParser::createTextFile(data, finalPath);
-
-				AssetMetadata metadata;
-				metadata.handle = newAssetUUID;
-				metadata.type = AssetType::Skybox;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
-
-				auto registry = ProjectManager::getProject()->getAssetRegistry();
-				registry->add(metadata);
-				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
-
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create" })
-		});
-
-		contentBox->addSlot({ {0,0}, m_validationText });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Footer Buttons --
-		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
-		});
-
-		std::string versionText = "v" + std::to_string(ASSET_VERSION_SKYBOX);
-
-		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 10.0f,
-			.slots = {
-				{ {0,0}, m_createBtn },
-				{ {0,0}, cancelBtn },
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({
-						.text = versionText,
-						.color = Silica::GetTheme().Text_Dim
-					})
-				})}
-			}
-		});
-
-		contentBox->addSlot({ {0,0}, footerRow });
-
-
-		// -- Assemble Modal --
-		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 550.0f, 0.0f },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
-			.backgroundColor = Silica::GetTheme().Background_Panel,
-			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 20.0f, 20.0f },
-				.backgroundColor = Silica::Color::transparent(),
-				.child = contentBox
-			})
-		});
-
-		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
-			.horizontalAlign = Silica::HorizontalAlign::Center,
-			.verticalAlign = Silica::VerticalAlign::Center,
-			.child = modalPanel
-		}));
-
-		validate();
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		registry->add(metadata);
+		registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 	}
 
 }

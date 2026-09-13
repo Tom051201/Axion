@@ -10,11 +10,18 @@
 
 #include "AxionStudio/Source/core/EditorCommand.h"
 
+namespace {
+	constexpr float ITEM_SPACING = 1.0f;
+	constexpr float PANEL_PADDING = 5.0f;
+	constexpr float BTN_PAD_X = 8.0f;
+	constexpr float BTN_PAD_Y = 4.0f;
+}
+
 namespace Axion {
 
 	void HistoryPanel::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);
-		dispatcher.dispatch<EditorHistoryChangedEvent>(AX_BIND_EVENT_FN(onEditorHistoryChanged));
+		dispatcher.dispatch<EditorHistoryChangedEvent>(AX_BIND_EVENT_FN(HistoryPanel::onEditorHistoryChanged));
 	}
 
 	EventReply HistoryPanel::onEditorHistoryChanged(EditorHistoryChangedEvent& ev) {
@@ -24,14 +31,14 @@ namespace Axion {
 
 	Silica::WidgetPtr HistoryPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 1.0f });
+			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = ITEM_SPACING });
 
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Panel,
 				.child = Silica::MakeWidget<Silica::SScrollBox>({
 					.child = Silica::MakeWidget<Silica::SBox>({
-						.padding = { 5.0f, 5.0f },
+						.padding = { PANEL_PADDING, PANEL_PADDING },
 						.backgroundColor = Silica::Color::transparent(),
 						.child = m_contentBox
 					})
@@ -53,12 +60,11 @@ namespace Axion {
 		// -- Base State --
 		bool isBaseCurrent = (currentIndex == 0);
 		m_contentBox->addSlot({
-			.padding = {0, 0},
 			.child = Silica::MakeWidget<Silica::SButton>({
-				.padding = { 8.0f, 4.0f },
+				.padding = { BTN_PAD_X, BTN_PAD_Y },
 				.color = isBaseCurrent ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
 				.hoverColor = Silica::GetTheme().Element_Hover,
-				.onClick = [this]() {
+				.onClick = []() {
 					EditorCommandManager::jumpTo(0);
 					return Silica::EventReply::handled();
 				},
@@ -80,9 +86,8 @@ namespace Axion {
 			Silica::Color txtColor = isActive ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim;
 
 			m_contentBox->addSlot({
-				.padding = {0, 0},
 				.child = Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.color = btnColor,
 					.onClick = [jumpIndex]() {
 						EditorCommandManager::jumpTo(jumpIndex);

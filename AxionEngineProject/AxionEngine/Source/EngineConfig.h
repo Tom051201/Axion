@@ -18,27 +18,23 @@ namespace Axion::Config {
 
 
 	// ----- DIRECTX12 -----
-	inline constexpr uint32_t D12MaxRtvDescriptors = 16;
-	inline constexpr uint32_t D12MaxSrvDescriptors = 100000;
-	inline constexpr uint32_t D12MaxDsvDescriptors = 16;
-	inline constexpr uint32_t DX12srvHeapReserve = 64;
-	inline constexpr uint32_t D12MaxTextureSlots = 16;
-	inline constexpr bool D12EnableDebugSeverityWarning = false;
-	inline constexpr bool D12EnableDebugGpuBasedValidation = false;
+	inline constexpr uint32_t DX12_MaxRtvDescriptors = 16;
+	inline constexpr uint32_t DX12_MaxSrvDescriptors = 100000;
+	inline constexpr uint32_t DX12_MaxDsvDescriptors = 16;
+	inline constexpr uint32_t DX12_SrvHeapReserve = 64;
+	inline constexpr uint32_t DX12_MaxTextureSlots = 16;
+	inline constexpr bool DX12_EnableDebugSeverityWarning = false;
+	inline constexpr bool DX12_EnableDebugGpuBasedValidation = false;
 
 
 
 	// ----- DIRECTX11 ------
-	inline constexpr bool D11EnableDebugSeverityWarning = false;
+	inline constexpr bool DX11_EnableDebugSeverityWarning = false;
 
 
 
 	// ----- WIN32 -----
-	inline constexpr bool WinUsingCustomTitleBar = false;
+	inline constexpr bool Win32_UsingCustomTitleBar = false;
 
-
-
-	// ----- IMGUI -----
-	inline constexpr uint32_t ImguiFramesInFlight = 3;
 
 }

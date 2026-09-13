@@ -18,7 +18,8 @@ namespace Axion {
 		EntitySelected,
 		EditorStateChanged,
 		SceneModified,
-		EditorHistoryChanged
+		EditorHistoryChanged,
+		SettingsChanged
 	};
 
 	#define EDITOR_EVENT_CLASS_TYPE(type) \

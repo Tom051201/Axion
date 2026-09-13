@@ -24,6 +24,18 @@
 
 #include "AxionStudio/Source/core/EditorConfig.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+
+namespace {
+	constexpr float TOOLBAR_PADDING = 10.0f;
+	constexpr float CONTENT_PADDING = 10.0f;
+	constexpr float SECTION_SPACING = 15.0f;
+	constexpr float ROW_SPACING = 8.0f;
+	constexpr float LABEL_WIDTH = 140.0f;
+	constexpr float VERSION_BOX_WIDTH = 50.0f;
+	constexpr float BTN_PAD_X = 8.0f;
+	constexpr float BTN_PAD_Y = 4.0f;
+}
 
 namespace Axion {
 
@@ -60,21 +72,7 @@ namespace Axion {
 
 		// -- No project loaded --
 		if (!ProjectManager::hasProject()) {
-			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
-				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view project settings.",
-				.wrapWidth = 250.0f,
-				.color = Silica::GetTheme().Text_Dim
-			});
-
-			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Center,
-				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = emptyText
-			});
-
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({
-				.child = centeredState
-			}));
+			m_uiRoot->setChild(SilicaHelpers::MakeEmptyState("No Project Loaded.\n\nPlease load or create a project from the top menu bar to view project settings."));
 			return;
 		}
 
@@ -91,10 +89,10 @@ namespace Axion {
 		});
 
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 10.0f, 10.0f },
+			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
+				.spacing = TOOLBAR_PADDING,
 				.slots = {
 					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
 						.verticalAlign = Silica::VerticalAlign::Center,
@@ -108,32 +106,14 @@ namespace Axion {
 			})
 		});
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 15.0f });
-
-		// -- Helper Function --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(140.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::SAlign>({
-							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-						})
-					})},
-					{ {1, 0}, valueWidget }
-				}
-			});
-		};
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SECTION_SPACING });
 
 		// -- Game Version --
 		Version projectVersion = m_project->getVersion();
 
 		auto makeVersionBox = [this](int value, auto onCommit) {
 			return Silica::MakeWidget<Silica::SBox>({
-				.explicitSize = Silica::Vec2(50.0f, 0.0f),
+				.explicitSize = Silica::Vec2(VERSION_BOX_WIDTH, 0.0f),
 				.child = Silica::MakeWidget<Silica::SEditableText>({
 					.initialText = std::to_string(value),
 					.onTextCommitted = onCommit
@@ -160,7 +140,7 @@ namespace Axion {
 				})}
 			}
 		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Version", versionRow) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Version", versionRow, LABEL_WIDTH) });
 
 
 		// -- App Icon --
@@ -168,14 +148,14 @@ namespace Axion {
 		std::string iconDisplay = currentIcon.empty() ? "None" : currentIcon.filename().string();
 
 		auto iconRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 10.0f,
+			.spacing = TOOLBAR_PADDING,
 			.slots = {
 				{ {1,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = iconDisplay })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = iconDisplay })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.onClick = [this]() {
 						std::filesystem::path path = FileDialogs::openFile({ {"Windows Icon", "*.ico"} });
 						if (!path.empty()) {
@@ -188,7 +168,7 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse" })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.color = Silica::GetTheme().Accent_Danger,
 					.onClick = [this]() {
 						m_project->setAppIconPath("");
@@ -196,22 +176,23 @@ namespace Axion {
 						rebuildUI();
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "X" })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X" })
 				})}
 			}
 		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("App Icon (.ico)", iconRow) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("App Icon (.ico)", iconRow, LABEL_WIDTH) });
 
 
 		// -- Project And Assets Folders --
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Project File", Silica::MakeWidget<Silica::STextBlock>({
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Project File", Silica::MakeWidget<Silica::STextBlock>({
 			.text = m_projectFileRelative.string(),
 			.color = Silica::GetTheme().Text_Dim
-		})) });
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Assets Path", Silica::MakeWidget<Silica::STextBlock>({
+		}), LABEL_WIDTH) });
+
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Assets Path", Silica::MakeWidget<Silica::STextBlock>({
 			.text = m_assetsRelative.string(),
 			.color = Silica::GetTheme().Text_Dim
-		})) });
+		}), LABEL_WIDTH) });
 
 
 		// -- Default Scene --
@@ -222,35 +203,24 @@ namespace Axion {
 			sceneDisplayStr = defaultScenePath.filename().string();
 		}
 
+		auto sceneDropZoneInner = Silica::MakeWidget<Silica::SAlign>({
+			.horizontalAlign = Silica::HorizontalAlign::Center,
+			.child = Silica::MakeWidget<Silica::STextBlock>({.text = sceneDisplayStr })
+		});
+
+		auto sceneDropZone = SilicaHelpers::MakeAssetDropZone(".axscene", [this](const std::filesystem::path& droppedPath) {
+			std::filesystem::path absPath = AssetManager::getAbsolute(droppedPath);
+			m_project->setDefaultScene(absPath);
+			ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+			rebuildUI();
+		}, sceneDropZoneInner, { BTN_PAD_X, BTN_PAD_Y });
+
 		auto sceneRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
+			.spacing = ROW_SPACING,
 			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.padding = { 8.0f, 4.0f },
-
-					// -- Catch Native Drag / Drop --
-					.onDrop = [this](const Silica::DragDropPayload& payload) mutable {
-						if (payload.type == "AssetPath") {
-							std::filesystem::path droppedPath = std::any_cast<std::filesystem::path>(payload.data);
-
-							if (droppedPath.extension() == ".axscene") {
-								std::filesystem::path absPath = AssetManager::getAbsolute(droppedPath);
-								m_project->setDefaultScene(absPath);
-								ProjectManager::saveProject(ProjectManager::getProjectFilePath());
-								rebuildUI();
-								return Silica::EventReply::handled();
-							}
-						}
-						return Silica::EventReply::unhandled();
-					},
-
-					.child = Silica::MakeWidget<Silica::SAlign>({
-						.horizontalAlign = Silica::HorizontalAlign::Center,
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = sceneDisplayStr })
-					})
-				})},
+				{ {1,0}, sceneDropZone },
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.onClick = [this]() {
 						std::filesystem::path currentScenePath = SceneManager::getScenePath();
 						if (!currentScenePath.empty()) {
@@ -265,23 +235,23 @@ namespace Axion {
 				})}
 			}
 		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Default Scene", sceneRow) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Default Scene", sceneRow, LABEL_WIDTH) });
 
 
 		// -- Show In Explorer --
 		auto explorerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
+			.spacing = ROW_SPACING,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.onClick = [this]() {
 						PlatformUtils::openFolderInFileExplorer(m_project->getProjectPath());
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({ .text = "Project Folder" })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Project Folder" })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.onClick = [this]() {
 						PlatformUtils::openFolderInFileExplorer(m_project->getAssetsPath());
 						return Silica::EventReply::handled();
@@ -290,15 +260,15 @@ namespace Axion {
 				})}
 			}
 		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Show in Explorer", explorerRow) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Show in Explorer", explorerRow, LABEL_WIDTH) });
 
 
 		// -- Options --
 		auto optionsRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
+			.spacing = ROW_SPACING,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.color = Silica::GetTheme().Accent_Primary,
 					.onClick = [this]() {
 						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
@@ -307,7 +277,7 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Save Project" })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.onClick = [this]() {
 						EditorConfig::startupProjectPath = ProjectManager::getProjectFilePath();
 						return Silica::EventReply::handled();
@@ -315,7 +285,7 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Set As Startup" })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { BTN_PAD_X, BTN_PAD_Y },
 					.color = Silica::GetTheme().Accent_Warning,
 					.onClick = [this]() {
 						if (m_openExportModalCallback) m_openExportModalCallback();
@@ -325,18 +295,16 @@ namespace Axion {
 				})}
 			}
 		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Options", optionsRow) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Options", optionsRow, LABEL_WIDTH) });
 
 
 		// -- Final Layout Assembly --
 		auto paddedContent = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 10.0f, 10.0f },
+			.padding = { CONTENT_PADDING, CONTENT_PADDING },
 			.child = contentBox
 		});
 
-		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({
-			.child = paddedContent
-		});
+		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({.child = paddedContent });
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = topBarBox,

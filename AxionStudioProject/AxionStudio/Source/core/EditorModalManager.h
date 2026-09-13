@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <Silica/include/SWidget.h> 
+#include <Silica/include/OverlayManager.h>
 
 namespace Silica {
 	class SBox;
@@ -13,16 +14,15 @@ namespace Axion {
 	class EditorModalManager {
 	public:
 
-		static void initialize(std::shared_ptr<Silica::SBox> root, Silica::WidgetPtr mainLayout);
 		static void shutdown();
 		static void open(Silica::WidgetPtr modalWidget);
 		static void close();
 
+		static bool isModalOpen() { return s_activeModalID != 0; }
+
 	private:
 
-		inline static std::shared_ptr<Silica::SBox> s_root = nullptr;
-		inline static Silica::WidgetPtr s_mainLayout = nullptr;
-		inline static Silica::WidgetPtr s_currentModal = nullptr;
+		inline static Silica::OverlayID s_activeModalID = 0;
 
 	};
 

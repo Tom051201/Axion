@@ -20,6 +20,18 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+
+namespace {
+	constexpr float TOOLBAR_PADDING = 10.0f;
+	constexpr float TOOLBAR_SPACING = 10.0f;
+	constexpr float CONTENT_PADDING = 10.0f;
+	constexpr float SECTION_SPACING = 15.0f;
+	constexpr float ROW_SPACING = 8.0f;
+	constexpr float DASHBOARD_SPACING = 10.0f;
+	constexpr float BTN_PAD_Y = 6.0f;
+	constexpr float LABEL_WIDTH = 120.0f;
+}
 
 namespace Axion {
 
@@ -62,10 +74,10 @@ namespace Axion {
 
 		// -- Top toolbar --
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 10.0f, 10.0f },
+			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
+				.spacing = TOOLBAR_SPACING,
 				.slots = {
 					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
 						.verticalAlign = Silica::VerticalAlign::Center,
@@ -82,40 +94,21 @@ namespace Axion {
 			})
 		});
 
-
-		// -- Helper function --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(120.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::SAlign>({
-							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-						})
-					})},
-					{ {1, 0}, valueWidget }
-				}
-			});
-		};
-
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 15.0f });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = SECTION_SPACING });
 
 		// ----- OFFLINE UI -----
 		if (m_currentState == NetworkUIState::Offline) {
 
 			// -- Server start setup --
 			auto serverControls = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 8.0f,
+				.spacing = ROW_SPACING,
 				.slots = {
-					{ {0,0}, MakePropertyRow("Host Port", Silica::MakeWidget<Silica::SInputFieldInt>({
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Host Port", Silica::MakeWidget<Silica::SInputFieldInt>({
 						.initialValue = m_targetPort,
 						.onValueChanged = [this](int val) { m_targetPort = val; }
-					}))},
+					}), LABEL_WIDTH)},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, 6.0f },
+						.padding = { 0.0f, BTN_PAD_Y },
 						.onClick = [this]() {
 							if (m_server->start((uint16_t)m_targetPort)) {
 								m_currentState = NetworkUIState::RunningServer;
@@ -136,14 +129,14 @@ namespace Axion {
 
 			// -- Client connect setup --
 			auto clientControls = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 8.0f,
+				.spacing = ROW_SPACING,
 				.slots = {
-					{ {0,0}, MakePropertyRow("Target IP", Silica::MakeWidget<Silica::SEditableText>({
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Target IP", Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_targetIP,
 						.onTextCommitted = [this](const std::string& val) { m_targetIP = val; }
-					}))},
+					}), LABEL_WIDTH)},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, 6.0f },
+						.padding = { 0.0f, BTN_PAD_Y },
 						.onClick = [this]() {
 							if (m_client->connect(m_targetIP, (uint16_t)m_targetPort)) {
 								m_currentState = NetworkUIState::RunningClient;
@@ -165,21 +158,17 @@ namespace Axion {
 		else if (m_currentState == NetworkUIState::RunningServer) {
 
 			auto serverDashboard = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 10.0f,
+				.spacing = DASHBOARD_SPACING,
 				.slots = {
-					{ {0,0}, MakePropertyRow("Listening Port", Silica::MakeWidget<Silica::STextBlock>({.text = std::to_string(m_targetPort) }))},
-					{ {0,0}, MakePropertyRow("Local IP", Silica::MakeWidget<Silica::STextBlock>({.text = "127.0.0.1 (Localhost)" }))},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Listening Port", Silica::MakeWidget<Silica::STextBlock>({.text = std::to_string(m_targetPort) }), LABEL_WIDTH)},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Local IP", Silica::MakeWidget<Silica::STextBlock>({.text = "127.0.0.1 (Localhost)" }), LABEL_WIDTH)},
 
 					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
-
-					// -- Debug tools --
-					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Server Tools", .color = Silica::GetTheme().Text_Dim }) },
-
-					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
+					{ {0,0}, SilicaHelpers::MakeHeader("Server Tools") },
 
 					// -- Shutdown --
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, 6.0f },
+						.padding = { 0.0f, BTN_PAD_Y },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this]() {
 							m_server->stop();
@@ -201,19 +190,16 @@ namespace Axion {
 		else if (m_currentState == NetworkUIState::RunningClient) {
 
 			auto clientDashboard = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 10.0f,
+				.spacing = DASHBOARD_SPACING,
 				.slots = {
-					{ {0,0}, MakePropertyRow("Connected To", Silica::MakeWidget<Silica::STextBlock>({.text = m_targetIP + ":" + std::to_string(m_targetPort) }))},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Connected To", Silica::MakeWidget<Silica::STextBlock>({.text = m_targetIP + ":" + std::to_string(m_targetPort) }), LABEL_WIDTH)},
 
 					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
+					{ {0,0}, SilicaHelpers::MakeHeader("Client Tools") },
 
 					// -- Debug tools --
-					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
-						.text = "Client Tools",
-						.color = Silica::GetTheme().Text_Dim
-					}) },
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, 6.0f },
+						.padding = { 0.0f, BTN_PAD_Y },
 						.onClick = [this]() {
 							m_client->sendString("Client sent a debug ping!");
 							return Silica::EventReply::handled();
@@ -228,7 +214,7 @@ namespace Axion {
 
 					// -- Disconnect --
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, 6.0f },
+						.padding = { 0.0f, BTN_PAD_Y },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this]() {
 							m_client->disconnect();
@@ -248,18 +234,15 @@ namespace Axion {
 
 		// -- Final Assembly --
 		auto paddedContent = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 10.0f, 10.0f },
+			.padding = { CONTENT_PADDING, CONTENT_PADDING },
 			.child = contentBox
 		});
 
-		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({.child = paddedContent });
-
-		auto borderLayout = Silica::MakeWidget<Silica::SBorderLayout>({
+		m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = topBarBox,
-			.contentArea = scrollBox
-		});
+			.contentArea = Silica::MakeWidget<Silica::SScrollBox>({.child = paddedContent })
+		}));
 
-		m_uiRoot->setChild(borderLayout);
 	}
 
 }

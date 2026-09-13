@@ -17,6 +17,14 @@
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
 
+namespace {
+	constexpr float MODAL_WIDTH = 500.0f;
+	constexpr float LABEL_WIDTH = 100.0f;
+	constexpr float SPACING_LARGE = 15.0f;
+	constexpr float SPACING_SMALL = 4.0f;
+	constexpr float PADDING_LARGE = 20.0f;
+}
+
 namespace Axion {
 
 	SystemInfoModal::SystemInfoModal() {
@@ -53,12 +61,11 @@ namespace Axion {
 	void SystemInfoModal::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 15.0f });
-
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = SPACING_LARGE });
 
 		// -- Helper Functions --
 		auto MakeHeader = [&](const std::string& title) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 4.0f });
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = SPACING_SMALL });
 			box->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
 				.text = title,
 				.color = Silica::GetTheme().Accent_Primary
@@ -72,7 +79,7 @@ namespace Axion {
 				.spacing = 10.0f,
 				.slots = {
 					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(100.0f, 0.0f),
+						.explicitSize = Silica::Vec2(LABEL_WIDTH, 0.0f),
 						.backgroundColor = Silica::Color::transparent(),
 						.child = Silica::MakeWidget<Silica::STextBlock>({
 							.text = label,
@@ -84,27 +91,36 @@ namespace Axion {
 			});
 		};
 
+		auto formatMemory = [](uint64_t mb) {
+			if (mb >= 1024) {
+				char buf[32];
+				std::snprintf(buf, sizeof(buf), "%.1f GB", mb / 1024.0f);
+				return std::string(buf);
+			}
+			return std::to_string(mb) + " MB";
+		};
 
-		// -- GPU --
+
+		// -- System Information Layout --
+
+		// GPU
 		contentBox->addSlot({ {0,0}, MakeHeader("GPU") });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("GPU:", m_gpuName) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("VRAM:", std::to_string(m_vramMB) + " MB") });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("VRAM:", formatMemory(m_vramMB)) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Driver:", m_gpuDriverVersion) });
 
-
-		// -- CPU --
+		// CPU
 		contentBox->addSlot({ {0,0}, MakeHeader("CPU") });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("CPU:", m_cpuName) });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Cores:", std::to_string(m_cores)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("RAM:", std::to_string(m_totalRamMB) + " MB") });
+		contentBox->addSlot({ {0,0}, MakePropertyRow("RAM:", formatMemory(m_totalRamMB)) });
 
-
-		// -- Snapshot Of Current Performance --
+		// Performance
+		contentBox->addSlot({ {0,0}, MakeHeader("Performance Snapshot") });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("Frame Time:", std::to_string(Renderer::getFrameTimeMs()) + " ms") });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("FPS:", std::to_string((int)(1000.0 / Renderer::getFrameTimeMs())) + " FPS") });
 
-
-		// -- OS --
+		// OS
 		contentBox->addSlot({ {0,0}, MakeHeader("Operating System") });
 		contentBox->addSlot({ {0,0}, MakePropertyRow("OS:", m_os) });
 
@@ -129,11 +145,11 @@ namespace Axion {
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 500.0f, 0.0f },
+			.explicitSize = Silica::Vec2{ MODAL_WIDTH, 0.0f },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.backgroundColor = Silica::GetTheme().Background_Panel,
 			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 20.0f, 20.0f },
+				.padding = { PADDING_LARGE, PADDING_LARGE },
 				.backgroundColor = Silica::Color::transparent(),
 				.child = contentBox
 			})

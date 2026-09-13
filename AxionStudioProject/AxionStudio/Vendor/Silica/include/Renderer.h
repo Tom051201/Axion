@@ -7,6 +7,7 @@
 
 #include "MathTypes.h"
 #include "SWidget.h"
+#include "OverlayManager.h"
 
 namespace Silica {
 
@@ -58,12 +59,6 @@ namespace Silica {
 		void popTextureID();
 	};
 
-	struct PopupRecord {
-		WidgetPtr widget;
-		Geometry geometry;
-		std::function<void()> closeCallback;
-	};
-
 
 
 	class Renderer {
@@ -79,17 +74,22 @@ namespace Silica {
 		static const DrawList* getDrawData();
 		static const Vec2& getMousePosition();
 
-		static void pushPopup(WidgetPtr widget, const Geometry& geo, std::function<void()> closeCallback);
-		static void closeAllPopups();
-
 		static void setTooltip(const std::string& text, FontAtlas* font);
+
+		static OverlayID openPopup(WidgetPtr widget, const Geometry& geometry, OverlayID parentID = 0, std::function<void()> closeCallback = nullptr);
+		static OverlayID openModal(WidgetPtr widget, const Geometry& geometry, std::function<void()> closeCallback = nullptr);
+		static void closeOverlay(OverlayID id);
+		static void closeAllOverlays();
+		static void closePopups();
+
+		static OverlayManager& getOverlayManager();
 
 	private:
 
 		static DrawList s_drawList;
 		static Vec2 s_mousePosition;
 
-		static std::vector<PopupRecord> s_popups;
+		static OverlayManager s_overlays;
 
 		static std::string s_tooltipText;
 		static FontAtlas* s_tooltipFont;

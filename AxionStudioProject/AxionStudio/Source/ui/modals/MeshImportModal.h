@@ -2,49 +2,35 @@
 
 #include <filesystem>
 #include <string>
-#include <functional>
-#include <memory>
+#include <vector>
 
-#include <Silica/include/SWidget.h>
-
-namespace Silica {
-	class SBox;
-	class STextBlock;
-	class SButton;
-}
+#include "AxionStudio/Source/ui/ModalBase.h"
 
 namespace Axion {
 
-	class MeshImportModal {
+	class MeshImportModal : public ModalBase {
 	public:
 
-		MeshImportModal() { resetInputs(); }
-		~MeshImportModal() = default;
+		MeshImportModal();
 
 		void presetFromFile(const std::filesystem::path& sourceFile);
 
-		Silica::WidgetPtr getWidget(std::function<void()> onClose);
+	protected:
+
+		void buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) override;
+		void validate() override;
+		void onConfirm() override;
 
 	private:
-
-		void rebuildUI();
-		void rebuildUI_Internal();
-		void resetInputs();
-		void validate();
 
 		std::string m_name;
 		std::string m_sourcePath;
 		std::string m_outputPath;
 
 		int m_importType = 0;
-		const char* m_types[3] = { "OBJ", "GLTF", "GLB" };
+		const std::vector<std::string> m_types = { "OBJ", "GLTF", "GLB" };
 
-		// -- Silica --
-		std::shared_ptr<Silica::SBox> m_uiRoot;
-		std::shared_ptr<Silica::STextBlock> m_validationText;
-		std::shared_ptr<Silica::SButton> m_createBtn;
-		std::function<void()> m_onClose;
-		bool m_rebuildQueued = false;
+		void resetInputs();
 
 	};
 

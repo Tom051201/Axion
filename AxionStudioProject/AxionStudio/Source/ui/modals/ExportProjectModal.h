@@ -1,40 +1,26 @@
 #pragma once
 
-#include <string>
-#include <memory>
-
-#include <Silica/include/SWidget.h>
-
-namespace Silica {
-	class SBox;
-	class STextBlock;
-	class SButton;
-}
+#include "AxionStudio/Source/ui/ModalBase.h"
 
 namespace Axion {
 
-	class ExportProjectModal {
+	class ExportProjectModal : public ModalBase {
 	public:
 
-		ExportProjectModal() = default;
-		~ExportProjectModal() = default;
+		ExportProjectModal();
 
 		Silica::WidgetPtr getWidget();
 
-	private:
+	protected:
 
-		void rebuildUI();
-		void rebuildUI_Internal();
-		void validate();
+		void buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) override;
+		void validate() override;
+		void onConfirm() override;
+
+	private:
 
 		std::string m_exportPath;
 		bool m_openAfterExport = true;
-
-		// -- Silica --
-		std::shared_ptr<Silica::SBox> m_uiRoot;
-		std::shared_ptr<Silica::STextBlock> m_validationText;
-		std::shared_ptr<Silica::SButton> m_exportBtn;
-		bool m_rebuildQueued = false;
 
 	};
 

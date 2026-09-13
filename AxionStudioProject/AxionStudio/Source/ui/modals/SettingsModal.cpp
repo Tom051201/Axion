@@ -13,25 +13,42 @@
 #include <Silica/include/SSeparator.h>
 #include <Silica/include/SEditableText.h>
 #include <Silica/include/SScrollBox.h>
+#include <Silica/include/SCheckbox.h>
+#include <Silica/include/SInputFieldInt.h>
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
+
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+
+namespace {
+	constexpr float MODAL_WIDTH = 1250.0f;
+	constexpr float MODAL_HEIGHT = 700.0f;
+	constexpr float FOOTER_HEIGHT = 66.0f;
+	constexpr float TOP_SECTION_HEIGHT = MODAL_HEIGHT - FOOTER_HEIGHT;
+
+	constexpr float SIDEBAR_WIDTH = 160.0f;
+	constexpr float LABEL_WIDTH = 220.0f;
+
+	constexpr float SPACING_LARGE = 15.0f;
+	constexpr float SPACING_SMALL = 5.0f;
+	constexpr float PADDING_LARGE = 20.0f;
+}
 
 namespace Axion {
 
-	Silica::WidgetPtr SettingsModal::getWidget(const std::vector<std::string>& currentPaths, std::function<void(std::vector<std::string>)> onApply, std::function<void()> onClose) {
+	Silica::WidgetPtr SettingsModal::getWidget(const SettingsPayload& initialSettings, std::function<void(const SettingsPayload&)> onApply, std::function<void()> onClose) {
 		m_onApply = onApply;
 		m_onClose = onClose;
 
 		if (!m_uiRoot) {
-			m_budgetText = std::to_string(AssetManager::getMaxAssetsPerFrame());
-			m_libraryPaths = currentPaths;
+			m_workingSettings = initialSettings;
 
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.consumePointerEvents = true,
 				.backgroundColor = Silica::Color(0, 0, 0, 180),
-				});
+			});
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -44,57 +61,46 @@ namespace Axion {
 		EditorActionQueue::push([this]() {
 			m_rebuildQueued = false;
 			rebuildUI_Internal();
-			});
+		});
 	}
 
 	Silica::WidgetPtr SettingsModal::buildEditorPreferencesTab() {
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 15.0f });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SPACING_LARGE });
 
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Editor Preferences" }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Editor Preferences") });
 
-		auto inputRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 15.0f,
-			.slots = {
-				{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-					.explicitSize = Silica::Vec2{ 200.0f, 0.0f },
-					.backgroundColor = Silica::Color::transparent(),
-					.child = Silica::MakeWidget<Silica::SAlign>({
-						.verticalAlign = Silica::VerticalAlign::Center,
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Asset Load Budget (Per Frame):" })
-					})
-				})},
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_budgetText,
-						.onTextCommitted = [this](const std::string& val) {
-							m_budgetText = val;
-							try {
-								int parsed = std::stoi(val);
-								if (parsed >= 1) {
-									AssetManager::setMaxAssetsPerFrame((uint32_t)parsed);
-								}
-							}
-							catch (...) {}
-						}
-					})
-				})}
+		// -- Asset load budget --
+		auto budgetInput = Silica::MakeWidget<Silica::SBox>({
+			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
+				.initialValue = (int)m_workingSettings.maxAssetsPerFrame,
+				.onValueChanged = [this](int val) {
+					m_workingSettings.maxAssetsPerFrame = static_cast<uint32_t>(std::max(1, val));
+				}
+			})
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Asset Load Budget (Per Frame):", budgetInput, LABEL_WIDTH) });
+
+		// -- Discord RPC --
+		auto discordCheck = Silica::MakeWidget<Silica::SCheckBox>({
+			.initialCheck = m_workingSettings.enableDiscordRPC,
+			.onCheckChanged = [this](bool val) {
+				m_workingSettings.enableDiscordRPC = val;
 			}
-			});
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Enable Discord Rich Presence:", discordCheck, LABEL_WIDTH) });
 
-		contentBox->addSlot({ {0,0}, inputRow });
 		return contentBox;
 	}
 
 	Silica::WidgetPtr SettingsModal::buildFilePathsTab() {
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 15.0f });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SPACING_LARGE });
 
 		// -- Header Row --
 		auto headerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.slots = {
 				{ {1,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Asset Library Search Paths" })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Asset Library Search Paths", .color = Silica::GetTheme().Accent_Primary })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 					.padding = { 12.0f, 4.0f },
@@ -103,7 +109,7 @@ namespace Axion {
 					.onClick = [this]() {
 						std::filesystem::path newPath = FileDialogs::openFolder(std::filesystem::current_path());
 						if (!newPath.empty()) {
-							m_libraryPaths.push_back(newPath.string());
+							m_workingSettings.assetLibraryPaths.push_back(newPath.string());
 							rebuildUI();
 						}
 						return Silica::EventReply::handled();
@@ -111,23 +117,23 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+"})
 				})}
 			}
-			});
+		});
 
 		contentBox->addSlot({ {0,0}, headerRow });
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
 
 		// -- List of Paths --
-		auto pathsList = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 5.0f });
+		auto pathsList = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SPACING_SMALL });
 
-		for (size_t i = 0; i < m_libraryPaths.size(); ++i) {
+		for (size_t i = 0; i < m_workingSettings.assetLibraryPaths.size(); ++i) {
 			auto pathRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 10.0f,
 				.slots = {
 					{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 						.child = Silica::MakeWidget<Silica::SEditableText>({
-							.initialText = m_libraryPaths[i],
+							.initialText = m_workingSettings.assetLibraryPaths[i],
 							.onTextChanged = [this, i](const std::string& val) {
-								m_libraryPaths[i] = val;
+								m_workingSettings.assetLibraryPaths[i] = val;
 							}
 						})
 					})},
@@ -135,7 +141,7 @@ namespace Axion {
 						.padding = { 10.0f, 6.0f },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this, i]() {
-							m_libraryPaths.erase(m_libraryPaths.begin() + i);
+							m_workingSettings.assetLibraryPaths.erase(m_workingSettings.assetLibraryPaths.begin() + i);
 							rebuildUI();
 							return Silica::EventReply::handled();
 						},
@@ -151,6 +157,43 @@ namespace Axion {
 		return contentBox;
 	}
 
+	Silica::WidgetPtr SettingsModal::buildPanelsTab() {
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SPACING_LARGE });
+
+		// -- Content Browser --
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Content Browser") });
+
+		auto cbShowContentArea = Silica::MakeWidget<Silica::SCheckBox>({
+			.initialCheck = m_workingSettings.contentBrowserShowContentArea,
+			.onCheckChanged = [this](bool val) { m_workingSettings.contentBrowserShowContentArea = val; }
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Show Content Area:", cbShowContentArea, LABEL_WIDTH) });
+
+		auto cbShowVFSTree = Silica::MakeWidget<Silica::SCheckBox>({
+			.initialCheck = m_workingSettings.contentBrowserShowVFSTree,
+			.onCheckChanged = [this](bool val) { m_workingSettings.contentBrowserShowVFSTree = val; }
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Show Collection Tree:", cbShowVFSTree, LABEL_WIDTH) });
+
+		auto cbShowPhysicalTree = Silica::MakeWidget<Silica::SCheckBox>({
+			.initialCheck = m_workingSettings.contentBrowserShowPhysicalTree,
+			.onCheckChanged = [this](bool val) { m_workingSettings.contentBrowserShowPhysicalTree = val; }
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Show Physical Tree:", cbShowPhysicalTree, LABEL_WIDTH) });
+
+
+		// -- Material Editor --
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Material Editor") });
+
+		auto cbInvertCam = Silica::MakeWidget<Silica::SCheckBox>({
+			.initialCheck = m_workingSettings.materialEditorInvertCamera,
+			.onCheckChanged = [this](bool val) { m_workingSettings.materialEditorInvertCamera = val; }
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Invert Camera Pan/Orbit:", cbInvertCam, LABEL_WIDTH) });
+
+		return contentBox;
+	}
+
 	void SettingsModal::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
@@ -158,8 +201,10 @@ namespace Axion {
 		auto makeTabButton = [this](const std::string& label, Tab targetTab) {
 			bool isActive = (m_activeTab == targetTab);
 			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { 15.0f, 10.0f },
-				.color = isActive ? Silica::GetTheme().Surface_Tertiary : Silica::Color::transparent(),
+				.padding = { SPACING_LARGE, 10.0f },
+				.color = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
+				.hoverColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::GetTheme().Element_Hover,
+				.pressedColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::GetTheme().Element_Pressed,
 				.onClick = [this, targetTab]() {
 					m_activeTab = targetTab;
 					rebuildUI();
@@ -169,32 +214,33 @@ namespace Axion {
 					.text = label,
 					.color = isActive ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim
 				})
-				});
-			};
+			});
+		};
 
 		// -- Left Sidebar --
 		auto sidebar = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 140.0f, 0.0f },
-			.backgroundColor = Silica::GetTheme().Surface_Secondary,
+			.explicitSize = Silica::Vec2{ SIDEBAR_WIDTH, 0.0f },
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 2.0f,
 				.slots = {
 					{ {0,0}, makeTabButton("Preferences", Tab::EditorPreferences) },
-					{ {0,0}, makeTabButton("File Paths", Tab::FilePaths) }
+					{ {0,0}, makeTabButton("File Paths", Tab::FilePaths) },
+					{ {0,0}, makeTabButton("Panels", Tab::Panels) },
 				}
 			})
-			});
+		});
 
 		// -- Right Content Area --
 		Silica::WidgetPtr activeContent = nullptr;
 		if (m_activeTab == Tab::EditorPreferences) activeContent = buildEditorPreferencesTab();
 		else if (m_activeTab == Tab::FilePaths) activeContent = buildFilePathsTab();
+		else if (m_activeTab == Tab::Panels) activeContent = buildPanelsTab();
 
 		auto contentArea = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 20.0f },
+			.padding = { PADDING_LARGE, PADDING_LARGE },
 			.backgroundColor = Silica::Color::transparent(),
 			.child = activeContent
-			});
+		});
 
 		// -- Split Layout --
 		auto splitLayout = Silica::MakeWidget<Silica::SHorizontalBox>({
@@ -202,18 +248,18 @@ namespace Axion {
 				{ {0,0}, sidebar },
 				{ {1,0}, contentArea }
 			}
-			});
+		});
 
 		auto topSection = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 850.0f, 534.0f },
+			.explicitSize = Silica::Vec2{ MODAL_WIDTH, TOP_SECTION_HEIGHT },
 			.child = splitLayout
-			});
+		});
 
 		// -- Footer --
 		auto footerBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 20.0f, 15.0f },
-			.explicitSize = Silica::Vec2{ 850.0f, 66.0f },
-			.backgroundColor = Silica::GetTheme().Surface_Secondary,
+			.padding = { PADDING_LARGE, SPACING_LARGE },
+			.explicitSize = Silica::Vec2{ MODAL_WIDTH, FOOTER_HEIGHT },
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SAlign>({
 				.horizontalAlign = Silica::HorizontalAlign::Right,
 				.verticalAlign = Silica::VerticalAlign::Center,
@@ -221,7 +267,7 @@ namespace Axion {
 					.padding = { 30.0f, 8.0f },
 					.hoverColor = Silica::GetTheme().Accent_Primary,
 					.onClick = [this]() {
-						if (m_onApply) m_onApply(m_libraryPaths);
+						if (m_onApply) m_onApply(m_workingSettings);
 
 						if (m_onClose) m_onClose();
 						return Silica::EventReply::handled();
@@ -229,7 +275,7 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Done" })
 				})
 			})
-			});
+		});
 
 		// -- Stack Top Section And Footer Cleanly --
 		auto fullLayout = Silica::MakeWidget<Silica::SVerticalBox>({
@@ -237,20 +283,20 @@ namespace Axion {
 				{ {0,0}, topSection },
 				{ {0,0}, footerBox }
 			}
-			});
+		});
 
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 850.0f, 600.0f },
+			.explicitSize = Silica::Vec2{ MODAL_WIDTH, MODAL_HEIGHT },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.child = fullLayout
-			});
+		});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
 			.horizontalAlign = Silica::HorizontalAlign::Center,
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = modalPanel
-			}));
+		}));
 	}
 
 }

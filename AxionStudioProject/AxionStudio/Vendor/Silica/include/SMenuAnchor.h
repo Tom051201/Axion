@@ -5,6 +5,7 @@
 
 #include "SWidget.h"
 #include "MathTypes.h"
+#include "OverlayManager.h"
 
 namespace Silica {
 
@@ -19,6 +20,8 @@ namespace Silica {
 			bool openAtMousePos = false;
 			std::optional<Color> arrowNormal;
 			std::optional<Color> arrowHover;
+			std::optional<std::string> hoverGroup;
+			OverlayID parentOverlayID = 0;
 			WidgetPtr anchorContent = nullptr;
 			WidgetPtr menuContent = nullptr;
 		};
@@ -41,6 +44,9 @@ namespace Silica {
 		void closeMenu();
 		bool isOpen() const;
 
+		void setParentMenu(SMenuAnchor* parentMenu);
+		OverlayID getOverlayID() const;
+
 	private:
 
 		WidgetPtr m_anchorContent;
@@ -54,10 +60,16 @@ namespace Silica {
 		bool m_openAtMousePos = false;
 		Color m_arrowNormal;
 		Color m_arrowHover;
+		std::string m_hoverGroup = "";
 		Vec2 m_clickPos;
+		OverlayID m_overlayId = 0;
+		OverlayID m_parentOverlayID = 0;
+		SMenuAnchor* m_parentMenu = nullptr;
+		SMenuAnchor* m_activeChild = nullptr;
 
 		Geometry m_menuGeometry;
 
+		void activateChild(SMenuAnchor* child);
 		void drawTriangle(DrawList& drawList, const Vec2& center, float radius, Color color) const;
 
 	};

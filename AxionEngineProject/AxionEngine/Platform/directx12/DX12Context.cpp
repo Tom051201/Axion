@@ -41,11 +41,11 @@ namespace Axion {
 		// ----- Initialize D3D12 backend -----
 		m_device.initialize();
 		m_commandQueue.initialize(m_device.getDevice());
-		m_rtvHeap.initialize(m_device.getDevice(), Config::D12MaxRtvDescriptors);
-		m_gpuSrvHeap.initialize(m_device.getDevice(), Config::D12MaxSrvDescriptors, true);
-		m_gpuSrvHeap.reserve(Config::DX12srvHeapReserve);
-		m_stagingSrvHeap.initialize(m_device.getDevice(), Config::D12MaxSrvDescriptors, false);
-		m_dsvHeap.initialize(m_device.getDevice(), Config::D12MaxDsvDescriptors);
+		m_rtvHeap.initialize(m_device.getDevice(), Config::DX12_MaxRtvDescriptors);
+		m_gpuSrvHeap.initialize(m_device.getDevice(), Config::DX12_MaxSrvDescriptors, true);
+		m_gpuSrvHeap.reserve(Config::DX12_SrvHeapReserve);
+		m_stagingSrvHeap.initialize(m_device.getDevice(), Config::DX12_MaxSrvDescriptors, false);
+		m_dsvHeap.initialize(m_device.getDevice(), Config::DX12_MaxDsvDescriptors);
 		m_swapChain.initialize((HWND)hwnd, m_device.getFactory(), m_commandQueue.getCommandQueue(), swapSpec);
 		m_commandList.initialize(m_device.getDevice());
 		m_fence.initialize(m_device.getDevice());
@@ -186,7 +186,7 @@ namespace Axion {
 	void DX12Context::bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count) {
 		auto* device = m_device.getDevice();
 
-		uint32_t tableSize = Config::D12MaxTextureSlots;
+		uint32_t tableSize = Config::DX12_MaxTextureSlots;
 		uint32_t batchStartOffset = m_gpuSrvHeap.allocateRange(tableSize);
 
 		for (uint32_t i = 0; i < tableSize; i++) {

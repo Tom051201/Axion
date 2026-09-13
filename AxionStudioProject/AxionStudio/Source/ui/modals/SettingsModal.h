@@ -12,15 +12,25 @@ namespace Silica {
 
 namespace Axion {
 
+	struct SettingsPayload {
+		uint32_t maxAssetsPerFrame = 2;
+		bool enableDiscordRPC = true;
+		std::vector<std::string> assetLibraryPaths;
+		bool contentBrowserShowContentArea = true;
+		bool contentBrowserShowVFSTree = true;
+		bool contentBrowserShowPhysicalTree = true;
+		bool materialEditorInvertCamera = false;
+	};
+
 	class SettingsModal {
 	public:
 
-		enum class Tab { EditorPreferences, FilePaths };
+		enum class Tab { EditorPreferences, FilePaths, Panels };
 
 		SettingsModal() = default;
 		~SettingsModal() = default;
 
-		Silica::WidgetPtr getWidget(const std::vector<std::string>& currentPaths, std::function<void(std::vector<std::string>)> onApply, std::function<void()> onClose);
+		Silica::WidgetPtr getWidget(const SettingsPayload& initialSettings, std::function<void(const SettingsPayload&)> onApply, std::function<void()> onClose);
 
 	private:
 
@@ -30,6 +40,7 @@ namespace Axion {
 		// -- Tab Builders --
 		Silica::WidgetPtr buildEditorPreferencesTab();
 		Silica::WidgetPtr buildFilePathsTab();
+		Silica::WidgetPtr buildPanelsTab();
 
 		// -- Silica --
 		std::shared_ptr<Silica::SBox> m_uiRoot;
@@ -38,11 +49,10 @@ namespace Axion {
 
 		// -- State --
 		Tab m_activeTab = Tab::EditorPreferences;
-		std::string m_budgetText;
-		std::vector<std::string> m_libraryPaths;
+		SettingsPayload m_workingSettings;
 
 		// -- Callbacks --
-		std::function<void(std::vector<std::string>)> m_onApply;
+		std::function<void(const SettingsPayload&)> m_onApply;
 
 	};
 

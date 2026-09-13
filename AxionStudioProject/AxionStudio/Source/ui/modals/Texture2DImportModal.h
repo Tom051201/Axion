@@ -1,47 +1,36 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
-#include <memory>
-#include <functional>
+#include <vector>
 
-#include <Silica/include/SWidget.h>
-
-namespace Silica {
-	class SBox;
-	class STextBlock;
-	class SButton;
-}
+#include "AxionStudio/Source/ui/ModalBase.h"
 
 namespace Axion {
 
-	class Texture2DImportModal {
+	class Texture2DImportModal : public ModalBase {
 	public:
 
-		Texture2DImportModal() { resetInputs(); }
-		~Texture2DImportModal() = default;
+		Texture2DImportModal();
 
-		Silica::WidgetPtr getWidget(std::function<void()> onClose);
+		void presetFromFile(const std::filesystem::path& sourceFile);
+
+	protected:
+
+		void buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) override;
+		void validate() override;
+		void onConfirm() override;
 
 	private:
-
-		void rebuildUI();
-		void rebuildUI_Internal();
-		void resetInputs();
-		void validate();
 
 		std::string m_name;
 		std::string m_sourcePath;
 		std::string m_outputPath;
 
 		int m_importType = 0;
-		const char* m_types[3] = { "PNG", "JPG", "JPEG" };
+		const std::vector<std::string> m_types = { "PNG", "JPG", "JPEG" };
 
-		// -- Silica --
-		std::shared_ptr<Silica::SBox> m_uiRoot;
-		std::shared_ptr<Silica::STextBlock> m_validationText;
-		std::shared_ptr<Silica::SButton> m_createBtn;
-		std::function<void()> m_onClose;
-		bool m_rebuildQueued = false;
+		void resetInputs();
 
 	};
 

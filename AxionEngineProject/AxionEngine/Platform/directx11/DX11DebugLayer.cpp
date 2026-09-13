@@ -18,7 +18,7 @@ namespace Axion {
 			infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
 
 			// -- Optional Break On Warnings --
-			if constexpr (Config::D11EnableDebugSeverityWarning) {
+			if constexpr (Config::DX11_EnableDebugSeverityWarning) {
 				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
 			}
 

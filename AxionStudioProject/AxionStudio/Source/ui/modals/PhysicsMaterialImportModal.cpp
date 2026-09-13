@@ -3,14 +3,11 @@
 
 #include <Silica/include/Theme.h>
 #include <Silica/include/SBox.h>
-#include <Silica/include/SBorderLayout.h>
-#include <Silica/include/SHorizontalBox.h>
 #include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SHorizontalBox.h>
 #include <Silica/include/SButton.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SEditableText.h>
-#include <Silica/include/SAlign.h>
-#include <Silica/include/SSliderFloat.h>
 #include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
@@ -21,23 +18,49 @@
 
 #include "AxionAssetPipeline/Source/parser/PhysicsMaterialParser.h"
 
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-
 namespace Axion {
+
+	PhysicsMaterialImportModal::PhysicsMaterialImportModal() {
+		m_modalTitle = "Import Physics Material";
+		m_versionText = "v" + std::to_string(ASSET_VERSION_PHYSICS_MATERIAL);
+		m_modalWidth = 500.0f;
+		resetInputs();
+	}
 
 	void PhysicsMaterialImportModal::resetInputs() {
 		m_name.clear();
-
-		std::filesystem::path phymatDir = ProjectManager::getProject()->getAssetsPath() / "physics";
-		m_outputPath = phymatDir.string();
-
+		m_outputPath = (ProjectManager::getProject()->getAssetsPath() / "physics").string();
 		m_staticFriction = 0.5f;
 		m_dynamicFriction = 0.5f;
 		m_restitution = 0.05f;
 	}
 
+	void PhysicsMaterialImportModal::buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) {
+		// -- Name --
+		auto nameInput = Silica::MakeWidget<Silica::SBox>({
+			.child = Silica::MakeWidget<Silica::SEditableText>({
+				.initialText = m_name,
+				.onTextChanged = [this](const std::string& val) {
+					m_name = val;
+					validate();
+				}
+			})
+		});
+		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
+
+		// -- Physics Properties --
+		contentBox->addSlot({ {0,0}, makePropertyRow("Static Friction", makeSliderRow(m_staticFriction, 10.0f)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Dynamic Friction", makeSliderRow(m_dynamicFriction, 10.0f)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Restitution", makeSliderRow(m_restitution, 1.0f)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
+
+		// -- Output Path --
+		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "physics")) });
+	}
+
 	void PhysicsMaterialImportModal::validate() {
-		if (!m_validationText || !m_createBtn) return;
+		if (!m_validationText || !m_confirmBtn) return;
 
 		std::string finalName = m_name + ".axpmat";
 		std::filesystem::path finalPath;
@@ -77,204 +100,32 @@ namespace Axion {
 
 		m_validationText->setText(validationMsg);
 		m_validationText->setColor(validationColor);
-		m_createBtn->setEnabled(!disabled);
+		m_confirmBtn->setEnabled(!disabled);
 	}
 
-	Silica::WidgetPtr PhysicsMaterialImportModal::getWidget(std::function<void()> onClose) {
-		m_onClose = onClose;
+	void PhysicsMaterialImportModal::onConfirm() {
+		std::string finalName = m_name + ".axpmat";
+		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.consumePointerEvents = true,
-				.backgroundColor = Silica::Color(0, 0, 0, 180),
-			});
-			rebuildUI_Internal();
-		}
-		return m_uiRoot;
-	}
+		UUID newAssetUUID = UUID::generate();
 
-	void PhysicsMaterialImportModal::rebuildUI() {
-		if (m_rebuildQueued) return;
-		m_rebuildQueued = true;
+		AAP::PhysicsMaterialAssetData data;
+		data.uuid = newAssetUUID;
+		data.name = m_name;
+		data.staticFriction = m_staticFriction;
+		data.dynamicFriction = m_dynamicFriction;
+		data.restitution = m_restitution;
 
-		EditorActionQueue::push([this]() {
-			m_rebuildQueued = false;
-			rebuildUI_Internal();
-		});
-	}
+		AAP::PhysicsMaterialParser::createTextFile(data, finalPath);
 
-	void PhysicsMaterialImportModal::rebuildUI_Internal() {
-		if (!m_uiRoot) return;
+		AssetMetadata metadata;
+		metadata.handle = newAssetUUID;
+		metadata.type = AssetType::PhysicsMaterial;
+		metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 12.0f });
-
-		// -- Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Import Physics Material" }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Helper Functions --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(130.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::SAlign>({
-							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-						})
-					})},
-					{ {1, 0}, valueWidget }
-				}
-				});
-			};
-
-		auto MakeSliderRow = [&](float& val, float maxVal) {
-			return Silica::MakeWidget<Silica::SSliderFloat>({
-				.initialValue = val, .minValue = 0.0f, .maxValue = maxVal,
-				.onValueChanged = [this, &val](float v) { val = v; }
-			});
-		};
-
-
-		// -- Name --
-		auto nameInput = Silica::MakeWidget<Silica::SBox>({
-			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_name,
-				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
-			})
-			});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Name", nameInput) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
-
-
-		// -- Physics Properties --
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Static Friction", MakeSliderRow(m_staticFriction, 10.0f)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Dynamic Friction", MakeSliderRow(m_dynamicFriction, 10.0f)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Restitution", MakeSliderRow(m_restitution, 1.0f)) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
-
-
-		// -- Output Path --
-		auto outputRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
-			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_outputPath,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.onClick = [this]() {
-						std::filesystem::path phymatDir = ProjectManager::getProject()->getAssetsPath() / "physics";
-						if (!std::filesystem::exists(phymatDir)) {
-							phymatDir = ProjectManager::getProject()->getAssetsPath();
-						}
-						std::filesystem::path absPath = FileDialogs::openFolder(phymatDir);
-						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
-				})}
-			}
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Output Location", outputRow) });
-
-
-		// -- Initialize Dynamic UI References --
-		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
-
-		m_createBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
-
-				std::string finalName = m_name + ".axpmat";
-				std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
-
-				UUID newAssetUUID = UUID::generate();
-
-				AAP::PhysicsMaterialAssetData data;
-				data.uuid = newAssetUUID;
-				data.name = m_name;
-				data.staticFriction = m_staticFriction;
-				data.dynamicFriction = m_dynamicFriction;
-				data.restitution = m_restitution;
-
-				AAP::PhysicsMaterialParser::createTextFile(data, finalPath);
-
-				AssetMetadata metadata;
-				metadata.handle = newAssetUUID;
-				metadata.type = AssetType::PhysicsMaterial;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
-
-				auto registry = ProjectManager::getProject()->getAssetRegistry();
-				registry->add(metadata);
-				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
-
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create" })
-		});
-
-		contentBox->addSlot({ {0,0}, m_validationText });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Footer Buttons --
-		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
-		});
-
-		std::string versionText = "v" + std::to_string(ASSET_VERSION_PHYSICS_MATERIAL);
-
-		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 10.0f,
-			.slots = {
-				{ {0,0}, m_createBtn },
-				{ {0,0}, cancelBtn },
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({
-						.text = versionText,
-						.color = Silica::GetTheme().Text_Dim
-					})
-				})}
-			}
-		});
-
-		contentBox->addSlot({ {0,0}, footerRow });
-
-		// -- Assemble Modal --
-		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 500.0f, 0.0f },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
-			.backgroundColor = Silica::GetTheme().Background_Panel,
-			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 20.0f, 20.0f },
-				.backgroundColor = Silica::Color::transparent(),
-				.child = contentBox
-			})
-		});
-
-		m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
-			.horizontalAlign = Silica::HorizontalAlign::Center,
-			.verticalAlign = Silica::VerticalAlign::Center,
-			.child = modalPanel
-		}));
-
-		validate();
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		registry->add(metadata);
+		registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 	}
 
 }

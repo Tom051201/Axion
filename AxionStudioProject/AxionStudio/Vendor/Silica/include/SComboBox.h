@@ -5,6 +5,7 @@
 
 #include "SWidget.h"
 #include "FontAtlas.h"
+#include "OverlayManager.h"
 
 namespace Silica {
 
@@ -50,6 +51,7 @@ namespace Silica {
 		std::vector<std::string> m_options;
 		FontAtlas* m_font = nullptr;
 		std::function<void(std::string)> m_onValueChanged;
+		OverlayID m_overlayId = 0;
 
 		std::string m_currentValue;
 		bool m_isOpen = false;

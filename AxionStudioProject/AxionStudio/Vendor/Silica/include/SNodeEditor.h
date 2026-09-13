@@ -8,6 +8,7 @@
 #include "MathTypes.h"
 #include "FontAtlas.h"
 #include "SWidget.h"
+#include "OverlayManager.h"
 
 namespace Silica {
 
@@ -85,6 +86,7 @@ namespace Silica {
 		FontAtlas* m_font = nullptr;
 		std::function<WidgetPtr(Vec2)> m_onBackgroundContextClick;
 		std::function<WidgetPtr(NodeID, Vec2)> m_onNodeContextClick;
+		OverlayID m_contextOverlayId = 0;
 
 		WidgetPtr m_activeContextMenu = nullptr;
 		Geometry m_contextMenuGeometry;

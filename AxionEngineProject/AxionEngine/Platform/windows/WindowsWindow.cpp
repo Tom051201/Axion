@@ -51,7 +51,7 @@ namespace Axion {
 
 
 		// ----- Activates the custom title bar -----
-		DWORD style = Config::WinUsingCustomTitleBar ?
+		DWORD style = Config::Win32_UsingCustomTitleBar ?
 			(WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX) :
 			WS_OVERLAPPEDWINDOW;
 
@@ -111,7 +111,7 @@ namespace Axion {
 	void WindowsWindow::setPosition(uint32_t x, uint32_t y) {
 		RECT rect = { 0, 0, (LONG)m_data.width, (LONG)m_data.height };
 
-		DWORD style = Config::WinUsingCustomTitleBar ?
+		DWORD style = Config::Win32_UsingCustomTitleBar ?
 			(WS_POPUP | WS_THICKFRAME | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX) :
 			WS_OVERLAPPEDWINDOW;
 
@@ -278,7 +278,7 @@ namespace Axion {
 				}
 				// ----- Deactivate title bar -----
 				case WM_NCCALCSIZE: {
-					if constexpr (Config::WinUsingCustomTitleBar) {
+					if constexpr (Config::Win32_UsingCustomTitleBar) {
 						if (wparam == TRUE) {
 							return 0;
 						}
@@ -287,7 +287,7 @@ namespace Axion {
 				}
 				// ----- Hit test for custom title bar -----
 				case WM_NCHITTEST: {
-					if constexpr (Config::WinUsingCustomTitleBar) {
+					if constexpr (Config::Win32_UsingCustomTitleBar) {
 						POINT pt = { GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
 						ScreenToClient(hwnd, &pt);
 
@@ -319,7 +319,7 @@ namespace Axion {
 				}
 				// ----- Calculating size for minimizing / maximizing -----
 				case WM_GETMINMAXINFO: {
-					if constexpr (Config::WinUsingCustomTitleBar) {
+					if constexpr (Config::Win32_UsingCustomTitleBar) {
 						LPMINMAXINFO mmi = (LPMINMAXINFO)lparam;
 
 						HMONITOR hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);

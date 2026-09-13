@@ -191,14 +191,19 @@ namespace Axion {
 		});
 	}
 
-	Silica::WidgetPtr MakeAddComponentItem(const std::string& text, std::function<Silica::EventReply()> onClick) {
+	Silica::WidgetPtr MakeAddComponentItem(const std::string& text, std::function<Silica::EventReply()> onClick, bool closeOverlays = true) {
 		return Silica::MakeWidget<Silica::SButton>({
 			.padding = { 0.0f, 0.0f },
-			.onClick = onClick,
+			.onClick = [onClick, closeOverlays]() {
+				if (closeOverlays) {
+					Silica::Renderer::closeAllOverlays();
+				}
+				return onClick();
+			},
 			.child = Silica::MakeWidget<Silica::SBox>({
 				.padding = { 12.0f, 4.0f },
 				.backgroundColor = Silica::Color::transparent(),
-				.child = Silica::MakeWidget<Silica::STextBlock>({ .text = text })
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
 			})
 		});
 	}
@@ -361,9 +366,24 @@ namespace Axion {
 		if (!entity.hasComponent<NativeScriptComponent>()) registerComp.operator()<NativeScriptComponent>("Native Script", "Scripting");
 		if (!entity.hasComponent<ScriptComponent>()) registerComp.operator()<ScriptComponent>("C# Script", "Scripting");
 
-		auto menuListContainer = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
+		auto menuListContainer = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 0.0f });
+		auto addComponentMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
 
-		auto populateMenuList = [menuListContainer, availableComps](const std::string& filter) {
+		// -- Add Component Button --
+		auto addComponentMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
+			.openOnHover = false,
+			.anchorContent = Silica::MakeWidget<Silica::SButton>({
+				.padding = { 8.0f, 4.0f },
+				.hoverColor = Silica::GetTheme().Accent_Primary,
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add Component" })
+			}),
+			.menuContent = Silica::MakeWidget<Silica::SBox>({
+				.backgroundColor = Silica::GetTheme().Background_Popup,
+				.child = addComponentMenuContent
+			})
+		});
+
+		auto populateMenuList = [menuListContainer, availableComps, addComponentMenu](const std::string& filter) {
 			menuListContainer->clearSlots();
 			std::string lowerFilter = ToLower(filter);
 
@@ -397,18 +417,22 @@ namespace Axion {
 						});
 					}
 
+					auto categoryMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
+						.openOnHover = true,
+						.openToRight = true,
+						.showArrow = true,
+						.anchorContent = MakeAddComponentItem(category, []() { return Silica::EventReply::unhandled(); }, false),
+						.menuContent = Silica::MakeWidget<Silica::SBox>({
+							.backgroundColor = Silica::GetTheme().Background_Popup,
+							.child = subMenuBox
+						})
+					});
+
+					categoryMenu->setParentMenu(addComponentMenu.get());
+
 					menuListContainer->addSlot({
 						.padding = {0,0},
-						.child = Silica::MakeWidget<Silica::SMenuAnchor>({
-							.openOnHover = true,
-							.openToRight = true,
-							.showArrow = true,
-							.anchorContent = MakeAddComponentItem(category, []() { return Silica::EventReply::unhandled(); }),
-							.menuContent = Silica::MakeWidget<Silica::SBox>({
-								.backgroundColor = Silica::GetTheme().Background_Popup,
-								.child = subMenuBox
-							})
-						})
+						.child = categoryMenu
 					});
 				}
 			}
@@ -427,8 +451,6 @@ namespace Axion {
 			}
 		};
 
-		populateMenuList("");
-
 		// -- Search Bar --
 		auto searchBar = Silica::MakeWidget<Silica::SEditableText>({
 			.hintText = "Search components...",
@@ -436,25 +458,10 @@ namespace Axion {
 		});
 
 
-		// -- Add Component Button --
-		auto addComponentMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
-			.openOnHover = false,
-			.anchorContent = Silica::MakeWidget<Silica::SButton>({
-				.padding = { 8.0f, 4.0f },
-				.hoverColor = Silica::GetTheme().Accent_Primary,
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add Component" })
-			}),
-			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::GetTheme().Background_Popup,
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 2.0f,
-					.slots = {
-						{ {4.0f, 4.0f}, searchBar },
-						{ {0.0f, 0.0f}, Silica::MakeWidget<Silica::SScrollBox>({.child = menuListContainer })}
-					}
-				})
-			})
-		});
+		addComponentMenuContent->addSlot({ {4.0f, 4.0f}, searchBar });
+		addComponentMenuContent->addSlot({ {0.0f, 0.0f}, Silica::MakeWidget<Silica::SScrollBox>({.child = menuListContainer }) });
+
+		populateMenuList("");
 
 		// -- Build the Trailing Widget for the Header --
 		std::vector<Silica::Slot> headerTrailingSlots;

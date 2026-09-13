@@ -1,35 +1,23 @@
 #pragma once
 
-#include <string>
-#include <functional>
-#include <memory>
-
-#include <Silica/include/SWidget.h>
-
 #include "AxionEngine/Source/core/Math.h"
 
-namespace Silica {
-	class SBox;
-	class STextBlock;
-	class SButton;
-}
+#include "AxionStudio/Source/ui/ModalBase.h"
 
 namespace Axion {
 
-	class MaterialImportModal {
+	class MaterialImportModal : public ModalBase {
 	public:
 
-		MaterialImportModal() { resetInputs(); }
-		~MaterialImportModal() = default;
+		MaterialImportModal();
 
-		Silica::WidgetPtr getWidget(std::function<void()> onClose);
+	protected:
+
+		void buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) override;
+		void validate() override;
+		void onConfirm() override;
 
 	private:
-
-		void rebuildUI();
-		void rebuildUI_Internal();
-		void resetInputs();
-		void validate();
 
 		std::string m_name;
 		std::string m_pipelinePath;
@@ -48,12 +36,7 @@ namespace Axion {
 		std::string m_occlusionMapPath;
 		std::string m_emissiveMapPath;
 
-		// -- Silica --
-		std::shared_ptr<Silica::SBox> m_uiRoot;
-		std::function<void()> m_onClose;
-		std::shared_ptr<Silica::STextBlock> m_validationText;
-		std::shared_ptr<Silica::SButton> m_createBtn;
-		bool m_rebuildQueued = false;
+		void resetInputs();
 
 	};
 

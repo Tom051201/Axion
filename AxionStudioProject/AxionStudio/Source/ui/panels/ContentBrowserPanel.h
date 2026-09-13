@@ -15,6 +15,8 @@
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
 #include "AxionStudio/Source/core/VirtualFileSystem.h"
+#include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/EditorModalManager.h"
 
 namespace YAML {
 	class Node;
@@ -25,6 +27,8 @@ namespace Silica {
 	class SBox;
 	class SHorizontalSplitBox;
 	class SVerticalSplitBox;
+	class SEditableText;
+	class SMenuAnchor;
 }
 
 namespace Axion {
@@ -38,8 +42,6 @@ namespace Axion {
 	class Texture2DImportModal;
 	class TextureCubeImportModal;
 }
-
-
 
 namespace Axion {
 
@@ -65,6 +67,13 @@ namespace Axion {
 
 		Silica::WidgetPtr getWidget();
 
+		void setShowContentArea(bool show) { m_showContentArea = show; rebuildUI(); }
+		void setShowVFSTree(bool show) { m_showVFSTree = show; rebuildUI(); }
+		void setShowPhysicalTree(bool show) { m_showPhysicalTree = show; rebuildUI(); }
+		bool getShowContentArea() { return m_showContentArea; }
+		bool getShowVFSTree() { return m_showVFSTree; }
+		bool getShowPhysicalTree() { return m_showPhysicalTree; }
+
 	private:
 
 		struct DirItem {
@@ -80,7 +89,6 @@ namespace Axion {
 		std::vector<DirItem> m_directoryEntries;
 		bool m_showFileExtensions = true;
 		std::unordered_set<std::string> m_expandedDirectories;
-		Silica::WidgetPtr buildDirectoryTree(const std::filesystem::path& dirPath);
 		float m_treeViewWidth = 220.0f;
 		float m_treeViewTopHeight = 250.0f;
 		std::shared_ptr<Silica::SHorizontalSplitBox> m_splitBox;
@@ -90,7 +98,6 @@ namespace Axion {
 		VirtualFileSystem m_vfs;
 		bool m_viewingCollection = false;
 		std::shared_ptr<VFSNode> m_currentCollection;
-		Silica::WidgetPtr buildCollectionTree(std::shared_ptr<VFSNode> node);
 
 		// -- Search / filtering --
 		std::string m_searchString;
@@ -115,7 +122,11 @@ namespace Axion {
 
 		// -- UI --
 		bool m_showNames = true;
+		bool m_showContentArea = true;
+		bool m_showVFSTree = true;
+		bool m_showPhysicalTree = true;
 		float m_thumbnailSize = 100.0f;
+		std::shared_ptr<Silica::SEditableText> m_searchBoxWidget;
 
 		// -- Callbacks --
 		std::function<void(Event&)> m_eventCallback;
@@ -125,29 +136,68 @@ namespace Axion {
 		std::function<void(const std::filesystem::path&)> m_openSceneInViewportCallback;
 
 		// -- Modals --
-		Shared<AudioImportModal> m_audioImportModal;
-		Shared<MaterialImportModal> m_materialImportModal;
-		Shared<MeshImportModal> m_meshImportModal;
-		Shared<PhysicsMaterialImportModal> m_physicsMaterialModal;
-		Shared<PipelineImportModal> m_pipelineImportModal;
-		Shared<ShaderImportModal> m_shaderImportModal;
-		Shared<SkyboxImportModal> m_skyboxImportModal;
-		Shared<Texture2DImportModal> m_texture2DImportModal;
-		Shared<TextureCubeImportModal> m_textureCubeImportModal;
+		std::shared_ptr<AudioImportModal> m_audioImportModal;
+		std::shared_ptr<MaterialImportModal> m_materialImportModal;
+		std::shared_ptr<MeshImportModal> m_meshImportModal;
+		std::shared_ptr<PhysicsMaterialImportModal> m_physicsMaterialModal;
+		std::shared_ptr<PipelineImportModal> m_pipelineImportModal;
+		std::shared_ptr<ShaderImportModal> m_shaderImportModal;
+		std::shared_ptr<SkyboxImportModal> m_skyboxImportModal;
+		std::shared_ptr<Texture2DImportModal> m_texture2DImportModal;
+		std::shared_ptr<TextureCubeImportModal> m_textureCubeImportModal;
 
 		// -- Silica --
 		bool m_rebuildQueued = false;
 		std::shared_ptr<Silica::SBox> m_uiRoot;
+
 		void rebuildUI();
 		void rebuildUI_Internal();
+
+		// -- UI Builders --
 		Silica::WidgetPtr buildToolbar();
 		Silica::WidgetPtr buildContentArea();
 		Silica::WidgetPtr buildDeleteModal();
+		Silica::WidgetPtr buildDirectoryTree(const std::filesystem::path& dirPath);
+		Silica::WidgetPtr buildCollectionTree(std::shared_ptr<VFSNode> node);
+		Silica::WidgetPtr createAssetItemWidget(const DirItem& item);
 
-		// -- Events --
+		std::shared_ptr<Silica::SMenuAnchor> buildCreateAssetSubMenu();
+		Silica::WidgetPtr buildBackgroundContextMenu(Silica::WidgetPtr createAssetSubMenuWidget);
+		Silica::WidgetPtr makeContextMenuItem(const std::string& text, std::function<void()> onClickAction, std::optional<Silica::Color> textColor = std::nullopt);
+
+		// -- Commands --
+		void cmdCreateCollection(std::shared_ptr<VFSNode> parentNode);
+		void cmdDeleteCollection(std::shared_ptr<VFSNode> node);
+		void cmdCreateFolder();
+		void cmdCreateVisualScript();
+		void cmdRenameItem(const std::filesystem::path& path);
+		void cmdDeleteItem(const std::filesystem::path& path, std::shared_ptr<VFSNode> vfsNode);
+		void cmdOpenItem(const std::filesystem::path& path, bool isDir, std::shared_ptr<VFSNode> vfsNode);
+
+		template<typename TModal, typename SetupFunc = std::nullptr_t>
+		void openAssetModal(std::shared_ptr<TModal> ContentBrowser::* modalMember, SetupFunc preSetup = nullptr) {
+			EditorActionQueue::push([this, modalMember, preSetup]() {
+				auto& modalPtr = this->*modalMember;
+				modalPtr = std::make_shared<TModal>();
+
+				if constexpr (!std::is_same_v<SetupFunc, std::nullptr_t>) {
+					preSetup(modalPtr);
+				}
+
+				auto modalWidget = modalPtr->getWidget([this, modalMember]() {
+					EditorActionQueue::push([this, modalMember]() {
+						EditorModalManager::close();
+						(this->*modalMember) = nullptr;
+						refresh();
+					});
+				});
+
+				EditorModalManager::open(modalWidget);
+			});
+		}
+
+		// -- Events & Helpers --
 		EventReply onProjectChanged(ProjectChangedEvent& e);
-
-		// -- Helper functions --
 		void refreshDirectory();
 		void resetRenaming();
 		bool matchesSearch(const std::string& name);

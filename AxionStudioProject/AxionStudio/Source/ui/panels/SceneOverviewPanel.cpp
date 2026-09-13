@@ -24,6 +24,19 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+
+namespace {
+	constexpr float TOOLBAR_PADDING = 10.0f;
+	constexpr float TOOLBAR_SPACING = 10.0f;
+	constexpr float CONTENT_PADDING = 10.0f;
+	constexpr float SECTION_SPACING = 10.0f;
+	constexpr float ROW_SPACING = 8.0f;
+	constexpr float INNER_SPACING = 4.0f;
+	constexpr float LABEL_WIDTH = 120.0f;
+	constexpr float BTN_PAD_X = 8.0f;
+	constexpr float BTN_PAD_Y = 4.0f;
+}
 
 namespace Axion {
 
@@ -34,9 +47,7 @@ namespace Axion {
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
-						if (path.extension() == ".axsky") {
-							return Silica::EventReply::handled();
-						}
+						if (path.extension() == ".axsky") return Silica::EventReply::handled();
 					}
 					return Silica::EventReply::unhandled();
 				},
@@ -82,35 +93,14 @@ namespace Axion {
 	void SceneOverviewPanel::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
-		// -- No project loaded --
+		// -- Empty States --
 		if (!ProjectManager::hasProject()) {
-			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
-				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view scene settings.",
-				.wrapWidth = 250.0f,
-				.color = Silica::GetTheme().Text_Dim
-			});
-
-			auto centeredState = Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Center,
-				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = emptyText
-			});
-
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({
-				.child = centeredState
-			}));
+			m_uiRoot->setChild(SilicaHelpers::MakeEmptyState("No Project Loaded.\n\nPlease load or create a project from the top menu bar to view scene settings."));
 			return;
 		}
 
-		// -- No scene loaded --
 		if (!m_activeScene) {
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Center,
-				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = Silica::MakeWidget<Silica::STextBlock>({
-					.text = "No Scene Loaded."
-				})
-			}));
+			m_uiRoot->setChild(SilicaHelpers::MakeEmptyState("No Scene Loaded."));
 			return;
 		}
 
@@ -126,10 +116,10 @@ namespace Axion {
 		});
 
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 10.0f, 10.0f },
+			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
+				.spacing = TOOLBAR_SPACING,
 				.slots = {
 					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
 						.verticalAlign = Silica::VerticalAlign::Center,
@@ -144,27 +134,7 @@ namespace Axion {
 		});
 
 		// -- Build Scrollable Content Area --
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 10.0f });
-
-
-		// -- Helper Funtions --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(120.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::SAlign>({
-							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-						})
-					})},
-					{ {1, 0}, valueWidget }
-				}
-			});
-		};
-
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SECTION_SPACING });
 
 		// -- Skybox --
 		Silica::WidgetPtr skyboxContent;
@@ -174,10 +144,10 @@ namespace Axion {
 			std::filesystem::path skyRel = AssetManager::getRelativeToAssets(skyPath);
 
 			auto btnRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 8.0f,
+				.spacing = ROW_SPACING,
 				.slots = {
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
+						.padding = { BTN_PAD_X, BTN_PAD_Y },
 						.onClick = [this]() {
 							std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox";
 							std::filesystem::path absolutePath = std::filesystem::exists(skyDir) ?
@@ -197,7 +167,7 @@ namespace Axion {
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Change Skybox"})
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
+						.padding = { BTN_PAD_X, BTN_PAD_Y },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this]() {
 							m_activeScene->removeSkybox();
@@ -210,9 +180,9 @@ namespace Axion {
 			});
 
 			skyboxContent = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 4.0f,
+				.spacing = INNER_SPACING,
 				.slots = {
-					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({ .text = skyPath.stem().string() })},
+					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = skyPath.stem().string() })},
 					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
 						.text = skyRel.string(),
 						.color = Silica::GetTheme().Text_Dim
@@ -223,14 +193,14 @@ namespace Axion {
 		}
 		else {
 			skyboxContent = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 8.0f,
+				.spacing = ROW_SPACING,
 				.slots = {
 					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
 						.text = "No Skybox Loaded",
 						.color = Silica::GetTheme().Text_Dim
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
+						.padding = { BTN_PAD_X, BTN_PAD_Y },
 						.onClick = [this]() {
 							std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox";
 							std::filesystem::path absolutePath = std::filesystem::exists(skyDir) ?
@@ -252,7 +222,7 @@ namespace Axion {
 				}
 			});
 		}
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Skybox", skyboxContent) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Skybox", skyboxContent, LABEL_WIDTH) });
 
 
 		// -- Global Gravity --
@@ -264,7 +234,7 @@ namespace Axion {
 				m_activeScene->setGravity(Vec3(val.x, val.y, val.z));
 			}
 		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Global Gravity", gravityInput) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Global Gravity", gravityInput, LABEL_WIDTH) });
 
 
 		// -- Ambient Color --
@@ -280,18 +250,16 @@ namespace Axion {
 				m_activeScene->setAmbientColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
 			}
 		});
-		contentBox->addSlot({ {0, 0}, MakePropertyRow("Ambient Color", ambientColorInput) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Ambient Color", ambientColorInput, LABEL_WIDTH) });
 
 
 		// -- Final Layout Assembly --
 		auto paddedContent = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 10.0f, 10.0f },
+			.padding = { CONTENT_PADDING, CONTENT_PADDING },
 			.child = contentBox
 		});
 
-		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({
-			.child = paddedContent
-		});
+		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({.child = paddedContent });
 
 		auto borderLayout = Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = topBarBox,
@@ -316,7 +284,6 @@ namespace Axion {
 		rebuildUI_Internal();
 		return EventReply::unhandled();
 	}
-
 
 	void SceneOverviewPanel::setScene(const Shared<Scene>& scene) {
 		m_activeScene = scene;

@@ -67,8 +67,6 @@ namespace Axion {
 
 		Silica::WidgetPtr createInlineWidgetForPin(const Pin& pin);
 
-		static Silica::Color getNodeTypeColor(NodeType type);
-		static Silica::Color getPinColor(PinType type);
 		bool hasNodeOfType(NodeType type) const;
 		void refreshVariableNodes();
 		void syncGraphState();

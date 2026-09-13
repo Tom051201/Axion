@@ -3,16 +3,15 @@
 
 #include <Silica/include/Theme.h>
 #include <Silica/include/SBox.h>
-#include <Silica/include/SBorderLayout.h>
-#include <Silica/include/SHorizontalBox.h>
 #include <Silica/include/SVerticalBox.h>
+#include <Silica/include/SHorizontalBox.h>
 #include <Silica/include/SButton.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SEditableText.h>
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SCheckbox.h>
-#include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SScrollBox.h>
+#include <Silica/include/SInputFieldInt.h>
 #include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
@@ -20,19 +19,21 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
-
 #include "AxionAssetPipeline/Source/parser/PipelineParser.h"
 
-#include "AxionStudio/Source/core/EditorActionQueue.h"
-
 namespace Axion {
+
+	PipelineImportModal::PipelineImportModal() {
+		m_modalTitle = "Create Pipeline Asset";
+		m_versionText = "v" + std::to_string(ASSET_VERSION_PIPELINE);
+		m_modalWidth = 600.0f;
+		resetInputs();
+	}
 
 	void PipelineImportModal::resetInputs() {
 		m_name.clear();
 		m_shaderPath.clear();
-
-		std::filesystem::path pipeDir = ProjectManager::getProject()->getAssetsPath() / "pipelines";
-		m_outputPath = pipeDir.string();
+		m_outputPath = (ProjectManager::getProject()->getAssetsPath() / "pipelines").string();
 
 		m_colorFormatIndex = 1;
 		m_depthFormatIndex = 2;
@@ -47,200 +48,60 @@ namespace Axion {
 		m_bufferElements.clear();
 	}
 
-	void PipelineImportModal::validate() {
-		if (!m_validationText || !m_createBtn) return;
-
-		std::string finalName = m_name + ".axpso";
-		std::filesystem::path finalPath;
-
-		bool shaderExists = false;
-		bool shaderIsFile = false;
-		bool outputExists = false;
-		bool outputIsDirectory = false;
-		bool invalidOutFileName = false;
-
-		// -- Safe Filesystem Checks --
-		try {
-			std::error_code ec;
-			if (!m_shaderPath.empty()) {
-				shaderExists = std::filesystem::exists(m_shaderPath, ec);
-				shaderIsFile = std::filesystem::is_regular_file(m_shaderPath, ec);
-			}
-			if (!m_outputPath.empty()) {
-				outputExists = std::filesystem::exists(m_outputPath, ec);
-				outputIsDirectory = std::filesystem::is_directory(m_outputPath, ec);
-				finalPath = std::filesystem::path(m_outputPath) / finalName;
-				invalidOutFileName = std::filesystem::exists(finalPath, ec);
-			}
-		}
-		catch (...) {}
-
-		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
-
-		bool disabled = (m_name.empty() || m_shaderPath.empty() || m_outputPath.empty() || !shaderExists || !shaderIsFile || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
-
-		std::string validationMsg = "Ready to create asset.";
-		Silica::Color validationColor = Silica::GetTheme().Text_Success;
-
-		if (disabled) {
-			validationColor = Silica::GetTheme().Text_Danger;
-			if (m_name.empty()) validationMsg = "No Name is set.";
-			else if (m_shaderPath.empty()) validationMsg = "No shader file is set.";
-			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
-			else if (!shaderExists) validationMsg = "Shader file does not exist.";
-			else if (!shaderIsFile) validationMsg = "Shader is not a file.";
-			else if (!outputExists) validationMsg = "Output directory does not exist.";
-			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
-			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
-			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
-		}
-
-		m_validationText->setText(validationMsg);
-		m_validationText->setColor(validationColor);
-		m_createBtn->setEnabled(!disabled);
-	}
-
-	Silica::WidgetPtr PipelineImportModal::getWidget(std::function<void()> onClose) {
-		m_onClose = onClose;
-
-		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.consumePointerEvents = true,
-				.backgroundColor = Silica::Color(0, 0, 0, 180),
-			});
-			rebuildUI_Internal();
-		}
-		return m_uiRoot;
-	}
-
-	void PipelineImportModal::rebuildUI() {
-		if (m_rebuildQueued) return;
-		m_rebuildQueued = true;
-
-		EditorActionQueue::push([this]() {
-			m_rebuildQueued = false;
-			rebuildUI_Internal();
-		});
-	}
-
-	void PipelineImportModal::rebuildUI_Internal() {
-		if (!m_uiRoot) return;
-
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 10.0f });
-
-
-		// -- Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Create Pipeline Asset" }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Helper Functions --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(130.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::SAlign>({
-							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-						})
-					})},
-					{ {1, 0}, valueWidget }
-				}
-			});
-		};
-
-		auto MakeCombo = [&](int& currentIndex, const char** names, int count) {
-			auto menuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
-			for (int i = 0; i < count; ++i) {
-				menuBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
-					.color = Silica::Color::transparent(),
-					.onClick = [this, &currentIndex, i]() {
-						currentIndex = i;
-						rebuildUI();
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = names[i] })
-				}) });
-			}
-
-			return Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.anchorContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 8.0f, 4.0f },
-					.backgroundColor = Silica::GetTheme().Element_Normal,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = names[currentIndex] })
-				}),
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 4.0f, 4.0f },
-					.backgroundColor = Silica::GetTheme().Background_Popup,
-					.child = Silica::MakeWidget<Silica::SScrollBox>({.child = menuBox})
-				})
-			});
-		};
+	void PipelineImportModal::buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) {
 
 		// -- Core Properties --
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = m_name ,
-				.onTextChanged = [this](const std::string& val) { m_name = val; validate(); }
+				.initialText = m_name,
+				.onTextChanged = [this](const std::string& val) {
+					m_name = val;
+					validate();
+				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Name", nameInput) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Color Format", MakeCombo(m_colorFormatIndex, m_colorFormatsNames, 6)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Depth Stencil", MakeCombo(m_depthFormatIndex, m_depthFormatsNames, 5)) });
+
+		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Color Format", makeCombo(m_colorFormatIndex, m_colorFormatsNames)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Stencil", makeCombo(m_depthFormatIndex, m_depthFormatsNames)) });
 
 		auto depthTestCheck = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = m_depthTest, .onCheckChanged = [this](bool val) { m_depthTest = val; } });
 		auto depthWriteCheck = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = m_depthWrite, .onCheckChanged = [this](bool val) { m_depthWrite = val; } });
 		auto stencilCheck = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = m_stencilEnabled, .onCheckChanged = [this](bool val) { m_stencilEnabled = val; } });
 
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Depth Test", depthTestCheck) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Depth Write", depthWriteCheck) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Depth Compare", MakeCombo(m_depthCompareIndex, m_depthCompareNames, 8)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Stencil", stencilCheck) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Test", depthTestCheck) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Write", depthWriteCheck) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Compare", makeCombo(m_depthCompareIndex, m_depthCompareNames)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Stencil", stencilCheck) });
 
 		auto countInput = Silica::MakeWidget<Silica::SBox>({
-			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = std::to_string(m_sampleCount) ,
-				.onTextCommitted = [this](const std::string& val) {
-					try { m_sampleCount = std::max(1, std::stoi(val)); }
-					catch (...) {}
-					rebuildUI();
-				}
+			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
+				.initialValue = m_sampleCount,
+				.onValueChanged = [this](int val) { m_sampleCount = std::max(1, val); }
 			})
 		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Sample Count", countInput) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Sample Count", countInput) });
 
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Cull Mode", MakeCombo(m_cullModeIndex, m_cullModesNames, 3)) });
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Topology", MakeCombo(m_topologyIndex, m_topologiesNames, 5)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Cull Mode", makeCombo(m_cullModeIndex, m_cullModesNames)) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Topology", makeCombo(m_topologyIndex, m_topologiesNames)) });
 
 		auto rtInput = Silica::MakeWidget<Silica::SBox>({
-			.child = Silica::MakeWidget<Silica::SEditableText>({
-				.initialText = std::to_string(m_renderTargetsCount) ,
-				.onTextCommitted = [this](const std::string& val) {
-					try { m_renderTargetsCount = std::max(0, std::stoi(val)); }
-					catch (...) {}
-					rebuildUI();
-				}
+			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
+				.initialValue = m_renderTargetsCount,
+				.onValueChanged = [this](int val) { m_renderTargetsCount = std::max(0, val); }
 			})
 		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Render Targets", rtInput) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Render Targets", rtInput) });
 
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
 
 		// -- Buffer Layout --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{0, 1},
-			.backgroundColor = Silica::GetTheme().Background_Popup
-		}) });
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
 			.text = "Buffer Layout:",
-			.color = Silica::GetTheme().Background_Input
+			.color = Silica::GetTheme().Text_Dim
 		}) });
 
-		auto layoutBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 6.0f });
+		auto layoutBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 6.0f });
 
 		for (size_t i = 0; i < m_bufferElements.size(); i++) {
 			auto& element = m_bufferElements[i];
@@ -248,7 +109,7 @@ namespace Axion {
 			auto elName = Silica::MakeWidget<Silica::SBox>({
 				.explicitSize = Silica::Vec2{100, 0},
 				.child = Silica::MakeWidget<Silica::SEditableText>({
-					.initialText = element.name ,
+					.initialText = element.name,
 					.onTextChanged = [&element](const std::string& v) { element.name = v; }
 				})
 			});
@@ -256,7 +117,7 @@ namespace Axion {
 			int tIdx = static_cast<int>(element.type);
 			auto elType = Silica::MakeWidget<Silica::SBox>({
 				.explicitSize = Silica::Vec2{90,0},
-				.child = MakeCombo(tIdx, m_shaderDataTypeNames, 10)
+				.child = makeCombo(tIdx, m_shaderDataTypeNames)
 			});
 
 			if (static_cast<ShaderDataType>(tIdx) != element.type) {
@@ -306,169 +167,106 @@ namespace Axion {
 
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({
 			.padding = {10,10},
+			.explicitSize = Silica::Vec2{0.0f, 160.0f},
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
-			.child = layoutBox
+			.child = Silica::MakeWidget<Silica::SScrollBox>({
+				.child = layoutBox
+			})
 		}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
 
 
 		// -- File Paths --
-		auto shaderRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
-			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_shaderPath ,
-						.onTextChanged = [this](const std::string& val) { m_shaderPath = val; validate(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.onClick = [this]() {
-						std::filesystem::path shaderDir = ProjectManager::getProject()->getAssetsPath() / "shaders";
-						if (!std::filesystem::exists(shaderDir)) {
-							shaderDir = ProjectManager::getProject()->getAssetsPath();
-						}
-						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Shader Asset", "*.axshader"} }, shaderDir);
-						if (!absPath.empty()) { m_shaderPath = absPath.string(); rebuildUI(); }
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
-				})}
+		contentBox->addSlot({ {0,0}, makePropertyRow("Shader File", makeFileRow(m_shaderPath, "Axion Shader Asset", "*.axshader", "shaders")) });
+		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "pipelines")) });
+	}
+
+	void PipelineImportModal::validate() {
+		if (!m_validationText || !m_confirmBtn) return;
+
+		std::string finalName = m_name + ".axpso";
+		std::filesystem::path finalPath;
+
+		bool shaderExists = false;
+		bool shaderIsFile = false;
+		bool outputExists = false;
+		bool outputIsDirectory = false;
+		bool invalidOutFileName = false;
+
+		try {
+			std::error_code ec;
+			if (!m_shaderPath.empty()) {
+				shaderExists = std::filesystem::exists(m_shaderPath, ec);
+				shaderIsFile = std::filesystem::is_regular_file(m_shaderPath, ec);
 			}
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Shader File", shaderRow) });
-
-		auto outputRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 8.0f,
-			.slots = {
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
-					.child = Silica::MakeWidget<Silica::SEditableText>({
-						.initialText = m_outputPath ,
-						.onTextChanged = [this](const std::string& val) { m_outputPath = val; validate(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = {8, 4},
-					.onClick = [this]() {
-						std::filesystem::path pipeDir = ProjectManager::getProject()->getAssetsPath() / "pipelines";
-						if (!std::filesystem::exists(pipeDir)) {
-							pipeDir = ProjectManager::getProject()->getAssetsPath();
-						}
-						std::filesystem::path absPath = FileDialogs::openFolder(pipeDir);
-						if (!absPath.empty()) { m_outputPath = absPath.string(); rebuildUI(); }
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
-				})}
+			if (!m_outputPath.empty()) {
+				outputExists = std::filesystem::exists(m_outputPath, ec);
+				outputIsDirectory = std::filesystem::is_directory(m_outputPath, ec);
+				finalPath = std::filesystem::path(m_outputPath) / finalName;
+				invalidOutFileName = std::filesystem::exists(finalPath, ec);
 			}
-		});
-		contentBox->addSlot({ {0,0}, MakePropertyRow("Output Location", outputRow) });
+		}
+		catch (...) {}
 
+		bool nameTooLong = m_name.length() > Config::MaxBinaryStringLength;
 
-		// -- Initialize Dynamic UI References --
-		m_validationText = Silica::MakeWidget<Silica::STextBlock>({ .text = "" });
+		bool disabled = (m_name.empty() || m_shaderPath.empty() || m_outputPath.empty() || !shaderExists || !shaderIsFile || !outputExists || !outputIsDirectory || invalidOutFileName || nameTooLong);
 
-		m_createBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (!m_createBtn->isEnabled()) return Silica::EventReply::unhandled();
+		std::string validationMsg = "Ready to create asset.";
+		Silica::Color validationColor = Silica::GetTheme().Text_Success;
 
-				std::string finalName = m_name + ".axpso";
-				std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
+		if (disabled) {
+			validationColor = Silica::GetTheme().Text_Danger;
+			if (m_name.empty()) validationMsg = "No Name is set.";
+			else if (m_shaderPath.empty()) validationMsg = "No shader file is set.";
+			else if (m_outputPath.empty()) validationMsg = "No output directory is set.";
+			else if (!shaderExists) validationMsg = "Shader file does not exist.";
+			else if (!shaderIsFile) validationMsg = "Shader is not a file.";
+			else if (!outputExists) validationMsg = "Output directory does not exist.";
+			else if (!outputIsDirectory) validationMsg = "Output is not a directory.";
+			else if (invalidOutFileName) validationMsg = "Asset with this name already exists.";
+			else if (nameTooLong) validationMsg = "Name exceeds max limit.";
+		}
 
-				PipelineSpecification spec = {};
-				spec.colorFormat = m_colorFormats[m_colorFormatIndex];
-				spec.depthStencilFormat = m_depthFormats[m_depthFormatIndex];
-				spec.depthTest = m_depthTest;
-				spec.depthWrite = m_depthWrite;
-				spec.depthFunction = m_depthCompares[m_depthCompareIndex];
-				spec.stencilEnabled = m_stencilEnabled;
-				spec.sampleCount = m_sampleCount;
-				spec.cullMode = m_cullModes[m_cullModeIndex];
-				spec.topology = m_topologies[m_topologyIndex];
-				spec.numRenderTargets = m_renderTargetsCount;
-				spec.vertexLayout = BufferLayout(m_bufferElements);
+		m_validationText->setText(validationMsg);
+		m_validationText->setColor(validationColor);
+		m_confirmBtn->setEnabled(!disabled);
+	}
 
-				UUID newAssetUUID = UUID::generate();
-				AAP::PipelineAssetData data;
-				data.uuid = newAssetUUID;
-				data.shaderFilePath = AssetManager::getRelativeToAssets(m_shaderPath);
-				data.name = m_name;
-				data.spec = spec;
+	void PipelineImportModal::onConfirm() {
+		std::string finalName = m_name + ".axpso";
+		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
-				AAP::PipelineParser::createTextFile(data, finalPath);
+		PipelineSpecification spec = {};
+		spec.colorFormat = m_colorFormats[m_colorFormatIndex];
+		spec.depthStencilFormat = m_depthFormats[m_depthFormatIndex];
+		spec.depthTest = m_depthTest;
+		spec.depthWrite = m_depthWrite;
+		spec.depthFunction = m_depthCompares[m_depthCompareIndex];
+		spec.stencilEnabled = m_stencilEnabled;
+		spec.sampleCount = m_sampleCount;
+		spec.cullMode = m_cullModes[m_cullModeIndex];
+		spec.topology = m_topologies[m_topologyIndex];
+		spec.numRenderTargets = m_renderTargetsCount;
+		spec.vertexLayout = BufferLayout(m_bufferElements);
 
-				AssetMetadata metadata;
-				metadata.handle = newAssetUUID;
-				metadata.type = AssetType::Pipeline;
-				metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
+		UUID newAssetUUID = UUID::generate();
+		AAP::PipelineAssetData data;
+		data.uuid = newAssetUUID;
+		data.shaderFilePath = AssetManager::getRelativeToAssets(m_shaderPath);
+		data.name = m_name;
+		data.spec = spec;
 
-				auto registry = ProjectManager::getProject()->getAssetRegistry();
-				registry->add(metadata);
-				registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
+		AAP::PipelineParser::createTextFile(data, finalPath);
 
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Create" })
-		});
+		AssetMetadata metadata;
+		metadata.handle = newAssetUUID;
+		metadata.type = AssetType::Pipeline;
+		metadata.filePath = AssetManager::getRelativeToAssets(finalPath);
 
-		contentBox->addSlot({ {0,0}, m_validationText });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-
-
-		// -- Footer Buttons --
-		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
-			.onClick = [this]() {
-				if (m_onClose) m_onClose();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
-		});
-
-		std::string versionText = "v" + std::to_string(ASSET_VERSION_PIPELINE);
-
-		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 10.0f,
-			.slots = {
-				{ {0,0}, m_createBtn },
-				{ {0,0}, cancelBtn },
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({
-						.text = versionText,
-						.color = Silica::GetTheme().Text_Dim
-					})
-				})}
-			}
-		});
-
-		contentBox->addSlot({ {0,0}, footerRow });
-
-
-		// -- Assemble Modal --
-		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ 550.0f, 0.0f },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
-			.backgroundColor = Silica::GetTheme().Background_Panel,
-			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 20.0f, 20.0f },
-				.backgroundColor = Silica::Color::transparent(),
-				.child = contentBox
-			})
-		});
-
-		m_uiRoot->setChild(Silica::MakeWidget<Silica::SScrollBox>({
-			.child = Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Center,
-				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = modalPanel
-			})
-		}));
-
-		validate();
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		registry->add(metadata);
+		registry->serialize(ProjectManager::getProject()->getProjectPath() / "AssetRegistry.yaml");
 	}
 
 }
