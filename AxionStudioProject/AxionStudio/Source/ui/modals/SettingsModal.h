@@ -6,21 +6,15 @@
 
 #include <Silica/include/SWidget.h>
 
+#include "AxionEngine/Source/events/Event.h"
+
+#include "AxionStudio/Source/core/EditorEvents.h"
+
 namespace Silica {
 	class SBox;
 }
 
 namespace Axion {
-
-	struct SettingsPayload {
-		uint32_t maxAssetsPerFrame = 2;
-		bool enableDiscordRPC = true;
-		std::vector<std::string> assetLibraryPaths;
-		bool contentBrowserShowContentArea = true;
-		bool contentBrowserShowVFSTree = true;
-		bool contentBrowserShowPhysicalTree = true;
-		bool materialEditorInvertCamera = false;
-	};
 
 	class SettingsModal {
 	public:
@@ -30,9 +24,20 @@ namespace Axion {
 		SettingsModal() = default;
 		~SettingsModal() = default;
 
-		Silica::WidgetPtr getWidget(const SettingsPayload& initialSettings, std::function<void(const SettingsPayload&)> onApply, std::function<void()> onClose);
+		Silica::WidgetPtr getWidget(std::function<void()> onClose);
+		void setEventCallback(std::function<void(Event&)> callback) { m_eventCallback = callback; }
 
 	private:
+
+		struct WorkingState {
+			uint32_t maxAssetsPerFrame = 2;
+			bool enableDiscordRPC = true;
+			std::vector<std::string> assetLibraryPaths;
+			bool contentBrowserShowContentArea = true;
+			bool contentBrowserShowVFSTree = true;
+			bool contentBrowserShowPhysicalTree = true;
+			bool materialEditorInvertCamera = false;
+		};
 
 		void rebuildUI();
 		void rebuildUI_Internal();
@@ -49,10 +54,11 @@ namespace Axion {
 
 		// -- State --
 		Tab m_activeTab = Tab::EditorPreferences;
-		SettingsPayload m_workingSettings;
+		WorkingState m_workingState;
+		EditorSettingType m_pendingChanges = EditorSettingType::None;
 
 		// -- Callbacks --
-		std::function<void(const SettingsPayload&)> m_onApply;
+		std::function<void(Event&)> m_eventCallback;
 
 	};
 

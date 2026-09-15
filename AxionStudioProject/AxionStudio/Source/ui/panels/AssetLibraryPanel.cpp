@@ -14,6 +14,7 @@
 #include <Silica/include/SWrapBox.h>
 #include <Silica/include/SWrappedTextBlock.h>
 #include <Silica/include/SEditableText.h>
+#include <Silica/include/SMenuAnchor.h>
 
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/core/Logging.h"
@@ -23,36 +24,38 @@
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
+#include "AxionStudio/Source/core/EditorSettings.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace {
 	constexpr float SEARCH_BAR_WIDTH = 250.0f;
-	constexpr float TOP_BAR_SPACING = 20.0f;
-	constexpr float GRID_PADDING = 20.0f;
-	constexpr float WRAP_BOX_SPACING = 15.0f;
-
 	constexpr float CARD_WIDTH = 220.0f;
 	constexpr float CARD_HEIGHT = 300.0f;
-	constexpr float CARD_SPACING = 8.0f;
-	constexpr float CARD_PADDING_X = 8.0f;
-
-	constexpr float CONTENT_WIDTH = CARD_WIDTH - (CARD_PADDING_X * 2.0f);
 
 	constexpr float THUMBNAIL_HEIGHT = 140.0f;
 	constexpr float TITLE_HEIGHT = 20.0f;
 	constexpr float DESC_HEIGHT = 60.0f;
 	constexpr uint32_t DESC_MAX_LINES = 3;
-
-	constexpr float BUTTON_AREA_PAD_Y = 12.0f;
-	constexpr float BUTTON_INNER_PAD_Y = 6.0f;
 }
 
 namespace Axion {
 
 	AssetLibraryPanel::AssetLibraryPanel() {
-		std::filesystem::path defaultLib = std::filesystem::current_path() / "AxionStudio" / "Resources" / "DefaultAssets";
-		if (!std::filesystem::exists(defaultLib)) std::filesystem::create_directories(defaultLib);
+		// -- Sync with global config --
+		for (const std::string& pathStr : EditorSettings::assetLibraryPaths) {
+			m_libraryPaths.push_back(std::filesystem::path(pathStr));
+		}
 
-		addLibraryDirectory(defaultLib);
+		if (m_libraryPaths.empty()) {
+			std::filesystem::path defaultLib = std::filesystem::current_path() / "AxionStudio" / "Resources" / "DefaultAssets";
+			if (!std::filesystem::exists(defaultLib)) std::filesystem::create_directories(defaultLib);
+
+			m_libraryPaths.push_back(defaultLib);
+			EditorSettings::assetLibraryPaths.push_back(defaultLib.string());
+		}
+
+		scanLibraries();
 	}
 
 	void AssetLibraryPanel::addLibraryDirectory(const std::filesystem::path& path) {
@@ -125,13 +128,50 @@ namespace Axion {
 				})
 			});
 
-			// -- Assemble Top Bar --
+			// -- Options Menu --
+			auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+					.openOnHover = false,
+					.openToRight = true,
+					.anchorContent = Silica::MakeWidget<Silica::SButton>({
+						.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+						.color = Silica::Color::transparent(),
+						.hoverColor = Silica::Color(255, 255, 255, 20),
+						.onClick = []() { return Silica::EventReply::unhandled(); },
+						.child = Silica::MakeWidget<Silica::SImage>({
+							.textureID = SilicaContext::getIcon("GearIcon"),
+							.tint = Silica::GetTheme().Text_Main,
+							.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+						})
+					}),
+					.menuContent = Silica::MakeWidget<Silica::SBox>({
+						.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+						.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+						.borderThickness = Silica::GetTheme().Border_Thickness,
+						.backgroundColor = Silica::GetTheme().Background_Popup,
+						.child = Silica::MakeWidget<Silica::SVerticalBox>({
+							.spacing = EditorTheme::SPACING_SMALL,
+							.slots = {
+								{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Rescan Libraries", [this]() {
+									scanLibraries();
+									rebuildUI();
+								}) }
+							}
+						})
+					})
+				})
+			});
+
+			// -- Assemble Standard Toolbar --
 			auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 8.0f, 5.0f },
+				.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+				.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
 				.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 				.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-					.spacing = TOP_BAR_SPACING,
+					.spacing = EditorTheme::TOOLBAR_SPACING,
 					.slots = {
+						{ {0,0}, optionsMenu },
 						{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 							.verticalAlign = Silica::VerticalAlign::Center,
 							.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Asset Library" })
@@ -150,7 +190,7 @@ namespace Axion {
 			});
 
 			// -- Grid Container --
-			m_gridContainer = Silica::MakeWidget<Silica::SBox>({.padding = { GRID_PADDING, GRID_PADDING } });
+			m_gridContainer = Silica::MakeWidget<Silica::SBox>({.padding = { EditorTheme::PADDING_XLARGE, EditorTheme::PADDING_XLARGE } });
 
 			auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({.child = m_gridContainer });
 
@@ -209,7 +249,7 @@ namespace Axion {
 			}
 
 			contentAreaWidget = Silica::MakeWidget<Silica::SWrapBox>({
-				.spacing = WRAP_BOX_SPACING,
+				.spacing = EditorTheme::SPACING_LARGE,
 				.children = cardWidgets
 			});
 		}
@@ -374,10 +414,30 @@ namespace Axion {
 	}
 
 	void AssetLibraryPanel::onEvent(Event& e) {
-		if (e.getEventType() == EventType::ProjectChanged) {
-			m_projectIsLoaded = ProjectManager::hasProject();
-			rebuildUI_Internal();
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(AssetLibraryPanel::onProjectChanged));
+		dispatcher.dispatch<EditorSettingsChangedEvent>(AX_BIND_EVENT_FN(AssetLibraryPanel::onEditorSettingsChanged));
+	}
+
+	EventReply AssetLibraryPanel::onProjectChanged(ProjectChangedEvent& e) {
+		m_projectIsLoaded = ProjectManager::hasProject();
+		rebuildUI_Internal();
+		return EventReply::unhandled();
+	}
+
+	EventReply AssetLibraryPanel::onEditorSettingsChanged(EditorSettingsChangedEvent& ev) {
+		if (ev.hasChange(EditorSettingType::AssetLibraryPaths) || ev.hasChange(EditorSettingType::All)) {
+			m_libraryPaths.clear();
+
+			for (const std::string& pathStr : EditorSettings::assetLibraryPaths) {
+				m_libraryPaths.push_back(std::filesystem::path(pathStr));
+			}
+
+			scanLibraries();
+			rebuildUI();
 		}
+
+		return EventReply::unhandled();
 	}
 
 	void AssetLibraryPanel::setLibraryDirectories(const std::vector<std::filesystem::path>& paths) {
@@ -403,7 +463,7 @@ namespace Axion {
 			.explicitSize = Silica::Vec2{ CARD_WIDTH, CARD_HEIGHT },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = CARD_SPACING,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = {
 					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
 						.explicitSize = Silica::Vec2{ CARD_WIDTH, THUMBNAIL_HEIGHT },
@@ -411,27 +471,27 @@ namespace Axion {
 						.child = thumbnail
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-						.padding = { CARD_PADDING_X, 0.0f },
-						.explicitSize = Silica::Vec2{ CONTENT_WIDTH, TITLE_HEIGHT },
+						.padding = { EditorTheme::PADDING_MEDIUM, 0.0f },
+						.explicitSize = Silica::Vec2{ CARD_WIDTH - (EditorTheme::PADDING_MEDIUM * 2.0f), TITLE_HEIGHT },
 						.child = Silica::MakeWidget<Silica::STextBlock>({
 							.text = pack.name,
-							.truncateWidth = CONTENT_WIDTH
+							.truncateWidth = CARD_WIDTH - (EditorTheme::PADDING_MEDIUM * 2.0f)
 						})
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-						.padding = { CARD_PADDING_X, 0.0f },
-						.explicitSize = Silica::Vec2{ CONTENT_WIDTH, DESC_HEIGHT },
+						.padding = { EditorTheme::PADDING_MEDIUM, 0.0f },
+						.explicitSize = Silica::Vec2{ CARD_WIDTH - (EditorTheme::PADDING_MEDIUM * 2.0f), DESC_HEIGHT },
 						.child = Silica::MakeWidget<Silica::SWrappedTextBlock>({
 							.text = pack.description,
-							.wrapWidth = CONTENT_WIDTH,
+							.wrapWidth = CARD_WIDTH - (EditorTheme::PADDING_MEDIUM * 2.0f),
 							.maxLines = DESC_MAX_LINES,
 							.color = Silica::GetTheme().Text_Dim
 						})
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
-						.padding = { CARD_PADDING_X, BUTTON_AREA_PAD_Y },
+						.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
 						.child = Silica::MakeWidget<Silica::SButton>({
-							.padding = { 0.0f, BUTTON_INNER_PAD_Y },
+							.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 							.enabled = m_projectIsLoaded,
 							.color = Silica::GetTheme().Accent_Primary,
 							.onClick = [this, pack]() {

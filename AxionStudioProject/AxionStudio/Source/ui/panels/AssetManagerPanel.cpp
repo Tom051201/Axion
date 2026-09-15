@@ -11,6 +11,8 @@
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SVerticalBox.h>
 #include <Silica/include/SCollapsingHeader.h>
+#include <Silica/include/SMenuAnchor.h>
+#include <Silica/include/SImage.h>
 
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/core/EnumUtils.h"
@@ -24,32 +26,19 @@
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 // ----- HELPER FUNCTIONS AND CONSTANTS -----
 namespace {
-	constexpr float TOOLBAR_PADDING = 5.0f;
-	constexpr float BUTTON_PAD_X = 10.0f;
-	constexpr float BUTTON_PAD_Y = 6.0f;
-
-	constexpr float SCROLL_CONTENT_PADDING = 10.0f;
-	constexpr float SECTION_SPACING = 10.0f;
-	constexpr float ROW_SPACING = 2.0f;
-	constexpr float LIST_SPACING = 6.0f;
-	constexpr float ASSET_ITEM_SPACING = 4.0f;
-
-	constexpr float INNER_HEADER_PAD_X = 10.0f;
-	constexpr float INNER_HEADER_PAD_Y = 5.0f;
-	constexpr float OUTER_HEADER_PAD_X = 15.0f;
-	constexpr float OUTER_HEADER_PAD_Y = 5.0f;
-
 
 	template<typename T>
 	Silica::WidgetPtr buildAssetInfoWidget(const char* name, std::function<Silica::WidgetPtr(Axion::Ref<T>)> elementFunc) {
 		const auto& map = Axion::AssetManager::getMap<T>();
 		std::string label = std::string(name) + " (" + std::to_string(map.size()) + ")";
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = LIST_SPACING });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = Axion::EditorTheme::SPACING_MEDIUM });
 
 		if (map.empty()) {
 			contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
@@ -59,7 +48,7 @@ namespace {
 		}
 		else {
 			for (const auto& [handle, asset] : map) {
-				auto assetContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = ASSET_ITEM_SPACING });
+				auto assetContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = Axion::EditorTheme::SPACING_SMALL });
 
 				std::string filePath = Axion::AssetManager::getRelativeToAssets(Axion::AssetManager::getAssetFilePath<T>(handle)).string();
 				assetContent->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Asset File: " + filePath }) });
@@ -78,7 +67,7 @@ namespace {
 					.title = std::string(name) + " [" + handle.uuid.toString() + "]",
 					.initiallyOpen = false,
 					.content = Silica::MakeWidget<Silica::SBox>({
-						.padding = { INNER_HEADER_PAD_X, INNER_HEADER_PAD_Y },
+						.padding = { Axion::EditorTheme::PADDING_MEDIUM, Axion::EditorTheme::PADDING_SMALL },
 						.child = assetContent
 					}),
 				});
@@ -91,7 +80,7 @@ namespace {
 			.title = label,
 			.initiallyOpen = false,
 			.content = Silica::MakeWidget<Silica::SBox>({
-				.padding = { OUTER_HEADER_PAD_X, OUTER_HEADER_PAD_Y },
+				.padding = { Axion::EditorTheme::PADDING_LARGE, Axion::EditorTheme::PADDING_SMALL },
 				.child = contentBox
 			}),
 		});
@@ -103,7 +92,7 @@ namespace Axion {
 
 	Silica::WidgetPtr AssetManagerPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({ .borderThickness = Silica::GetTheme().Border_Thickness });
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -132,35 +121,66 @@ namespace Axion {
 	void AssetManagerPanel::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
+		// -- Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { 16.0f, 16.0f }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeContextMenuItem("Reload", [this]() {
+								refresh();
+							}) }
+						}
+					})
+				})
+			})
+		});
+
 		// ----- Refresh Button -----
-		auto refreshButton = Silica::MakeWidget<Silica::SButton>({
-			.padding = { BUTTON_PAD_X, BUTTON_PAD_Y },
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() {
-				refresh();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Refresh Assets" })
+		auto refreshButton = SilicaHelpers::MakeToolbarBtn("Refresh Assets", Silica::GetTheme().Accent_Primary, [this]() {
+			refresh();
 		});
 
 		// ----- Toolbar -----
 		auto toolbar = Silica::MakeWidget<Silica::SBox>({
-			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
+				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
-					{ {2,0}, refreshButton }
+					{ {0,0}, optionsMenu },
+					{ {0,0}, refreshButton }
 				}
 			})
 		});
 
 
 		// ----- Scrollable Content -----
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SECTION_SPACING });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_LARGE });
 
 		// -- Mesh Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Mesh>("Mesh" , [&](Ref<Mesh> mesh) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Vertices", std::to_string(mesh->getVertexBuffer()->getVertexCount())) });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Indices", std::to_string(mesh->getIndexCount())) });
 			return box;
@@ -168,7 +188,7 @@ namespace Axion {
 
 		// -- Texture2D Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Texture2D>("Texture2D" , [&](Ref<Texture2D> tex) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Width", std::to_string(tex->getWidth()) + " px") });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Height", std::to_string(tex->getHeight()) + " px") });
 			return box;
@@ -176,7 +196,7 @@ namespace Axion {
 
 		// -- TextureCube Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<TextureCube>("TextureCube" , [&](Ref<TextureCube> cube) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Face Width", std::to_string(cube->getFaceWidth()) + " px") });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Face Height", std::to_string(cube->getFaceHeight()) + " px") });
 			return box;
@@ -184,7 +204,7 @@ namespace Axion {
 
 		// -- Material Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Material>("Material" , [&](Ref<Material> material) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Name", material->getName()) });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Pipeline", material->getPipelineHandle().isValid() ? material->getPipelineHandle().uuid.toString() : "Internal Default") });
 			return box;
@@ -192,7 +212,7 @@ namespace Axion {
 
 		// -- Skybox Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Skybox>("Skybox" , [&](Ref<Skybox> skybox) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Texture UUID", skybox->getTextureHandle().uuid.toString()) });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Pipeline UUID", skybox->getPipelineHandle().isValid() ? skybox->getPipelineHandle().uuid.toString() : "Internal Default") });
 			return box;
@@ -200,14 +220,14 @@ namespace Axion {
 
 		// -- Shader Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Shader>("Shader" , [&](Ref<Shader> shader) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Name", shader->getName()) });
 			return box;
 		}) });
 
 		// -- Pipeline Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Pipeline>("Pipeline" , [&](Ref<Pipeline> pipeline) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			const auto& spec = pipeline->getSpecification();
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Color Format", EnumUtils::toString(spec.colorFormat)) });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Depth Test", spec.depthTest ? "Enabled" : "Disabled") });
@@ -217,7 +237,7 @@ namespace Axion {
 
 		// -- AudioClip Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<AudioClip>("AudioClip" , [&](Ref<AudioClip> clip) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("File", clip->getPath().string()) });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Load Mode", EnumUtils::toString(clip->getMode())) });
 			return box;
@@ -225,7 +245,7 @@ namespace Axion {
 
 		// -- PhysicsMaterial Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<PhysicsMaterial>("PhysicsMaterial" , [&](Ref<PhysicsMaterial> physMat) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Static Friction", std::to_string(physMat->staticFriction)) });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Dynamic Friction", std::to_string(physMat->dynamicFriction)) });
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Restitution", std::to_string(physMat->restitution)) });
@@ -234,7 +254,7 @@ namespace Axion {
 
 		// -- Prefab Assets --
 		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Prefab>("Prefab" , [&](Ref<Prefab> prefab) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ROW_SPACING});
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL});
 			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Entity Nodes", std::to_string(prefab->getEntityNode().size())) });
 			return box;
 		}) });
@@ -243,7 +263,7 @@ namespace Axion {
 		// ----- Assemble -----
 		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({
 			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { SCROLL_CONTENT_PADDING, SCROLL_CONTENT_PADDING },
+				.padding = { EditorTheme::PADDING_LARGE, EditorTheme::PADDING_LARGE },
 				.child = contentBox
 			})
 		});

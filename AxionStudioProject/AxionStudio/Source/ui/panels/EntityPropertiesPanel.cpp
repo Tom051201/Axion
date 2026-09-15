@@ -22,6 +22,7 @@
 #include <Silica/include/SWrappedTextBlock.h>
 #include <Silica/include/SScissorBox.h>
 #include <Silica/include/SInputFieldInt.h>
+#include <Silica/include/SImage.h>
 
 #include "AxionEngine/Source/core/EnumUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -33,22 +34,22 @@
 #include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
-namespace Axion {
+namespace {
+	constexpr float COMPONENT_PAD_X = 10.0f;
+	constexpr float COMPONENT_PAD_Y = 5.0f;
+	constexpr float EMPTY_TEXT_WIDTH = 250.0f;
+	constexpr float AUDIO_BTN_PAD_Y = 2.0f;
+	constexpr float TOP_MARGIN_SLOT = 6.0f;
 
-	// ----- Global Component Clipboard -----
-	namespace {
-
-		struct ComponentClipboardData {
-			std::string componentName;
-			std::function<Shared<EditorCommand>(Entity)> createPasteCommand;
-		};
-
-		static std::optional<ComponentClipboardData> s_componentClipboard;
-
-	}
-
-
+	struct ComponentClipboardData {
+		std::string componentName;
+		std::function<Axion::Shared<Axion::EditorCommand>(Axion::Entity)> createPasteCommand;
+	};
+	static std::optional<ComponentClipboardData> s_componentClipboard;
 
 	// ----- CUSTOM WIDGETS -----
 	class SEntityHeaderLayout : public Silica::SWidget {
@@ -118,8 +119,6 @@ namespace Axion {
 
 	};
 
-
-
 	// ----- HELPER FUNCTIONS -----
 	std::string ToLower(std::string str) {
 		std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -127,7 +126,7 @@ namespace Axion {
 	}
 
 	template<typename T, typename UIBuilderFunc>
-	void drawComponentBlock(const std::string& title, Entity entity, std::shared_ptr<Silica::SVerticalBox> container, std::function<void()> triggerRebuild, bool isRemovable, UIBuilderFunc buildContent) {
+	void drawComponentBlock(const std::string& title, Axion::Entity entity, std::shared_ptr<Silica::SVerticalBox> container, std::function<void()> triggerRebuild, bool isRemovable, UIBuilderFunc buildContent) {
 		if (!entity.hasComponent<T>()) return;
 
 		std::vector<Silica::Slot> headerSlots;
@@ -141,8 +140,8 @@ namespace Axion {
 					auto compData = entity.getComponent<T>();
 					s_componentClipboard = {
 						title,
-						[compData, title](Entity target) -> Shared<EditorCommand> {
-							return MakeShared<PasteComponentCommand<T>>(target, title, compData);
+						[compData, title](Axion::Entity target) -> Axion::Shared<Axion::EditorCommand> {
+							return Axion::MakeShared<Axion::PasteComponentCommand<T>>(target, title, compData);
 						}
 					};
 
@@ -161,10 +160,10 @@ namespace Axion {
 					.color = Silica::Color::transparent(),
 					.hoverColor = Silica::GetTheme().Accent_Danger,
 					.onClick = [title, entity, triggerRebuild]() mutable {
-						EditorActionQueue::push([title, entity, triggerRebuild]() mutable {
-							auto cmd = MakeShared<RemoveComponentCommand<T>>(entity, title);
+						Axion::EditorActionQueue::push([title, entity, triggerRebuild]() mutable {
+							auto cmd = MakeShared<Axion::RemoveComponentCommand<T>>(entity, title);
 							cmd->execute();
-							EditorCommandManager::push(cmd);
+							Axion::EditorCommandManager::push(cmd);
 							if (triggerRebuild) triggerRebuild();
 						});
 
@@ -208,13 +207,14 @@ namespace Axion {
 		});
 	}
 
+}
 
-
+namespace Axion {
 
 	// ----- ENTITY PROPERTIES PANEL IMPLEMENTATION -----
 	Silica::WidgetPtr EntityPropertiesPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
+			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 0.0f });
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.child = m_contentBox
@@ -258,7 +258,7 @@ namespace Axion {
 		if (!ProjectManager::hasProject()) {
 			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
 				.text = "No Project Loaded.\n\nPlease load or create a project from the top menu bar to view entity properties.",
-				.wrapWidth = 250.0f,
+				.wrapWidth = EMPTY_TEXT_WIDTH,
 				.color = Silica::GetTheme().Text_Dim
 			});
 
@@ -268,7 +268,7 @@ namespace Axion {
 				.child = emptyText
 			});
 
-			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({.child = centeredState }));
+			m_uiRoot->setChild(Silica::MakeWidget<Silica::SScissorBox>({ .child = centeredState }));
 			return;
 		}
 
@@ -287,7 +287,7 @@ namespace Axion {
 		if (!entity) {
 			auto emptyText = Silica::MakeWidget<Silica::SWrappedTextBlock>({
 				.text = "No Entity Selected.\n\nPlease select an entity from the Hierarchy Panel or Viewport to view and edit its properties.",
-				.wrapWidth = 250.0f,
+				.wrapWidth = EMPTY_TEXT_WIDTH,
 				.color = Silica::GetTheme().Text_Dim
 			});
 
@@ -367,19 +367,53 @@ namespace Axion {
 		if (!entity.hasComponent<ScriptComponent>()) registerComp.operator()<ScriptComponent>("C# Script", "Scripting");
 
 		auto menuListContainer = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 0.0f });
-		auto addComponentMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+		auto addComponentMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL });
 
 		// -- Add Component Button --
 		auto addComponentMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.anchorContent = Silica::MakeWidget<Silica::SButton>({
-				.padding = { 8.0f, 4.0f },
+				.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 				.hoverColor = Silica::GetTheme().Accent_Primary,
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add Component" })
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = addComponentMenuContent
+			})
+		});
+
+		// -- Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Copy Entity ID", [entity]() {
+//								PlatformUtils::setClipboardText(entity.getComponent<UUIDComponent>().id.toString());
+							}) }
+						}
+					})
+				})
 			})
 		});
 
@@ -398,7 +432,7 @@ namespace Axion {
 			if (grouped.empty()) {
 				menuListContainer->addSlot({
 					.padding = {10,10},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "No matches found..." }) 
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "No matches found..." })
 				});
 				return;
 			}
@@ -406,7 +440,7 @@ namespace Axion {
 			if (lowerFilter.empty()) {
 				for (const auto& [category, comps] : grouped) {
 
-					auto subMenuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 0.0f });
+					auto subMenuBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 0.0f });
 					for (const auto& comp : comps) {
 						subMenuBox->addSlot({
 							.padding = {0,0},
@@ -457,10 +491,8 @@ namespace Axion {
 			.onTextChanged = populateMenuList
 		});
 
-
 		addComponentMenuContent->addSlot({ {4.0f, 4.0f}, searchBar });
 		addComponentMenuContent->addSlot({ {0.0f, 0.0f}, Silica::MakeWidget<Silica::SScrollBox>({.child = menuListContainer }) });
-
 		populateMenuList("");
 
 		// -- Build the Trailing Widget for the Header --
@@ -468,7 +500,7 @@ namespace Axion {
 		if (s_componentClipboard.has_value()) {
 			headerTrailingSlots.push_back({
 				{0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.hoverColor = Silica::GetTheme().Element_Hover,
 					.onClick = [entity, triggerRebuild]() mutable {
 						if (s_componentClipboard.has_value()) {
@@ -489,47 +521,54 @@ namespace Axion {
 		headerTrailingSlots.push_back({ {0,0}, addComponentMenu });
 
 		auto headerTrailingBox = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 5.0f,
+			.spacing = EditorTheme::SPACING_MEDIUM,
 			.slots = headerTrailingSlots
+		});
+
+		auto headerTopLeftBox = Silica::MakeWidget<Silica::SHorizontalBox>({
+			.spacing = EditorTheme::SPACING_MEDIUM,
+			.slots = {
+				{ {0,0}, optionsMenu },
+				{ {1,0}, nameInput }
+			}
+		});
+
+		auto topRowLayout = Silica::MakeWidget<SEntityHeaderLayout>({
+			.textInput = headerTopLeftBox,
+			.trailingWidget = headerTrailingBox
+		});
+
+		auto bottomRowLayout = Silica::MakeWidget<Silica::SHorizontalBox>({
+			.spacing = EditorTheme::SPACING_MEDIUM,
+			.slots = {
+				{ {0,0}, Silica::MakeWidget<Silica::SBox>({
+					.explicitSize = Silica::Vec2{ EditorTheme::ICON_SIZE_SMALL + (EditorTheme::PADDING_SMALL * 2.0f), 0.0f },
+					.backgroundColor = Silica::Color::transparent()
+				})},
+				{ {1,0}, Silica::MakeWidget<Silica::STextBlock>({
+					.text = uuidStr,
+					.color = Silica::GetTheme().Text_Dim,
+				})}
+			}
 		});
 
 		// -- Build Top Bar --
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 10.0f, 10.0f },
+			.padding = { EditorTheme::PADDING_LARGE, EditorTheme::PADDING_LARGE },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 4.0f,
+				.spacing = EditorTheme::SPACING_SMALL,
 				.slots = {
-					{ { 0.0f, 0.0f }, Silica::MakeWidget<SEntityHeaderLayout>({
-						.textInput = nameInput,
-						.trailingWidget = headerTrailingBox
-					})},
-					{ { 0.0f, 0.0f }, Silica::MakeWidget<Silica::STextBlock>({
-						.text = uuidStr,
-						.color = Silica::GetTheme().Text_Dim,
-					})}
+					{ { 0.0f, 0.0f }, topRowLayout },
+					{ { 0.0f, 0.0f }, bottomRowLayout }
 				}
 			})
 		});
 
-		auto container = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 4.0f });
+		auto container = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL });
 
 
 		// -- Helper Function --
-		auto MakePropertyRow = [&](const std::string& label, Silica::WidgetPtr valueWidget) {
-			return Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 10.0f,
-				.slots = {
-					{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-						.explicitSize = Silica::Vec2(120.0f, 0.0f),
-						.backgroundColor = Silica::Color::transparent(),
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-					})},
-					{ {0, 0}, valueWidget }
-				}
-			});
-		};
-
 		auto Vec4ToColor = [](const Vec4& vecColor) {
 			return Silica::Color(
 				(uint8_t)(std::clamp(vecColor.x, 0.0f, 1.0f) * 255.0f),
@@ -544,14 +583,15 @@ namespace Axion {
 		drawComponentBlock<TransformComponent>("Transform", entity, container, triggerRebuild, false, [&]() {
 			auto& transform = entity.getComponent<TransformComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 4.0f,
+					.spacing = EditorTheme::SPACING_SMALL,
 					.slots = {
 						// -- POSITION --
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Position",
 							.initialValue = Silica::Vec3(transform.position.x, transform.position.y, transform.position.z),
+							.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().position = Vec3(val.x, val.y, val.z);
 							},
@@ -569,6 +609,7 @@ namespace Axion {
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Rotation",
 							.initialValue = Silica::Vec3(transform.getEulerAngles().x, transform.getEulerAngles().y, transform.getEulerAngles().z),
+							.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().setEulerAngles(Vec3(val.x, val.y, val.z));
 							},
@@ -582,11 +623,11 @@ namespace Axion {
 								}
 							}
 						})},
-
 						// --- SCALE ---
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Scale",
 							.initialValue = Silica::Vec3(transform.scale.x, transform.scale.y, transform.scale.z),
+							.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().scale = Vec3(val.x, val.y, val.z);
 							},
@@ -612,7 +653,7 @@ namespace Axion {
 
 			// -- Drag Drop Logic --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -645,14 +686,13 @@ namespace Axion {
 				std::string indexCount = mesh ? std::to_string(mesh->getIndexCount()) : "Unknown";
 
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 4.0f,
+					.spacing = EditorTheme::SPACING_SMALL,
 					.slots = {
 						{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "UUID: " + meshComponent.handle.uuid.toString(), }) },
 						{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Vertices: " + vertexCount }) },
 						{ {0, 0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Indices: " + indexCount }) },
-
-						{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-							.padding = { 8.0f, 4.0f },
+						{ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+							.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 							.onClick = [entity, triggerRebuild]() mutable {
 								entity.getComponent<MeshComponent>().handle.invalidate();
 								triggerRebuild();
@@ -666,7 +706,7 @@ namespace Axion {
 			// -- Has No Mesh Loaded --
 			else {
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
 						if (!std::filesystem::exists(meshDir)) {
@@ -697,7 +737,7 @@ namespace Axion {
 
 			// -- Drag Drop Logic --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -733,15 +773,14 @@ namespace Axion {
 				std::string boneCount = actualMesh ? std::to_string(actualMesh->getSkeleton().bones.size()) : "Unknown";
 
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }))},
-						{ {0,0}, MakePropertyRow("Vertices", Silica::MakeWidget<Silica::STextBlock>({.text = vertexCount }))},
-						{ {0,0}, MakePropertyRow("Indices", Silica::MakeWidget<Silica::STextBlock>({.text = indexCount }))},
-						{ {0,0}, MakePropertyRow("Bones", Silica::MakeWidget<Silica::STextBlock>({.text = boneCount }))},
-
-						{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-							.padding = { 8.0f, 4.0f },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Vertices", Silica::MakeWidget<Silica::STextBlock>({.text = vertexCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Indices", Silica::MakeWidget<Silica::STextBlock>({.text = indexCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Bones", Silica::MakeWidget<Silica::STextBlock>({.text = boneCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+							.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 							.onClick = [entity, triggerRebuild]() mutable {
 								entity.getComponent<SkeletalMeshComponent>().handle.invalidate();
 								triggerRebuild();
@@ -750,12 +789,12 @@ namespace Axion {
 							.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Skeletal Mesh" })
 						})}
 					}
-					}));
+				}));
 			}
 			// -- Has No Skeletal Mesh Loaded --
 			else {
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
 						if (!std::filesystem::exists(meshDir)) {
@@ -808,14 +847,14 @@ namespace Axion {
 				materialComponent.materials.resize(submeshCount);
 			}
 
-			auto materialList = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 15.0f });
+			auto materialList = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_LARGE });
 
 			for (uint32_t i = 0; i < submeshCount; i++) {
 				std::string label = "Material (" + std::to_string(i) + ")";
 
 				// -- Create Drop Zone For This Slot --
 				std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 5.0f },
+					.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 					.onDragOver = [](const Silica::DragDropPayload& payload) {
 						if (payload.type == "AssetPath") {
 							auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -855,18 +894,18 @@ namespace Axion {
 					Vec4 albedoVec4(colorData[0], colorData[1], colorData[2], colorData[3]);
 
 					dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-						.spacing = 8.0f,
+						.spacing = EditorTheme::SPACING_MEDIUM,
 						.slots = {
-							{ {0,0}, MakePropertyRow(label, Silica::MakeWidget<Silica::STextBlock>({.text = material->getName() }))},
-							{ {0,0}, MakePropertyRow("Pipeline", Silica::MakeWidget<Silica::STextBlock>({.text = pipelineName }))},
-							{ {0,0}, MakePropertyRow("Albedo Color", Silica::MakeWidget<Silica::SColorField>({
+							{ {0,0}, SilicaHelpers::MakePropertyRow(label, Silica::MakeWidget<Silica::STextBlock>({.text = material->getName() }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+							{ {0,0}, SilicaHelpers::MakePropertyRow("Pipeline", Silica::MakeWidget<Silica::STextBlock>({.text = pipelineName }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+							{ {0,0}, SilicaHelpers::MakePropertyRow("Albedo Color", Silica::MakeWidget<Silica::SColorField>({
 								.initialColor = Vec4ToColor(albedoVec4),
 								.onColorChanged = [material](Silica::Color c) mutable {
 									material->setAlbedoColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
 								}
-							}))},
-							{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-								.padding = { 8.0f, 4.0f },
+							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+							{ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+								.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 								.onClick = [entity, i, triggerRebuild]() mutable {
 									EditorActionQueue::push([entity, i, triggerRebuild]() mutable {
 										entity.getComponent<MaterialComponent>().materials[i].invalidate();
@@ -884,7 +923,7 @@ namespace Axion {
 					std::string btnLabel = "Open " + label + "...";
 
 					dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
-						.padding = { 8.0f, 4.0f },
+						.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [entity, i, triggerRebuild]() mutable {
 							std::filesystem::path materialDir = ProjectManager::getProject()->getAssetsPath() / "materials";
 							if (!std::filesystem::exists(materialDir)) materialDir = ProjectManager::getProject()->getAssetsPath();
@@ -909,7 +948,7 @@ namespace Axion {
 			}
 
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 0.0f, 5.0f },
+				.padding = { 0.0f, COMPONENT_PAD_Y },
 				.child = materialList
 			});
 		});
@@ -921,7 +960,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -951,20 +990,20 @@ namespace Axion {
 			std::vector<Silica::Slot> uiSlots;
 
 			uiSlots.push_back({
-				{0,0}, MakePropertyRow("Tint", Silica::MakeWidget<Silica::SColorField>({
+				{0,0}, SilicaHelpers::MakePropertyRow("Tint", Silica::MakeWidget<Silica::SColorField>({
 					.initialColor = Vec4ToColor(spriteComponent.tint),
 					.onColorChanged = [entity](Silica::Color c) mutable {
 						entity.getComponent<SpriteComponent>().tint = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 					}
-				}))
+				}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)
 			});
 
 			if (spriteComponent.texture.isValid()) {
 				std::string uuidStr = spriteComponent.texture.uuid.toString();
-				uiSlots.push_back({ {0,0}, MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<SpriteComponent>().texture.invalidate();
 						triggerRebuild();
@@ -974,8 +1013,8 @@ namespace Axion {
 				}) });
 			}
 			else {
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / "textures";
 						if (!std::filesystem::exists(texDir)) texDir = ProjectManager::getProject()->getAssetsPath();
@@ -995,7 +1034,10 @@ namespace Axion {
 			}
 
 			// -- Assemble --
-			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 8.0f, .slots = uiSlots }));
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
+				.spacing = EditorTheme::SPACING_MEDIUM,
+				.slots = uiSlots
+			}));
 
 			return dropZoneBox;
 		});
@@ -1005,16 +1047,16 @@ namespace Axion {
 		drawComponentBlock<DirectionalLightComponent>("Directional Light", entity, container, triggerRebuild, true, [&]() {
 			auto& dirLightComponent = entity.getComponent<DirectionalLightComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
 							.initialColor = Vec4ToColor(dirLightComponent.color),
 							.onColorChanged = [entity](Silica::Color c) mutable {
 								entity.getComponent<DirectionalLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 							}
-						}))}
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
 					}
 				})
 			});
@@ -1025,28 +1067,28 @@ namespace Axion {
 		drawComponentBlock<PointLightComponent>("Point Light", entity, container, triggerRebuild, true, [&]() {
 			auto& pointLightComponent = entity.getComponent<PointLightComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
 							.initialColor = Vec4ToColor(pointLightComponent.color),
 							.onColorChanged = [entity](Silica::Color c) mutable {
 								entity.getComponent<PointLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 							}
-						}))},
-						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.intensity,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().intensity = val; }
-						}))},
-						{ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.radius,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().radius = val; }
-						}))},
-						{ {0,0}, MakePropertyRow("Falloff", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Falloff", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.falloff,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().falloff = val; }
-						}))}
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
 					}
 				})
 			});
@@ -1057,32 +1099,32 @@ namespace Axion {
 		drawComponentBlock<SpotLightComponent>("Spot Light", entity, container, triggerRebuild, true, [&]() {
 			auto& spotLightComponent = entity.getComponent<SpotLightComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Color", Silica::MakeWidget<Silica::SColorField>({
 							.initialColor = Vec4ToColor(spotLightComponent.color),
 							.onColorChanged = [entity](Silica::Color c) mutable {
 								entity.getComponent<SpotLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 							}
-						}))},
-						{ {0,0}, MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.intensity,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().intensity = val; }
-						}))},
-						{ {0,0}, MakePropertyRow("Range", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Range", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.range,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().range = val; }
-						}))},
-						{ {0,0}, MakePropertyRow("Inner Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Inner Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.innerConeAngle,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().innerConeAngle = val; }
-						}))},
-						{ {0,0}, MakePropertyRow("Outer Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Outer Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.outerConeAngle,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().outerConeAngle = val; }
-						}))}
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
 					}
 				})
 			});
@@ -1093,22 +1135,22 @@ namespace Axion {
 		drawComponentBlock<NetworkIdentityComponent>("Network Identity", entity, container, triggerRebuild, true, [&]() {
 			auto& netIdentityComponent = entity.getComponent<NetworkIdentityComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Owner Client ID", Silica::MakeWidget<Silica::SInputFieldInt>({
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Owner Client ID", Silica::MakeWidget<Silica::SInputFieldInt>({
 							.initialValue = (int)netIdentityComponent.ownerClientID,
 							.onValueChanged = [entity](int val) mutable {
 								entity.getComponent<NetworkIdentityComponent>().ownerClientID = (uint32_t)std::max(0, val);
 							}
-						}))},
-						{ {0,0}, MakePropertyRow("Is Local Player", Silica::MakeWidget<Silica::SCheckBox>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Is Local Player", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = netIdentityComponent.isLocalPlayer,
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<NetworkIdentityComponent>().isLocalPlayer = checked;
 							}
-						}))}
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
 					}
 				})
 			});
@@ -1119,22 +1161,22 @@ namespace Axion {
 		drawComponentBlock<CameraComponent>("Camera", entity, container, triggerRebuild, true, [&]() {
 			auto& cameraComponent = entity.getComponent<CameraComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Primary", Silica::MakeWidget<Silica::SCheckBox>({
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Primary", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = cameraComponent.isPrimary,
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<CameraComponent>().isPrimary = checked;
 							}
-						}))},
-						{ {0,0}, MakePropertyRow("Fixed Aspect Ratio", Silica::MakeWidget<Silica::SCheckBox>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Aspect Ratio", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = cameraComponent.fixedAspectRatio,
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<CameraComponent>().fixedAspectRatio = checked;
 							}
-						}))}
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
 					}
 				})
 			});
@@ -1147,7 +1189,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -1183,16 +1225,16 @@ namespace Axion {
 				bool isPaused = audioComponent.audio->isPaused();
 
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0, 0}, MakePropertyRow("Name", Silica::MakeWidget<Silica::STextBlock>({.text = name }))},
-						{ {0, 0}, MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuid }))},
-						{ {0, 0}, MakePropertyRow("Mode", Silica::MakeWidget<Silica::STextBlock>({.text = mode }))},
-						{ {0, 0}, MakePropertyRow("Playback", Silica::MakeWidget<Silica::SHorizontalBox>({
-							.spacing = 4.0f,
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Name", Silica::MakeWidget<Silica::STextBlock>({.text = name }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuid }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Mode", Silica::MakeWidget<Silica::STextBlock>({.text = mode }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Playback", Silica::MakeWidget<Silica::SHorizontalBox>({
+							.spacing = EditorTheme::SPACING_SMALL,
 							.slots = {
 								{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-									.padding = { 8.0f, 2.0f },
+									.padding = { EditorTheme::BUTTON_PADDING_X, AUDIO_BTN_PAD_Y },
 									.onClick = [entity, triggerRebuild]() mutable {
 										entity.getComponent<AudioComponent>().audio->play();
 										triggerRebuild();
@@ -1201,7 +1243,7 @@ namespace Axion {
 									.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Play" })
 								})},
 								{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-									.padding = { 8.0f, 2.0f },
+									.padding = { EditorTheme::BUTTON_PADDING_X, AUDIO_BTN_PAD_Y },
 									.onClick = [entity, triggerRebuild]() mutable {
 										entity.getComponent<AudioComponent>().audio->stop();
 										triggerRebuild();
@@ -1210,7 +1252,7 @@ namespace Axion {
 									.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Stop" })
 								})},
 								{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-									.padding = { 8.0f, 2.0f },
+									.padding = { EditorTheme::BUTTON_PADDING_X, AUDIO_BTN_PAD_Y },
 									.onClick = [entity, isPaused, triggerRebuild]() mutable {
 										if (isPaused) entity.getComponent<AudioComponent>().audio->resume();
 										else entity.getComponent<AudioComponent>().audio->pause();
@@ -1220,58 +1262,58 @@ namespace Axion {
 									.child = Silica::MakeWidget<Silica::STextBlock>({.text = isPaused ? "Resume" : "Pause" })
 								})}
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Volume", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Volume", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getVolume(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setVolume(val);
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Pitch", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Pitch", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getPitch(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setPitch(val);
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Pan", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Pan", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getPan(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setPan(val);
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Loop", Silica::MakeWidget<Silica::SCheckBox>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Loop", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = audioComponent.audio->isLooping(),
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<AudioComponent>().audio->loop(checked);
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Spatialize", Silica::MakeWidget<Silica::SCheckBox>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Spatialize", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = audioComponent.audio->isSpatial(),
 							.onCheckChanged = [entity](bool checked) mutable {
 								if (checked) entity.getComponent<AudioComponent>().audio->enableSpatial();
 								else entity.getComponent<AudioComponent>().audio->disableSpatial();
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Min Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Min Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getMinDistance(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setMinDistance(val);
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Max Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Max Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getMaxDistance(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setMaxDistance(val);
 							}
-						}))},
-						{ {0, 0}, MakePropertyRow("Doppler", Silica::MakeWidget<Silica::SInputFieldFloat>({
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Doppler", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getDopplerFactor(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setDopplerFactor(val);
 							}
-						}))},
-						{ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-							.padding = { 8.0f, 4.0f },
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+							.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 							.onClick = [entity, triggerRebuild]() mutable {
 								entity.getComponent<AudioComponent>().audio = nullptr;
 								triggerRebuild();
@@ -1285,7 +1327,7 @@ namespace Axion {
 			// -- Has No Audio Loaded --
 			else {
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
 						if (!std::filesystem::exists(audioDir)) audioDir = ProjectManager::getProject()->getAssetsPath();
@@ -1315,7 +1357,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -1342,17 +1384,17 @@ namespace Axion {
 			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Class Name", Silica::MakeWidget<Silica::SEditableText>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Class Name", Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = scriptComponent.className,
 				.onTextCommitted = [entity](const std::string& newText) mutable {
 					entity.getComponent<ScriptComponent>().className = newText;
 				}
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("State", Silica::MakeWidget<Silica::STextBlock>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("State", Silica::MakeWidget<Silica::STextBlock>({
 				.text = scriptComponent.isInstantiated ? "Running" : "Waiting to start",
 				.color = scriptComponent.isInstantiated ? Silica::GetTheme().Text_Success : Silica::GetTheme().Text_Warning
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			const auto& fields = ScriptEngine::getScriptFields(scriptComponent.className);
 
@@ -1366,7 +1408,7 @@ namespace Axion {
 					for (const auto& field : fields) {
 						if (field.type == ScriptFieldType::Float) {
 							float val = ScriptEngine::getFieldValueFloat(scriptComponent.gcHandle, field.name);
-							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::SInputFieldFloat>({
+							uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow(field.name, Silica::MakeWidget<Silica::SInputFieldFloat>({
 								.initialValue = val,
 								.onValueChanged = [entity, fieldName = field.name](float newVal) mutable {
 									auto& sc = entity.getComponent<ScriptComponent>();
@@ -1374,14 +1416,14 @@ namespace Axion {
 										ScriptEngine::setFieldValueFloat(sc.gcHandle, fieldName, newVal);
 									}
 								}
-							})) });
+							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 						}
 						else if (field.type == ScriptFieldType::Vector3) {
 							Vec3 val = ScriptEngine::getFieldValueVector3(scriptComponent.gcHandle, field.name);
 							uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 								.label = field.name,
 								.initialValue = Silica::Vec3(val.x, val.y, val.z),
-								.labelWidth = 120.0f,
+								.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 								.onValueChanged = [entity, fieldName = field.name](Silica::Vec3 newVal) mutable {
 									auto& sc = entity.getComponent<ScriptComponent>();
 									if (sc.isInstantiated && sc.gcHandle) {
@@ -1395,16 +1437,16 @@ namespace Axion {
 				else {
 					for (const auto& field : fields) {
 						if (field.type == ScriptFieldType::Float) {
-							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
+							uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
 								.text = "0.00 (Edit Mode)",
 								.color = Silica::GetTheme().Text_Dim,
-							})) });
+							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 						}
 						else if (field.type == ScriptFieldType::Vector3) {
-							uiSlots.push_back({ {0,0}, MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
+							uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
 								.text = "[ 0.00, 0.00, 0.00 ] (Edit Mode)",
 								.color = Silica::GetTheme().Text_Dim,
-							})) });
+							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 						}
 					}
 				}
@@ -1412,7 +1454,7 @@ namespace Axion {
 
 			// -- Assemble --
 			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 8.0f,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = uiSlots
 			}));
 
@@ -1424,13 +1466,13 @@ namespace Axion {
 		drawComponentBlock<NativeScriptComponent>("Native Script", entity, container, triggerRebuild, true, [&]() {
 			auto& scriptComponent = entity.getComponent<NativeScriptComponent>();
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = 8.0f,
+					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, MakePropertyRow("Class Name", Silica::MakeWidget<Silica::STextBlock>({
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Class Name", Silica::MakeWidget<Silica::STextBlock>({
 							.text = scriptComponent.scriptName,
-						}))}
+						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
 					}
 				})
 			});
@@ -1443,7 +1485,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -1475,51 +1517,51 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Velocity Var",
 				.initialValue = Silica::Vec3(particleSystemComponent.velocityVariation.x, particleSystemComponent.velocityVariation.y, particleSystemComponent.velocityVariation.z),
-				.labelWidth = 120.0f,
+				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<ParticleSystemComponent>().velocityVariation = Vec3(val.x, val.y, val.z);
 				}
 			}) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Color", Silica::MakeWidget<Silica::SColorField>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Start Color", Silica::MakeWidget<Silica::SColorField>({
 				.initialColor = Vec4ToColor(particleSystemComponent.colorBegin),
 				.onColorChanged = [entity](Silica::Color c) mutable {
 					entity.getComponent<ParticleSystemComponent>().colorBegin = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 				}
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("End Color", Silica::MakeWidget<Silica::SColorField>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("End Color", Silica::MakeWidget<Silica::SColorField>({
 				.initialColor = Vec4ToColor(particleSystemComponent.colorEnd),
 				.onColorChanged = [entity](Silica::Color c) mutable {
 					entity.getComponent<ParticleSystemComponent>().colorEnd = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 				}
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Start Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Start Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.sizeBegin,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeBegin = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("End Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("End Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.sizeEnd,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeEnd = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Lifetime", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Lifetime", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.lifeTime,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().lifeTime = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Gravity Scale", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Gravity Scale", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.gravityScale,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().gravityScale = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			if (particleSystemComponent.texture.isValid()) {
 				std::string uuidStr = particleSystemComponent.texture.uuid.toString();
-				uiSlots.push_back({ {0,0}, MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<ParticleSystemComponent>().texture.invalidate();
 						triggerRebuild();
@@ -1529,8 +1571,8 @@ namespace Axion {
 				}) });
 			}
 			else {
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / "textures";
 						if (!std::filesystem::exists(texDir)) texDir = ProjectManager::getProject()->getAssetsPath();
@@ -1550,7 +1592,7 @@ namespace Axion {
 			}
 
 			// -- Assemble --
-			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 8.0f, .slots = uiSlots }));
+			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_MEDIUM, .slots = uiSlots }));
 
 			return dropZoneBox;
 		});
@@ -1562,7 +1604,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -1594,24 +1636,24 @@ namespace Axion {
 				std::vector<Silica::Slot> uiSlots;
 
 				std::string uuidStr = animatorComponent.currentClip.uuid.toString();
-				uiSlots.push_back({ {0,0}, MakePropertyRow("Clip UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Clip UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 				if (clip) {
 					char durationBuf[64];
 					snprintf(durationBuf, sizeof(durationBuf), "%.2f seconds", clip->duration);
 					std::string durationStr = durationBuf;
 					std::string trackCount = std::to_string(clip->boneAnimations.size());
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Duration", Silica::MakeWidget<Silica::STextBlock>({.text = durationStr })) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Bone Tracks", Silica::MakeWidget<Silica::STextBlock>({.text = trackCount })) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Duration", Silica::MakeWidget<Silica::STextBlock>({.text = durationStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Bone Tracks", Silica::MakeWidget<Silica::STextBlock>({.text = trackCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 				}
 
-				uiSlots.push_back({ {0,0}, MakePropertyRow("Playing", Silica::MakeWidget<Silica::SCheckBox>({
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Playing", Silica::MakeWidget<Silica::SCheckBox>({
 					.initialCheck = animatorComponent.isPlaying,
 					.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<AnimatorComponent>().isPlaying = checked; }
-				})) });
+				}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<AnimatorComponent>().currentClip.invalidate();
 						triggerRebuild();
@@ -1620,12 +1662,12 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear Animation Clip" })
 				}) });
 
-				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 8.0f, .slots = uiSlots }));
+				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_MEDIUM, .slots = uiSlots }));
 			}
 			// -- Has No Animation Clip Loaded --
 			else {
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path animDir = ProjectManager::getProject()->getAssetsPath() / "animations";
 						if (!std::filesystem::exists(animDir)) animDir = ProjectManager::getProject()->getAssetsPath();
@@ -1664,56 +1706,56 @@ namespace Axion {
 				}
 			});
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Body Type", bodyTypeCombo) });
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Body Type", bodyTypeCombo, EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Kinematic", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Kinematic", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.isKinematic,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().isKinematic = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Use Global Gravity", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Use Global Gravity", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.useGlobalGravity,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().useGlobalGravity = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Enable CCD", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Enable CCD", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.enableCCD,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().enableCCD = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Mass", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Mass", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.mass,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().mass = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Linear Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Linear Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.linearDamping,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().linearDamping = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Angular Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Angular Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.angularDamping,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().angularDamping = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Fixed Rotation X", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Rotation X", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.fixedRotationX,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().fixedRotationX = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Fixed Rotation Y", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Rotation Y", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.fixedRotationY,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().fixedRotationY = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Fixed Rotation Z", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Rotation Z", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.fixedRotationZ,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().fixedRotationZ = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
+				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_MEDIUM, .slots = uiSlots })
 			});
 		});
 
@@ -1724,7 +1766,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -1756,7 +1798,7 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Half Extents",
 				.initialValue = Silica::Vec3(boxColliderComponent.halfExtents.x, boxColliderComponent.halfExtents.y, boxColliderComponent.halfExtents.z),
-				.labelWidth = 120.0f,
+				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<BoxColliderComponent>().halfExtents = Vec3(val.x, val.y, val.z);
 				}
@@ -1765,16 +1807,16 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(boxColliderComponent.offset.x, boxColliderComponent.offset.y, boxColliderComponent.offset.z),
-				.labelWidth = 120.0f,
+				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<BoxColliderComponent>().offset = Vec3(val.x, val.y, val.z);
 				}
 			}) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = boxColliderComponent.isTrigger,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<BoxColliderComponent>().isTrigger = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			if (boxColliderComponent.material.isValid()) {
 				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(boxColliderComponent.material);
@@ -1783,22 +1825,22 @@ namespace Axion {
 					char dfBuf[32]; snprintf(dfBuf, sizeof(dfBuf), "%.2f (Read-Only)", material->dynamicFriction);
 					char resBuf[32]; snprintf(resBuf, sizeof(resBuf), "%.2f (Read-Only)", material->restitution);
 
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = sfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = dfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
 						.text = resBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 				}
 
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<BoxColliderComponent>().material.invalidate();
 						triggerRebuild();
@@ -1808,8 +1850,8 @@ namespace Axion {
 				}) });
 			}
 			else {
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
 						if (!std::filesystem::exists(dir)) dir = ProjectManager::getProject()->getAssetsPath();
@@ -1830,9 +1872,9 @@ namespace Axion {
 
 			// -- Assemble --
 			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 8.0f,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = uiSlots
-			}));
+				}));
 
 			return dropZoneBox;
 		});
@@ -1844,7 +1886,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -1873,24 +1915,24 @@ namespace Axion {
 			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = sphereColliderComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<SphereColliderComponent>().radius = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(sphereColliderComponent.offset.x, sphereColliderComponent.offset.y, sphereColliderComponent.offset.z),
-				.labelWidth = 120.0f,
+				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<SphereColliderComponent>().offset = Vec3(val.x, val.y, val.z);
 				}
 			}) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = sphereColliderComponent.isTrigger,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<SphereColliderComponent>().isTrigger = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			if (sphereColliderComponent.material.isValid()) {
 				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(sphereColliderComponent.material);
@@ -1899,22 +1941,22 @@ namespace Axion {
 					char dfBuf[32]; snprintf(dfBuf, sizeof(dfBuf), "%.2f (Read-Only)", material->dynamicFriction);
 					char resBuf[32]; snprintf(resBuf, sizeof(resBuf), "%.2f (Read-Only)", material->restitution);
 
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = sfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = dfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
 						.text = resBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 				}
 
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<SphereColliderComponent>().material.invalidate();
 						triggerRebuild();
@@ -1924,8 +1966,8 @@ namespace Axion {
 				}) });
 			}
 			else {
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
 						if (!std::filesystem::exists(dir)) dir = ProjectManager::getProject()->getAssetsPath();
@@ -1946,7 +1988,7 @@ namespace Axion {
 
 			// -- Assemble --
 			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 8.0f,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = uiSlots
 			}));
 
@@ -1960,7 +2002,7 @@ namespace Axion {
 
 			// -- Create Drop Zone Box --
 			std::shared_ptr<Silica::SBox> dropZoneBox = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -1989,29 +2031,29 @@ namespace Axion {
 			// -- Build UI Slots --
 			std::vector<Silica::Slot> uiSlots;
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = capsuleColliderComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().radius = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Half Height", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Half Height", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = capsuleColliderComponent.halfHeight,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().halfHeight = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(capsuleColliderComponent.offset.x, capsuleColliderComponent.offset.y, capsuleColliderComponent.offset.z),
-				.labelWidth = 120.0f,
+				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<CapsuleColliderComponent>().offset = Vec3(val.x, val.y, val.z);
 				}
 			}) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = capsuleColliderComponent.isTrigger,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<CapsuleColliderComponent>().isTrigger = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			if (capsuleColliderComponent.material.isValid()) {
 				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(capsuleColliderComponent.material);
@@ -2020,22 +2062,22 @@ namespace Axion {
 					char dfBuf[32]; snprintf(dfBuf, sizeof(dfBuf), "%.2f (Read-Only)", material->dynamicFriction);
 					char resBuf[32]; snprintf(resBuf, sizeof(resBuf), "%.2f (Read-Only)", material->restitution);
 
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = sfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = dfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
-					uiSlots.push_back({ {0,0}, MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
 						.text = resBuf,
 						.color = Silica::GetTheme().Text_Dim
-					})) });
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 				}
 
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<CapsuleColliderComponent>().material.invalidate();
 						triggerRebuild();
@@ -2045,8 +2087,8 @@ namespace Axion {
 				}) });
 			}
 			else {
-				uiSlots.push_back({ {0, 6}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { 8.0f, 4.0f },
+				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
 						if (!std::filesystem::exists(dir)) dir = ProjectManager::getProject()->getAssetsPath();
@@ -2067,9 +2109,9 @@ namespace Axion {
 
 			// -- Assemble --
 			dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 8.0f,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = uiSlots
-			}));
+				}));
 
 			return dropZoneBox;
 		});
@@ -2091,26 +2133,26 @@ namespace Axion {
 				}
 			});
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Type", typeCombo) });
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Type", typeCombo, EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Affect Kinematic", Silica::MakeWidget<Silica::SCheckBox>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Affect Kinematic", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = gravitySourceComponent.affectKinematic,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<GravitySourceComponent>().affectKinematic = checked; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Strength", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Strength", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = gravitySourceComponent.strength,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().strength = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
-			uiSlots.push_back({ {0,0}, MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = gravitySourceComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().radius = val; }
-			})) });
+			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 			return Silica::MakeWidget<Silica::SBox>({
-				.padding = { 10.0f, 5.0f },
-				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 8.0f, .slots = uiSlots })
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
+				.child = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_MEDIUM, .slots = uiSlots })
 			});
 		});
 
@@ -2118,7 +2160,7 @@ namespace Axion {
 		// ----- Assemble Layout --
 		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({
 			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 0.0f, 4.0f },
+				.padding = { 0.0f, EditorTheme::PADDING_SMALL },
 				.child = container
 			})
 		});

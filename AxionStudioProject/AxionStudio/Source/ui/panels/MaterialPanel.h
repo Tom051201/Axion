@@ -15,6 +15,8 @@
 #include "AxionEngine/Source/graphics/Mesh.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
+#include "AxionStudio/Source/core/EditorEvents.h"
+
 namespace Silica {
 	class SBox;
 }
@@ -32,6 +34,8 @@ namespace Axion {
 		void onEvent(Event& ev);
 		void onUpdate(Timestep ts);
 		void setMaterial(const std::filesystem::path& materialPath);
+
+		void setEventCallback(std::function<void(Event&)> callback) { m_eventCallback = callback; }
 
 	private:
 
@@ -66,7 +70,9 @@ namespace Axion {
 		void cmdSaveMaterial();
 
 		// -- Events --
+		std::function<void(Event&)> m_eventCallback;
 		EventReply onProjectChanged(ProjectChangedEvent& ev);
+		EventReply onEditorSettingsChanged(EditorSettingsChangedEvent& ev);
 
 	};
 

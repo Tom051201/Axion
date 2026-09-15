@@ -20,6 +20,8 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/EditorEvents.h"
+#include "AxionStudio/Source/core/EditorSettings.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace {
@@ -38,12 +40,20 @@ namespace {
 
 namespace Axion {
 
-	Silica::WidgetPtr SettingsModal::getWidget(const SettingsPayload& initialSettings, std::function<void(const SettingsPayload&)> onApply, std::function<void()> onClose) {
-		m_onApply = onApply;
+	Silica::WidgetPtr SettingsModal::getWidget(std::function<void()> onClose) {
 		m_onClose = onClose;
 
 		if (!m_uiRoot) {
-			m_workingSettings = initialSettings;
+			m_pendingChanges = EditorSettingType::None;
+
+			// -- Pull current state --
+			m_workingState.maxAssetsPerFrame = AssetManager::getMaxAssetsPerFrame();
+			m_workingState.enableDiscordRPC = EditorSettings::enableDiscordRPC;
+			m_workingState.assetLibraryPaths = EditorSettings::assetLibraryPaths;
+			m_workingState.contentBrowserShowContentArea = EditorSettings::contentBrowserShowContentArea;
+			m_workingState.contentBrowserShowVFSTree = EditorSettings::contentBrowserShowVFSTree;
+			m_workingState.contentBrowserShowPhysicalTree = EditorSettings::contentBrowserShowPhysicalTree;
+			m_workingState.materialEditorInvertCamera = EditorSettings::materialEditorInvertCamera;
 
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.consumePointerEvents = true,
@@ -65,16 +75,16 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr SettingsModal::buildEditorPreferencesTab() {
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SPACING_LARGE });
-
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = SPACING_LARGE });
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Editor Preferences") });
 
 		// -- Asset load budget --
 		auto budgetInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
-				.initialValue = (int)m_workingSettings.maxAssetsPerFrame,
+				.initialValue = (int)m_workingState.maxAssetsPerFrame,
 				.onValueChanged = [this](int val) {
-					m_workingSettings.maxAssetsPerFrame = static_cast<uint32_t>(std::max(1, val));
+					m_workingState.maxAssetsPerFrame = static_cast<uint32_t>(std::max(1, val));
+					m_pendingChanges |= EditorSettingType::AssetLoadBudget;
 				}
 			})
 		});
@@ -82,9 +92,10 @@ namespace Axion {
 
 		// -- Discord RPC --
 		auto discordCheck = Silica::MakeWidget<Silica::SCheckBox>({
-			.initialCheck = m_workingSettings.enableDiscordRPC,
+			.initialCheck = m_workingState.enableDiscordRPC,
 			.onCheckChanged = [this](bool val) {
-				m_workingSettings.enableDiscordRPC = val;
+				m_workingState.enableDiscordRPC = val;
+				m_pendingChanges |= EditorSettingType::DiscordRPC;
 			}
 		});
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Enable Discord Rich Presence:", discordCheck, LABEL_WIDTH) });
@@ -109,7 +120,8 @@ namespace Axion {
 					.onClick = [this]() {
 						std::filesystem::path newPath = FileDialogs::openFolder(std::filesystem::current_path());
 						if (!newPath.empty()) {
-							m_workingSettings.assetLibraryPaths.push_back(newPath.string());
+							m_workingState.assetLibraryPaths.push_back(newPath.string());
+							m_pendingChanges |= EditorSettingType::AssetLibraryPaths;
 							rebuildUI();
 						}
 						return Silica::EventReply::handled();
@@ -125,15 +137,16 @@ namespace Axion {
 		// -- List of Paths --
 		auto pathsList = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SPACING_SMALL });
 
-		for (size_t i = 0; i < m_workingSettings.assetLibraryPaths.size(); ++i) {
+		for (size_t i = 0; i < m_workingState.assetLibraryPaths.size(); i++) {
 			auto pathRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = 10.0f,
 				.slots = {
 					{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 						.child = Silica::MakeWidget<Silica::SEditableText>({
-							.initialText = m_workingSettings.assetLibraryPaths[i],
+							.initialText = m_workingState.assetLibraryPaths[i],
 							.onTextChanged = [this, i](const std::string& val) {
-								m_workingSettings.assetLibraryPaths[i] = val;
+								m_workingState.assetLibraryPaths[i] = val;
+								m_pendingChanges |= EditorSettingType::AssetLibraryPaths;
 							}
 						})
 					})},
@@ -141,14 +154,15 @@ namespace Axion {
 						.padding = { 10.0f, 6.0f },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this, i]() {
-							m_workingSettings.assetLibraryPaths.erase(m_workingSettings.assetLibraryPaths.begin() + i);
+							m_workingState.assetLibraryPaths.erase(m_workingState.assetLibraryPaths.begin() + i);
+							m_pendingChanges |= EditorSettingType::AssetLibraryPaths;
 							rebuildUI();
 							return Silica::EventReply::handled();
 						},
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X"})
 					})}
 				}
-				});
+			});
 			pathsList->addSlot({ {0,0}, pathRow });
 		}
 
@@ -164,20 +178,29 @@ namespace Axion {
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Content Browser") });
 
 		auto cbShowContentArea = Silica::MakeWidget<Silica::SCheckBox>({
-			.initialCheck = m_workingSettings.contentBrowserShowContentArea,
-			.onCheckChanged = [this](bool val) { m_workingSettings.contentBrowserShowContentArea = val; }
+			.initialCheck = m_workingState.contentBrowserShowContentArea,
+			.onCheckChanged = [this](bool val) {
+				m_workingState.contentBrowserShowContentArea = val;
+				m_pendingChanges |= EditorSettingType::ContentBrowserLayout;
+			}
 		});
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Show Content Area:", cbShowContentArea, LABEL_WIDTH) });
 
 		auto cbShowVFSTree = Silica::MakeWidget<Silica::SCheckBox>({
-			.initialCheck = m_workingSettings.contentBrowserShowVFSTree,
-			.onCheckChanged = [this](bool val) { m_workingSettings.contentBrowserShowVFSTree = val; }
+			.initialCheck = m_workingState.contentBrowserShowVFSTree,
+			.onCheckChanged = [this](bool val) {
+				m_workingState.contentBrowserShowVFSTree = val;
+				m_pendingChanges |= EditorSettingType::ContentBrowserLayout;
+			}
 		});
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Show Collection Tree:", cbShowVFSTree, LABEL_WIDTH) });
 
 		auto cbShowPhysicalTree = Silica::MakeWidget<Silica::SCheckBox>({
-			.initialCheck = m_workingSettings.contentBrowserShowPhysicalTree,
-			.onCheckChanged = [this](bool val) { m_workingSettings.contentBrowserShowPhysicalTree = val; }
+			.initialCheck = m_workingState.contentBrowserShowPhysicalTree,
+			.onCheckChanged = [this](bool val) {
+				m_workingState.contentBrowserShowPhysicalTree = val;
+				m_pendingChanges |= EditorSettingType::ContentBrowserLayout;
+			}
 		});
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Show Physical Tree:", cbShowPhysicalTree, LABEL_WIDTH) });
 
@@ -186,8 +209,11 @@ namespace Axion {
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Material Editor") });
 
 		auto cbInvertCam = Silica::MakeWidget<Silica::SCheckBox>({
-			.initialCheck = m_workingSettings.materialEditorInvertCamera,
-			.onCheckChanged = [this](bool val) { m_workingSettings.materialEditorInvertCamera = val; }
+			.initialCheck = m_workingState.materialEditorInvertCamera,
+			.onCheckChanged = [this](bool val) {
+				m_workingState.materialEditorInvertCamera = val;
+				m_pendingChanges |= EditorSettingType::MaterialEditorCamera;
+			}
 		});
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Invert Camera Pan/Orbit:", cbInvertCam, LABEL_WIDTH) });
 
@@ -255,6 +281,62 @@ namespace Axion {
 			.child = splitLayout
 		});
 
+		// -- Apply Logic --
+		auto applyChanges = [this]() {
+			// -- Commit values --
+			AssetManager::setMaxAssetsPerFrame(m_workingState.maxAssetsPerFrame);
+			EditorSettings::enableDiscordRPC = m_workingState.enableDiscordRPC;
+			EditorSettings::assetLibraryPaths = m_workingState.assetLibraryPaths;
+			EditorSettings::contentBrowserShowContentArea = m_workingState.contentBrowserShowContentArea;
+			EditorSettings::contentBrowserShowVFSTree = m_workingState.contentBrowserShowVFSTree;
+			EditorSettings::contentBrowserShowPhysicalTree = m_workingState.contentBrowserShowPhysicalTree;
+			EditorSettings::materialEditorInvertCamera = m_workingState.materialEditorInvertCamera;
+
+			// -- Dispatch events --
+			if (m_pendingChanges != EditorSettingType::None && m_eventCallback) {
+				EditorSettingsChangedEvent e(m_pendingChanges);
+				m_eventCallback(e);
+			}
+
+			m_pendingChanges = EditorSettingType::None;
+		};
+
+		// -- Action Buttons --
+		auto actionButtons = Silica::MakeWidget<Silica::SHorizontalBox>({
+			.spacing = 10.0f,
+			.slots = {
+				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { 20.0f, 8.0f },
+					.hoverColor = Silica::GetTheme().Accent_Danger,
+					.onClick = [this]() {
+						m_pendingChanges = EditorSettingType::None;
+						if (m_onClose) m_onClose();
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cancel" })
+				})},
+				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { 20.0f, 8.0f },
+					.hoverColor = Silica::GetTheme().Accent_Primary,
+					.onClick = [this, applyChanges]() {
+						applyChanges();
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Apply" })
+				})},
+				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
+					.padding = { 30.0f, 8.0f },
+					.hoverColor = Silica::GetTheme().Accent_Primary,
+					.onClick = [this, applyChanges]() {
+						applyChanges();
+						if (m_onClose) m_onClose();
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Save" })
+				})}
+			}
+		});
+
 		// -- Footer --
 		auto footerBox = Silica::MakeWidget<Silica::SBox>({
 			.padding = { PADDING_LARGE, SPACING_LARGE },
@@ -263,17 +345,7 @@ namespace Axion {
 			.child = Silica::MakeWidget<Silica::SAlign>({
 				.horizontalAlign = Silica::HorizontalAlign::Right,
 				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = Silica::MakeWidget<Silica::SButton>({
-					.padding = { 30.0f, 8.0f },
-					.hoverColor = Silica::GetTheme().Accent_Primary,
-					.onClick = [this]() {
-						if (m_onApply) m_onApply(m_workingSettings);
-
-						if (m_onClose) m_onClose();
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Done" })
-				})
+				.child = actionButtons
 			})
 		});
 

@@ -20,6 +20,7 @@
 #include <Silica/include/SInputFieldVec3Float.h>
 #include <Silica/include/SComboBox.h>
 #include <Silica/include/SSeparator.h>
+#include <Silica/include/SMenuAnchor.h>
 
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -28,20 +29,16 @@
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
 #include "AxionStudio/Source/scripting/VisualScriptCompiler.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 #include "AxionStudio/Source/ui/panels/VisualScriptNodeRegistry.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
 
 namespace {
-	constexpr float LEFT_PANEL_WIDTH = 250.0f;
-	constexpr float EMPTY_TEXT_WIDTH = 250.0f;
-	constexpr float TOOLBAR_PADDING = 8.0f;
-	constexpr float TOOLBAR_SPACING = 15.0f;
-	constexpr float VAR_PANEL_PAD = 10.0f;
-	constexpr float VAR_SPACING = 6.0f;
-	constexpr float VAR_INPUT_WIDTH = 90.0f;
-	constexpr float VAR_TYPE_WIDTH = 85.0f;
-	constexpr float BTN_PAD_X = 8.0f;
-	constexpr float BTN_PAD_Y = 4.0f;
-	constexpr float NODE_OFFSET = 20.0f;
+	constexpr float LEFT_PANEL_WIDTH = 260.0f;
+	constexpr float EMPTY_TEXT_WIDTH = 300.0f;
+	constexpr float VAR_INPUT_WIDTH = 96.0f;
+	constexpr float VAR_TYPE_WIDTH = 88.0f;
+	constexpr float NODE_OFFSET = 24.0f;
 }
 
 namespace Axion {
@@ -64,7 +61,7 @@ namespace Axion {
 					}
 					return Silica::EventReply::unhandled();
 				}
-			});
+				});
 
 			m_nodeEditor = Silica::MakeWidget<Silica::SNodeEditor>({
 				.onBackgroundContextClick = [this](Silica::Vec2 pos) { return buildNodeContextMenu(pos); },
@@ -106,10 +103,43 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr VisualScriptPanel::buildToolbar() {
-		auto compileBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 10.0f, 6.0f }, .hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() { compileAndSave(); return Silica::EventReply::handled(); },
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Compile & Save" })
+
+		// -- Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Close Script", [this]() {
+								closeActiveScript();
+							}) }
+						}
+					})
+				})
+			})
+		});
+
+		auto compileBtn = SilicaHelpers::MakeToolbarBtn("Compile & Save", Silica::GetTheme().Accent_Primary, [this]() {
+			compileAndSave();
 		});
 
 		std::string displayFile = m_currentFilePath.empty() ? "Unsaved" : m_currentFilePath.filename().string();
@@ -119,10 +149,13 @@ namespace Axion {
 		});
 
 		return Silica::MakeWidget<Silica::SBox>({
-			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING }, .backgroundColor = Silica::GetTheme().Surface_Tertiary,
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = TOOLBAR_SPACING,
+				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
+					{ {0,0}, optionsMenu },
 					{ {0,0}, compileBtn },
 					{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent() }) },
 					{ {0,0}, fileLabel }
@@ -132,7 +165,7 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr VisualScriptPanel::buildVariablesPanel() {
-		auto varList = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = VAR_SPACING });
+		auto varList = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_MEDIUM });
 
 		varList->addSlot({ {0,0}, Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 10.0f,
@@ -206,7 +239,7 @@ namespace Axion {
 			});
 
 			varList->addSlot({ {0,0}, Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = 5.0f,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = {
 					{ {1,0}, nameInput },
 					{ {0,0}, typeDropdown },
@@ -215,7 +248,7 @@ namespace Axion {
 		}
 
 		return Silica::MakeWidget<Silica::SBox>({
-			.padding = {VAR_PANEL_PAD, VAR_PANEL_PAD},
+			.padding = {EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM},
 			.explicitSize = Silica::Vec2{LEFT_PANEL_WIDTH, 0.0f},
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SScrollBox>({.child = varList })
@@ -254,7 +287,7 @@ namespace Axion {
 						bool canSpawn = isEventNode ? !hasNodeOfType(opt.type) : true;
 
 						auto btn = Silica::MakeWidget<Silica::SButton>({
-							.padding = { BTN_PAD_X, BTN_PAD_Y },
+							.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 							.enabled = canSpawn,
 							.color = Silica::Color::transparent(),
 							.hoverColor = Silica::GetTheme().Accent_Primary,
@@ -290,7 +323,7 @@ namespace Axion {
 		rebuildMenuUI("");
 
 		auto searchContainer = Silica::MakeWidget<Silica::SBox>({
-			.padding = { 4.0f, 4.0f },
+			.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 			.child = Silica::MakeWidget<Silica::SEditableText>({
 				.hintText = "Search nodes...",
 				.onTextChanged = rebuildMenuUI
@@ -298,9 +331,10 @@ namespace Axion {
 		});
 
 		return Silica::MakeWidget<Silica::SBox>({
-			.padding = { 5.0f, 5.0f }, .borderThickness = Silica::GetTheme().Border_Thickness,
+			.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
+			.borderThickness = Silica::GetTheme().Border_Thickness,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = 4.0f,
+				.spacing = EditorTheme::SPACING_SMALL,
 				.slots = { { {0,0}, searchContainer }, { {1,0}, Silica::MakeWidget<Silica::SScrollBox>({.child = menuBox }) } }
 			})
 		});
@@ -460,14 +494,16 @@ namespace Axion {
 				.initialValue = pin.floatValue,
 				.onValueChanged = [this, id = pin.id](float val) {
 					m_pinMeta[id].floatValue = val;
-				} });
+				}
+			});
 		}
 		else if (pin.type == PinType::Int) {
 			return Silica::MakeWidget<Silica::SInputFieldInt>({
 				.initialValue = pin.intValue,
 				.onValueChanged = [this, id = pin.id](int val) {
 					m_pinMeta[id].intValue = val;
-				} });
+				}
+			});
 		}
 		else if (pin.type == PinType::String) {
 			NodeType nType = m_nodeTypes[pin.nodeID];
@@ -486,7 +522,8 @@ namespace Axion {
 				.initialText = pin.stringValue,
 				.onTextChanged = [this, id = pin.id](const std::string& val) {
 					m_pinMeta[id].stringValue = val;
-				} });
+				}
+			});
 		}
 		else if (pin.type == PinType::Key) {
 			std::vector<std::string> keys = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Space", "Enter", "Escape", "Tab", "Left", "Right", "Up", "Down", "LeftShift", "RightShift", "LeftControl", "RightControl", "LeftAlt" };
@@ -496,7 +533,8 @@ namespace Axion {
 				.searchable = true,
 				.onValueChanged = [this, id = pin.id](const std::string& val) {
 					m_pinMeta[id].stringValue = val;
-				} });
+				}
+			});
 		}
 		else if (pin.type == PinType::MouseButton) {
 			std::vector<std::string> btns = { "Left", "Right", "Middle", "X1", "X2" };
@@ -505,12 +543,13 @@ namespace Axion {
 				.initialValue = pin.stringValue.empty() ? "Left" : pin.stringValue,
 				.onValueChanged = [this, id = pin.id](const std::string& val) {
 					m_pinMeta[id].stringValue = val;
-				} });
+				}
+			});
 		}
 		else if (pin.type == PinType::Bool) {
 			auto textBlock = Silica::MakeWidget<Silica::STextBlock>({ .text = pin.boolValue ? "True" : "False", });
 			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { BTN_PAD_X, 2.0f },
+				.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::PADDING_SMALL },
 				.onClick = [this, id = pin.id, textBlock]() {
 					m_pinMeta[id].boolValue = !m_pinMeta[id].boolValue;
 					textBlock->setText(m_pinMeta[id].boolValue ? "True" : "False");
@@ -525,7 +564,8 @@ namespace Axion {
 				.labelWidth = 0.0f,
 				.onValueChanged = [this, id = pin.id](Silica::Vec3 val) {
 					m_pinMeta[id].vec3Value = {val.x, val.y, val.z};
-				} });
+				}
+			});
 		}
 		return nullptr;
 	}
@@ -588,7 +628,7 @@ namespace Axion {
 				[&](const Link& link) {
 					Pin* p1 = findPinInGraph(link.startPinID); Pin* p2 = findPinInGraph(link.endPinID);
 					return (!p1 || !p2 || p1->type != p2->type);
-			}), m_activeGraph.links.end());
+				}), m_activeGraph.links.end());
 
 			setContext(m_activeGraph, m_currentFilePath);
 			rebuildUI_Internal();
@@ -617,74 +657,59 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr VisualScriptPanel::buildNodeSpecificContextMenu(Silica::NodeID id, Silica::Vec2 mousePos) {
-		auto menuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 2.0f });
+		auto menuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
 
 		// -- CLONE BUTTON --
-		menuBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = { BTN_PAD_X, 6.0f }, .color = Silica::Color::transparent(),
-			.onClick = [this, id]() {
-				EditorActionQueue::push([this, id]() {
-					Silica::Renderer::closePopups();
-					syncGraphState();
+		menuBox->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Clone Node", [this, id]() {
+			syncGraphState();
 
-					Node* srcNode = nullptr;
-					for (auto& n : m_activeGraph.nodes) { if (n.id == id) { srcNode = &n; break; } }
+			Node* srcNode = nullptr;
+			for (auto& n : m_activeGraph.nodes) { if (n.id == id) { srcNode = &n; break; } }
 
-					if (srcNode) {
-						Node clonedNode = *srcNode;
-						clonedNode.id = m_nextNodeId++;
-						m_nodeTypes[clonedNode.id] = clonedNode.type;
+			if (srcNode) {
+				Node clonedNode = *srcNode;
+				clonedNode.id = m_nextNodeId++;
+				m_nodeTypes[clonedNode.id] = clonedNode.type;
 
-						Silica::Vec2 srcPos = m_nodePositions[id]; m_nodePositions[clonedNode.id] = { srcPos.x + NODE_OFFSET, srcPos.y + NODE_OFFSET };
+				Silica::Vec2 srcPos = m_nodePositions[id]; m_nodePositions[clonedNode.id] = { srcPos.x + NODE_OFFSET, srcPos.y + NODE_OFFSET };
 
-						for (auto& pin : clonedNode.inputs) { int oldId = pin.id; pin.id = m_nextPinId++; pin.nodeID = clonedNode.id; m_pinMeta[pin.id] = m_pinMeta[oldId]; m_pinMeta[pin.id].id = pin.id; m_pinMeta[pin.id].nodeID = clonedNode.id; }
-						for (auto& pin : clonedNode.outputs) { int oldId = pin.id; pin.id = m_nextPinId++; pin.nodeID = clonedNode.id; m_pinMeta[pin.id] = m_pinMeta[oldId]; m_pinMeta[pin.id].id = pin.id; m_pinMeta[pin.id].nodeID = clonedNode.id; }
+				for (auto& pin : clonedNode.inputs) { int oldId = pin.id; pin.id = m_nextPinId++; pin.nodeID = clonedNode.id; m_pinMeta[pin.id] = m_pinMeta[oldId]; m_pinMeta[pin.id].id = pin.id; m_pinMeta[pin.id].nodeID = clonedNode.id; }
+				for (auto& pin : clonedNode.outputs) { int oldId = pin.id; pin.id = m_nextPinId++; pin.nodeID = clonedNode.id; m_pinMeta[pin.id] = m_pinMeta[oldId]; m_pinMeta[pin.id].id = pin.id; m_pinMeta[pin.id].nodeID = clonedNode.id; }
 
-						m_activeGraph.nodes.push_back(clonedNode);
-						setContext(m_activeGraph, m_currentFilePath);
-						rebuildUI_Internal();
-					}
-				});
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clone Node" })
+				m_activeGraph.nodes.push_back(clonedNode);
+				setContext(m_activeGraph, m_currentFilePath);
+				rebuildUI_Internal();
+			}
 		}) });
 
 		// -- DELETE BUTTON --
-		menuBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SButton>({
-			.padding = { BTN_PAD_X, 6.0f }, .color = Silica::GetTheme().Accent_Danger,
-			.onClick = [this, id]() {
-				EditorActionQueue::push([this, id]() {
-					Silica::Renderer::closePopups();
-					syncGraphState();
+		menuBox->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Delete Node", [this, id]() {
+			syncGraphState();
 
-					std::vector<int> nodePinIDs;
-					for (const auto& n : m_activeGraph.nodes) {
-						if (n.id == id) {
-							for (const auto& p : n.inputs) nodePinIDs.push_back(p.id);
-							for (const auto& p : n.outputs) nodePinIDs.push_back(p.id);
-							break;
-						}
-					}
+			std::vector<int> nodePinIDs;
+			for (const auto& n : m_activeGraph.nodes) {
+				if (n.id == id) {
+					for (const auto& p : n.inputs) nodePinIDs.push_back(p.id);
+					for (const auto& p : n.outputs) nodePinIDs.push_back(p.id);
+					break;
+				}
+			}
 
-					m_activeGraph.links.erase(std::remove_if(m_activeGraph.links.begin(), m_activeGraph.links.end(),
-						[&](const Link& link) { return std::find(nodePinIDs.begin(), nodePinIDs.end(), link.startPinID) != nodePinIDs.end() || std::find(nodePinIDs.begin(), nodePinIDs.end(), link.endPinID) != nodePinIDs.end();
-					}), m_activeGraph.links.end());
+			m_activeGraph.links.erase(std::remove_if(m_activeGraph.links.begin(), m_activeGraph.links.end(),
+				[&](const Link& link) { return std::find(nodePinIDs.begin(), nodePinIDs.end(), link.startPinID) != nodePinIDs.end() || std::find(nodePinIDs.begin(), nodePinIDs.end(), link.endPinID) != nodePinIDs.end();
+			}), m_activeGraph.links.end());
 
-					m_activeGraph.nodes.erase(std::remove_if(m_activeGraph.nodes.begin(), m_activeGraph.nodes.end(), [id](const Node& n) { return n.id == id; }), m_activeGraph.nodes.end());
-					m_nodePositions.erase(id); m_nodeTypes.erase(id);
+			m_activeGraph.nodes.erase(std::remove_if(m_activeGraph.nodes.begin(), m_activeGraph.nodes.end(), [id](const Node& n) { return n.id == id; }), m_activeGraph.nodes.end());
+			m_nodePositions.erase(id); m_nodeTypes.erase(id);
 
-					setContext(m_activeGraph, m_currentFilePath);
-					rebuildUI_Internal();
-				});
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete Node" })
-		}) });
+			setContext(m_activeGraph, m_currentFilePath);
+			rebuildUI_Internal();
+		}, Silica::GetTheme().Accent_Danger) });
 
 		return Silica::MakeWidget<Silica::SBox>({
-			.padding = { 2.0f, 2.0f },
+			.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.backgroundColor = Silica::GetTheme().Background_Popup,
 			.child = menuBox
 		});
 	}

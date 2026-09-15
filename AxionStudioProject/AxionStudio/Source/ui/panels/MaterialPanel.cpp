@@ -18,6 +18,8 @@
 #include <Silica/include/SSeparator.h>
 #include <Silica/include/SWrappedTextBlock.h>
 #include <Silica/include/SScissorBox.h>
+#include <Silica/include/SMenuAnchor.h>
+#include <Silica/include/SCheckbox.h>
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EngineAssets.h"
@@ -31,9 +33,10 @@
 #include "AxionAssetPipeline/Source/parser/MaterialParser.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
-#include "AxionStudio/Source/core/EditorConfig.h"
+#include "AxionStudio/Source/core/EditorSettings.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 namespace {
 	constexpr uint32_t PREVIEW_RES = 512;
@@ -42,12 +45,6 @@ namespace {
 	constexpr float CAM_DRAG_SPEED = 0.01f;
 	constexpr float CAM_PITCH_LIMIT = 1.5f;
 
-	constexpr float TOOLBAR_PADDING = 4.0f;
-	constexpr float TOOLBAR_SPACING = 5.0f;
-	constexpr float BTN_PAD_X = 8.0f;
-	constexpr float BTN_PAD_Y = 4.0f;
-
-	constexpr float PROPS_PADDING = 15.0f;
 	constexpr float TEX_SLOT_SIZE = 64.0f;
 	constexpr float TEX_IMAGE_SIZE = 60.0f;
 
@@ -210,7 +207,7 @@ namespace {
 				float deltaX = pos.x - m_lastMousePos.x;
 				float deltaY = pos.y - m_lastMousePos.y;
 				m_lastMousePos = pos;
-				float dragDirection = Axion::EditorConfig::materialEditorInvertCamera ? -1.0f : 1.0f;
+				float dragDirection = Axion::EditorSettings::materialEditorInvertCamera ? -1.0f : 1.0f;
 				*m_yaw -= deltaX * CAM_DRAG_SPEED * dragDirection;
 				*m_pitch -= deltaY * CAM_DRAG_SPEED * dragDirection;
 				*m_pitch = std::clamp(*m_pitch, -CAM_PITCH_LIMIT, CAM_PITCH_LIMIT);
@@ -370,8 +367,52 @@ namespace Axion {
 			return;
 		}
 
+		// -- Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { 16.0f, 16.0f }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeCheckboxMenuItem("Invert Camera", EditorSettings::materialEditorInvertCamera, [this](bool val) {
+								EditorSettings::materialEditorInvertCamera = val;
+								if (m_eventCallback) {
+									EditorSettingsChangedEvent e(EditorSettingType::MaterialEditorCamera);
+									m_eventCallback(e);
+								}
+								rebuildUI();
+							})},
+							{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
+							{ {0,0}, SilicaHelpers::MakeContextMenuItem("Locate in Browser", [this]() { PlatformUtils::showInFileExplorer(m_currentMaterialPath); }) },
+							{ {0,0}, SilicaHelpers::MakeContextMenuItem("Close Material", [this]() { setMaterial(""); }) }
+						}
+					})
+				})
+			})
+		});
+
 		// -- Custom Mesh Drop Zone --
 		auto customMeshBtn = Silica::MakeWidget<Silica::SButton>({
+			.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+			.color = (m_previewShape == PreviewShape::Custom) ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
 			.onClick = [this]() {
 				auto meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
 				if (!std::filesystem::exists(meshDir)) meshDir = ProjectManager::getProject()->getAssetsPath();
@@ -396,53 +437,41 @@ namespace Axion {
 			})
 		});
 
-		auto customMeshDropZone = SilicaHelpers::MakeAssetDropZone(".axmesh", [this](const std::filesystem::path& path) {
-			EditorActionQueue::push([this, path]() {
-				UUID meshUUID = AssetManager::getAssetUUID(path);
-				if (meshUUID.isValid()) {
-					m_customMeshHandle = AssetManager::load<Mesh>(meshUUID);
-					m_customMeshName = path.stem().string();
-					m_previewShape = PreviewShape::Custom;
-					rebuildUI();
-				}
-			});
-		}, customMeshBtn, { 0.0f, 0.0f });
+		auto customMeshDropZone = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = SilicaHelpers::MakeAssetDropZone(".axmesh", [this](const std::filesystem::path& path) {
+				EditorActionQueue::push([this, path]() {
+					UUID meshUUID = AssetManager::getAssetUUID(path);
+					if (meshUUID.isValid()) {
+						m_customMeshHandle = AssetManager::load<Mesh>(meshUUID);
+						m_customMeshName = path.stem().string();
+						m_previewShape = PreviewShape::Custom;
+						rebuildUI();
+					}
+				});
+			}, customMeshBtn, { 0.0f, 0.0f })
+		});
 
-		if (m_previewShape == PreviewShape::Custom) {
-			customMeshDropZone = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::GetTheme().Accent_Primary,
-				.child = customMeshDropZone
-			});
-		}
-		else {
-			customMeshDropZone = Silica::MakeWidget<Silica::SBox>({
-				.backgroundColor = Silica::Color(240, 40, 40, 255),
-				.child = customMeshDropZone
-			});
-		}
-
-		// -- Toolbar --
+		// -- Fixed Height Toolbar --
 		auto toolbar = Silica::MakeWidget<Silica::SBox>({
-			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = TOOLBAR_SPACING,
+				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
-					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {BTN_PAD_X, BTN_PAD_Y}, .color = Silica::GetTheme().Accent_Success,
-						.onClick = [this]() { cmdSaveMaterial(); return Silica::EventReply::handled(); },
-						.child = Silica::MakeWidget<Silica::SAlign>({.horizontalAlign = Silica::HorizontalAlign::Center, .verticalAlign = Silica::VerticalAlign::Center, .child = Silica::MakeWidget<Silica::STextBlock>({.text = "Save Material" }) })
-					})},
-					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {BTN_PAD_X, BTN_PAD_Y}, .color = (m_previewShape == PreviewShape::Sphere) ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
-						.onClick = [this]() { m_previewShape = PreviewShape::Sphere; rebuildUI(); return Silica::EventReply::handled(); },
-						.child = Silica::MakeWidget<Silica::SAlign>({.horizontalAlign = Silica::HorizontalAlign::Center, .verticalAlign = Silica::VerticalAlign::Center, .child = Silica::MakeWidget<Silica::STextBlock>({.text = "Sphere" }) })
-					})},
-					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = {BTN_PAD_X, BTN_PAD_Y}, .color = (m_previewShape == PreviewShape::Cube) ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
-						.onClick = [this]() { m_previewShape = PreviewShape::Cube; rebuildUI(); return Silica::EventReply::handled(); },
-						.child = Silica::MakeWidget<Silica::SAlign>({.horizontalAlign = Silica::HorizontalAlign::Center, .verticalAlign = Silica::VerticalAlign::Center, .child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cube" }) })
-					})},
+					{ {0,0}, optionsMenu },
+					{ {0,0}, SilicaHelpers::MakeToolbarBtn("Save Material", Silica::GetTheme().Accent_Success, [this]() {
+						cmdSaveMaterial();
+					}) },
+					{ {0,0}, SilicaHelpers::MakeToolbarBtn("Sphere", (m_previewShape == PreviewShape::Sphere) ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(), [this]() {
+						m_previewShape = PreviewShape::Sphere;
+						rebuildUI();
+					}) },
+					{ {0,0}, SilicaHelpers::MakeToolbarBtn("Cube", (m_previewShape == PreviewShape::Cube) ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(), [this]() {
+						m_previewShape = PreviewShape::Cube;
+						rebuildUI();
+					}) },
 					{ {0,0}, customMeshDropZone }
 				}
 			})
@@ -468,7 +497,7 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr MaterialPanel::buildProperties() {
-		auto propsBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = PROPS_PADDING });
+		auto propsBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::PADDING_LARGE });
 
 		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Material: " + m_material->getName() }) });
 
@@ -480,16 +509,20 @@ namespace Axion {
 		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Values", .color = Silica::GetTheme().Text_Dim }) });
 
 		propsBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Albedo", Silica::MakeWidget<Silica::SColorField>({
-			.initialColor = Vec4ToColor(m_material->getAlbedoColor()), .onColorChanged = [this, ColorToVec4](Silica::Color c) { m_material->setAlbedoColor(ColorToVec4(c)); }
+			.initialColor = Vec4ToColor(m_material->getAlbedoColor()),
+			.onColorChanged = [this, ColorToVec4](Silica::Color c) { m_material->setAlbedoColor(ColorToVec4(c)); }
 		})) });
 		propsBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Metalness", Silica::MakeWidget<Silica::SInputFieldFloat>({
-			.initialValue = m_material->getMetalness(), .onValueChanged = [this](float v) { m_material->setMetalness(v); }
+			.initialValue = m_material->getMetalness(),
+			.onValueChanged = [this](float v) { m_material->setMetalness(v); }
 		})) });
 		propsBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Roughness", Silica::MakeWidget<Silica::SInputFieldFloat>({
-			.initialValue = m_material->getRoughness(), .onValueChanged = [this](float v) { m_material->setRoughness(v); }
+			.initialValue = m_material->getRoughness(),
+			.onValueChanged = [this](float v) { m_material->setRoughness(v); }
 		})) });
 		propsBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Emission", Silica::MakeWidget<Silica::SInputFieldFloat>({
-			.initialValue = m_material->getEmission(), .onValueChanged = [this](float v) { m_material->setEmission(v); }
+			.initialValue = m_material->getEmission(),
+			.onValueChanged = [this](float v) { m_material->setEmission(v); }
 		})) });
 
 		// -- Texture Slots --
@@ -503,7 +536,7 @@ namespace Axion {
 		propsBox->addSlot({ {0,0}, buildTextureSlot("Occlusion", TextureSlot::Occlusion) });
 		propsBox->addSlot({ {0,0}, buildTextureSlot("Emissive", TextureSlot::Emissive) });
 
-		return Silica::MakeWidget<Silica::SBox>({ .padding = { PROPS_PADDING, PROPS_PADDING }, .child = propsBox });
+		return Silica::MakeWidget<Silica::SBox>({ .padding = { EditorTheme::PADDING_LARGE, EditorTheme::PADDING_LARGE }, .child = propsBox });
 	}
 
 	Silica::WidgetPtr MaterialPanel::buildTextureSlot(const std::string& label, TextureSlot slot) {
@@ -549,14 +582,14 @@ namespace Axion {
 		Silica::WidgetPtr clearButton = Silica::MakeWidget<Silica::SBox>({ .backgroundColor = Silica::Color::transparent() });
 		if (currentTexHandle.isValid()) {
 			clearButton = Silica::MakeWidget<Silica::SButton>({
-				.padding = {4, 4}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Danger,
+				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL }, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Danger,
 				.onClick = [this, slot]() { EditorActionQueue::push([this, slot]() { m_material->setTexture(slot, AssetHandle<Texture2D>()); rebuildUI(); }); return Silica::EventReply::handled(); },
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X"})
 			});
 		}
 
 		return Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = PROPS_PADDING,
+			.spacing = EditorTheme::PADDING_LARGE,
 			.slots = {
 				{ {0,0}, dropZone },
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({.verticalAlign = Silica::VerticalAlign::Center, .child = Silica::MakeWidget<Silica::STextBlock>({.text = label }) })},
@@ -607,9 +640,15 @@ namespace Axion {
 	void MaterialPanel::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);
 		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(onProjectChanged));
+		dispatcher.dispatch<EditorSettingsChangedEvent>(AX_BIND_EVENT_FN(onEditorSettingsChanged));
 	}
 
 	EventReply MaterialPanel::onProjectChanged(ProjectChangedEvent& ev) {
+		rebuildUI();
+		return EventReply::unhandled();
+	}
+
+	EventReply MaterialPanel::onEditorSettingsChanged(EditorSettingsChangedEvent& ev) {
 		rebuildUI();
 		return EventReply::unhandled();
 	}

@@ -11,6 +11,9 @@
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/graphics/Texture.h"
 #include "AxionEngine/Source/events/Event.h"
+#include "AxionEngine/Source/events/ApplicationEvent.h"
+
+#include "AxionStudio/Source/core/EditorEvents.h"
 
 namespace Silica {
 	class SBox;
@@ -59,6 +62,9 @@ namespace Axion {
 		void rebuildUI_Internal();
 		void importAssetPackToProject(const AssetPack& pack);
 		Silica::WidgetPtr createPackCardWidget(const AssetPack& pack);
+
+		EventReply onProjectChanged(ProjectChangedEvent& ev);
+		EventReply onEditorSettingsChanged(EditorSettingsChangedEvent& ev);
 
 	};
 

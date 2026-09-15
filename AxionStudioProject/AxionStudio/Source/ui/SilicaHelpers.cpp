@@ -10,6 +10,12 @@
 #include <Silica/include/SWrappedTextBlock.h>
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SScissorBox.h>
+#include <Silica/include/SButton.h>
+#include <Silica/include/SCheckbox.h>
+#include <Silica/include/Renderer.h>
+
+#include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 namespace Axion::SilicaHelpers {
 
@@ -91,6 +97,100 @@ namespace Axion::SilicaHelpers {
 				return Silica::EventReply::unhandled();
 			},
 			.child = child
+		});
+	}
+
+	Silica::WidgetPtr MakeContextMenuItem(const std::string& text, std::function<void()> onClick, std::optional<Silica::Color> hoverColor) {
+		return Silica::MakeWidget<Silica::SButton>({
+			.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+			.color = Silica::Color::transparent(),
+			.hoverColor = hoverColor.value_or(Silica::GetTheme().Accent_Primary),
+			.onClick = [onClick]() {
+				EditorActionQueue::push([onClick]() {
+					Silica::Renderer::closePopups();
+					if (onClick) onClick();
+				});
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Left,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text})
+			})
+		});
+	}
+
+	// NEW: Use this ONLY inside your fixed-width Gear Options menus
+	Silica::WidgetPtr MakeOptionsMenuItem(const std::string& text, std::function<void()> onClick, std::optional<Silica::Color> hoverColor) {
+		return Silica::MakeWidget<Silica::SButton>({
+			.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+			.color = Silica::Color::transparent(),
+			.hoverColor = hoverColor.value_or(Silica::GetTheme().Accent_Primary),
+			.onClick = [onClick]() {
+				EditorActionQueue::push([onClick]() {
+					Silica::Renderer::closePopups();
+					if (onClick) onClick();
+				});
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH - (EditorTheme::PADDING_SMALL * 2.0f) - (EditorTheme::BUTTON_PADDING_X * 2.0f), 0.0f },
+				.backgroundColor = Silica::Color::transparent(),
+				.child = Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Left,
+					.verticalAlign = Silica::VerticalAlign::Center,
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = text})
+				})
+			})
+		});
+	}
+
+	Silica::WidgetPtr MakeCheckboxMenuItem(const std::string& text, bool isChecked, std::function<void(bool)> onToggle) {
+		return Silica::MakeWidget<Silica::SBox>({
+			.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+			.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH - (EditorTheme::PADDING_SMALL * 2.0f), 0.0f },
+			.backgroundColor = Silica::Color::transparent(),
+			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
+				.spacing = 15.0f,
+				.slots = {
+					{ {0,0}, Silica::MakeWidget<Silica::SBox>({
+						.explicitSize = Silica::Vec2{ 180.0f, 0.0f },
+						.backgroundColor = Silica::Color::transparent(),
+						.child = Silica::MakeWidget<Silica::SAlign>({
+							.horizontalAlign = Silica::HorizontalAlign::Left,
+							.verticalAlign = Silica::VerticalAlign::Center,
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = text})
+						})
+					})},
+					{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
+						.horizontalAlign = Silica::HorizontalAlign::Right,
+						.verticalAlign = Silica::VerticalAlign::Center,
+						.child = Silica::MakeWidget<Silica::SCheckBox>({
+							.initialCheck = isChecked,
+							.onCheckChanged = [onToggle](bool val) {
+								EditorActionQueue::push([onToggle, val]() {
+									if (onToggle) onToggle(val);
+								});
+							}
+						})
+					})}
+				}
+			})
+		});
+	}
+
+	Silica::WidgetPtr MakeToolbarBtn(const std::string& text, Silica::Color color, std::function<void()> onClick, float padX, float padY) {
+		return Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SButton>({
+				.padding = { padX, padY },
+				.color = color,
+				.onClick = [onClick]() {
+					if (onClick) onClick();
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
+			})
 		});
 	}
 

@@ -1,16 +1,17 @@
 StartupProject: D:/Projects/TestProject/TestProject.axproj
 MaxAssetsPerFrame: 2
 EnableDiscordRPC: true
+MaterialEditorInvertCamera: true
+OpenTextEditors:
+  []
+AssetLibraryPaths:
+  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Resources\DefaultAssets
 ContentBrowser:
   ShowFileExtensions: false
   OnlyEngineAssets: true
-  ThumbnailSize: 141
-  TreeViewWidth: 340
-  TreeViewTopHeight: 50
+  ThumbnailSize: 100
+  TreeViewWidth: 220
+  TreeViewTopHeight: 66
   ShowContentArea: true
   ShowVFSTree: true
   ShowPhysicalTree: true
-OpenTextEditors:
-  - D:\Projects\TestProject\AssetRegistry.yaml
-AssetLibraryPaths:
-  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Resources\DefaultAssets

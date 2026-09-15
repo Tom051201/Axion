@@ -13,6 +13,7 @@
 #include <Silica/include/SBox.h>
 #include <Silica/include/SBorderLayout.h>
 #include <Silica/include/SAlign.h>
+#include <Silica/include/SImage.h>
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -26,16 +27,9 @@
 #include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
-
-namespace {
-	constexpr float PADDING_SMALL = 5.0f;
-	constexpr float SPACING_SMALL = 2.0f;
-	constexpr float SPACING_MEDIUM = 5.0f;
-	constexpr float BTN_PAD_X = 8.0f;
-	constexpr float BTN_PAD_Y = 4.0f;
-	constexpr float TREE_NODE_Y_OFFSET = 16.0f;
-}
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 namespace Axion {
 
@@ -120,44 +114,28 @@ namespace Axion {
 		std::string tag = entity.hasComponent<TagComponent>() ? entity.getComponent<TagComponent>().tag : "Unnamed Entity";
 		bool hasChildren = entity.hasComponent<RelationshipComponent>() && !entity.getComponent<RelationshipComponent>().children.empty();
 
-		auto MakeCtxBtn = [&](const std::string& text, std::function<void()> action, Silica::Color hoverColor = Silica::GetTheme().Accent_Primary) {
-			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { BTN_PAD_X, BTN_PAD_Y },
-				.color = Silica::Color::transparent(),
-				.hoverColor = hoverColor,
-				.onClick = [action]() {
-					EditorActionQueue::push([action]() {
-						Silica::Renderer::closePopups();
-						action();
-					});
-					return Silica::EventReply::handled();
-				},
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text})
-			});
-		};
-
 		// -- Right Click Context Menu --
 		auto contextMenu = Silica::MakeWidget<Silica::SBox>({
-			.padding = { PADDING_SMALL, PADDING_SMALL },
-			.borderThickness = Silica::GetTheme().Border_Thickness, .backgroundColor = Silica::GetTheme().Background_Popup,
+			.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.backgroundColor = Silica::GetTheme().Background_Popup,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = SPACING_SMALL,
+				.spacing = EditorTheme::SPACING_SMALL,
 				.slots = {
-					{ {0,0}, MakeCtxBtn("Delete Entity", [this, entity]() mutable {
+					{ {0,0}, SilicaHelpers::MakeContextMenuItem("Delete Entity", [this, entity]() mutable {
 						auto cmd = MakeShared<DeleteEntityCommand>(m_scene, entity);
 						cmd->execute();
 						EditorCommandManager::push(cmd);
 						EntitySelectedEvent ev({});
 						m_eventCallback(ev);
 					}, Silica::GetTheme().Accent_Danger) },
-
-					{ {0,0}, MakeCtxBtn("Add Child", [this, entity]() mutable {
+					{ {0,0}, SilicaHelpers::MakeContextMenuItem("Add Child", [this, entity]() mutable {
 						Entity child = m_scene->createEntity("Child Entity");
 						child.setParent(entity);
 						rebuildUI();
 					}) },
 
-					{ {0,0}, MakeCtxBtn("Create Prefab", [this, entity, tag]() mutable {
+					{ {0,0}, SilicaHelpers::MakeContextMenuItem("Create Prefab", [this, entity, tag]() mutable {
 						std::filesystem::path prefabDir = ProjectManager::getProject()->getAssetsPath() / "prefabs";
 						std::filesystem::create_directories(prefabDir);
 						std::filesystem::path savePath = FileDialogs::saveFile({ {"Axion Prefab Asset", "*.axprefab"} }, prefabDir);
@@ -180,7 +158,7 @@ namespace Axion {
 		// -- Create TreeNode And Drag / Drop Logic --
 		auto treeNode = Silica::MakeWidget<Silica::STreeNode>({
 			.label = tag,
-			.yTextOffset = TREE_NODE_Y_OFFSET,
+			.yTextOffset = EditorTheme::TREE_NODE_Y_OFFSET,
 			.initiallyOpen = m_openNodes.find((entt::entity)entity) != m_openNodes.end(),
 			.isSelected = m_selectedEntity == entity,
 			.isLeaf = !hasChildren,
@@ -256,17 +234,53 @@ namespace Axion {
 
 		if (!m_scene) return;
 
-		auto addEntityButton = Silica::MakeWidget<Silica::SButton>({
-			.padding = { BTN_PAD_X, BTN_PAD_Y }, .hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [this]() mutable {
-				EditorActionQueue::push([this]() { m_scene->createEntity("Empty Entity"); rebuildUI(); });
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add Entity" })
+		// -- Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Collapse All", [this]() {
+								m_openNodes.clear();
+								rebuildUI();
+							}) }
+						}
+					})
+				})
+			})
 		});
 
+		auto addEntityButton = SilicaHelpers::MakeToolbarBtn("+ Add Entity", Silica::Color::transparent(), [this]() {
+			EditorActionQueue::push([this]() {
+				m_scene->createEntity("Empty Entity");
+				rebuildUI();
+			});
+		});
+
+		// -- Toolbar --
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { PADDING_SMALL, PADDING_SMALL }, .backgroundColor = Silica::GetTheme().Surface_Tertiary,
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
+			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.onDragOver = [](const Silica::DragDropPayload& payload) {
 				if (payload.type == "Entity") return Silica::EventReply::handled();
 				return Silica::EventReply::unhandled();
@@ -283,8 +297,11 @@ namespace Axion {
 				return Silica::EventReply::unhandled();
 			},
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = SPACING_MEDIUM,
-				.slots = { { {0,0}, addEntityButton } } 
+				.spacing = EditorTheme::TOOLBAR_SPACING,
+				.slots = {
+					{ {0,0}, optionsMenu },
+					{ {0,0}, addEntityButton }
+				}
 			})
 		});
 

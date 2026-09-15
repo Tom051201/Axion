@@ -17,6 +17,7 @@
 #include <Silica/include/SInputFieldVec3Float.h>
 #include <Silica/include/SWrappedTextBlock.h>
 #include <Silica/include/SScissorBox.h>
+#include <Silica/include/SImage.h>
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -24,19 +25,9 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
-
-namespace {
-	constexpr float TOOLBAR_PADDING = 10.0f;
-	constexpr float TOOLBAR_SPACING = 10.0f;
-	constexpr float CONTENT_PADDING = 10.0f;
-	constexpr float SECTION_SPACING = 10.0f;
-	constexpr float ROW_SPACING = 8.0f;
-	constexpr float INNER_SPACING = 4.0f;
-	constexpr float LABEL_WIDTH = 120.0f;
-	constexpr float BTN_PAD_X = 8.0f;
-	constexpr float BTN_PAD_Y = 4.0f;
-}
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 namespace Axion {
 
@@ -104,6 +95,41 @@ namespace Axion {
 			return;
 		}
 
+		// -- Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Reset Gravity", [this]() {
+								m_activeScene->setGravity(Vec3(0.0f, -9.81f, 0.0f));
+								rebuildUI();
+							}) }
+						}
+					})
+				})
+			})
+		});
+
 		// -- Toolbar --
 		auto titleInput = Silica::MakeWidget<Silica::SBox>({
 			.backgroundColor = Silica::GetTheme().Background_Input,
@@ -116,11 +142,13 @@ namespace Axion {
 		});
 
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = TOOLBAR_SPACING,
+				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
+					{ {0, 0}, optionsMenu },
 					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
 						.verticalAlign = Silica::VerticalAlign::Center,
 						.child = Silica::MakeWidget<Silica::STextBlock>({
@@ -128,13 +156,16 @@ namespace Axion {
 							.color = Silica::GetTheme().Text_Dim
 						})
 					})},
-					{ {1, 0}, titleInput }
+					{ {1, 0}, Silica::MakeWidget<Silica::SAlign>({
+						.verticalAlign = Silica::VerticalAlign::Center,
+						.child = titleInput
+					})}
 				}
 			})
 		});
 
 		// -- Build Scrollable Content Area --
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SECTION_SPACING });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_LARGE });
 
 		// -- Skybox --
 		Silica::WidgetPtr skyboxContent;
@@ -144,10 +175,10 @@ namespace Axion {
 			std::filesystem::path skyRel = AssetManager::getRelativeToAssets(skyPath);
 
 			auto btnRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = ROW_SPACING,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = {
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { BTN_PAD_X, BTN_PAD_Y },
+						.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [this]() {
 							std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox";
 							std::filesystem::path absolutePath = std::filesystem::exists(skyDir) ?
@@ -167,7 +198,7 @@ namespace Axion {
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Change Skybox"})
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { BTN_PAD_X, BTN_PAD_Y },
+						.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this]() {
 							m_activeScene->removeSkybox();
@@ -180,7 +211,7 @@ namespace Axion {
 			});
 
 			skyboxContent = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = INNER_SPACING,
+				.spacing = EditorTheme::SPACING_SMALL,
 				.slots = {
 					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = skyPath.stem().string() })},
 					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
@@ -193,14 +224,14 @@ namespace Axion {
 		}
 		else {
 			skyboxContent = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = ROW_SPACING,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = {
 					{ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
 						.text = "No Skybox Loaded",
 						.color = Silica::GetTheme().Text_Dim
 					})},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { BTN_PAD_X, BTN_PAD_Y },
+						.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [this]() {
 							std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "skybox";
 							std::filesystem::path absolutePath = std::filesystem::exists(skyDir) ?
@@ -222,7 +253,7 @@ namespace Axion {
 				}
 			});
 		}
-		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Skybox", skyboxContent, LABEL_WIDTH) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Skybox", skyboxContent, EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 
 		// -- Global Gravity --
@@ -234,7 +265,7 @@ namespace Axion {
 				m_activeScene->setGravity(Vec3(val.x, val.y, val.z));
 			}
 		});
-		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Global Gravity", gravityInput, LABEL_WIDTH) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Global Gravity", gravityInput, EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 
 		// -- Ambient Color --
@@ -250,16 +281,16 @@ namespace Axion {
 				m_activeScene->setAmbientColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
 			}
 		});
-		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Ambient Color", ambientColorInput, LABEL_WIDTH) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Ambient Color", ambientColorInput, EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
 
 
 		// -- Final Layout Assembly --
 		auto paddedContent = Silica::MakeWidget<Silica::SBox>({
-			.padding = { CONTENT_PADDING, CONTENT_PADDING },
+			.padding = { EditorTheme::PADDING_LARGE, EditorTheme::PADDING_LARGE },
 			.child = contentBox
 		});
 
-		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({.child = paddedContent });
+		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({ .child = paddedContent });
 
 		auto borderLayout = Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = topBarBox,

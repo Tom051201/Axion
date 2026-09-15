@@ -34,9 +34,11 @@
 #include "AxionStudio/Source/core/EditorUtils.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/core/EditorEvents.h"
+#include "AxionStudio/Source/core/EditorSettings.h"
 #include "AxionStudio/Source/scripting/VisualScriptGraph.h"
 #include "AxionStudio/Source/scripting/VisualScriptSerializer.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 #include "AxionStudio/Source/ui/modals/AudioImportModal.h"
 #include "AxionStudio/Source/ui/modals/MaterialImportModal.h"
 #include "AxionStudio/Source/ui/modals/MeshImportModal.h"
@@ -48,21 +50,9 @@
 #include "AxionStudio/Source/ui/modals/TextureCubeImportModal.h"
 
 namespace {
-	constexpr float TOOLBAR_PADDING = 5.0f;
-	constexpr float TOOLBAR_SPACING = 8.0f;
-	constexpr float BUTTON_PAD_X = 8.0f;
-	constexpr float BUTTON_PAD_Y = 4.0f;
-
-	constexpr float ICON_SIZE_LARGE = 24.0f;
-	constexpr float ICON_SIZE_SMALL = 16.0f;
 	constexpr float GRID_SPACING = 16.0f;
-	constexpr float CTX_MENU_SPACING = 2.0f;
-	constexpr float CTX_MENU_PADDING = 5.0f;
 	constexpr float RENAME_BOX_EXTRA_WIDTH = 30.0f;
 	constexpr float SEARCH_BOX_WIDTH = 200.0f;
-	constexpr float MODAL_PAD = 20.0f;
-	constexpr float MODAL_BTN_PAD_X = 20.0f;
-	constexpr float MODAL_BTN_PAD_Y = 8.0f;
 
 	constexpr float THUMBNAIL_MIN = 32.0f;
 	constexpr float THUMBNAIL_MAX = 256.0f;
@@ -487,17 +477,18 @@ namespace Axion {
 			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
 			.anchorContent = Silica::MakeWidget<Silica::SScrollBox>({
 				.child = Silica::MakeWidget<Silica::SBox>({
-					.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+					.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
 					.child = collectionsBackgroundClicker
 				})
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+				.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = CTX_MENU_SPACING,
-					.slots = {{ {0,0}, makeContextMenuItem("Create Collection", [this]() { cmdCreateCollection(m_vfs.getRoot()); }) }}
+					.spacing = EditorTheme::SPACING_SMALL,
+					.slots = {{ {0,0}, SilicaHelpers::MakeContextMenuItem("Create Collection", [this]() { cmdCreateCollection(m_vfs.getRoot()); }) }}
 				})
 			})
 		});
@@ -543,17 +534,17 @@ namespace Axion {
 			.openAtMousePos = true,
 			.anchorContent = Silica::MakeWidget<Silica::SScrollBox>({
 				.child = Silica::MakeWidget<Silica::SBox>({
-					.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+					.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
 					.child = physicalBackgroundClicker
 				})
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.padding = {EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL},
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = CTX_MENU_SPACING,
-					.slots = {{ {0,0}, makeContextMenuItem("Create Folder in Root", [this]() { m_currentDirectory = m_rootDirectory; cmdCreateFolder(); }) }}
+					.spacing = EditorTheme::SPACING_SMALL,
+					.slots = {{ {0,0}, SilicaHelpers::MakeContextMenuItem("Create Folder in Root", [this]() { m_currentDirectory = m_rootDirectory; cmdCreateFolder(); }) }}
 				})
 			})
 		});
@@ -561,7 +552,7 @@ namespace Axion {
 		Silica::WidgetPtr treeContent = nullptr;
 
 		// -- Build Left Tree Layout based on toggles --
-		if (m_showVFSTree && m_showPhysicalTree) {
+		if (EditorSettings::contentBrowserShowVFSTree && EditorSettings::contentBrowserShowPhysicalTree) {
 			m_vSplitBox = Silica::MakeWidget<Silica::SVerticalSplitBox>({
 				.topHeight = m_treeViewTopHeight,
 				.topContent = collectionsDropZone,
@@ -571,8 +562,8 @@ namespace Axion {
 		}
 		else {
 			m_vSplitBox = nullptr;
-			if (m_showVFSTree) treeContent = collectionsDropZone;
-			else if (m_showPhysicalTree) treeContent = physicalTreeScrollContext;
+			if (EditorSettings::contentBrowserShowVFSTree) treeContent = collectionsDropZone;
+			else if (EditorSettings::contentBrowserShowPhysicalTree) treeContent = physicalTreeScrollContext;
 		}
 
 		if (treeContent) {
@@ -584,7 +575,7 @@ namespace Axion {
 
 		// -- Build Right Grid Layout based on toggle --
 		Silica::WidgetPtr gridContent = nullptr;
-		if (m_showContentArea) {
+		if (EditorSettings::contentBrowserShowContentArea) {
 			gridContent = Silica::MakeWidget<Silica::SBox>({
 				.backgroundColor = Silica::GetTheme().Surface_Primary,
 				.child = buildContentArea()
@@ -648,22 +639,23 @@ namespace Axion {
 
 	Silica::WidgetPtr ContentBrowser::buildToolbar() {
 		auto makeIconBtn = [=](const std::string& iconName, bool isDisabled, std::function<void()> onClick) {
-			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { BUTTON_PAD_X / 2.0f, BUTTON_PAD_X / 2.0f },
-				.enabled = !isDisabled,
-				.color = Silica::Color::transparent(),
-				.hoverColor = Silica::Color(100, 100, 100, 150),
-				.disabledColor = Silica::Color::transparent(),
-				.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
-				.child = Silica::MakeWidget<Silica::SImage>({
-					.textureID = SilicaContext::getIcon(iconName),
-					.tint = isDisabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
-					.desiredSize = { ICON_SIZE_LARGE, ICON_SIZE_LARGE }
+			return Silica::MakeWidget<Silica::SAlign>({
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X / 2.0f, EditorTheme::BUTTON_PADDING_X / 2.0f },
+					.enabled = !isDisabled,
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(100, 100, 100, 150),
+					.disabledColor = Silica::Color::transparent(),
+					.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon(iconName),
+						.tint = isDisabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
+						.desiredSize = { EditorTheme::ICON_SIZE_MEDIUM, EditorTheme::ICON_SIZE_MEDIUM }
+					})
 				})
 			});
 		};
-
-		auto makeSpacer = []() { return Silica::MakeWidget<Silica::SBox>({ .backgroundColor = Silica::Color::transparent() }); };
 
 		auto backBtn = makeIconBtn("BackIcon", m_backHistory.empty(), [this]() {
 			m_forwardHistory.push_back(m_currentDirectory);
@@ -680,7 +672,6 @@ namespace Axion {
 		});
 
 		auto refreshBtn = makeIconBtn("RefreshIcon", false, [this]() { refresh(); });
-
 		auto addBtn = makeIconBtn("AddFolderIcon", false, [this]() { cmdCreateFolder(); });
 
 		if (!m_searchBoxWidget) {
@@ -691,78 +682,83 @@ namespace Axion {
 			});
 		}
 
-		auto searchBox = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2(SEARCH_BOX_WIDTH, 0.0f),
-			.child = m_searchBoxWidget
+		auto searchBox = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SBox>({
+				.explicitSize = Silica::Vec2(SEARCH_BOX_WIDTH, 0.0f),
+				.child = m_searchBoxWidget
+			})
 		});
 
-		auto clearSearchBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { BUTTON_PAD_X, BUTTON_PAD_Y },
-			.color = m_searchString.empty() ? Silica::Color::transparent() : Silica::Color(50, 50, 50, 255),
-			.onClick = [this]() {
-				m_searchString.clear();
-				m_searchBoxWidget.reset();
-				rebuildUI();
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X" })
+		auto clearSearchBtn = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SButton>({
+				.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+				.color = m_searchString.empty() ? Silica::Color::transparent() : Silica::Color(50, 50, 50, 255),
+				.onClick = [this]() {
+					m_searchString.clear();
+					m_searchBoxWidget.reset();
+					rebuildUI();
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X" })
+			})
 		});
 
-		auto onlyEngineAssetsCheckbox = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = TOOLBAR_PADDING,
-			.slots = {
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::SCheckBox>({
-						.initialCheck = m_onlyEngineAssets,
-						.onCheckChanged = [this](bool val) {
-							m_onlyEngineAssets = val;
-							rebuildUI();
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeCheckboxMenuItem("Show File Extensions", m_showFileExtensions, [this](bool val) {
+								m_showFileExtensions = val;
+								rebuildUI();
+							})},
+							{ {0,0}, SilicaHelpers::MakeCheckboxMenuItem("Assets Only", m_onlyEngineAssets, [this](bool val) {
+								m_onlyEngineAssets = val;
+								rebuildUI();
+							})}
 						}
 					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Assets Only" })
-				})}
-			}
-			});
-
-		auto showExtensionsCheckbox = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = TOOLBAR_PADDING,
-			.slots = {
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::SCheckBox>({
-						.initialCheck = m_showFileExtensions,
-						.onCheckChanged = [this](bool val) { m_showFileExtensions = val; rebuildUI(); }
-					})
-				})},
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
-					.verticalAlign = Silica::VerticalAlign::Center,
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Show Ext" })
-				})}
-			}
-			});
+				})
+			})
+		});
 
 		return Silica::MakeWidget<Silica::SBox>({
-			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = TOOLBAR_SPACING,
+				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
+					{ {0, 0}, optionsMenu },
 					{ {0, 0}, backBtn },
 					{ {0, 0}, fwdBtn },
 					{ {0, 0}, refreshBtn },
 					{ {0, 0}, addBtn },
 					{ {0, 0}, searchBox },
-					{ {0, 0}, clearSearchBtn },
-					{ {1, 0}, makeSpacer() },
-					{ {0, 0}, onlyEngineAssetsCheckbox },
-					{ {0, 0}, showExtensionsCheckbox }
+					{ {0, 0}, clearSearchBtn }
 				}
 			})
-			});
+		});
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildContentArea() {
@@ -784,7 +780,7 @@ namespace Axion {
 				.child = grid
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.padding = {EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL},
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = buildBackgroundContextMenu(createAssetSubMenu)
@@ -844,17 +840,17 @@ namespace Axion {
 		Silica::TextureID iconTex = item.isDir ? SilicaContext::getIcon("FolderIcon") : SilicaContext::getIcon("FileIcon");
 
 		// -- Context Menu Builder --
-		auto ctxMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+		auto ctxMenu = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
 
 		if (path.extension() == ".axscene") {
-			ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Set as Default Scene", [path]() {
+			ctxMenu->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Set as Default Scene", [path]() {
 				ProjectManager::getProject()->setDefaultScene(path);
 				ProjectManager::saveProject(ProjectManager::getProjectFilePath());
 			}) });
 		}
 
 		if (path.extension() == ".axmat") {
-			ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Reload Material", [path]() {
+			ctxMenu->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Reload Material", [path]() {
 				AssetManager::reload<Material>(AssetManager::getAssetUUID(path));
 			}) });
 		}
@@ -863,54 +859,57 @@ namespace Axion {
 
 		if (!item.isDir) {
 			std::string ext = path.extension().string();
-			auto openInListContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+			auto openInListContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
 
 			if (ext == ".axmat") {
-				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Material Editor", [this, path]() {
+				openInListContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Material Editor", [this, path]() {
 					if (m_openMaterialEditorPanel) m_openMaterialEditorPanel(path);
 				}) });
 			}
 			if (ext == ".axscene") {
-				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Viewport", [this, path]() {
+				openInListContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Viewport", [this, path]() {
 					m_openSceneInViewportCallback(path);
 				}) });
 			}
 			if (ext == ".axvs") {
-				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Visual Script Editor", [this, path]() {
+				openInListContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Visual Script Editor", [this, path]() {
 					if (m_openVisualScriptPanel) m_openVisualScriptPanel(path);
 				}) });
 			}
 
 			if (EditorUtils::isTextEditorFile(ext) || EditorUtils::isEngineAssetExtension(ext)) {
-				openInListContent->addSlot({ {0,0}, makeContextMenuItem("Quartz Editor", [this, path]() {
+				openInListContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Quartz Editor", [this, path]() {
 					if (m_openTextEditorPanel) m_openTextEditorPanel(path);
 				}) });
 			}
 
 			std::string progName = PlatformUtils::getDefaultProgramName(path);
 			std::string btnText = progName.empty() ? "System Default (External)" : progName + " (External)";
-			openInListContent->addSlot({ {0,0}, makeContextMenuItem(btnText, [path]() {
+			openInListContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem(btnText, [path]() {
 				PlatformUtils::openExternally(path);
 			}) });
 
 			openInSubMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 				.openOnHover = true, .openToRight = true, .showArrow = true,
 				.anchorContent = Silica::MakeWidget<Silica::SButton>({
-					.padding = {BUTTON_PAD_X, BUTTON_PAD_Y}, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Primary,
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+					.color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Primary,
 					.onClick = []() { return Silica::EventReply::handled(); },
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Open in..." })
 				}),
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING}, .borderThickness = Silica::GetTheme().Border_Thickness,
+					.padding = {EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL}, .borderThickness = Silica::GetTheme().Border_Thickness,
 					.backgroundColor = Silica::GetTheme().Background_Popup, .child = openInListContent
 				})
 			});
 			ctxMenu->addSlot({ {0,0}, openInSubMenu });
 		}
 
-		ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Show in Explorer", [path]() { PlatformUtils::showInFileExplorer(path); }) });
-		ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Rename", [this, path]() { cmdRenameItem(path); }) });
-		ctxMenu->addSlot({ {0,0}, makeContextMenuItem("Delete", [this, path, item]() { cmdDeleteItem(path, item.vfsNode); }, Silica::GetTheme().Accent_Danger) });
+		ctxMenu->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Show in Explorer", [path]() { PlatformUtils::showInFileExplorer(path); }) });
+		ctxMenu->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Rename", [this, path]() { cmdRenameItem(path); }) });
+		ctxMenu->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Delete", [this, path, item]() mutable {
+			cmdDeleteItem(path, item.vfsNode);
+		}, Silica::GetTheme().Accent_Danger) });
 
 		Silica::WidgetPtr labelWidget = nullptr;
 		if (m_itemBeingRenamed == path) {
@@ -1023,7 +1022,7 @@ namespace Axion {
 			.openOnHover = false, .openOnRightClick = true, .openAtMousePos = true,
 			.anchorContent = assetClickBox,
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING}, .borderThickness = Silica::GetTheme().Border_Thickness,
+				.padding = {EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL}, .borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup, .child = ctxMenu
 			})
 		});
@@ -1033,11 +1032,11 @@ namespace Axion {
 	}
 
 	std::shared_ptr<Silica::SMenuAnchor> ContentBrowser::buildCreateAssetSubMenu() {
-		auto createAssetMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+		auto createAssetMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Visual Script", [this]() { cmdCreateVisualScript(); }) });
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Visual Script", [this]() { cmdCreateVisualScript(); }) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Audio", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Audio", [this]() {
 			std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
 			std::filesystem::path absPath = std::filesystem::exists(audioDir) ? FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, audioDir) : FileDialogs::openFile({ {"Audio Files", "*.mp3;*.wav;*.ogg"} }, ProjectManager::getProject()->getAssetsPath());
 			if (!absPath.empty()) {
@@ -1047,11 +1046,11 @@ namespace Axion {
 			}
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Material", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Material", [this]() {
 			openAssetModal(&ContentBrowser::m_materialImportModal);
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Mesh", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Mesh", [this]() {
 			std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
 			std::filesystem::path absPath = std::filesystem::exists(meshDir) ? FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, meshDir) : FileDialogs::openFile({ {"3D Models", "*.obj;*.gltf;*.glb"} }, ProjectManager::getProject()->getAssetsPath());
 			if (!absPath.empty()) {
@@ -1061,27 +1060,27 @@ namespace Axion {
 			}
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Physics Material", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Physics Material", [this]() {
 			openAssetModal(&ContentBrowser::m_physicsMaterialModal);
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Pipeline", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Pipeline", [this]() {
 			openAssetModal(&ContentBrowser::m_pipelineImportModal);
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Shader", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Shader", [this]() {
 			openAssetModal(&ContentBrowser::m_shaderImportModal);
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Skybox", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Skybox", [this]() {
 			openAssetModal(&ContentBrowser::m_skyboxImportModal);
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Texture 2D", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Texture 2D", [this]() {
 			openAssetModal(&ContentBrowser::m_texture2DImportModal);
 		}) });
 
-		createAssetMenuContent->addSlot({ {0,0}, makeContextMenuItem("Texture Cube", [this]() {
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Texture Cube", [this]() {
 			openAssetModal(&ContentBrowser::m_textureCubeImportModal);
 		}) });
 
@@ -1089,9 +1088,9 @@ namespace Axion {
 			.openOnHover = true,
 			.openToRight = true,
 			.showArrow = true,
-			.anchorContent = makeContextMenuItem("Create Asset", []() {}),
+			.anchorContent = SilicaHelpers::MakeContextMenuItem("Create Asset", []() {}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.padding = {EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL},
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = createAssetMenuContent
@@ -1100,31 +1099,12 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildBackgroundContextMenu(Silica::WidgetPtr createAssetSubMenuWidget) {
-		auto bgMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+		auto bgMenuContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
 
-		bgMenuContent->addSlot({ {0,0}, makeContextMenuItem("Create Folder", [this]() { cmdCreateFolder(); }) });
+		bgMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Create Folder", [this]() { cmdCreateFolder(); }) });
 		bgMenuContent->addSlot({ {0,0}, createAssetSubMenuWidget });
 
 		return bgMenuContent;
-	}
-
-	Silica::WidgetPtr ContentBrowser::makeContextMenuItem(const std::string& text, std::function<void()> onClickAction, std::optional<Silica::Color> textColor) {
-		return Silica::MakeWidget<Silica::SButton>({
-			.padding = { BUTTON_PAD_X, BUTTON_PAD_Y },
-			.color = Silica::Color::transparent(),
-			.hoverColor = Silica::GetTheme().Accent_Primary,
-			.onClick = [onClickAction]() {
-				EditorActionQueue::push([onClickAction]() {
-					Silica::Renderer::closePopups();
-					if (onClickAction) onClickAction();
-				});
-				return Silica::EventReply::handled();
-			},
-			.child = Silica::MakeWidget<Silica::STextBlock>({
-				.text = text,
-				.color = textColor.value_or(Silica::GetTheme().Text_Main)
-			})
-		});
 	}
 
 	Silica::WidgetPtr ContentBrowser::buildDeleteModal() {
@@ -1152,7 +1132,7 @@ namespace Axion {
 			.spacing = 10.0f,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { MODAL_BTN_PAD_X, MODAL_BTN_PAD_Y },
+					.padding = { EditorTheme::PADDING_XLARGE, EditorTheme::PADDING_XLARGE },
 					.color = Silica::GetTheme().Accent_Danger,
 					.onClick = [this]() {
 						if (m_eventCallback) {
@@ -1183,7 +1163,7 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Delete" })
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-					.padding = { MODAL_BTN_PAD_X, MODAL_BTN_PAD_Y },
+					.padding = { EditorTheme::PADDING_XLARGE, EditorTheme::PADDING_XLARGE },
 					.onClick = [this]() {
 						m_pendingDelete.reset(); m_openDeletePopup = false; rebuildUI();
 						return Silica::EventReply::handled();
@@ -1196,7 +1176,7 @@ namespace Axion {
 		modalContent->addSlot({ {0,0}, buttons });
 
 		auto modalBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { MODAL_PAD, MODAL_PAD },
+			.padding = { EditorTheme::PADDING_XLARGE, EditorTheme::PADDING_XLARGE },
 			.child = modalContent
 		});
 
@@ -1210,6 +1190,7 @@ namespace Axion {
 	void ContentBrowser::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(ContentBrowser::onProjectChanged));
+		dispatcher.dispatch<EditorSettingsChangedEvent>(AX_BIND_EVENT_FN(ContentBrowser::onEditorSettingsChanged));
 	}
 
 	void ContentBrowser::refreshDirectory() {
@@ -1304,6 +1285,14 @@ namespace Axion {
 		return EventReply::unhandled();
 	}
 
+	EventReply ContentBrowser::onEditorSettingsChanged(EditorSettingsChangedEvent& ev) {
+		if (ev.hasChange(EditorSettingType::ContentBrowserLayout) || ev.hasChange(EditorSettingType::All)) {
+			rebuildUI();
+		}
+
+		return EventReply::unhandled();
+	}
+
 	void ContentBrowser::refresh() {
 		refreshDirectory();
 		rebuildUI();
@@ -1331,9 +1320,9 @@ namespace Axion {
 			if (cbConfig["ThumbnailSize"]) m_thumbnailSize = cbConfig["ThumbnailSize"].as<float>();
 			if (cbConfig["TreeViewWidth"]) m_treeViewWidth = cbConfig["TreeViewWidth"].as<float>();
 			if (cbConfig["TreeViewTopHeight"]) m_treeViewTopHeight = cbConfig["TreeViewTopHeight"].as<float>();
-			if (cbConfig["ShowContentArea"]) m_showContentArea = cbConfig["ShowContentArea"].as<bool>();
-			if (cbConfig["ShowVFSTree"]) m_showVFSTree = cbConfig["ShowVFSTree"].as<bool>();
-			if (cbConfig["ShowPhysicalTree"]) m_showPhysicalTree = cbConfig["ShowPhysicalTree"].as<bool>();
+			if (cbConfig["ShowContentArea"]) EditorSettings::contentBrowserShowContentArea = cbConfig["ShowContentArea"].as<bool>();
+			if (cbConfig["ShowVFSTree"]) EditorSettings::contentBrowserShowVFSTree = cbConfig["ShowVFSTree"].as<bool>();
+			if (cbConfig["ShowPhysicalTree"]) EditorSettings::contentBrowserShowPhysicalTree = cbConfig["ShowPhysicalTree"].as<bool>();
 		}
 	}
 
@@ -1346,9 +1335,9 @@ namespace Axion {
 		out << YAML::Key << "ThumbnailSize" << YAML::Value << m_thumbnailSize;
 		out << YAML::Key << "TreeViewWidth" << YAML::Value << currentWidth;
 		out << YAML::Key << "TreeViewTopHeight" << YAML::Value << currentTopHeight;
-		out << YAML::Key << "ShowContentArea" << YAML::Value << m_showContentArea;
-		out << YAML::Key << "ShowVFSTree" << YAML::Value << m_showVFSTree;
-		out << YAML::Key << "ShowPhysicalTree" << YAML::Value << m_showPhysicalTree;
+		out << YAML::Key << "ShowContentArea" << YAML::Value << EditorSettings::contentBrowserShowContentArea;
+		out << YAML::Key << "ShowVFSTree" << YAML::Value << EditorSettings::contentBrowserShowVFSTree;
+		out << YAML::Key << "ShowPhysicalTree" << YAML::Value << EditorSettings::contentBrowserShowPhysicalTree;
 		out << YAML::EndMap;
 	}
 
@@ -1390,13 +1379,14 @@ namespace Axion {
 				auto fileIcon = Silica::MakeWidget<Silica::SImage>({
 					.textureID = SilicaContext::getIcon("FileIcon"),
 					.tint = Silica::GetTheme().Text_Main,
-					.desiredSize = { ICON_SIZE_SMALL, ICON_SIZE_SMALL },
+					.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL },
 				});
 
 				std::string fileName = m_showFileExtensions ? filePath.filename().string() : filePath.stem().string();
 
 				auto fileNode = Silica::MakeWidget<Silica::STreeNode>({
 					.label = fileName,
+					.yTextOffset = EditorTheme::TREE_NODE_Y_OFFSET,
 					.initiallyOpen = false,
 					.isSelected = false,
 					.isLeaf = true,
@@ -1413,7 +1403,7 @@ namespace Axion {
 		auto folderIcon = Silica::MakeWidget<Silica::SImage>({
 			.textureID = SilicaContext::getIcon("FolderIcon"),
 			.tint = isSelected ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim,
-			.desiredSize = { ICON_SIZE_SMALL, ICON_SIZE_SMALL },
+			.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL },
 			});
 
 		std::string label = (dirPath == m_rootDirectory) ? ProjectManager::getProject()->getName() : dirPath.filename().string();
@@ -1421,6 +1411,7 @@ namespace Axion {
 
 		return Silica::MakeWidget<Silica::STreeNode>({
 			.label = label,
+			.yTextOffset = EditorTheme::TREE_NODE_Y_OFFSET,
 			.initiallyOpen = isOpen,
 			.isSelected = isSelected,
 			.isLeaf = !hasChildren,
@@ -1455,11 +1446,12 @@ namespace Axion {
 		auto folderIcon = Silica::MakeWidget<Silica::SImage>({
 			.textureID = SilicaContext::getIcon("FolderIcon"),
 			.tint = (m_viewingCollection && m_currentCollection == node) ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Dim,
-			.desiredSize = { ICON_SIZE_SMALL, ICON_SIZE_SMALL },
+			.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL },
 		});
 
 		auto treeNode = Silica::MakeWidget<Silica::STreeNode>({
 			.label = node->name,
+			.yTextOffset = EditorTheme::TREE_NODE_Y_OFFSET,
 			.initiallyOpen = true,
 			.isSelected = (m_viewingCollection && m_currentCollection == node),
 			.isLeaf = childWidgets.empty(),
@@ -1520,12 +1512,14 @@ namespace Axion {
 			.children = childWidgets
 		});
 
-		auto ctxMenuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = CTX_MENU_SPACING });
+		auto ctxMenuBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
 
-		ctxMenuBox->addSlot({ {0,0}, makeContextMenuItem("Create Sub-Collection", [this, node]() { cmdCreateCollection(node); }) });
+		ctxMenuBox->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Create Sub-Collection", [this, node]() { cmdCreateCollection(node); }) });
 
 		if (node != m_vfs.getRoot()) {
-			ctxMenuBox->addSlot({ {0,0}, makeContextMenuItem("Delete Collection", [this, node]() { cmdDeleteCollection(node); }, Silica::GetTheme().Accent_Danger) });
+			ctxMenuBox->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Delete Collection", [this, node]() mutable {
+				cmdDeleteCollection(node);
+			}, Silica::GetTheme().Accent_Danger) });
 		}
 
 		return Silica::MakeWidget<Silica::SMenuAnchor>({
@@ -1534,7 +1528,7 @@ namespace Axion {
 			.openAtMousePos = true,
 			.anchorContent = treeNode,
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = {CTX_MENU_PADDING, CTX_MENU_PADDING},
+				.padding = {EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL},
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = ctxMenuBox

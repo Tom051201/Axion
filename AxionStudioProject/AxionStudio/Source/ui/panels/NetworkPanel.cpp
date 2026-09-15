@@ -13,6 +13,8 @@
 #include <Silica/include/SScrollBox.h>
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SSeparator.h>
+#include <Silica/include/SMenuAnchor.h>
+#include <Silica/include/SImage.h>
 
 #include "AxionNetwork/Source/NetworkServer.h"
 #include "AxionNetwork/Source/NetworkClient.h"
@@ -20,18 +22,9 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
-
-namespace {
-	constexpr float TOOLBAR_PADDING = 10.0f;
-	constexpr float TOOLBAR_SPACING = 10.0f;
-	constexpr float CONTENT_PADDING = 10.0f;
-	constexpr float SECTION_SPACING = 15.0f;
-	constexpr float ROW_SPACING = 8.0f;
-	constexpr float DASHBOARD_SPACING = 10.0f;
-	constexpr float BTN_PAD_Y = 6.0f;
-	constexpr float LABEL_WIDTH = 120.0f;
-}
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 namespace Axion {
 
@@ -72,13 +65,51 @@ namespace Axion {
 			statusColor = Silica::GetTheme().Accent_Success;
 		}
 
+		// -- Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Reset Defaults", [this]() {
+								m_targetPort = 27015;
+								m_targetIP = "127.0.0.1";
+								rebuildUI();
+							}) }
+						}
+					})
+				})
+			})
+		});
+
 		// -- Top toolbar --
 		auto topBarBox = Silica::MakeWidget<Silica::SBox>({
-			.padding = { TOOLBAR_PADDING, TOOLBAR_PADDING },
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 			.child = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = TOOLBAR_SPACING,
+				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
+					{ {0, 0}, optionsMenu },
 					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
 						.verticalAlign = Silica::VerticalAlign::Center,
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Multiplayer: " })
@@ -94,21 +125,21 @@ namespace Axion {
 			})
 		});
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = SECTION_SPACING });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_LARGE });
 
 		// ----- OFFLINE UI -----
 		if (m_currentState == NetworkUIState::Offline) {
 
 			// -- Server start setup --
 			auto serverControls = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = ROW_SPACING,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = {
 					{ {0,0}, SilicaHelpers::MakePropertyRow("Host Port", Silica::MakeWidget<Silica::SInputFieldInt>({
 						.initialValue = m_targetPort,
 						.onValueChanged = [this](int val) { m_targetPort = val; }
-					}), LABEL_WIDTH)},
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, BTN_PAD_Y },
+						.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [this]() {
 							if (m_server->start((uint16_t)m_targetPort)) {
 								m_currentState = NetworkUIState::RunningServer;
@@ -129,14 +160,14 @@ namespace Axion {
 
 			// -- Client connect setup --
 			auto clientControls = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = ROW_SPACING,
+				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = {
 					{ {0,0}, SilicaHelpers::MakePropertyRow("Target IP", Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_targetIP,
 						.onTextCommitted = [this](const std::string& val) { m_targetIP = val; }
-					}), LABEL_WIDTH)},
+					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, BTN_PAD_Y },
+						.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [this]() {
 							if (m_client->connect(m_targetIP, (uint16_t)m_targetPort)) {
 								m_currentState = NetworkUIState::RunningClient;
@@ -158,17 +189,17 @@ namespace Axion {
 		else if (m_currentState == NetworkUIState::RunningServer) {
 
 			auto serverDashboard = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = DASHBOARD_SPACING,
+				.spacing = EditorTheme::SPACING_LARGE,
 				.slots = {
-					{ {0,0}, SilicaHelpers::MakePropertyRow("Listening Port", Silica::MakeWidget<Silica::STextBlock>({.text = std::to_string(m_targetPort) }), LABEL_WIDTH)},
-					{ {0,0}, SilicaHelpers::MakePropertyRow("Local IP", Silica::MakeWidget<Silica::STextBlock>({.text = "127.0.0.1 (Localhost)" }), LABEL_WIDTH)},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Listening Port", Silica::MakeWidget<Silica::STextBlock>({.text = std::to_string(m_targetPort) }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Local IP", Silica::MakeWidget<Silica::STextBlock>({.text = "127.0.0.1 (Localhost)" }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
 
 					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
 					{ {0,0}, SilicaHelpers::MakeHeader("Server Tools") },
 
 					// -- Shutdown --
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, BTN_PAD_Y },
+						.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this]() {
 							m_server->stop();
@@ -182,7 +213,7 @@ namespace Axion {
 						})
 					})}
 				}
-			});
+				});
 			contentBox->addSlot({ {0, 0}, serverDashboard });
 		}
 
@@ -190,16 +221,15 @@ namespace Axion {
 		else if (m_currentState == NetworkUIState::RunningClient) {
 
 			auto clientDashboard = Silica::MakeWidget<Silica::SVerticalBox>({
-				.spacing = DASHBOARD_SPACING,
+				.spacing = EditorTheme::SPACING_LARGE,
 				.slots = {
-					{ {0,0}, SilicaHelpers::MakePropertyRow("Connected To", Silica::MakeWidget<Silica::STextBlock>({.text = m_targetIP + ":" + std::to_string(m_targetPort) }), LABEL_WIDTH)},
-
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Connected To", Silica::MakeWidget<Silica::STextBlock>({.text = m_targetIP + ":" + std::to_string(m_targetPort) }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
 					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
 					{ {0,0}, SilicaHelpers::MakeHeader("Client Tools") },
 
 					// -- Debug tools --
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, BTN_PAD_Y },
+						.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [this]() {
 							m_client->sendString("Client sent a debug ping!");
 							return Silica::EventReply::handled();
@@ -209,12 +239,11 @@ namespace Axion {
 							.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Send Debug Ping"})
 						})
 					})},
-
 					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
 
 					// -- Disconnect --
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
-						.padding = { 0.0f, BTN_PAD_Y },
+						.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 						.color = Silica::GetTheme().Accent_Danger,
 						.onClick = [this]() {
 							m_client->disconnect();
@@ -234,7 +263,7 @@ namespace Axion {
 
 		// -- Final Assembly --
 		auto paddedContent = Silica::MakeWidget<Silica::SBox>({
-			.padding = { CONTENT_PADDING, CONTENT_PADDING },
+			.padding = { EditorTheme::PADDING_LARGE, EditorTheme::PADDING_LARGE },
 			.child = contentBox
 		});
 

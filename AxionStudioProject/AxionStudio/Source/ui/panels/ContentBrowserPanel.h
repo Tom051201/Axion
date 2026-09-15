@@ -17,6 +17,7 @@
 #include "AxionStudio/Source/core/VirtualFileSystem.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
+#include "AxionStudio/Source/core/EditorEvents.h"
 
 namespace YAML {
 	class Node;
@@ -66,13 +67,6 @@ namespace Axion {
 		void setOpenSceneInViewportCallback(std::function<void(const std::filesystem::path&)> callback) { m_openSceneInViewportCallback = callback; }
 
 		Silica::WidgetPtr getWidget();
-
-		void setShowContentArea(bool show) { m_showContentArea = show; rebuildUI(); }
-		void setShowVFSTree(bool show) { m_showVFSTree = show; rebuildUI(); }
-		void setShowPhysicalTree(bool show) { m_showPhysicalTree = show; rebuildUI(); }
-		bool getShowContentArea() { return m_showContentArea; }
-		bool getShowVFSTree() { return m_showVFSTree; }
-		bool getShowPhysicalTree() { return m_showPhysicalTree; }
 
 	private:
 
@@ -163,7 +157,6 @@ namespace Axion {
 
 		std::shared_ptr<Silica::SMenuAnchor> buildCreateAssetSubMenu();
 		Silica::WidgetPtr buildBackgroundContextMenu(Silica::WidgetPtr createAssetSubMenuWidget);
-		Silica::WidgetPtr makeContextMenuItem(const std::string& text, std::function<void()> onClickAction, std::optional<Silica::Color> textColor = std::nullopt);
 
 		// -- Commands --
 		void cmdCreateCollection(std::shared_ptr<VFSNode> parentNode);
@@ -198,6 +191,7 @@ namespace Axion {
 
 		// -- Events & Helpers --
 		EventReply onProjectChanged(ProjectChangedEvent& e);
+		EventReply onEditorSettingsChanged(EditorSettingsChangedEvent& ev);
 		void refreshDirectory();
 		void resetRenaming();
 		bool matchesSearch(const std::string& name);

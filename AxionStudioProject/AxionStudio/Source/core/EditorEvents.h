@@ -19,7 +19,7 @@ namespace Axion {
 		EditorStateChanged,
 		SceneModified,
 		EditorHistoryChanged,
-		SettingsChanged
+		EditorSettingsChanged
 	};
 
 	#define EDITOR_EVENT_CLASS_TYPE(type) \
@@ -29,7 +29,7 @@ namespace Axion {
 
 
 
-	// ----- Editor Events -----
+	// ----- Asset Renamed Event -----
 	class AssetRenamedEvent : public Event {
 	public:
 
@@ -53,6 +53,7 @@ namespace Axion {
 
 	};
 
+	// ----- Asset Deleted Event -----
 	class AssetDeletedEvent : public Event {
 	public:
 
@@ -74,6 +75,7 @@ namespace Axion {
 
 	};
 
+	// ----- Entity Selected Event -----
 	class EntitySelectedEvent : public Event {
 	public:
 
@@ -95,6 +97,7 @@ namespace Axion {
 
 	};
 
+	// ----- Editor State Changed Event -----
 	class EditorStateChangedEvent : public Event {
 	public:
 
@@ -116,6 +119,7 @@ namespace Axion {
 
 	};
 
+	// ----- Scene Modified Event -----
 	enum class SceneModificationType {
 		NameChanged,
 		SkyboxChanged,
@@ -144,6 +148,7 @@ namespace Axion {
 
 	};
 
+	// ----- Editor History Changed Event -----
 	class EditorHistoryChangedEvent : public Event {
 	public:
 
@@ -155,6 +160,53 @@ namespace Axion {
 
 		EDITOR_EVENT_CLASS_TYPE(EditorHistoryChanged)
 		EVENT_CLASS_CATEGORY(EventCategoryEditor)
+
+	};
+
+	// ----- Editor Settings Changed Event -----
+	enum class EditorSettingType : uint32_t {
+		None = 0,
+		AssetLoadBudget = BIT(0),
+		DiscordRPC = BIT(1),
+		AssetLibraryPaths = BIT(2),
+		ContentBrowserLayout = BIT(3),
+		MaterialEditorCamera = BIT(4),
+		All = 0xFFFFFFFF
+	};
+
+	inline EditorSettingType operator|(EditorSettingType a, EditorSettingType b) {
+		return static_cast<EditorSettingType>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+	}
+	inline EditorSettingType operator&(EditorSettingType a, EditorSettingType b) {
+		return static_cast<EditorSettingType>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
+	}
+	inline EditorSettingType& operator|=(EditorSettingType& a, EditorSettingType b) {
+		a = a | b;
+		return a;
+	}
+
+	class EditorSettingsChangedEvent : public Event {
+	public:
+
+		EditorSettingsChangedEvent(EditorSettingType changedSettings)
+			: m_changedSettings(changedSettings) {}
+
+		EditorSettingType getChangedSettings() const { return m_changedSettings; }
+
+		bool hasChange(EditorSettingType type) const {
+			return (m_changedSettings & type) != EditorSettingType::None;
+		}
+
+		std::string toString() const override {
+			return "EditorSettingsChangedEvent";
+		}
+
+		EDITOR_EVENT_CLASS_TYPE(EditorSettingsChanged)
+		EVENT_CLASS_CATEGORY(EventCategoryEditor)
+
+	private:
+
+		EditorSettingType m_changedSettings;
 
 	};
 

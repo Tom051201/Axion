@@ -25,21 +25,10 @@
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 namespace {
-	constexpr float TOOLBAR_PAD_X = 2.0f;
-	constexpr float TOOLBAR_PAD_Y = 4.0f;
-	constexpr float BTN_ICON_PAD = 4.0f;
-	constexpr float BTN_TEXT_PAD_X = 8.0f;
-	constexpr float BTN_TEXT_PAD_Y = 4.0f;
-	constexpr float ICON_SIZE = 24.0f;
 	constexpr float GIZMO_BTN_SIZE = 32.0f;
-	constexpr float SPACING_SMALL = 4.0f;
-	constexpr float SPACING_MEDIUM = 8.0f;
-	constexpr float CAM_MENU_PAD = 10.0f;
-	constexpr float CAM_MENU_WIDTH = 250.0f;
-	constexpr float SLIDER_LABEL_WIDTH = 100.0f;
-	constexpr float STATS_PAD = 8.0f;
 	constexpr float DEFAULT_VP_WIDTH = 1280.0f;
 	constexpr float DEFAULT_VP_HEIGHT = 720.0f;
 }
@@ -56,7 +45,7 @@ namespace Axion {
 
 	Silica::WidgetPtr ViewportPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({ .borderThickness = Silica::GetTheme().Border_Thickness });
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -104,9 +93,10 @@ namespace Axion {
 			return;
 		}
 
-		// -- Normal Active Viewport --
+		// -- Normal Active Viewport Toolbar --
 		m_toolbarContainer = Silica::MakeWidget<Silica::SBox>({
-			.padding = { TOOLBAR_PAD_X, TOOLBAR_PAD_Y },
+			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
+			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
 			.backgroundColor = Silica::GetTheme().Surface_Tertiary,
 		});
 
@@ -190,7 +180,7 @@ namespace Axion {
 						.horizontalAlign = Silica::HorizontalAlign::Left,
 						.verticalAlign = Silica::VerticalAlign::Top,
 						.child = Silica::MakeWidget<Silica::SBox>({
-							.padding = { STATS_PAD, STATS_PAD },
+							.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
 							.backgroundColor = Silica::Color(0, 0, 0, 150),
 							.child = m_statsText
 						})
@@ -202,7 +192,7 @@ namespace Axion {
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = m_toolbarContainer,
 			.contentArea = m_viewportContainer
-		}));
+			}));
 	}
 
 	void ViewportPanel::rebuildToolbar() {
@@ -217,7 +207,7 @@ namespace Axion {
 		// -- Helper Functions --
 		auto makeImageButton = [](Silica::TextureID texID, bool isDisabled, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { BTN_ICON_PAD, BTN_ICON_PAD },
+				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 				.enabled = !isDisabled,
 				.color = Silica::Color::transparent(),
 				.hoverColor = Silica::Color(100, 100, 100, 150),
@@ -226,14 +216,14 @@ namespace Axion {
 				.child = Silica::MakeWidget<Silica::SImage>({
 					.textureID = texID,
 					.tint = isDisabled ? Silica::Color(100, 100, 100, 150) : Silica::Color::white(),
-					.desiredSize = { ICON_SIZE, ICON_SIZE }
+					.desiredSize = { EditorTheme::ICON_SIZE_MEDIUM, EditorTheme::ICON_SIZE_MEDIUM }
 				})
 			});
 		};
 
 		auto makeTextButton = [](const std::string& text, bool isActive, std::function<void()> onClick) {
 			return Silica::MakeWidget<Silica::SButton>({
-				.padding = { BTN_TEXT_PAD_X, BTN_TEXT_PAD_Y },
+				.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 				.color = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
 				.hoverColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color(100, 100, 100, 150),
 				.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
@@ -259,9 +249,48 @@ namespace Axion {
 			});
 		};
 
+		// -- Gear Options Menu --
+		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
+				.openOnHover = false,
+				.openToRight = true,
+				.anchorContent = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.color = Silica::Color::transparent(),
+					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.onClick = []() { return Silica::EventReply::unhandled(); },
+					.child = Silica::MakeWidget<Silica::SImage>({
+						.textureID = SilicaContext::getIcon("GearIcon"),
+						.tint = Silica::GetTheme().Text_Main,
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
+					})
+				}),
+				.menuContent = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
+					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.backgroundColor = Silica::GetTheme().Background_Popup,
+					.child = Silica::MakeWidget<Silica::SVerticalBox>({
+						.spacing = EditorTheme::SPACING_SMALL,
+						.slots = {
+							{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Reset View", [this]() {
+								// Placeholder for later implementation
+							}) }
+						}
+					})
+				})
+			})
+		});
 
-		// -- Gizmo Tools --
-		Silica::WidgetPtr gizmoRow;
+
+		// -- Build Left Row (Gear + Gizmo) --
+		auto leftRow = Silica::MakeWidget<Silica::SHorizontalBox>({
+			.spacing = EditorTheme::SPACING_SMALL
+		});
+
+		leftRow->addSlot({ {0,0}, optionsMenu });
+
 		if (m_gizmo) {
 			auto translateBtn = makeSquareTextButton("T", m_gizmo->getMode() == GizmoMode::Translate, [this]() {
 				m_gizmo->setMode(GizmoMode::Translate); refreshToolbar();
@@ -278,10 +307,10 @@ namespace Axion {
 				m_gizmo->setSpace(isLocal ? GizmoSpace::Global : GizmoSpace::Local); refreshToolbar();
 			});
 
-			gizmoRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-				.spacing = SPACING_SMALL,
-				.slots = { { {0,0}, translateBtn }, { {0,0}, rotateBtn }, { {0,0}, scaleBtn }, { {0,0}, spaceBtn } }
-			});
+			leftRow->addSlot({ {0,0}, translateBtn });
+			leftRow->addSlot({ {0,0}, rotateBtn });
+			leftRow->addSlot({ {0,0}, scaleBtn });
+			leftRow->addSlot({ {0,0}, spaceBtn });
 		}
 
 		// -- Play / Simulate / Camera Tools --
@@ -295,22 +324,22 @@ namespace Axion {
 		auto camSettingsMenu = Silica::MakeWidget<Silica::SMenuAnchor>({
 			.openOnHover = false,
 			.anchorContent = Silica::MakeWidget<Silica::SButton>({
-				.padding = { BTN_ICON_PAD, BTN_ICON_PAD },
+				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 				.color = Silica::Color::transparent(),
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Cam" })
 			}),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.padding = { CAM_MENU_PAD, CAM_MENU_PAD },
-				.explicitSize = Silica::Vec2{ CAM_MENU_WIDTH, 0.0f },
+				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+				.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
 				.borderThickness = Silica::GetTheme().Border_Thickness,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
-					.spacing = SPACING_MEDIUM,
+					.spacing = EditorTheme::SPACING_SMALL,
 					.slots = {
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_translationSpeed3D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_translationSpeed3D = v; } }), SLIDER_LABEL_WIDTH) },
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Rotate (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_rotationSpeed3D, .minValue = 0.0f, .maxValue = 0.01f, .onValueChanged = [this](float v) { m_camera->m_rotationSpeed3D = v; } }), SLIDER_LABEL_WIDTH) },
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_keyboardSpeed2D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_keyboardSpeed2D = v; } }), SLIDER_LABEL_WIDTH) },
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Drag (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_dragSpeed2D, .minValue = 0.0f, .maxValue = 0.1f, .onValueChanged = [this](float v) { m_camera->m_dragSpeed2D = v; } }), SLIDER_LABEL_WIDTH) }
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_translationSpeed3D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_translationSpeed3D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Rotate (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_rotationSpeed3D, .minValue = 0.0f, .maxValue = 0.01f, .onValueChanged = [this](float v) { m_camera->m_rotationSpeed3D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_keyboardSpeed2D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_keyboardSpeed2D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Drag (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_dragSpeed2D, .minValue = 0.0f, .maxValue = 0.1f, .onValueChanged = [this](float v) { m_camera->m_dragSpeed2D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) }
 					}
 				})
 			})
@@ -346,7 +375,7 @@ namespace Axion {
 		});
 
 		auto centerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = SPACING_MEDIUM,
+			.spacing = EditorTheme::TOOLBAR_SPACING,
 			.slots = {
 				{ {0, 0}, camBtn },
 				{ {0, 0}, camSettingsMenu },
@@ -358,15 +387,13 @@ namespace Axion {
 		});
 
 		// -- Assemble Overlay --
-		auto toolbarOverlay = Silica::MakeWidget<Silica::SOverlay>({.children = {} });
+		auto toolbarOverlay = Silica::MakeWidget<Silica::SOverlay>({ .children = {} });
 
-		if (gizmoRow) {
-			toolbarOverlay->addChild(Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Left,
-				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = gizmoRow
-			}));
-		}
+		toolbarOverlay->addChild(Silica::MakeWidget<Silica::SAlign>({
+			.horizontalAlign = Silica::HorizontalAlign::Left,
+			.verticalAlign = Silica::VerticalAlign::Center,
+			.child = leftRow
+		}));
 
 		toolbarOverlay->addChild(Silica::MakeWidget<Silica::SAlign>({
 			.horizontalAlign = Silica::HorizontalAlign::Center,
