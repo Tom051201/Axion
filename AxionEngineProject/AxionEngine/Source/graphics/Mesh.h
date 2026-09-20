@@ -37,8 +37,8 @@ namespace Axion {
 		uint32_t getVertexCount() const { return m_vertexBuffer->getVertexCount(); }
 		uint32_t getIndexCount() const { return m_indexBuffer->getIndexCount(); }
 		const std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
-
-
+		const std::vector<Vertex>& getVertices() const { return m_meshData.vertices; }
+		const std::vector<uint32_t>& getIndices() const { return m_meshData.indices; }
 
 
 		static Ref<Mesh> create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
@@ -51,6 +51,7 @@ namespace Axion {
 		Ref<VertexBuffer> m_vertexBuffer;
 		Ref<IndexBuffer> m_indexBuffer;
 		std::vector<Submesh> m_submeshes;
+		MeshData m_meshData;
 
 	};
 

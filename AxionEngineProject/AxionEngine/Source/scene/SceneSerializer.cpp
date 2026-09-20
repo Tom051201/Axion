@@ -23,7 +23,8 @@ namespace Axion {
 		RigidBody, BoxCollider, SphereCollider, CapsuleCollider, GravitySource,
 		Script, NativeScript, ParticleSystem,
 		SkeletalMesh, Animator,
-		NetworkIdentity
+		NetworkIdentity,
+		TriangleMeshCollider, ConvexCollider
 	};
 
 	static void writeString(std::ofstream& out, const std::string& str) {
@@ -276,6 +277,35 @@ namespace Axion {
 			else {
 				out << YAML::Key << "Material" << YAML::Value << "0";
 			}
+			out << YAML::EndMap;
+		}
+
+		// -- TriangleMeshColliderComponent --
+		if (entity.hasComponent<TriangleMeshColliderComponent>()) {
+			out << YAML::Key << "TriangleMeshColliderComponent";
+			out << YAML::BeginMap;
+			auto& tmc = entity.getComponent<TriangleMeshColliderComponent>();
+			out << YAML::Key << "IsTrigger" << YAML::Value << tmc.isTrigger;
+			if (tmc.collisionMesh.isValid()) out << YAML::Key << "Mesh" << YAML::Value << tmc.collisionMesh.uuid;
+			else out << YAML::Key << "Mesh" << YAML::Value << "0";
+			if (tmc.material.isValid()) out << YAML::Key << "Material" << YAML::Value << tmc.material.uuid;
+			else out << YAML::Key << "Material" << YAML::Value << "0";
+
+			out << YAML::EndMap;
+		}
+
+		// -- ConvexColliderComponent --
+		if (entity.hasComponent<ConvexColliderComponent>()) {
+			out << YAML::Key << "ConvexColliderComponent";
+			out << YAML::BeginMap;
+			auto& cc = entity.getComponent<ConvexColliderComponent>();
+			out << YAML::Key << "IsTrigger" << YAML::Value << cc.isTrigger;
+			out << YAML::Key << "VertexLimit" << YAML::Value << cc.vertexLimit;
+			if (cc.collisionMesh.isValid()) out << YAML::Key << "Mesh" << YAML::Value << cc.collisionMesh.uuid;
+			else out << YAML::Key << "Mesh" << YAML::Value << "0";
+			if (cc.material.isValid()) out << YAML::Key << "Material" << YAML::Value << cc.material.uuid;
+			else out << YAML::Key << "Material" << YAML::Value << "0";
+
 			out << YAML::EndMap;
 		}
 
@@ -882,6 +912,49 @@ namespace Axion {
 			}
 		}
 
+		// -- TriangleMeshColliderComponent --
+		auto triangleMeshColliderComponent = entityNode["TriangleMeshColliderComponent"];
+		if (triangleMeshColliderComponent) {
+			auto& tmc = deserializedEntity.addComponent<TriangleMeshColliderComponent>();
+			tmc.isTrigger = triangleMeshColliderComponent["IsTrigger"].as<bool>();
+			UUID meshUUID = triangleMeshColliderComponent["Mesh"].as<UUID>();
+			if (meshUUID.isValid() && registry->contains(meshUUID)) {
+				tmc.collisionMesh = AssetManager::load<Mesh>(meshUUID);
+			}
+			else {
+				tmc.collisionMesh = AssetHandle<Mesh>();
+			}
+			UUID materialUUID = triangleMeshColliderComponent["Material"].as<UUID>();
+			if (materialUUID.isValid() && registry->contains(materialUUID)) {
+				tmc.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+			}
+			else {
+				tmc.material = AssetHandle<PhysicsMaterial>();
+			}
+		}
+
+		// -- ConvexColliderComponent --
+		auto convexColliderComponent = entityNode["ConvexColliderComponent"];
+		if (convexColliderComponent) {
+			auto& cc = deserializedEntity.addComponent<ConvexColliderComponent>();
+			cc.isTrigger = convexColliderComponent["IsTrigger"].as<bool>();
+			cc.vertexLimit = convexColliderComponent["VertexLimit"].as<uint32_t>();
+			UUID meshUUID = convexColliderComponent["Mesh"].as<UUID>();
+			if (meshUUID.isValid() && registry->contains(meshUUID)) {
+				cc.collisionMesh = AssetManager::load<Mesh>(meshUUID);
+			}
+			else {
+				cc.collisionMesh = AssetHandle<Mesh>();
+			}
+			UUID materialUUID = convexColliderComponent["Material"].as<UUID>();
+			if (materialUUID.isValid() && registry->contains(materialUUID)) {
+				cc.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+			}
+			else {
+				cc.material = AssetHandle<PhysicsMaterial>();
+			}
+		}
+
 		// -- GravitySourceComponent --
 		auto gravitySourceComponent = entityNode["GravitySourceComponent"];
 		if (gravitySourceComponent) {
@@ -1199,6 +1272,33 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&component.radius), sizeof(float));
 			out.write(reinterpret_cast<const char*>(&component.halfHeight), sizeof(float));
 			out.write(reinterpret_cast<const char*>(&component.offset), sizeof(Vec3));
+			uint8_t flags = (component.isTrigger ? 1 : 0);
+			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+		}
+
+		// -- Write Triangle Mesh Collider Component --
+		if (entity.hasComponent<TriangleMeshColliderComponent>()) {
+			ComponentID id = ComponentID::TriangleMeshCollider;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			auto& component = entity.getComponent<TriangleMeshColliderComponent>();
+			UUID meshUUID = component.collisionMesh.isValid() ? component.collisionMesh.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&meshUUID), sizeof(UUID));
+			UUID materialUUID = component.material.isValid() ? component.material.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+			uint8_t flags = (component.isTrigger ? 1 : 0);
+			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+		}
+
+		// -- Write Convex Collider Component --
+		if (entity.hasComponent<ConvexColliderComponent>()) {
+			ComponentID id = ComponentID::ConvexCollider;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			auto& component = entity.getComponent<ConvexColliderComponent>();
+			UUID meshUUID = component.collisionMesh.isValid() ? component.collisionMesh.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&meshUUID), sizeof(UUID));
+			UUID materialUUID = component.material.isValid() ? component.material.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+			out.write(reinterpret_cast<const char*>(&component.vertexLimit), sizeof(uint32_t));
 			uint8_t flags = (component.isTrigger ? 1 : 0);
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
 		}
@@ -1521,6 +1621,35 @@ namespace Axion {
 				in.read(reinterpret_cast<char*>(&component.radius), sizeof(float));
 				in.read(reinterpret_cast<char*>(&component.halfHeight), sizeof(float));
 				in.read(reinterpret_cast<char*>(&component.offset), sizeof(Vec3));
+				uint8_t flags;
+				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+				component.isTrigger = (flags & 1) != 0;
+				break;
+			}
+			case ComponentID::TriangleMeshCollider: {
+				// -- Read Triangle Mesh Collider Component --
+				auto& component = entity.addComponent<TriangleMeshColliderComponent>();
+				UUID meshUUID;
+				in.read(reinterpret_cast<char*>(&meshUUID), sizeof(UUID));
+				if (meshUUID.isValid()) component.collisionMesh = AssetManager::load<Mesh>(meshUUID);
+				UUID materialUUID;
+				in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+				if (materialUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+				uint8_t flags;
+				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
+				component.isTrigger = (flags & 1) != 0;
+				break;
+			}
+			case ComponentID::ConvexCollider: {
+				// -- Read Convex Collider Component --
+				auto& component = entity.addComponent<ConvexColliderComponent>();
+				UUID meshUUID;
+				in.read(reinterpret_cast<char*>(&meshUUID), sizeof(UUID));
+				if (meshUUID.isValid()) component.collisionMesh = AssetManager::load<Mesh>(meshUUID);
+				UUID materialUUID;
+				in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+				if (materialUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+				in.read(reinterpret_cast<char*>(&component.vertexLimit), sizeof(uint32_t));
 				uint8_t flags;
 				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
 				component.isTrigger = (flags & 1) != 0;

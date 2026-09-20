@@ -773,6 +773,38 @@ namespace Axion {
 				Vec4 color = cc.isTrigger ? Vec4(1.0f, 0.57f, 0.0f, 1.0f) : Vec4(0.0f, 1.0f, 0.0f, 1.0f);
 				WireframeRenderer::drawCapsule(colliderTransform, radius, halfHeight, color);
 			}
+
+			// -- Triangle Collider --
+			if (m_selectedEntity.hasComponent<TriangleMeshColliderComponent>()) {
+				auto& cc = m_selectedEntity.getComponent<TriangleMeshColliderComponent>();
+
+				if (cc.collisionMesh.isValid()) {
+					Ref<Mesh> mesh = AssetManager::get<Mesh>(cc.collisionMesh);
+					if (mesh) {
+						Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
+						Vec4 color = cc.isTrigger ? Vec4(1.0f, 0.57f, 0.0f, 1.0f) : Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+						WireframeRenderer::drawMesh(worldTransform, mesh, color);
+					}
+				}
+
+			}
+
+			// -- Convex Collider --
+			if (m_selectedEntity.hasComponent<ConvexColliderComponent>()) {
+				auto& cc = m_selectedEntity.getComponent<ConvexColliderComponent>();
+
+				if (cc.collisionMesh.isValid()) {
+					Ref<Mesh> mesh = AssetManager::get<Mesh>(cc.collisionMesh);
+					if (mesh) {
+						Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
+						Vec4 color = cc.isTrigger ? Vec4(1.0f, 0.57f, 0.0f, 1.0f) : Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+						WireframeRenderer::drawMesh(worldTransform, mesh, color);
+					}
+				}
+			}
+
 		}
 
 

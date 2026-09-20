@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxionEngine/Source/core/Math.h"
+#include "AxionEngine/Source/graphics/Mesh.h"
 
 namespace Axion {
 
@@ -10,6 +11,7 @@ namespace Axion {
 		static void drawBox(const Mat4& transform, const Vec4& color);
 		static void drawSphere(const Mat4& transform, float radius, const Vec4& color);
 		static void drawCapsule(const Mat4& transform, float radius, float halfHeight, const Vec4& color);
+		static void drawMesh(const Mat4& transform, const Ref<Mesh>& mesh, const Vec4& color);
 
 	};
 

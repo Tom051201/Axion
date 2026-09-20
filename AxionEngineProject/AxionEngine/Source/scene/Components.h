@@ -297,6 +297,31 @@ namespace Axion {
 
 
 
+	struct TriangleMeshColliderComponent {
+		AssetHandle<Mesh> collisionMesh;
+		AssetHandle<PhysicsMaterial> material;
+
+		bool isTrigger = false;
+		void* runtimeShape = nullptr;
+
+		TriangleMeshColliderComponent() = default;
+	};
+
+
+
+	struct ConvexColliderComponent {
+		AssetHandle<Mesh> collisionMesh;
+		AssetHandle<PhysicsMaterial> material;
+
+		uint32_t vertexLimit = 255;
+		bool isTrigger = false;
+		void* runtimeShape = nullptr;
+
+		ConvexColliderComponent() = default;
+	};
+
+
+
 	struct GravitySourceComponent {
 		enum class Type { Directional, Point };
 		Type type = Type::Point;

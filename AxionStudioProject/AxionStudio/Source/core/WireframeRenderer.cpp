@@ -118,4 +118,31 @@ namespace Axion {
 		}
 	}
 
+	void WireframeRenderer::drawMesh(const Mat4& transform, const Ref<Mesh>& mesh, const Vec4& color) {
+		if (!mesh) return;
+
+		const auto& vertices = mesh->getVertices();
+		const auto& indices = mesh->getIndices();
+
+		if (vertices.empty() || indices.empty()) return;
+
+		for (size_t i = 0; i < indices.size(); i += 3) {
+			uint32_t i0 = indices[i];
+			uint32_t i1 = indices[i + 1];
+			uint32_t i2 = indices[i + 2];
+
+			Vec3 p0 = { vertices[i0].position.x, vertices[i0].position.y, vertices[i0].position.z };
+			Vec3 p1 = { vertices[i1].position.x, vertices[i1].position.y, vertices[i1].position.z };
+			Vec3 p2 = { vertices[i2].position.x, vertices[i2].position.y, vertices[i2].position.z };
+
+			p0 = transform * p0;
+			p1 = transform * p1;
+			p2 = transform * p2;
+
+			Renderer2D::drawLine(p0, p1, color);
+			Renderer2D::drawLine(p1, p2, color);
+			Renderer2D::drawLine(p2, p0, color);
+		}
+	}
+
 }

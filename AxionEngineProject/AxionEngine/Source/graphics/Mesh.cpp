@@ -8,12 +8,15 @@ namespace Axion {
 	Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
 		m_vertexBuffer = VertexBuffer::create(vertices);
 		m_indexBuffer = IndexBuffer::create(indices);
+		m_meshData.vertices = vertices;
+		m_meshData.indices = indices;
 	}
 
 	Mesh::Mesh(const MeshData& meshData) {
 		m_vertexBuffer = VertexBuffer::create(meshData.vertices);
 		m_indexBuffer = IndexBuffer::create(meshData.indices);
 		m_submeshes = meshData.submeshes;
+		m_meshData = meshData;
 	}
 
 	Mesh::~Mesh() {
