@@ -56,7 +56,7 @@ namespace Axion {
 			.hoverGroup = "MainMenuBar",
 			.anchorContent = MakeMenuItem("File", []() { return Silica::EventReply::unhandled(); }, false),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = DROPDOWN_SPACING,
@@ -102,7 +102,7 @@ namespace Axion {
 			.hoverGroup = "MainMenuBar",
 			.anchorContent = MakeMenuItem("Edit", []() { return Silica::EventReply::unhandled(); }, false),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = DROPDOWN_SPACING,
@@ -159,7 +159,7 @@ namespace Axion {
 			.hoverGroup = "MainMenuBar",
 			.anchorContent = MakeMenuItem("View", []() { return Silica::EventReply::unhandled(); }, false),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = DROPDOWN_SPACING,
@@ -180,7 +180,7 @@ namespace Axion {
 			.hoverGroup = "MainMenuBar",
 			.anchorContent = MakeMenuItem("Project", []() { return Silica::EventReply::unhandled(); }, false),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = DROPDOWN_SPACING,
@@ -237,7 +237,7 @@ namespace Axion {
 			.hoverGroup = "MainMenuBar",
 			.anchorContent = MakeMenuItem("Help", []() { return Silica::EventReply::unhandled(); }, false),
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.backgroundColor = dropDownBg,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = DROPDOWN_SPACING,

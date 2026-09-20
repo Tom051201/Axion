@@ -7,6 +7,8 @@
 #include <Silica/include/SVerticalBox.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SButton.h>
+#include <Silica/include/SSpacer.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -16,7 +18,12 @@
 
 #include "AxionAssetPipeline/Source/parser/Texture2DParser.h"
 
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+
 namespace Axion {
+
+	// TODO: fix here the backslashes when using the open button
+	// TODO: add an automatic name setting when no name is already set when using the open button
 
 	Texture2DImportModal::Texture2DImportModal() {
 		m_modalTitle = "Import Texture2D Asset";
@@ -29,8 +36,6 @@ namespace Axion {
 		resetInputs();
 
 		m_sourcePath = sourceFile.string();
-		std::filesystem::path tex2dDir = ProjectManager::getProject()->getAssetsPath() / "textures";
-		m_outputPath = tex2dDir.string();
 		m_name = sourceFile.stem().string();
 
 		std::string typeStr = sourceFile.extension().string();
@@ -45,8 +50,11 @@ namespace Axion {
 	void Texture2DImportModal::resetInputs() {
 		m_name.clear();
 		m_sourcePath.clear();
-		std::filesystem::path tex2dDir = ProjectManager::getProject()->getAssetsPath() / "textures";
-		m_outputPath = tex2dDir.string();
+
+		m_outputPath.clear();
+		std::filesystem::path texDir = ProjectManager::getProject()->getAssetsPath() / "Textures";
+		if (std::filesystem::exists(texDir)) m_outputPath = texDir.generic_string();
+
 		m_importType = 0;
 	}
 
@@ -61,11 +69,12 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
-
-		contentBox->addSlot({ {0,0}, makePropertyRow("Type", makeCombo(m_importType, m_types)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Source File", makeFileRow(m_sourcePath, "Image File", "*.png;*.jpg;*.jpeg", "textures")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Type", makeCombo(m_importType, m_types)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Source File", makeFileRow(m_sourcePath, "Image File", "*.png;*.jpg;*.jpeg", "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "textures")) });
 	}
 
 	void Texture2DImportModal::validate() {

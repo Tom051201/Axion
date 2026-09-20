@@ -15,6 +15,7 @@
 #include <Silica/include/SSeparator.h>
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SImage.h>
+#include <Silica/include/SSpacer.h>
 
 #include "AxionNetwork/Source/NetworkServer.h"
 #include "AxionNetwork/Source/NetworkClient.h"
@@ -33,7 +34,7 @@ namespace Axion {
 
 	Silica::WidgetPtr NetworkPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.hasBorder = true });
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -85,7 +86,7 @@ namespace Axion {
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.hasBorder = true,
 					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = EditorTheme::SPACING_SMALL,
@@ -110,6 +111,7 @@ namespace Axion {
 				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
 					{ {0, 0}, optionsMenu },
+					{ {0, 0}, Silica::MakeWidget<Silica::SSpacer>({.size = { EditorTheme::SPACING_LARGE, 0.0f } }) },
 					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
 						.verticalAlign = Silica::VerticalAlign::Center,
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Multiplayer: " })
@@ -137,7 +139,7 @@ namespace Axion {
 					{ {0,0}, SilicaHelpers::MakePropertyRow("Host Port", Silica::MakeWidget<Silica::SInputFieldInt>({
 						.initialValue = m_targetPort,
 						.onValueChanged = [this](int val) { m_targetPort = val; }
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+					}))},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 						.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [this]() {
@@ -165,7 +167,7 @@ namespace Axion {
 					{ {0,0}, SilicaHelpers::MakePropertyRow("Target IP", Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_targetIP,
 						.onTextCommitted = [this](const std::string& val) { m_targetIP = val; }
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+					}))},
 					{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 						.padding = { 0.0f, EditorTheme::BUTTON_PADDING_Y },
 						.onClick = [this]() {
@@ -191,8 +193,8 @@ namespace Axion {
 			auto serverDashboard = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = EditorTheme::SPACING_LARGE,
 				.slots = {
-					{ {0,0}, SilicaHelpers::MakePropertyRow("Listening Port", Silica::MakeWidget<Silica::STextBlock>({.text = std::to_string(m_targetPort) }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
-					{ {0,0}, SilicaHelpers::MakePropertyRow("Local IP", Silica::MakeWidget<Silica::STextBlock>({.text = "127.0.0.1 (Localhost)" }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Listening Port", Silica::MakeWidget<Silica::STextBlock>({.text = std::to_string(m_targetPort) }))},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Local IP", Silica::MakeWidget<Silica::STextBlock>({.text = "127.0.0.1 (Localhost)" }))},
 
 					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
 					{ {0,0}, SilicaHelpers::MakeHeader("Server Tools") },
@@ -223,7 +225,7 @@ namespace Axion {
 			auto clientDashboard = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = EditorTheme::SPACING_LARGE,
 				.slots = {
-					{ {0,0}, SilicaHelpers::MakePropertyRow("Connected To", Silica::MakeWidget<Silica::STextBlock>({.text = m_targetIP + ":" + std::to_string(m_targetPort) }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+					{ {0,0}, SilicaHelpers::MakePropertyRow("Connected To", Silica::MakeWidget<Silica::STextBlock>({.text = m_targetIP + ":" + std::to_string(m_targetPort) }))},
 					{ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) },
 					{ {0,0}, SilicaHelpers::MakeHeader("Client Tools") },
 

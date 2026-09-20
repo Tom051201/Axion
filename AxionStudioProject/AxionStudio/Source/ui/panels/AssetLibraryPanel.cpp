@@ -107,7 +107,7 @@ namespace Axion {
 
 	Silica::WidgetPtr AssetLibraryPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.borderThickness = Silica::GetTheme().Border_Thickness });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.hasBorder = true });
 
 			// -- Pack Count --
 			m_packCountText = Silica::MakeWidget<Silica::STextBlock>({
@@ -132,23 +132,21 @@ namespace Axion {
 			auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
 				.verticalAlign = Silica::VerticalAlign::Center,
 				.child = Silica::MakeWidget<Silica::SMenuAnchor>({
-					.openOnHover = false,
 					.openToRight = true,
 					.anchorContent = Silica::MakeWidget<Silica::SButton>({
 						.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::Color(255, 255, 255, 20),
+						.hoverColor = EditorTheme::BUTTON_COLOR_HOVER_SUBTLE,
 						.onClick = []() { return Silica::EventReply::unhandled(); },
 						.child = Silica::MakeWidget<Silica::SImage>({
 							.textureID = SilicaContext::getIcon("GearIcon"),
-							.tint = Silica::GetTheme().Text_Main,
 							.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
 						})
 					}),
 					.menuContent = Silica::MakeWidget<Silica::SBox>({
 						.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 						.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-						.borderThickness = Silica::GetTheme().Border_Thickness,
+						.hasBorder = true,
 						.backgroundColor = Silica::GetTheme().Background_Popup,
 						.child = Silica::MakeWidget<Silica::SVerticalBox>({
 							.spacing = EditorTheme::SPACING_SMALL,
@@ -287,7 +285,7 @@ namespace Axion {
 					return AssetType::None;
 				};
 
-				// -- Pass 1 : Generate UUID Mappings (STRING BASED FOR SAFETY) --
+				// -- Pass 1 : Generate UUID Mappings --
 				std::unordered_map<std::string, std::string> uuidRemap;
 
 				for (const auto& entry : std::filesystem::recursive_directory_iterator(pack.sourcePath)) {
@@ -449,19 +447,22 @@ namespace Axion {
 	Silica::WidgetPtr AssetLibraryPanel::createPackCardWidget(const AssetPack& pack) {
 		Silica::WidgetPtr thumbnail;
 		if (pack.thumbnailID != 0) {
-			thumbnail = Silica::MakeWidget<Silica::SImage>({ .textureID = pack.thumbnailID });
+			thumbnail = Silica::MakeWidget<Silica::SImage>({.textureID = pack.thumbnailID });
 		}
 		else {
 			thumbnail = Silica::MakeWidget<Silica::SAlign>({
 				.horizontalAlign = Silica::HorizontalAlign::Center,
 				.verticalAlign = Silica::VerticalAlign::Center,
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "No Image", .color = Silica::GetTheme().Text_Dim })
-				});
+				.child = Silica::MakeWidget<Silica::STextBlock>({
+					.text = "No Image",
+					.color = Silica::GetTheme().Text_Dim
+				})
+			});
 		}
 
 		return Silica::MakeWidget<Silica::SBox>({
 			.explicitSize = Silica::Vec2{ CARD_WIDTH, CARD_HEIGHT },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.hasBorder = true,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = EditorTheme::SPACING_MEDIUM,
 				.slots = {
@@ -507,6 +508,32 @@ namespace Axion {
 				}
 			})
 		});
+	}
+
+	void AssetLibraryPanel::loadSettings(const YAML::Node& editorSettings) {
+		if (auto alSettings = editorSettings["AssetLibrary"]) {
+			// -- Paths --
+			if (alSettings["PackSourcePaths"]) {
+				std::vector<std::string> savedPaths;
+				for (auto pathNode : alSettings["PackSourcePaths"]) {
+					savedPaths.push_back(pathNode.as<std::string>());
+				}
+				EditorSettings::assetLibraryPaths = savedPaths;
+			}
+		}
+	}
+
+	void AssetLibraryPanel::saveSettings(YAML::Emitter& out) const {
+		out << YAML::Key << "AssetLibrary" << YAML::Value << YAML::BeginMap;
+		// -- Paths --
+		out << YAML::Key << "PackSourcePaths" << YAML::Value << YAML::BeginSeq;
+		for (const auto& pathStr : EditorSettings::assetLibraryPaths) {
+			std::filesystem::path path = pathStr;
+			out << path.generic_string();
+		}
+		out << YAML::EndSeq;
+
+		out << YAML::EndMap;
 	}
 
 }

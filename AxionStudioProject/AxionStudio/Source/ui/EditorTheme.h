@@ -1,5 +1,8 @@
 #pragma once
 
+#include <Silica/include/MathTypes.h>
+#include <Silica/include/Theme.h>
+
 namespace Axion::EditorTheme {
 
 	// ----- Toolbars -----
@@ -10,6 +13,7 @@ namespace Axion::EditorTheme {
 	// ----- Buttons -----
 	constexpr float BUTTON_PADDING_X = 8.0f;
 	constexpr float BUTTON_PADDING_Y = 4.0f;
+	constexpr Silica::Color BUTTON_COLOR_HOVER_SUBTLE = Silica::Color(255, 255, 255, 20);
 
 	// ----- Icons -----
 	constexpr float ICON_SIZE_SMALL = 16.0f;
@@ -33,6 +37,10 @@ namespace Axion::EditorTheme {
 	constexpr float OPTIONS_MENU_WIDTH = 240.0f;
 
 	// ----- Properties ------
-	constexpr float PROPERTY_ROW_LABEL_WIDTH = 120.0f;
+	constexpr float ROW_LABEL_WIDTH = 120.0f;
+	constexpr float ROW_HEIGHT_DEFAULT = 28.0f;
+
+	// ----- Modals -----
+	constexpr Silica::Color MODAL_COLOR_DIMMED_BACKGROUND = Silica::Color(0, 0, 0, 180);
 
 }

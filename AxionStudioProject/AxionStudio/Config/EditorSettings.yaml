@@ -1,17 +1,38 @@
-StartupProject: D:/Projects/TestProject/TestProject.axproj
-MaxAssetsPerFrame: 2
-EnableDiscordRPC: true
-MaterialEditorInvertCamera: true
-OpenTextEditors:
-  []
-AssetLibraryPaths:
-  - D:\Coding\AxionEngine\Axion\AxionStudioProject\AxionStudio\Resources\DefaultAssets
+Editor:
+  StartupProject: D:/Projects/TestProject/TestProject.axproj
+  EnableDiscordRPC: true
+  MaxAssetsPerFrame: 2
+  OpenTextEditors:
+    []
 ContentBrowser:
   ShowFileExtensions: false
-  OnlyEngineAssets: true
+  OnlyEngineAssets: false
   ThumbnailSize: 100
-  TreeViewWidth: 220
-  TreeViewTopHeight: 66
+  TreeViewWidth: 329
+  TreeViewTopHeight: 68
   ShowContentArea: true
   ShowVFSTree: true
   ShowPhysicalTree: true
+  CurrentDirectory: D:\Projects\TestProject\Assets
+  ExpandedDirectories:
+    - D:\Projects\TestProject
+    - D:\Projects\TestProject\Assets
+MaterialEditor:
+  InvertCam: false
+Viewport:
+  ShowRendererStats: true
+  InvertCamX: false
+  InvertCamY: false
+  CamProjectionType: Perspective
+  TranslationSpeedCam3D: 10
+  RotationSpeedCam3D: 0.00499999989
+  KeyboardSpeedCam2D: 100
+  DragSpeedCam2D: 0.0700057
+  FOVCam3D: 75
+  ZoomCam2D: 10
+  GizmoMode: Translate
+  GizmoSpace: Global
+  GizmoScale: 0.800000012
+AssetLibrary:
+  PackSourcePaths:
+    - D:/Coding/AxionEngine/Axion/AxionStudioProject/AxionStudio/Resources/DefaultAssets

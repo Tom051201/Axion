@@ -35,13 +35,12 @@
 #include "AxionStudio/Source/core/EditorUtils.h"
 #include "AxionStudio/Source/core/EditorSettings.h"
 #include "AxionStudio/Source/core/DiscordManager.h"
-#include "AxionStudio/Source/core/EditorSettings.h"
 #include "AxionStudio/Source/ui/EditorMenuBar.h"
 #include "AxionStudio/Source/ui/panels/ViewportPanel.h"
 #include "AxionStudio/Source/ui/panels/ContentBrowserPanel.h"
 #include "AxionStudio/Source/ui/panels/VisualScriptPanel.h"
-#include "AxionStudio/Source/ui/panels/SceneOverviewPanel.h"
-#include "AxionStudio/Source/ui/panels/ProjectOverviewPanel.h"
+#include "AxionStudio/Source/ui/panels/SceneSettingsPanel.h"
+#include "AxionStudio/Source/ui/panels/ProjectSettingsPanel.h"
 #include "AxionStudio/Source/ui/panels/AssetManagerPanel.h"
 #include "AxionStudio/Source/ui/panels/HierarchyPanel.h"
 #include "AxionStudio/Source/ui/panels/EntityPropertiesPanel.h"
@@ -134,14 +133,14 @@ namespace Axion {
 		m_contentBrowserPanel->setOpenSceneInViewportCallback(AX_BIND_FN(EditorLayer::openSceneInViewport));
 		auto contentBrowserWidget = m_contentBrowserPanel->getWidget();
 
-		m_projectOverviewPanel = MakeShared<ProjectPanel>();
-		m_projectOverviewPanel->setProject(ProjectManager::getProject());
-		auto projectSettings = m_projectOverviewPanel->getWidget();
+		m_projectSettingsPanel = MakeShared<ProjectSettingsPanel>();
+		m_projectSettingsPanel->setProject(ProjectManager::getProject());
+		auto projectSettingsWidget = m_projectSettingsPanel->getWidget();
 
-		m_sceneOverviewPanel = MakeShared<SceneOverviewPanel>();
-		m_sceneOverviewPanel->setEventCallback(AX_BIND_EVENT_FN(EditorLayer::onEvent));
-		m_sceneOverviewPanel->setScene(m_activeScene);
-		auto sceneSettings = m_sceneOverviewPanel->getWidget();
+		m_sceneSettingsPanel = MakeShared<SceneSettingsPanel>();
+		m_sceneSettingsPanel->setEventCallback(AX_BIND_EVENT_FN(EditorLayer::onEvent));
+		m_sceneSettingsPanel->setScene(m_activeScene);
+		auto sceneSettingsWidget = m_sceneSettingsPanel->getWidget();
 
 		m_viewportTextureID = SilicaContext::getFrameBufferTextureID(m_frameBuffer);
 		m_viewportPanel = MakeShared<ViewportPanel>();
@@ -208,6 +207,7 @@ namespace Axion {
 			}
 		});
 		m_viewportPanel->setVisualScriptDropCallback(AX_BIND_FN(EditorLayer::openVisualScriptPanel));
+		m_viewportPanel->setRequestViewportTextureCallback([this]() -> Silica::TextureID { return m_viewportTextureID; });
 		auto fullViewportPanel = m_viewportPanel->getWidget();
 
 		m_visualScriptPanel = MakeShared<VisualScriptPanel>();
@@ -242,8 +242,8 @@ namespace Axion {
 		m_dock->registerTab("Viewport", fullViewportPanel);
 		m_dock->registerTab("Visual Script", visualScriptWidget);
 		m_dock->registerTab("Content Browser", contentBrowserWidget);
-		m_dock->registerTab("Project Settings", projectSettings);
-		m_dock->registerTab("Scene Settings", sceneSettings);
+		m_dock->registerTab("Project Settings", projectSettingsWidget);
+		m_dock->registerTab("Scene Settings", sceneSettingsWidget);
 		m_dock->registerTab("Asset Inspector", assetManagerWidget);
 		m_dock->registerTab("Asset Library", assetLibraryWidget);
 		m_dock->registerTab("Material Editor", materialWidget);
@@ -269,10 +269,10 @@ namespace Axion {
 				.hitRect = {}
 			});
 			m_dock->splitNode(topHalf->child[0], Silica::SplitDirection::Vertical, 0.5f, "Properties", propertiesWidget, false);
-			m_dock->splitNode(viewportNode, Silica::SplitDirection::Horizontal, 0.75f, "Project Settings", projectSettings, false);
+			m_dock->splitNode(viewportNode, Silica::SplitDirection::Horizontal, 0.75f, "Project Settings", projectSettingsWidget, false);
 			viewportNode->child[1]->tabs.push_back({
 				.title = "Scene Settings",
-				.content = sceneSettings,
+				.content = sceneSettingsWidget,
 				.hitRect = {}
 			});
 			topHalf->child[0]->child[1]->tabs.push_back({
@@ -347,6 +347,9 @@ namespace Axion {
 		EditorSettings::load(m_editorSettingsPath, [this](const YAML::Node& settings) {
 			if (m_contentBrowserPanel) {
 				m_contentBrowserPanel->loadSettings(settings);
+				m_materialPanel->loadSettings(settings);
+				m_viewportPanel->loadSettings(settings);
+				m_assetLibraryPanel->loadSettings(settings);
 			}
 		});
 
@@ -369,8 +372,8 @@ namespace Axion {
 		}
 
 		if (m_hierarchyPanel) m_hierarchyPanel->setScene(m_activeScene);
-		if (m_sceneOverviewPanel) m_sceneOverviewPanel->setScene(m_activeScene);
-		if (m_projectOverviewPanel) m_projectOverviewPanel->setProject(ProjectManager::getProject());
+		if (m_sceneSettingsPanel) m_sceneSettingsPanel->setScene(m_activeScene);
+		if (m_projectSettingsPanel) m_projectSettingsPanel->setProject(ProjectManager::getProject());
 
 		// -- Restore Asset Library Paths --
 		if (!EditorSettings::assetLibraryPaths.empty() && m_assetLibraryPanel) {
@@ -422,7 +425,9 @@ namespace Axion {
 		// -- Save open Text Editors --
 		EditorSettings::openTextEditors.clear();
 		for (const auto& [pathStr, tabName] : m_openTextEditors) {
-			EditorSettings::openTextEditors.push_back(pathStr);
+			if (m_dock->isTabOpen(tabName)) {
+				EditorSettings::openTextEditors.push_back(pathStr);
+			}
 		}
 
 		// -- Save Asset Library paths --
@@ -437,6 +442,9 @@ namespace Axion {
 		EditorSettings::save(m_editorSettingsPath, [this](YAML::Emitter& out) {
 			if (m_contentBrowserPanel) {
 				m_contentBrowserPanel->saveSettings(out);
+				m_materialPanel->saveSettings(out);
+				m_viewportPanel->saveSettings(out);
+				m_assetLibraryPanel->saveSettings(out);
 			}
 		});
 
@@ -451,8 +459,8 @@ namespace Axion {
 		m_hierarchyPanel = nullptr;
 		m_propertiesPanel = nullptr;
 		m_contentBrowserPanel = nullptr;
-		m_projectOverviewPanel = nullptr;
-		m_sceneOverviewPanel = nullptr;
+		m_projectSettingsPanel = nullptr;
+		m_sceneSettingsPanel = nullptr;
 		m_visualScriptPanel = nullptr;
 		m_assetManagerPanel = nullptr;
 
@@ -523,7 +531,8 @@ namespace Axion {
 			}
 
 			// -- Update Hover Picking --
-			if (m_viewportPanel && isHovering && activeState == EditorState::Edit) {
+			bool isCameraActive = Input::isMouseButtonPressed(MouseButton::Right) || Input::isMouseButtonPressed(MouseButton::Middle);
+			if (m_viewportPanel && isHovering && activeState == EditorState::Edit && !isCameraActive) {
 				Silica::Vec2 localMouse = m_viewportPanel->getRelativeMousePos();
 				m_hoveredEntityID = m_frameBuffer->readPixel(1, (int)localMouse.x, (int)localMouse.y);
 			}
@@ -577,13 +586,17 @@ namespace Axion {
 					bool snap = Input::isKeyPressed(KeyCode::LeftControl);
 					float snapValue = (m_transformGizmo.getMode() == GizmoMode::Rotate) ? 15.0f : 1.0f;
 					Silica::Vec2 mousePos = m_viewportPanel->getRelativeMousePos();
+					bool isCameraActive = Input::isMouseButtonPressed(MouseButton::Right) || Input::isMouseButtonPressed(MouseButton::Middle);
+					bool canInteractWithGizmo = !isCameraActive;
 
-					if (isMouseDown && m_transformGizmo.isHovered() && !m_isDraggingGizmo) {
+					m_transformGizmo.setGizmoScale(EditorSettings::viewportPanelGizmoScale);
+
+					if (isMouseDown && m_transformGizmo.isHovered() && !m_isDraggingGizmo && canInteractWithGizmo) {
 						m_isDraggingGizmo = true;
 						m_dragStartTransform = m_selectedEntity.getComponent<TransformComponent>();
 					}
 
-					auto delta = m_transformGizmo.onUpdate(worldM, m_editorCamera, Vec2(mousePos.x, mousePos.y), Vec2(currentViewSize.x, currentViewSize.y), isMouseDown, snap, snapValue);
+					auto delta = m_transformGizmo.onUpdate(worldM, m_editorCamera, Vec2(mousePos.x, mousePos.y), Vec2(currentViewSize.x, currentViewSize.y), isMouseDown, snap, snapValue, canInteractWithGizmo);
 
 					if (delta.has_value()) {
 						auto& tc = m_selectedEntity.getComponent<TransformComponent>();
@@ -642,7 +655,7 @@ namespace Axion {
 		}
 
 		// ----- Draw Renderer Stats -----
-		if (m_viewportPanel) {
+		if (m_viewportPanel && EditorSettings::viewportPanelShowRendererStats) {
 			auto& stats = Renderer::getStats();
 			char buffer[256];
 			snprintf(buffer, sizeof(buffer),
@@ -671,8 +684,8 @@ namespace Axion {
 
 		// ----- Pass Events To Panels -----
 		if (m_contentBrowserPanel) m_contentBrowserPanel->onEvent(e);
-		if (m_sceneOverviewPanel) m_sceneOverviewPanel->onEvent(e);
-		if (m_projectOverviewPanel) m_projectOverviewPanel->onEvent(e);
+		if (m_sceneSettingsPanel) m_sceneSettingsPanel->onEvent(e);
+		if (m_projectSettingsPanel) m_projectSettingsPanel->onEvent(e);
 		if (m_assetLibraryPanel) m_assetLibraryPanel->onEvent(e);
 		if (m_visualScriptPanel) m_visualScriptPanel->onEvent(e);
 		if (m_propertiesPanel) m_propertiesPanel->onEvent(e);
@@ -1039,7 +1052,7 @@ namespace Axion {
 	}
 
 	void EditorLayer::openTextEditorTab(const std::filesystem::path& filepath) {
-		std::string pathStr = filepath.string();
+		std::string pathStr = filepath.generic_string();
 
 		if (m_openTextEditors.find(pathStr) != m_openTextEditors.end()) {
 			std::string existingTabName = m_openTextEditors[pathStr];
@@ -1080,7 +1093,7 @@ namespace Axion {
 		textEditorWidget->openFile(filepath);
 
 		// -- Register Tab --
-		std::string tabName = filepath.filename().string() + "##" + filepath.string();
+		std::string tabName = filepath.filename().string() + "##" + filepath.generic_string();
 		m_openTextEditors[pathStr] = tabName;
 
 		if (m_dock) {
@@ -1161,6 +1174,9 @@ namespace Axion {
 
 	EventReply EditorLayer::onMouseButtonPressed(MouseButtonPressedEvent& ev) {
 		if (ev.getMouseButton() == MouseButton::Left) {
+			bool isCameraActive = Input::isMouseButtonPressed(MouseButton::Right) || Input::isMouseButtonPressed(MouseButton::Middle);
+			if (isCameraActive) return EventReply::unhandled();
+
 			if (m_viewportPanel && m_viewportPanel->isHovered(Silica::Renderer::getMousePosition())) {
 
 				if (m_selectedEntity.isValid() && m_transformGizmo.isHovered()) {

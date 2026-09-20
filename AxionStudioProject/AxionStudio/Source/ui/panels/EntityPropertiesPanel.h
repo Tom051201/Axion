@@ -38,6 +38,7 @@ namespace Axion {
 
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		std::shared_ptr<Silica::SVerticalBox> m_contentBox;
+		float m_scrollState;
 
 		EventReply onProjectChanged(ProjectChangedEvent& ev);
 		EventReply onEntitySelected(EntitySelectedEvent& ev);

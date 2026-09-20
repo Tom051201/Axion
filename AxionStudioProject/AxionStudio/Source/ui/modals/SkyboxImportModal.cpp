@@ -7,6 +7,8 @@
 #include <Silica/include/SVerticalBox.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SButton.h>
+#include <Silica/include/SSpacer.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -15,6 +17,8 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/parser/SkyboxParser.h"
+
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace Axion {
 
@@ -30,8 +34,9 @@ namespace Axion {
 		m_texturePath.clear();
 		m_pipelinePath.clear();
 
-		std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "skybox";
-		m_outputPath = dir.string();
+		m_outputPath.clear();
+		std::filesystem::path skyDir = ProjectManager::getProject()->getAssetsPath() / "Skybox";
+		if (std::filesystem::exists(skyDir)) m_outputPath = skyDir.generic_string();
 	}
 
 	void SkyboxImportModal::buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) {
@@ -45,11 +50,13 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
 
-		contentBox->addSlot({ {0,0}, makePropertyRow("Texture Cube", makeFileRow(m_texturePath, "Axion Texture File", "*.axtcube", "textures")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Pipeline", makeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "skybox")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Texture Cube", makeFileRow(m_texturePath, "Axion Texture File", "*.axtcube", "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Pipeline", makeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "skybox")) });
 	}
 
 	void SkyboxImportModal::validate() {

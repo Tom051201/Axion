@@ -10,6 +10,7 @@
 #include <Silica/include/SCheckbox.h>
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SButton.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -17,7 +18,12 @@
 #include "AxionAssetPipeline/Source/core/AssetPackager.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
 
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
+
 namespace Axion {
+
+	// TODO: fix magic numbers here
 
 	ExportProjectModal::ExportProjectModal() {
 		m_modalTitle = "Export Project (Windows x64)";
@@ -59,6 +65,7 @@ namespace Axion {
 
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Build Summary:", .color = Silica::GetTheme().Text_Success }) });
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SBox>({.padding = { 15.0f, 0.0f }, .child = summaryBox }) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
 
 		// -- Export Path --
 		auto exportRow = Silica::MakeWidget<Silica::SHorizontalBox>({
@@ -67,21 +74,27 @@ namespace Axion {
 				{ {1,0}, Silica::MakeWidget<Silica::SBox>({
 					.child = Silica::MakeWidget<Silica::SEditableText>({
 						.initialText = m_exportPath,
-						.onTextChanged = [this](const std::string& val) { m_exportPath = val; validate(); }
+						.onTextChanged = [this](const std::string& val) {
+							m_exportPath = val;
+							validate();
+						}
 					})
 				})},
 				{ {0,0}, Silica::MakeWidget<Silica::SButton>({
 					.padding = {8, 4},
 					.onClick = [this, project]() {
 						std::filesystem::path absPath = FileDialogs::openFolder(project->getProjectPath());
-						if (!absPath.empty()) { m_exportPath = absPath.string(); rebuildUI(); }
+						if (!absPath.empty()) {
+							m_exportPath = absPath.generic_string();
+							rebuildUI();
+						}
 						return Silica::EventReply::handled();
 					},
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
 				})}
 			}
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Export Path", exportRow) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Export Path", exportRow) });
 
 		// -- Options --
 		auto optionsRow = Silica::MakeWidget<Silica::SHorizontalBox>({
@@ -100,7 +113,7 @@ namespace Axion {
 				})}
 			}
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Options", optionsRow) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Options", optionsRow) });
 	}
 
 	void ExportProjectModal::validate() {

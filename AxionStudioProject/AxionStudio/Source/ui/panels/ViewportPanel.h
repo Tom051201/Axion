@@ -13,6 +13,11 @@
 #include "AxionEngine/Source/events/Event.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
 
+namespace YAML {
+	class Node;
+	class Emitter;
+}
+
 namespace Silica {
 	class SBox;
 	class SImage;
@@ -44,6 +49,10 @@ namespace Axion {
 		void setEventCallback(std::function<void(Event&)> callback) { m_eventCallback = callback; }
 		void setPrefabDropCallback(std::function<void(const std::filesystem::path&, Silica::Vec2)> callback) { m_onPrefabDropped = callback; }
 		void setVisualScriptDropCallback(std::function<void(const std::filesystem::path&)> callback) { m_onVisualScriptDropped = callback; }
+		void setRequestViewportTextureCallback(const std::function<Silica::TextureID()> callback) { m_requestViewportTexture = callback; }
+
+		void loadSettings(const YAML::Node& editorConfig);
+		void saveSettings(YAML::Emitter& out) const;
 
 	private:
 
@@ -63,6 +72,7 @@ namespace Axion {
 		std::function<void()> m_onStop;
 		std::function<void(const std::filesystem::path&, Silica::Vec2)> m_onPrefabDropped;
 		std::function<void(const std::filesystem::path&)> m_onVisualScriptDropped;
+		std::function<Silica::TextureID()> m_requestViewportTexture;
 
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		bool m_rebuildQueued = false;
@@ -73,6 +83,7 @@ namespace Axion {
 		std::shared_ptr<Silica::STextBlock> m_statsText;
 
 		EventReply onProjectChanged(ProjectChangedEvent& ev);
+		EventReply onEditorSettingsChanged(EditorSettingsChangedEvent& ev);
 
 	};
 

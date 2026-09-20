@@ -171,6 +171,7 @@ namespace Axion {
 		AssetLibraryPaths = BIT(2),
 		ContentBrowserLayout = BIT(3),
 		MaterialEditorCamera = BIT(4),
+		Viewport = BIT(5),
 		All = 0xFFFFFFFF
 	};
 

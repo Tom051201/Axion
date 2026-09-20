@@ -12,6 +12,7 @@
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SImage.h>
+#include <Silica/include/SSpacer.h>
 
 #include "AxionStudio/Source/core/EditorCommand.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
@@ -36,7 +37,7 @@ namespace Axion {
 
 	Silica::WidgetPtr HistoryPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = ITEM_SPACING });
+			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = ITEM_SPACING });
 
 			// -- Options Menu --
 			auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
@@ -47,18 +48,17 @@ namespace Axion {
 					.anchorContent = Silica::MakeWidget<Silica::SButton>({
 						.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 						.color = Silica::Color::transparent(),
-						.hoverColor = Silica::Color(255, 255, 255, 20),
+						.hoverColor = EditorTheme::BUTTON_COLOR_HOVER_SUBTLE,
 						.onClick = []() { return Silica::EventReply::unhandled(); },
 						.child = Silica::MakeWidget<Silica::SImage>({
 							.textureID = SilicaContext::getIcon("GearIcon"),
-							.tint = Silica::GetTheme().Text_Main,
 							.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
 						})
 					}),
 					.menuContent = Silica::MakeWidget<Silica::SBox>({
 						.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 						.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-						.borderThickness = Silica::GetTheme().Border_Thickness,
+						.hasBorder = true,
 						.backgroundColor = Silica::GetTheme().Background_Popup,
 						.child = Silica::MakeWidget<Silica::SVerticalBox>({
 							.spacing = EditorTheme::SPACING_SMALL,
@@ -81,12 +81,10 @@ namespace Axion {
 					.spacing = EditorTheme::TOOLBAR_SPACING,
 					.slots = {
 						{ {0, 0}, optionsMenu },
+						{ {0, 0}, Silica::MakeWidget<Silica::SSpacer>({.size = { EditorTheme::SPACING_LARGE, 0.0f } }) },
 						{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
 							.verticalAlign = Silica::VerticalAlign::Center,
-							.child = Silica::MakeWidget<Silica::STextBlock>({
-								.text = "History",
-								.color = Silica::GetTheme().Text_Dim
-							})
+							.child = Silica::MakeWidget<Silica::STextBlock>({.text = "History" })
 						})}
 					}
 				})
@@ -102,8 +100,7 @@ namespace Axion {
 			});
 
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
-				.backgroundColor = Silica::GetTheme().Background_Panel,
+				.hasBorder = true,
 				.child = Silica::MakeWidget<Silica::SBorderLayout>({
 					.topBar = topBarBox,
 					.contentArea = scrollContent
@@ -128,14 +125,13 @@ namespace Axion {
 			.child = Silica::MakeWidget<Silica::SButton>({
 				.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 				.color = isBaseCurrent ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
-				.hoverColor = Silica::GetTheme().Element_Hover,
 				.onClick = []() {
 					EditorCommandManager::jumpTo(0);
 					return Silica::EventReply::handled();
 				},
 				.child = Silica::MakeWidget<Silica::STextBlock>({
 					.text = "[ Original State ]",
-					.color = Silica::GetTheme().Text_Dim
+					.color = isBaseCurrent ? Silica::GetTheme().Text_Main : Silica::GetTheme().Text_Success
 				})
 			})
 		});

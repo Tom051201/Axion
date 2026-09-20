@@ -8,10 +8,12 @@
 #include <Silica/include/SEditableText.h>
 #include <Silica/include/SAlign.h>
 #include <Silica/include/SColorPicker.h>
+#include <Silica/include/SColorField.h>
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SSeparator.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SButton.h>
+#include <Silica/include/SSpacer.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -19,6 +21,8 @@
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionAssetPipeline/Source/parser/MaterialParser.h"
+
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace Axion {
 
@@ -33,8 +37,9 @@ namespace Axion {
 		m_name.clear();
 		m_pipelinePath.clear();
 
-		std::filesystem::path matDir = ProjectManager::getProject()->getAssetsPath() / "materials";
-		m_outputPath = matDir.string();
+		m_outputPath.clear();
+		std::filesystem::path matDir = ProjectManager::getProject()->getAssetsPath() / "Materials";
+		if (std::filesystem::exists(matDir)) m_outputPath = matDir.generic_string();
 
 		m_albedoColor = Vec4::one();
 		m_metalness = 0.0f;
@@ -51,24 +56,6 @@ namespace Axion {
 
 	void MaterialImportModal::buildContent(std::shared_ptr<Silica::SVerticalBox> contentBox) {
 
-		auto makeColorPicker = [&](Vec4& vecColor) {
-			Silica::Color initialColor = Silica::Color((uint8_t)(vecColor.x * 255), (uint8_t)(vecColor.y * 255), (uint8_t)(vecColor.z * 255), (uint8_t)(vecColor.w * 255));
-			return Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
-				.anchorContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 2.0f, 2.0f }, .backgroundColor = Silica::Color(45, 45, 45, 255),
-					.child = Silica::MakeWidget<Silica::SBox>({.explicitSize = Silica::Vec2{100.0f, 24.0f}, .backgroundColor = initialColor })
-				}),
-				.menuContent = Silica::MakeWidget<Silica::SBox>({
-					.padding = { 10.0f, 10.0f }, .backgroundColor = Silica::Color(45, 45, 45, 255),
-					.child = Silica::MakeWidget<Silica::SColorPicker>({
-						.initialColor = initialColor,
-						.onColorChanged = [this, &vecColor](Silica::Color c) { vecColor = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f); }
-					})
-				})
-			});
-			};
-
 		// -- Name --
 		auto nameInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SEditableText>({
@@ -79,28 +66,32 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
 
 		// -- Base Values --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Albedo Color", makeColorPicker(m_albedoColor)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Metalness", makeSliderRow(m_metalness, 1.0f)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Roughness", makeSliderRow(m_roughness, 1.0f)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Emission", makeSliderRow(m_emission, 10.0f)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Tiling", makeSliderRow(m_tiling, 100.0f)) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
+		auto albedoColorPicker = Silica::MakeWidget<Silica::SColorField>({
+			.initialColor = SilicaHelpers::MakeSilicaColor(m_albedoColor),
+			.onColorChanged = [this](Silica::Color c) { m_albedoColor = SilicaHelpers::MakeAxionColor(c); }
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Albedo Color", albedoColorPicker) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Metalness", makeSliderRow(m_metalness, 1.0f)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Roughness", makeSliderRow(m_roughness, 1.0f)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Emission", makeSliderRow(m_emission, 10.0f)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Tiling", makeSliderRow(m_tiling, 100.0f)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
 
 		// -- Texture Maps --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Albedo Map", makeFileRow(m_albedoMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Normal Map", makeFileRow(m_normalMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Metalness Map", makeFileRow(m_metalnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Roughness Map", makeFileRow(m_roughnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Occlusion Map", makeFileRow(m_occlusionMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Emissive Map", makeFileRow(m_emissiveMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
-
-		// -- Dependencies and Output --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Pipeline", makeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "materials")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Albedo Map", makeFileRow(m_albedoMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Normal Map", makeFileRow(m_normalMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Metalness Map", makeFileRow(m_metalnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Roughness Map", makeFileRow(m_roughnessMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Occlusion Map", makeFileRow(m_occlusionMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Emissive Map", makeFileRow(m_emissiveMapPath, "Axion Texture Asset", "*.axtex", "textures")) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Pipeline", makeFileRow(m_pipelinePath, "Axion Pipeline Asset", "*.axpso", "pipelines")) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "materials")) });
 	}
 
 	void MaterialImportModal::validate() {

@@ -16,11 +16,11 @@ namespace Silica {
 
 namespace Axion {
 
-	class ProjectPanel {
+	class ProjectSettingsPanel {
 	public:
 
-		ProjectPanel() = default;
-		~ProjectPanel() = default;
+		ProjectSettingsPanel() = default;
+		~ProjectSettingsPanel() = default;
 
 		void onEvent(Event& e);
 

@@ -7,6 +7,8 @@
 #include <Silica/include/SVerticalBox.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SButton.h>
+#include <Silica/include/SSpacer.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -15,6 +17,8 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/parser/MeshParser.h"
+
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace Axion {
 
@@ -28,13 +32,18 @@ namespace Axion {
 	void MeshImportModal::presetFromFile(const std::filesystem::path& sourceFile) {
 		resetInputs();
 
-		m_sourcePath = sourceFile.string();
-		std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
-		m_outputPath = meshDir.string();
-		m_name = sourceFile.stem().string();
+		m_sourcePath = sourceFile.generic_string();
 
 		std::string typeStr = sourceFile.extension().string();
 		std::transform(typeStr.begin(), typeStr.end(), typeStr.begin(), [](unsigned char c) { return std::tolower(c); });
+
+		// -- Modify name --
+		std::string rawName = sourceFile.stem().string();
+		if (!rawName.empty()) {
+			rawName[0] = std::toupper(static_cast<unsigned char>(rawName[0]));
+			std::replace(rawName.begin(), rawName.end(), ' ', '_');
+		}
+		m_name = rawName;
 
 		if (typeStr == ".obj") m_importType = 0;
 		else if (typeStr == ".gltf") m_importType = 1;
@@ -45,8 +54,11 @@ namespace Axion {
 	void MeshImportModal::resetInputs() {
 		m_name.clear();
 		m_sourcePath.clear();
-		std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "meshes";
-		m_outputPath = meshDir.string();
+
+		m_outputPath.clear();
+		std::filesystem::path meshDir = ProjectManager::getProject()->getAssetsPath() / "Meshes";
+		if (std::filesystem::exists(meshDir)) m_outputPath = meshDir.generic_string();
+
 		m_importType = 0;
 	}
 
@@ -61,14 +73,12 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
-
-		// -- Type --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Type", makeCombo(m_importType, m_types)) });
-
-		// -- Source Path and Output Path --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Source File", makeFileRow(m_sourcePath, "3D Models", "*.obj;*.gltf;*.glb", "meshes")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "meshes")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Type", makeCombo(m_importType, m_types)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Source File", makeFileRow(m_sourcePath, "3D Models", "*.obj;*.gltf;*.glb", "meshes")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "meshes")) });
 	}
 
 	void MeshImportModal::validate() {

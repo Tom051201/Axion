@@ -5,35 +5,38 @@ Scene: Test Scene
 Skybox: b4e88aba8952de74c020877e8840e45b
 AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
 Entities:
-  - Entity: 5fe7cc740fcb360795d9a2c59c1702c6
+  - Entity: 34bf7539c424abecd5ba7a8dd2b9da5e
     TagComponent:
-      Tag: Cube
+      Tag: Floor
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [0, -5.29415035, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
+      Scale: [30, 1, 30]
     MeshComponent:
       UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
     MaterialComponent:
       Materials:
         - 62978f2cec44e79c194d63fa2751720a
-    NetworkIdentityComponent:
-      OwnerClientID: 0
-      IsLocalPlayer: false
-  - Entity: 77ef249aef85f49687cb5f61548cfdc3
-    TagComponent:
-      Tag: Light
-    TransformComponent:
-      Translation: [0, 0, -10.2763519]
-      Rotation: [0.156731576, -0.503221989, -0.029546503, 0.849311471]
-      Scale: [1, 1, 1]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
+    RigidBodyComponent:
+      BodyType: Static
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Material: 0
   - Entity: 5293e7395dedb7092c6424e73dfefd7f
     TagComponent:
       Tag: Player
     TransformComponent:
-      Translation: [0, -2.40617633, -5.74697304]
+      Translation: [0, 0, -5.74697304]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     CameraComponent:
@@ -63,30 +66,27 @@ Entities:
       Material: 0
     ScriptComponent:
       ClassName: ScriptPack_Player
-  - Entity: 34bf7539c424abecd5ba7a8dd2b9da5e
+  - Entity: 77ef249aef85f49687cb5f61548cfdc3
     TagComponent:
-      Tag: Floor
+      Tag: Light
     TransformComponent:
-      Translation: [0, -5.29415035, 0]
+      Translation: [0, 0, -10.2763519]
+      Rotation: [0.156731576, -0.503221989, -0.029546503, 0.849311471]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+  - Entity: 5fe7cc740fcb360795d9a2c59c1702c6
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [0, 0, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [30, 1, 30]
+      Scale: [1, 1, 1]
     MeshComponent:
       UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
     MaterialComponent:
       Materials:
         - 62978f2cec44e79c194d63fa2751720a
-    RigidBodyComponent:
-      BodyType: Static
-      Mass: 1
-      IsKinematic: false
-      LinearDamping: 0
-      AngularDamping: 0.0500000007
-      FixedRotationX: false
-      FixedRotationY: false
-      FixedRotationZ: false
-      EnableCCD: false
-    BoxColliderComponent:
-      HalfExtents: [0.5, 0.5, 0.5]
-      Offset: [0, 0, 0]
-      IsTrigger: false
-      Material: 0
+    NetworkIdentityComponent:
+      OwnerClientID: 0
+      IsLocalPlayer: false

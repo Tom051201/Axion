@@ -17,6 +17,11 @@
 
 #include "AxionStudio/Source/core/EditorEvents.h"
 
+namespace YAML {
+	class Node;
+	class Emitter;
+}
+
 namespace Silica {
 	class SBox;
 }
@@ -36,6 +41,9 @@ namespace Axion {
 		void setMaterial(const std::filesystem::path& materialPath);
 
 		void setEventCallback(std::function<void(Event&)> callback) { m_eventCallback = callback; }
+
+		void loadSettings(const YAML::Node& editorConfig);
+		void saveSettings(YAML::Emitter& out) const;
 
 	private:
 

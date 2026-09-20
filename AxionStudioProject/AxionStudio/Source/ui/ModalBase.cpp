@@ -12,11 +12,14 @@
 #include <Silica/include/SComboBox.h>
 #include <Silica/include/SSliderFloat.h>
 #include <Silica/include/SEditableText.h>
+#include <Silica/include/SSpacer.h>
 
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace Axion {
 
@@ -26,7 +29,7 @@ namespace Axion {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
 				.consumePointerEvents = true,
-				.backgroundColor = Silica::Color(0, 0, 0, 180),
+				.backgroundColor = EditorTheme::MODAL_COLOR_DIMMED_BACKGROUND,
 			});
 			rebuildUI_Internal();
 		}
@@ -46,11 +49,11 @@ namespace Axion {
 	void ModalBase::rebuildUI_Internal() {
 		if (!m_uiRoot) return;
 
-		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 12.0f });
+		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_MEDIUM });
 
 		// -- Standard Header --
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = m_modalTitle }) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakeHeader(m_modalTitle) });
+		contentBox->addSlot({ {0, 0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_MEDIUM} }) });
 
 		buildContent(contentBox);
 
@@ -58,7 +61,8 @@ namespace Axion {
 		m_validationText = Silica::MakeWidget<Silica::STextBlock>({.text = "" });
 
 		m_confirmBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
+			.padding = { EditorTheme::PADDING_XLARGE, EditorTheme::PADDING_MEDIUM },
+			.color = Silica::GetTheme().Accent_Success,
 			.onClick = [this]() {
 				if (!m_confirmBtn->isEnabled()) return Silica::EventReply::unhandled();
 
@@ -70,12 +74,14 @@ namespace Axion {
 			.child = Silica::MakeWidget<Silica::STextBlock>({.text = m_confirmText })
 		});
 
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_MEDIUM} }) });
 		contentBox->addSlot({ {0,0}, m_validationText });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_MEDIUM * 2})});
 
 		// -- Standard Footer Assembly --
 		auto cancelBtn = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 20.0f, 8.0f },
+			.padding = { EditorTheme::PADDING_XLARGE, EditorTheme::PADDING_MEDIUM },
+			.hoverColor = Silica::GetTheme().Accent_Danger,
 			.onClick = [this]() {
 				if (m_onClose) m_onClose();
 				return Silica::EventReply::handled();
@@ -84,11 +90,10 @@ namespace Axion {
 		});
 
 		auto footerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 10.0f,
+			.spacing = EditorTheme::SPACING_MEDIUM,
 			.slots = {
 				{ {0,0}, m_confirmBtn },
 				{ {0,0}, cancelBtn },
-				{ {1,0}, Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent()}) },
 				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
 					.verticalAlign = Silica::VerticalAlign::Center,
 					.child = Silica::MakeWidget<Silica::STextBlock>({
@@ -104,10 +109,10 @@ namespace Axion {
 		// -- Final Outer Box --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.explicitSize = Silica::Vec2{ m_modalWidth, 0.0f },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.hasBorder = true,
 			.backgroundColor = Silica::GetTheme().Background_Panel,
 			.child = Silica::MakeWidget<Silica::SBox>({
-				.padding = { 20.0f, 20.0f },
+				.padding = { EditorTheme::PADDING_XLARGE, EditorTheme::PADDING_XLARGE },
 				.backgroundColor = Silica::Color::transparent(),
 				.child = contentBox
 			})
@@ -125,23 +130,6 @@ namespace Axion {
 
 
 	// ----- SHARED HELPERS -----
-	Silica::WidgetPtr ModalBase::makePropertyRow(const std::string& label, Silica::WidgetPtr valueWidget) {
-		return Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = 10.0f,
-			.slots = {
-				{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
-					.explicitSize = Silica::Vec2(130.0f, 0.0f),
-					.backgroundColor = Silica::Color::transparent(),
-					.child = Silica::MakeWidget<Silica::SAlign>({
-						.verticalAlign = Silica::VerticalAlign::Center,
-						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
-					})
-				})},
-				{ {1, 0}, valueWidget }
-			}
-		});
-	}
-
 	Silica::WidgetPtr ModalBase::makeCombo(int& currentIndex, const std::vector<std::string>& options) {
 		return Silica::MakeWidget<Silica::SComboBox>({
 			.options = options,
@@ -158,7 +146,9 @@ namespace Axion {
 
 	Silica::WidgetPtr ModalBase::makeSliderRow(float& val, float maxVal) {
 		return Silica::MakeWidget<Silica::SSliderFloat>({
-			.initialValue = val, .minValue = 0.0f, .maxValue = maxVal,
+			.initialValue = val,
+			.minValue = 0.0f,
+			.maxValue = maxVal,
 			.onValueChanged = [this, &val](float v) { val = v; }
 		});
 	}

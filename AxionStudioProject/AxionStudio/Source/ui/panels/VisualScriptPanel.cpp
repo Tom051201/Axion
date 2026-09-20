@@ -46,7 +46,7 @@ namespace Axion {
 	Silica::WidgetPtr VisualScriptPanel::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath" && std::any_cast<std::filesystem::path>(payload.data).extension() == ".axvs") return Silica::EventReply::handled();
 					return Silica::EventReply::unhandled();
@@ -124,7 +124,7 @@ namespace Axion {
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.hasBorder = true,
 					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = EditorTheme::SPACING_SMALL,
@@ -332,7 +332,7 @@ namespace Axion {
 
 		return Silica::MakeWidget<Silica::SBox>({
 			.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.hasBorder = true,
 			.child = Silica::MakeWidget<Silica::SVerticalBox>({
 				.spacing = EditorTheme::SPACING_SMALL,
 				.slots = { { {0,0}, searchContainer }, { {1,0}, Silica::MakeWidget<Silica::SScrollBox>({.child = menuBox }) } }
@@ -708,7 +708,7 @@ namespace Axion {
 
 		return Silica::MakeWidget<Silica::SBox>({
 			.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.hasBorder = true,
 			.backgroundColor = Silica::GetTheme().Background_Popup,
 			.child = menuBox
 		});

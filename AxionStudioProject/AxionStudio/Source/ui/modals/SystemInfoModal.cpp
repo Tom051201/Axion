@@ -146,7 +146,7 @@ namespace Axion {
 		// -- Assemble Modal --
 		auto modalPanel = Silica::MakeWidget<Silica::SBox>({
 			.explicitSize = Silica::Vec2{ MODAL_WIDTH, 0.0f },
-			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.hasBorder = true,
 			.backgroundColor = Silica::GetTheme().Background_Panel,
 			.child = Silica::MakeWidget<Silica::SBox>({
 				.padding = { PADDING_LARGE, PADDING_LARGE },

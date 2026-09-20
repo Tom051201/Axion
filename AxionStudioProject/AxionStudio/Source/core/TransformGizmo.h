@@ -24,7 +24,10 @@ namespace Axion {
 		void setSpace(GizmoSpace space) { m_space = space; }
 		GizmoSpace getSpace() const { return m_space; }
 
-		std::optional<Vec3> onUpdate(const Mat4& entityWorldTransform, const Camera& camera, const Vec2& mousePos, const Vec2& viewportSize, bool isMouseDown, bool snap = false, float snapValue = 1.0f);
+		void setGizmoScale(float scale) { m_gizmoScale = scale; }
+		float getGizmoScale() const { return m_gizmoScale; }
+
+		std::optional<Vec3> onUpdate(const Mat4& entityWorldTransform, const Camera& camera, const Vec2& mousePos, const Vec2& viewportSize, bool isMouseDown, bool snap = false, float snapValue = 1.0f, bool canInteract = true);
 		void onRender(const Mat4& entityWorldTransform, const Camera& camera);
 
 		bool isHovered() const { return m_hoveredAxis != GizmoAxis::None; }
@@ -35,6 +38,7 @@ namespace Axion {
 		GizmoSpace m_space = GizmoSpace::Local;
 		GizmoAxis m_hoveredAxis = GizmoAxis::None;
 		GizmoAxis m_activeAxis = GizmoAxis::None;
+		float m_gizmoScale = 1.0f;
 
 		bool m_isDragging = false;
 		Vec3 m_initialIntersectionPoint;

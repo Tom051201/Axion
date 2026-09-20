@@ -2,6 +2,7 @@
 
 #include <string>
 #include <optional>
+#include <functional>
 
 #include "Renderer.h"
 #include "SWidget.h"
@@ -18,6 +19,7 @@ namespace Silica {
 			std::optional<Color> headerColor;
 			std::optional<Color> headerHoverColor;
 			std::optional<Color> textColor;
+			std::function<void(bool)> onToggleOpen = nullptr;
 			FontAtlas* font = nullptr;
 			WidgetPtr trailingWidget = nullptr;
 			WidgetPtr content = nullptr;
@@ -52,6 +54,8 @@ namespace Silica {
 
 		float m_headerHeight = 24.0f;
 		bool m_isHeaderHovered = false;
+
+		std::function<void(bool)> m_onToggleOpen;
 
 		Rect getHeaderRect() const;
 		void drawTriangle(DrawList& drawList, const Vec2& center, float radius, bool isOpen, Color color) const;

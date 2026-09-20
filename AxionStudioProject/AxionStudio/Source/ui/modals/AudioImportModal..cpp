@@ -9,6 +9,7 @@
 #include <Silica/include/SSeparator.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SButton.h>
+#include <Silica/include/SSpacer.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -18,6 +19,8 @@
 #include "AxionEngine/Source/audio/AudioManager.h"
 
 #include "AxionAssetPipeline/Source/parser/AudioParser.h"
+
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace Axion {
 
@@ -31,10 +34,18 @@ namespace Axion {
 	void AudioImportModal::presetFromFile(const std::filesystem::path& sourceFile) {
 		resetInputs();
 
-		m_sourcePath = sourceFile.string();
-		std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "audio";
-		m_outputPath = audioDir.string();
-		m_name = sourceFile.stem().string();
+		m_sourcePath = sourceFile.generic_string();
+
+		std::filesystem::path audioDir = ProjectManager::getProject()->getAssetsPath() / "Audio";
+		if (std::filesystem::exists(audioDir)) { m_outputPath = audioDir.generic_string(); }
+
+		// -- Modify name --
+		std::string rawName = sourceFile.stem().string();
+		if (!rawName.empty()) {
+			rawName[0] = std::toupper(static_cast<unsigned char>(rawName[0]));
+			std::replace(rawName.begin(), rawName.end(), ' ', '_');
+		}
+		m_name = rawName;
 
 		AudioFileInfo fileInfo;
 		bool success = AudioManager::readAudioFileMetadata(sourceFile, fileInfo);
@@ -72,11 +83,13 @@ namespace Axion {
 			})
 		});
 
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Format", makeCombo(m_importFormat, m_formatNames)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Type", makeCombo(m_loadType, m_typesNames)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Source File", makeFileRow(m_sourcePath, "Audio Files", "*.mp3;*.wav;*.ogg", "audio")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "audio")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Format", makeCombo(m_importFormat, m_formatNames)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Type", makeCombo(m_loadType, m_typesNames)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Source File", makeFileRow(m_sourcePath, "Audio Files", "*.mp3;*.wav;*.ogg", "audio")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "audio")) });
 	}
 
 	void AudioImportModal::validate() {

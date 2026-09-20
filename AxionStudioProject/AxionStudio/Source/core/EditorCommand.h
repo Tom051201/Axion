@@ -68,6 +68,30 @@ namespace Axion {
 
 
 
+	// ----- Create Entity Command -----
+	class CreateEntityCommand : public EditorCommand {
+	public:
+
+		CreateEntityCommand(Shared<Scene> scene, const std::string& name, Entity parent = {});
+
+		void execute() override;
+		void undo() override;
+
+		std::string getName() const override { return "Create Entity " + m_entityName; }
+
+	private:
+
+		Shared<Scene> m_scene;
+		std::string m_entityName;
+		UUID m_entityUUID = UUID(0, 0);
+		UUID m_parentUUID = UUID(0, 0);
+		std::string m_serializedData;
+		bool m_isFirstExecution = true;
+
+	};
+
+
+
 	// ----- Delete Entity Command -----
 	class DeleteEntityCommand : public EditorCommand {
 	public:
@@ -262,6 +286,31 @@ namespace Axion {
 		UUID m_entityUUID;
 		std::string m_entityName;
 		std::string m_compName;
+
+	};
+
+
+
+	// ----- Reparent Entity Command -----
+	class ReparentEntityCommand : public EditorCommand {
+	public:
+
+		ReparentEntityCommand(Shared<Scene> scene, Entity child, Entity newParent);
+
+		void execute() override;
+		void undo() override;
+
+		std::string getName() const override { return "Reparent " + m_childName; }
+
+	private:
+
+		Shared<Scene> m_scene;
+		UUID m_childUUID;
+		UUID m_oldParentUUID = UUID(0, 0);
+		UUID m_newParentUUID = UUID(0, 0);
+		std::string m_childName;
+
+		void performReparent(UUID childId, UUID targetParentId);
 
 	};
 

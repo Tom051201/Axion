@@ -39,7 +39,6 @@ namespace Axion {
 		std::shared_ptr<Silica::STextBlock> m_validationText;
 		std::shared_ptr<Silica::SButton> m_confirmBtn;
 
-		Silica::WidgetPtr makePropertyRow(const std::string& label, Silica::WidgetPtr valueWidget);
 		Silica::WidgetPtr makeCombo(int& currentIndex, const std::vector<std::string>& options);
 		Silica::WidgetPtr makeSliderRow(float& val, float maxVal);
 		Silica::WidgetPtr makeFileRow(std::string& outPath, const std::string& typeDesc, const std::string& filter, const std::string& defaultAssetsSubDir);

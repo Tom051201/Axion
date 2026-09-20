@@ -50,10 +50,6 @@ namespace Axion {
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		std::shared_ptr<Silica::SVerticalBox> m_contentBox;
 
-		// -- ECS Relationship Logic --
-		void detachEntityFromParent(Entity entity);
-		void attachEntityToParent(Entity child, Entity parent);
-
 		// -- Events --
 		EventReply onSceneChanged(SceneChangedEvent& ev);
 		EventReply onProjectChanged(ProjectChangedEvent& ev);

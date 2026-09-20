@@ -7,7 +7,13 @@
 
 namespace Axion {
 
-	std::optional<Vec3> TransformGizmo::onUpdate(const Mat4& entityWorldTransform, const Camera& camera, const Vec2& mousePos, const Vec2& viewportSize, bool isMouseDown, bool snap, float snapValue) {
+	std::optional<Vec3> TransformGizmo::onUpdate(const Mat4& entityWorldTransform, const Camera& camera, const Vec2& mousePos, const Vec2& viewportSize, bool isMouseDown, bool snap, float snapValue, bool canInteract) {
+		if (!canInteract && !m_isDragging) {
+			m_hoveredAxis = GizmoAxis::None;
+			m_activeAxis = GizmoAxis::None;
+			return std::nullopt;
+		}
+
 		float ndcX = (mousePos.x / viewportSize.x) * 2.0f - 1.0f;
 		float ndcY = 1.0f - (mousePos.y / viewportSize.y) * 2.0f;
 
@@ -23,7 +29,7 @@ namespace Axion {
 		Quat rot = (m_space == GizmoSpace::Local) ? entityWorldTransform.getRotation() : Quat::identity();
 
 		Vec3 camPos = camera.getViewMatrix().inverse().getTranslation();
-		float gizmoSize = (camPos - worldPos).length() * 0.15f;
+		float gizmoSize = (camPos - worldPos).length() * 0.15f * m_gizmoScale;
 
 		if (!isMouseDown) {
 			Vec3 viewDirLocal = rot.inversed().rotate((camPos - worldPos).normalized());
@@ -184,7 +190,7 @@ namespace Axion {
 		Vec3 camPos = invView.getTranslation();
 
 		float distance = (camPos - worldPos).length();
-		float gizmoSize = distance * 0.15f;
+		float gizmoSize = distance * 0.15f * m_gizmoScale;
 		float planeOffset = gizmoSize * 0.15f;
 		float planeSize = gizmoSize * 0.4f;
 

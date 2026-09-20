@@ -50,6 +50,8 @@ namespace Axion {
 		float m_yaw = 0.0f;
 		float m_distance = 10.0f;
 		float m_fov = 45.0f;
+		float m_minFOV = 1.0f;
+		float m_maxFOV = 90.0f;
 		float m_translationSpeed3D = 5.0f;
 		float m_rotationSpeed3D = 0.003f;
 

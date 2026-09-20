@@ -37,8 +37,8 @@ namespace Axion {
 
 	class ContentBrowser;
 	class VisualScriptPanel;
-	class SceneOverviewPanel;
-	class ProjectPanel;
+	class SceneSettingsPanel;
+	class ProjectSettingsPanel;
 	class AssetManagerPanel;
 	class HierarchyPanel;
 	class EntityPropertiesPanel;
@@ -93,8 +93,8 @@ namespace Axion {
 		Silica::TextureID m_viewportTextureID = 0;
 		Shared<ContentBrowser> m_contentBrowserPanel;
 		Shared<VisualScriptPanel> m_visualScriptPanel;
-		Shared<SceneOverviewPanel> m_sceneOverviewPanel;
-		Shared<ProjectPanel> m_projectOverviewPanel;
+		Shared<SceneSettingsPanel> m_sceneSettingsPanel;
+		Shared<ProjectSettingsPanel> m_projectSettingsPanel;
 		Shared<AssetManagerPanel> m_assetManagerPanel;
 		Shared<HierarchyPanel> m_hierarchyPanel;
 		Shared<EntityPropertiesPanel> m_propertiesPanel;

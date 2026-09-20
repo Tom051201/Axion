@@ -9,6 +9,7 @@
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SEditableText.h>
 #include <Silica/include/SSeparator.h>
+#include <Silica/include/SSpacer.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -17,6 +18,8 @@
 #include "AxionEngine/Source/project/ProjectManager.h"
 
 #include "AxionAssetPipeline/Source/parser/PhysicsMaterialParser.h"
+
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace Axion {
 
@@ -29,7 +32,11 @@ namespace Axion {
 
 	void PhysicsMaterialImportModal::resetInputs() {
 		m_name.clear();
-		m_outputPath = (ProjectManager::getProject()->getAssetsPath() / "physics").string();
+
+		m_outputPath.clear();
+		std::filesystem::path phyDir = ProjectManager::getProject()->getAssetsPath() / "Physics";
+		if (std::filesystem::exists(phyDir)) m_outputPath = phyDir.generic_string();
+
 		m_staticFriction = 0.5f;
 		m_dynamicFriction = 0.5f;
 		m_restitution = 0.05f;
@@ -46,17 +53,13 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
-
-		// -- Physics Properties --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Static Friction", makeSliderRow(m_staticFriction, 10.0f)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Dynamic Friction", makeSliderRow(m_dynamicFriction, 10.0f)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Restitution", makeSliderRow(m_restitution, 1.0f)) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
-
-		// -- Output Path --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "physics")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Static Friction", makeSliderRow(m_staticFriction, 10.0f)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Dynamic Friction", makeSliderRow(m_dynamicFriction, 10.0f)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Restitution", makeSliderRow(m_restitution, 1.0f)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "physics")) });
 	}
 
 	void PhysicsMaterialImportModal::validate() {

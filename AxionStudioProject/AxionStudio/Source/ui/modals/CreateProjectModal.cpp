@@ -13,10 +13,15 @@
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
+
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionStudio/Source/core/EditorModalManager.h"
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+#include "AxionStudio/Source/ui/EditorTheme.h"
 
 namespace Axion {
+
+	// TODO: fix magic numbers in here and match it to the other modals
 
 	CreateProjectModal::CreateProjectModal() {
 		m_modalTitle = "Create New Project";
@@ -26,9 +31,7 @@ namespace Axion {
 	}
 
 	Silica::WidgetPtr CreateProjectModal::getWidget() {
-		return ModalBase::getWidget([]() {
-			EditorModalManager::close();
-		});
+		return ModalBase::getWidget([]() { EditorModalManager::close(); });
 	}
 
 	void CreateProjectModal::resetInputs() {
@@ -51,7 +54,7 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Project Name", nameInput) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Project Name", nameInput) });
 
 		// -- Location --
 		auto locRow = Silica::MakeWidget<Silica::SHorizontalBox>({
@@ -67,14 +70,18 @@ namespace Axion {
 					.padding = {8, 4},
 					.onClick = [this]() {
 						std::filesystem::path folder = FileDialogs::openFolder();
-						if (!folder.empty()) { m_outputPath = folder.string(); rebuildUI(); }
+						if (!folder.empty()) {
+							m_outputPath = folder.generic_string();
+							rebuildUI();
+						}
 						return Silica::EventReply::handled();
 					},
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Browse..." })
 				})}
 			}
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Location", locRow) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Location", locRow) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
 
 		// -- Version --
 		auto makeVersionBox = [this](uint32_t& versionRef) {
@@ -97,7 +104,7 @@ namespace Axion {
 				{ {0,0}, makeVersionBox(m_version.patch) }
 			}
 		});
-		contentBox->addSlot({ {0, 0}, makePropertyRow("Version", versionRow) });
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Version", versionRow) });
 
 		// -- Author, Company, Description --
 		auto makeTextRow = [this](const std::string& label, std::string& stringRef) {
@@ -107,7 +114,7 @@ namespace Axion {
 					.onTextChanged = [&stringRef](const std::string& val) { stringRef = val; }
 				})
 			});
-			return makePropertyRow(label, input);
+			return SilicaHelpers::MakePropertyRow(label, input);
 		};
 
 		contentBox->addSlot({ {0,0}, makeTextRow("Author", m_author) });

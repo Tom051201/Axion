@@ -86,6 +86,7 @@ namespace Silica {
 		void closeTab(DockNodePtr node, int tabIndex);
 		void focusTab(const std::string& title);
 		bool isTabVisible(const std::string& title) const;
+		bool isTabOpen(const std::string& title) const;
 
 		std::vector<std::string> getRegisteredTabNames() const;
 

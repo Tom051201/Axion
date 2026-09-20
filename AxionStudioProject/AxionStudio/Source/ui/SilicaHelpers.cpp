@@ -20,24 +20,37 @@
 namespace Axion::SilicaHelpers {
 
 	Silica::WidgetPtr MakeDetailRow(const std::string& label, const std::string& value, float labelWidth) {
-		return Silica::MakeWidget<Silica::SHorizontalBox>({
+		auto rowBox = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 15.0f,
 			.slots = {
 				{ {0,0}, Silica::MakeWidget<Silica::SBox>({
 					.explicitSize = Silica::Vec2{labelWidth, 0.0f},
 					.backgroundColor = Silica::Color::transparent(),
-					.child = Silica::MakeWidget<Silica::STextBlock>({
-						.text = label,
-						.color = Silica::GetTheme().Text_Dim
+					.child = Silica::MakeWidget<Silica::SAlign>({
+						.horizontalAlign = Silica::HorizontalAlign::Left,
+						.verticalAlign = Silica::VerticalAlign::Center,
+						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
 					})
 				})},
-				{ {1,0}, Silica::MakeWidget<Silica::STextBlock>({.text = value }) }
+				{ {1,0}, Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Left,
+					.verticalAlign = Silica::VerticalAlign::Center,
+					.child = Silica::MakeWidget<Silica::STextBlock>({
+						.text = value,
+						.color = Silica::GetTheme().Text_Dim
+					})
+				}) }
 			}
+		});
+
+		return Silica::MakeWidget<Silica::SBox>({
+			.explicitSize = Silica::Vec2(0.0f, EditorTheme::ROW_HEIGHT_DEFAULT),
+			.child = rowBox
 		});
 	}
 
 	Silica::WidgetPtr MakeHeader(const std::string& title) {
-		auto box = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = 4.0f });
+		auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 4.0f });
 		box->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
 			.text = title,
 			.color = Silica::GetTheme().Accent_Primary
@@ -63,19 +76,29 @@ namespace Axion::SilicaHelpers {
 	}
 
 	Silica::WidgetPtr MakePropertyRow(const std::string& label, Silica::WidgetPtr valueWidget, float labelWidth) {
-		return Silica::MakeWidget<Silica::SHorizontalBox>({
+		auto rowBox = Silica::MakeWidget<Silica::SHorizontalBox>({
 			.spacing = 10.0f,
 			.slots = {
 				{ {0, 0}, Silica::MakeWidget<Silica::SBox>({
 					.explicitSize = Silica::Vec2(labelWidth, 0.0f),
 					.backgroundColor = Silica::Color::transparent(),
 					.child = Silica::MakeWidget<Silica::SAlign>({
+						.horizontalAlign = Silica::HorizontalAlign::Left,
 						.verticalAlign = Silica::VerticalAlign::Center,
 						.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
 					})
 				})},
-				{ {1, 0}, valueWidget }
+				{ {1, 0}, Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Left,
+					.verticalAlign = Silica::VerticalAlign::Center,
+					.child = valueWidget
+				})}
 			}
+		});
+
+		return Silica::MakeWidget<Silica::SBox>({
+			.explicitSize = Silica::Vec2(0.0f, EditorTheme::ROW_HEIGHT_DEFAULT),
+			.child = rowBox
 		});
 	}
 
@@ -192,6 +215,14 @@ namespace Axion::SilicaHelpers {
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
 			})
 		});
+	}
+
+	Silica::Color MakeSilicaColor(const Axion::Vec4& c) {
+		return Silica::Color((uint8_t)(c.x * 255), (uint8_t)(c.y * 255), (uint8_t)(c.z * 255), (uint8_t)(c.w * 255));
+	}
+
+	Axion::Vec4 MakeAxionColor(const Silica::Color& c) {
+		return Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 	}
 
 }

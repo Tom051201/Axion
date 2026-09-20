@@ -44,6 +44,7 @@ namespace {
 	constexpr float EMPTY_TEXT_WIDTH = 250.0f;
 	constexpr float AUDIO_BTN_PAD_Y = 2.0f;
 	constexpr float TOP_MARGIN_SLOT = 6.0f;
+	constexpr float NAME_INPUT_WIDTH = 250.0f;
 
 	struct ComponentClipboardData {
 		std::string componentName;
@@ -216,7 +217,7 @@ namespace Axion {
 		if (!m_uiRoot) {
 			m_contentBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 0.0f });
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.child = m_contentBox
 			});
 			rebuildUI();
@@ -313,15 +314,27 @@ namespace Axion {
 		}
 
 		// -- Editable Text Field --
-		auto nameInput = Silica::MakeWidget<Silica::SEditableText>({
-			.initialText = tag,
-			.onTextCommitted = [entity, triggerRebuild](const std::string& newText) mutable {
-				if (entity.hasComponent<TagComponent>()) {
-					entity.getComponent<TagComponent>().tag = newText;
+		auto nameInput = Silica::MakeWidget<Silica::SBox>({
+			.explicitSize = Silica::Vec2(NAME_INPUT_WIDTH, 0.0f),
+			.child = Silica::MakeWidget<Silica::SEditableText>({
+				.initialText = tag,
+				.onTextCommitted = [entity, triggerRebuild](const std::string& newText) mutable {
+					if (entity.hasComponent<TagComponent>()) {
+						entity.getComponent<TagComponent>().tag = newText;
+					}
+					triggerRebuild();
 				}
-				triggerRebuild();
-			}
+			})
 		});
+//		auto nameInput = Silica::MakeWidget<Silica::SEditableText>({
+//			.initialText = tag,
+//			.onTextCommitted = [entity, triggerRebuild](const std::string& newText) mutable {
+//				if (entity.hasComponent<TagComponent>()) {
+//					entity.getComponent<TagComponent>().tag = newText;
+//				}
+//				triggerRebuild();
+//			}
+//		});
 
 		struct CompDef {
 			std::string name;
@@ -403,7 +416,7 @@ namespace Axion {
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.hasBorder = true,
 					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = EditorTheme::SPACING_SMALL,
@@ -591,7 +604,7 @@ namespace Axion {
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Position",
 							.initialValue = Silica::Vec3(transform.position.x, transform.position.y, transform.position.z),
-							.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+							.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().position = Vec3(val.x, val.y, val.z);
 							},
@@ -609,7 +622,7 @@ namespace Axion {
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Rotation",
 							.initialValue = Silica::Vec3(transform.getEulerAngles().x, transform.getEulerAngles().y, transform.getEulerAngles().z),
-							.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+							.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().setEulerAngles(Vec3(val.x, val.y, val.z));
 							},
@@ -627,7 +640,7 @@ namespace Axion {
 						{ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 							.label = "Scale",
 							.initialValue = Silica::Vec3(transform.scale.x, transform.scale.y, transform.scale.z),
-							.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+							.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 							.onValueChanged = [entity](Silica::Vec3 val) mutable {
 								entity.getComponent<TransformComponent>().scale = Vec3(val.x, val.y, val.z);
 							},
@@ -775,10 +788,10 @@ namespace Axion {
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0,0}, SilicaHelpers::MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Vertices", Silica::MakeWidget<Silica::STextBlock>({.text = vertexCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Indices", Silica::MakeWidget<Silica::STextBlock>({.text = indexCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Bones", Silica::MakeWidget<Silica::STextBlock>({.text = boneCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }))},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Vertices", Silica::MakeWidget<Silica::STextBlock>({.text = vertexCount }))},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Indices", Silica::MakeWidget<Silica::STextBlock>({.text = indexCount }))},
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Bones", Silica::MakeWidget<Silica::STextBlock>({.text = boneCount }))},
 						{ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
 							.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 							.onClick = [entity, triggerRebuild]() mutable {
@@ -896,14 +909,14 @@ namespace Axion {
 					dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = EditorTheme::SPACING_MEDIUM,
 						.slots = {
-							{ {0,0}, SilicaHelpers::MakePropertyRow(label, Silica::MakeWidget<Silica::STextBlock>({.text = material->getName() }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
-							{ {0,0}, SilicaHelpers::MakePropertyRow("Pipeline", Silica::MakeWidget<Silica::STextBlock>({.text = pipelineName }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+							{ {0,0}, SilicaHelpers::MakePropertyRow(label, Silica::MakeWidget<Silica::STextBlock>({.text = material->getName() }))},
+							{ {0,0}, SilicaHelpers::MakePropertyRow("Pipeline", Silica::MakeWidget<Silica::STextBlock>({.text = pipelineName }))},
 							{ {0,0}, SilicaHelpers::MakePropertyRow("Albedo Color", Silica::MakeWidget<Silica::SColorField>({
 								.initialColor = Vec4ToColor(albedoVec4),
 								.onColorChanged = [material](Silica::Color c) mutable {
 									material->setAlbedoColor(Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f));
 								}
-							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+							}))},
 							{ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
 								.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 								.onClick = [entity, i, triggerRebuild]() mutable {
@@ -995,12 +1008,12 @@ namespace Axion {
 					.onColorChanged = [entity](Silica::Color c) mutable {
 						entity.getComponent<SpriteComponent>().tint = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 					}
-				}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)
+				}))
 			});
 
 			if (spriteComponent.texture.isValid()) {
 				std::string uuidStr = spriteComponent.texture.uuid.toString();
-				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
 
 				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
@@ -1056,7 +1069,7 @@ namespace Axion {
 							.onColorChanged = [entity](Silica::Color c) mutable {
 								entity.getComponent<DirectionalLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
+						}))}
 					}
 				})
 			});
@@ -1076,19 +1089,19 @@ namespace Axion {
 							.onColorChanged = [entity](Silica::Color c) mutable {
 								entity.getComponent<PointLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.intensity,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().intensity = val; }
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.radius,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().radius = val; }
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Falloff", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = pointLightComponent.falloff,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<PointLightComponent>().falloff = val; }
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
+						}))}
 					}
 				})
 			});
@@ -1108,23 +1121,23 @@ namespace Axion {
 							.onColorChanged = [entity](Silica::Color c) mutable {
 								entity.getComponent<SpotLightComponent>().color = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Intensity", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.intensity,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().intensity = val; }
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Range", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.range,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().range = val; }
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Inner Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.innerConeAngle,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().innerConeAngle = val; }
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Outer Cone", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = spotLightComponent.outerConeAngle,
 							.onValueChanged = [entity](float val) mutable { entity.getComponent<SpotLightComponent>().outerConeAngle = val; }
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
+						}))}
 					}
 				})
 			});
@@ -1144,13 +1157,13 @@ namespace Axion {
 							.onValueChanged = [entity](int val) mutable {
 								entity.getComponent<NetworkIdentityComponent>().ownerClientID = (uint32_t)std::max(0, val);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Is Local Player", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = netIdentityComponent.isLocalPlayer,
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<NetworkIdentityComponent>().isLocalPlayer = checked;
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
+						}))}
 					}
 				})
 			});
@@ -1170,13 +1183,13 @@ namespace Axion {
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<CameraComponent>().isPrimary = checked;
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Aspect Ratio", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = cameraComponent.fixedAspectRatio,
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<CameraComponent>().fixedAspectRatio = checked;
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
+						}))}
 					}
 				})
 			});
@@ -1227,9 +1240,9 @@ namespace Axion {
 				dropZoneBox->setChild(Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = EditorTheme::SPACING_MEDIUM,
 					.slots = {
-						{ {0, 0}, SilicaHelpers::MakePropertyRow("Name", Silica::MakeWidget<Silica::STextBlock>({.text = name }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
-						{ {0, 0}, SilicaHelpers::MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuid }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
-						{ {0, 0}, SilicaHelpers::MakePropertyRow("Mode", Silica::MakeWidget<Silica::STextBlock>({.text = mode }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Name", Silica::MakeWidget<Silica::STextBlock>({.text = name }))},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuid }))},
+						{ {0, 0}, SilicaHelpers::MakePropertyRow("Mode", Silica::MakeWidget<Silica::STextBlock>({.text = mode }))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Playback", Silica::MakeWidget<Silica::SHorizontalBox>({
 							.spacing = EditorTheme::SPACING_SMALL,
 							.slots = {
@@ -1262,56 +1275,56 @@ namespace Axion {
 									.child = Silica::MakeWidget<Silica::STextBlock>({.text = isPaused ? "Resume" : "Pause" })
 								})}
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Volume", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getVolume(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setVolume(val);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Pitch", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getPitch(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setPitch(val);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Pan", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getPan(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setPan(val);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Loop", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = audioComponent.audio->isLooping(),
 							.onCheckChanged = [entity](bool checked) mutable {
 								entity.getComponent<AudioComponent>().audio->loop(checked);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Spatialize", Silica::MakeWidget<Silica::SCheckBox>({
 							.initialCheck = audioComponent.audio->isSpatial(),
 							.onCheckChanged = [entity](bool checked) mutable {
 								if (checked) entity.getComponent<AudioComponent>().audio->enableSpatial();
 								else entity.getComponent<AudioComponent>().audio->disableSpatial();
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Min Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getMinDistance(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setMinDistance(val);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Max Distance", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getMaxDistance(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setMaxDistance(val);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0, 0}, SilicaHelpers::MakePropertyRow("Doppler", Silica::MakeWidget<Silica::SInputFieldFloat>({
 							.initialValue = audioComponent.audio->getDopplerFactor(),
 							.onValueChanged = [entity](float val) mutable {
 								entity.getComponent<AudioComponent>().audio->setDopplerFactor(val);
 							}
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)},
+						}))},
 						{ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
 							.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 							.onClick = [entity, triggerRebuild]() mutable {
@@ -1389,12 +1402,12 @@ namespace Axion {
 				.onTextCommitted = [entity](const std::string& newText) mutable {
 					entity.getComponent<ScriptComponent>().className = newText;
 				}
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("State", Silica::MakeWidget<Silica::STextBlock>({
 				.text = scriptComponent.isInstantiated ? "Running" : "Waiting to start",
 				.color = scriptComponent.isInstantiated ? Silica::GetTheme().Text_Success : Silica::GetTheme().Text_Warning
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			const auto& fields = ScriptEngine::getScriptFields(scriptComponent.className);
 
@@ -1416,14 +1429,14 @@ namespace Axion {
 										ScriptEngine::setFieldValueFloat(sc.gcHandle, fieldName, newVal);
 									}
 								}
-							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+							})) });
 						}
 						else if (field.type == ScriptFieldType::Vector3) {
 							Vec3 val = ScriptEngine::getFieldValueVector3(scriptComponent.gcHandle, field.name);
 							uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 								.label = field.name,
 								.initialValue = Silica::Vec3(val.x, val.y, val.z),
-								.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+								.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 								.onValueChanged = [entity, fieldName = field.name](Silica::Vec3 newVal) mutable {
 									auto& sc = entity.getComponent<ScriptComponent>();
 									if (sc.isInstantiated && sc.gcHandle) {
@@ -1440,13 +1453,13 @@ namespace Axion {
 							uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
 								.text = "0.00 (Edit Mode)",
 								.color = Silica::GetTheme().Text_Dim,
-							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+							})) });
 						}
 						else if (field.type == ScriptFieldType::Vector3) {
 							uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow(field.name, Silica::MakeWidget<Silica::STextBlock>({
 								.text = "[ 0.00, 0.00, 0.00 ] (Edit Mode)",
 								.color = Silica::GetTheme().Text_Dim,
-							}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+							})) });
 						}
 					}
 				}
@@ -1472,7 +1485,7 @@ namespace Axion {
 					.slots = {
 						{ {0,0}, SilicaHelpers::MakePropertyRow("Class Name", Silica::MakeWidget<Silica::STextBlock>({
 							.text = scriptComponent.scriptName,
-						}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH)}
+						}))}
 					}
 				})
 			});
@@ -1517,7 +1530,7 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Velocity Var",
 				.initialValue = Silica::Vec3(particleSystemComponent.velocityVariation.x, particleSystemComponent.velocityVariation.y, particleSystemComponent.velocityVariation.z),
-				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+				.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<ParticleSystemComponent>().velocityVariation = Vec3(val.x, val.y, val.z);
 				}
@@ -1528,38 +1541,38 @@ namespace Axion {
 				.onColorChanged = [entity](Silica::Color c) mutable {
 					entity.getComponent<ParticleSystemComponent>().colorBegin = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 				}
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("End Color", Silica::MakeWidget<Silica::SColorField>({
 				.initialColor = Vec4ToColor(particleSystemComponent.colorEnd),
 				.onColorChanged = [entity](Silica::Color c) mutable {
 					entity.getComponent<ParticleSystemComponent>().colorEnd = Vec4(c.r() / 255.0f, c.g() / 255.0f, c.b() / 255.0f, c.a() / 255.0f);
 				}
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Start Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.sizeBegin,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeBegin = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("End Size", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.sizeEnd,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().sizeEnd = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Lifetime", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.lifeTime,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().lifeTime = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Gravity Scale", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = particleSystemComponent.gravityScale,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<ParticleSystemComponent>().gravityScale = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			if (particleSystemComponent.texture.isValid()) {
 				std::string uuidStr = particleSystemComponent.texture.uuid.toString();
-				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Texture UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
 				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
@@ -1636,21 +1649,21 @@ namespace Axion {
 				std::vector<Silica::Slot> uiSlots;
 
 				std::string uuidStr = animatorComponent.currentClip.uuid.toString();
-				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Clip UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Clip UUID", Silica::MakeWidget<Silica::STextBlock>({.text = uuidStr })) });
 
 				if (clip) {
 					char durationBuf[64];
 					snprintf(durationBuf, sizeof(durationBuf), "%.2f seconds", clip->duration);
 					std::string durationStr = durationBuf;
 					std::string trackCount = std::to_string(clip->boneAnimations.size());
-					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Duration", Silica::MakeWidget<Silica::STextBlock>({.text = durationStr }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
-					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Bone Tracks", Silica::MakeWidget<Silica::STextBlock>({.text = trackCount }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Duration", Silica::MakeWidget<Silica::STextBlock>({.text = durationStr })) });
+					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Bone Tracks", Silica::MakeWidget<Silica::STextBlock>({.text = trackCount })) });
 				}
 
 				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Playing", Silica::MakeWidget<Silica::SCheckBox>({
 					.initialCheck = animatorComponent.isPlaying,
 					.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<AnimatorComponent>().isPlaying = checked; }
-				}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+				})) });
 
 				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
@@ -1706,52 +1719,52 @@ namespace Axion {
 				}
 			});
 
-			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Body Type", bodyTypeCombo, EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Body Type", bodyTypeCombo) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Kinematic", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.isKinematic,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().isKinematic = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Use Global Gravity", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.useGlobalGravity,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().useGlobalGravity = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Enable CCD", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.enableCCD,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().enableCCD = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Mass", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.mass,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().mass = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Linear Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.linearDamping,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().linearDamping = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Angular Damping", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = rigidBodyComponent.angularDamping,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<RigidBodyComponent>().angularDamping = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Rotation X", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.fixedRotationX,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().fixedRotationX = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Rotation Y", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.fixedRotationY,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().fixedRotationY = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Fixed Rotation Z", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = rigidBodyComponent.fixedRotationZ,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<RigidBodyComponent>().fixedRotationZ = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
@@ -1798,7 +1811,7 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Half Extents",
 				.initialValue = Silica::Vec3(boxColliderComponent.halfExtents.x, boxColliderComponent.halfExtents.y, boxColliderComponent.halfExtents.z),
-				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+				.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<BoxColliderComponent>().halfExtents = Vec3(val.x, val.y, val.z);
 				}
@@ -1807,7 +1820,7 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(boxColliderComponent.offset.x, boxColliderComponent.offset.y, boxColliderComponent.offset.z),
-				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+				.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<BoxColliderComponent>().offset = Vec3(val.x, val.y, val.z);
 				}
@@ -1816,7 +1829,7 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = boxColliderComponent.isTrigger,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<BoxColliderComponent>().isTrigger = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			if (boxColliderComponent.material.isValid()) {
 				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(boxColliderComponent.material);
@@ -1828,15 +1841,15 @@ namespace Axion {
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = sfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = dfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
 						.text = resBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 				}
 
 				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
@@ -1918,12 +1931,12 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = sphereColliderComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<SphereColliderComponent>().radius = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(sphereColliderComponent.offset.x, sphereColliderComponent.offset.y, sphereColliderComponent.offset.z),
-				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+				.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<SphereColliderComponent>().offset = Vec3(val.x, val.y, val.z);
 				}
@@ -1932,7 +1945,7 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = sphereColliderComponent.isTrigger,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<SphereColliderComponent>().isTrigger = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			if (sphereColliderComponent.material.isValid()) {
 				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(sphereColliderComponent.material);
@@ -1944,15 +1957,15 @@ namespace Axion {
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = sfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = dfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
 						.text = resBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 				}
 
 				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
@@ -2034,17 +2047,17 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = capsuleColliderComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().radius = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Half Height", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = capsuleColliderComponent.halfHeight,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<CapsuleColliderComponent>().halfHeight = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, Silica::MakeWidget<Silica::SInputFieldVec3Float>({
 				.label = "Offset",
 				.initialValue = Silica::Vec3(capsuleColliderComponent.offset.x, capsuleColliderComponent.offset.y, capsuleColliderComponent.offset.z),
-				.labelWidth = EditorTheme::PROPERTY_ROW_LABEL_WIDTH,
+				.labelWidth = EditorTheme::ROW_LABEL_WIDTH,
 				.onValueChanged = [entity](Silica::Vec3 val) mutable {
 					entity.getComponent<CapsuleColliderComponent>().offset = Vec3(val.x, val.y, val.z);
 				}
@@ -2053,7 +2066,7 @@ namespace Axion {
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = capsuleColliderComponent.isTrigger,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<CapsuleColliderComponent>().isTrigger = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			if (capsuleColliderComponent.material.isValid()) {
 				Ref<PhysicsMaterial> material = AssetManager::get<PhysicsMaterial>(capsuleColliderComponent.material);
@@ -2065,15 +2078,15 @@ namespace Axion {
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Static Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = sfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Dynamic Friction", Silica::MakeWidget<Silica::STextBlock>({
 						.text = dfBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 					uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Restitution", Silica::MakeWidget<Silica::STextBlock>({
 						.text = resBuf,
 						.color = Silica::GetTheme().Text_Dim
-					}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+					})) });
 				}
 
 				uiSlots.push_back({ {0.0f, TOP_MARGIN_SLOT}, Silica::MakeWidget<Silica::SButton>({
@@ -2133,22 +2146,22 @@ namespace Axion {
 				}
 			});
 
-			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Type", typeCombo, EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Type", typeCombo) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Affect Kinematic", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = gravitySourceComponent.affectKinematic,
 				.onCheckChanged = [entity](bool checked) mutable { entity.getComponent<GravitySourceComponent>().affectKinematic = checked; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Strength", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = gravitySourceComponent.strength,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().strength = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Radius", Silica::MakeWidget<Silica::SInputFieldFloat>({
 				.initialValue = gravitySourceComponent.radius,
 				.onValueChanged = [entity](float val) mutable { entity.getComponent<GravitySourceComponent>().radius = val; }
-			}), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) });
+			})) });
 
 			return Silica::MakeWidget<Silica::SBox>({
 				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
@@ -2159,6 +2172,7 @@ namespace Axion {
 
 		// ----- Assemble Layout --
 		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({
+			.scrollState = &m_scrollState,
 			.child = Silica::MakeWidget<Silica::SBox>({
 				.padding = { 0.0f, EditorTheme::PADDING_SMALL },
 				.child = container

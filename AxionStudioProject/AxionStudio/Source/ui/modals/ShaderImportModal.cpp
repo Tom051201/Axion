@@ -8,6 +8,8 @@
 #include <Silica/include/SVerticalBox.h>
 #include <Silica/include/STextBlock.h>
 #include <Silica/include/SButton.h>
+#include <Silica/include/SSpacer.h>
+#include <Silica/include/SSeparator.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -15,9 +17,14 @@
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/graphics/Shader.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+
 #include "AxionAssetPipeline/Source/parser/ShaderParser.h"
 
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
+
 namespace Axion {
+
+	// TODO: add an presetFromFile
 
 	ShaderImportModal::ShaderImportModal() {
 		m_modalTitle = "Import Shader Asset";
@@ -29,7 +36,10 @@ namespace Axion {
 	void ShaderImportModal::resetInputs() {
 		m_name.clear();
 		m_sourcePath.clear();
-		m_outputPath = (ProjectManager::getProject()->getAssetsPath() / "shaders").string();
+
+		m_outputPath.clear();
+		std::filesystem::path shaDir = ProjectManager::getProject()->getAssetsPath() / "Shaders";
+		if (std::filesystem::exists(shaDir)) m_outputPath = shaDir.generic_string();
 
 		m_formatIndex = 0;
 		m_batchTexturesCount = 1;
@@ -46,10 +56,11 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
 
 		// -- Format --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Format", makeCombo(m_formatIndex, m_formats)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Format", makeCombo(m_formatIndex, m_formats)) });
 
 		// -- Batch Textures Count --
 		auto batchInput = Silica::MakeWidget<Silica::SBox>({
@@ -60,11 +71,12 @@ namespace Axion {
 				}
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Batch Textures", batchInput) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Batch Textures", batchInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
 
 		// -- Source and Output Paths --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Source File", makeFileRow(m_sourcePath, "Shader Source", "*.hlsl;*.glsl", "shaders")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "shaders")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Source File", makeFileRow(m_sourcePath, "Shader Source", "*.hlsl;*.glsl", "shaders")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "shaders")) });
 	}
 
 	void ShaderImportModal::validate() {

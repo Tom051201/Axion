@@ -15,6 +15,11 @@
 
 #include "AxionStudio/Source/core/EditorEvents.h"
 
+namespace YAML {
+	class Node;
+	class Emitter;
+}
+
 namespace Silica {
 	class SBox;
 	class STextBlock;
@@ -44,6 +49,9 @@ namespace Axion {
 		const std::vector<std::filesystem::path>& getLibraryDirectories() const { return m_libraryPaths; }
 
 		void onEvent(Event& e);
+
+		void loadSettings(const YAML::Node& editorSettings);
+		void saveSettings(YAML::Emitter& out) const;
 
 	private:
 

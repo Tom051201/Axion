@@ -87,6 +87,9 @@ namespace Axion {
 		float m_treeViewTopHeight = 250.0f;
 		std::shared_ptr<Silica::SHorizontalSplitBox> m_splitBox;
 		std::shared_ptr<Silica::SVerticalSplitBox> m_vSplitBox;
+		float m_scrollStateVFS = 0.0f;
+		float m_scrollStatePhysical = 0.0f;
+		float m_scrollStateContentArea = 0.0f;
 
 		// -- VFS --
 		VirtualFileSystem m_vfs;

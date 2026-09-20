@@ -16,6 +16,7 @@ namespace Silica {
 		struct Args {
 			Vec2 padding = Vec2::zero();
 			std::optional<Vec2> explicitSize;
+			bool hasBorder = false;
 			float borderThickness = 0.0f;
 			bool consumePointerEvents = false;
 			std::optional<Color> backgroundColor;

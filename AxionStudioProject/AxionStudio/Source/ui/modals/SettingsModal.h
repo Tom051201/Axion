@@ -19,7 +19,7 @@ namespace Axion {
 	class SettingsModal {
 	public:
 
-		enum class Tab { EditorPreferences, FilePaths, Panels };
+		enum class Tab { EditorPreferences, Graphics, FilePaths, Panels };
 
 		SettingsModal() = default;
 		~SettingsModal() = default;
@@ -37,6 +37,10 @@ namespace Axion {
 			bool contentBrowserShowVFSTree = true;
 			bool contentBrowserShowPhysicalTree = true;
 			bool materialEditorInvertCamera = false;
+			bool viewportPanelShowRendererStats = true;
+			bool viewportPanelInvertCameraX = false;
+			bool viewportPanelInvertCameraY = false;
+			float viewportPanelGizmoScale = 1.0f;
 		};
 
 		void rebuildUI();
@@ -44,6 +48,7 @@ namespace Axion {
 
 		// -- Tab Builders --
 		Silica::WidgetPtr buildEditorPreferencesTab();
+		Silica::WidgetPtr buildGraphicsTab();
 		Silica::WidgetPtr buildFilePathsTab();
 		Silica::WidgetPtr buildPanelsTab();
 
@@ -56,6 +61,7 @@ namespace Axion {
 		Tab m_activeTab = Tab::EditorPreferences;
 		WorkingState m_workingState;
 		EditorSettingType m_pendingChanges = EditorSettingType::None;
+		bool m_showCancelPopup = false;
 
 		// -- Callbacks --
 		std::function<void(Event&)> m_eventCallback;

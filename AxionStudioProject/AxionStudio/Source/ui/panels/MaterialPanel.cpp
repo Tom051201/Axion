@@ -21,6 +21,7 @@
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SCheckbox.h>
 
+#include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
@@ -44,7 +45,6 @@ namespace {
 	constexpr float CAM_ZOOM_SPEED = 0.5f;
 	constexpr float CAM_DRAG_SPEED = 0.01f;
 	constexpr float CAM_PITCH_LIMIT = 1.5f;
-
 	constexpr float TEX_SLOT_SIZE = 64.0f;
 	constexpr float TEX_IMAGE_SIZE = 60.0f;
 
@@ -219,7 +219,11 @@ namespace {
 		}
 
 		Silica::EventReply onMouseButtonUp(const Silica::Geometry& geom, const Silica::Vec2& pos, Silica::MouseButton btn) override {
-			if (m_isDragging && btn == Silica::MouseButton::Right) { m_isDragging = false; Silica::SWidget::setCapturedWidget(nullptr); return Silica::EventReply::handled(); }
+			if (m_isDragging && btn == Silica::MouseButton::Right) {
+				m_isDragging = false;
+				Silica::SWidget::setCapturedWidget(nullptr);
+				return Silica::EventReply::handled();
+			}
 			if (m_child) return m_child->onMouseButtonUp(m_child->getAllocatedGeometry(), pos, btn);
 			return Silica::EventReply::unhandled();
 		}
@@ -276,13 +280,13 @@ namespace Axion {
 			m_material = nullptr;
 		}
 
-		EditorActionQueue::push([this]() { rebuildUI(); });
+		EditorActionQueue::push(AX_BIND_FN(MaterialPanel::rebuildUI));
 	}
 
 	Silica::WidgetPtr MaterialPanel::getWidget() {
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.onDragOver = [](const Silica::DragDropPayload& payload) {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -371,23 +375,21 @@ namespace Axion {
 		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
 				.openToRight = true,
 				.anchorContent = Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 					.color = Silica::Color::transparent(),
-					.hoverColor = Silica::Color(255, 255, 255, 20),
+					.hoverColor = EditorTheme::BUTTON_COLOR_HOVER_SUBTLE,
 					.onClick = []() { return Silica::EventReply::unhandled(); },
 					.child = Silica::MakeWidget<Silica::SImage>({
 						.textureID = SilicaContext::getIcon("GearIcon"),
-						.tint = Silica::GetTheme().Text_Main,
-						.desiredSize = { 16.0f, 16.0f }
+						.desiredSize = { EditorTheme::ICON_SIZE_SMALL, EditorTheme::ICON_SIZE_SMALL }
 					})
 				}),
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.hasBorder = true,
 					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = EditorTheme::SPACING_SMALL,
@@ -432,7 +434,8 @@ namespace Axion {
 				return Silica::EventReply::handled();
 			},
 			.child = Silica::MakeWidget<Silica::SAlign>({
-				.horizontalAlign = Silica::HorizontalAlign::Center, .verticalAlign = Silica::VerticalAlign::Center,
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = m_previewShape == PreviewShape::Custom ? m_customMeshName : "Custom Mesh"})
 			})
 		});
@@ -452,7 +455,7 @@ namespace Axion {
 			}, customMeshBtn, { 0.0f, 0.0f })
 		});
 
-		// -- Fixed Height Toolbar --
+		// -- Toolbar --
 		auto toolbar = Silica::MakeWidget<Silica::SBox>({
 			.padding = { EditorTheme::TOOLBAR_PADDING_X, 0.0f },
 			.explicitSize = Silica::Vec2{ 0.0f, EditorTheme::TOOLBAR_HEIGHT },
@@ -461,9 +464,7 @@ namespace Axion {
 				.spacing = EditorTheme::TOOLBAR_SPACING,
 				.slots = {
 					{ {0,0}, optionsMenu },
-					{ {0,0}, SilicaHelpers::MakeToolbarBtn("Save Material", Silica::GetTheme().Accent_Success, [this]() {
-						cmdSaveMaterial();
-					}) },
+					{ {0,0}, SilicaHelpers::MakeToolbarBtn("Save Material", Silica::GetTheme().Accent_Success, AX_BIND_FN(MaterialPanel::cmdSaveMaterial)) },
 					{ {0,0}, SilicaHelpers::MakeToolbarBtn("Sphere", (m_previewShape == PreviewShape::Sphere) ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(), [this]() {
 						m_previewShape = PreviewShape::Sphere;
 						rebuildUI();
@@ -492,7 +493,10 @@ namespace Axion {
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = toolbar,
-			.contentArea = Silica::MakeWidget<SPreviewLayout>({.leftPane = leftPane, .rightPane = rightPane })
+			.contentArea = Silica::MakeWidget<SPreviewLayout>({
+				.leftPane = leftPane,
+				.rightPane = rightPane
+			})
 		}));
 	}
 
@@ -506,8 +510,10 @@ namespace Axion {
 
 		// -- Material Values --
 		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Values", .color = Silica::GetTheme().Text_Dim }) });
-
+		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
+			.text = "Values",
+			.color = Silica::GetTheme().Text_Dim
+		}) });
 		propsBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Albedo", Silica::MakeWidget<Silica::SColorField>({
 			.initialColor = Vec4ToColor(m_material->getAlbedoColor()),
 			.onColorChanged = [this, ColorToVec4](Silica::Color c) { m_material->setAlbedoColor(ColorToVec4(c)); }
@@ -527,7 +533,10 @@ namespace Axion {
 
 		// -- Texture Slots --
 		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({}) });
-		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({.text = "Textures", .color = Silica::GetTheme().Text_Dim }) });
+		propsBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
+			.text = "Textures",
+			.color = Silica::GetTheme().Text_Dim
+		}) });
 
 		propsBox->addSlot({ {0,0}, buildTextureSlot("Albedo", TextureSlot::Albedo) });
 		propsBox->addSlot({ {0,0}, buildTextureSlot("Normal", TextureSlot::Normal) });
@@ -536,7 +545,10 @@ namespace Axion {
 		propsBox->addSlot({ {0,0}, buildTextureSlot("Occlusion", TextureSlot::Occlusion) });
 		propsBox->addSlot({ {0,0}, buildTextureSlot("Emissive", TextureSlot::Emissive) });
 
-		return Silica::MakeWidget<Silica::SBox>({ .padding = { EditorTheme::PADDING_LARGE, EditorTheme::PADDING_LARGE }, .child = propsBox });
+		return Silica::MakeWidget<Silica::SBox>({
+			.padding = { EditorTheme::PADDING_LARGE, EditorTheme::PADDING_LARGE },
+			.child = propsBox
+		});
 	}
 
 	Silica::WidgetPtr MaterialPanel::buildTextureSlot(const std::string& label, TextureSlot slot) {
@@ -545,14 +557,18 @@ namespace Axion {
 
 		if (currentTexHandle.isValid()) {
 			Ref<Texture2D> tex = AssetManager::get<Texture2D>(currentTexHandle);
-			slotContent = Silica::MakeWidget<Silica::SImage>({ .textureID = SilicaContext::getTextureID(tex), .desiredSize = { TEX_IMAGE_SIZE, TEX_IMAGE_SIZE } });
+			slotContent = Silica::MakeWidget<Silica::SImage>({
+				.textureID = SilicaContext::getTextureID(tex),
+				.desiredSize = { TEX_IMAGE_SIZE, TEX_IMAGE_SIZE }
+			});
 		}
 		else {
-			slotContent = Silica::MakeWidget<Silica::STextBlock>({ .text = "No\nTex" });
+			slotContent = Silica::MakeWidget<Silica::STextBlock>({.text = "No\nTex" });
 		}
 
 		auto slotButton = Silica::MakeWidget<Silica::SButton>({
-			.padding = { 0.0f, 0.0f }, .color = Silica::Color::transparent(),
+			.padding = { 0.0f, 0.0f },
+			.color = Silica::Color::transparent(),
 			.onClick = [this, slot]() {
 				auto texDir = ProjectManager::getProject()->getAssetsPath() / "textures";
 				if (!std::filesystem::exists(texDir)) texDir = ProjectManager::getProject()->getAssetsPath();
@@ -561,29 +577,48 @@ namespace Axion {
 				if (absPath.extension() == ".axtex") {
 					EditorActionQueue::push([this, absPath, slot]() {
 						UUID texUUID = AssetManager::getAssetUUID(absPath);
-						if (texUUID.isValid()) { m_material->setTexture(slot, AssetManager::load<Texture2D>(texUUID)); rebuildUI(); }
+						if (texUUID.isValid()) {
+							m_material->setTexture(slot, AssetManager::load<Texture2D>(texUUID));
+							rebuildUI();
+						}
 					});
 				}
 				return Silica::EventReply::handled();
 			},
-			.child = Silica::MakeWidget<Silica::SAlign>({.horizontalAlign = Silica::HorizontalAlign::Center, .verticalAlign = Silica::VerticalAlign::Center, .child = slotContent })
+			.child = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.verticalAlign = Silica::VerticalAlign::Center,
+				.child = slotContent
+			})
 		});
 
 		auto dropZone = Silica::MakeWidget<Silica::SBox>({
-			.explicitSize = Silica::Vec2{ TEX_SLOT_SIZE, TEX_SLOT_SIZE }, .borderThickness = Silica::GetTheme().Border_Thickness,
+			.explicitSize = Silica::Vec2{ TEX_SLOT_SIZE, TEX_SLOT_SIZE },
+			.hasBorder = true,
 			.child = SilicaHelpers::MakeAssetDropZone(".axtex", [this, slot](const std::filesystem::path& path) {
 				EditorActionQueue::push([this, path, slot]() {
 					UUID texUUID = AssetManager::getAssetUUID(path);
-					if (texUUID.isValid()) { m_material->setTexture(slot, AssetManager::load<Texture2D>(texUUID)); rebuildUI(); }
+					if (texUUID.isValid()) {
+						m_material->setTexture(slot, AssetManager::load<Texture2D>(texUUID));
+						rebuildUI();
+					}
 				});
 			}, slotButton, {0.0f, 0.0f})
 		});
 
-		Silica::WidgetPtr clearButton = Silica::MakeWidget<Silica::SBox>({ .backgroundColor = Silica::Color::transparent() });
+		Silica::WidgetPtr clearButton = Silica::MakeWidget<Silica::SBox>({.backgroundColor = Silica::Color::transparent() });
 		if (currentTexHandle.isValid()) {
 			clearButton = Silica::MakeWidget<Silica::SButton>({
-				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL }, .color = Silica::Color::transparent(), .hoverColor = Silica::GetTheme().Accent_Danger,
-				.onClick = [this, slot]() { EditorActionQueue::push([this, slot]() { m_material->setTexture(slot, AssetHandle<Texture2D>()); rebuildUI(); }); return Silica::EventReply::handled(); },
+				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
+				.color = Silica::Color::transparent(),
+				.hoverColor = Silica::GetTheme().Accent_Danger,
+				.onClick = [this, slot]() {
+					EditorActionQueue::push([this, slot]() {
+						m_material->setTexture(slot, AssetHandle<Texture2D>());
+						rebuildUI();
+					});
+					return Silica::EventReply::handled();
+				},
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X"})
 			});
 		}
@@ -592,8 +627,15 @@ namespace Axion {
 			.spacing = EditorTheme::PADDING_LARGE,
 			.slots = {
 				{ {0,0}, dropZone },
-				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({.verticalAlign = Silica::VerticalAlign::Center, .child = Silica::MakeWidget<Silica::STextBlock>({.text = label }) })},
-				{ {1,0}, Silica::MakeWidget<Silica::SAlign>({.horizontalAlign = Silica::HorizontalAlign::Right, .verticalAlign = Silica::VerticalAlign::Center, .child = clearButton })}
+				{ {0,0}, Silica::MakeWidget<Silica::SAlign>({
+					.verticalAlign = Silica::VerticalAlign::Center,
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = label })
+				})},
+				{ {1,0}, Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Right,
+					.verticalAlign = Silica::VerticalAlign::Center,
+					.child = clearButton
+				})}
 			}
 		});
 	}
@@ -649,8 +691,20 @@ namespace Axion {
 	}
 
 	EventReply MaterialPanel::onEditorSettingsChanged(EditorSettingsChangedEvent& ev) {
-		rebuildUI();
+		rebuildUI(); // TODO: only rebuild when flag is correct so if Settings::mat... changed
 		return EventReply::unhandled();
+	}
+
+	void MaterialPanel::loadSettings(const YAML::Node& editorSettings) {
+		if (auto meSettings = editorSettings["MaterialEditor"]) {
+			if (meSettings["InvertCam"]) EditorSettings::materialEditorInvertCamera = meSettings["InvertCam"].as<bool>();
+		}
+	}
+
+	void MaterialPanel::saveSettings(YAML::Emitter& out) const {
+		out << YAML::Key << "MaterialEditor" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "InvertCam" << YAML::Value << EditorSettings::materialEditorInvertCamera;
+		out << YAML::EndMap;
 	}
 
 }

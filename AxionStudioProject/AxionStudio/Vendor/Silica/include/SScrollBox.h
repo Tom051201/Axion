@@ -12,6 +12,7 @@ namespace Silica {
 
 		struct Args {
 			float scrollSpeed = 40.0f;
+			float* scrollState = nullptr;
 			std::optional<Color> thumbColor;
 			std::optional<Color> thumbDraggingColor;
 			WidgetPtr child = nullptr;
@@ -35,7 +36,8 @@ namespace Silica {
 	private:
 
 		WidgetPtr m_child;
-		float m_scrollOffset = 0.0f;
+		float m_internalScrollOffset = 0.0f;
+		float* m_scrollOffset = nullptr;
 		float m_scrollSpeed = 40.0f;
 		float m_maxScroll = 0.0f;
 

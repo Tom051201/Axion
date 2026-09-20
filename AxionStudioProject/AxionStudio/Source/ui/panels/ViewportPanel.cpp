@@ -17,12 +17,14 @@
 #include <Silica/include/SMenuAnchor.h>
 #include <Silica/include/SOverlay.h>
 
+#include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 
 #include "AxionStudio/Source/core/EditorEvents.h"
 #include "AxionStudio/Source/core/EditorActionQueue.h"
+#include "AxionStudio/Source/core/EditorSettings.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
 #include "AxionStudio/Source/ui/SilicaHelpers.h"
 #include "AxionStudio/Source/ui/EditorTheme.h"
@@ -45,7 +47,7 @@ namespace Axion {
 
 	Silica::WidgetPtr ViewportPanel::getWidget() {
 		if (!m_uiRoot) {
-			m_uiRoot = Silica::MakeWidget<Silica::SBox>({ .borderThickness = Silica::GetTheme().Border_Thickness });
+			m_uiRoot = Silica::MakeWidget<Silica::SBox>({.hasBorder = true });
 			rebuildUI_Internal();
 		}
 		return m_uiRoot;
@@ -54,10 +56,18 @@ namespace Axion {
 	void ViewportPanel::onEvent(Event& ev) {
 		EventDispatcher dispatcher(ev);
 		dispatcher.dispatch<ProjectChangedEvent>(AX_BIND_EVENT_FN(ViewportPanel::onProjectChanged));
+		dispatcher.dispatch<EditorSettingsChangedEvent>(AX_BIND_EVENT_FN(ViewportPanel::onEditorSettingsChanged));
 	}
 
 	EventReply ViewportPanel::onProjectChanged(ProjectChangedEvent& ev) {
 		rebuildUI();
+		return EventReply::unhandled();
+	}
+
+	EventReply ViewportPanel::onEditorSettingsChanged(EditorSettingsChangedEvent& ev) {
+		if (ev.hasChange(EditorSettingType::Viewport)) {
+			rebuildUI();
+		}
 		return EventReply::unhandled();
 	}
 
@@ -66,7 +76,7 @@ namespace Axion {
 	}
 
 	void ViewportPanel::refreshToolbar() {
-		EditorActionQueue::push([this]() { rebuildToolbar(); });
+		EditorActionQueue::push(AX_BIND_FN(ViewportPanel::rebuildToolbar));
 	}
 
 	void ViewportPanel::rebuildUI() {
@@ -108,13 +118,34 @@ namespace Axion {
 			.color = Silica::GetTheme().Text_Success
 		});
 
+		Silica::TextureID texID = 0;
+		if (m_requestViewportTexture) {
+			texID = m_requestViewportTexture();
+		}
+
 		m_viewportImage = Silica::MakeWidget<Silica::SImage>({
-			.textureID = 0,
+			.textureID = texID,
 			.desiredSize = { DEFAULT_VP_WIDTH, DEFAULT_VP_HEIGHT }
 		});
 
+		// -- Build Overlay Children Dynamically --
+		std::vector<Silica::WidgetPtr> overlayChildren;
+		overlayChildren.push_back(m_viewportImage);
+
+		if (EditorSettings::viewportPanelShowRendererStats) {
+			overlayChildren.push_back(Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Left,
+				.verticalAlign = Silica::VerticalAlign::Top,
+				.child = Silica::MakeWidget<Silica::SBox>({
+					.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
+					.backgroundColor = Silica::Color(0, 0, 0, 150),
+					.child = m_statsText
+				})
+			}));
+		}
+
 		m_viewportContainer = Silica::MakeWidget<Silica::SBox>({
-			.borderThickness = Silica::GetTheme().Border_Thickness,
+			.hasBorder = true,
 			.onDragOver = [](const Silica::DragDropPayload& payload) {
 				if (payload.type == "AssetPath") {
 					auto path = std::any_cast<std::filesystem::path>(payload.data);
@@ -174,25 +205,14 @@ namespace Axion {
 				return Silica::EventReply::unhandled();
 			},
 			.child = Silica::MakeWidget<Silica::SOverlay>({
-				.children = {
-					m_viewportImage,
-					Silica::MakeWidget<Silica::SAlign>({
-						.horizontalAlign = Silica::HorizontalAlign::Left,
-						.verticalAlign = Silica::VerticalAlign::Top,
-						.child = Silica::MakeWidget<Silica::SBox>({
-							.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_MEDIUM },
-							.backgroundColor = Silica::Color(0, 0, 0, 150),
-							.child = m_statsText
-						})
-					})
-				}
+				.children = overlayChildren
 			})
 		});
 
 		m_uiRoot->setChild(Silica::MakeWidget<Silica::SBorderLayout>({
 			.topBar = m_toolbarContainer,
 			.contentArea = m_viewportContainer
-			}));
+		}));
 	}
 
 	void ViewportPanel::rebuildToolbar() {
@@ -227,7 +247,11 @@ namespace Axion {
 				.color = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color::transparent(),
 				.hoverColor = isActive ? Silica::GetTheme().Accent_Primary : Silica::Color(100, 100, 100, 150),
 				.onClick = [onClick]() { onClick(); return Silica::EventReply::handled(); },
-				.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
+				.child = Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Center,
+					.verticalAlign = Silica::VerticalAlign::Center,
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = text })
+				})
 			});
 		};
 
@@ -253,7 +277,6 @@ namespace Axion {
 		auto optionsMenu = Silica::MakeWidget<Silica::SAlign>({
 			.verticalAlign = Silica::VerticalAlign::Center,
 			.child = Silica::MakeWidget<Silica::SMenuAnchor>({
-				.openOnHover = false,
 				.openToRight = true,
 				.anchorContent = Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
@@ -269,14 +292,23 @@ namespace Axion {
 				.menuContent = Silica::MakeWidget<Silica::SBox>({
 					.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 					.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-					.borderThickness = Silica::GetTheme().Border_Thickness,
+					.hasBorder = true,
 					.backgroundColor = Silica::GetTheme().Background_Popup,
 					.child = Silica::MakeWidget<Silica::SVerticalBox>({
 						.spacing = EditorTheme::SPACING_SMALL,
 						.slots = {
-							{ {0,0}, SilicaHelpers::MakeOptionsMenuItem("Reset View", [this]() {
-								// Placeholder for later implementation
-							}) }
+							{ {0,0}, SilicaHelpers::MakeCheckboxMenuItem("Show Render Stats", EditorSettings::viewportPanelShowRendererStats, [this](bool val) {
+								EditorSettings::viewportPanelShowRendererStats = val;
+								rebuildUI();
+							})},
+							{ {0,0}, SilicaHelpers::MakeCheckboxMenuItem("Invert Camera X-Axis", EditorSettings::viewportPanelInvertCameraX, [this](bool val) {
+								EditorSettings::viewportPanelInvertCameraX = val;
+								rebuildUI();
+							})},
+							{ {0,0}, SilicaHelpers::MakeCheckboxMenuItem("Invert Camera Y-Axis", EditorSettings::viewportPanelInvertCameraY, [this](bool val) {
+								EditorSettings::viewportPanelInvertCameraY = val;
+								rebuildUI();
+							})},
 						}
 					})
 				})
@@ -284,15 +316,13 @@ namespace Axion {
 		});
 
 
-		// -- Build Left Row (Gear + Gizmo) --
-		auto leftRow = Silica::MakeWidget<Silica::SHorizontalBox>({
-			.spacing = EditorTheme::SPACING_SMALL
-		});
+		// -- Build Left Row --
+		auto leftRow = Silica::MakeWidget<Silica::SHorizontalBox>({.spacing = EditorTheme::SPACING_SMALL });
 
 		leftRow->addSlot({ {0,0}, optionsMenu });
 
 		if (m_gizmo) {
-			auto translateBtn = makeSquareTextButton("T", m_gizmo->getMode() == GizmoMode::Translate, [this]() {
+			auto translateBtn = makeSquareTextButton("T", m_gizmo->getMode() == GizmoMode::Translate, [this]() { // TODO: maybe gray out or so when no entity selected
 				m_gizmo->setMode(GizmoMode::Translate); refreshToolbar();
 			});
 			auto rotateBtn = makeSquareTextButton("R", m_gizmo->getMode() == GizmoMode::Rotate, [this]() {
@@ -331,15 +361,39 @@ namespace Axion {
 			.menuContent = Silica::MakeWidget<Silica::SBox>({
 				.padding = { EditorTheme::PADDING_SMALL, EditorTheme::PADDING_SMALL },
 				.explicitSize = Silica::Vec2{ EditorTheme::OPTIONS_MENU_WIDTH, 0.0f },
-				.borderThickness = Silica::GetTheme().Border_Thickness,
+				.hasBorder = true,
 				.backgroundColor = Silica::GetTheme().Background_Popup,
 				.child = Silica::MakeWidget<Silica::SVerticalBox>({
 					.spacing = EditorTheme::SPACING_SMALL,
 					.slots = {
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_translationSpeed3D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_translationSpeed3D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) },
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Rotate (3D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_rotationSpeed3D, .minValue = 0.0f, .maxValue = 0.01f, .onValueChanged = [this](float v) { m_camera->m_rotationSpeed3D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) },
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_keyboardSpeed2D, .minValue = 0.0f, .maxValue = 25.0f, .onValueChanged = [this](float v) { m_camera->m_keyboardSpeed2D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) },
-						{ {0,0}, SilicaHelpers::MakePropertyRow("Drag (2D)", Silica::MakeWidget<Silica::SSliderFloat>({.initialValue = m_camera->m_dragSpeed2D, .minValue = 0.0f, .maxValue = 0.1f, .onValueChanged = [this](float v) { m_camera->m_dragSpeed2D = v; } }), EditorTheme::PROPERTY_ROW_LABEL_WIDTH) }
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (3D)", Silica::MakeWidget<Silica::SSliderFloat>({
+							.initialValue = m_camera->m_translationSpeed3D,
+							.minValue = 0.0f,
+							.maxValue = 25.0f,
+							.snapStep = 1.0f,
+							.onValueChanged = [this](float v) { m_camera->m_translationSpeed3D = v; }
+						})) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Rotate (3D)", Silica::MakeWidget<Silica::SSliderFloat>({
+							.initialValue = m_camera->m_rotationSpeed3D * 1000.0f,
+							.minValue = 0.0f,
+							.maxValue = 10.0f,
+							.snapStep = 1.0f,
+							.onValueChanged = [this](float v) { m_camera->m_rotationSpeed3D = (v / 1000.0f); }
+						})) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Speed (2D)", Silica::MakeWidget<Silica::SSliderFloat>({
+							.initialValue = m_camera->m_keyboardSpeed2D,
+							.minValue = 0.0f,
+							.maxValue = 100.0f,
+							.snapStep = 5.0f,
+							.onValueChanged = [this](float v) { m_camera->m_keyboardSpeed2D = v; }
+						})) },
+						{ {0,0}, SilicaHelpers::MakePropertyRow("Drag (2D)", Silica::MakeWidget<Silica::SSliderFloat>({
+							.initialValue = m_camera->m_dragSpeed2D * 100.0f,
+							.minValue = 0.0f,
+							.maxValue = 10.0f,
+							.snapStep = 1.0f,
+							.onValueChanged = [this](float v) { m_camera->m_dragSpeed2D = (v / 100.0f); }
+						})) },
 					}
 				})
 			})
@@ -435,6 +489,56 @@ namespace Axion {
 		Silica::Vec2 globalMouse = Silica::Renderer::getMousePosition();
 		Silica::Vec2 viewPos = getViewportPosition();
 		return { globalMouse.x - viewPos.x, globalMouse.y - viewPos.y };
+	}
+
+	void ViewportPanel::loadSettings(const YAML::Node& editorSettings) {
+		if (auto vpSettings = editorSettings["Viewport"]) {
+			if (vpSettings["ShowRendererStats"]) EditorSettings::viewportPanelShowRendererStats = vpSettings["ShowRendererStats"].as<bool>();
+			if (vpSettings["InvertCamX"]) EditorSettings::viewportPanelInvertCameraX = vpSettings["InvertCamX"].as<bool>();
+			if (vpSettings["InvertCamY"]) EditorSettings::viewportPanelInvertCameraY = vpSettings["InvertCamY"].as<bool>();
+			if (vpSettings["CamProjectionType"]) {
+				if (vpSettings["CamProjectionType"].as<std::string>() == "Orthographic") { m_camera->setProjectionType(Camera::ProjectionType::Orthographic); }
+				else { m_camera->setProjectionType(Camera::ProjectionType::Perspective); }
+			}
+			if (vpSettings["TranslationSpeedCam3D"]) m_camera->m_translationSpeed3D = vpSettings["TranslationSpeedCam3D"].as<float>();
+			if (vpSettings["RotationSpeedCam3D"]) m_camera->m_rotationSpeed3D = vpSettings["RotationSpeedCam3D"].as<float>();
+			if (vpSettings["KeyboardSpeedCam2D"]) m_camera->m_keyboardSpeed2D = vpSettings["KeyboardSpeedCam2D"].as<float>();
+			if (vpSettings["DragSpeedCam2D"]) m_camera->m_dragSpeed2D = vpSettings["DragSpeedCam2D"].as<float>();
+			if (vpSettings["FOVCam3D"]) m_camera->m_fov = vpSettings["FOVCam3D"].as<float>();
+			if (vpSettings["ZoomCam2D"]) m_camera->m_zoom2D = vpSettings["ZoomCam2D"].as<float>();
+			if (vpSettings["GizmoMode"]) {
+				if (vpSettings["GizmoMode"].as<std::string>() == "Rotate") { m_gizmo->setMode(GizmoMode::Rotate); }
+				else if (vpSettings["GizmoMode"].as<std::string>() == "Scale") { m_gizmo->setMode(GizmoMode::Scale); }
+				else { m_gizmo->setMode(GizmoMode::Translate); }
+			}
+			if (vpSettings["GizmoSpace"]) {
+				if (vpSettings["GizmoSpace"].as<std::string>() == "Local") { m_gizmo->setSpace(GizmoSpace::Local); }
+				else { m_gizmo->setSpace(GizmoSpace::Global); }
+			}
+			if (vpSettings["GizmoScale"]) EditorSettings::viewportPanelGizmoScale = vpSettings["GizmoScale"].as<float>();
+		}
+	}
+
+	void ViewportPanel::saveSettings(YAML::Emitter& out) const {
+		std::string gizmoMode = "Translate";
+		if (m_gizmo->getMode() == GizmoMode::Rotate) gizmoMode = "Rotate";
+		else if (m_gizmo->getMode() == GizmoMode::Scale) gizmoMode = "Scale";
+
+		out << YAML::Key << "Viewport" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "ShowRendererStats" << YAML::Value << EditorSettings::viewportPanelShowRendererStats;
+		out << YAML::Key << "InvertCamX" << YAML::Value << EditorSettings::viewportPanelInvertCameraX;
+		out << YAML::Key << "InvertCamY" << YAML::Value << EditorSettings::viewportPanelInvertCameraY;
+		out << YAML::Key << "CamProjectionType" << YAML::Value << ((m_camera->getProjectionType() == Camera::ProjectionType::Perspective) ? "Perspective" : "Orthographic");
+		out << YAML::Key << "TranslationSpeedCam3D" << YAML::Value << m_camera->m_translationSpeed3D;
+		out << YAML::Key << "RotationSpeedCam3D" << YAML::Value << m_camera->m_rotationSpeed3D;
+		out << YAML::Key << "KeyboardSpeedCam2D" << YAML::Value << m_camera->m_keyboardSpeed2D;
+		out << YAML::Key << "DragSpeedCam2D" << YAML::Value << m_camera->m_dragSpeed2D;
+		out << YAML::Key << "FOVCam3D" << YAML::Value << m_camera->m_fov;
+		out << YAML::Key << "ZoomCam2D" << YAML::Value << m_camera->m_zoom2D;
+		out << YAML::Key << "GizmoMode" << YAML::Value << gizmoMode;
+		out << YAML::Key << "GizmoSpace" << YAML::Value << ((m_gizmo->getSpace() == GizmoSpace::Local) ? "Local" : "Global");
+		out << YAML::Key << "GizmoScale" << YAML::Value << EditorSettings::viewportPanelGizmoScale;
+		out << YAML::EndMap;
 	}
 
 }

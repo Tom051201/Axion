@@ -104,6 +104,72 @@ namespace Axion {
 
 
 
+	// ----- Create Entity Command -----
+	CreateEntityCommand::CreateEntityCommand(Shared<Scene> scene, const std::string& name, Entity parent)
+		: m_scene(scene), m_entityName(name) {
+		if (parent) {
+			m_parentUUID = parent.getComponent<UUIDComponent>().id;
+		}
+	}
+
+	void CreateEntityCommand::execute() {
+		if (!m_scene) return;
+
+		if (m_isFirstExecution) {
+			Entity e = m_scene->createEntity(m_entityName);
+			m_entityUUID = e.getComponent<UUIDComponent>().id;
+
+			if (m_parentUUID.isValid() && m_parentUUID != UUID(0, 0)) {
+				Entity parent = m_scene->getEntityByUUID(m_parentUUID);
+				if (parent) {
+					e.setParent(parent);
+				}
+			}
+
+			YAML::Emitter out;
+			out << YAML::BeginSeq;
+			SceneSerializer serializer(m_scene);
+			serializer.serializeEntity(out, e);
+			out << YAML::EndSeq;
+			m_serializedData = std::string(out.c_str());
+
+			m_isFirstExecution = false;
+		}
+		else {
+			YAML::Node data = YAML::Load(m_serializedData);
+			if (data.IsSequence()) {
+				for (auto entityNode : data) {
+					Entity deserializedEntity = SceneSerializer::deserializeEntityNode(m_scene.get(), entityNode, false);
+					if (m_parentUUID.isValid() && m_parentUUID != UUID(0, 0)) {
+						Entity parent = m_scene->getEntityByUUID(m_parentUUID);
+						if (parent) {
+							deserializedEntity.setParent(parent);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void CreateEntityCommand::undo() {
+		if (!m_scene) return;
+		Entity e = m_scene->getEntityByUUID(m_entityUUID);
+		if (e) {
+			if (e.hasComponent<RelationshipComponent>()) {
+				auto& rel = e.getComponent<RelationshipComponent>();
+				if (rel.parent != entt::null) {
+					Entity parent = { rel.parent, m_scene.get() };
+					auto& parentRel = parent.getComponent<RelationshipComponent>();
+					auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)e);
+					if (it != parentRel.children.end()) parentRel.children.erase(it);
+				}
+			}
+			m_scene->destroyEntity(e);
+		}
+	}
+
+
+
 	// ----- Delete Entity Command -----
 	DeleteEntityCommand::DeleteEntityCommand(Shared<Scene> scene, Entity entity)
 		: m_scene(scene) {
@@ -219,6 +285,61 @@ namespace Axion {
 			}
 		}
 		m_scene->destroyEntity(e);
+	}
+
+
+
+	// ----- Reparent Entity Command -----
+	ReparentEntityCommand::ReparentEntityCommand(Shared<Scene> scene, Entity child, Entity newParent)
+		: m_scene(scene) {
+
+		m_childUUID = child.getComponent<UUIDComponent>().id;
+		m_childName = child.hasComponent<TagComponent>() ? child.getComponent<TagComponent>().tag : "Entity";
+
+		if (child.hasComponent<RelationshipComponent>()) {
+			entt::entity parentHandle = child.getComponent<RelationshipComponent>().parent;
+			if (parentHandle != entt::null) {
+				m_oldParentUUID = Entity{ parentHandle, m_scene.get() }.getComponent<UUIDComponent>().id;
+			}
+		}
+
+		if (newParent) {
+			m_newParentUUID = newParent.getComponent<UUIDComponent>().id;
+		}
+	}
+
+	void ReparentEntityCommand::execute() {
+		performReparent(m_childUUID, m_newParentUUID);
+	}
+
+	void ReparentEntityCommand::undo() {
+		performReparent(m_childUUID, m_oldParentUUID);
+	}
+
+	void ReparentEntityCommand::performReparent(UUID childId, UUID targetParentId) {
+		if (!m_scene) return;
+		Entity child = m_scene->getEntityByUUID(childId);
+		if (!child) return;
+
+		// -- Detach from current parent --
+		if (child.hasComponent<RelationshipComponent>()) {
+			auto& rel = child.getComponent<RelationshipComponent>();
+			if (rel.parent != entt::null) {
+				Entity oldParent = { rel.parent, m_scene.get() };
+				auto& parentRel = oldParent.getComponent<RelationshipComponent>();
+				auto it = std::find(parentRel.children.begin(), parentRel.children.end(), (entt::entity)child);
+				if (it != parentRel.children.end()) parentRel.children.erase(it);
+				rel.parent = entt::null;
+			}
+		}
+
+		// -- Attach to new parent --
+		if (targetParentId.isValid() && targetParentId != UUID(0, 0)) {
+			Entity newParent = m_scene->getEntityByUUID(targetParentId);
+			if (newParent) {
+				child.setParent(newParent);
+			}
+		}
 	}
 
 }

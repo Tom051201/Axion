@@ -4,6 +4,8 @@
 #include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/input/Input.h"
 
+#include "AxionStudio/Source/core/EditorSettings.h"
+
 namespace Axion {
 
 	EditorCamera::EditorCamera(uint32_t width, uint32_t height)
@@ -123,14 +125,13 @@ namespace Axion {
 
 		if (is3D()) {
 			m_fov -= delta;
-			m_fov = Math::clamp(m_fov, 1.0f, 90.0f);
+			m_fov = Math::clamp(m_fov, m_minFOV, m_maxFOV);
 			setPerspective(Math::toRadians(m_fov), 0.1f, 10000.0f);
 		}
 		else {
 			m_zoom2D -= delta * 0.1f;
 			m_zoom2D = Math::clamp(m_zoom2D, m_minZoom2D, m_maxZoom2D);
 			setOrthographic(m_zoom2D, -100.0f, 100.0f);
-
 		}
 
 		updateView();
@@ -147,6 +148,11 @@ namespace Axion {
 
 		float deltaX = e.getX() - centerX;
 		float deltaY = centerY - e.getY();
+
+		// -- Invert X-Axis and Y-Axis --
+		if (EditorSettings::viewportPanelInvertCameraX) deltaX = -deltaX;
+		if (EditorSettings::viewportPanelInvertCameraY) deltaY = -deltaY;
+
 		if (deltaX == 0.0f || deltaY == 0.0f) return EventReply::unhandled();
 
 		if (is3D()) {

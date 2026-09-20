@@ -16,11 +16,11 @@ namespace Silica {
 
 namespace Axion {
 
-	class SceneOverviewPanel {
+	class SceneSettingsPanel {
 	public:
 
-		SceneOverviewPanel() = default;
-		~SceneOverviewPanel() = default;
+		SceneSettingsPanel() = default;
+		~SceneSettingsPanel() = default;
 
 		Silica::WidgetPtr getWidget();
 

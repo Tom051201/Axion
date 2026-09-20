@@ -37,6 +37,12 @@ namespace Axion {
 		// -- Asset Library Panel --
 		static std::vector<std::string> assetLibraryPaths;
 
+		// -- Viewport Panel --
+		static bool viewportPanelShowRendererStats;
+		static bool viewportPanelInvertCameraY;
+		static bool viewportPanelInvertCameraX;
+		static float viewportPanelGizmoScale;
+
 	};
 
 }

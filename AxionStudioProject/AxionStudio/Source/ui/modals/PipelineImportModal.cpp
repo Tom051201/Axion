@@ -13,13 +13,18 @@
 #include <Silica/include/SScrollBox.h>
 #include <Silica/include/SInputFieldInt.h>
 #include <Silica/include/SSeparator.h>
+#include <Silica/include/SComboBox.h>
+#include <Silica/include/SSpacer.h>
 
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/AssetVersions.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+
 #include "AxionAssetPipeline/Source/parser/PipelineParser.h"
+
+#include "AxionStudio/Source/ui/SilicaHelpers.h"
 
 namespace Axion {
 
@@ -33,7 +38,10 @@ namespace Axion {
 	void PipelineImportModal::resetInputs() {
 		m_name.clear();
 		m_shaderPath.clear();
-		m_outputPath = (ProjectManager::getProject()->getAssetsPath() / "pipelines").string();
+
+		m_outputPath.clear();
+		std::filesystem::path pipDir = ProjectManager::getProject()->getAssetsPath() / "Pipelines";
+		if (std::filesystem::exists(pipDir)) m_outputPath = pipDir.generic_string();
 
 		m_colorFormatIndex = 1;
 		m_depthFormatIndex = 2;
@@ -61,18 +69,19 @@ namespace Axion {
 			})
 		});
 
-		contentBox->addSlot({ {0,0}, makePropertyRow("Name", nameInput) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Color Format", makeCombo(m_colorFormatIndex, m_colorFormatsNames)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Stencil", makeCombo(m_depthFormatIndex, m_depthFormatsNames)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Color Format", makeCombo(m_colorFormatIndex, m_colorFormatsNames)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Depth Stencil", makeCombo(m_depthFormatIndex, m_depthFormatsNames)) });
 
 		auto depthTestCheck = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = m_depthTest, .onCheckChanged = [this](bool val) { m_depthTest = val; } });
 		auto depthWriteCheck = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = m_depthWrite, .onCheckChanged = [this](bool val) { m_depthWrite = val; } });
 		auto stencilCheck = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = m_stencilEnabled, .onCheckChanged = [this](bool val) { m_stencilEnabled = val; } });
 
-		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Test", depthTestCheck) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Write", depthWriteCheck) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Depth Compare", makeCombo(m_depthCompareIndex, m_depthCompareNames)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Stencil", stencilCheck) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Depth Test", depthTestCheck) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Depth Write", depthWriteCheck) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Depth Compare", makeCombo(m_depthCompareIndex, m_depthCompareNames)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Stencil", stencilCheck) });
 
 		auto countInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
@@ -80,10 +89,10 @@ namespace Axion {
 				.onValueChanged = [this](int val) { m_sampleCount = std::max(1, val); }
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Sample Count", countInput) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Sample Count", countInput) });
 
-		contentBox->addSlot({ {0,0}, makePropertyRow("Cull Mode", makeCombo(m_cullModeIndex, m_cullModesNames)) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Topology", makeCombo(m_topologyIndex, m_topologiesNames)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Cull Mode", makeCombo(m_cullModeIndex, m_cullModesNames)) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Topology", makeCombo(m_topologyIndex, m_topologiesNames)) });
 
 		auto rtInput = Silica::MakeWidget<Silica::SBox>({
 			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
@@ -91,17 +100,18 @@ namespace Axion {
 				.onValueChanged = [this](int val) { m_renderTargetsCount = std::max(0, val); }
 			})
 		});
-		contentBox->addSlot({ {0,0}, makePropertyRow("Render Targets", rtInput) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Render Targets", rtInput) });
 
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
 
 		// -- Buffer Layout --
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::STextBlock>({
 			.text = "Buffer Layout:",
-			.color = Silica::GetTheme().Text_Dim
+			.color = Silica::GetTheme().Text_Main
 		}) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
 
-		auto layoutBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = 6.0f });
+		auto layoutBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_MEDIUM });
 
 		for (size_t i = 0; i < m_bufferElements.size(); i++) {
 			auto& element = m_bufferElements[i];
@@ -129,7 +139,7 @@ namespace Axion {
 			auto elInst = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = element.instanced, .onCheckChanged = [&element](bool v) { element.instanced = v; } });
 
 			auto delBtn = Silica::MakeWidget<Silica::SButton>({
-				.padding = {6,2},
+				.padding = { EditorTheme::PADDING_MEDIUM, EditorTheme::PADDING_SMALL },
 				.color = Silica::GetTheme().Accent_Danger,
 				.onClick = [this, i]() {
 					m_bufferElements.erase(m_bufferElements.begin() + i);
@@ -173,12 +183,12 @@ namespace Axion {
 				.child = layoutBox
 			})
 		}) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.thickness = 2.0f }) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
 
 
 		// -- File Paths --
-		contentBox->addSlot({ {0,0}, makePropertyRow("Shader File", makeFileRow(m_shaderPath, "Axion Shader Asset", "*.axshader", "shaders")) });
-		contentBox->addSlot({ {0,0}, makePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "pipelines")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Shader File", makeFileRow(m_shaderPath, "Axion Shader Asset", "*.axshader", "shaders")) });
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Output Location", makeDirectoryRow(m_outputPath, "pipelines")) });
 	}
 
 	void PipelineImportModal::validate() {

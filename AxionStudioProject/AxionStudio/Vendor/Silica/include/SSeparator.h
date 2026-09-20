@@ -17,6 +17,7 @@ namespace Silica {
 		struct Args {
 			Orientation orientation = Orientation::Horizontal;
 			float thickness = 4.0f;
+			float space = 0.0f;
 			std::optional<Color> color;
 		};
 
@@ -30,6 +31,7 @@ namespace Silica {
 
 		Orientation m_orientation = Orientation::Horizontal;
 		float m_thickness = 2.0f;
+		float m_space = 0.0f;
 		Color m_color;
 
 	};

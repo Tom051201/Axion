@@ -18,39 +18,31 @@ namespace Axion {
 		try {
 			YAML::Node settings = YAML::LoadFile(path.string());
 
-			if (settings["StartupProject"]) {
-				EditorSettings::startupProjectPath = settings["StartupProject"].as<std::string>();
-			}
+			// -- Load Editor Settings --
+			if (auto editor = settings["Editor"]) {
+				if (editor["StartupProject"]) {
+					EditorSettings::startupProjectPath = editor["StartupProject"].as<std::string>();
+				}
 
-			if (settings["MaxAssetsPerFrame"]) {
-				AssetManager::setMaxAssetsPerFrame(settings["MaxAssetsPerFrame"].as<uint32_t>());
-			}
+				if (editor["MaxAssetsPerFrame"]) {
+					AssetManager::setMaxAssetsPerFrame(editor["MaxAssetsPerFrame"].as<uint32_t>());
+				}
 
-			if (settings["EnableDiscordRPC"]) {
-				EditorSettings::enableDiscordRPC = settings["EnableDiscordRPC"].as<bool>();
-			}
+				if (editor["EnableDiscordRPC"]) {
+					EditorSettings::enableDiscordRPC = editor["EnableDiscordRPC"].as<bool>();
+				}
 
-			if (settings["MaterialEditorInvertCamera"]) {
-				EditorSettings::materialEditorInvertCamera = settings["MaterialEditorInvertCamera"].as<bool>();
-			}
-
-			if (settings["OpenTextEditors"]) {
-				for (auto pathNode : settings["OpenTextEditors"]) {
-					std::string pathStr = pathNode.as<std::string>();
-					if (std::filesystem::exists(pathStr)) {
-						EditorSettings::openTextEditors.push_back(pathStr);
+				if (editor["OpenTextEditors"]) {
+					for (auto pathNode : editor["OpenTextEditors"]) {
+						std::string pathStr = pathNode.as<std::string>();
+						if (std::filesystem::exists(pathStr)) {
+							EditorSettings::openTextEditors.push_back(pathStr);
+						}
 					}
 				}
 			}
 
-			if (settings["AssetLibraryPaths"]) {
-				std::vector<std::string> savedPaths;
-				for (auto pathNode : settings["AssetLibraryPaths"]) {
-					savedPaths.push_back(pathNode.as<std::string>());
-				}
-				EditorSettings::assetLibraryPaths = savedPaths;
-			}
-
+			// -- Load Panel Settings --
 			if (deserializeSubPanels) {
 				deserializeSubPanels(settings);
 			}
@@ -68,28 +60,25 @@ namespace Axion {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 
+		// -- Editor Settings --
+		out << YAML::Key << "Editor" << YAML::BeginMap;
+
 		if (!EditorSettings::startupProjectPath.empty() && EditorSettings::startupProjectPath != "None") {
 			out << YAML::Key << "StartupProject" << YAML::Value << EditorSettings::startupProjectPath.generic_string();
 		}
-
-		out << YAML::Key << "MaxAssetsPerFrame" << YAML::Value << AssetManager::getMaxAssetsPerFrame();
 		out << YAML::Key << "EnableDiscordRPC" << YAML::Value << EditorSettings::enableDiscordRPC;
-		out << YAML::Key << "MaterialEditorInvertCamera" << YAML::Value << EditorSettings::materialEditorInvertCamera;
-
+		out << YAML::Key << "MaxAssetsPerFrame" << YAML::Value << AssetManager::getMaxAssetsPerFrame();
 		// -- Open Text Editors --
 		out << YAML::Key << "OpenTextEditors" << YAML::Value << YAML::BeginSeq;
 		for (const auto& pathStr : EditorSettings::openTextEditors) {
-			out << pathStr;
+			std::filesystem::path path = pathStr;
+			out << path.generic_string();
 		}
 		out << YAML::EndSeq;
 
-		// -- Asset Library Paths --
-		out << YAML::Key << "AssetLibraryPaths" << YAML::Value << YAML::BeginSeq;
-		for (const auto& pathStr : EditorSettings::assetLibraryPaths) {
-			out << pathStr;
-		}
-		out << YAML::EndSeq;
+		out << YAML::EndMap;
 
+		// -- Panel Settings --
 		if (serializeSubPanels) {
 			serializeSubPanels(out);
 		}
@@ -126,5 +115,11 @@ namespace Axion {
 
 	// -- Asset Library --
 	std::vector<std::string> EditorSettings::assetLibraryPaths = {};
+
+	// -- Viewport Panel --
+	bool EditorSettings::viewportPanelShowRendererStats = true;
+	bool EditorSettings::viewportPanelInvertCameraY = false;
+	bool EditorSettings::viewportPanelInvertCameraX = false;
+	float EditorSettings::viewportPanelGizmoScale = 1.0f;
 
 }
