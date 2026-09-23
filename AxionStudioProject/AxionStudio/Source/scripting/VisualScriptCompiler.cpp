@@ -149,6 +149,9 @@ namespace Axion {
 							if (sourceNode.type == NodeType::RigidBody_GetAngularVelocity) return target + ".RigidBody.AngularVelocity";
 							if (sourceNode.type == NodeType::RigidBody_GetMass) return target + ".RigidBody.Mass";
 
+							// -- CHARACTER CONTROLLER GETTERS --
+							if (sourceNode.type == NodeType::CharacterController_IsGrounded) return target + ".CharacterController.IsGrounded";
+
 							// -- AUDIO / ANIMATOR GETTERS --
 							if (sourceNode.type == NodeType::Audio_GetVolume) return target + ".Audio.Volume";
 							if (sourceNode.type == NodeType::Animator_IsPlaying) return target + ".Animator.IsPlaying";
@@ -327,6 +330,14 @@ namespace Axion {
 				case NodeType::RigidBody_SetMass: {
 					std::string mass = safeResolve(2);
 					cs << tabs << target << ".RigidBody.Mass = " << mass << ";\n";
+					break;
+				}
+
+				// -- CHARACTER CONTROLLER --
+				case NodeType::CharacterController_Move: {
+					std::string disp = safeResolve(2);
+					std::string ts = safeResolve(3);
+					cs << tabs << target << ".CharacterController.Move(" << disp << ", " << ts << ");\n";
 					break;
 				}
 

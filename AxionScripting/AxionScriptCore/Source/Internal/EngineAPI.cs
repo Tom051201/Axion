@@ -33,6 +33,8 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, float> RigidBody_GetMass;
 		public delegate* unmanaged<ulong, ulong, float, void> RigidBody_SetMass;
 		public delegate* unmanaged<Vector3*, Vector3*, float, ulong*, ulong*, Vector3*, Vector3*, float*, byte> Physics_Raycast;
+		public delegate* unmanaged<ulong, ulong, Vector3*, float, void> CCT_Move;
+		public delegate* unmanaged<ulong, ulong, byte> CCT_IsGrounded;
 
 		// -- AUDIO --
 		public delegate* unmanaged<ulong, ulong, void> Audio_Play;

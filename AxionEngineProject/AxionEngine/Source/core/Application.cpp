@@ -11,6 +11,7 @@
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/audio/AudioManager.h"
 #include "AxionEngine/Source/physics/PhysicsSystem.h"
+#include "AxionEngine/Source/physics/PhysicsLayerManager.h"
 #include "AxionEngine/Source/scripting/ScriptEngine.h"
 
 namespace Axion {
@@ -41,6 +42,7 @@ namespace Axion {
 
 		AudioManager::initialize();
 		PhysicsSystem::initialize();
+		PhysicsLayerManager::initialize();
 
 		AssetManager::initialize(m_specification.assetLoader);
 		SceneManager::initialize(AX_BIND_EVENT_FN(Application::onEvent));
@@ -53,11 +55,13 @@ namespace Axion {
 	Application::~Application() {
 		m_layerStack.clear();
 
+		PhysicsSystem::onSceneStop(SceneManager::getScene().get());
 		SceneManager::shutdown();
 
 		AssetManager::shutdown();
 		ProjectManager::shutdown();
 		AudioManager::shutdown();
+		PhysicsLayerManager::shutdown();
 		PhysicsSystem::shutdown();
 
 		Renderer3D::shutdown();

@@ -1,22 +1,59 @@
-Version: 2
+Version: 3
 UUID: 0c2ce19ea62a4dee103fd59e64b28d90
 Type: Scene
 Scene: Test Scene
 Skybox: b4e88aba8952de74c020877e8840e45b
 AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
 Entities:
-  - Entity: 34bf7539c424abecd5ba7a8dd2b9da5e
+  - Entity: 77ef249aef85f49687cb5f61548cfdc3
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [0, 0, -10.2763519]
+      Rotation: [0.156731576, -0.503221989, -0.029546503, 0.849311471]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+  - Entity: 5293e7395dedb7092c6424e73dfefd7f
+    TagComponent:
+      Tag: Player
+    TransformComponent:
+      Translation: [0, 2.34822464, -3.70974207]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      ProjectionType: Perspective
+      PerspectiveFOV: 0.785398185
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 100
+      OrthographicSize: 10
+      OrthographicNear: -1
+      OrthographicFar: 1
+    CharacterControllerComponent:
+      Radius: 0.5
+      Height: 1
+      StepOffset: 0.300000012
+      SlopeLimitDegrees: 45
+      PushPower: 50
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+    ScriptComponent:
+      ClassName: CharacterController
+  - Entity: b946d76c95251e8657372979eefb28ce
     TagComponent:
       Tag: Floor
     TransformComponent:
-      Translation: [0, -5.29415035, 0]
+      Translation: [0, -0.5, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [30, 1, 30]
+      Scale: [10, 1, 10]
     MeshComponent:
       UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
     MaterialComponent:
       Materials:
-        - 62978f2cec44e79c194d63fa2751720a
+        - a64bf9a3953dc640c83d0b464aee42d5
     RigidBodyComponent:
       BodyType: Static
       Mass: 1
@@ -31,26 +68,23 @@ Entities:
       HalfExtents: [0.5, 0.5, 0.5]
       Offset: [0, 0, 0]
       IsTrigger: false
+      Layer: 1
+      CollisionMask: 4294967295
       Material: 0
-  - Entity: 5293e7395dedb7092c6424e73dfefd7f
+  - Entity: 3f60784bb8dc45994e9adf4c46ca048e
     TagComponent:
-      Tag: Player
+      Tag: Wall
     TransformComponent:
-      Translation: [0, 0, -5.74697304]
+      Translation: [0, 1, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Primary: true
-      FixedAspectRatio: false
-      ProjectionType: Perspective
-      PerspectiveFOV: 0.785398185
-      PerspectiveNear: 0.100000001
-      PerspectiveFar: 100
-      OrthographicSize: 10
-      OrthographicNear: -1
-      OrthographicFar: 1
+      Scale: [0.5, 2, 0.5]
+    MeshComponent:
+      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
+    MaterialComponent:
+      Materials:
+        - 468a1e72b23718f4152fb7ab16cd4a84
     RigidBodyComponent:
-      BodyType: Dynamic
+      BodyType: Static
       Mass: 1
       IsKinematic: false
       LinearDamping: 0
@@ -63,30 +97,47 @@ Entities:
       HalfExtents: [0.5, 0.5, 0.5]
       Offset: [0, 0, 0]
       IsTrigger: false
+      Layer: 1
+      CollisionMask: 4294967295
       Material: 0
-    ScriptComponent:
-      ClassName: ScriptPack_Player
-  - Entity: 77ef249aef85f49687cb5f61548cfdc3
+  - Entity: 0d14f45671beefee83d5c8dc562e4ed7
     TagComponent:
-      Tag: Light
+      Tag: Door
     TransformComponent:
-      Translation: [0, 0, -10.2763519]
-      Rotation: [0.156731576, -0.503221989, -0.029546503, 0.849311471]
-      Scale: [1, 1, 1]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-  - Entity: 5fe7cc740fcb360795d9a2c59c1702c6
-    TagComponent:
-      Tag: Cube
-    TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [1.25, 1, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
+      Scale: [2, 1, 0.200000003]
     MeshComponent:
       UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
     MaterialComponent:
       Materials:
         - 62978f2cec44e79c194d63fa2751720a
-    NetworkIdentityComponent:
-      OwnerClientID: 0
-      IsLocalPlayer: false
+    RigidBodyComponent:
+      BodyType: Dynamic
+      Mass: 50
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+    PhysicsJointComponent:
+      Type: Hinge
+      ConnectedEntity: 3f60784bb8dc45994e9adf4c46ca048e
+      LocalAnchor1: [-1, 0, 0]
+      LocalAnchor2: [0, 0, 0]
+      MinDistance: 0
+      MaxDistance: 1
+      SpringStiffness: 0
+      SpringDamping: 0
+      EnableCollision: false
+      IsBreakable: false
+      BreakForce: 1000

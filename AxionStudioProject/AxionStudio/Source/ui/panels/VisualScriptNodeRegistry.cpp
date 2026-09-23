@@ -16,7 +16,8 @@ namespace Axion {
 			NodeType::Network_IsLocalPlayer, NodeType::Network_SendEvent,
 			NodeType::Logic_Branch, NodeType::Logic_Sequence, NodeType::Logic_And, NodeType::Logic_Or,
 			NodeType::Math_Add, NodeType::Math_Subtract, NodeType::Math_Multiply, NodeType::Math_Divide, NodeType::Math_Equal, NodeType::Math_Greater, NodeType::Math_Less, NodeType::Math_MakeVector3, NodeType::Math_BreakVector3,
-			NodeType::Variable_Get, NodeType::Variable_Set
+			NodeType::Variable_Get, NodeType::Variable_Set,
+			NodeType::CharacterController_Move, NodeType::CharacterController_IsGrounded,
 		};
 		return s_AllNodes;
 	}
@@ -65,6 +66,10 @@ namespace Axion {
 			case NodeType::RigidBody_SetAngularVelocity: { static VSNodeDef d = { "Set Angular Velocity", "Rigid Body", { {"Execute", PinType::Flow}, {"Target", PinType::Entity}, {"Velocity", PinType::Vector3} }, { {"Next", PinType::Flow} } }; return d; }
 			case NodeType::RigidBody_GetMass: { static VSNodeDef d = { "Get Mass", "Rigid Body", { {"Target", PinType::Entity} }, { {"Mass", PinType::Float} } }; return d; }
 			case NodeType::RigidBody_SetMass: { static VSNodeDef d = { "Set Mass", "Rigid Body", { {"Execute", PinType::Flow}, {"Target", PinType::Entity}, {"Mass", PinType::Float} }, { {"Next", PinType::Flow} } }; return d; }
+
+		// -- CHARACTER CONTROLLER --
+			case NodeType::CharacterController_Move: { static VSNodeDef d = { "Move Character", "Character Controller", { {"Execute", PinType::Flow}, {"Target", PinType::Entity}, {"Displacement", PinType::Vector3}, {"Timestep", PinType::Float} }, { {"Next", PinType::Flow} } }; return d; }
+			case NodeType::CharacterController_IsGrounded: { static VSNodeDef d = { "Is Grounded", "Character Controller", { {"Target", PinType::Entity} }, { {"Result", PinType::Bool} } }; return d; }
 
 		// -- INPUT --
 			case NodeType::Input_IsKeyPressed: { static VSNodeDef d = { "Is Key Pressed", "Input", { {"Key", PinType::Key, "Space"} }, { {"Result", PinType::Bool} } }; return d; }
@@ -123,6 +128,7 @@ namespace Axion {
 		if (type >= NodeType::Logic_Branch && type <= NodeType::Logic_Or) return Silica::Color(96, 125, 139);
 		if (type >= NodeType::Math_Add && type <= NodeType::Math_BreakVector3) return Silica::Color(85, 139, 47);
 		if (type == NodeType::Variable_Get || type == NodeType::Variable_Set) return Silica::Color(139, 195, 74);
+		if (type == NodeType::CharacterController_Move || type == NodeType::CharacterController_IsGrounded) return Silica::Color(0, 188, 212);
 		return Silica::Color(80, 80, 80);
 	}
 

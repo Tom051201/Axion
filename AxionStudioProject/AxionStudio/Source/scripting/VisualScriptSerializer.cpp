@@ -288,6 +288,10 @@ namespace Axion {
 		else if (str == "RigidBody_GetMass") return NodeType::RigidBody_GetMass;
 		else if (str == "RigidBody_SetMass") return NodeType::RigidBody_SetMass;
 
+		// -- CHARACTER CONTROLLER --
+		else if (str == "CharacterController_Move") return NodeType::CharacterController_Move;
+		else if (str == "CharacterController_IsGrounded") return NodeType::CharacterController_IsGrounded;
+
 		// -- INPUT --
 		else if (str == "Input_IsKeyPressed") return NodeType::Input_IsKeyPressed;
 		else if (str == "Input_IsMouseButtonPressed") return NodeType::Input_IsMouseButtonPressed;
@@ -381,6 +385,10 @@ namespace Axion {
 			case NodeType::RigidBody_SetAngularVelocity: return "RigidBody_SetAngularVelocity";
 			case NodeType::RigidBody_GetMass: return "RigidBody_GetMass";
 			case NodeType::RigidBody_SetMass: return "RigidBody_SetMass";
+
+			// -- CHARACTER CONTROLLER --
+			case NodeType::CharacterController_Move: return "CharacterController_Move";
+			case NodeType::CharacterController_IsGrounded: return "CharacterController_IsGrounded";
 
 			// -- INPUT --
 			case NodeType::Input_IsKeyPressed: return "Input_IsKeyPressed";

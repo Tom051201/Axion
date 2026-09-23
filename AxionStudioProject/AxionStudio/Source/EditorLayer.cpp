@@ -805,6 +805,18 @@ namespace Axion {
 				}
 			}
 
+			// -- Character Controller --
+			if (m_selectedEntity.hasComponent<CharacterControllerComponent>()) {
+				auto& cct = m_selectedEntity.getComponent<CharacterControllerComponent>();
+
+				Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
+				Mat4 cleanWorldTransform = Mat4::TRS(worldTransform.getTranslation(), worldTransform.getRotation(), Vec3::one());
+				float halfHeight = cct.height * 0.5f;
+				Vec4 color = Vec4(0.0f, 1.0f, 1.0f, 1.0f);
+
+				WireframeRenderer::drawCapsule(cleanWorldTransform, cct.radius, halfHeight, color);
+			}
+
 		}
 
 

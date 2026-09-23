@@ -256,8 +256,10 @@ namespace Axion {
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
 		bool isTrigger = false;
 
-		AssetHandle<PhysicsMaterial> material;
+		uint32_t layer = 0x0001;
+		uint32_t collisionMask = 0xFFFFFFFF;
 
+		AssetHandle<PhysicsMaterial> material;
 		void* runtimeShape = nullptr;
 
 		BoxColliderComponent() = default;
@@ -271,8 +273,10 @@ namespace Axion {
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
 		bool isTrigger = false;
 
-		AssetHandle<PhysicsMaterial> material;
+		uint32_t layer = 0x0001;
+		uint32_t collisionMask = 0xFFFFFFFF;
 
+		AssetHandle<PhysicsMaterial> material;
 		void* runtimeShape = nullptr;
 
 		SphereColliderComponent() = default;
@@ -287,8 +291,10 @@ namespace Axion {
 		Vec3 offset = { 0.0f, 0.0f, 0.0f };
 		bool isTrigger = false;
 
-		AssetHandle<PhysicsMaterial> material;
+		uint32_t layer = 0x0001;
+		uint32_t collisionMask = 0xFFFFFFFF;
 
+		AssetHandle<PhysicsMaterial> material;
 		void* runtimeShape = nullptr;
 
 		CapsuleColliderComponent() = default;
@@ -299,9 +305,12 @@ namespace Axion {
 
 	struct TriangleMeshColliderComponent {
 		AssetHandle<Mesh> collisionMesh;
-		AssetHandle<PhysicsMaterial> material;
-
 		bool isTrigger = false;
+
+		uint32_t layer = 0x0001;
+		uint32_t collisionMask = 0xFFFFFFFF;
+
+		AssetHandle<PhysicsMaterial> material;
 		void* runtimeShape = nullptr;
 
 		TriangleMeshColliderComponent() = default;
@@ -311,13 +320,66 @@ namespace Axion {
 
 	struct ConvexColliderComponent {
 		AssetHandle<Mesh> collisionMesh;
-		AssetHandle<PhysicsMaterial> material;
-
 		uint32_t vertexLimit = 255;
 		bool isTrigger = false;
+
+		uint32_t layer = 0x0001;
+		uint32_t collisionMask = 0xFFFFFFFF;
+
+		AssetHandle<PhysicsMaterial> material;
 		void* runtimeShape = nullptr;
 
 		ConvexColliderComponent() = default;
+	};
+
+
+
+	struct CharacterControllerComponent {
+		float radius = 0.5f;
+		float height = 1.0f;
+		float stepOffset = 0.3f;
+		float slopeLimitDegrees = 45.0f;
+		float pushPower = 50.0f;
+		bool isGrounded = false;
+
+		uint32_t layer = 0x0001;
+		uint32_t collisionMask = 0xFFFFFFFF;
+
+		AssetHandle<PhysicsMaterial> material;
+		void* runtimeController = nullptr;
+
+		CharacterControllerComponent() = default;
+		CharacterControllerComponent(const CharacterControllerComponent&) = default;
+	};
+
+
+
+	enum class JointType {
+		Fixed,
+		Distance,
+		Hinge
+	};
+
+	struct PhysicsJointComponent {
+		JointType type = JointType::Fixed;
+		UUID connectedEntity;
+
+		Vec3 localAnchor1 = Vec3(0.0f, 0.0f, 0.0f);
+		Vec3 localAnchor2 = Vec3(0.0f, 0.0f, 0.0f);
+
+		float minDistance = 0.0f;
+		float maxDistance = 1.0f;
+		float springStiffness = 0.0f;
+		float springDamping = 0.0f;
+
+		bool enableCollision = false;
+		bool isBreakable = false;
+		float breakForce = 1000.0f;
+
+		void* runtimeJoint = nullptr;
+
+		PhysicsJointComponent() = default;
+		PhysicsJointComponent(const PhysicsJointComponent&) = default;
 	};
 
 

@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/project/Project.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/scripting/ScriptEngine.h"
+#include "AxionEngine/Source/physics/PhysicsLayerManager.h"
 
 namespace Axion {
 
@@ -113,6 +114,7 @@ namespace Axion {
 			if (s_managerData->newProjectRequest) {
 				Shared<Project> newProject = Project::createNew(s_managerData->newProjectSpecification);
 				if (newProject) {
+					PhysicsLayerManager::initialize();
 					AX_CORE_LOG_INFO("New Project created");
 
 					setProject(newProject);
@@ -139,6 +141,7 @@ namespace Axion {
 			if (s_managerData->unloadProjectRequest) {
 				setProject(nullptr);
 				s_managerData->projectPath.clear();
+				PhysicsLayerManager::initialize();
 				AX_CORE_LOG_INFO("Unloaded Project");
 
 				s_managerData->unloadProjectRequest = false;

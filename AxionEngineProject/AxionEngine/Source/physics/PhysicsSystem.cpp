@@ -3,6 +3,11 @@
 
 #include <physx/include/PxPhysicsAPI.h>
 #include <physx/include/cooking/PxCooking.h>
+#include <physx/include/characterkinematic/PxControllerManager.h>
+#include <physx/include/characterkinematic/PxController.h>
+#include <physx/include/extensions/PxFixedJoint.h>
+#include <physx/include/extensions/PxDistanceJoint.h>
+#include <physx/include/extensions/PxRevoluteJoint.h>
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scene/Scene.h"
@@ -22,21 +27,98 @@ namespace Axion {
 	static PxDefaultCpuDispatcher* s_dispatcher = nullptr;
 	static PxScene* s_physXScene = nullptr;
 	static PxMaterial* s_defaultMaterial = nullptr;
+	static PxControllerManager* s_cctManager = nullptr;
 
 	static PxFilterFlags AxionSimulatorFilterShader(
 		PxFilterObjectAttributes attributes0, PxFilterData filterData0,
 		PxFilterObjectAttributes attributes1, PxFilterData filterData1,
 		PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 	{
-		pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+		// -- Let triggers bypass the collision solver --
+		if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1)) {
+			pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+			return PxFilterFlag::eDEFAULT;
+		}
 
-		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
-		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
-		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_CCD;
-		pairFlags |= PxPairFlag::eNOTIFY_CONTACT_POINTS;
+		// -- Bitwise Layer & Mask Check --
+		// filterData.word0 = The object's Layer
+		// filterData.word1 = The object's Collision Mask
+		bool collide = (filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1);
 
-		return PxFilterFlag::eDEFAULT;
+		if (collide) {
+			pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_CCD;
+			pairFlags |= PxPairFlag::eNOTIFY_CONTACT_POINTS;
+			return PxFilterFlag::eDEFAULT;
+		}
+
+		// -- Ignore collision entirely if masks don't match --
+		return PxFilterFlag::eKILL;
 	}
+
+	class CharacterHitCallback : public physx::PxUserControllerHitReport {
+	public:
+
+		void onShapeHit(const physx::PxControllerShapeHit& hit) override {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene) return;
+
+			entt::entity playerHandle = (entt::entity)(uintptr_t)hit.controller->getUserData();
+			Entity playerEntity = { playerHandle, scene };
+
+			if (!hit.shape || !hit.actor || !hit.actor->userData) return;
+			entt::entity otherHandle = (entt::entity)(uintptr_t)hit.actor->userData;
+			Entity otherEntity = { otherHandle, scene };
+
+			if (!playerEntity.isValid() || !otherEntity.isValid()) return;
+
+			if (hit.actor->is<physx::PxRigidDynamic>()) {
+				physx::PxRigidDynamic* dynamicActor = static_cast<physx::PxRigidDynamic*>(hit.actor);
+
+				if (!(dynamicActor->getRigidBodyFlags() & physx::PxRigidBodyFlag::eKINEMATIC)) {
+					float pushPower = 50.0f;
+					if (playerEntity.hasComponent<CharacterControllerComponent>()) {
+						pushPower = playerEntity.getComponent<CharacterControllerComponent>().pushPower;
+					}
+
+					physx::PxVec3 pushDirection = -hit.worldNormal;
+					pushDirection.y = 0.0f;
+					pushDirection.normalize();
+
+					physx::PxRigidBodyExt::addForceAtPos(
+						*dynamicActor,
+						pushDirection * pushPower,
+						physx::PxVec3(static_cast<float>(hit.worldPos.x), static_cast<float>(hit.worldPos.y), static_cast<float>(hit.worldPos.z)),
+						physx::PxForceMode::eIMPULSE
+					);
+				}
+			}
+
+			if (playerEntity.hasComponent<ScriptComponent>()) {
+				void* gcHandle = playerEntity.getComponent<ScriptComponent>().gcHandle;
+				if (gcHandle) {
+					Collision collision;
+					collision.other = otherEntity;
+					collision.contactPoint = { (float)hit.worldPos.x, (float)hit.worldPos.y, (float)hit.worldPos.z };
+					collision.contactNormal = { (float)hit.worldNormal.x, (float)hit.worldNormal.y, (float)hit.worldNormal.z };
+					collision.impulse = { 0.0f, (float)hit.length, 0.0f };
+
+					ScriptEngine::onCollisionEnter(gcHandle, collision);
+				}
+			}
+		}
+
+		void onControllerHit(const physx::PxControllersHit& hit) override {
+			// Called when two CCTs bump into each other. You can implement this similarly if you have NPC CCTs.
+		}
+
+		void onObstacleHit(const physx::PxControllerObstacleHit& hit) override {}
+
+	};
+
+	static CharacterHitCallback s_cctHitCallback;
 
 	class PhysicsContactListener : public PxSimulationEventCallback {
 	public:
@@ -185,6 +267,7 @@ namespace Axion {
 		sceneDesc.flags |= PxSceneFlag::eENABLE_CCD;
 
 		s_physXScene = s_physics->createScene(sceneDesc);
+		s_cctManager = PxCreateControllerManager(*s_physXScene);
 
 		auto rbView = scene->getRegistry().view<RigidBodyComponent, TransformComponent>();
 		for (auto [entityHandle, rb, transform] : rbView.each()) {
@@ -196,6 +279,16 @@ namespace Axion {
 	}
 
 	void PhysicsSystem::onSceneStop(Scene* scene) {
+		// -- Release Physics Joints --
+		auto jointView = scene->getRegistry().view<PhysicsJointComponent>();
+		for (auto entity : jointView) {
+			auto& jc = jointView.get<PhysicsJointComponent>(entity);
+			if (jc.runtimeJoint) {
+				static_cast<physx::PxJoint*>(jc.runtimeJoint)->release();
+				jc.runtimeJoint = nullptr;
+			}
+		}
+
 		// -- Release physx actor --
 		auto view = scene->getRegistry().view<RigidBodyComponent>();
 		for (auto entity : view) {
@@ -204,6 +297,12 @@ namespace Axion {
 				static_cast<PxRigidActor*>(rb.runtimeActor)->release();
 				rb.runtimeActor = nullptr;
 			}
+		}
+
+		// -- Release controller manager --
+		if (s_cctManager) {
+			s_cctManager->release();
+			s_cctManager = nullptr;
 		}
 
 		// -- Release physx scene --
@@ -221,6 +320,15 @@ namespace Axion {
 		float strength;
 		float radius;
 	};
+
+	static void setupShapeFilterData(PxShape* shape, uint32_t layer, uint32_t mask) {
+		PxFilterData filterData;
+		filterData.word0 = layer; // Object's ID
+		filterData.word1 = mask;  // What it can hit
+
+		shape->setSimulationFilterData(filterData);
+		shape->setQueryFilterData(filterData);
+	}
 
 	void PhysicsSystem::step(Scene* scene, Timestep ts) {
 		if (!s_physXScene) return;
@@ -317,6 +425,115 @@ namespace Axion {
 		}
 
 
+		// ----- Joints Pre-Simulation Pass -----
+		auto jointView = registry.view<PhysicsJointComponent, RigidBodyComponent>();
+		for (auto [entityHandle, jc, rb] : jointView.each()) {
+			if (jc.runtimeJoint == nullptr && rb.runtimeActor != nullptr) {
+
+				physx::PxRigidActor* actor0 = static_cast<physx::PxRigidActor*>(rb.runtimeActor);
+				physx::PxRigidActor* actor1 = nullptr;
+
+				if (jc.connectedEntity.isValid()) {
+					Entity connectedEnt = scene->getEntityByUUID(jc.connectedEntity);
+					if (connectedEnt.isValid() && connectedEnt.hasComponent<RigidBodyComponent>()) {
+						auto& connectedRb = connectedEnt.getComponent<RigidBodyComponent>();
+						if (connectedRb.runtimeActor) {
+							actor1 = static_cast<physx::PxRigidActor*>(connectedRb.runtimeActor);
+						}
+						else {
+							continue;
+						}
+					}
+				}
+
+				physx::PxTransform localFrame0(physx::PxVec3(jc.localAnchor1.x, jc.localAnchor1.y, jc.localAnchor1.z));
+				physx::PxTransform localFrame1(physx::PxVec3(jc.localAnchor2.x, jc.localAnchor2.y, jc.localAnchor2.z));
+
+				if (jc.localAnchor2 == Vec3(0.0f, 0.0f, 0.0f) && actor1 != nullptr) {
+					physx::PxTransform worldAnchor = actor0->getGlobalPose() * localFrame0;
+					localFrame1.p = actor1->getGlobalPose().getInverse().transform(worldAnchor.p);
+				}
+				physx::PxJoint* joint = nullptr;
+
+				switch (jc.type) {
+					case JointType::Fixed: {
+						joint = physx::PxFixedJointCreate(*s_physics, actor0, localFrame0, actor1, localFrame1);
+						break;
+					}
+					case JointType::Distance: {
+						physx::PxDistanceJoint* distJoint = physx::PxDistanceJointCreate(*s_physics, actor0, localFrame0, actor1, localFrame1);
+
+						distJoint->setMinDistance(jc.minDistance);
+						distJoint->setMaxDistance(jc.maxDistance);
+						distJoint->setDistanceJointFlag(physx::PxDistanceJointFlag::eMIN_DISTANCE_ENABLED, jc.minDistance > 0.0f);
+						distJoint->setDistanceJointFlag(physx::PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
+
+						if (jc.springStiffness > 0.0f) {
+							distJoint->setStiffness(jc.springStiffness);
+							distJoint->setDamping(jc.springDamping);
+							distJoint->setDistanceJointFlag(physx::PxDistanceJointFlag::eSPRING_ENABLED, true);
+						}
+
+						joint = distJoint;
+						break;
+					}
+					case JointType::Hinge: {
+						physx::PxQuat upHinge(physx::PxHalfPi, physx::PxVec3(0.0f, 0.0f, 1.0f));
+						localFrame0.q = upHinge;
+						localFrame1.q = upHinge;
+
+						physx::PxRevoluteJoint* hingeJoint = physx::PxRevoluteJointCreate(*s_physics, actor0, localFrame0, actor1, localFrame1);
+						joint = hingeJoint;
+						break;
+					}
+				}
+
+				// -- Apply universal joint settings --
+				if (joint) {
+					joint->setConstraintFlag(physx::PxConstraintFlag::eCOLLISION_ENABLED, jc.enableCollision);
+
+					if (jc.isBreakable) {
+						joint->setBreakForce(jc.breakForce, jc.breakForce);
+					}
+
+					jc.runtimeJoint = joint;
+				}
+			}
+		}
+
+
+		// ----- CCT Pre-Simulation Pass -----
+		auto cctView = registry.view<CharacterControllerComponent, TransformComponent>();
+		for (auto [entityHandle, cct, transform] : cctView.each()) {
+			if (cct.runtimeController == nullptr) {
+				PxMaterial* material = getOrCreatePhysXMaterial(cct.material);
+
+				PxCapsuleControllerDesc desc;
+				desc.height = cct.height;
+				desc.radius = cct.radius;
+				desc.stepOffset = cct.stepOffset;
+				desc.slopeLimit = std::cos(Math::toRadians(cct.slopeLimitDegrees));
+				desc.material = material;
+				desc.position = PxExtendedVec3(transform.position.x, transform.position.y, transform.position.z);
+				desc.upDirection = PxVec3(0, 1, 0);
+				desc.userData = (void*)(uintptr_t)entityHandle;
+				desc.reportCallback = &s_cctHitCallback;
+
+				PxController* controller = s_cctManager->createController(desc);
+
+				PxRigidDynamic* actor = controller->getActor();
+				if (actor && actor->getNbShapes() > 0) {
+					PxShape* shape;
+					actor->getShapes(&shape, 1);
+					setupShapeFilterData(shape, cct.layer, cct.collisionMask);
+				}
+
+				cct.runtimeController = controller;
+			}
+		}
+
+
+
 
 		// ----- Simulate physx -----
 		s_physXScene->simulate(ts.getSeconds());
@@ -332,6 +549,15 @@ namespace Axion {
 
 				transform.position = { pt.p.x, pt.p.y, pt.p.z };
 				transform.rotation = { pt.q.x, pt.q.y, pt.q.z, pt.q.w };
+			}
+		}
+
+		// ----- CCT Post-Simulation Pass -----
+		for (auto [entityHandle, cct, transform] : cctView.each()) {
+			if (cct.runtimeController) {
+				PxController* controller = static_cast<PxController*>(cct.runtimeController);
+				const PxExtendedVec3& pos = controller->getPosition();
+				transform.position = { (float)pos.x, (float)pos.y, (float)pos.z };
 			}
 		}
 
@@ -421,6 +647,7 @@ namespace Axion {
 
 			PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxBoxGeometry(halfExtents), *material);
 			shape->setLocalPose(PxTransform(offset));
+			setupShapeFilterData(shape, bc.layer, bc.collisionMask);
 			if (bc.isTrigger) {
 				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
@@ -438,6 +665,7 @@ namespace Axion {
 
 			PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxSphereGeometry(geometryRadius), *material);
 			shape->setLocalPose(PxTransform(PxVec3(sc.offset.x * transform.scale.x, sc.offset.y * transform.scale.y, sc.offset.z * transform.scale.z)));
+			setupShapeFilterData(shape, sc.layer, sc.collisionMask);
 			if (sc.isTrigger) {
 				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
@@ -460,7 +688,7 @@ namespace Axion {
 			PxQuat relativeRotation(PxHalfPi, PxVec3(0.0f, 0.0f, 1.0f));
 			PxVec3 offset = { cc.offset.x * transform.scale.x, cc.offset.y * transform.scale.y, cc.offset.z * transform.scale.z };
 			shape->setLocalPose(PxTransform(offset, relativeRotation));
-
+			setupShapeFilterData(shape, cc.layer, cc.collisionMask);
 			if (cc.isTrigger) {
 				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
@@ -476,7 +704,7 @@ namespace Axion {
 
 			if (meshAsset && !meshAsset->getVertices().empty()) {
 				PxConvexMeshDesc convexDesc;
-				convexDesc.points.count = meshAsset->getVertices().size();
+				convexDesc.points.count = static_cast<physx::PxU32>(meshAsset->getVertices().size());
 				convexDesc.points.stride = sizeof(Axion::Vertex);
 				convexDesc.points.data = meshAsset->getVertices().data();
 				convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
@@ -492,7 +720,7 @@ namespace Axion {
 
 					PxMeshScale pxScale(PxVec3(transform.scale.x, transform.scale.y, transform.scale.z), PxQuat(PxIdentity));
 					PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxConvexMeshGeometry(convexMesh, pxScale), *material);
-
+					setupShapeFilterData(shape, cc.layer, cc.collisionMask);
 					if (cc.isTrigger) {
 						shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 						shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
@@ -515,10 +743,10 @@ namespace Axion {
 
 				if (meshAsset && !meshAsset->getVertices().empty() && !meshAsset->getIndices().empty()) {
 					PxTriangleMeshDesc meshDesc;
-					meshDesc.points.count = meshAsset->getVertices().size();
+					meshDesc.points.count = static_cast<physx::PxU32>(meshAsset->getVertices().size());
 					meshDesc.points.stride = sizeof(Axion::Vertex);
 					meshDesc.points.data = meshAsset->getVertices().data();
-					meshDesc.triangles.count = meshAsset->getIndices().size() / 3;
+					meshDesc.triangles.count = static_cast<physx::PxU32>(meshAsset->getIndices().size() / 3);
 					meshDesc.triangles.stride = 3 * sizeof(uint32_t);
 					meshDesc.triangles.data = meshAsset->getIndices().data();
 
@@ -532,7 +760,7 @@ namespace Axion {
 
 						PxMeshScale pxScale(PxVec3(transform.scale.x, transform.scale.y, transform.scale.z), PxQuat(PxIdentity));
 						PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxTriangleMeshGeometry(triMesh, pxScale), *material);
-
+						setupShapeFilterData(shape, tmc.layer, tmc.collisionMask);
 						if (tmc.isTrigger) {
 							shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 							shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);

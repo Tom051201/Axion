@@ -6,6 +6,7 @@
 #include "AxionEngine/Source/EngineConfig.h"
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/PathResolver.h"
+#include "AxionEngine/Source/physics/PhysicsLayerManager.h"
 
 namespace Axion {
 
@@ -71,6 +72,13 @@ namespace Axion {
 			AX_CORE_LOG_TRACE("VFS: Resolved AppIcon [{0}] -> [{1}]", rawIcon, resolvedIcon.string());
 		}
 
+		if (data["PhysicsLayers"]) {
+			PhysicsLayerManager::deserialize(data["PhysicsLayers"]);
+		}
+		else {
+			PhysicsLayerManager::initialize();
+		}
+
 		std::filesystem::path registryPath = absProjectDir / "AssetRegistry.yaml";
 		project->getAssetRegistry()->deserialize(registryPath);
 
@@ -124,6 +132,8 @@ namespace Axion {
 			in.read(&iconPath[0], iconPathLength);
 		}
 
+		PhysicsLayerManager::deserializeBinary(in);
+
 		in.close();
 		AX_CORE_LOG_INFO("Successfully Loaded GameConfig Binary");
 
@@ -160,6 +170,8 @@ namespace Axion {
 
 		if (!m_defaultScene.empty()) out << YAML::Key << "DefaultScene" << YAML::Value << PathResolver::virtualize(m_defaultScene);
 		if (!m_appIconPath.empty()) out << YAML::Key << "AppIcon" << YAML::Value << PathResolver::virtualize(m_appIconPath);
+
+		PhysicsLayerManager::serialize(out);
 
 		out << YAML::EndMap;
 

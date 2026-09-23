@@ -5,7 +5,7 @@ Editor:
   OpenTextEditors:
     []
 ContentBrowser:
-  ShowFileExtensions: false
+  ShowFileExtensions: true
   OnlyEngineAssets: false
   ThumbnailSize: 100
   TreeViewWidth: 329
@@ -13,10 +13,16 @@ ContentBrowser:
   ShowContentArea: true
   ShowVFSTree: true
   ShowPhysicalTree: true
-  CurrentDirectory: D:\Projects\TestProject\Assets
+  CurrentDirectory: D:\Projects\TestProject\Assets\Materials
   ExpandedDirectories:
     - D:\Projects\TestProject
+    - D:\Projects\TestProject\Assets\Scripts
     - D:\Projects\TestProject\Assets
+    - D:\Projects\TestProject\Assets\ImportedPacks
+    - D:\Projects\TestProject\Assets\Materials
+    - D:\Projects\TestProject\Assets\ImportedPacks\Script Pack
+    - D:\Projects\TestProject\Scripts
+    - D:\Projects\TestProject\Assets\ImportedPacks\Base Pack
 MaterialEditor:
   InvertCam: false
 Viewport:

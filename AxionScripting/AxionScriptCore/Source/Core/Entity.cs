@@ -7,9 +7,10 @@ namespace AxionScriptCore {
 		RigidBody = 0,
 		BoxCollider = 1,
 		SphereCollider = 2,
-		CapuleCollider = 3,
+		CapsuleCollider = 3,
 		Audio = 4,
-		ParticleSystem = 5
+		ParticleSystem = 5,
+		CharacterController = 6,
 	}
 
 	public class Entity {
@@ -20,12 +21,14 @@ namespace AxionScriptCore {
 		public RigidBody RigidBody { get; private set; }
 		public AudioSource Audio { get; private set; }
 		public Animator Animator { get; private set; }
+		public CharacterController CharacterController { get; private set; }
 
 		public Entity() {
 			Transform = new Transform(this);
 			RigidBody = new RigidBody(this);
 			Audio = new AudioSource(this);
 			Animator = new Animator(this);
+			CharacterController = new CharacterController(this);
 		}
 
 		public virtual void OnCreate() {}

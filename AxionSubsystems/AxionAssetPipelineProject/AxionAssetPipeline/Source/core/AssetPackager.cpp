@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/core/PathResolver.h"
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+#include "AxionEngine/Source/physics/PhysicsLayerManager.h"
 
 #include "AxionAssetPipeline/Source/platform/PlatformPackager.h"
 #include "AxionAssetPipeline/Source/parser/MeshParser.h"
@@ -355,6 +356,8 @@ namespace Axion::AAP {
 			if (iconPathLength > 0) {
 				outConfig.write(iconPath.data(), iconPathLength);
 			}
+
+			PhysicsLayerManager::serializeBinary(outConfig);
 
 			outConfig.close();
 			AX_CORE_LOG_INFO("Baked GameConfig.axbin");

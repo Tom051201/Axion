@@ -16,6 +16,21 @@
 
 namespace Axion {
 
+	static std::string JointTypeToString(JointType type) {
+		switch (type) {
+			case JointType::Fixed: return "Fixed";
+			case JointType::Distance: return "Distance";
+			case JointType::Hinge: return "Hinge";
+		}
+		return "Fixed";
+	}
+
+	static JointType JointTypeFromString(const std::string& str) {
+		if (str == "Distance") return JointType::Distance;
+		if (str == "Hinge") return JointType::Hinge;
+		return JointType::Fixed;
+	}
+
 	enum class ComponentID : uint16_t {
 		None = 0,
 		Tag, Relationship, Transform, Mesh, Sprite, Material, Audio, Camera,
@@ -24,7 +39,7 @@ namespace Axion {
 		Script, NativeScript, ParticleSystem,
 		SkeletalMesh, Animator,
 		NetworkIdentity,
-		TriangleMeshCollider, ConvexCollider
+		TriangleMeshCollider, ConvexCollider, CharacterController, PhysicsJoint
 	};
 
 	static void writeString(std::ofstream& out, const std::string& str) {
@@ -236,6 +251,8 @@ namespace Axion {
 			out << YAML::Key << "HalfExtents" << YAML::Value << bcc.halfExtents;
 			out << YAML::Key << "Offset" << YAML::Value << bcc.offset;
 			out << YAML::Key << "IsTrigger" << YAML::Value << bcc.isTrigger;
+			out << YAML::Key << "Layer" << YAML::Value << bcc.layer;
+			out << YAML::Key << "CollisionMask" << YAML::Value << bcc.collisionMask;
 			if (bcc.material.isValid()) {
 				out << YAML::Key << "Material" << YAML::Value << bcc.material.uuid;
 			}
@@ -253,6 +270,8 @@ namespace Axion {
 			out << YAML::Key << "Radius" << YAML::Value << scc.radius;
 			out << YAML::Key << "Offset" << YAML::Value << scc.offset;
 			out << YAML::Key << "IsTrigger" << YAML::Value << scc.isTrigger;
+			out << YAML::Key << "Layer" << YAML::Value << scc.layer;
+			out << YAML::Key << "CollisionMask" << YAML::Value << scc.collisionMask;
 			if (scc.material.isValid()) {
 				out << YAML::Key << "Material" << YAML::Value << scc.material.uuid;
 			}
@@ -271,6 +290,8 @@ namespace Axion {
 			out << YAML::Key << "HalfHeight" << YAML::Value << ccc.halfHeight;
 			out << YAML::Key << "Offset" << YAML::Value << ccc.offset;
 			out << YAML::Key << "IsTrigger" << YAML::Value << ccc.isTrigger;
+			out << YAML::Key << "Layer" << YAML::Value << ccc.layer;
+			out << YAML::Key << "CollisionMask" << YAML::Value << ccc.collisionMask;
 			if (ccc.material.isValid()) {
 				out << YAML::Key << "Material" << YAML::Value << ccc.material.uuid;
 			}
@@ -286,6 +307,8 @@ namespace Axion {
 			out << YAML::BeginMap;
 			auto& tmc = entity.getComponent<TriangleMeshColliderComponent>();
 			out << YAML::Key << "IsTrigger" << YAML::Value << tmc.isTrigger;
+			out << YAML::Key << "Layer" << YAML::Value << tmc.layer;
+			out << YAML::Key << "CollisionMask" << YAML::Value << tmc.collisionMask;
 			if (tmc.collisionMesh.isValid()) out << YAML::Key << "Mesh" << YAML::Value << tmc.collisionMesh.uuid;
 			else out << YAML::Key << "Mesh" << YAML::Value << "0";
 			if (tmc.material.isValid()) out << YAML::Key << "Material" << YAML::Value << tmc.material.uuid;
@@ -299,13 +322,52 @@ namespace Axion {
 			out << YAML::Key << "ConvexColliderComponent";
 			out << YAML::BeginMap;
 			auto& cc = entity.getComponent<ConvexColliderComponent>();
-			out << YAML::Key << "IsTrigger" << YAML::Value << cc.isTrigger;
 			out << YAML::Key << "VertexLimit" << YAML::Value << cc.vertexLimit;
+			out << YAML::Key << "IsTrigger" << YAML::Value << cc.isTrigger;
+			out << YAML::Key << "Layer" << YAML::Value << cc.layer;
+			out << YAML::Key << "CollisionMask" << YAML::Value << cc.collisionMask;
 			if (cc.collisionMesh.isValid()) out << YAML::Key << "Mesh" << YAML::Value << cc.collisionMesh.uuid;
 			else out << YAML::Key << "Mesh" << YAML::Value << "0";
 			if (cc.material.isValid()) out << YAML::Key << "Material" << YAML::Value << cc.material.uuid;
 			else out << YAML::Key << "Material" << YAML::Value << "0";
 
+			out << YAML::EndMap;
+		}
+
+		// -- CharacterControllerComponent --
+		if (entity.hasComponent<CharacterControllerComponent>()) {
+			out << YAML::Key << "CharacterControllerComponent";
+			out << YAML::BeginMap;
+			auto& cct = entity.getComponent<CharacterControllerComponent>();
+			out << YAML::Key << "Radius" << YAML::Value << cct.radius;
+			out << YAML::Key << "Height" << YAML::Value << cct.height;
+			out << YAML::Key << "StepOffset" << YAML::Value << cct.stepOffset;
+			out << YAML::Key << "SlopeLimitDegrees" << YAML::Value << cct.slopeLimitDegrees;
+			out << YAML::Key << "PushPower" << YAML::Value << cct.pushPower;
+			out << YAML::Key << "Layer" << YAML::Value << cct.layer;
+			out << YAML::Key << "CollisionMask" << YAML::Value << cct.collisionMask;
+			if (cct.material.isValid()) out << YAML::Key << "Material" << YAML::Value << cct.material.uuid;
+			else out << YAML::Key << "Material" << YAML::Value << "0";
+			out << YAML::EndMap;
+		}
+
+		// -- PhysicsJointComponent --
+		if (entity.hasComponent<PhysicsJointComponent>()) {
+			out << YAML::Key << "PhysicsJointComponent";
+			out << YAML::BeginMap;
+			auto& jc = entity.getComponent<PhysicsJointComponent>();
+			out << YAML::Key << "Type" << YAML::Value << JointTypeToString(jc.type);
+			if (jc.connectedEntity.isValid()) out << YAML::Key << "ConnectedEntity" << YAML::Value << jc.connectedEntity;
+			else out << YAML::Key << "ConnectedEntity" << YAML::Value << "0";
+			out << YAML::Key << "LocalAnchor1" << YAML::Value << jc.localAnchor1;
+			out << YAML::Key << "LocalAnchor2" << YAML::Value << jc.localAnchor2;
+			out << YAML::Key << "MinDistance" << YAML::Value << jc.minDistance;
+			out << YAML::Key << "MaxDistance" << YAML::Value << jc.maxDistance;
+			out << YAML::Key << "SpringStiffness" << YAML::Value << jc.springStiffness;
+			out << YAML::Key << "SpringDamping" << YAML::Value << jc.springDamping;
+			out << YAML::Key << "EnableCollision" << YAML::Value << jc.enableCollision;
+			out << YAML::Key << "IsBreakable" << YAML::Value << jc.isBreakable;
+			out << YAML::Key << "BreakForce" << YAML::Value << jc.breakForce;
 			out << YAML::EndMap;
 		}
 
@@ -852,6 +914,12 @@ namespace Axion {
 			bcc.halfExtents = boxColliderComponent["HalfExtents"].as<Vec3>();
 			bcc.offset = boxColliderComponent["Offset"].as<Vec3>();
 			bcc.isTrigger = boxColliderComponent["IsTrigger"].as<bool>();
+			if (boxColliderComponent["Layer"]) {
+				bcc.layer = boxColliderComponent["Layer"].as<uint32_t>();
+			}
+			if (boxColliderComponent["CollisionMask"]) {
+				bcc.collisionMask = boxColliderComponent["CollisionMask"].as<uint32_t>();
+			}
 			UUID materialUUID = boxColliderComponent["Material"].as<UUID>();
 			if (materialUUID.isValid()) {
 				if (registry->contains(materialUUID)) {
@@ -874,6 +942,12 @@ namespace Axion {
 			scc.radius = sphereColliderComponent["Radius"].as<float>();
 			scc.offset = sphereColliderComponent["Offset"].as<Vec3>();
 			scc.isTrigger = sphereColliderComponent["IsTrigger"].as<bool>();
+			if (boxColliderComponent["Layer"]) {
+				scc.layer = boxColliderComponent["Layer"].as<uint32_t>();
+			}
+			if (boxColliderComponent["CollisionMask"]) {
+				scc.collisionMask = boxColliderComponent["CollisionMask"].as<uint32_t>();
+			}
 			UUID materialUUID = sphereColliderComponent["Material"].as<UUID>();
 			if (materialUUID.isValid()) {
 				if (registry->contains(materialUUID)) {
@@ -897,6 +971,12 @@ namespace Axion {
 			ccc.halfHeight = capsuleColliderComponent["HalfHeight"].as<float>();
 			ccc.offset = capsuleColliderComponent["Offset"].as<Vec3>();
 			ccc.isTrigger = capsuleColliderComponent["IsTrigger"].as<bool>();
+			if (boxColliderComponent["Layer"]) {
+				ccc.layer = boxColliderComponent["Layer"].as<uint32_t>();
+			}
+			if (boxColliderComponent["CollisionMask"]) {
+				ccc.collisionMask = boxColliderComponent["CollisionMask"].as<uint32_t>();
+			}
 			UUID materialUUID = capsuleColliderComponent["Material"].as<UUID>();
 			if (materialUUID.isValid()) {
 				if (registry->contains(materialUUID)) {
@@ -917,6 +997,12 @@ namespace Axion {
 		if (triangleMeshColliderComponent) {
 			auto& tmc = deserializedEntity.addComponent<TriangleMeshColliderComponent>();
 			tmc.isTrigger = triangleMeshColliderComponent["IsTrigger"].as<bool>();
+			if (boxColliderComponent["Layer"]) {
+				tmc.layer = boxColliderComponent["Layer"].as<uint32_t>();
+			}
+			if (boxColliderComponent["CollisionMask"]) {
+				tmc.collisionMask = boxColliderComponent["CollisionMask"].as<uint32_t>();
+			}
 			UUID meshUUID = triangleMeshColliderComponent["Mesh"].as<UUID>();
 			if (meshUUID.isValid() && registry->contains(meshUUID)) {
 				tmc.collisionMesh = AssetManager::load<Mesh>(meshUUID);
@@ -937,8 +1023,14 @@ namespace Axion {
 		auto convexColliderComponent = entityNode["ConvexColliderComponent"];
 		if (convexColliderComponent) {
 			auto& cc = deserializedEntity.addComponent<ConvexColliderComponent>();
-			cc.isTrigger = convexColliderComponent["IsTrigger"].as<bool>();
 			cc.vertexLimit = convexColliderComponent["VertexLimit"].as<uint32_t>();
+			cc.isTrigger = convexColliderComponent["IsTrigger"].as<bool>();
+			if (boxColliderComponent["Layer"]) {
+				cc.layer = boxColliderComponent["Layer"].as<uint32_t>();
+			}
+			if (boxColliderComponent["CollisionMask"]) {
+				cc.collisionMask = boxColliderComponent["CollisionMask"].as<uint32_t>();
+			}
 			UUID meshUUID = convexColliderComponent["Mesh"].as<UUID>();
 			if (meshUUID.isValid() && registry->contains(meshUUID)) {
 				cc.collisionMesh = AssetManager::load<Mesh>(meshUUID);
@@ -953,6 +1045,43 @@ namespace Axion {
 			else {
 				cc.material = AssetHandle<PhysicsMaterial>();
 			}
+		}
+
+		// -- CharacterControllerComponent --
+		auto cctComponent = entityNode["CharacterControllerComponent"];
+		if (cctComponent) {
+			auto& cct = deserializedEntity.addComponent<CharacterControllerComponent>();
+			cct.radius = cctComponent["Radius"].as<float>();
+			cct.height = cctComponent["Height"].as<float>();
+			cct.stepOffset = cctComponent["StepOffset"].as<float>();
+			cct.slopeLimitDegrees = cctComponent["SlopeLimitDegrees"].as<float>();
+			if (cctComponent["PushPower"]) cct.pushPower = cctComponent["PushPower"].as<float>();
+			if (cctComponent["Layer"]) cct.layer = cctComponent["Layer"].as<uint32_t>();
+			if (cctComponent["CollisionMask"]) cct.collisionMask = cctComponent["CollisionMask"].as<uint32_t>();
+			UUID materialUUID = cctComponent["Material"].as<UUID>();
+			if (materialUUID.isValid() && registry->contains(materialUUID)) {
+				cct.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+			}
+			else {
+				cct.material = AssetHandle<PhysicsMaterial>();
+			}
+		}
+
+		auto jointComponent = entityNode["PhysicsJointComponent"];
+		if (jointComponent) {
+			auto& jc = deserializedEntity.addComponent<PhysicsJointComponent>();
+			jc.type = JointTypeFromString(jointComponent["Type"].as<std::string>());
+			if (jointComponent["ConnectedEntity"].as<std::string>() == "0") jc.connectedEntity = UUID(0, 0);
+			else jc.connectedEntity = jointComponent["ConnectedEntity"].as<UUID>();
+			jc.localAnchor1 = jointComponent["LocalAnchor1"].as<Vec3>();
+			jc.localAnchor2 = jointComponent["LocalAnchor2"].as<Vec3>();
+			jc.minDistance = jointComponent["MinDistance"].as<float>();
+			jc.maxDistance = jointComponent["MaxDistance"].as<float>();
+			jc.springStiffness = jointComponent["SpringStiffness"].as<float>();
+			jc.springDamping = jointComponent["SpringDamping"].as<float>();
+			jc.enableCollision = jointComponent["EnableCollision"].as<bool>();
+			jc.isBreakable = jointComponent["IsBreakable"].as<bool>();
+			jc.breakForce = jointComponent["BreakForce"].as<float>();
 		}
 
 		// -- GravitySourceComponent --
@@ -1247,6 +1376,8 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&component.offset), sizeof(Vec3));
 			uint8_t flags = (component.isTrigger ? 1 : 0);
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			out.write(reinterpret_cast<const char*>(&component.layer), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&component.collisionMask), sizeof(uint32_t));
 		}
 
 		// -- Write Sphere Collider Component --
@@ -1260,6 +1391,8 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&component.offset), sizeof(Vec3));
 			uint8_t flags = (component.isTrigger ? 1 : 0);
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			out.write(reinterpret_cast<const char*>(&component.layer), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&component.collisionMask), sizeof(uint32_t));
 		}
 
 		// -- Write Capsule Collider Component --
@@ -1274,6 +1407,8 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&component.offset), sizeof(Vec3));
 			uint8_t flags = (component.isTrigger ? 1 : 0);
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			out.write(reinterpret_cast<const char*>(&component.layer), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&component.collisionMask), sizeof(uint32_t));
 		}
 
 		// -- Write Triangle Mesh Collider Component --
@@ -1287,6 +1422,8 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
 			uint8_t flags = (component.isTrigger ? 1 : 0);
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			out.write(reinterpret_cast<const char*>(&component.layer), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&component.collisionMask), sizeof(uint32_t));
 		}
 
 		// -- Write Convex Collider Component --
@@ -1301,6 +1438,43 @@ namespace Axion {
 			out.write(reinterpret_cast<const char*>(&component.vertexLimit), sizeof(uint32_t));
 			uint8_t flags = (component.isTrigger ? 1 : 0);
 			out.write(reinterpret_cast<const char*>(&flags), sizeof(uint8_t));
+			out.write(reinterpret_cast<const char*>(&component.layer), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&component.collisionMask), sizeof(uint32_t));
+		}
+
+		// -- Write Character Controller Component --
+		if (entity.hasComponent<CharacterControllerComponent>()) {
+			ComponentID id = ComponentID::CharacterController;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			auto& component = entity.getComponent<CharacterControllerComponent>();
+			out.write(reinterpret_cast<const char*>(&component.radius), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&component.height), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&component.stepOffset), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&component.slopeLimitDegrees), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&component.pushPower), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&component.layer), sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(&component.collisionMask), sizeof(uint32_t));
+			UUID materialUUID = component.material.isValid() ? component.material.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&materialUUID), sizeof(UUID));
+		}
+
+		// -- Write Physics Joint Component --
+		if (entity.hasComponent<PhysicsJointComponent>()) {
+			ComponentID id = ComponentID::PhysicsJoint;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			auto& jc = entity.getComponent<PhysicsJointComponent>();
+			int typeInt = static_cast<int>(jc.type);
+			out.write(reinterpret_cast<const char*>(&typeInt), sizeof(int));
+			out.write(reinterpret_cast<const char*>(&jc.connectedEntity), sizeof(UUID));
+			out.write(reinterpret_cast<const char*>(&jc.localAnchor1), sizeof(Vec3));
+			out.write(reinterpret_cast<const char*>(&jc.localAnchor2), sizeof(Vec3));
+			out.write(reinterpret_cast<const char*>(&jc.minDistance), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&jc.maxDistance), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&jc.springStiffness), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&jc.springDamping), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&jc.enableCollision), sizeof(bool));
+			out.write(reinterpret_cast<const char*>(&jc.isBreakable), sizeof(bool));
+			out.write(reinterpret_cast<const char*>(&jc.breakForce), sizeof(float));
 		}
 
 		// -- Write Gravity Source Component --
@@ -1597,6 +1771,14 @@ namespace Axion {
 				uint8_t flags;
 				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
 				component.isTrigger = (flags & 1) != 0;
+				if (sceneVersion >= 3) {
+					in.read(reinterpret_cast<char*>(&component.layer), sizeof(uint32_t));
+					in.read(reinterpret_cast<char*>(&component.collisionMask), sizeof(uint32_t));
+				}
+				else {
+					component.layer = 0x0001;
+					component.collisionMask = 0xFFFFFFFF;
+				}
 				break;
 			}
 			case ComponentID::SphereCollider: {
@@ -1610,6 +1792,14 @@ namespace Axion {
 				uint8_t flags;
 				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
 				component.isTrigger = (flags & 1) != 0;
+				if (sceneVersion >= 3) {
+					in.read(reinterpret_cast<char*>(&component.layer), sizeof(uint32_t));
+					in.read(reinterpret_cast<char*>(&component.collisionMask), sizeof(uint32_t));
+				}
+				else {
+					component.layer = 0x0001;
+					component.collisionMask = 0xFFFFFFFF;
+				}
 				break;
 			}
 			case ComponentID::CapsuleCollider: {
@@ -1624,6 +1814,14 @@ namespace Axion {
 				uint8_t flags;
 				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
 				component.isTrigger = (flags & 1) != 0;
+				if (sceneVersion >= 3) {
+					in.read(reinterpret_cast<char*>(&component.layer), sizeof(uint32_t));
+					in.read(reinterpret_cast<char*>(&component.collisionMask), sizeof(uint32_t));
+				}
+				else {
+					component.layer = 0x0001;
+					component.collisionMask = 0xFFFFFFFF;
+				}
 				break;
 			}
 			case ComponentID::TriangleMeshCollider: {
@@ -1638,6 +1836,14 @@ namespace Axion {
 				uint8_t flags;
 				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
 				component.isTrigger = (flags & 1) != 0;
+				if (sceneVersion >= 3) {
+					in.read(reinterpret_cast<char*>(&component.layer), sizeof(uint32_t));
+					in.read(reinterpret_cast<char*>(&component.collisionMask), sizeof(uint32_t));
+				}
+				else {
+					component.layer = 0x0001;
+					component.collisionMask = 0xFFFFFFFF;
+				}
 				break;
 			}
 			case ComponentID::ConvexCollider: {
@@ -1653,6 +1859,47 @@ namespace Axion {
 				uint8_t flags;
 				in.read(reinterpret_cast<char*>(&flags), sizeof(uint8_t));
 				component.isTrigger = (flags & 1) != 0;
+				if (sceneVersion >= 3) {
+					in.read(reinterpret_cast<char*>(&component.layer), sizeof(uint32_t));
+					in.read(reinterpret_cast<char*>(&component.collisionMask), sizeof(uint32_t));
+				}
+				else {
+					component.layer = 0x0001;
+					component.collisionMask = 0xFFFFFFFF;
+				}
+				break;
+			}
+			case ComponentID::CharacterController: {
+				// -- Read Character Controller Component --
+				auto& component = entity.addComponent<CharacterControllerComponent>();
+				in.read(reinterpret_cast<char*>(&component.radius), sizeof(float));
+				in.read(reinterpret_cast<char*>(&component.height), sizeof(float));
+				in.read(reinterpret_cast<char*>(&component.stepOffset), sizeof(float));
+				in.read(reinterpret_cast<char*>(&component.slopeLimitDegrees), sizeof(float));
+				in.read(reinterpret_cast<char*>(&component.pushPower), sizeof(float));
+				in.read(reinterpret_cast<char*>(&component.layer), sizeof(uint32_t));
+				in.read(reinterpret_cast<char*>(&component.collisionMask), sizeof(uint32_t));
+				UUID materialUUID;
+				in.read(reinterpret_cast<char*>(&materialUUID), sizeof(UUID));
+				if (materialUUID.isValid()) component.material = AssetManager::load<PhysicsMaterial>(materialUUID);
+				break;
+			}
+			case ComponentID::PhysicsJoint: {
+				// -- Read Physics Joint Component --
+				auto& jc = entity.addComponent<PhysicsJointComponent>();
+				int typeInt;
+				in.read(reinterpret_cast<char*>(&typeInt), sizeof(int));
+				jc.type = static_cast<JointType>(typeInt);
+				in.read(reinterpret_cast<char*>(&jc.connectedEntity), sizeof(UUID));
+				in.read(reinterpret_cast<char*>(&jc.localAnchor1), sizeof(Vec3));
+				in.read(reinterpret_cast<char*>(&jc.localAnchor2), sizeof(Vec3));
+				in.read(reinterpret_cast<char*>(&jc.minDistance), sizeof(float));
+				in.read(reinterpret_cast<char*>(&jc.maxDistance), sizeof(float));
+				in.read(reinterpret_cast<char*>(&jc.springStiffness), sizeof(float));
+				in.read(reinterpret_cast<char*>(&jc.springDamping), sizeof(float));
+				in.read(reinterpret_cast<char*>(&jc.enableCollision), sizeof(bool));
+				in.read(reinterpret_cast<char*>(&jc.isBreakable), sizeof(bool));
+				in.read(reinterpret_cast<char*>(&jc.breakForce), sizeof(float));
 				break;
 			}
 			case ComponentID::GravitySource: {

@@ -73,6 +73,7 @@ namespace Silica {
 
 		static const DrawList* getDrawData();
 		static const Vec2& getMousePosition();
+		static const Vec2& getViewportSize();
 
 		static void setTooltip(const std::string& text, FontAtlas* font);
 
@@ -88,6 +89,7 @@ namespace Silica {
 
 		static DrawList s_drawList;
 		static Vec2 s_mousePosition;
+		static Vec2 s_viewportSize;
 
 		static OverlayManager s_overlays;
 

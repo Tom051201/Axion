@@ -257,7 +257,7 @@ namespace Axion {
 
 	void ScriptEngine::loadAppAssembly(const std::filesystem::path& filePath) {
 		if (std::filesystem::exists(filePath)) {
-			std::string pathStr = filePath.string();
+			std::string pathStr = filePath.generic_string();
 			if (s_loadAppAssemblyFunc) s_loadAppAssemblyFunc(pathStr.c_str());
 
 			s_scriptMetadata.clear();

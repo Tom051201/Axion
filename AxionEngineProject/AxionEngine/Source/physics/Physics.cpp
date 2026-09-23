@@ -154,4 +154,29 @@ namespace Axion {
 		return rb.mass;
 	}
 
+	void Physics::moveCharacterController(Entity entity, const Vec3& displacement, Timestep ts) {
+		if (!entity.hasComponent<CharacterControllerComponent>()) return;
+		auto& cct = entity.getComponent<CharacterControllerComponent>();
+		if (!cct.runtimeController) return;
+
+		physx::PxController* controller = static_cast<physx::PxController*>(cct.runtimeController);
+
+		physx::PxFilterData filterData(cct.layer, cct.collisionMask, 0, 0);
+		physx::PxControllerFilters filters(&filterData, nullptr, nullptr);
+
+		physx::PxControllerCollisionFlags flags = controller->move(
+			physx::PxVec3(displacement.x, displacement.y, displacement.z),
+			0.0f, // 0.001f,
+			ts.getSeconds(),
+			filters
+		);
+
+		cct.isGrounded = (flags & physx::PxControllerCollisionFlag::eCOLLISION_DOWN);
+	}
+
+	bool Physics::isGrounded(Entity entity) {
+		if (!entity.hasComponent<CharacterControllerComponent>()) return false;
+		return entity.getComponent<CharacterControllerComponent>().isGrounded;
+	}
+
 }

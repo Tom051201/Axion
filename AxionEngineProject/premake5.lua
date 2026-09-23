@@ -47,6 +47,7 @@ project "AxionEngine"
 		"PhysXCommon_64",
 		"PhysXExtensions_static_64",
 		"PhysXPvdSDK_static_64",
+		"PhysXCharacterKinematic_static_64",
 		"AxionEngine/Vendor/dotnet/lib/nethost.lib"
 	}
 

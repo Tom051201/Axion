@@ -92,29 +92,32 @@ namespace Axion {
 			}
 		}
 
-		// -- Hemispheres --
 		int halfSegments = WIREFRAME_SEGMENTS / 2;
+
+		// -- Top Hemisphere --
 		for (int i = 0; i < halfSegments; i++) {
+			int next = i + 1;
+
+			Vec3 t1_xy = transform * (Vec3(g_unitCircleXY[i].x * radius, g_unitCircleXY[i].y * radius + halfHeight, 0.0f));
+			Vec3 t2_xy = transform * (Vec3(g_unitCircleXY[next].x * radius, g_unitCircleXY[next].y * radius + halfHeight, 0.0f));
+			Renderer2D::drawLine(t1_xy, t2_xy, color);
+
+			Vec3 t1_zy = transform * (Vec3(0.0f, g_unitCircleXY[i].y * radius + halfHeight, g_unitCircleXY[i].x * radius));
+			Vec3 t2_zy = transform * (Vec3(0.0f, g_unitCircleXY[next].y * radius + halfHeight, g_unitCircleXY[next].x * radius));
+			Renderer2D::drawLine(t1_zy, t2_zy, color);
+		}
+
+		// -- Bottom Hemisphere --
+		for (int i = halfSegments; i < WIREFRAME_SEGMENTS; i++) {
 			int next = (i + 1) % WIREFRAME_SEGMENTS;
 
-			Vec3 top_xy1 = transform * ((g_unitCircleXY[i] * radius) + Vec3(0.0f, halfHeight, 0.0f));
-			Vec3 top_xy2 = transform * ((g_unitCircleXY[next] * radius) + Vec3(0.0f, halfHeight, 0.0f));
-			Renderer2D::drawLine(top_xy1, top_xy2, color);
+			Vec3 b1_xy = transform * (Vec3(g_unitCircleXY[i].x * radius, g_unitCircleXY[i].y * radius - halfHeight, 0.0f));
+			Vec3 b2_xy = transform * (Vec3(g_unitCircleXY[next].x * radius, g_unitCircleXY[next].y * radius - halfHeight, 0.0f));
+			Renderer2D::drawLine(b1_xy, b2_xy, color);
 
-			Vec3 top_yz1 = transform * ((g_unitCircleYZ[i] * radius) + Vec3(0.0f, halfHeight, 0.0f));
-			Vec3 top_yz2 = transform * ((g_unitCircleYZ[next] * radius) + Vec3(0.0f, halfHeight, 0.0f));
-			Renderer2D::drawLine(top_yz1, top_yz2, color);
-
-			int btmIdx = i + halfSegments;
-			int btmNext = (btmIdx + 1) % WIREFRAME_SEGMENTS;
-
-			Vec3 btm_xy1 = transform * ((g_unitCircleXY[btmIdx] * radius) - Vec3(0.0f, halfHeight, 0.0f));
-			Vec3 btm_xy2 = transform * ((g_unitCircleXY[btmNext] * radius) - Vec3(0.0f, halfHeight, 0.0f));
-			Renderer2D::drawLine(btm_xy1, btm_xy2, color);
-
-			Vec3 btm_yz1 = transform * ((g_unitCircleYZ[btmIdx] * radius) - Vec3(0.0f, halfHeight, 0.0f));
-			Vec3 btm_yz2 = transform * ((g_unitCircleYZ[btmNext] * radius) - Vec3(0.0f, halfHeight, 0.0f));
-			Renderer2D::drawLine(btm_yz1, btm_yz2, color);
+			Vec3 b1_zy = transform * (Vec3(0.0f, g_unitCircleXY[i].y * radius - halfHeight, g_unitCircleXY[i].x * radius));
+			Vec3 b2_zy = transform * (Vec3(0.0f, g_unitCircleXY[next].y * radius - halfHeight, g_unitCircleXY[next].x * radius));
+			Renderer2D::drawLine(b1_zy, b2_zy, color);
 		}
 	}
 

@@ -247,6 +247,21 @@ namespace Axion {
 			return 0;
 		}
 
+		extern "C" void cct_move(uint64_t uuidHi, uint64_t uuidLo, float* displacement, float timestep) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid()) {
+				Physics::moveCharacterController(entity, Vec3(displacement[0], displacement[1], displacement[2]), Timestep(timestep));
+			}
+		}
+
+		extern "C" uint8_t cct_isGrounded(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid()) {
+				return Physics::isGrounded(entity) ? 1 : 0;
+			}
+			return 0;
+		}
+
 
 		// -- AUDIO --
 		extern "C" void audio_play(uint64_t uuidHi, uint64_t uuidLo) {
@@ -388,6 +403,7 @@ namespace Axion {
 				case 3: { if (!entity.hasComponent<CapsuleColliderComponent>()) entity.addComponent<CapsuleColliderComponent>(); break; }
 				case 4: { if (!entity.hasComponent<AudioComponent>()) entity.addComponent<AudioComponent>(); break; }
 				case 5: { if (!entity.hasComponent<ParticleSystemComponent>()) entity.addComponent<ParticleSystemComponent>(); break; }
+				case 6: { if (!entity.hasComponent<CharacterControllerComponent>()) entity.addComponent<CharacterControllerComponent>(); break; }
 
 			}
 		}
@@ -546,6 +562,8 @@ namespace Axion {
 		REGISTER_API(apiStruct, rigidbody_getMass);
 		REGISTER_API(apiStruct, rigidbody_setMass);
 		REGISTER_API(apiStruct, physics_raycast);
+		REGISTER_API(apiStruct, cct_move);
+		REGISTER_API(apiStruct, cct_isGrounded);
 
 		// -- AUDIO --
 		REGISTER_API(apiStruct, audio_play);

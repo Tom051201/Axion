@@ -23,6 +23,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/physics/PhysicsLayerManager.h"
 
 #include "AxionAssetPipeline/Source/core/AssetPackager.h"
 
@@ -442,6 +443,41 @@ namespace Axion {
 
 		contentBox->addSlot({ {0, 0}, sceneDropZone });
 		contentBox->addSlot({ {0, 0}, Silica::MakeWidget<Silica::SSpacer>({.size = { 0.0f, EditorTheme::SPACING_LARGE }}) });
+
+
+		// ----- PHYSICS LAYERS -----
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakeHeader("Physics Layers") }); // TODO: make this with a + button up to 31 times and add an event so that the properties panel rebuilds to show the new names and new things
+
+		auto physicsLayersContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
+
+		for (uint32_t i = 0; i < 32; ++i) {
+			std::string label = "Layer " + std::to_string(i);
+
+			if (i == 0) {
+				auto defaultText = Silica::MakeWidget<Silica::STextBlock>({
+					.text = "Default (Read-Only)",
+					.color = Silica::GetTheme().Text_Dim
+				});
+				physicsLayersContent->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow(label, defaultText) });
+			}
+			else {
+				auto nameInput = Silica::MakeWidget<Silica::SEditableText>({
+					.initialText = PhysicsLayerManager::getLayerName(i),
+					.hintText = "...",
+					.onTextCommitted = [this, i](const std::string& newText) {
+						PhysicsLayerManager::setLayerName(i, newText);
+						ProjectManager::saveProject(ProjectManager::getProjectFilePath());
+					}
+				});
+				physicsLayersContent->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow(label, nameInput) });
+			}
+		}
+
+		auto physicsDropZone = SilicaHelpers::MakeAssetDropZone("", [](const std::filesystem::path&) {}, physicsLayersContent, { DROP_ZONE_PADDING, DROP_ZONE_PADDING });
+
+		contentBox->addSlot({ {0, 0}, physicsDropZone });
+		contentBox->addSlot({ {0, 0}, Silica::MakeWidget<Silica::SSpacer>({.size = { 0.0f, EditorTheme::SPACING_LARGE }}) });
+
 
 		// -- Final Layout Assembly --
 		auto paddedContent = Silica::MakeWidget<Silica::SBox>({

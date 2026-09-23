@@ -56,6 +56,10 @@ namespace Axion {
 		RigidBody_GetMass,
 		RigidBody_SetMass,
 
+		// -- CHARACTER CONTROLLER --
+		CharacterController_Move,
+		CharacterController_IsGrounded,
+
 		// -- INPUT --
 		Input_IsKeyPressed,
 		Input_IsMouseButtonPressed,

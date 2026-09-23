@@ -31,6 +31,9 @@ namespace Axion {
 		static void setMass(Entity entity, float mass);
 		static float getMass(Entity entity);
 
+		static void moveCharacterController(Entity entity, const Vec3& displacement, Timestep ts);
+		static bool isGrounded(Entity entity);
+
 	};
 
 }

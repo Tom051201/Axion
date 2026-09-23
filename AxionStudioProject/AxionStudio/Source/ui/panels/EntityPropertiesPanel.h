@@ -33,6 +33,9 @@ namespace Axion {
 
 		void rebuildUI();
 
+		Silica::WidgetPtr MakePhysicsLayerSelector(std::function<uint32_t()> getLayer, std::function<void(uint32_t)> setLayer);
+		Silica::WidgetPtr MakePhysicsMaskSelector(std::function<uint32_t()> getMask, std::function<void(uint32_t)> setMask);
+
 		Entity m_selectedEntity;
 		TransformComponent m_editStartTransform;
 
