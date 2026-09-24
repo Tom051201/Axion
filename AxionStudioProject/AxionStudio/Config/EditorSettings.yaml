@@ -13,7 +13,7 @@ ContentBrowser:
   ShowContentArea: true
   ShowVFSTree: true
   ShowPhysicalTree: true
-  CurrentDirectory: D:\Projects\TestProject\Assets\Materials
+  CurrentDirectory: D:\Projects\TestProject\Assets\ImportedPacks\Script Pack
   ExpandedDirectories:
     - D:\Projects\TestProject
     - D:\Projects\TestProject\Assets\Scripts

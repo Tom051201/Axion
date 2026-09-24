@@ -610,6 +610,160 @@ namespace Axion {
 		return false;
 	}
 
+	static physx::PxQuat EulerToPxQuat(const Vec3& euler) {
+		physx::PxQuat qX(euler.x, physx::PxVec3(1.0f, 0.0f, 0.0f));
+		physx::PxQuat qY(euler.y, physx::PxVec3(0.0f, 1.0f, 0.0f));
+		physx::PxQuat qZ(euler.z, physx::PxVec3(0.0f, 0.0f, 1.0f));
+		return qZ * qY * qX;
+	}
+
+	bool PhysicsSystem::sweepBox(Scene* scene, const Vec3& origin, const Vec3& halfExtents, const Vec3& orientation, const Vec3& direction, float maxDistance, RaycastHit* outHit) {
+		if (!s_physXScene || direction.length() == 0.0f) return false;
+
+		physx::PxVec3 pxDir(direction.x, direction.y, direction.z); pxDir.normalize();
+		physx::PxTransform pose(physx::PxVec3(origin.x, origin.y, origin.z), EulerToPxQuat(orientation));
+		physx::PxBoxGeometry geom(halfExtents.x, halfExtents.y, halfExtents.z);
+		physx::PxSweepBuffer hit;
+
+		if (s_physXScene->sweep(geom, pose, pxDir, maxDistance, hit)) {
+			if (outHit) {
+				outHit->position = { (float)hit.block.position.x, (float)hit.block.position.y, (float)hit.block.position.z };
+				outHit->normal = { hit.block.normal.x, hit.block.normal.y, hit.block.normal.z };
+				outHit->distance = hit.block.distance;
+				outHit->entity = (hit.block.actor && hit.block.actor->userData) ? Entity{ (entt::entity)(uintptr_t)hit.block.actor->userData, scene } : Entity{};
+			}
+			return true;
+		}
+		return false;
+	}
+
+	bool PhysicsSystem::sweepSphere(Scene* scene, const Vec3& origin, float radius, const Vec3& direction, float maxDistance, RaycastHit* outHit) {
+		if (!s_physXScene) return false;
+
+		if (direction.length() == 0.0f) return false;
+
+		physx::PxVec3 pxOrigin(origin.x, origin.y, origin.z);
+		physx::PxVec3 pxDir(direction.x, direction.y, direction.z);
+		pxDir.normalize();
+
+		physx::PxTransform pose(pxOrigin);
+		physx::PxSphereGeometry geom(radius);
+		physx::PxSweepBuffer hit;
+
+		// -- Sweep shape through the scene --
+		if (s_physXScene->sweep(geom, pose, pxDir, maxDistance, hit)) {
+			if (outHit) {
+				outHit->position = { (float)hit.block.position.x, (float)hit.block.position.y, (float)hit.block.position.z };
+				outHit->normal = { hit.block.normal.x, hit.block.normal.y, hit.block.normal.z };
+				outHit->distance = hit.block.distance;
+
+				if (hit.block.actor && hit.block.actor->userData) {
+					entt::entity handle = (entt::entity)(uintptr_t)hit.block.actor->userData;
+					outHit->entity = { handle, scene };
+				}
+				else {
+					outHit->entity = {};
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	bool PhysicsSystem::sweepCapsule(Scene* scene, const Vec3& origin, float radius, float halfHeight, const Vec3& orientation, const Vec3& direction, float maxDistance, RaycastHit* outHit) {
+		if (!s_physXScene || direction.length() == 0.0f) return false;
+
+		physx::PxVec3 pxDir(direction.x, direction.y, direction.z); pxDir.normalize();
+		physx::PxTransform pose(physx::PxVec3(origin.x, origin.y, origin.z), EulerToPxQuat(orientation));
+		physx::PxCapsuleGeometry geom(radius, halfHeight);
+		physx::PxSweepBuffer hit;
+
+		if (s_physXScene->sweep(geom, pose, pxDir, maxDistance, hit)) {
+			if (outHit) {
+				outHit->position = { (float)hit.block.position.x, (float)hit.block.position.y, (float)hit.block.position.z };
+				outHit->normal = { hit.block.normal.x, hit.block.normal.y, hit.block.normal.z };
+				outHit->distance = hit.block.distance;
+				outHit->entity = (hit.block.actor && hit.block.actor->userData) ? Entity{ (entt::entity)(uintptr_t)hit.block.actor->userData, scene } : Entity{};
+			}
+			return true;
+		}
+		return false;
+	}
+
+	size_t PhysicsSystem::overlapBox(Scene* scene, const Vec3& center, const Vec3& halfExtents, const Vec3& orientation, uint64_t* outIdsHi, uint64_t* outIdsLo, size_t maxUUIDs) {
+		if (!s_physXScene) return 0;
+		physx::PxTransform pose(physx::PxVec3(center.x, center.y, center.z), EulerToPxQuat(orientation));
+		physx::PxBoxGeometry geom(halfExtents.x, halfExtents.y, halfExtents.z);
+		physx::PxOverlapHit hits[64]; physx::PxOverlapBuffer hitBuffer(hits, 64);
+
+		if (s_physXScene->overlap(geom, pose, hitBuffer)) {
+			size_t count = 0;
+			for (physx::PxU32 i = 0; i < hitBuffer.nbTouches && count < maxUUIDs; i++) {
+				if (hitBuffer.touches[i].actor && hitBuffer.touches[i].actor->userData) {
+					Entity entity = { (entt::entity)(uintptr_t)hitBuffer.touches[i].actor->userData, scene };
+					if (entity.isValid() && entity.hasComponent<UUIDComponent>()) {
+						UUID id = entity.getComponent<UUIDComponent>().id;
+						outIdsHi[count] = id.high; outIdsLo[count] = id.low; count++;
+					}
+				}
+			}
+			return count;
+		}
+		return 0;
+	}
+
+	size_t PhysicsSystem::overlapSphere(Scene* scene, const Vec3& center, float radius, uint64_t* outIdsHi, uint64_t* outIdsLo, size_t maxUUIDs) {
+		if (!s_physXScene) return 0;
+
+		physx::PxSphereGeometry geom(radius);
+		physx::PxTransform pose(physx::PxVec3(center.x, center.y, center.z));
+
+		physx::PxOverlapHit hits[64];
+		physx::PxOverlapBuffer hitBuffer(hits, 64);
+
+		if (s_physXScene->overlap(geom, pose, hitBuffer)) {
+			size_t count = 0;
+			for (physx::PxU32 i = 0; i < hitBuffer.nbTouches && count < maxUUIDs; i++) {
+				if (hitBuffer.touches[i].actor && hitBuffer.touches[i].actor->userData) {
+					entt::entity handle = (entt::entity)(uintptr_t)hitBuffer.touches[i].actor->userData;
+					Entity entity = { handle, scene };
+
+					if (entity.isValid() && entity.hasComponent<UUIDComponent>()) {
+						UUID id = entity.getComponent<UUIDComponent>().id;
+						outIdsHi[count] = id.high;
+						outIdsLo[count] = id.low;
+						count++;
+					}
+				}
+			}
+			return count;
+		}
+		return 0;
+	}
+
+	size_t PhysicsSystem::overlapCapsule(Scene* scene, const Vec3& center, float radius, float halfHeight, const Vec3& orientation, uint64_t* outIdsHi, uint64_t* outIdsLo, size_t maxUUIDs) {
+		if (!s_physXScene) return 0;
+
+		physx::PxTransform pose(physx::PxVec3(center.x, center.y, center.z), EulerToPxQuat(orientation));
+		physx::PxCapsuleGeometry geom(radius, halfHeight);
+		physx::PxOverlapHit hits[64]; physx::PxOverlapBuffer hitBuffer(hits, 64);
+
+		if (s_physXScene->overlap(geom, pose, hitBuffer)) {
+			size_t count = 0;
+			for (physx::PxU32 i = 0; i < hitBuffer.nbTouches && count < maxUUIDs; i++) {
+				if (hitBuffer.touches[i].actor && hitBuffer.touches[i].actor->userData) {
+					Entity entity = { (entt::entity)(uintptr_t)hitBuffer.touches[i].actor->userData, scene };
+					if (entity.isValid() && entity.hasComponent<UUIDComponent>()) {
+						UUID id = entity.getComponent<UUIDComponent>().id;
+						outIdsHi[count] = id.high; outIdsLo[count] = id.low; count++;
+					}
+				}
+			}
+			return count;
+		}
+		return 0;
+	}
+
 	void PhysicsSystem::createPhysicsActor(Entity entity, Scene* scene, RigidBodyComponent& rb, TransformComponent& transform) {
 		PxQuat pxQuat(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w);
 		if (pxQuat.magnitudeSquared() < 0.0001) pxQuat = PxQuat(PxIdentity);

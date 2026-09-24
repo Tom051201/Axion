@@ -33,8 +33,15 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, float> RigidBody_GetMass;
 		public delegate* unmanaged<ulong, ulong, float, void> RigidBody_SetMass;
 		public delegate* unmanaged<Vector3*, Vector3*, float, ulong*, ulong*, Vector3*, Vector3*, float*, byte> Physics_Raycast;
+		public delegate* unmanaged<Vector3*, Vector3*, Vector3*, Vector3*, float, ulong*, ulong*, Vector3*, Vector3*, float*, byte> Physics_SweepBox;
+		public delegate* unmanaged<Vector3*, float, Vector3*, float, ulong*, ulong*, Vector3*, Vector3*, float*, byte> Physics_SweepSphere;
+		public delegate* unmanaged<Vector3*, float, float, Vector3*, Vector3*, float, ulong*, ulong*, Vector3*, Vector3*, float*, byte> Physics_SweepCapsule;
+		public delegate* unmanaged<Vector3*, Vector3*, Vector3*, ulong*, ulong*, int, int> Physics_OverlapBox;
+		public delegate* unmanaged<Vector3*, float, ulong*, ulong*, int, int> Physics_OverlapSphere;
+		public delegate* unmanaged<Vector3*, float, float, Vector3*, ulong*, ulong*, int, int> Physics_OverlapCapsule;
 		public delegate* unmanaged<ulong, ulong, Vector3*, float, void> CCT_Move;
 		public delegate* unmanaged<ulong, ulong, byte> CCT_IsGrounded;
+
 
 		// -- AUDIO --
 		public delegate* unmanaged<ulong, ulong, void> Audio_Play;

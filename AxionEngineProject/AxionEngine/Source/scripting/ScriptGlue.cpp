@@ -247,6 +247,77 @@ namespace Axion {
 			return 0;
 		}
 
+		extern "C" uint8_t physics_sweepBox(float* origin, float* halfExtents, float* orientation, float* direction, float maxDistance, uint64_t* outIdHi, uint64_t* outIdLo, float* outPos, float* outNormal, float* outDistance) {
+			Scene* scene = ScriptEngine::getSceneContext(); if (!scene) return 0;
+			RaycastHit hit;
+			if (PhysicsSystem::sweepBox(scene, Vec3(origin[0], origin[1], origin[2]), Vec3(halfExtents[0], halfExtents[1], halfExtents[2]), Vec3(orientation[0], orientation[1], orientation[2]), Vec3(direction[0], direction[1], direction[2]), maxDistance, &hit)) {
+				if (hit.entity.isValid()) { UUID id = hit.entity.getComponent<UUIDComponent>().id; *outIdHi = id.high; *outIdLo = id.low; }
+				else { *outIdHi = 0; *outIdLo = 0; }
+				outPos[0] = hit.position.x; outPos[1] = hit.position.y; outPos[2] = hit.position.z;
+				outNormal[0] = hit.normal.x; outNormal[1] = hit.normal.y; outNormal[2] = hit.normal.z; *outDistance = hit.distance;
+				return 1;
+			}
+			return 0;
+		}
+
+		extern "C" uint8_t physics_sweepSphere(float* origin, float radius, float* direction, float maxDistance, uint64_t* outIdHi, uint64_t* outIdLo, float* outPos, float* outNormal, float* outDistance) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene) return 0;
+
+			RaycastHit hit;
+			if (PhysicsSystem::sweepSphere(scene, Vec3(origin[0], origin[1], origin[2]), radius, Vec3(direction[0], direction[1], direction[2]), maxDistance, &hit)) {
+				if (hit.entity.isValid()) {
+					UUID id = hit.entity.getComponent<UUIDComponent>().id;
+					*outIdHi = id.high;
+					*outIdLo = id.low;
+				}
+				else {
+					*outIdHi = 0;
+					*outIdLo = 0;
+				}
+
+				outPos[0] = hit.position.x;
+				outPos[1] = hit.position.y;
+				outPos[2] = hit.position.z;
+				outNormal[0] = hit.normal.x;
+				outNormal[1] = hit.normal.y;
+				outNormal[2] = hit.normal.z;
+				*outDistance = hit.distance;
+
+				return 1;
+			}
+			return 0;
+		}
+
+		extern "C" uint8_t physics_sweepCapsule(float* origin, float radius, float halfHeight, float* orientation, float* direction, float maxDistance, uint64_t* outIdHi, uint64_t* outIdLo, float* outPos, float* outNormal, float* outDistance) {
+			Scene* scene = ScriptEngine::getSceneContext(); if (!scene) return 0;
+			RaycastHit hit;
+			if (PhysicsSystem::sweepCapsule(scene, Vec3(origin[0], origin[1], origin[2]), radius, halfHeight, Vec3(orientation[0], orientation[1], orientation[2]), Vec3(direction[0], direction[1], direction[2]), maxDistance, &hit)) {
+				if (hit.entity.isValid()) { UUID id = hit.entity.getComponent<UUIDComponent>().id; *outIdHi = id.high; *outIdLo = id.low; }
+				else { *outIdHi = 0; *outIdLo = 0; }
+				outPos[0] = hit.position.x; outPos[1] = hit.position.y; outPos[2] = hit.position.z;
+				outNormal[0] = hit.normal.x; outNormal[1] = hit.normal.y; outNormal[2] = hit.normal.z; *outDistance = hit.distance;
+				return 1;
+			}
+			return 0;
+		}
+
+		extern "C" int physics_overlapBox(float* center, float* halfExtents, float* orientation, uint64_t* outIdsHi, uint64_t* outIdsLo, int maxArraySize) {
+			Scene* scene = ScriptEngine::getSceneContext(); if (!scene) return 0;
+			return (int)PhysicsSystem::overlapBox(scene, Vec3(center[0], center[1], center[2]), Vec3(halfExtents[0], halfExtents[1], halfExtents[2]), Vec3(orientation[0], orientation[1], orientation[2]), outIdsHi, outIdsLo, (size_t)maxArraySize);
+		}
+
+		extern "C" int physics_overlapSphere(float* center, float radius, uint64_t* outIdsHi, uint64_t* outIdsLo, int maxArraySize) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene) return 0;
+			return (int)PhysicsSystem::overlapSphere(scene, Vec3(center[0], center[1], center[2]), radius, outIdsHi, outIdsLo, (size_t)maxArraySize);
+		}
+
+		extern "C" int physics_overlapCapsule(float* center, float radius, float halfHeight, float* orientation, uint64_t* outIdsHi, uint64_t* outIdsLo, int maxArraySize) {
+			Scene* scene = ScriptEngine::getSceneContext(); if (!scene) return 0;
+			return (int)PhysicsSystem::overlapCapsule(scene, Vec3(center[0], center[1], center[2]), radius, halfHeight, Vec3(orientation[0], orientation[1], orientation[2]), outIdsHi, outIdsLo, (size_t)maxArraySize);
+		}
+
 		extern "C" void cct_move(uint64_t uuidHi, uint64_t uuidLo, float* displacement, float timestep) {
 			Entity entity = getEntityByUUID(uuidHi, uuidLo);
 			if (entity.isValid()) {
@@ -562,6 +633,12 @@ namespace Axion {
 		REGISTER_API(apiStruct, rigidbody_getMass);
 		REGISTER_API(apiStruct, rigidbody_setMass);
 		REGISTER_API(apiStruct, physics_raycast);
+		REGISTER_API(apiStruct, physics_sweepBox);
+		REGISTER_API(apiStruct, physics_sweepSphere);
+		REGISTER_API(apiStruct, physics_sweepCapsule);
+		REGISTER_API(apiStruct, physics_overlapBox);
+		REGISTER_API(apiStruct, physics_overlapSphere);
+		REGISTER_API(apiStruct, physics_overlapCapsule);
 		REGISTER_API(apiStruct, cct_move);
 		REGISTER_API(apiStruct, cct_isGrounded);
 

@@ -49,6 +49,12 @@ namespace Axion {
 		float(*rigidbody_getMass)(uint64_t, uint64_t);
 		void(*rigidbody_setMass)(uint64_t, uint64_t, float);
 		uint8_t(*physics_raycast)(float*, float*, float, uint64_t*, uint64_t*, float*, float*, float*);
+		uint8_t(*physics_sweepBox)(float*, float*, float*, float*, float, uint64_t*, uint64_t*, float*, float*, float*);
+		uint8_t(*physics_sweepSphere)(float*, float, float*, float, uint64_t*, uint64_t*, float*, float*, float*);
+		uint8_t(*physics_sweepCapsule)(float*, float, float, float*, float*, float, uint64_t*, uint64_t*, float*, float*, float*);
+		int(*physics_overlapBox)(float*, float*, float*, uint64_t*, uint64_t*, int);
+		int(*physics_overlapSphere)(float*, float, uint64_t*, uint64_t*, int);
+		int(*physics_overlapCapsule)(float*, float, float, float*, uint64_t*, uint64_t*, int);
 		void(*cct_move)(uint64_t, uint64_t, float*, float);
 		uint8_t(*cct_isGrounded)(uint64_t, uint64_t);
 

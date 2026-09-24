@@ -41,7 +41,7 @@ Entities:
       CollisionMask: 4294967295
       Material: 0
     ScriptComponent:
-      ClassName: CharacterController
+      ClassName: Player
   - Entity: b946d76c95251e8657372979eefb28ce
     TagComponent:
       Tag: Floor
@@ -141,3 +141,32 @@ Entities:
       EnableCollision: false
       IsBreakable: false
       BreakForce: 1000
+  - Entity: 7e5ab821a49b7268ddc0ef9a4eb36923
+    TagComponent:
+      Tag: Cube 1
+    TransformComponent:
+      Translation: [-2.12679315, 3.14537835, -0.99950099]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 2.01485109, 1]
+    MeshComponent:
+      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
+    MaterialComponent:
+      Materials:
+        - 468a1e72b23718f4152fb7ab16cd4a84
+    RigidBodyComponent:
+      BodyType: Dynamic
+      Mass: 10
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
