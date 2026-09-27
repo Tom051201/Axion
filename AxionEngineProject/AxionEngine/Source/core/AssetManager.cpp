@@ -17,6 +17,7 @@
 #include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/physics/PhysicsMesh.h"
 #include "AxionEngine/Source/pathfinding/NavMesh.h"
 
 namespace Axion {
@@ -51,6 +52,7 @@ namespace Axion {
 		release<AnimationClip>();
 		release<Prefab>();
 		release<NavMesh>();
+		release<PhysicsMesh>();
 
 		AX_CORE_LOG_INFO("AssetManager shutdown");
 	}
@@ -73,6 +75,7 @@ namespace Axion {
 			processLoadQueue<AnimationClip>(maxItemsThisFrame);
 			processLoadQueue<Prefab>(maxItemsThisFrame);
 			processLoadQueue<NavMesh>(maxItemsThisFrame);
+			processLoadQueue<PhysicsMesh>(maxItemsThisFrame);
 
 		}
 	}
@@ -142,6 +145,7 @@ namespace Axion {
 				case AssetType::SkeletalMesh:		removeAssetFromStorage<SkeletalMesh>(handle); break;
 				case AssetType::AnimationClip:		removeAssetFromStorage<AnimationClip>(handle); break;
 				case AssetType::NavMesh:			removeAssetFromStorage<NavMesh>(handle); break;
+				case AssetType::PhysicsMesh:		removeAssetFromStorage<PhysicsMesh>(handle); break;
 				default: break;
 			}
 		}
@@ -162,6 +166,7 @@ namespace Axion {
 		total += getPendingCount<AnimationClip>();
 		total += getPendingCount<Prefab>();
 		total += getPendingCount<NavMesh>();
+		total += getPendingCount<PhysicsMesh>();
 		return total > 0;
 	}
 
@@ -403,6 +408,23 @@ namespace Axion {
 		}
 
 		s_loader->loadNavMesh(handle, getAbsolute(registry->get(handle).filePath));
+		return handle;
+	}
+
+	// -- PhysicsMesh --
+	template<>
+	AssetHandle<PhysicsMesh> AssetManager::load<PhysicsMesh>(UUID handle) {
+		std::lock_guard<std::recursive_mutex> lock(storage<PhysicsMesh>().mutex);
+
+		if (has<PhysicsMesh>(handle)) return handle;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("PhysicsMesh UUID not found in AssetRegistry!");
+			return {};
+		}
+
+		s_loader->loadPhysicsMesh(handle, getAbsolute(registry->get(handle).filePath));
 		return handle;
 	}
 

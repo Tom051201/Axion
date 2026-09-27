@@ -50,6 +50,7 @@
 #include "AxionStudio/Source/ui/modals/SkyboxImportModal.h"
 #include "AxionStudio/Source/ui/modals/Texture2DImportModal.h"
 #include "AxionStudio/Source/ui/modals/TextureCubeImportModal.h"
+#include "AxionStudio/Source/ui/modals/PhysicsMeshImportModal.h"
 
 namespace {
 	constexpr float GRID_SPACING = 16.0f;
@@ -1120,6 +1121,10 @@ namespace Axion {
 
 		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Texture Cube", [this]() {
 			openAssetModal(&ContentBrowser::m_textureCubeImportModal);
+		}) });
+
+		createAssetMenuContent->addSlot({ {0,0}, SilicaHelpers::MakeContextMenuItem("Physics Mesh", [this]() {
+			openAssetModal(&ContentBrowser::m_physicsMeshImportModal);
 		}) });
 
 		return Silica::MakeWidget<Silica::SMenuAnchor>({

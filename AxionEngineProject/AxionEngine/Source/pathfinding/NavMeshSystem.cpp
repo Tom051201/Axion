@@ -7,12 +7,14 @@
 #include <DetourNavMesh.h>
 #include <DetourNavMeshQuery.h>
 #include <DetourNavMeshBuilder.h>
+#include <physx/include/PxPhysicsAPI.h>
 
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/BinaryHeaders.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Scene.h"
+#include "AxionEngine/Source/physics/PhysicsMesh.h"
 
 namespace Axion {
 
@@ -95,21 +97,40 @@ namespace Axion {
 				auto& tmc = entity.getComponent<TriangleMeshColliderComponent>();
 
 				if (tmc.collisionMesh.isValid()) {
-					Ref<Mesh> mesh = AssetManager::get<Mesh>(tmc.collisionMesh);
-					if (mesh) {
+					Ref<PhysicsMesh> physMesh = AssetManager::get<PhysicsMesh>(tmc.collisionMesh);
+					if (physMesh && physMesh->getType() == PhysicsMesh::Type::Triangle && physMesh->getRuntimeMesh()) {
+
+						physx::PxTriangleMesh* triMesh = static_cast<physx::PxTriangleMesh*>(physMesh->getRuntimeMesh());
+						const physx::PxVec3* pxVerts = triMesh->getVertices();
+						const void* pxTris = triMesh->getTriangles();
+						physx::PxU32 numVerts = triMesh->getNbVertices();
+						physx::PxU32 numTris = triMesh->getNbTriangles();
+						bool is16Bit = triMesh->getTriangleMeshFlags() & physx::PxTriangleMeshFlag::e16_BIT_INDICES;
+
 						int vOffset = (int)(verts.size() / 3);
 
-						// -- Loop through all vertices --
-						for (const auto& v : mesh->getVertices()) {
-							Vec4 worldPos = worldTransform * Vec4(v.position.x, v.position.y, v.position.z, 1.0f);
+						// -- Extract Vertices --
+						for (physx::PxU32 i = 0; i < numVerts; i++) {
+							Vec4 worldPos = worldTransform * Vec4(pxVerts[i].x, pxVerts[i].y, pxVerts[i].z, 1.0f);
 							verts.push_back(worldPos.x);
 							verts.push_back(worldPos.y);
 							verts.push_back(worldPos.z);
 						}
 
-						// -- Loop through all indices --
-						for (uint32_t index : mesh->getIndices()) {
-							tris.push_back(vOffset + (int)index);
+						// -- Extract Indices --
+						for (physx::PxU32 i = 0; i < numTris; i++) {
+							if (is16Bit) {
+								const physx::PxU16* indices16 = static_cast<const physx::PxU16*>(pxTris);
+								tris.push_back(vOffset + indices16[i * 3 + 0]);
+								tris.push_back(vOffset + indices16[i * 3 + 1]);
+								tris.push_back(vOffset + indices16[i * 3 + 2]);
+							}
+							else {
+								const physx::PxU32* indices32 = static_cast<const physx::PxU32*>(pxTris);
+								tris.push_back(vOffset + indices32[i * 3 + 0]);
+								tris.push_back(vOffset + indices32[i * 3 + 1]);
+								tris.push_back(vOffset + indices32[i * 3 + 2]);
+							}
 						}
 					}
 				}
@@ -120,21 +141,35 @@ namespace Axion {
 				auto& cc = entity.getComponent<ConvexColliderComponent>();
 
 				if (cc.collisionMesh.isValid()) {
-					Ref<Mesh> mesh = AssetManager::get<Mesh>(cc.collisionMesh);
-					if (mesh) {
+					Ref<PhysicsMesh> physMesh = AssetManager::get<PhysicsMesh>(cc.collisionMesh);
+					if (physMesh && physMesh->getType() == PhysicsMesh::Type::Convex && physMesh->getRuntimeMesh()) {
+
+						physx::PxConvexMesh* convexMesh = static_cast<physx::PxConvexMesh*>(physMesh->getRuntimeMesh());
+						const physx::PxVec3* pxVerts = convexMesh->getVertices();
+						const physx::PxU8* pxIndices = convexMesh->getIndexBuffer();
+						physx::PxU32 numVerts = convexMesh->getNbVertices();
+						physx::PxU32 numPolys = convexMesh->getNbPolygons();
+
 						int vOffset = (int)(verts.size() / 3);
 
-						// -- Loop through all vertices --
-						for (const auto& v : mesh->getVertices()) {
-							Vec4 worldPos = worldTransform * Vec4(v.position.x, v.position.y, v.position.z, 1.0f);
+						// -- Extract Vertices --
+						for (physx::PxU32 i = 0; i < numVerts; i++) {
+							Vec4 worldPos = worldTransform * Vec4(pxVerts[i].x, pxVerts[i].y, pxVerts[i].z, 1.0f);
 							verts.push_back(worldPos.x);
 							verts.push_back(worldPos.y);
 							verts.push_back(worldPos.z);
 						}
 
-						// -- Loop through all indices --
-						for (uint32_t index : mesh->getIndices()) {
-							tris.push_back(vOffset + (int)index);
+						// -- Extract Polygons  --
+						for (physx::PxU32 i = 0; i < numPolys; i++) {
+							physx::PxHullPolygon poly;
+							convexMesh->getPolygonData(i, poly);
+
+							for (physx::PxU32 j = 2; j < poly.mNbVerts; j++) {
+								tris.push_back(vOffset + pxIndices[poly.mIndexBase + 0]);
+								tris.push_back(vOffset + pxIndices[poly.mIndexBase + j - 1]);
+								tris.push_back(vOffset + pxIndices[poly.mIndexBase + j]);
+							}
 						}
 					}
 				}

@@ -19,6 +19,7 @@
 #include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/physics/PhysicsSystem.h"
 #include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 #include "AxionAssetPipeline/Source/importer/OBJImporter.h"
@@ -760,6 +761,32 @@ namespace Axion {
 					return nullptr;
 				}
 				return NavMeshSystem::deserializeFromStream(in);
+			});
+		});
+	}
+
+	void EditorAssetLoader::loadPhysicsMesh(UUID handle, const std::filesystem::path& absolutePath) {
+		AssetManager::storage<PhysicsMesh>().assets[handle] = nullptr;
+		AssetManager::storage<PhysicsMesh>().handleToPath[handle] = absolutePath;
+
+		JobSystem::submit([handle, absolutePath]() {
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) return;
+
+			YAML::Node data = YAML::Load(stream);
+			std::string rawSource = data["Source"].as<std::string>();
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
+
+			std::string typeStr = data["PhysicsType"] ? data["PhysicsType"].as<std::string>() : "Convex";
+			PhysicsMesh::Type meshType = (typeStr == "Triangle") ? PhysicsMesh::Type::Triangle : PhysicsMesh::Type::Convex;
+
+			AssetManager::submitToMainThread<PhysicsMesh>(handle, [sourcePath, meshType]() -> Ref<PhysicsMesh> {
+				std::ifstream in(sourcePath, std::ios::in | std::ios::binary);
+				if (!in.is_open()) {
+					AX_CORE_LOG_ERROR("Failed to open PhysicsMesh binary file: {}", sourcePath.string());
+					return nullptr;
+				}
+				return PhysicsSystem::deserializePhysicsMesh(in, meshType);
 			});
 		});
 	}

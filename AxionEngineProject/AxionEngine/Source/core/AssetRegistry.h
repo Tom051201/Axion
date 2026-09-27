@@ -22,7 +22,8 @@ namespace Axion {
 		Scene,
 		AnimationClip,
 		SkeletalMesh,
-		NavMesh
+		NavMesh,
+		PhysicsMesh
 	};
 
 

@@ -17,6 +17,7 @@
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/audio/AudioSource.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/physics/PhysicsMesh.h"
 #include "AxionEngine/Source/scene/ParticleSystem.h"
 #include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
@@ -305,7 +306,7 @@ namespace Axion {
 
 
 	struct TriangleMeshColliderComponent {
-		AssetHandle<Mesh> collisionMesh;
+		AssetHandle<PhysicsMesh> collisionMesh;
 		bool isTrigger = false;
 
 		uint32_t layer = 0x0001;
@@ -320,8 +321,7 @@ namespace Axion {
 
 
 	struct ConvexColliderComponent {
-		AssetHandle<Mesh> collisionMesh;
-		uint32_t vertexLimit = 255;
+		AssetHandle<PhysicsMesh> collisionMesh;
 		bool isTrigger = false;
 
 		uint32_t layer = 0x0001;

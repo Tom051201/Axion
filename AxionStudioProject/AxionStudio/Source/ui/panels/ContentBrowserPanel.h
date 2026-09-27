@@ -42,6 +42,7 @@ namespace Axion {
 	class SkyboxImportModal;
 	class Texture2DImportModal;
 	class TextureCubeImportModal;
+	class PhysicsMeshImportModal;
 }
 
 namespace Axion {
@@ -142,6 +143,7 @@ namespace Axion {
 		std::shared_ptr<SkyboxImportModal> m_skyboxImportModal;
 		std::shared_ptr<Texture2DImportModal> m_texture2DImportModal;
 		std::shared_ptr<TextureCubeImportModal> m_textureCubeImportModal;
+		std::shared_ptr<PhysicsMeshImportModal> m_physicsMeshImportModal;
 
 		// -- Silica --
 		bool m_rebuildQueued = false;

@@ -15,6 +15,8 @@
 #include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/physics/PhysicsMesh.h"
+#include "AxionEngine/Source/physics/PhysicsSystem.h"
 #include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 namespace Axion {
@@ -621,6 +623,27 @@ namespace Axion {
 				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
 
 				return NavMeshSystem::deserializeFromStream(in);
+			});
+		});
+	}
+
+	void BinaryAssetLoader::loadPhysicsMesh(UUID handle, const std::filesystem::path& absolutePath) {
+		AssetManager::storage<PhysicsMesh>().assets[handle] = nullptr;
+		AssetManager::storage<PhysicsMesh>().handleToPath[handle] = absolutePath;
+
+		JobSystem::submit([handle, absolutePath]() {
+			if (!std::filesystem::exists(absolutePath)) return;
+
+			AssetManager::submitToMainThread<PhysicsMesh>(handle, [absolutePath]() -> Ref<PhysicsMesh> {
+				std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+				if (!in.is_open()) return nullptr;
+				BinaryAssetHeader header;
+				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+				uint32_t pType;
+				in.read(reinterpret_cast<char*>(&pType), sizeof(uint32_t));
+				PhysicsMesh::Type meshType = static_cast<PhysicsMesh::Type>(pType);
+
+				return PhysicsSystem::deserializePhysicsMesh(in, meshType);
 			});
 		});
 	}

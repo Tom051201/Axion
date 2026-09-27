@@ -1,6 +1,7 @@
 #include "studiopch.h"
 #include "EditorLayer.h"
 
+#include <physx/include/PxPhysicsAPI.h>
 #include <Quartz/include/SQuartzEditor.h>
 #include <Silica/include/Theme.h>
 #include <Silica/include/SBox.h>
@@ -776,18 +777,19 @@ namespace Axion {
 
 			// -- Triangle Collider --
 			if (m_selectedEntity.hasComponent<TriangleMeshColliderComponent>()) {
-				auto& cc = m_selectedEntity.getComponent<TriangleMeshColliderComponent>();
+				auto& tmc = m_selectedEntity.getComponent<TriangleMeshColliderComponent>();
 
-				if (cc.collisionMesh.isValid()) {
-					Ref<Mesh> mesh = AssetManager::get<Mesh>(cc.collisionMesh);
-					if (mesh) {
-						Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
-						Vec4 color = cc.isTrigger ? Vec4(1.0f, 0.57f, 0.0f, 1.0f) : Vec4(0.0f, 1.0f, 0.0f, 1.0f);
-
-						WireframeRenderer::drawMesh(worldTransform, mesh, color);
+				if (tmc.collisionMesh.isValid()) {
+					Ref<PhysicsMesh> physMesh = AssetManager::get<PhysicsMesh>(tmc.collisionMesh);
+					if (physMesh) {
+						Ref<Mesh> debugMesh = getPhysicsDebugMesh(physMesh);
+						if (debugMesh) {
+							Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
+							Vec4 color = tmc.isTrigger ? Vec4(1.0f, 0.57f, 0.0f, 1.0f) : Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+							WireframeRenderer::drawMesh(worldTransform, debugMesh, color);
+						}
 					}
 				}
-
 			}
 
 			// -- Convex Collider --
@@ -795,12 +797,14 @@ namespace Axion {
 				auto& cc = m_selectedEntity.getComponent<ConvexColliderComponent>();
 
 				if (cc.collisionMesh.isValid()) {
-					Ref<Mesh> mesh = AssetManager::get<Mesh>(cc.collisionMesh);
-					if (mesh) {
-						Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
-						Vec4 color = cc.isTrigger ? Vec4(1.0f, 0.57f, 0.0f, 1.0f) : Vec4(0.0f, 1.0f, 0.0f, 1.0f);
-
-						WireframeRenderer::drawMesh(worldTransform, mesh, color);
+					Ref<PhysicsMesh> physMesh = AssetManager::get<PhysicsMesh>(cc.collisionMesh);
+					if (physMesh) {
+						Ref<Mesh> debugMesh = getPhysicsDebugMesh(physMesh);
+						if (debugMesh) {
+							Mat4 worldTransform = m_activeScene->getWorldTransform(m_selectedEntity);
+							Vec4 color = cc.isTrigger ? Vec4(1.0f, 0.57f, 0.0f, 1.0f) : Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+							WireframeRenderer::drawMesh(worldTransform, debugMesh, color);
+						}
 					}
 				}
 			}
@@ -1279,6 +1283,68 @@ namespace Axion {
 		}
 
 		EditorModalManager::open(m_systemInfoModal->getWidget());
+	}
+
+	Ref<Mesh> EditorLayer::getPhysicsDebugMesh(Ref<PhysicsMesh> physicsMesh) {
+		if (!physicsMesh || !physicsMesh->getRuntimeMesh()) return nullptr;
+
+		void* runtimeMesh = physicsMesh->getRuntimeMesh();
+
+		// -- Return cached mesh if we already generated it --
+		if (m_physicsDebugMeshCache.find(runtimeMesh) != m_physicsDebugMeshCache.end()) {
+			return m_physicsDebugMeshCache[runtimeMesh];
+		}
+
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+
+		if (physicsMesh->getType() == PhysicsMesh::Type::Triangle) {
+			physx::PxTriangleMesh* triMesh = static_cast<physx::PxTriangleMesh*>(runtimeMesh);
+
+			// Extract Verts
+			const physx::PxVec3* pxVerts = triMesh->getVertices();
+			for (physx::PxU32 i = 0; i < triMesh->getNbVertices(); i++) {
+				Vertex v;
+				v.position = { pxVerts[i].x, pxVerts[i].y, pxVerts[i].z };
+				vertices.push_back(v);
+			}
+
+			// Extract Indices
+			const void* pxTris = triMesh->getTriangles();
+			bool is16Bit = triMesh->getTriangleMeshFlags() & physx::PxTriangleMeshFlag::e16_BIT_INDICES;
+			for (physx::PxU32 i = 0; i < triMesh->getNbTriangles() * 3; i++) {
+				if (is16Bit) indices.push_back(static_cast<const physx::PxU16*>(pxTris)[i]);
+				else indices.push_back(static_cast<const physx::PxU32*>(pxTris)[i]);
+			}
+		}
+		else if (physicsMesh->getType() == PhysicsMesh::Type::Convex) {
+			physx::PxConvexMesh* convexMesh = static_cast<physx::PxConvexMesh*>(runtimeMesh);
+
+			// Extract Verts
+			const physx::PxVec3* pxVerts = convexMesh->getVertices();
+			for (physx::PxU32 i = 0; i < convexMesh->getNbVertices(); i++) {
+				Vertex v;
+				v.position = { pxVerts[i].x, pxVerts[i].y, pxVerts[i].z };
+				vertices.push_back(v);
+			}
+
+			// Extract Indices (Triangulate Polygons)
+			const physx::PxU8* pxIndices = convexMesh->getIndexBuffer();
+			for (physx::PxU32 i = 0; i < convexMesh->getNbPolygons(); i++) {
+				physx::PxHullPolygon poly;
+				convexMesh->getPolygonData(i, poly);
+				for (physx::PxU32 j = 2; j < poly.mNbVerts; j++) {
+					indices.push_back(pxIndices[poly.mIndexBase + 0]);
+					indices.push_back(pxIndices[poly.mIndexBase + j - 1]);
+					indices.push_back(pxIndices[poly.mIndexBase + j]);
+				}
+			}
+		}
+
+		// -- Build, Cache, and Return --
+		Ref<Mesh> debugMesh = Mesh::create(vertices, indices);
+		m_physicsDebugMeshCache[runtimeMesh] = debugMesh;
+		return debugMesh;
 	}
 
 }

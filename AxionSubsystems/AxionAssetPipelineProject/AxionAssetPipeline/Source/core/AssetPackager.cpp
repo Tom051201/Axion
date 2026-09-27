@@ -24,6 +24,7 @@
 #include "AxionAssetPipeline/Source/parser/AnimationClipParser.h"
 #include "AxionAssetPipeline/Source/parser/SkeletalMeshParser.h"
 #include "AxionAssetPipeline/Source/parser/NavMeshParser.h"
+#include "AxionAssetPipeline/Source/parser/PhysicsMeshParser.h"
 
 namespace Axion::AAP {
 
@@ -49,273 +50,287 @@ namespace Axion::AAP {
 			std::filesystem::create_directories(runtimeAbsolutePath.parent_path());
 
 			switch (metadata.type) {
-				case AssetType::Mesh: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
+			case AssetType::Mesh: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					MeshAssetData meshData;
-					meshData.uuid = uuid;
-					meshData.name = data["Name"].as<std::string>();
-					meshData.fileFormat = FormatUtils::meshFormatFromString(data["Format"].as<std::string>());
-					meshData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
+				MeshAssetData meshData;
+				meshData.uuid = uuid;
+				meshData.name = data["Name"].as<std::string>();
+				meshData.fileFormat = FormatUtils::meshFormatFromString(data["Format"].as<std::string>());
+				meshData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
-					MeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::AudioClip: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
+				MeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::AudioClip: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					AudioAssetData audioData;
-					audioData.uuid = uuid;
-					audioData.name = data["Name"].as<std::string>();
-					audioData.audioFilePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
-					audioData.fileFormat = FormatUtils::audioFormatFromString(data["Format"].as<std::string>());
-					audioData.mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
+				AudioAssetData audioData;
+				audioData.uuid = uuid;
+				audioData.name = data["Name"].as<std::string>();
+				audioData.audioFilePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
+				audioData.fileFormat = FormatUtils::audioFormatFromString(data["Format"].as<std::string>());
+				audioData.mode = EnumUtils::AudioClipModeFromString(data["Mode"].as<std::string>());
 
-					AudioParser::createBinaryFile(audioData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::Material: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
+				AudioParser::createBinaryFile(audioData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::Material: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					MaterialAssetData matData;
-					matData.uuid = uuid;
-					matData.name = data["Name"].as<std::string>();
-					matData.properties.albedoColor = data["AlbedoColor"].as<Vec4>();
-					matData.properties.metalness = data["Metalness"].as<float>();
-					matData.properties.roughness = data["Roughness"].as<float>();
-					matData.properties.emissionStrength = data["Emission"].as<float>();
-					matData.properties.tiling = data["Tiling"].as<float>();
-					matData.properties.useNormalMap = data["UseNormalMap"].as<float>();
-					matData.properties.useMetalnessMap = data["UseMetalnessMap"].as<float>();
-					matData.properties.useRoughnessMap = data["UseRoughnessMap"].as<float>();
-					matData.properties.useOcclusionMap = data["UseOcclusionMap"].as<float>();
+				MaterialAssetData matData;
+				matData.uuid = uuid;
+				matData.name = data["Name"].as<std::string>();
+				matData.properties.albedoColor = data["AlbedoColor"].as<Vec4>();
+				matData.properties.metalness = data["Metalness"].as<float>();
+				matData.properties.roughness = data["Roughness"].as<float>();
+				matData.properties.emissionStrength = data["Emission"].as<float>();
+				matData.properties.tiling = data["Tiling"].as<float>();
+				matData.properties.useNormalMap = data["UseNormalMap"].as<float>();
+				matData.properties.useMetalnessMap = data["UseMetalnessMap"].as<float>();
+				matData.properties.useRoughnessMap = data["UseRoughnessMap"].as<float>();
+				matData.properties.useOcclusionMap = data["UseOcclusionMap"].as<float>();
 
-					auto registry = ProjectManager::getProject()->getAssetRegistry();
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
 
-					if (data["Pipeline"]) {
-						UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
-						if (registry->contains(pipeUUID)) {
-							matData.pipelineAsset = registry->get(pipeUUID).filePath.string();
-						}
+				if (data["Pipeline"]) {
+					UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
+					if (registry->contains(pipeUUID)) {
+						matData.pipelineAsset = registry->get(pipeUUID).filePath.string();
 					}
-					else {
-						matData.pipelineAsset = "";
+				}
+				else {
+					matData.pipelineAsset = "";
+				}
+
+				if (data["Textures"]) {
+					auto texturesNode = data["Textures"];
+					if (texturesNode["Albedo"]) matData.textures[TextureSlot::Albedo] = registry->get(UUID::fromString(texturesNode["Albedo"].as<std::string>())).filePath.string();
+					if (texturesNode["Normal"]) matData.textures[TextureSlot::Normal] = registry->get(UUID::fromString(texturesNode["Normal"].as<std::string>())).filePath.string();
+					if (texturesNode["Metalness"]) matData.textures[TextureSlot::Metalness] = registry->get(UUID::fromString(texturesNode["Metalness"].as<std::string>())).filePath.string();
+					if (texturesNode["Roughness"]) matData.textures[TextureSlot::Roughness] = registry->get(UUID::fromString(texturesNode["Roughness"].as<std::string>())).filePath.string();
+					if (texturesNode["Occlusion"]) matData.textures[TextureSlot::Occlusion] = registry->get(UUID::fromString(texturesNode["Occlusion"].as<std::string>())).filePath.string();
+					if (texturesNode["Emissive"]) matData.textures[TextureSlot::Emissive] = registry->get(UUID::fromString(texturesNode["Emissive"].as<std::string>())).filePath.string();
+				}
+
+				MaterialParser::createBinaryFile(matData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::PhysicsMaterial: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
+
+				PhysicsMaterialAssetData pmatData;
+				pmatData.uuid = uuid;
+				pmatData.name = data["Name"].as<std::string>();
+				pmatData.staticFriction = data["StaticFriction"].as<float>();
+				pmatData.dynamicFriction = data["DynamicFriction"].as<float>();
+				pmatData.restitution = data["Restitution"].as<float>();
+
+				PhysicsMaterialParser::createBinaryFile(pmatData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::Pipeline: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
+
+				PipelineAssetData pipeData;
+				pipeData.uuid = uuid;
+				pipeData.name = data["Name"].as<std::string>();
+
+				YAML::Node specData = data["Specification"];
+
+				UUID shaderUUID = UUID::fromString(specData["Shader"].as<std::string>());
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+				if (registry->contains(shaderUUID)) {
+					pipeData.shaderFilePath = registry->get(shaderUUID).filePath.string();
+				}
+
+				pipeData.spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
+				pipeData.spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
+				pipeData.spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
+				pipeData.spec.depthTest = specData["DepthTest"].as<bool>();
+				pipeData.spec.depthWrite = specData["DepthWrite"].as<bool>();
+				pipeData.spec.depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
+				pipeData.spec.stencilEnabled = specData["StencilEnabled"].as<bool>();
+				pipeData.spec.sampleCount = specData["SampleCount"].as<uint32_t>();
+				pipeData.spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
+				pipeData.spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
+
+				YAML::Node layoutData = specData["BufferLayout"];
+				if (layoutData && layoutData.IsSequence()) {
+					std::vector<BufferElement> elements;
+					elements.reserve(layoutData.size());
+					for (const auto& elemNode : layoutData) {
+						std::string name = elemNode["Name"].as<std::string>();
+						ShaderDataType type = EnumUtils::shaderDataTypeFromString(elemNode["Type"].as<std::string>());
+						BufferElement elem(name, type);
+						if (elemNode["Size"]) elem.size = elemNode["Size"].as<uint32_t>();
+						if (elemNode["Offset"]) elem.offset = elemNode["Offset"].as<uint32_t>();
+						if (elemNode["Instanced"]) elem.instanced = elemNode["Instanced"].as<bool>();
+						elements.push_back(elem);
 					}
+					BufferLayout layout(elements);
+					layout.calculateOffsetAndStride();
+					pipeData.spec.vertexLayout = layout;
+				}
 
-					if (data["Textures"]) {
-						auto texturesNode = data["Textures"];
-						if (texturesNode["Albedo"]) matData.textures[TextureSlot::Albedo] = registry->get(UUID::fromString(texturesNode["Albedo"].as<std::string>())).filePath.string();
-						if (texturesNode["Normal"]) matData.textures[TextureSlot::Normal] = registry->get(UUID::fromString(texturesNode["Normal"].as<std::string>())).filePath.string();
-						if (texturesNode["Metalness"]) matData.textures[TextureSlot::Metalness] = registry->get(UUID::fromString(texturesNode["Metalness"].as<std::string>())).filePath.string();
-						if (texturesNode["Roughness"]) matData.textures[TextureSlot::Roughness] = registry->get(UUID::fromString(texturesNode["Roughness"].as<std::string>())).filePath.string();
-						if (texturesNode["Occlusion"]) matData.textures[TextureSlot::Occlusion] = registry->get(UUID::fromString(texturesNode["Occlusion"].as<std::string>())).filePath.string();
-						if (texturesNode["Emissive"]) matData.textures[TextureSlot::Emissive] = registry->get(UUID::fromString(texturesNode["Emissive"].as<std::string>())).filePath.string();
+				PipelineParser::createBinaryFile(pipeData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::Shader: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
+
+				ShaderAssetData shaderData;
+				shaderData.uuid = uuid;
+				shaderData.fileFormat = FormatUtils::shaderFormatFromString(data["Format"].as<std::string>());
+				shaderData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
+
+				YAML::Node specData = data["Specification"];
+				shaderData.spec.name = specData["Name"].as<std::string>();
+				if (specData["BatchTextures"]) {
+					shaderData.spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
+				}
+
+				ShaderParser::createBinaryFile(shaderData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::Skybox: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
+
+				SkyboxAssetData skyData;
+				skyData.uuid = uuid;
+				skyData.name = data["Name"].as<std::string>();
+
+				auto registry = ProjectManager::getProject()->getAssetRegistry();
+
+				if (data["Pipeline"]) {
+					UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
+					if (registry->contains(pipeUUID)) {
+						skyData.pipelinePath = registry->get(pipeUUID).filePath.string();
 					}
-
-					MaterialParser::createBinaryFile(matData, runtimeAbsolutePath);
-					break;
 				}
-				case AssetType::PhysicsMaterial: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
-
-					PhysicsMaterialAssetData pmatData;
-					pmatData.uuid = uuid;
-					pmatData.name = data["Name"].as<std::string>();
-					pmatData.staticFriction = data["StaticFriction"].as<float>();
-					pmatData.dynamicFriction = data["DynamicFriction"].as<float>();
-					pmatData.restitution = data["Restitution"].as<float>();
-
-					PhysicsMaterialParser::createBinaryFile(pmatData, runtimeAbsolutePath);
-					break;
+				else {
+					skyData.pipelinePath = "";
 				}
-				case AssetType::Pipeline: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
 
-					PipelineAssetData pipeData;
-					pipeData.uuid = uuid;
-					pipeData.name = data["Name"].as<std::string>();
+				UUID texUUID = UUID::fromString(data["TextureCube"].as<std::string>());
+				if (registry->contains(texUUID)) skyData.textureCubePath = registry->get(texUUID).filePath.string();
 
-					YAML::Node specData = data["Specification"];
+				SkyboxParser::createBinaryFile(skyData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::TextureCube: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					UUID shaderUUID = UUID::fromString(specData["Shader"].as<std::string>());
-					auto registry = ProjectManager::getProject()->getAssetRegistry();
-					if (registry->contains(shaderUUID)) {
-						pipeData.shaderFilePath = registry->get(shaderUUID).filePath.string();
-					}
+				TextureCubeAssetData texData;
+				texData.uuid = uuid;
+				texData.name = data["Name"].as<std::string>();
+				texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
+				texData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
-					pipeData.spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
-					pipeData.spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
-					pipeData.spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
-					pipeData.spec.depthTest = specData["DepthTest"].as<bool>();
-					pipeData.spec.depthWrite = specData["DepthWrite"].as<bool>();
-					pipeData.spec.depthFunction = EnumUtils::depthCompareFromString(specData["DepthFunction"].as<std::string>());
-					pipeData.spec.stencilEnabled = specData["StencilEnabled"].as<bool>();
-					pipeData.spec.sampleCount = specData["SampleCount"].as<uint32_t>();
-					pipeData.spec.cullMode = EnumUtils::cullModeFromString(specData["CullMode"].as<std::string>());
-					pipeData.spec.topology = EnumUtils::primitiveTopologyFromString(specData["Topology"].as<std::string>());
+				TextureCubeParser::createBinaryFile(texData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::Texture2D: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					YAML::Node layoutData = specData["BufferLayout"];
-					if (layoutData && layoutData.IsSequence()) {
-						std::vector<BufferElement> elements;
-						elements.reserve(layoutData.size());
-						for (const auto& elemNode : layoutData) {
-							std::string name = elemNode["Name"].as<std::string>();
-							ShaderDataType type = EnumUtils::shaderDataTypeFromString(elemNode["Type"].as<std::string>());
-							BufferElement elem(name, type);
-							if (elemNode["Size"]) elem.size = elemNode["Size"].as<uint32_t>();
-							if (elemNode["Offset"]) elem.offset = elemNode["Offset"].as<uint32_t>();
-							if (elemNode["Instanced"]) elem.instanced = elemNode["Instanced"].as<bool>();
-							elements.push_back(elem);
-						}
-						BufferLayout layout(elements);
-						layout.calculateOffsetAndStride();
-						pipeData.spec.vertexLayout = layout;
-					}
+				Texture2DAssetData texData;
+				texData.uuid = uuid;
+				texData.name = data["Name"].as<std::string>();
+				texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
+				texData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
-					PipelineParser::createBinaryFile(pipeData, runtimeAbsolutePath);
-					break;
+				Texture2DParser::createBinaryFile(texData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::Prefab: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
+
+				PrefabAssetData prefabData;
+				prefabData.uuid = uuid;
+				prefabData.name = data["Name"] ? data["Name"].as<std::string>() : "Prefab";
+				prefabData.scene = std::make_shared<Scene>();
+
+				YAML::Node entityNode = data["Entity"];
+				prefabData.entity = SceneSerializer::deserializeEntityNode(prefabData.scene.get(), entityNode, false);
+
+				PrefabParser::createBinaryFile(prefabData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::Scene: {
+				Shared<Scene> scene = std::make_shared<Scene>();
+				SceneSerializer serializer(scene);
+				if (serializer.deserializeText(inPath)) {
+					serializer.serializeBinary(runtimeAbsolutePath);
 				}
-				case AssetType::Shader: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
-
-					ShaderAssetData shaderData;
-					shaderData.uuid = uuid;
-					shaderData.fileFormat = FormatUtils::shaderFormatFromString(data["Format"].as<std::string>());
-					shaderData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
-
-					YAML::Node specData = data["Specification"];
-					shaderData.spec.name = specData["Name"].as<std::string>();
-					if (specData["BatchTextures"]) {
-						shaderData.spec.batchTextures = specData["BatchTextures"].as<uint32_t>();
-					}
-
-					ShaderParser::createBinaryFile(shaderData, runtimeAbsolutePath);
-					break;
+				else {
+					AX_CORE_LOG_ERROR("Failed to bake scene {}", inPath.string());
 				}
-				case AssetType::Skybox: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
+				break;
+			}
+			case AssetType::AnimationClip: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					SkyboxAssetData skyData;
-					skyData.uuid = uuid;
-					skyData.name = data["Name"].as<std::string>();
+				AnimationClipAssetData clipData;
+				clipData.uuid = uuid;
+				clipData.name = data["Name"].as<std::string>();
+				clipData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
-					auto registry = ProjectManager::getProject()->getAssetRegistry();
+				AnimationClipParser::createBinaryFile(clipData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::SkeletalMesh: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					if (data["Pipeline"]) {
-						UUID pipeUUID = UUID::fromString(data["Pipeline"].as<std::string>());
-						if (registry->contains(pipeUUID)) {
-							skyData.pipelinePath = registry->get(pipeUUID).filePath.string();
-						}
-					}
-					else {
-						skyData.pipelinePath = "";
-					}
+				SkeletalMeshAssetData meshData;
+				meshData.uuid = uuid;
+				meshData.name = data["Name"].as<std::string>();
+				meshData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
-					UUID texUUID = UUID::fromString(data["TextureCube"].as<std::string>());
-					if (registry->contains(texUUID)) skyData.textureCubePath = registry->get(texUUID).filePath.string();
+				SkeletalMeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::NavMesh: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					SkyboxParser::createBinaryFile(skyData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::TextureCube: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
+				NavMeshAssetData navData;
+				navData.uuid = uuid;
+				navData.name = data["Name"].as<std::string>();
+				navData.sourcePath = PathResolver::resolve(data["Source"].as<std::string>());
 
-					TextureCubeAssetData texData;
-					texData.uuid = uuid;
-					texData.name = data["Name"].as<std::string>();
-					texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
-					texData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
+				NavMeshParser::createBinaryFile(navData, runtimeAbsolutePath);
+				break;
+			}
+			case AssetType::PhysicsMesh: {
+				std::ifstream stream(inPath);
+				YAML::Node data = YAML::Load(stream);
 
-					TextureCubeParser::createBinaryFile(texData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::Texture2D: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
+				PhysicsMeshAssetData physData;
+				physData.uuid = uuid;
+				physData.name = data["Name"].as<std::string>();
+				std::string typeStr = data["PhysicsType"] ? data["PhysicsType"].as<std::string>() : "Convex";
+				physData.type = (typeStr == "Triangle") ? PhysicsMesh::Type::Triangle : PhysicsMesh::Type::Convex;
+				physData.sourcePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
-					Texture2DAssetData texData;
-					texData.uuid = uuid;
-					texData.name = data["Name"].as<std::string>();
-					texData.fileFormat = FormatUtils::textureFormatFromString(data["Format"].as<std::string>());
-					texData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
-
-					Texture2DParser::createBinaryFile(texData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::Prefab: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
-
-					PrefabAssetData prefabData;
-					prefabData.uuid = uuid;
-					prefabData.name = data["Name"] ? data["Name"].as<std::string>() : "Prefab";
-					prefabData.scene = std::make_shared<Scene>();
-
-					YAML::Node entityNode = data["Entity"];
-					prefabData.entity = SceneSerializer::deserializeEntityNode(prefabData.scene.get(), entityNode, false);
-
-					PrefabParser::createBinaryFile(prefabData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::Scene: {
-					Shared<Scene> scene = std::make_shared<Scene>();
-					SceneSerializer serializer(scene);
-					if (serializer.deserializeText(inPath)) {
-						serializer.serializeBinary(runtimeAbsolutePath);
-					}
-					else {
-						AX_CORE_LOG_ERROR("Failed to bake scene {}", inPath.string());
-					}
-					break;
-				}
-				case AssetType::AnimationClip: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
-
-					AnimationClipAssetData clipData;
-					clipData.uuid = uuid;
-					clipData.name = data["Name"].as<std::string>();
-					clipData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
-
-					AnimationClipParser::createBinaryFile(clipData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::SkeletalMesh: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
-
-					SkeletalMeshAssetData meshData;
-					meshData.uuid = uuid;
-					meshData.name = data["Name"].as<std::string>();
-					meshData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
-
-					SkeletalMeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
-					break;
-				}
-				case AssetType::NavMesh: {
-					std::ifstream stream(inPath);
-					YAML::Node data = YAML::Load(stream);
-
-					NavMeshAssetData navData;
-					navData.uuid = uuid;
-					navData.name = data["Name"].as<std::string>();
-					navData.sourcePath = PathResolver::resolve(data["Source"].as<std::string>());
-
-					NavMeshParser::createBinaryFile(navData, runtimeAbsolutePath);
-					break;
-				}
-				default: {
-					AX_CORE_LOG_WARN("Asset Type not supported for packaging yet: {}", AssetRegistry::assetTypeToString(metadata.type));
-					break;
-				}
+				PhysicsMeshParser::createBinaryFile(physData, runtimeAbsolutePath);
+				break;
+			}
+			default: {
+				AX_CORE_LOG_WARN("Asset Type not supported for packaging yet: {}", AssetRegistry::assetTypeToString(metadata.type));
+				break;
+			}
 			}
 
 			AssetMetadata runtimeMetadata;

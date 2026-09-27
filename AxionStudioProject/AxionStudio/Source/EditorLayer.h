@@ -120,6 +120,9 @@ namespace Axion {
 		AXNetwork::NetworkServer m_testServer;
 		AXNetwork::NetworkClient m_testClient;
 
+		// -- Debug Rendering --
+		Ref<Mesh> getPhysicsDebugMesh(Ref<PhysicsMesh> physicsMesh);
+		std::unordered_map<void*, Ref<Mesh>> m_physicsDebugMeshCache;
 
 
 		void playScene();

@@ -854,33 +854,20 @@ namespace Axion {
 		if (entity.hasComponent<ConvexColliderComponent>()) {
 			auto& cc = entity.getComponent<ConvexColliderComponent>();
 			PxMaterial* material = getOrCreatePhysXMaterial(cc.material);
-			Ref<Mesh> meshAsset = AssetManager::get<Mesh>(cc.collisionMesh);
+			Ref<PhysicsMesh> physicsMesh = AssetManager::get<PhysicsMesh>(cc.collisionMesh);
 
-			if (meshAsset && !meshAsset->getVertices().empty()) {
-				PxConvexMeshDesc convexDesc;
-				convexDesc.points.count = static_cast<physx::PxU32>(meshAsset->getVertices().size());
-				convexDesc.points.stride = sizeof(Axion::Vertex);
-				convexDesc.points.data = meshAsset->getVertices().data();
-				convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
-				convexDesc.vertexLimit = cc.vertexLimit;
+			if (physicsMesh && physicsMesh->getType() == PhysicsMesh::Type::Convex && physicsMesh->getRuntimeMesh()) {
+				PxConvexMesh* convexMesh = static_cast<physx::PxConvexMesh*>(physicsMesh->getRuntimeMesh());
+				PxMeshScale pxScale(PxVec3(transform.scale.x, transform.scale.y, transform.scale.z), PxQuat(PxIdentity));
 
-				PxDefaultMemoryOutputStream writeBuffer;
-				PxConvexMeshCookingResult::Enum result;
-				PxCookingParams params(s_physics->getTolerancesScale());
+				PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxConvexMeshGeometry(convexMesh, pxScale), *material);
+				setupShapeFilterData(shape, cc.layer, cc.collisionMask);
 
-				if (PxCookConvexMesh(params, convexDesc, writeBuffer, &result)) {
-					PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
-					PxConvexMesh* convexMesh = s_physics->createConvexMesh(readBuffer);
-
-					PxMeshScale pxScale(PxVec3(transform.scale.x, transform.scale.y, transform.scale.z), PxQuat(PxIdentity));
-					PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxConvexMeshGeometry(convexMesh, pxScale), *material);
-					setupShapeFilterData(shape, cc.layer, cc.collisionMask);
-					if (cc.isTrigger) {
-						shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-						shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-					}
-					cc.runtimeShape = shape;
+				if (cc.isTrigger) {
+					shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+					shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
 				}
+				cc.runtimeShape = shape;
 			}
 		}
 
@@ -893,34 +880,20 @@ namespace Axion {
 			}
 			else {
 				PxMaterial* material = getOrCreatePhysXMaterial(tmc.material);
-				Ref<Mesh> meshAsset = AssetManager::get<Mesh>(tmc.collisionMesh);
+				Ref<PhysicsMesh> physicsMesh = AssetManager::get<PhysicsMesh>(tmc.collisionMesh);
 
-				if (meshAsset && !meshAsset->getVertices().empty() && !meshAsset->getIndices().empty()) {
-					PxTriangleMeshDesc meshDesc;
-					meshDesc.points.count = static_cast<physx::PxU32>(meshAsset->getVertices().size());
-					meshDesc.points.stride = sizeof(Axion::Vertex);
-					meshDesc.points.data = meshAsset->getVertices().data();
-					meshDesc.triangles.count = static_cast<physx::PxU32>(meshAsset->getIndices().size() / 3);
-					meshDesc.triangles.stride = 3 * sizeof(uint32_t);
-					meshDesc.triangles.data = meshAsset->getIndices().data();
+				if (physicsMesh && physicsMesh->getType() == PhysicsMesh::Type::Triangle && physicsMesh->getRuntimeMesh()) {
+					PxTriangleMesh* triMesh = static_cast<physx::PxTriangleMesh*>(physicsMesh->getRuntimeMesh());
+					PxMeshScale pxScale(PxVec3(transform.scale.x, transform.scale.y, transform.scale.z), PxQuat(PxIdentity));
 
-					PxDefaultMemoryOutputStream writeBuffer;
-					PxTriangleMeshCookingResult::Enum result;
-					PxCookingParams params(s_physics->getTolerancesScale());
+					PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxTriangleMeshGeometry(triMesh, pxScale), *material);
+					setupShapeFilterData(shape, tmc.layer, tmc.collisionMask);
 
-					if (PxCookTriangleMesh(params, meshDesc, writeBuffer, &result)) {
-						PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
-						PxTriangleMesh* triMesh = s_physics->createTriangleMesh(readBuffer);
-
-						PxMeshScale pxScale(PxVec3(transform.scale.x, transform.scale.y, transform.scale.z), PxQuat(PxIdentity));
-						PxShape* shape = PxRigidActorExt::createExclusiveShape(*actor, PxTriangleMeshGeometry(triMesh, pxScale), *material);
-						setupShapeFilterData(shape, tmc.layer, tmc.collisionMask);
-						if (tmc.isTrigger) {
-							shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-							shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-						}
-						tmc.runtimeShape = shape;
+					if (tmc.isTrigger) {
+						shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+						shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
 					}
+					tmc.runtimeShape = shape;
 				}
 			}
 		}
@@ -931,6 +904,35 @@ namespace Axion {
 
 		s_physXScene->addActor(*actor);
 		rb.runtimeActor = actor;
+	}
+
+	Ref<PhysicsMesh> PhysicsSystem::deserializePhysicsMesh(std::istream& in, PhysicsMesh::Type type) {
+		size_t currentPos = in.tellg();
+		in.seekg(0, std::ios::end);
+		size_t size = (size_t)in.tellg() - currentPos;
+		in.seekg(currentPos, std::ios::beg);
+
+		if (size == 0) return nullptr;
+
+		std::vector<char> buffer(size);
+		in.read(buffer.data(), size);
+
+		physx::PxDefaultMemoryInputData readBuffer(reinterpret_cast<physx::PxU8*>(buffer.data()), static_cast<physx::PxU32>(size));
+		void* runtimeMesh = nullptr;
+
+		if (type == PhysicsMesh::Type::Convex) {
+			runtimeMesh = s_physics->createConvexMesh(readBuffer);
+		}
+		else {
+			runtimeMesh = s_physics->createTriangleMesh(readBuffer);
+		}
+
+		if (!runtimeMesh) {
+			AX_CORE_LOG_ERROR("PhysX failed to create mesh from binary stream!");
+			return nullptr;
+		}
+
+		return MakeRef<PhysicsMesh>(type, runtimeMesh);
 	}
 
 }

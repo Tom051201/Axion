@@ -2269,7 +2269,7 @@ namespace Axion {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
 						auto ext = path.extension();
-						if (ext == ".axpmat" || ext == ".axmesh" || ext == ".axmodel") return Silica::EventReply::handled();
+						if (ext == ".axpmat" || ext == ".axpmesh") return Silica::EventReply::handled();
 					}
 					return Silica::EventReply::unhandled();
 				},
@@ -2288,11 +2288,11 @@ namespace Axion {
 							});
 							return Silica::EventReply::handled();
 						}
-						else if (ext == ".axmesh" || ext == ".axmodel") {
+						else if (ext == ".axpmesh") {
 							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
 								UUID assetUUID = AssetManager::getAssetUUID(path);
 								if (assetUUID.isValid()) {
-									entity.getComponent<TriangleMeshColliderComponent>().collisionMesh = AssetManager::load<Mesh>(assetUUID);
+									entity.getComponent<TriangleMeshColliderComponent>().collisionMesh = AssetManager::load<PhysicsMesh>(assetUUID);
 									triggerRebuild();
 								}
 							});
@@ -2308,7 +2308,7 @@ namespace Axion {
 
 			// Mesh Loading
 			if (tmc.collisionMesh.isValid()) {
-				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Mesh", Silica::MakeWidget<Silica::SButton>({
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Physics Mesh", Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<TriangleMeshColliderComponent>().collisionMesh.invalidate();
@@ -2319,22 +2319,22 @@ namespace Axion {
 				})) });
 			}
 			else {
-				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Mesh", Silica::MakeWidget<Silica::SButton>({
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Physics Mesh", Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
-						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath();
-						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh;*.axmodel;*.obj"} }, dir);
+						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Mesh", "*.axpmesh"} }, dir);
 
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
-								entity.getComponent<TriangleMeshColliderComponent>().collisionMesh = AssetManager::load<Mesh>(assetUUID);
+								entity.getComponent<TriangleMeshColliderComponent>().collisionMesh = AssetManager::load<PhysicsMesh>(assetUUID);
 								triggerRebuild();
 							}
 						}
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Mesh..." })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Physics Mesh..." })
 				})) });
 			}
 
@@ -2427,7 +2427,7 @@ namespace Axion {
 					if (payload.type == "AssetPath") {
 						auto path = std::any_cast<std::filesystem::path>(payload.data);
 						auto ext = path.extension();
-						if (ext == ".axpmat" || ext == ".axmesh" || ext == ".axmodel") return Silica::EventReply::handled();
+						if (ext == ".axpmat" || ext == ".axpmesh") return Silica::EventReply::handled();
 					}
 					return Silica::EventReply::unhandled();
 				},
@@ -2446,11 +2446,11 @@ namespace Axion {
 							});
 							return Silica::EventReply::handled();
 						}
-						else if (ext == ".axmesh" || ext == ".axmodel") {
+						else if (ext == ".axpmesh") {
 							EditorActionQueue::push([entity, path, triggerRebuild]() mutable {
 								UUID assetUUID = AssetManager::getAssetUUID(path);
 								if (assetUUID.isValid()) {
-									entity.getComponent<ConvexColliderComponent>().collisionMesh = AssetManager::load<Mesh>(assetUUID);
+									entity.getComponent<ConvexColliderComponent>().collisionMesh = AssetManager::load<PhysicsMesh>(assetUUID);
 									triggerRebuild();
 								}
 							});
@@ -2466,7 +2466,7 @@ namespace Axion {
 
 			// Mesh Loading
 			if (cc.collisionMesh.isValid()) {
-				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Mesh", Silica::MakeWidget<Silica::SButton>({
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Physics Mesh", Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
 						entity.getComponent<ConvexColliderComponent>().collisionMesh.invalidate();
@@ -2477,29 +2477,24 @@ namespace Axion {
 				})) });
 			}
 			else {
-				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Mesh", Silica::MakeWidget<Silica::SButton>({
+				uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Physics Mesh", Silica::MakeWidget<Silica::SButton>({
 					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 					.onClick = [entity, triggerRebuild]() mutable {
-						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath();
-						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Mesh Asset", "*.axmesh;*.axmodel;*.obj"} }, dir);
+						std::filesystem::path dir = ProjectManager::getProject()->getAssetsPath() / "physics";
+						std::filesystem::path absPath = FileDialogs::openFile({ {"Axion Physics Mesh", "*.axpmesh"} }, dir);
 
 						if (!absPath.empty()) {
 							UUID assetUUID = AssetManager::getAssetUUID(absPath);
 							if (assetUUID.isValid()) {
-								entity.getComponent<ConvexColliderComponent>().collisionMesh = AssetManager::load<Mesh>(assetUUID);
+								entity.getComponent<ConvexColliderComponent>().collisionMesh = AssetManager::load<PhysicsMesh>(assetUUID);
 								triggerRebuild();
 							}
 						}
 						return Silica::EventReply::handled();
 					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Mesh..." })
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Load Physics Mesh..." })
 				})) });
 			}
-
-			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Vertex Limit", Silica::MakeWidget<Silica::SInputFieldInt>({
-				.initialValue = (int)cc.vertexLimit,
-				.onValueChanged = [entity](int val) mutable { entity.getComponent<ConvexColliderComponent>().vertexLimit = (uint32_t)std::max(0, val); }
-			})) });
 
 			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Is Trigger", Silica::MakeWidget<Silica::SCheckBox>({
 				.initialCheck = cc.isTrigger,

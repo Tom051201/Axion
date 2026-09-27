@@ -3,6 +3,7 @@
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/scene/Entity.h"
+#include "AxionEngine/Source/physics/PhysicsMesh.h"
 
 namespace Axion {
 
@@ -41,6 +42,8 @@ namespace Axion {
 		static size_t overlapBox(Scene* scene, const Vec3& center, const Vec3& halfExtents, const Vec3& orientation, uint64_t* outIdsHi, uint64_t* outIdsLo, size_t maxUUIDs);
 		static size_t overlapSphere(Scene* scene, const Vec3& center, float radius, uint64_t* outIdsHi, uint64_t* outIdsLo, size_t maxUUIDs);
 		static size_t overlapCapsule(Scene* scene, const Vec3& center, float radius, float halfHeight, const Vec3& orientation, uint64_t* outIdsHi, uint64_t* outIdsLo, size_t maxUUIDs);
+
+		static Ref<PhysicsMesh> deserializePhysicsMesh(std::istream& in, PhysicsMesh::Type type);
 
 	private:
 
