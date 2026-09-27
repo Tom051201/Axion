@@ -11,6 +11,7 @@
 #include "AxionEngine/Source/scene/SceneSerializer.h"
 #include "AxionEngine/Source/scene/Prefab.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
+#include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 namespace Axion {
 
@@ -475,6 +476,7 @@ namespace Axion {
 				case 4: { if (!entity.hasComponent<AudioComponent>()) entity.addComponent<AudioComponent>(); break; }
 				case 5: { if (!entity.hasComponent<ParticleSystemComponent>()) entity.addComponent<ParticleSystemComponent>(); break; }
 				case 6: { if (!entity.hasComponent<CharacterControllerComponent>()) entity.addComponent<CharacterControllerComponent>(); break; }
+				case 7: { if (!entity.hasComponent<NavMeshAgentComponent>()) entity.addComponent<NavMeshAgentComponent>(); break; }
 
 			}
 		}
@@ -570,6 +572,115 @@ namespace Axion {
 
 		extern "C" uint8_t scene_isLoading() {
 			return SceneManager::isLoadingScene() ? 1 : 0;
+		}
+
+
+		// -- PATHFINDING --
+		extern "C" uint8_t navmesh_bakeProfile(const char* profileName) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene || !profileName) return 0;
+
+			std::string nameStr = profileName;
+
+			for (auto& profile : scene->getNavMeshProfiles()) {
+				if (profile.name == nameStr) {
+					Ref<NavMesh> newMesh = NavMeshSystem::bakeScene(scene, profile.settings);
+
+					if (newMesh) {
+						if (!profile.handle.isValid()) {
+							profile.handle = UUID::generate();
+						}
+
+						AssetManager::storage<NavMesh>().assets[profile.handle.uuid] = newMesh;
+						return 1;
+					}
+					return 0;
+				}
+			}
+
+			AX_CORE_LOG_WARN("Cannot bake: Profile '{}' not found in Scene Settings.", nameStr);
+			return 0;
+		}
+
+		extern "C" int navmesh_calculatePath(const char* profileName, float* start, float* end, float* outWaypoints, int maxWaypoints) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene || !profileName) return 0;
+
+			Vec3 startPos(start[0], start[1], start[2]);
+			Vec3 endPos(end[0], end[1], end[2]);
+
+			std::vector<Vec3> path = scene->calculatePath(profileName, startPos, endPos);
+
+			if (path.empty()) return 0;
+
+			int count = std::min((int)path.size(), maxWaypoints);
+			for (int i = 0; i < count; i++) {
+				outWaypoints[i * 3 + 0] = path[i].x;
+				outWaypoints[i * 3 + 1] = path[i].y;
+				outWaypoints[i * 3 + 2] = path[i].z;
+			}
+			return count;
+		}
+
+		extern "C" void navmesh_getNearestPoint(const char* profileName, float* point, float* outPoint) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene || !profileName) return;
+
+			Vec3 result = scene->getNavMeshNearestPoint(profileName, Vec3(point[0], point[1], point[2]));
+			outPoint[0] = result.x; outPoint[1] = result.y; outPoint[2] = result.z;
+		}
+
+		extern "C" void navmesh_getRandomPoint(const char* profileName, float* center, float radius, float* outPoint) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene || !profileName) return;
+
+			Vec3 result = scene->getNavMeshRandomPoint(profileName, Vec3(center[0], center[1], center[2]), radius);
+			outPoint[0] = result.x; outPoint[1] = result.y; outPoint[2] = result.z;
+		}
+
+		extern "C" uint8_t navmesh_raycast(const char* profileName, float* start, float* end, float* outHitPoint) {
+			Scene* scene = ScriptEngine::getSceneContext();
+			if (!scene || !profileName) return 1;
+
+			Vec3 hitPoint;
+			bool hitWall = scene->raycastNavMesh(profileName, Vec3(start[0], start[1], start[2]), Vec3(end[0], end[1], end[2]), hitPoint);
+
+			outHitPoint[0] = hitPoint.x; outHitPoint[1] = hitPoint.y; outHitPoint[2] = hitPoint.z;
+			return hitWall ? 1 : 0;
+		}
+
+		extern "C" void agent_getProfileName(uint64_t uuidHi, uint64_t uuidLo, char* outName, int maxLength) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<NavMeshAgentComponent>()) {
+				const std::string& name = entity.getComponent<NavMeshAgentComponent>().profileName;
+				strncpy(outName, name.c_str(), maxLength - 1);
+				outName[maxLength - 1] = '\0';
+			}
+			else {
+				outName[0] = '\0';
+			}
+		}
+
+		extern "C" void agent_setProfileName(uint64_t uuidHi, uint64_t uuidLo, const char* name) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<NavMeshAgentComponent>()) {
+				entity.getComponent<NavMeshAgentComponent>().profileName = name ? name : "Default";
+			}
+		}
+
+		extern "C" float agent_getSpeed(uint64_t uuidHi, uint64_t uuidLo) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<NavMeshAgentComponent>()) {
+				return entity.getComponent<NavMeshAgentComponent>().speed;
+			}
+			return 0.0f;
+		}
+
+		extern "C" void agent_setSpeed(uint64_t uuidHi, uint64_t uuidLo, float speed) {
+			Entity entity = getEntityByUUID(uuidHi, uuidLo);
+			if (entity.isValid() && entity.hasComponent<NavMeshAgentComponent>()) {
+				entity.getComponent<NavMeshAgentComponent>().speed = std::max(0.0f, speed);
+			}
 		}
 
 
@@ -669,6 +780,17 @@ namespace Axion {
 		REGISTER_API(apiStruct, scene_load);
 		REGISTER_API(apiStruct, scene_save);
 		REGISTER_API(apiStruct, scene_isLoading);
+
+		// -- PATHFINDING --
+		REGISTER_API(apiStruct, navmesh_bakeProfile);
+		REGISTER_API(apiStruct, navmesh_calculatePath);
+		REGISTER_API(apiStruct, navmesh_getNearestPoint);
+		REGISTER_API(apiStruct, navmesh_getRandomPoint);
+		REGISTER_API(apiStruct, navmesh_raycast);
+		REGISTER_API(apiStruct, agent_getProfileName);
+		REGISTER_API(apiStruct, agent_setProfileName);
+		REGISTER_API(apiStruct, agent_getSpeed);
+		REGISTER_API(apiStruct, agent_setSpeed);
 
 		// -- NETWORK --
 		REGISTER_API(apiStruct, network_isLocalPlayer);

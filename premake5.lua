@@ -19,6 +19,7 @@ PhysXDir = "%{wks.location}/AxionEngineProject/AxionEngine/Vendor/physx"
 
 group "Dependencies"
 	include "AxionEngineProject/AxionEngine/Vendor/yaml-cpp"
+	include "AxionEngineProject/AxionEngine/vendor/recastnavigation"
 
 group "Subsystems"
 	include "AxionSubsystems/AxionAssetPipelineProject"

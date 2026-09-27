@@ -12,10 +12,17 @@
 #include "AxionEngine/Source/graphics/Camera.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 #include "AxionEngine/Source/scene/Skybox.h"
+#include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 namespace Axion {
 
 	class Entity;
+
+	struct SceneNavMeshProfile {
+		std::string name = "Default";
+		AssetHandle<NavMesh> handle;
+		NavMeshBuildSettings settings;
+	};
 
 	class Scene {
 	public:
@@ -83,6 +90,14 @@ namespace Axion {
 		UUID getUUID() const { return m_sceneID; }
 		void setUUID(UUID id) { m_sceneID = id; }
 
+		std::vector<SceneNavMeshProfile>& getNavMeshProfiles() { return m_navMeshProfiles; }
+		const std::vector<SceneNavMeshProfile>& getNavMeshProfiles() const { return m_navMeshProfiles; }
+		AssetHandle<NavMesh> getNavMeshHandle(const std::string& profileName) const;
+		std::vector<Vec3> calculatePath(const std::string& profileName, const Vec3& start, const Vec3& end);
+		Vec3 getNavMeshNearestPoint(const std::string& profileName, const Vec3& point);
+		Vec3 getNavMeshRandomPoint(const std::string& profileName, const Vec3& center, float radius);
+		bool raycastNavMesh(const std::string& profileName, const Vec3& start, const Vec3& end, Vec3& outHitPoint);
+
 	private:
 
 		UUID m_sceneID;
@@ -118,6 +133,8 @@ namespace Axion {
 		std::vector<QueuedTrigger> m_triggerQueue;
 
 		std::vector<entt::entity> m_scriptEntitiesCache;
+
+		std::vector<SceneNavMeshProfile> m_navMeshProfiles;
 
 		EventReply onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();

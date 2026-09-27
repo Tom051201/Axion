@@ -466,6 +466,7 @@ namespace Axion {
 		if (!entity.hasComponent<CharacterControllerComponent>()) registerComp.operator()<CharacterControllerComponent>("Character Controller", "Physics");
 		if (!entity.hasComponent<PhysicsJointComponent>()) registerComp.operator()<PhysicsJointComponent>("Physics Joint", "Physics");
 		if (!entity.hasComponent<GravitySourceComponent>()) registerComp.operator()<GravitySourceComponent>("Gravity Source", "Physics");
+		if (!entity.hasComponent<NavMeshAgentComponent>()) registerComp.operator()<NavMeshAgentComponent>("NavMesh Agent", "Physics");
 
 		if (!entity.hasComponent<NetworkIdentityComponent>()) registerComp.operator()<NetworkIdentityComponent>("Network Identity", "General");
 		if (!entity.hasComponent<CameraComponent>()) registerComp.operator()<CameraComponent>("Camera", "General");
@@ -2848,6 +2849,31 @@ namespace Axion {
 			});
 		});
 
+		// -- NAVMESH AGENT COMPONENT --
+		drawComponentBlock<NavMeshAgentComponent>("NavMesh Agent", entity, container, triggerRebuild, true, [&]() {
+			auto& agent = entity.getComponent<NavMeshAgentComponent>();
+			std::vector<Silica::Slot> uiSlots;
+
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Profile Name", Silica::MakeWidget<Silica::SEditableText>({
+				.initialText = agent.profileName,
+				.onTextCommitted = [entity](const std::string& text) mutable {
+					entity.getComponent<NavMeshAgentComponent>().profileName = text;
+				}
+			})) });
+
+			uiSlots.push_back({ {0,0}, SilicaHelpers::MakePropertyRow("Speed", Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = agent.speed,
+				.onValueChanged = [entity](float val) mutable { entity.getComponent<NavMeshAgentComponent>().speed = std::max(0.0f, val); }
+			})) });
+
+			return Silica::MakeWidget<Silica::SBox>({
+				.padding = { COMPONENT_PAD_X, COMPONENT_PAD_Y },
+				.child = Silica::MakeWidget<Silica::SVerticalBox>({
+					.spacing = EditorTheme::SPACING_MEDIUM,
+					.slots = uiSlots
+				})
+			});
+		});
 
 		// ----- Assemble Layout --
 		auto scrollBox = Silica::MakeWidget<Silica::SScrollBox>({

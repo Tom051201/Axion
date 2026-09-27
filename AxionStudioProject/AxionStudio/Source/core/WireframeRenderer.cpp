@@ -148,4 +148,16 @@ namespace Axion {
 		}
 	}
 
+	void WireframeRenderer::drawNavMesh(const std::vector<NavMeshEdge>& edges, const Vec4& color) {
+		for (const auto& edge : edges) {
+			Vec3 p0 = edge.p0;
+			Vec3 p1 = edge.p1;
+
+			p0.y += 0.05f;
+			p1.y += 0.05f;
+
+			Renderer2D::drawLine(p0, p1, color);
+		}
+	}
+
 }

@@ -16,13 +16,14 @@ ContentBrowser:
   CurrentDirectory: D:\Projects\TestProject\Assets\ImportedPacks\Script Pack
   ExpandedDirectories:
     - D:\Projects\TestProject
-    - D:\Projects\TestProject\Assets\Scripts
     - D:\Projects\TestProject\Assets
+    - D:\Projects\TestProject\Assets\Scripts
     - D:\Projects\TestProject\Assets\ImportedPacks
     - D:\Projects\TestProject\Assets\Materials
     - D:\Projects\TestProject\Assets\ImportedPacks\Script Pack
     - D:\Projects\TestProject\Scripts
     - D:\Projects\TestProject\Assets\ImportedPacks\Base Pack
+    - D:\Projects\TestProject\Assets\NavMeshes
 MaterialEditor:
   InvertCam: false
 Viewport:
@@ -34,7 +35,7 @@ Viewport:
   RotationSpeedCam3D: 0.00499999989
   KeyboardSpeedCam2D: 100
   DragSpeedCam2D: 0.0700057
-  FOVCam3D: 75
+  FOVCam3D: 76
   ZoomCam2D: 10
   GizmoMode: Translate
   GizmoSpace: Global

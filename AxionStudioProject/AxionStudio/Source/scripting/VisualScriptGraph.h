@@ -9,7 +9,7 @@ namespace Axion {
 
 	enum class PinKind { None, Input, Output };
 
-	enum class PinType { None, Flow, Bool, Int, Float, String, Vector3, Entity, Key, MouseButton };
+	enum class PinType { None, Flow, Bool, Int, Float, String, Vector3, Vector3Array, Entity, Key, MouseButton };
 
 	enum class NodeType {
 		None = 0,
@@ -78,6 +78,19 @@ namespace Axion {
 		// -- NETWORK --
 		Network_IsLocalPlayer,
 		Network_SendEvent,
+
+		// -- PATHFINDING --
+		NavMesh_BakeProfile,
+		NavMesh_CalculatePath,
+		NavMesh_GetNearestPoint,
+		NavMesh_GetRandomPoint,
+		NavMesh_Raycast,
+
+		// -- NAVMESH AGENT --
+		Agent_GetProfileName,
+		Agent_SetProfileName,
+		Agent_GetSpeed,
+		Agent_SetSpeed,
 
 		// -- LOGIC --
 		Logic_Branch,

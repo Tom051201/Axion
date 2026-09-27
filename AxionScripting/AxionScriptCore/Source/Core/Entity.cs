@@ -11,6 +11,7 @@ namespace AxionScriptCore {
 		Audio = 4,
 		ParticleSystem = 5,
 		CharacterController = 6,
+		NavMeshAgent = 7,
 	}
 
 	public class Entity {
@@ -22,6 +23,7 @@ namespace AxionScriptCore {
 		public AudioSource Audio { get; private set; }
 		public Animator Animator { get; private set; }
 		public CharacterController CharacterController { get; private set; }
+		public NavMeshAgent NavMeshAgent { get; private set; }
 
 		public Entity() {
 			Transform = new Transform(this);
@@ -29,6 +31,7 @@ namespace AxionScriptCore {
 			Audio = new AudioSource(this);
 			Animator = new Animator(this);
 			CharacterController = new CharacterController(this);
+			NavMeshAgent = new NavMeshAgent(this);
 		}
 
 		public virtual void OnCreate() {}

@@ -185,6 +185,7 @@ namespace Axion {
 		if (assetType == "Scene")				return AssetType::Scene;
 		if (assetType == "SkeletalMesh")		return AssetType::SkeletalMesh;
 		if (assetType == "AnimationClip")		return AssetType::AnimationClip;
+		if (assetType == "NavMesh")				return AssetType::NavMesh;
 		return AssetType::None;
 	}
 
@@ -204,6 +205,7 @@ namespace Axion {
 			case AssetType::None:				return "None";
 			case AssetType::SkeletalMesh:		return "SkeletalMesh";
 			case AssetType::AnimationClip:		return "AnimationClip";
+			case AssetType::NavMesh:			return "NavMesh";
 		}
 		return "None";
 	}

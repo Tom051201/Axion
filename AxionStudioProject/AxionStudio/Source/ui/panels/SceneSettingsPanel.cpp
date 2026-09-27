@@ -19,11 +19,14 @@
 #include <Silica/include/SScissorBox.h>
 #include <Silica/include/SImage.h>
 #include <Silica/include/SSpacer.h>
+#include <Silica/include/SInputFieldFloat.h>
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
+
+#include "AxionAssetPipeline/Source/parser/NavMeshParser.h"
 
 #include "AxionStudio/Source/core/EditorActionQueue.h"
 #include "AxionStudio/Source/core/SilicaContext.h"
@@ -276,6 +279,210 @@ namespace Axion {
 		contentBox->addSlot({ {0, 0}, graphicsDummyZone });
 
 		contentBox->addSlot({ {0, 0}, Silica::MakeWidget<Silica::SSpacer>({.size = { 0.0f, EditorTheme::SPACING_LARGE }}) });
+
+		// ----- PATHFINDING -----
+		contentBox->addSlot({ {0, 0}, SilicaHelpers::MakeHeader("Pathfinding Profiles") });
+		auto pathfindingContent = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_LARGE });
+
+		auto& profiles = m_activeScene->getNavMeshProfiles();
+
+		for (size_t i = 0; i < profiles.size(); ++i) {
+			auto& profile = profiles[i];
+			auto profileBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_MEDIUM });
+
+			// -- Name & Delete Row --
+			auto nameInput = Silica::MakeWidget<Silica::SEditableText>({
+				.initialText = profile.name,
+				.onTextCommitted = [this, i](const std::string& val) {
+					m_activeScene->getNavMeshProfiles()[i].name = val;
+				}
+				});
+
+			auto deleteBtn = Silica::MakeWidget<Silica::SButton>({
+				.color = Silica::GetTheme().Accent_Danger,
+				.onClick = [this, i]() {
+					m_activeScene->getNavMeshProfiles().erase(m_activeScene->getNavMeshProfiles().begin() + i);
+					rebuildUI();
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X"})
+				});
+
+			auto headerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
+				.spacing = EditorTheme::SPACING_MEDIUM,
+				.slots = { { {1, 0}, nameInput }, { {0, 0}, deleteBtn } }
+				});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Profile Name:", headerRow) });
+
+			// -- Active Asset Display --
+			if (profile.handle.isValid()) {
+				std::filesystem::path nmPath = AssetManager::getAssetFilePath<NavMesh>(profile.handle);
+				profileBox->addSlot({ {0, 0}, SilicaHelpers::MakeDetailRow("Active NavMesh:", nmPath.filename().string()) });
+
+				auto removeNmBtn = Silica::MakeWidget<Silica::SButton>({
+					.color = Silica::GetTheme().Accent_Danger,
+					.onClick = [this, i]() {
+						m_activeScene->getNavMeshProfiles()[i].handle.invalidate();
+						rebuildUI();
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear NavMesh"})
+					});
+				profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("", removeNmBtn) });
+			}
+			else {
+				profileBox->addSlot({ {0, 0}, SilicaHelpers::MakeDetailRow("Active NavMesh:", "None") });
+			}
+
+			// -- Settings Inputs --
+			auto hInput = Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = profile.settings.agentHeight,
+				.onValueChanged = [this, i](float val) { m_activeScene->getNavMeshProfiles()[i].settings.agentHeight = std::max(0.1f, val); }
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Walkable Height:", hInput) });
+
+			auto rInput = Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = profile.settings.agentRadius,
+				.onValueChanged = [this, i](float val) { m_activeScene->getNavMeshProfiles()[i].settings.agentRadius = std::max(0.1f, val); }
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Agent Radius:", rInput) });
+
+			auto cInput = Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = profile.settings.agentMaxClimb,
+				.onValueChanged = [this, i](float val) { m_activeScene->getNavMeshProfiles()[i].settings.agentMaxClimb = std::max(0.0f, val); }
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Max Climb:", cInput) });
+
+			auto sInput = Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = profile.settings.agentMaxSlope,
+				.onValueChanged = [this, i](float val) { m_activeScene->getNavMeshProfiles()[i].settings.agentMaxSlope = std::clamp(val, 0.0f, 90.0f); }
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Max Slope (Deg):", sInput) });
+
+			auto csInput = Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = profile.settings.cellSize,
+				.onValueChanged = [this, i](float val) { m_activeScene->getNavMeshProfiles()[i].settings.cellSize = std::max(0.05f, val); }
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Cell Size:", csInput) });
+
+			auto chInput = Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = profile.settings.cellHeight,
+				.onValueChanged = [this, i](float val) { m_activeScene->getNavMeshProfiles()[i].settings.cellHeight = std::max(0.05f, val); }
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Cell Height:", chInput) });
+
+			// -- Bake Button --
+			auto bakeBtn = Silica::MakeWidget<Silica::SButton>({
+				.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+				.onClick = [this, i]() {
+					auto& curProfile = m_activeScene->getNavMeshProfiles()[i];
+					Ref<NavMesh> newMesh = NavMeshSystem::bakeScene(m_activeScene.get(), curProfile.settings);
+
+					if (newMesh) {
+						// CASE 1: Update an EXISTING NavMesh (No File Dialog, No New UUID)
+						if (curProfile.handle.isValid()) {
+							std::filesystem::path nmPath = AssetManager::getAssetFilePath<NavMesh>(curProfile.handle);
+							if (!nmPath.empty()) {
+								std::filesystem::path rawSourcePath = AssetManager::getAbsolute(nmPath);
+								rawSourcePath.replace_extension(".axnav");
+
+								// Overwrite the binary data on disk
+								std::ofstream outStream(rawSourcePath, std::ios::out | std::ios::binary);
+								NavMeshSystem::serializeToStream(newMesh, outStream);
+								outStream.close();
+
+								// Update live RAM
+								AssetManager::storage<NavMesh>().assets[curProfile.handle.uuid] = newMesh;
+								AX_CORE_LOG_INFO("Successfully updated existing NavMesh for profile: {}", curProfile.name);
+								rebuildUI();
+								return Silica::EventReply::handled();
+							}
+						}
+
+						// CASE 2: Bake a completely NEW NavMesh
+						std::filesystem::path defaultPath = ProjectManager::getProject()->getAssetsPath();
+						std::filesystem::path savePath = FileDialogs::saveFile({ {"Axion NavMesh", "*.axnm"} }, defaultPath);
+
+						if (!savePath.empty()) {
+							std::filesystem::path rawSourcePath = savePath;
+							rawSourcePath.replace_extension(".axnav");
+
+							// Save binary
+							std::ofstream outStream(rawSourcePath, std::ios::out | std::ios::binary);
+							NavMeshSystem::serializeToStream(newMesh, outStream);
+							outStream.close();
+
+							// Save YAML metadata
+							UUID newUUID = UUID::generate();
+							AAP::NavMeshAssetData data;
+							data.uuid = newUUID;
+							data.name = savePath.stem().string();
+							// FIX: Convert Absolute to Relative Path!
+							data.sourcePath = rawSourcePath;
+							AAP::NavMeshParser::createTextFile(data, savePath);
+
+							// Register new asset
+							AssetMetadata metadata;
+							metadata.handle = newUUID;
+							metadata.type = AssetType::NavMesh;
+							metadata.filePath = AssetManager::getRelativeToAssets(savePath);
+
+							ProjectManager::getProject()->getAssetRegistry()->add(metadata);
+							ProjectManager::getProject()->getAssetRegistry()->serialize(ProjectManager::getProjectFilePath().parent_path() / "AssetRegistry.yaml");
+
+							// Apply to RAM and scene
+							AssetManager::storage<NavMesh>().assets[newUUID] = newMesh;
+							AssetManager::storage<NavMesh>().handleToPath[newUUID] = savePath;
+
+							m_activeScene->getNavMeshProfiles()[i].handle = newUUID;
+							AX_CORE_LOG_INFO("Successfully baked NEW NavMesh for profile: {}", curProfile.name);
+							rebuildUI();
+						}
+					}
+					return Silica::EventReply::handled();
+				},
+				.child = Silica::MakeWidget<Silica::SAlign>({
+					.horizontalAlign = Silica::HorizontalAlign::Center,
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Bake NavMesh" })
+				})
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Actions:", bakeBtn) });
+
+			// -- Drop Zone --
+			auto dropZone = SilicaHelpers::MakeAssetDropZone(".axnm", [this, i](const std::filesystem::path& droppedPath) {
+				EditorActionQueue::push([this, i, droppedPath]() {
+					if (!m_activeScene) return;
+					UUID assetUUID = AssetManager::getAssetUUID(droppedPath);
+					if (assetUUID.isValid()) {
+						m_activeScene->getNavMeshProfiles()[i].handle = AssetManager::load<NavMesh>(assetUUID);
+						rebuildUI();
+					}
+				});
+			}, profileBox, { DROP_ZONE_PADDING, DROP_ZONE_PADDING });
+
+			pathfindingContent->addSlot({ {0, 0}, dropZone });
+			pathfindingContent->addSlot({ {0, 0}, Silica::MakeWidget<Silica::SSpacer>({.size = { 0.0f, EditorTheme::SPACING_LARGE }}) });
+		}
+
+		// -- Add Profile Button --
+		auto addProfileBtn = Silica::MakeWidget<Silica::SButton>({
+			.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+			.onClick = [this]() {
+				SceneNavMeshProfile newProfile;
+				newProfile.name = "New Profile";
+				m_activeScene->getNavMeshProfiles().push_back(newProfile);
+				rebuildUI();
+				return Silica::EventReply::handled();
+			},
+			.child = Silica::MakeWidget<Silica::SAlign>({
+				.horizontalAlign = Silica::HorizontalAlign::Center,
+				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "+ Add NavMesh Profile" })
+			})
+		});
+
+		pathfindingContent->addSlot({ {0, 0}, addProfileBtn });
+		contentBox->addSlot({ {0, 0}, pathfindingContent });
+
 
 
 		// -- Final Layout Assembly --

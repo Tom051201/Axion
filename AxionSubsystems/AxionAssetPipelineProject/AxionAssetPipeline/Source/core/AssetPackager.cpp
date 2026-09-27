@@ -23,6 +23,7 @@
 #include "AxionAssetPipeline/Source/parser/AudioParser.h"
 #include "AxionAssetPipeline/Source/parser/AnimationClipParser.h"
 #include "AxionAssetPipeline/Source/parser/SkeletalMeshParser.h"
+#include "AxionAssetPipeline/Source/parser/NavMeshParser.h"
 
 namespace Axion::AAP {
 
@@ -297,6 +298,18 @@ namespace Axion::AAP {
 					meshData.filePath = AssetManager::getAbsolute(PathResolver::resolve(data["Source"].as<std::string>()));
 
 					SkeletalMeshParser::createBinaryFile(meshData, runtimeAbsolutePath);
+					break;
+				}
+				case AssetType::NavMesh: {
+					std::ifstream stream(inPath);
+					YAML::Node data = YAML::Load(stream);
+
+					NavMeshAssetData navData;
+					navData.uuid = uuid;
+					navData.name = data["Name"].as<std::string>();
+					navData.sourcePath = PathResolver::resolve(data["Source"].as<std::string>());
+
+					NavMeshParser::createBinaryFile(navData, runtimeAbsolutePath);
 					break;
 				}
 				default: {

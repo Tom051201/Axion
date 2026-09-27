@@ -15,6 +15,7 @@
 #include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 namespace Axion {
 
@@ -603,6 +604,24 @@ namespace Axion {
 				return SkeletalMesh::create(*meshData);
 			});
 
+		});
+	}
+
+	void BinaryAssetLoader::loadNavMesh(UUID handle, const std::filesystem::path& absolutePath) {
+		AssetManager::storage<NavMesh>().assets[handle] = nullptr;
+		AssetManager::storage<NavMesh>().handleToPath[handle] = absolutePath;
+
+		JobSystem::submit([handle, absolutePath]() {
+			if (!std::filesystem::exists(absolutePath)) return;
+
+			AssetManager::submitToMainThread<NavMesh>(handle, [absolutePath]() -> Ref<NavMesh> {
+				std::ifstream in(absolutePath, std::ios::in | std::ios::binary);
+
+				BinaryAssetHeader header;
+				in.read(reinterpret_cast<char*>(&header), sizeof(BinaryAssetHeader));
+
+				return NavMeshSystem::deserializeFromStream(in);
+			});
 		});
 	}
 

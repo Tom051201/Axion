@@ -39,7 +39,8 @@ namespace Axion {
 		Script, NativeScript, ParticleSystem,
 		SkeletalMesh, Animator,
 		NetworkIdentity,
-		TriangleMeshCollider, ConvexCollider, CharacterController, PhysicsJoint
+		TriangleMeshCollider, ConvexCollider, CharacterController, PhysicsJoint,
+		NavMeshAgent,
 	};
 
 	static void writeString(std::ofstream& out, const std::string& str) {
@@ -450,6 +451,16 @@ namespace Axion {
 			out << YAML::EndMap;
 		}
 
+		// -- NavMeshAgentComponent --
+		if (entity.hasComponent<NavMeshAgentComponent>()) {
+			out << YAML::Key << "NavMeshAgentComponent";
+			out << YAML::BeginMap;
+			auto& component = entity.getComponent<NavMeshAgentComponent>();
+			out << YAML::Key << "ProfileName" << YAML::Value << component.profileName;
+			out << YAML::Key << "Speed" << YAML::Value << component.speed;
+			out << YAML::EndMap;
+		}
+
 		out << YAML::EndMap; // Entity
 	}
 
@@ -511,6 +522,24 @@ namespace Axion {
 		// -- Ambient Color --
 		out << YAML::Key << "AmbientColor" << YAML::Value << m_scene->getAmbientColor();
 
+		// -- NavMesh Profiles --
+		out << YAML::Key << "NavMeshProfiles" << YAML::Value << YAML::BeginSeq;
+		for (const auto& profile : m_scene->getNavMeshProfiles()) {
+			out << YAML::BeginMap;
+			out << YAML::Key << "Name" << YAML::Value << profile.name;
+			UUID navUUID = profile.handle.isValid() ? profile.handle.uuid : UUID(0, 0);
+			out << YAML::Key << "UUID" << YAML::Value << navUUID; 
+
+			out << YAML::Key << "AgentHeight" << YAML::Value << profile.settings.agentHeight;
+			out << YAML::Key << "AgentRadius" << YAML::Value << profile.settings.agentRadius;
+			out << YAML::Key << "AgentMaxClimb" << YAML::Value << profile.settings.agentMaxClimb;
+			out << YAML::Key << "AgentMaxSlope" << YAML::Value << profile.settings.agentMaxSlope;
+			out << YAML::Key << "CellSize" << YAML::Value << profile.settings.cellSize;
+			out << YAML::Key << "CellHeight" << YAML::Value << profile.settings.cellHeight;
+			out << YAML::EndMap;
+		}
+		out << YAML::EndSeq;
+
 		// -- Entities --
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto e : m_scene->m_registry.view<entt::entity>()) {
@@ -545,6 +574,25 @@ namespace Axion {
 
 		// -- Write Ambient Color --
 		out.write(reinterpret_cast<const char*>(&m_scene->m_sceneAmbientColor), sizeof(Vec4));
+
+		// ----- Write NavMesh Profiles -----
+		const auto& navProfiles = m_scene->getNavMeshProfiles();
+		uint32_t profileCount = static_cast<uint32_t>(navProfiles.size());
+		out.write(reinterpret_cast<const char*>(&profileCount), sizeof(uint32_t));
+
+		for (const auto& profile : navProfiles) {
+			writeString(out, profile.name);
+
+			UUID navUUID = profile.handle.isValid() ? profile.handle.uuid : UUID(0, 0);
+			out.write(reinterpret_cast<const char*>(&navUUID), sizeof(UUID));
+
+			out.write(reinterpret_cast<const char*>(&profile.settings.agentHeight), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&profile.settings.agentRadius), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&profile.settings.agentMaxClimb), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&profile.settings.agentMaxSlope), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&profile.settings.cellSize), sizeof(float));
+			out.write(reinterpret_cast<const char*>(&profile.settings.cellHeight), sizeof(float));
+		}
 
 		// -- Write Entity Count --
 		uint32_t entityCount = 0;
@@ -596,6 +644,29 @@ namespace Axion {
 
 		// ----- Ambient Color -----
 		if (data["AmbientColor"]) m_scene->m_sceneAmbientColor = data["AmbientColor"].as<Vec4>();
+
+
+		// ----- NavMesh Profiles -----
+		if (auto profilesNode = data["NavMeshProfiles"]) {
+			for (auto profileNode : profilesNode) {
+				SceneNavMeshProfile profile;
+				profile.name = profileNode["Name"].as<std::string>();
+
+				UUID navMeshUUID = profileNode["UUID"].as<UUID>();
+				if (navMeshUUID.isValid()) {
+					profile.handle = AssetManager::load<NavMesh>(navMeshUUID);
+				}
+
+				profile.settings.agentHeight = profileNode["AgentHeight"].as<float>();
+				profile.settings.agentRadius = profileNode["AgentRadius"].as<float>();
+				profile.settings.agentMaxClimb = profileNode["AgentMaxClimb"].as<float>();
+				profile.settings.agentMaxSlope = profileNode["AgentMaxSlope"].as<float>();
+				profile.settings.cellSize = profileNode["CellSize"].as<float>();
+				profile.settings.cellHeight = profileNode["CellHeight"].as<float>();
+
+				m_scene->getNavMeshProfiles().push_back(profile);
+			}
+		}
 
 
 		// ----- Entities -----
@@ -671,6 +742,32 @@ namespace Axion {
 		Vec4 ambientCol;
 		in.read(reinterpret_cast<char*>(&ambientCol), sizeof(Vec4));
 		m_scene->m_sceneAmbientColor = ambientCol;
+
+		// ----- Read NavMesh Profiles -----
+		if (version >= 4) {
+			uint32_t profileCount = 0;
+			in.read(reinterpret_cast<char*>(&profileCount), sizeof(uint32_t));
+
+			for (uint32_t i = 0; i < profileCount; i++) {
+				SceneNavMeshProfile profile;
+				profile.name = readString(in);
+
+				UUID navUUID;
+				in.read(reinterpret_cast<char*>(&navUUID), sizeof(UUID));
+				if (navUUID.isValid() && ProjectManager::getProject()->getAssetRegistry()->contains(navUUID)) {
+					profile.handle = AssetManager::load<NavMesh>(navUUID);
+				}
+
+				in.read(reinterpret_cast<char*>(&profile.settings.agentHeight), sizeof(float));
+				in.read(reinterpret_cast<char*>(&profile.settings.agentRadius), sizeof(float));
+				in.read(reinterpret_cast<char*>(&profile.settings.agentMaxClimb), sizeof(float));
+				in.read(reinterpret_cast<char*>(&profile.settings.agentMaxSlope), sizeof(float));
+				in.read(reinterpret_cast<char*>(&profile.settings.cellSize), sizeof(float));
+				in.read(reinterpret_cast<char*>(&profile.settings.cellHeight), sizeof(float));
+
+				m_scene->getNavMeshProfiles().push_back(profile);
+			}
+		}
 
 		// -- Read Entities --
 		uint32_t entityCount;
@@ -1186,6 +1283,13 @@ namespace Axion {
 			animComp.isPlaying = animatorComponent["IsPlaying"].as<bool>();
 		}
 
+		// -- NavMeshAgentComponent --
+		if (auto agentNode = entityNode["NavMeshAgentComponent"]) {
+			auto& component = deserializedEntity.addComponent<NavMeshAgentComponent>();
+			component.profileName = agentNode["ProfileName"].as<std::string>();
+			component.speed = agentNode["Speed"].as<float>();
+		}
+
 		return deserializedEntity;
 	}
 
@@ -1544,6 +1648,15 @@ namespace Axion {
 			UUID clipUUID = component.currentClip.uuid.isValid() ? component.currentClip.uuid : UUID(0, 0);
 			out.write(reinterpret_cast<const char*>(&clipUUID), sizeof(UUID));
 			out.write(reinterpret_cast<const char*>(&component.isPlaying), sizeof(bool));
+		}
+
+		// -- Write NavMesh Agent Component --
+		if (entity.hasComponent<NavMeshAgentComponent>()) {
+			ComponentID id = ComponentID::NavMeshAgent;
+			out.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+			auto& component = entity.getComponent<NavMeshAgentComponent>();
+			writeString(out, component.profileName);
+			out.write(reinterpret_cast<const char*>(&component.speed), sizeof(float));
 		}
 
 		ComponentID endID = ComponentID::None;
@@ -1964,6 +2077,13 @@ namespace Axion {
 				in.read(reinterpret_cast<char*>(&clipUUID), sizeof(UUID));
 				if (clipUUID.isValid()) component.currentClip = AssetManager::load<AnimationClip>(clipUUID);
 				in.read(reinterpret_cast<char*>(&component.isPlaying), sizeof(bool));
+				break;
+			}
+			case ComponentID::NavMeshAgent: {
+				// -- Read NavMesh Agent Component --
+				auto& component = entity.addComponent<NavMeshAgentComponent>();
+				component.profileName = readString(in);
+				in.read(reinterpret_cast<char*>(&component.speed), sizeof(float));
 				break;
 			}
 			}

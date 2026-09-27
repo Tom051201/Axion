@@ -221,6 +221,7 @@ namespace Axion {
 		else if (str == "Entity") return PinType::Entity;
 		else if (str == "Key") return PinType::Key;
 		else if (str == "MouseButton") return PinType::MouseButton;
+		else if (str == "Vector3Array") return PinType::Vector3Array;
 		else if (str == "None") return PinType::None;
 
 		AX_CORE_LOG_WARN("Unable converting string to pin type!");
@@ -238,6 +239,7 @@ namespace Axion {
 			case PinType::Entity: { return "Entity"; }
 			case PinType::Key: return "Key";
 			case PinType::MouseButton: return "MouseButton";
+			case PinType::Vector3Array: { return "Vector3Array"; }
 			case PinType::None: { return "None"; }
 		}
 
@@ -310,6 +312,19 @@ namespace Axion {
 		// -- NETWORK --
 		else if (str == "Network_IsLocalPlayer") return NodeType::Network_IsLocalPlayer;
 		else if (str == "Network_SendEvent") return NodeType::Network_SendEvent;
+
+		// -- PATHFINDING --
+		else if (str == "NavMesh_BakeProfile") return NodeType::NavMesh_BakeProfile;
+		else if (str == "NavMesh_CalculatePath") return NodeType::NavMesh_CalculatePath;
+		else if (str == "NavMesh_GetNearestPoint") return NodeType::NavMesh_GetNearestPoint;
+		else if (str == "NavMesh_GetRandomPoint") return NodeType::NavMesh_GetRandomPoint;
+		else if (str == "NavMesh_Raycast") return NodeType::NavMesh_Raycast;
+
+		// -- NAVMESH AGENT --
+		else if (str == "Agent_GetProfileName") return NodeType::Agent_GetProfileName;
+		else if (str == "Agent_SetProfileName") return NodeType::Agent_SetProfileName;
+		else if (str == "Agent_GetSpeed") return NodeType::Agent_GetSpeed;
+		else if (str == "Agent_SetSpeed") return NodeType::Agent_SetSpeed;
 
 		// -- LOGIC --
 		else if (str == "Logic_Branch") return NodeType::Logic_Branch;
@@ -408,6 +423,19 @@ namespace Axion {
 			// -- NETWORK --
 			case NodeType::Network_IsLocalPlayer: return "Network_IsLocalPlayer";
 			case NodeType::Network_SendEvent: return "Network_SendEvent";
+
+			// -- PATHFINDING --
+			case NodeType::NavMesh_BakeProfile: return "NavMesh_BakeProfile";
+			case NodeType::NavMesh_CalculatePath: return "NavMesh_CalculatePath";
+			case NodeType::NavMesh_GetNearestPoint: return "NavMesh_GetNearestPoint";
+			case NodeType::NavMesh_GetRandomPoint: return "NavMesh_GetRandomPoint";
+			case NodeType::NavMesh_Raycast: return "NavMesh_Raycast";
+
+			// -- NAVMESH AGENT --
+			case NodeType::Agent_GetProfileName: return "Agent_GetProfileName";
+			case NodeType::Agent_SetProfileName: return "Agent_SetProfileName";
+			case NodeType::Agent_GetSpeed: return "Agent_GetSpeed";
+			case NodeType::Agent_SetSpeed: return "Agent_SetSpeed";
 
 			// -- LOGIC --
 			case NodeType::Logic_Branch: return "Logic_Branch";

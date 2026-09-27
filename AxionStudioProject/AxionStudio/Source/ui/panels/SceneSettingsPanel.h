@@ -7,6 +7,7 @@
 #include "AxionEngine/Source/core/Core.h"
 #include "AxionEngine/Source/scene/Scene.h"
 #include "AxionEngine/Source/events/ApplicationEvent.h"
+#include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 #include "AxionStudio/Source/core/EditorEvents.h"
 
@@ -35,6 +36,7 @@ namespace Axion {
 		Shared<Scene> m_activeScene;
 		std::shared_ptr<Silica::SBox> m_uiRoot;
 		bool m_rebuildQueued = false;
+
 		std::function<void(Event&)> m_eventCallback;
 
 		void rebuildUI_Internal();

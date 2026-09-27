@@ -25,6 +25,7 @@ namespace Axion {
 		virtual void loadPrefab(UUID handle, const std::filesystem::path& absolutePath) = 0;
 		virtual void loadAnimationClip(UUID handle, const std::filesystem::path& absolutePath) = 0;
 		virtual void loadSkeletalMesh(UUID handle, const std::filesystem::path& absolutePath) = 0;
+		virtual void loadNavMesh(UUID handle, const std::filesystem::path& absolutePath) = 0;
 
 		virtual void reloadMaterial(UUID handle, const std::filesystem::path& absolutePath) = 0;
 

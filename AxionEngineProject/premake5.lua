@@ -34,13 +34,16 @@ project "AxionEngine"
 		"AxionEngine/Vendor/spdlog/include",
 		"AxionEngine/Vendor/d3d12",
 		"AxionEngine/Vendor/yaml-cpp/include",
-		"AxionEngine/Vendor/dotnet/include"
+		"AxionEngine/Vendor/dotnet/include",
+		"AxionEngine/vendor/RecastNavigation/Recast/Include",
+		"AxionEngine/vendor/RecastNavigation/Detour/Include"
 	}
 
 	libdirs {}
 
 	links {
 		"yaml-cpp",
+		"RecastNavigation",
 		"PhysXFoundation_64",
 		"PhysX_64",
 		"PhysXCooking_64",

@@ -13,6 +13,7 @@
 #include "AxionEngine/Source/physics/PhysicsSystem.h"
 #include "AxionEngine/Source/physics/PhysicsLayerManager.h"
 #include "AxionEngine/Source/scripting/ScriptEngine.h"
+#include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 namespace Axion {
 
@@ -40,6 +41,7 @@ namespace Axion {
 		Renderer2D::initialize();
 		Renderer3D::initialize();
 
+		NavMeshSystem::initialize();
 		AudioManager::initialize();
 		PhysicsSystem::initialize();
 		PhysicsLayerManager::initialize();
@@ -61,6 +63,7 @@ namespace Axion {
 		AssetManager::shutdown();
 		ProjectManager::shutdown();
 		AudioManager::shutdown();
+		NavMeshSystem::shutdown();
 		PhysicsLayerManager::shutdown();
 		PhysicsSystem::shutdown();
 

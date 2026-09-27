@@ -17,6 +17,7 @@
 #include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/pathfinding/NavMesh.h"
 
 namespace Axion {
 
@@ -49,6 +50,7 @@ namespace Axion {
 		release<SkeletalMesh>();
 		release<AnimationClip>();
 		release<Prefab>();
+		release<NavMesh>();
 
 		AX_CORE_LOG_INFO("AssetManager shutdown");
 	}
@@ -70,6 +72,7 @@ namespace Axion {
 			processLoadQueue<SkeletalMesh>(maxItemsThisFrame);
 			processLoadQueue<AnimationClip>(maxItemsThisFrame);
 			processLoadQueue<Prefab>(maxItemsThisFrame);
+			processLoadQueue<NavMesh>(maxItemsThisFrame);
 
 		}
 	}
@@ -138,6 +141,7 @@ namespace Axion {
 				case AssetType::Prefab:				removeAssetFromStorage<Prefab>(handle); break;
 				case AssetType::SkeletalMesh:		removeAssetFromStorage<SkeletalMesh>(handle); break;
 				case AssetType::AnimationClip:		removeAssetFromStorage<AnimationClip>(handle); break;
+				case AssetType::NavMesh:			removeAssetFromStorage<NavMesh>(handle); break;
 				default: break;
 			}
 		}
@@ -157,6 +161,7 @@ namespace Axion {
 		total += getPendingCount<SkeletalMesh>();
 		total += getPendingCount<AnimationClip>();
 		total += getPendingCount<Prefab>();
+		total += getPendingCount<NavMesh>();
 		return total > 0;
 	}
 
@@ -359,7 +364,7 @@ namespace Axion {
 
 		auto registry = ProjectManager::getProject()->getAssetRegistry();
 		if (!registry->contains(handle)) {
-			AX_CORE_LOG_ERROR("Prefab UUID not found in AssetRegistry!");
+			AX_CORE_LOG_ERROR("SkeletalMesh UUID not found in AssetRegistry!");
 			return {};
 		}
 
@@ -376,11 +381,28 @@ namespace Axion {
 
 		auto registry = ProjectManager::getProject()->getAssetRegistry();
 		if (!registry->contains(handle)) {
-			AX_CORE_LOG_ERROR("Prefab UUID not found in AssetRegistry!");
+			AX_CORE_LOG_ERROR("AnimationClip UUID not found in AssetRegistry!");
 			return {};
 		}
 
 		s_loader->loadAnimationClip(handle, getAbsolute(registry->get(handle).filePath));
+		return handle;
+	}
+
+	// -- NavMesh --
+	template<>
+	AssetHandle<NavMesh> AssetManager::load<NavMesh>(UUID handle) {
+		std::lock_guard<std::recursive_mutex> lock(storage<NavMesh>().mutex);
+
+		if (has<NavMesh>(handle)) return handle;
+
+		auto registry = ProjectManager::getProject()->getAssetRegistry();
+		if (!registry->contains(handle)) {
+			AX_CORE_LOG_ERROR("NavMesh UUID not found in AssetRegistry!");
+			return {};
+		}
+
+		s_loader->loadNavMesh(handle, getAbsolute(registry->get(handle).filePath));
 		return handle;
 	}
 

@@ -42,7 +42,6 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<ulong, ulong, Vector3*, float, void> CCT_Move;
 		public delegate* unmanaged<ulong, ulong, byte> CCT_IsGrounded;
 
-
 		// -- AUDIO --
 		public delegate* unmanaged<ulong, ulong, void> Audio_Play;
 		public delegate* unmanaged<ulong, ulong, void> Audio_Stop;
@@ -70,6 +69,17 @@ namespace AxionScriptCore {
 		public delegate* unmanaged<IntPtr, void> Scene_Load;
 		public delegate* unmanaged<IntPtr, void> Scene_Save;
 		public delegate* unmanaged<byte> Scene_IsLoading;
+
+		// -- PATHFINDING --
+		public delegate* unmanaged<IntPtr, byte> NavMesh_BakeProfile;
+		public delegate* unmanaged<IntPtr, Vector3*, Vector3*, float*, int, int> NavMesh_CalculatePath;
+		public delegate* unmanaged<IntPtr, Vector3*, Vector3*, void> NavMesh_GetNearestPoint;
+		public delegate* unmanaged<IntPtr, Vector3*, float, Vector3*, void> NavMesh_GetRandomPoint;
+		public delegate* unmanaged<IntPtr, Vector3*, Vector3*, Vector3*, byte> NavMesh_Raycast;
+		public delegate* unmanaged<ulong, ulong, byte*, int, void> Agent_GetProfileName;
+		public delegate* unmanaged<ulong, ulong, IntPtr, void> Agent_SetProfileName;
+		public delegate* unmanaged<ulong, ulong, float> Agent_GetSpeed;
+		public delegate* unmanaged<ulong, ulong, float, void> Agent_SetSpeed;
 
 		// -- NETWORK --
 		public delegate* unmanaged<ulong, ulong, byte> Network_IsLocalPlayer;

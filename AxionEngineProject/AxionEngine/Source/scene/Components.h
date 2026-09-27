@@ -19,6 +19,7 @@
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
 #include "AxionEngine/Source/scene/ParticleSystem.h"
 #include "AxionEngine/Source/scene/Animation.h"
+#include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 namespace Axion {
 
@@ -439,6 +440,16 @@ namespace Axion {
 		AnimatorComponent() = default;
 		AnimatorComponent(const AnimatorComponent&) = default;
 		AnimatorComponent(const AssetHandle<AnimationClip>& clip) : currentClip(clip) {}
+	};
+
+
+
+	struct NavMeshAgentComponent {
+		std::string profileName = "Default";
+		float speed = 3.0f;
+
+		NavMeshAgentComponent() = default;
+		NavMeshAgentComponent(const NavMeshAgentComponent&) = default;
 	};
 
 

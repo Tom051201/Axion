@@ -86,6 +86,17 @@ namespace Axion {
 		void(*scene_save)(const char*);
 		uint8_t(*scene_isLoading)();
 
+		// -- PATHFINDING --
+		uint8_t(*navmesh_bakeProfile)(const char*);
+		int(*navmesh_calculatePath)(const char*, float*, float*, float*, int);
+		void(*navmesh_getNearestPoint)(const char*, float*, float*);
+		void(*navmesh_getRandomPoint)(const char*, float*, float, float*);
+		uint8_t(*navmesh_raycast)(const char*, float*, float*, float*);
+		void(*agent_getProfileName)(uint64_t, uint64_t, char*, int);
+		void(*agent_setProfileName)(uint64_t, uint64_t, const char*);
+		float(*agent_getSpeed)(uint64_t, uint64_t);
+		void(*agent_setSpeed)(uint64_t, uint64_t, float);
+
 		// -- NETWORK --
 		uint8_t(*network_isLocalPlayer)(uint64_t, uint64_t);
 		void(*network_sendEvent)(uint64_t, uint64_t, uint32_t, uint8_t*, uint16_t);

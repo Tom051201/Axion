@@ -696,4 +696,55 @@ namespace Axion {
 		}
 	}
 
+	AssetHandle<NavMesh> Scene::getNavMeshHandle(const std::string& profileName) const {
+		for (const auto& profile : m_navMeshProfiles) {
+			if (profile.name == profileName) {
+				return profile.handle;
+			}
+		}
+
+		AX_CORE_LOG_WARN("NavMesh Profile '{}' not found in Scene!", profileName);
+		return AssetHandle<NavMesh>();
+	}
+
+	std::vector<Vec3> Scene::calculatePath(const std::string& profileName, const Vec3& start, const Vec3& end) {
+		AssetHandle<NavMesh> handle = getNavMeshHandle(profileName);
+
+		if (handle.isValid()) {
+			Ref<NavMesh> navMesh = AssetManager::get<NavMesh>(handle);
+			if (navMesh) {
+				return NavMeshSystem::calculatePath(navMesh, start, end);
+			}
+		}
+
+		return std::vector<Vec3>();
+	}
+
+	Vec3 Scene::getNavMeshNearestPoint(const std::string& profileName, const Vec3& point) {
+		AssetHandle<NavMesh> handle = getNavMeshHandle(profileName);
+		if (handle.isValid()) {
+			Ref<NavMesh> navMesh = AssetManager::get<NavMesh>(handle);
+			if (navMesh) return NavMeshSystem::getNearestPoint(navMesh, point);
+		}
+		return point;
+	}
+
+	Vec3 Scene::getNavMeshRandomPoint(const std::string& profileName, const Vec3& center, float radius) {
+		AssetHandle<NavMesh> handle = getNavMeshHandle(profileName);
+		if (handle.isValid()) {
+			Ref<NavMesh> navMesh = AssetManager::get<NavMesh>(handle);
+			if (navMesh) return NavMeshSystem::getRandomPointAroundCircle(navMesh, center, radius);
+		}
+		return center;
+	}
+
+	bool Scene::raycastNavMesh(const std::string& profileName, const Vec3& start, const Vec3& end, Vec3& outHitPoint) {
+		AssetHandle<NavMesh> handle = getNavMeshHandle(profileName);
+		if (handle.isValid()) {
+			Ref<NavMesh> navMesh = AssetManager::get<NavMesh>(handle);
+			if (navMesh) return NavMeshSystem::raycast(navMesh, start, end, outHitPoint);
+		}
+		return true;
+	}
+
 }

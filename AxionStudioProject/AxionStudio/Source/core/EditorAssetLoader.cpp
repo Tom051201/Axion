@@ -19,6 +19,7 @@
 #include "AxionEngine/Source/scene/Animation.h"
 #include "AxionEngine/Source/audio/AudioClip.h"
 #include "AxionEngine/Source/physics/PhysicsMaterial.h"
+#include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
 
 #include "AxionAssetPipeline/Source/importer/OBJImporter.h"
 #include "AxionAssetPipeline/Source/importer/GLTFImporter.h"
@@ -737,6 +738,29 @@ namespace Axion {
 				return SkeletalMesh::create(*meshData);
 			});
 
+		});
+	}
+
+	void EditorAssetLoader::loadNavMesh(UUID handle, const std::filesystem::path& absolutePath) {
+		AssetManager::storage<NavMesh>().assets[handle] = nullptr;
+		AssetManager::storage<NavMesh>().handleToPath[handle] = absolutePath;
+
+		JobSystem::submit([handle, absolutePath]() {
+			std::ifstream stream(absolutePath);
+			if (!stream.is_open()) return;
+
+			YAML::Node data = YAML::Load(stream);
+			std::string rawSource = data["Source"].as<std::string>();
+			std::filesystem::path sourcePath = PathResolver::resolve(rawSource);
+
+			AssetManager::submitToMainThread<NavMesh>(handle, [sourcePath]() -> Ref<NavMesh> {
+				std::ifstream in(sourcePath, std::ios::in | std::ios::binary);
+				if (!in.is_open()) {
+					AX_CORE_LOG_ERROR("Failed to open NavMesh binary file: {}", sourcePath.string());
+					return nullptr;
+				}
+				return NavMeshSystem::deserializeFromStream(in);
+			});
 		});
 	}
 

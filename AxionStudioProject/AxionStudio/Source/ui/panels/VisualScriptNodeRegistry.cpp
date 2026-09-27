@@ -18,6 +18,8 @@ namespace Axion {
 			NodeType::Math_Add, NodeType::Math_Subtract, NodeType::Math_Multiply, NodeType::Math_Divide, NodeType::Math_Equal, NodeType::Math_Greater, NodeType::Math_Less, NodeType::Math_MakeVector3, NodeType::Math_BreakVector3,
 			NodeType::Variable_Get, NodeType::Variable_Set,
 			NodeType::CharacterController_Move, NodeType::CharacterController_IsGrounded,
+			NodeType::NavMesh_BakeProfile, NodeType::NavMesh_CalculatePath, NodeType::NavMesh_GetNearestPoint, NodeType::NavMesh_GetRandomPoint, NodeType::NavMesh_Raycast,
+			NodeType::Agent_GetProfileName, NodeType::Agent_SetProfileName, NodeType::Agent_GetSpeed, NodeType::Agent_SetSpeed,
 		};
 		return s_AllNodes;
 	}
@@ -90,6 +92,19 @@ namespace Axion {
 			case NodeType::Network_IsLocalPlayer: { static VSNodeDef d = { "Is Local Player", "Network", { {"Target", PinType::Entity} }, { {"Result", PinType::Bool} } }; return d; }
 			case NodeType::Network_SendEvent: { static VSNodeDef d = { "Send Network Event", "Network", { {"Execute", PinType::Flow}, {"Target", PinType::Entity}, {"Event ID", PinType::Int} }, { {"Next", PinType::Flow} } }; return d; }
 
+		// -- PATHFINDING --
+			case NodeType::NavMesh_BakeProfile: { static VSNodeDef d = { "Bake NavMesh Profile", "Pathfinding", { {"Execute", PinType::Flow}, {"Profile Name", PinType::String} }, { {"Next", PinType::Flow} } }; return d; }
+			case NodeType::NavMesh_CalculatePath: { static VSNodeDef d = { "Calculate Path", "Pathfinding", { {"Profile Name", PinType::String}, {"Start", PinType::Vector3}, {"End", PinType::Vector3} }, { {"Path", PinType::Vector3Array} } }; return d; }
+			case NodeType::NavMesh_GetNearestPoint: { static VSNodeDef d = { "Get Nearest Walkable Point", "Pathfinding", { {"Profile Name", PinType::String}, {"Point", PinType::Vector3} }, { {"Result", PinType::Vector3} } }; return d; }
+			case NodeType::NavMesh_GetRandomPoint: { static VSNodeDef d = { "Get Random Walkable Point", "Pathfinding", { {"Profile Name", PinType::String}, {"Center", PinType::Vector3}, {"Radius", PinType::Float} }, { {"Result", PinType::Vector3} } }; return d; }
+			case NodeType::NavMesh_Raycast: { static VSNodeDef d = { "Raycast NavMesh", "Pathfinding", { {"Execute", PinType::Flow}, {"Profile Name", PinType::String}, {"Start", PinType::Vector3}, {"End", PinType::Vector3} }, { {"Next", PinType::Flow}, {"Hit Wall", PinType::Bool}, {"Hit Point", PinType::Vector3} } }; return d; }
+
+		// -- NAVMESH AGENT --
+			case NodeType::Agent_GetProfileName: { static VSNodeDef d = { "Get Profile Name", "NavMesh Agent", { {"Target", PinType::Entity} }, { {"Profile Name", PinType::String} } }; return d; }
+			case NodeType::Agent_SetProfileName: { static VSNodeDef d = { "Set Profile Name", "NavMesh Agent", { {"Execute", PinType::Flow}, {"Target", PinType::Entity}, {"Profile Name", PinType::String} }, { {"Next", PinType::Flow} } }; return d; }
+			case NodeType::Agent_GetSpeed: { static VSNodeDef d = { "Get Speed", "NavMesh Agent", { {"Target", PinType::Entity} }, { {"Speed", PinType::Float} } }; return d; }
+			case NodeType::Agent_SetSpeed: { static VSNodeDef d = { "Set Speed", "NavMesh Agent", { {"Execute", PinType::Flow}, {"Target", PinType::Entity}, {"Speed", PinType::Float} }, { {"Next", PinType::Flow} } }; return d; }
+
 		// -- LOGIC --
 			case NodeType::Logic_Branch: { static VSNodeDef d = { "Branch", "Logic", { {"Execute", PinType::Flow}, {"Condition", PinType::Bool} }, { {"True", PinType::Flow}, {"False", PinType::Flow} } }; return d; }
 			case NodeType::Logic_Sequence: { static VSNodeDef d = { "Sequence", "Logic", { {"Execute", PinType::Flow} }, { {"Then 0", PinType::Flow}, {"Then 1", PinType::Flow}, {"Then 2", PinType::Flow}, {"Then 3", PinType::Flow}, {"Then 4", PinType::Flow} } }; return d; }
@@ -129,6 +144,8 @@ namespace Axion {
 		if (type >= NodeType::Math_Add && type <= NodeType::Math_BreakVector3) return Silica::Color(85, 139, 47);
 		if (type == NodeType::Variable_Get || type == NodeType::Variable_Set) return Silica::Color(139, 195, 74);
 		if (type == NodeType::CharacterController_Move || type == NodeType::CharacterController_IsGrounded) return Silica::Color(0, 188, 212);
+		if (type >= NodeType::NavMesh_BakeProfile && type <= NodeType::NavMesh_Raycast) return Silica::Color(103, 58, 183);
+		if (type >= NodeType::Agent_GetProfileName && type <= NodeType::Agent_SetSpeed) return Silica::Color(30, 136, 229);
 		return Silica::Color(80, 80, 80);
 	}
 
@@ -143,6 +160,7 @@ namespace Axion {
 			case PinType::Entity: return Silica::Color(100, 181, 246);
 			case PinType::Key: return Silica::Color(156, 39, 176);
 			case PinType::MouseButton: return Silica::Color(156, 39, 176);
+			case PinType::Vector3Array: return Silica::Color(255, 160, 0);
 			default: return Silica::Color(200, 200, 200);
 		}
 	}

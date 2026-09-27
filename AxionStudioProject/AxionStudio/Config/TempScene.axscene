@@ -1,10 +1,74 @@
-Version: 3
+Version: 4
 UUID: 0c2ce19ea62a4dee103fd59e64b28d90
 Type: Scene
 Scene: Test Scene
 Skybox: b4e88aba8952de74c020877e8840e45b
 AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
+NavMeshProfiles:
+  - Name: Default
+    UUID: 7c74b309effa4ed2b596f98a944e5f9b
+    AgentHeight: 2
+    AgentRadius: 0.5
+    AgentMaxClimb: 0.300000012
+    AgentMaxSlope: 45
+    CellSize: 0.300000012
+    CellHeight: 0.200000003
 Entities:
+  - Entity: 2ef050af73529274af437db0a6cb9ad1
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Translation: [4.21350288, 2.57129812, 3.37949324]
+      Rotation: [0, 0, 0, 1]
+      Scale: [24.4236088, 5.4842639, 1]
+    MeshComponent:
+      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
+    MaterialComponent:
+      Materials:
+        - 468a1e72b23718f4152fb7ab16cd4a84
+    RigidBodyComponent:
+      BodyType: Static
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+  - Entity: 020af6763b5e6123462427abc3dd149d
+    TagComponent:
+      Tag: Enemy
+    TransformComponent:
+      Translation: [7.68056488, 1.15968704, 11.0984154]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 2, 1]
+    MeshComponent:
+      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
+    MaterialComponent:
+      Materials:
+        - 468a1e72b23718f4152fb7ab16cd4a84
+    CharacterControllerComponent:
+      Radius: 0.5
+      Height: 2
+      StepOffset: 0.300000012
+      SlopeLimitDegrees: 45
+      PushPower: 50
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+    ScriptComponent:
+      ClassName: EnemyAI
+    NavMeshAgentComponent:
+      ProfileName: Default
+      Speed: 3.5
   - Entity: 77ef249aef85f49687cb5f61548cfdc3
     TagComponent:
       Tag: Light
@@ -48,7 +112,7 @@ Entities:
     TransformComponent:
       Translation: [0, -0.5, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [10, 1, 10]
+      Scale: [30.6496925, 1, 31.1484737]
     MeshComponent:
       UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
     MaterialComponent:

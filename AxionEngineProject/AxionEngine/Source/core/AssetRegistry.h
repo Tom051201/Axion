@@ -21,7 +21,8 @@ namespace Axion {
 		Prefab,
 		Scene,
 		AnimationClip,
-		SkeletalMesh
+		SkeletalMesh,
+		NavMesh
 	};
 
 

@@ -851,6 +851,18 @@ namespace Axion {
 			Renderer2D::drawBillboard(position, Vec2::one(), cameraViewMatrix, EditorResourceManager::getIcon("LightIcon"));
 		}
 
+		// -- NavMesh --
+		if (m_activeScene) {
+			for (const auto& profile : m_activeScene->getNavMeshProfiles()) {
+				if (profile.handle.isValid()) {
+					Ref<NavMesh> navMesh = AssetManager::get<NavMesh>(profile.handle);
+					if (navMesh) {
+						WireframeRenderer::drawNavMesh(NavMeshSystem::getDebugEdges(navMesh), Vec4(0.0f, 1.0f, 1.0f, 1.0f));
+					}
+				}
+			}
+		}
+
 		Renderer2D::endScene();
 	}
 

@@ -27,6 +27,7 @@ namespace Axion {
 	class Prefab;
 	class SkeletalMesh;
 	class AnimationClip;
+	class NavMesh;
 
 	template<typename T>
 	using AssetMap = std::unordered_map<AssetHandle<T>, Ref<T>>;
@@ -172,5 +173,6 @@ namespace Axion {
 	template<> AssetHandle<Prefab> AssetManager::load<Prefab>(UUID handle);
 	template<> AssetHandle<SkeletalMesh> AssetManager::load<SkeletalMesh>(UUID handle);
 	template<> AssetHandle<AnimationClip> AssetManager::load<AnimationClip>(UUID handle);
+	template<> AssetHandle<NavMesh> AssetManager::load<NavMesh>(UUID handle);
 
 }
