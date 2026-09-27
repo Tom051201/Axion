@@ -42,6 +42,7 @@ namespace Axion {
 		static bool viewportPanelInvertCameraY;
 		static bool viewportPanelInvertCameraX;
 		static float viewportPanelGizmoScale;
+		static bool viewportPanelRenderNavMeshes;
 
 	};
 

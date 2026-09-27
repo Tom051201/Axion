@@ -309,6 +309,10 @@ namespace Axion {
 								EditorSettings::viewportPanelInvertCameraY = val;
 								rebuildUI();
 							})},
+								{ {0,0}, SilicaHelpers::MakeCheckboxMenuItem("Render NavMeshes", EditorSettings::viewportPanelRenderNavMeshes, [this](bool val) {
+								EditorSettings::viewportPanelRenderNavMeshes = val;
+								rebuildUI();
+							})},
 						}
 					})
 				})
@@ -516,6 +520,7 @@ namespace Axion {
 				else { m_gizmo->setSpace(GizmoSpace::Global); }
 			}
 			if (vpSettings["GizmoScale"]) EditorSettings::viewportPanelGizmoScale = vpSettings["GizmoScale"].as<float>();
+			if (vpSettings["RenderNavMeshes"]) EditorSettings::viewportPanelRenderNavMeshes = vpSettings["RenderNavMeshes"].as<bool>();
 		}
 	}
 
@@ -538,6 +543,7 @@ namespace Axion {
 		out << YAML::Key << "GizmoMode" << YAML::Value << gizmoMode;
 		out << YAML::Key << "GizmoSpace" << YAML::Value << ((m_gizmo->getSpace() == GizmoSpace::Local) ? "Local" : "Global");
 		out << YAML::Key << "GizmoScale" << YAML::Value << EditorSettings::viewportPanelGizmoScale;
+		out << YAML::Key << "RenderNavMeshes" << YAML::Value << EditorSettings::viewportPanelRenderNavMeshes;
 		out << YAML::EndMap;
 	}
 

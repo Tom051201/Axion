@@ -121,5 +121,6 @@ namespace Axion {
 	bool EditorSettings::viewportPanelInvertCameraY = false;
 	bool EditorSettings::viewportPanelInvertCameraX = false;
 	float EditorSettings::viewportPanelGizmoScale = 1.0f;
+	bool EditorSettings::viewportPanelRenderNavMeshes = true;
 
 }

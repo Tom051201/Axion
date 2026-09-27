@@ -536,6 +536,8 @@ namespace Axion {
 			out << YAML::Key << "AgentMaxSlope" << YAML::Value << profile.settings.agentMaxSlope;
 			out << YAML::Key << "CellSize" << YAML::Value << profile.settings.cellSize;
 			out << YAML::Key << "CellHeight" << YAML::Value << profile.settings.cellHeight;
+			out << YAML::Key << "DebugColor" << YAML::Value << profile.debugColor;
+			out << YAML::Key << "ShowDebug" << YAML::Value << profile.showDebug;
 			out << YAML::EndMap;
 		}
 		out << YAML::EndSeq;
@@ -663,6 +665,12 @@ namespace Axion {
 				profile.settings.agentMaxSlope = profileNode["AgentMaxSlope"].as<float>();
 				profile.settings.cellSize = profileNode["CellSize"].as<float>();
 				profile.settings.cellHeight = profileNode["CellHeight"].as<float>();
+
+				if (profileNode["DebugColor"]) profile.debugColor = profileNode["DebugColor"].as<Vec4>();
+				else profile.debugColor = { 0.0f, 1.0f, 1.0f, 1.0f };
+
+				if (profileNode["ShowDebug"]) profile.showDebug = profileNode["ShowDebug"].as<bool>();
+				else profile.showDebug = true;
 
 				m_scene->getNavMeshProfiles().push_back(profile);
 			}

@@ -13,7 +13,7 @@ ContentBrowser:
   ShowContentArea: true
   ShowVFSTree: true
   ShowPhysicalTree: true
-  CurrentDirectory: D:\Projects\TestProject\Assets\ImportedPacks\Script Pack
+  CurrentDirectory: D:\Projects\TestProject\Assets\NavMeshes
   ExpandedDirectories:
     - D:\Projects\TestProject
     - D:\Projects\TestProject\Assets
@@ -40,6 +40,7 @@ Viewport:
   GizmoMode: Translate
   GizmoSpace: Global
   GizmoScale: 0.800000012
+  RenderNavMeshes: true
 AssetLibrary:
   PackSourcePaths:
     - D:/Coding/AxionEngine/Axion/AxionStudioProject/AxionStudio/Resources/DefaultAssets

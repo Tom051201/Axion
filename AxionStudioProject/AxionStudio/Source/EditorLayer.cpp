@@ -852,12 +852,13 @@ namespace Axion {
 		}
 
 		// -- NavMesh --
-		if (m_activeScene) {
+		if (m_activeScene && EditorSettings::viewportPanelRenderNavMeshes) {
 			for (const auto& profile : m_activeScene->getNavMeshProfiles()) {
+				if (!profile.showDebug) continue;
 				if (profile.handle.isValid()) {
 					Ref<NavMesh> navMesh = AssetManager::get<NavMesh>(profile.handle);
 					if (navMesh) {
-						WireframeRenderer::drawNavMesh(NavMeshSystem::getDebugEdges(navMesh), Vec4(0.0f, 1.0f, 1.0f, 1.0f));
+						WireframeRenderer::drawNavMesh(NavMeshSystem::getDebugEdges(navMesh), profile.debugColor);
 					}
 				}
 			}
@@ -874,7 +875,7 @@ namespace Axion {
 		SceneSerializer serializer(m_editorScene);
 		serializer.serializeText(tempPath, false);
 
-		m_activeScene = std::make_shared<Scene>();
+		m_activeScene = std::make_shared<Scene>(); // TODO: MakeShared
 		SceneSerializer deserializer(m_activeScene);
 		deserializer.deserializeText(tempPath);
 

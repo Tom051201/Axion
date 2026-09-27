@@ -58,6 +58,7 @@ namespace Axion {
 		m_workingState.viewportPanelInvertCameraX = EditorSettings::viewportPanelInvertCameraX;
 		m_workingState.viewportPanelInvertCameraY = EditorSettings::viewportPanelInvertCameraY;
 		m_workingState.viewportPanelGizmoScale = EditorSettings::viewportPanelGizmoScale;
+		m_workingState.viewportPanelRenderNavMeshes = EditorSettings::viewportPanelRenderNavMeshes;
 
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
@@ -285,6 +286,15 @@ namespace Axion {
 		});
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Gizmo Scale:", vpGizmoScale, LABEL_WIDTH) });
 
+		auto vpRenderNavMeshes = Silica::MakeWidget<Silica::SCheckBox>({
+			.initialCheck = m_workingState.viewportPanelRenderNavMeshes,
+			.onCheckChanged = [this](bool val) {
+				m_workingState.viewportPanelRenderNavMeshes = val;
+				m_pendingChanges |= EditorSettingType::Viewport;
+			}
+		});
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Render NavMeshes:", vpRenderNavMeshes, LABEL_WIDTH) });
+
 		return contentBox;
 	}
 
@@ -365,6 +375,7 @@ namespace Axion {
 			EditorSettings::viewportPanelInvertCameraX = m_workingState.viewportPanelInvertCameraX;
 			EditorSettings::viewportPanelInvertCameraY = m_workingState.viewportPanelInvertCameraY;
 			EditorSettings::viewportPanelGizmoScale = m_workingState.viewportPanelGizmoScale;
+			EditorSettings::viewportPanelRenderNavMeshes = m_workingState.viewportPanelRenderNavMeshes;
 
 			// -- Dispatch events --
 			if (m_pendingChanges != EditorSettingType::None && m_eventCallback) {

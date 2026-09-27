@@ -22,6 +22,9 @@ namespace Axion {
 		std::string name = "Default";
 		AssetHandle<NavMesh> handle;
 		NavMeshBuildSettings settings;
+
+		Vec4 debugColor = { 0.0f, 1.0f, 1.0f, 1.0f }; // TODO: maybe move this somewhere into the editor only
+		bool showDebug = true;
 	};
 
 	class Scene {

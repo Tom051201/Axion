@@ -41,6 +41,7 @@ namespace Axion {
 			bool viewportPanelInvertCameraX = false;
 			bool viewportPanelInvertCameraY = false;
 			float viewportPanelGizmoScale = 1.0f;
+			bool viewportPanelRenderNavMeshes = true;
 		};
 
 		void rebuildUI();

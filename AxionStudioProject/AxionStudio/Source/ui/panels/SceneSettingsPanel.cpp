@@ -20,6 +20,7 @@
 #include <Silica/include/SImage.h>
 #include <Silica/include/SSpacer.h>
 #include <Silica/include/SInputFieldFloat.h>
+#include <Silica/include/SCheckBox.h>
 
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/core/AssetManager.h"
@@ -288,17 +289,18 @@ namespace Axion {
 
 		for (size_t i = 0; i < profiles.size(); ++i) {
 			auto& profile = profiles[i];
-			auto profileBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_MEDIUM });
+			auto profileBox = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_MEDIUM });
 
-			// -- Name & Delete Row --
+			// -- Name and Delete Row --
 			auto nameInput = Silica::MakeWidget<Silica::SEditableText>({
 				.initialText = profile.name,
 				.onTextCommitted = [this, i](const std::string& val) {
 					m_activeScene->getNavMeshProfiles()[i].name = val;
 				}
-				});
+			});
 
 			auto deleteBtn = Silica::MakeWidget<Silica::SButton>({
+				.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
 				.color = Silica::GetTheme().Accent_Danger,
 				.onClick = [this, i]() {
 					m_activeScene->getNavMeshProfiles().erase(m_activeScene->getNavMeshProfiles().begin() + i);
@@ -306,33 +308,57 @@ namespace Axion {
 					return Silica::EventReply::handled();
 				},
 				.child = Silica::MakeWidget<Silica::STextBlock>({.text = "X"})
-				});
+			});
 
 			auto headerRow = Silica::MakeWidget<Silica::SHorizontalBox>({
 				.spacing = EditorTheme::SPACING_MEDIUM,
-				.slots = { { {1, 0}, nameInput }, { {0, 0}, deleteBtn } }
-				});
+				.slots = {
+					{ {1, 0}, Silica::MakeWidget<Silica::SAlign>({
+						.verticalAlign = Silica::VerticalAlign::Center,
+						.child = nameInput
+					}) },
+					{ {0, 0}, deleteBtn }
+				}
+			});
 			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Profile Name:", headerRow) });
 
 			// -- Active Asset Display --
 			if (profile.handle.isValid()) {
 				std::filesystem::path nmPath = AssetManager::getAssetFilePath<NavMesh>(profile.handle);
 				profileBox->addSlot({ {0, 0}, SilicaHelpers::MakeDetailRow("Active NavMesh:", nmPath.filename().string()) });
-
-				auto removeNmBtn = Silica::MakeWidget<Silica::SButton>({
-					.color = Silica::GetTheme().Accent_Danger,
-					.onClick = [this, i]() {
-						m_activeScene->getNavMeshProfiles()[i].handle.invalidate();
-						rebuildUI();
-						return Silica::EventReply::handled();
-					},
-					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear NavMesh"})
-					});
-				profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("", removeNmBtn) });
 			}
 			else {
 				profileBox->addSlot({ {0, 0}, SilicaHelpers::MakeDetailRow("Active NavMesh:", "None") });
 			}
+
+			// -- Debug Visualization Row (Color + Show/Hide Toggle) --
+			auto colorInput = Silica::MakeWidget<Silica::SColorField>({
+				.initialColor = SilicaHelpers::MakeSilicaColor(profile.debugColor),
+				.onColorChanged = [this, i](Silica::Color c) {
+					m_activeScene->getNavMeshProfiles()[i].debugColor = SilicaHelpers::MakeAxionColor(c);
+				}
+			});
+
+			auto toggleVis = Silica::MakeWidget<Silica::SCheckBox>({
+				.initialCheck = profile.showDebug,
+				.onCheckChanged = [this, i](bool var) {
+					auto& p = m_activeScene->getNavMeshProfiles()[i];
+					p.showDebug = var;
+					return Silica::EventReply::handled();
+				}
+			});
+
+			auto debugRow = Silica::MakeWidget<Silica::SHorizontalBox>({
+				.spacing = EditorTheme::SPACING_MEDIUM,
+				.slots = {
+					{ {0, 0}, colorInput },
+					{ {0, 0}, Silica::MakeWidget<Silica::SAlign>({
+						.verticalAlign = Silica::VerticalAlign::Center,
+						.child = toggleVis
+					}) }
+				}
+			});
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Debug View:", debugRow) });
 
 			// -- Settings Inputs --
 			auto hInput = Silica::MakeWidget<Silica::SInputFieldFloat>({
@@ -379,19 +405,17 @@ namespace Axion {
 					Ref<NavMesh> newMesh = NavMeshSystem::bakeScene(m_activeScene.get(), curProfile.settings);
 
 					if (newMesh) {
-						// CASE 1: Update an EXISTING NavMesh (No File Dialog, No New UUID)
+						// -- Overwrite existing file --
 						if (curProfile.handle.isValid()) {
 							std::filesystem::path nmPath = AssetManager::getAssetFilePath<NavMesh>(curProfile.handle);
 							if (!nmPath.empty()) {
 								std::filesystem::path rawSourcePath = AssetManager::getAbsolute(nmPath);
 								rawSourcePath.replace_extension(".axnav");
 
-								// Overwrite the binary data on disk
 								std::ofstream outStream(rawSourcePath, std::ios::out | std::ios::binary);
 								NavMeshSystem::serializeToStream(newMesh, outStream);
 								outStream.close();
 
-								// Update live RAM
 								AssetManager::storage<NavMesh>().assets[curProfile.handle.uuid] = newMesh;
 								AX_CORE_LOG_INFO("Successfully updated existing NavMesh for profile: {}", curProfile.name);
 								rebuildUI();
@@ -399,7 +423,7 @@ namespace Axion {
 							}
 						}
 
-						// CASE 2: Bake a completely NEW NavMesh
+						// -- Bake new asset file --
 						std::filesystem::path defaultPath = ProjectManager::getProject()->getAssetsPath();
 						std::filesystem::path savePath = FileDialogs::saveFile({ {"Axion NavMesh", "*.axnm"} }, defaultPath);
 
@@ -407,21 +431,20 @@ namespace Axion {
 							std::filesystem::path rawSourcePath = savePath;
 							rawSourcePath.replace_extension(".axnav");
 
-							// Save binary
+							// -- Save binary data --
 							std::ofstream outStream(rawSourcePath, std::ios::out | std::ios::binary);
 							NavMeshSystem::serializeToStream(newMesh, outStream);
 							outStream.close();
 
-							// Save YAML metadata
+							// -- Save YAML metadata --
 							UUID newUUID = UUID::generate();
 							AAP::NavMeshAssetData data;
 							data.uuid = newUUID;
 							data.name = savePath.stem().string();
-							// FIX: Convert Absolute to Relative Path!
 							data.sourcePath = rawSourcePath;
 							AAP::NavMeshParser::createTextFile(data, savePath);
 
-							// Register new asset
+							// -- Register new asset --
 							AssetMetadata metadata;
 							metadata.handle = newUUID;
 							metadata.type = AssetType::NavMesh;
@@ -430,7 +453,6 @@ namespace Axion {
 							ProjectManager::getProject()->getAssetRegistry()->add(metadata);
 							ProjectManager::getProject()->getAssetRegistry()->serialize(ProjectManager::getProjectFilePath().parent_path() / "AssetRegistry.yaml");
 
-							// Apply to RAM and scene
 							AssetManager::storage<NavMesh>().assets[newUUID] = newMesh;
 							AssetManager::storage<NavMesh>().handleToPath[newUUID] = savePath;
 
@@ -446,7 +468,31 @@ namespace Axion {
 					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Bake NavMesh" })
 				})
 			});
-			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Actions:", bakeBtn) });
+
+			Silica::WidgetPtr actionsWidget = bakeBtn;
+
+			if (profile.handle.isValid()) {
+				auto removeNmBtn = Silica::MakeWidget<Silica::SButton>({
+					.padding = { EditorTheme::BUTTON_PADDING_X, EditorTheme::BUTTON_PADDING_Y },
+					.color = Silica::GetTheme().Accent_Danger,
+					.onClick = [this, i]() {
+						m_activeScene->getNavMeshProfiles()[i].handle.invalidate();
+						rebuildUI();
+						return Silica::EventReply::handled();
+					},
+					.child = Silica::MakeWidget<Silica::STextBlock>({.text = "Clear NavMesh"})
+				});
+
+				actionsWidget = Silica::MakeWidget<Silica::SHorizontalBox>({
+					.spacing = EditorTheme::SPACING_MEDIUM,
+					.slots = {
+						{ {0, 0}, bakeBtn },
+						{ {0, 0}, removeNmBtn }
+					}
+				});
+			}
+
+			profileBox->addSlot({ {0, 0}, SilicaHelpers::MakePropertyRow("Actions:", actionsWidget) });
 
 			// -- Drop Zone --
 			auto dropZone = SilicaHelpers::MakeAssetDropZone(".axnm", [this, i](const std::filesystem::path& droppedPath) {
