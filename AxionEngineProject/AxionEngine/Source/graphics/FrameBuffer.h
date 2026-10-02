@@ -29,8 +29,8 @@ namespace Axion {
 		virtual void release() = 0;
 		virtual void resize(uint32_t width, uint32_t height) = 0;
 
-		virtual void bind(RenderContext* renderContext) const = 0;
-		virtual void unbind(RenderContext* renderContext) const = 0;
+		virtual void bind(RenderContext* renderContext, bool transitionBarrier = true) const = 0;
+		virtual void unbind(RenderContext* renderContext, bool transitionBarrier = true) const = 0;
 
 		virtual void clear(RenderContext* renderContext) = 0;
 		virtual void clear(RenderContext* renderContext, const Vec4& clearColor) = 0;
@@ -42,6 +42,9 @@ namespace Axion {
 		virtual void* getColorAttachmentHandle() const = 0;
 		virtual void* getColorAttachmentNativeResource() const = 0;
 		virtual const FrameBufferSpecification& getSpecification() const = 0;
+
+		virtual void* getNativeColorResource() const = 0;
+		virtual void* getNativeDepthResource() const = 0;
 
 
 		static Ref<FrameBuffer> create(const FrameBufferSpecification& spec);

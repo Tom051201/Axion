@@ -10,7 +10,7 @@ namespace Axion {
 	DX12FrameBuffer::DX12FrameBuffer(const FrameBufferSpecification& spec) : m_specification(spec) {
 		m_context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		AX_CORE_ASSERT(m_context, "Failed to acquire DirectX12 context");
-		m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		m_currentState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 		try {
 			resize(spec.width, spec.height);
@@ -184,11 +184,11 @@ namespace Axion {
 		#endif
 	}
 
-	void DX12FrameBuffer::bind(RenderContext* renderContext) const {
+	void DX12FrameBuffer::bind(RenderContext* renderContext, bool transitionBarrier) const {
 		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 		
 		// ----- Transition barrier -----
-		if (m_currentState != D3D12_RESOURCE_STATE_RENDER_TARGET) {
+		if (transitionBarrier && m_currentState != D3D12_RESOURCE_STATE_RENDER_TARGET) {
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				m_colorResource.Get(),
 				m_currentState, D3D12_RESOURCE_STATE_RENDER_TARGET
@@ -228,11 +228,11 @@ namespace Axion {
 		cmdList->RSSetScissorRects(1, &sc);
 	}
 
-	void DX12FrameBuffer::unbind(RenderContext* renderContext) const {
+	void DX12FrameBuffer::unbind(RenderContext* renderContext, bool transitionBarrier) const {
 		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 
 		// ----- Reverse barrier -----
-		if (m_currentState != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) {
+		if (transitionBarrier && m_currentState != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) {
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				m_colorResource.Get(), m_currentState,
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE

@@ -20,8 +20,8 @@ namespace Axion {
 		void release() override;
 		void resize(uint32_t width, uint32_t height) override;
 
-		void bind(RenderContext* renderContext) const override;
-		void unbind(RenderContext* renderContext) const override;
+		void bind(RenderContext* renderContext, bool transitionBarrier = true) const override;
+		void unbind(RenderContext* renderContext, bool transitionBarrier = true) const override;
 
 		void clear(RenderContext* renderContext) override;
 		void clear(RenderContext* renderContext, const Vec4& clearColor) override;
@@ -33,6 +33,9 @@ namespace Axion {
 		void* getColorAttachmentHandle() const override { return (void*)m_colorSRV.Get(); }
 		void* getColorAttachmentNativeResource() const override { return (void*)m_colorTexture.Get(); }
 		const FrameBufferSpecification& getSpecification() const override { return m_specification; }
+
+		void* getNativeColorResource() const override { return nullptr; /*TODO*/ }
+		void* getNativeDepthResource() const override { return nullptr; /*TODO*/ }
 
 	private:
 

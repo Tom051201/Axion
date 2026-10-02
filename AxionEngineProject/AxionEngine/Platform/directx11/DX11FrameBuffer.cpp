@@ -147,7 +147,7 @@ namespace Axion {
 		#endif
 	}
 
-	void DX11FrameBuffer::bind(RenderContext* renderContext) const {
+	void DX11FrameBuffer::bind(RenderContext* renderContext, bool transitionBarrier) const {
 		auto* ctx = m_context->getDeviceContext();
 
 		ID3D11RenderTargetView* rtvs[2] = { m_colorRTV.Get(), nullptr };
@@ -168,7 +168,7 @@ namespace Axion {
 		ctx->RSSetViewports(1, &vp);
 	}
 
-	void DX11FrameBuffer::unbind(RenderContext* renderContext) const {
+	void DX11FrameBuffer::unbind(RenderContext* renderContext, bool transitionBarrier) const {
 		auto* ctx = m_context->getDeviceContext();
 		ID3D11RenderTargetView* nullRTVs[2] = { nullptr, nullptr };
 		ctx->OMSetRenderTargets(2, nullRTVs, nullptr);

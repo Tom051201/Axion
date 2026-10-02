@@ -8,6 +8,7 @@
 #include "AxionEngine/Source/graphics/Renderer3D.h"
 #include "AxionEngine/Source/graphics/GraphicsContext.h"
 #include "AxionEngine/Source/graphics/RenderContext.h"
+#include "AxionEngine/Source/graphics/RenderGraph.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
@@ -236,7 +237,7 @@ namespace Axion {
 				spotLight.color * spotLight.intensity, spotLight.range,
 				std::cos(spotLight.innerConeAngle * 3.14159265f / 180.0f),
 				std::cos(spotLight.outerConeAngle * 3.14159265f / 180.0f)
-			});
+				});
 		}
 
 		// ----- Spatial Audio Listener -----
@@ -253,7 +254,7 @@ namespace Axion {
 				Ref<AudioSource> source = audio.audio;
 				if (source) source->setPosition(transform.position);
 			}
-		});
+			});
 
 		// ----- Pre-Calculate Batches -----
 		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>>> renderBatches;
@@ -336,124 +337,143 @@ namespace Axion {
 			}
 		}
 
-		// ----- Multi-Threaded Render Dispatch
-		std::vector<std::function<void(uint32_t)>> renderJobs;
+		// ----- Render Graph Dispatch -----
+		m_renderGraph.clear();
+
+		// -- Import the current FrameBuffer into the graph --
+		RGResourceID mainTargetID = RG_INVALID_RESOURCE;
+		auto* target = Renderer::getCurrentRenderTarget();
+		if (target) {
+			mainTargetID = m_renderGraph.importResource("MainTarget", target, RGResourceState::PixelShaderResource);
+		}
 
 		// -- Shadow Map Pass --
 		if (lightData.directionalLights.size() > 0) {
-			renderJobs.push_back([&](uint32_t threadId) {
-				RenderContext* renderContext = GraphicsContext::get()->acquireThreadContext(threadId);
+			m_renderGraph.addPass("DirectionalShadows",
+				[&](RGPassBuilder& builder) {},
+				[&](RenderContext* renderContext) {
+					Vec3 lightDir = lightData.directionalLights[0].direction;
+					float lightDistance = 50.0f;
+					float orthoSize = 100.0f;
 
-				Vec3 lightDir = lightData.directionalLights[0].direction;
-				float lightDistance = 50.0f;
-				float orthoSize = 100.0f;
+					Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
+					Vec3 lightPos = lightDir * lightDistance;
+					Mat4 lightView = Mat4::lookAt(lightPos, Vec3(0.0f, 0.0f, 0.0f), lightUp);
+					Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
 
-				Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
-				Vec3 lightPos = lightDir * lightDistance;
-				Mat4 lightView = Mat4::lookAt(lightPos, Vec3(0.0f, 0.0f, 0.0f), lightUp);
-				Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
+					Renderer3D::beginScene(lightProjection, lightView.inverse());
+					GraphicsContext::get()->bindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
 
-				Renderer3D::beginScene(lightProjection, lightView.inverse());
+					// -- Draw Shadows for Static Meshes --
+					for (auto& [meshHandle, submeshMap] : renderBatches) {
+						Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
+						if (!mesh) continue;
 
-				GraphicsContext::get()->bindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
+						for (auto& [submeshIndex, materialMap] : submeshMap) {
+							std::vector<ObjectBuffer> flatInstanceData;
+							for (auto& [matHandle, data] : materialMap) {
+								flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+							}
+							Renderer3D::drawMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+						}
+					}
 
-				// -- Draw Shadows for Static Meshes --
+					// -- Draw Shadows for Skeletal Meshes --
+					for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
+						Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
+						if (!mesh) continue;
+
+						for (auto& [submeshIndex, materialMap] : submeshMap) {
+							std::vector<SkeletalObjectBuffer> flatInstanceData;
+							for (auto& [matHandle, data] : materialMap) {
+								flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+							}
+							Renderer3D::drawSkeletalMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+						}
+					}
+
+					GraphicsContext::get()->unbindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
+					Renderer3D::endScene();
+				}
+			);
+		}
+
+		// -- Main 3D Pass --
+		m_renderGraph.addPass("Main3D",
+			[&](RGPassBuilder& builder) {
+				if (mainTargetID != RG_INVALID_RESOURCE) {
+					builder.writeColor(mainTargetID);
+				}
+			},
+			[&](RenderContext* renderContext) {
+				if (target) {
+					target->bind(renderContext, false);
+					target->clear(renderContext);
+				}
+				else {
+					Renderer::restoreRenderTarget(renderContext);
+					Renderer::clear(renderContext);
+				}
+
+				Renderer3D::beginScene(cam, lightData);
+
+				if (m_skyboxHandle.isValid()) {
+					Ref<Skybox> skybox = AssetManager::get<Skybox>(m_skyboxHandle);
+					if (skybox) skybox->onUpdate(ts, renderContext);
+				}
+
+				// -- Draw Static Meshes --
 				for (auto& [meshHandle, submeshMap] : renderBatches) {
 					Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 					if (!mesh) continue;
 
 					for (auto& [submeshIndex, materialMap] : submeshMap) {
-						std::vector<ObjectBuffer> flatInstanceData;
-						for (auto& [matHandle, data] : materialMap) {
-							flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+						for (auto& [materialHandle, instanceData] : materialMap) {
+							Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+							if (!mat) continue;
+							Renderer3D::drawMeshInstanced(renderContext, mesh, submeshIndex, mat, instanceData.data(), static_cast<uint32_t>(instanceData.size()));
 						}
-						Renderer3D::drawMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
 					}
 				}
 
-				// -- Draw Shadows for Skeletal Meshes --
+				// -- Draw Skeletal Meshes --
 				for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
 					Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
 					if (!mesh) continue;
 
 					for (auto& [submeshIndex, materialMap] : submeshMap) {
-						std::vector<SkeletalObjectBuffer> flatInstanceData;
-						for (auto& [matHandle, data] : materialMap) {
-							flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+						for (auto& [materialHandle, instanceData] : materialMap) {
+							Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+							if (!mat) continue;
+							Renderer3D::drawSkeletalMeshInstanced(renderContext, mesh, submeshIndex, mat, instanceData.data(), static_cast<uint32_t>(instanceData.size()));
 						}
-						Renderer3D::drawSkeletalMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
 					}
 				}
 
-				GraphicsContext::get()->unbindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
 				Renderer3D::endScene();
-				renderContext->end();
+
+				if (target) {
+					target->unbind(renderContext, false);
+				}
 			});
+
+		// -- Transition Pass --
+		if (mainTargetID != RG_INVALID_RESOURCE) {
+			m_renderGraph.addPass("TransitionToSRV",
+				[&](RGPassBuilder& builder) {
+					builder.read(mainTargetID, RGResourceState::PixelShaderResource);
+				},
+				[&](RenderContext* renderContext) {}
+			);
 		}
 
-		// --- JOB 2: MAIN 3D PASS ---
-		renderJobs.push_back([&](uint32_t threadId) {
-			RenderContext* renderContext = GraphicsContext::get()->acquireThreadContext(threadId);
+		m_renderGraph.compile();
+		m_renderGraph.execute();
 
-			auto* target = Renderer::getCurrentRenderTarget();
-			if (target) {
-				target->bind(renderContext);
-				target->clear(renderContext);
-			}
-			else {
-				Renderer::restoreRenderTarget(renderContext);
-				Renderer::clear(renderContext);
-			}
-
-			Renderer3D::beginScene(cam, lightData);
-
-			// ----- Render Skybox -----
-			if (m_skyboxHandle.isValid()) {
-				Ref<Skybox> skybox = AssetManager::get<Skybox>(m_skyboxHandle);
-				if (skybox) skybox->onUpdate(ts, renderContext);
-			}
-
-			// -- Draw Static Meshes --
-			for (auto& [meshHandle, submeshMap] : renderBatches) {
-				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
-				if (!mesh) continue;
-
-				for (auto& [submeshIndex, materialMap] : submeshMap) {
-					for (auto& [materialHandle, instanceData] : materialMap) {
-						Ref<Material> mat = AssetManager::get<Material>(materialHandle);
-						if (!mat) continue;
-						Renderer3D::drawMeshInstanced(renderContext, mesh, submeshIndex, mat, instanceData.data(), static_cast<uint32_t>(instanceData.size()));
-					}
-				}
-			}
-
-			// -- Draw Skeletal Meshes --
-			for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
-				Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
-				if (!mesh) continue;
-
-				for (auto& [submeshIndex, materialMap] : submeshMap) {
-					for (auto& [materialHandle, instanceData] : materialMap) {
-						Ref<Material> mat = AssetManager::get<Material>(materialHandle);
-						if (!mat) continue;
-						Renderer3D::drawSkeletalMeshInstanced(renderContext, mesh, submeshIndex, mat, instanceData.data(), static_cast<uint32_t>(instanceData.size()));
-					}
-				}
-			}
-
-			Renderer3D::endScene();
-
-			if (target) {
-				target->unbind(renderContext);
-			}
-
-			renderContext->end();
-		});
-
-		JobSystem::executeAndWait(renderJobs);
+		// ----- 2D Pass -----
 		RenderContext* mainContext = GraphicsContext::get()->getMainRenderContext();
 
-		auto* target = Renderer::getCurrentRenderTarget();
+		target = Renderer::getCurrentRenderTarget();
 		if (target) target->bind(mainContext);
 		else Renderer::restoreRenderTarget(mainContext);
 

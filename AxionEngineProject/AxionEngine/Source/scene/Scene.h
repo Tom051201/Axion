@@ -10,6 +10,7 @@
 #include "AxionEngine/Source/core/Timestep.h"
 #include "AxionEngine/Source/core/UUID.h"
 #include "AxionEngine/Source/graphics/Camera.h"
+#include "AxionEngine/Source/graphics/RenderGraph.h"
 #include "AxionEngine/Source/events/RenderingEvent.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/pathfinding/NavMeshSystem.h"
@@ -111,6 +112,8 @@ namespace Axion {
 		std::vector<std::function<void()>> m_componentsPendingRemove;
 
 		AssetHandle<Skybox> m_skyboxHandle;
+
+		RenderGraph m_renderGraph;
 
 		float m_physicsAccumulator = 0.0f;
 		const float m_physicsTimeStep = 1.0f / 60.0f; // 60 FPS Physics
