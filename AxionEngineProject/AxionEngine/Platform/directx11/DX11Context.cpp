@@ -5,6 +5,7 @@
 #include "AxionEngine/Platform/directx11/DX11Texture.h"
 
 #include "AxionEngine/Source/core/EngineAssets.h"
+#include "AxionEngine/Source/graphics/RenderContext.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -133,7 +134,7 @@ namespace Axion {
 		m_deviceContext->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
 	}
 
-	void DX11Context::bindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+	void DX11Context::bindDepthOnlyRenderTarget(RenderContext* renderContext, const Ref<Texture2D>& depthTexture) {
 		auto* depthTex = static_cast<DX11DepthTexture*>(depthTexture.get());
 		ID3D11DepthStencilView* dsv = depthTex->getDsv();
 
@@ -151,7 +152,7 @@ namespace Axion {
 		m_deviceContext->RSSetViewports(1, &vp);
 	}
 
-	void DX11Context::unbindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) {
+	void DX11Context::unbindDepthOnlyRenderTarget(RenderContext* renderContext, const Ref<Texture2D>& depthTexture) {
 		m_deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 	}
 
@@ -189,15 +190,15 @@ namespace Axion {
 		createRenderTarget();
 	}
 
-	void DX11Context::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
+	void DX11Context::drawIndexed(RenderContext* renderContext, const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
 		m_deviceContext->DrawIndexedInstanced(ib->getIndexCount(), instanceCount, 0, 0, 0);
 	}
 
-	void DX11Context::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) {
+	void DX11Context::drawIndexed(RenderContext* renderContext, const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) {
 		m_deviceContext->DrawIndexedInstanced(indexCount, instanceCount, startIndexLocation, baseVertexLocation, 0);
 	}
 
-	void DX11Context::draw(uint32_t vertexCount) {
+	void DX11Context::draw(RenderContext* renderContext, uint32_t vertexCount) {
 		m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 		m_deviceContext->DrawInstanced(vertexCount, 1, 0, 0);
 		m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -11,6 +11,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// BufferElement ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +99,7 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind(uint32_t slot = 0, uint32_t offset = 0) const = 0;
+		virtual void bind(RenderContext* context, uint32_t slot = 0, uint32_t offset = 0) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual void setLayout(const BufferLayout& layout) = 0;
@@ -132,7 +134,7 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind() const = 0;
+		virtual void bind(RenderContext* renderContext) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual uint32_t getIndexCount() const = 0;
@@ -155,8 +157,8 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind(uint32_t slot) const = 0;
-		virtual void bind(uint32_t slot, size_t offset) const = 0;
+		virtual void bind(RenderContext* renderContext, uint32_t slot) const = 0;
+		virtual void bind(RenderContext* renderContext, uint32_t slot, size_t offset) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual void update(const void* data, size_t size) = 0;
@@ -180,8 +182,8 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind(uint32_t slot) const = 0;
-		virtual void bind(uint32_t slot, size_t offset) const = 0;
+		virtual void bind(RenderContext* renderContext, uint32_t slot) const = 0;
+		virtual void bind(RenderContext* renderContext, uint32_t slot, size_t offset) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual void update(const void* data, size_t size) = 0;

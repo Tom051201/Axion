@@ -12,11 +12,11 @@
 
 namespace Axion {
 
+	class RenderContext;
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// DX12Texture2D ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
-
 
 	class DX12Texture2D : public Texture2D {
 	public:
@@ -28,8 +28,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0) const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext, uint32_t slot = 0) const override;
+		void unbind(RenderContext* renderContext) const override;
 
 		uint32_t getWidth() const override { return m_width; }
 		uint32_t getHeight() const override { return m_height; }
@@ -40,7 +40,6 @@ namespace Axion {
 
 		ID3D12Resource* getResource() const { return m_textureResource.Get(); }
 
-
 	private:
 
 		uint32_t m_width = 0;
@@ -50,13 +49,13 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadHeap;
 		uint32_t m_srvHeapIndex;
-	};
+		uint32_t m_gpuSrvHeapIndex = 0;
 
+	};
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// DX12TextureCube //////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
-
 
 	class DX12TextureCube : public TextureCube {
 	public:
@@ -69,8 +68,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0) const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext, uint32_t slot = 0) const override;
+		void unbind(RenderContext* renderContext) const override;
 
 		void* getHandle() const override;
 
@@ -88,17 +87,15 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadHeap;
 		uint32_t m_srvHeapIndex;
-
+		uint32_t m_gpuSrvHeapIndex = 0;
 
 		void setupGpuResources(const std::array<stbi_uc*, 6>& pixels);
 
 	};
 
-
 	////////////////////////////////////////////////////////////////////////////////
 	///// DX12DepthTexture /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
-
 
 	class DX12DepthTexture : public Texture2D {
 	public:
@@ -108,8 +105,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0) const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext, uint32_t slot = 0) const override;
+		void unbind(RenderContext* renderContext) const override;
 
 		uint32_t getWidth() const override { return m_width; }
 		uint32_t getHeight() const override { return m_height; }
@@ -129,6 +126,7 @@ namespace Axion {
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 
 		uint32_t m_srvHeapIndex;
+		uint32_t m_gpuSrvHeapIndex = 0;
 
 		D3D12_CPU_DESCRIPTOR_HANDLE m_dsvHandle;
 

@@ -13,6 +13,8 @@ namespace Axion {
 	constexpr const char* SHADER_MODEL_VS = "vs_5_0";
 	constexpr const char* SHADER_MODEL_PS = "ps_5_0";
 
+	class RenderContext;
+
 	class DX12Shader : public Shader {
 	public:
 
@@ -23,8 +25,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind() const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext) const override;
+		void unbind(RenderContext* renderContext) const override;
 
 		const std::string& getName() const override { return m_specification.name; }
 

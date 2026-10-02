@@ -60,8 +60,8 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind() = 0;
-		virtual void unbind() = 0;
+		virtual void bind(RenderContext* renderContext) = 0;
+		virtual void unbind(RenderContext* renderContext) = 0;
 
 		virtual const PipelineSpecification& getSpecification() const = 0;
 

@@ -24,8 +24,11 @@ namespace Axion {
 	static Ref<StructuredBuffer> s_skeletalInstanceBuffer;
 	static Ref<StructuredBuffer> s_boneBuffer;
 	static uint32_t s_currentBoneElementIndex = 0;
+	static uint32_t s_currentStaticInstanceCount = 0;
+	static uint32_t s_currentSkeletalInstanceCount = 0;
+
 	constexpr uint32_t MAX_SKELETAL_INSTANCES = 1000;
-	constexpr uint32_t MAX_BONES = MAX_SKELETAL_INSTANCES * 1000;
+	constexpr uint32_t MAX_BONES = MAX_SKELETAL_INSTANCES * 100;
 
 	void Renderer3D::initialize() {
 		s_instanceVertexBuffer = VertexBuffer::createDynamic(MAX_INSTANCES * sizeof(ObjectBuffer), sizeof(ObjectBuffer));
@@ -35,7 +38,8 @@ namespace Axion {
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
-			{ "ENTITY_ID", ShaderDataType::Int, false, true }
+			{ "ENTITY_ID", ShaderDataType::Int, false, true },
+			{ "PADDING", ShaderDataType::Float3, false, true }
 		});
 
 		s_skeletalInstanceBuffer = StructuredBuffer::create(sizeof(GPUInstanceData), MAX_SKELETAL_INSTANCES);
@@ -60,9 +64,7 @@ namespace Axion {
 		Renderer::beginScene(projection, transform);
 	}
 
-	void Renderer3D::endScene() {
-		// does nothing for now
-	}
+	void Renderer3D::endScene() {}
 
 	void Renderer3D::beginFrame() {
 		if (s_instanceVertexBuffer) s_instanceVertexBuffer->resetOffset();
@@ -70,77 +72,91 @@ namespace Axion {
 		if (s_boneBuffer) s_boneBuffer->resetOffset();
 
 		s_currentBoneElementIndex = 0;
+		s_currentStaticInstanceCount = 0;
+		s_currentSkeletalInstanceCount = 0;
 	}
 
 	void Renderer3D::setClearColor(const Vec4& color) {
 		RenderCommand::setClearColor(color);
 	}
 
-	void Renderer3D::clear() {
-		RenderCommand::clear();
+	void Renderer3D::clear(RenderContext* renderContext) {
+		RenderCommand::clear(renderContext);
 	}
 
-	void Renderer3D::drawMesh(const Mat4& transform, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
+	void Renderer3D::drawMesh(RenderContext* renderContext, const Mat4& transform, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer) {
 		if (!material || !material->isValid()) return;
 
-		std::vector<ObjectBuffer> singleInstance;
 		ObjectBuffer buffer;
 		buffer.color = material->getAlbedoColor().toFloat4();
 		buffer.modelMatrix = transform.transposed().toXM();
-		singleInstance.push_back(buffer);
+		buffer.entityID = -1;
 
-		drawMeshInstanced(mesh, submeshIndex, material, singleInstance);
+		drawMeshInstanced(renderContext, mesh, submeshIndex, material, &buffer, 1);
 	}
 
-	void Renderer3D::drawMeshInstanced(Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData) {
-		if (instanceData.empty()) return;
-		if (!mesh) return;
-		if (!material || !material->isValid()) return;
+	void Renderer3D::drawMeshInstanced(RenderContext* renderContext, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const ObjectBuffer* instanceData, uint32_t instanceCount) {
+		if (instanceCount == 0 || !mesh || !material || !material->isValid()) return;
 
-		material->bind();
-		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
+		if (s_currentStaticInstanceCount + instanceCount > MAX_INSTANCES) {
+			AX_CORE_LOG_WARN("Renderer3D: Exceeded MAX_INSTANCES!");
+			return;
+		}
 
-		uint32_t dataSize = static_cast<uint32_t>(instanceData.size() * sizeof(ObjectBuffer));
-		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData.data(), dataSize);
+		material->bind(renderContext);
+		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
 
-		mesh->getVertexBuffer()->bind();
-		mesh->getIndexBuffer()->bind();
-		s_instanceVertexBuffer->bind(1, bufferOffset);
+		uint32_t dataSize = instanceCount * sizeof(ObjectBuffer);
+		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData, dataSize);
+		s_currentStaticInstanceCount += instanceCount;
+
+		mesh->getVertexBuffer()->bind(renderContext);
+		mesh->getIndexBuffer()->bind(renderContext);
+		s_instanceVertexBuffer->bind(renderContext, 1, bufferOffset);
 
 		const auto& submeshes = mesh->getSubmeshes();
 		auto& stats = Renderer::getStats();
 
 		if (submeshes.empty()) {
-			RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer(), static_cast<uint32_t>(instanceData.size()));
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), mesh->getIndexCount(), instanceCount, 0, 0);
 		}
 		else {
 			const auto& submesh = submeshes[submeshIndex];
-			RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), submesh.indexCount, instanceCount, submesh.startIndex, submesh.baseVertex);
 		}
 
 		stats.drawCalls++;
 		stats.meshCount3D++;
-		stats.instanceCount3D += static_cast<uint32_t>(instanceData.size());
+		stats.instanceCount3D += instanceCount;
 	}
 
-	void Renderer3D::drawSkeletalMeshInstanced(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<SkeletalObjectBuffer>& instanceData) {
-		if (instanceData.empty()) return;
-		if (!mesh) return;
-		if (!material || !material->isValid()) return;
+	void Renderer3D::drawSkeletalMeshInstanced(RenderContext* renderContext, Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const SkeletalObjectBuffer* instanceData, uint32_t instanceCount) {
+		if (instanceCount == 0 || !mesh || !material || !material->isValid()) return;
+
+		if (s_currentSkeletalInstanceCount + instanceCount > MAX_SKELETAL_INSTANCES || s_currentBoneElementIndex + (instanceCount * 100) > MAX_BONES) {
+			AX_CORE_LOG_WARN("Renderer3D: Exceeded MAX_SKELETAL_INSTANCES or MAX_BONES!");
+			return;
+		}
 
 		material->setSkeletal(true);
-		material->bind();
+		material->bind(renderContext);
 		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
 
-		std::vector<GPUInstanceData> gpuInstances(instanceData.size());
-		std::vector<DirectX::XMFLOAT4X4> flatBones;
-		flatBones.reserve(instanceData.size() * 100);
+		thread_local std::vector<GPUInstanceData> gpuInstances;
+		thread_local std::vector<DirectX::XMFLOAT4X4> flatBones;
 
-		for (size_t i = 0; i < instanceData.size(); ++i) {
-			gpuInstances[i].modelMatrix = instanceData[i].modelMatrix;
-			gpuInstances[i].color = instanceData[i].color;
-			gpuInstances[i].boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
-			gpuInstances[i].entityID = instanceData[i].entityID;
+		gpuInstances.clear();
+		flatBones.clear();
+		gpuInstances.reserve(instanceCount);
+		flatBones.reserve(instanceCount * 100);
+
+		for (size_t i = 0; i < instanceCount; ++i) {
+			GPUInstanceData gpuInst;
+			gpuInst.modelMatrix = instanceData[i].modelMatrix;
+			gpuInst.color = instanceData[i].color;
+			gpuInst.boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
+			gpuInst.entityID = instanceData[i].entityID;
+			gpuInstances.push_back(gpuInst);
 
 			for (int b = 0; b < 100; ++b) {
 				flatBones.push_back(instanceData[i].boneTransforms[b]);
@@ -148,12 +164,13 @@ namespace Axion {
 		}
 
 		s_currentBoneElementIndex += static_cast<uint32_t>(flatBones.size());
+		s_currentSkeletalInstanceCount += instanceCount;
 
 		uint32_t instanceByteOffset = s_skeletalInstanceBuffer->append(gpuInstances.data(), gpuInstances.size() * sizeof(GPUInstanceData));
 		uint32_t boneByteOffset = s_boneBuffer->append(flatBones.data(), flatBones.size() * sizeof(DirectX::XMFLOAT4X4));
 
-		mesh->getVertexBuffer()->bind();
-		mesh->getIndexBuffer()->bind();
+		mesh->getVertexBuffer()->bind(renderContext);
+		mesh->getIndexBuffer()->bind(renderContext);
 
 		Ref<Pipeline> pipeline = AssetManager::get<Pipeline>(material->getPipelineHandle());
 		if (!pipeline) { pipeline = EngineAssets::getSkeletalPBRPipeline(); }
@@ -162,71 +179,86 @@ namespace Axion {
 		uint32_t instanceSlot = shader->getBindPoint("u_instanceData");
 		uint32_t boneSlot = shader->getBindPoint("u_boneData");
 
-		s_skeletalInstanceBuffer->bind(instanceSlot, instanceByteOffset);
-		s_boneBuffer->bind(boneSlot, 0);
+		s_skeletalInstanceBuffer->bind(renderContext, instanceSlot, instanceByteOffset);
+		s_boneBuffer->bind(renderContext, boneSlot, 0);
 
 		const auto& submeshes = mesh->getSubmeshes();
 		auto& stats = Renderer::getStats();
 
 		if (submeshes.empty()) {
-			RenderCommand::drawIndexed(mesh->getIndexBuffer(), mesh->getIndexCount(), static_cast<uint32_t>(instanceData.size()), 0, 0);
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), mesh->getIndexCount(), instanceCount, 0, 0);
 		}
 		else {
 			const auto& submesh = submeshes[submeshIndex];
-			RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), submesh.indexCount, instanceCount, submesh.startIndex, submesh.baseVertex);
 		}
 
 		stats.drawCalls++;
 		stats.meshCount3D++;
-		stats.instanceCount3D += static_cast<uint32_t>(instanceData.size());
+		stats.instanceCount3D += instanceCount;
 	}
 
-	void Renderer3D::drawMeshInstancedShadow(Ref<Mesh>& mesh, uint32_t submeshIndex, const std::vector<ObjectBuffer>& instanceData) {
-		if (instanceData.empty()) return;
+	void Renderer3D::drawMeshInstancedShadow(RenderContext* renderContext, Ref<Mesh>& mesh, uint32_t submeshIndex, const ObjectBuffer* instanceData, uint32_t instanceCount) {
+		if (instanceCount == 0 || !mesh) return;
+
+		if (s_currentStaticInstanceCount + instanceCount > MAX_INSTANCES) return;
+
 		Ref<Pipeline> shadowPipeline = EngineAssets::getShadowPipeline();
 		if (!shadowPipeline) return;
-		if (!mesh) return;
 
-		shadowPipeline->bind();
-		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
+		shadowPipeline->bind(renderContext);
+		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
 
-		uint32_t dataSize = static_cast<uint32_t>(instanceData.size() * sizeof(ObjectBuffer));
-		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData.data(), dataSize);
+		uint32_t dataSize = instanceCount * sizeof(ObjectBuffer);
+		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData, dataSize);
+		s_currentStaticInstanceCount += instanceCount;
 
-		mesh->getVertexBuffer()->bind();
-		mesh->getIndexBuffer()->bind();
-		s_instanceVertexBuffer->bind(1, bufferOffset);
+		mesh->getVertexBuffer()->bind(renderContext);
+		mesh->getIndexBuffer()->bind(renderContext);
+		s_instanceVertexBuffer->bind(renderContext, 1, bufferOffset);
 
 		const auto& submeshes = mesh->getSubmeshes();
 
 		if (submeshes.empty()) {
-			RenderCommand::drawIndexed(mesh->getIndexBuffer(), mesh->getIndexCount(), static_cast<uint32_t>(instanceData.size()), 0, 0);
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), mesh->getIndexCount(), instanceCount, 0, 0);
 		}
 		else {
 			const auto& submesh = submeshes[submeshIndex];
-			RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), submesh.indexCount, instanceCount, submesh.startIndex, submesh.baseVertex);
 		}
 
+		auto& stats = Renderer::getStats();
+		stats.drawCalls++;
+		stats.meshCount3D++;
+		stats.instanceCount3D += instanceCount;
 	}
 
-	void Renderer3D::drawSkeletalMeshInstancedShadow(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const std::vector<SkeletalObjectBuffer>& instanceData) {
-		if (instanceData.empty()) return;
+	void Renderer3D::drawSkeletalMeshInstancedShadow(RenderContext* renderContext, Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const SkeletalObjectBuffer* instanceData, uint32_t instanceCount) {
+		if (instanceCount == 0 || !mesh) return;
+
+		if (s_currentSkeletalInstanceCount + instanceCount > MAX_SKELETAL_INSTANCES || s_currentBoneElementIndex + (instanceCount * 100) > MAX_BONES) return;
+
 		Ref<Pipeline> shadowPipeline = EngineAssets::getSkeletalShadowPipeline();
 		if (!shadowPipeline) return;
-		if (!mesh) return;
 
-		shadowPipeline->bind();
-		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
+		shadowPipeline->bind(renderContext);
+		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
 
-		std::vector<GPUInstanceData> gpuInstances(instanceData.size());
-		std::vector<DirectX::XMFLOAT4X4> flatBones;
-		flatBones.reserve(instanceData.size() * 100);
+		thread_local std::vector<GPUInstanceData> gpuInstances;
+		thread_local std::vector<DirectX::XMFLOAT4X4> flatBones;
 
-		for (size_t i = 0; i < instanceData.size(); ++i) {
-			gpuInstances[i].modelMatrix = instanceData[i].modelMatrix;
-			gpuInstances[i].color = instanceData[i].color;
-			gpuInstances[i].boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
-			gpuInstances[i].entityID = instanceData[i].entityID;
+		gpuInstances.clear();
+		flatBones.clear();
+		gpuInstances.reserve(instanceCount);
+		flatBones.reserve(instanceCount * 100);
+
+		for (size_t i = 0; i < instanceCount; ++i) {
+			GPUInstanceData gpuInst;
+			gpuInst.modelMatrix = instanceData[i].modelMatrix;
+			gpuInst.color = instanceData[i].color;
+			gpuInst.boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
+			gpuInst.entityID = instanceData[i].entityID;
+			gpuInstances.push_back(gpuInst);
 
 			for (int b = 0; b < 100; ++b) {
 				flatBones.push_back(instanceData[i].boneTransforms[b]);
@@ -234,34 +266,35 @@ namespace Axion {
 		}
 
 		s_currentBoneElementIndex += static_cast<uint32_t>(flatBones.size());
+		s_currentSkeletalInstanceCount += instanceCount;
 
 		uint32_t instanceByteOffset = s_skeletalInstanceBuffer->append(gpuInstances.data(), gpuInstances.size() * sizeof(GPUInstanceData));
 		uint32_t boneByteOffset = s_boneBuffer->append(flatBones.data(), flatBones.size() * sizeof(DirectX::XMFLOAT4X4));
 
-		mesh->getVertexBuffer()->bind();
-		mesh->getIndexBuffer()->bind();
+		mesh->getVertexBuffer()->bind(renderContext);
+		mesh->getIndexBuffer()->bind(renderContext);
 
 		Ref<Shader> shader = shadowPipeline->getSpecification().shader;
 		uint32_t instanceSlot = shader->getBindPoint("u_instanceData");
 		uint32_t boneSlot = shader->getBindPoint("u_boneData");
 
-		s_skeletalInstanceBuffer->bind(instanceSlot, instanceByteOffset);
-		s_boneBuffer->bind(boneSlot, 0);
+		s_skeletalInstanceBuffer->bind(renderContext, instanceSlot, instanceByteOffset);
+		s_boneBuffer->bind(renderContext, boneSlot, 0);
 
 		const auto& submeshes = mesh->getSubmeshes();
-		auto& stats = Renderer::getStats();
 
 		if (submeshes.empty()) {
-			RenderCommand::drawIndexed(mesh->getIndexBuffer(), mesh->getIndexCount(), static_cast<uint32_t>(instanceData.size()), 0, 0);
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), mesh->getIndexCount(), instanceCount, 0, 0);
 		}
 		else {
 			const auto& submesh = submeshes[submeshIndex];
-			RenderCommand::drawIndexed(mesh->getIndexBuffer(), submesh.indexCount, static_cast<uint32_t>(instanceData.size()), submesh.startIndex, submesh.baseVertex);
+			RenderCommand::drawIndexed(renderContext, mesh->getIndexBuffer(), submesh.indexCount, instanceCount, submesh.startIndex, submesh.baseVertex);
 		}
 
+		auto& stats = Renderer::getStats();
 		stats.drawCalls++;
 		stats.meshCount3D++;
-		stats.instanceCount3D += static_cast<uint32_t>(instanceData.size());
+		stats.instanceCount3D += instanceCount;
 	}
 
 }

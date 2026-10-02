@@ -6,6 +6,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	class Renderer2D {
 	public:
 
@@ -14,30 +16,27 @@ namespace Axion {
 		static void initialize();
 		static void shutdown();
 
-		static void beginScene(const Camera& camera);
-		static void endScene();
+		static void beginScene(RenderContext* renderContext, const Camera& camera);
+		static void endScene(RenderContext* renderContext);
 		static void beginFrame();
-
-		static void drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Vec4& color);
-		static void drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 
 		static void drawQuad(const Vec2& position, const Vec2& size, const Vec4& color);
 		static void drawQuad(const Vec3& position, const Vec2& size, const Vec4& color);
-
 		static void drawQuad(const Vec2& position, const Vec2& size, float rotation, const Vec4& color);
 		static void drawQuad(const Vec3& position, const Vec2& size, float rotation, const Vec4& color);
-
 		static void drawQuad(const Vec2& position, const Vec2& size, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 		static void drawQuad(const Vec3& position, const Vec2& size, float rotation, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
-
 		static void drawQuad(const Mat4& transform, const Vec4& color);
 		static void drawQuad(const Mat4& transform, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
+
+		static void drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Vec4& color);
+		static void drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint = Vec4::one());
 
 		static void drawLine(const Vec3& p0, const Vec3& p1, const Vec4& color);
 
 	private:
 
-		static void flush();
+		static void flush(RenderContext* renderContext);
 		static void startBatch();
 		static void nextBatch();
 

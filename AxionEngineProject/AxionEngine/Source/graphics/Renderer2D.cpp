@@ -8,7 +8,6 @@
 #include "AxionEngine/Source/graphics/Texture.h"
 
 #include "AxionEngine/Platform/directx12/DX12Context.h"
-#include "AxionEngine/Platform/directx12/DX12CommandList.h"
 
 #include "AxionEngine/Resources/shaders/Batch2DQuad_VS.h"
 #include "AxionEngine/Resources/shaders/Batch2DQuad_PS.h"
@@ -69,6 +68,7 @@ namespace Axion {
 		Ref<ConstantBuffer> cameraConstantBuffer;
 		uint32_t cameraBufferOffset = 0;
 
+		RenderContext* currentContext = nullptr;
 	};
 
 	static Renderer2DData s_data;
@@ -87,11 +87,9 @@ namespace Axion {
 			{ "ENTITY_ID",	ShaderDataType::Int     }
 		});
 
-
 		// -- Allocate CPU-side memory for vertices --
 		s_data.quadVertexBufferBase = new QuadVertex[s_data.MaxVertices];
 		s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
-
 
 		// -- Create indices --
 		uint32_t* quadIndices = new uint32_t[s_data.MaxIndices];
@@ -100,7 +98,6 @@ namespace Axion {
 			quadIndices[i + 0] = offset + 0;
 			quadIndices[i + 1] = offset + 1;
 			quadIndices[i + 2] = offset + 2;
-
 			quadIndices[i + 3] = offset + 2;
 			quadIndices[i + 4] = offset + 3;
 			quadIndices[i + 5] = offset + 0;
@@ -111,7 +108,6 @@ namespace Axion {
 		// -- Create static IndexBuffer --
 		s_data.quadIndexBuffer = IndexBuffer::create(std::vector<uint32_t>(quadIndices, quadIndices + s_data.MaxIndices));
 		delete[] quadIndices;
-
 
 		s_data.lineVertexBuffer = VertexBuffer::createDynamic(s_data.MaxLineVertices * sizeof(LineVertex), sizeof(LineVertex));
 		s_data.lineVertexBuffer->setLayout({
@@ -127,10 +123,7 @@ namespace Axion {
 		qsSpec.name = "Batch2DQuad";
 		qsSpec.batchTextures = Renderer2DData::MaxTextureSlots;
 		s_data.quadShader = Shader::create(qsSpec);
-		s_data.quadShader->loadFromBytecode(
-			g_Batch2DQuad_VS, sizeof(g_Batch2DQuad_VS),
-			g_Batch2DQuad_PS, sizeof(g_Batch2DQuad_PS)
-		);
+		s_data.quadShader->loadFromBytecode(g_Batch2DQuad_VS, sizeof(g_Batch2DQuad_VS), g_Batch2DQuad_PS, sizeof(g_Batch2DQuad_PS));
 		PipelineSpecification qpSpec;
 		qpSpec.shader = s_data.quadShader;
 		qpSpec.numRenderTargets = 2;
@@ -158,10 +151,7 @@ namespace Axion {
 		lsSpec.name = "Batch2DLine";
 		lsSpec.batchTextures = 0;
 		s_data.lineShader = Shader::create(lsSpec);
-		s_data.lineShader->loadFromBytecode(
-			g_Batch2DLine_VS, sizeof(g_Batch2DLine_VS),
-			g_Batch2DLine_PS, sizeof(g_Batch2DLine_PS)
-		);
+		s_data.lineShader->loadFromBytecode(g_Batch2DLine_VS, sizeof(g_Batch2DLine_VS), g_Batch2DLine_PS, sizeof(g_Batch2DLine_PS));
 		PipelineSpecification lpSpec;
 		lpSpec.shader = s_data.lineShader;
 		lpSpec.numRenderTargets = 2;
@@ -185,13 +175,11 @@ namespace Axion {
 		uint32_t alignedCameraDataSize = (sizeof(Renderer2DData::CameraData) + 255) & ~255;
 		s_data.cameraConstantBuffer = ConstantBuffer::create(alignedCameraDataSize * MaxCameraPasses);
 
-
 		// -- Setup quad positions --
 		s_data.quadVertexPositions[0] = { -0.5f, -0.5f, 0.0f, 1.0f };	// BL
 		s_data.quadVertexPositions[1] = { 0.5f, -0.5f, 0.0f, 1.0f };	// BR
 		s_data.quadVertexPositions[2] = { 0.5f,  0.5f, 0.0f, 1.0f };	// TR
 		s_data.quadVertexPositions[3] = { -0.5f,  0.5f, 0.0f, 1.0f };	// TL
-
 
 		// -- Setup quad tex coords --
 		s_data.quadTexCoords[0] = { 0.0f, 1.0f };	// BL
@@ -199,10 +187,8 @@ namespace Axion {
 		s_data.quadTexCoords[2] = { 1.0f, 0.0f };	// TR
 		s_data.quadTexCoords[3] = { 0.0f, 0.0f };	// TL
 
-
 		// -- Slot 0 = white fallback --
 		s_data.textureSlots[0] = EngineAssets::getWhiteTexture();
-
 
 		s_initialized = true;
 		AX_CORE_LOG_TRACE("Renderer2D initialized");
@@ -229,22 +215,21 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Renderer2D shutdown");
 	}
 
-	void Renderer2D::beginScene(const Camera& camera) {
+	void Renderer2D::beginScene(RenderContext* renderContext, const Camera& camera) {
+		s_data.currentContext = renderContext;
 		Renderer2DData::CameraData camData;
 		camData.viewProjection = camera.getViewProjectionMatrix().transposed().toFloat4x4();
 		s_data.cameraBufferOffset = s_data.cameraConstantBuffer->append(&camData, sizeof(Renderer2DData::CameraData));
 		startBatch();
 	}
 
-	void Renderer2D::endScene() {
-		flush();
+	void Renderer2D::endScene(RenderContext* renderContext) {
+		flush(renderContext);
 	}
 
 	void Renderer2D::beginFrame() {
 		if (s_data.quadVertexBuffer) s_data.quadVertexBuffer->resetOffset();
-
 		if (s_data.lineVertexBuffer) s_data.lineVertexBuffer->resetOffset();
-
 		if (s_data.cameraConstantBuffer) s_data.cameraConstantBuffer->resetOffset();
 	}
 
@@ -252,17 +237,16 @@ namespace Axion {
 		s_data.quadIndexCount = 0;
 		s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
 		s_data.textureSlotIndex = 1;
-
 		s_data.lineVertexCount = 0;
 		s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
 	}
 
 	void Renderer2D::nextBatch() {
-		flush();
+		flush(s_data.currentContext);
 		startBatch();
 	}
 
-	void Renderer2D::flush() {
+	void Renderer2D::flush(RenderContext* renderContext) {
 		// -- Flush quads --
 		if (s_data.quadIndexCount > 0) {
 			Ref<Pipeline> pipeline = s_data.quadPipeline;
@@ -271,14 +255,14 @@ namespace Axion {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.quadVertexBufferPtr - (uint8_t*)s_data.quadVertexBufferBase);
 			uint32_t bufferOffset = s_data.quadVertexBuffer->append(s_data.quadVertexBufferBase, dataSize);
 
-			pipeline->bind();
-			s_data.cameraConstantBuffer->bind(0, s_data.cameraBufferOffset);
-			Renderer::bindTextures(s_data.textureSlots, s_data.textureSlotIndex, 1);
+			pipeline->bind(renderContext);
+			s_data.cameraConstantBuffer->bind(renderContext, 0, s_data.cameraBufferOffset);
+			Renderer::bindTextures(renderContext, s_data.textureSlots, s_data.textureSlotIndex, 1);
 
-			s_data.quadVertexBuffer->bind(0, bufferOffset);
-			s_data.quadIndexBuffer->bind();
+			s_data.quadVertexBuffer->bind(renderContext, 0, bufferOffset);
+			s_data.quadIndexBuffer->bind(renderContext);
 
-			RenderCommand::drawIndexed(s_data.quadIndexBuffer, s_data.quadIndexCount);
+			RenderCommand::drawIndexed(renderContext, s_data.quadIndexBuffer, s_data.quadIndexCount);
 
 			Renderer::getStats().drawCalls++;
 		}
@@ -291,11 +275,11 @@ namespace Axion {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_data.lineVertexBufferPtr - (uint8_t*)s_data.lineVertexBufferBase);
 			uint32_t bufferOffset = s_data.lineVertexBuffer->append(s_data.lineVertexBufferBase, dataSize);
 
-			pipeline->bind();
-			s_data.cameraConstantBuffer->bind(0, s_data.cameraBufferOffset);
-			s_data.lineVertexBuffer->bind(0, bufferOffset);
+			pipeline->bind(renderContext);
+			s_data.cameraConstantBuffer->bind(renderContext, 0, s_data.cameraBufferOffset);
+			s_data.lineVertexBuffer->bind(renderContext, 0, bufferOffset);
 
-			RenderCommand::draw(s_data.lineVertexCount);
+			RenderCommand::draw(renderContext, s_data.lineVertexCount);
 
 			Renderer::getStats().drawCalls++;
 		}
@@ -309,7 +293,6 @@ namespace Axion {
 		}
 
 		Mat4 camTransform = cameraView.inverse();
-
 		Vec3 camRight = { camTransform.data()[0], camTransform.data()[1], camTransform.data()[2] };
 		Vec3 camUp = { camTransform.data()[4], camTransform.data()[5], camTransform.data()[6] };
 
@@ -442,7 +425,6 @@ namespace Axion {
 
 		float texIndex = -1.0f;
 
-		// check if already in a slot
 		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
 			if (s_data.textureSlots[i]->getHandle() == validTexture->getHandle()) {
 				texIndex = static_cast<float>(i);

@@ -4,10 +4,11 @@
 #include <filesystem>
 #include <array>
 
-#include "AxionEngine/Source/core/Core.h" // TODO: maybe remove core from here cause technically its unneeded in the header
 #include "AxionEngine/Source/core/Ref.h"
 
 namespace Axion {
+
+	class RenderContext;
 
 	class Texture2D : public RefCounted {
 	public:
@@ -16,8 +17,8 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind(uint32_t slot = 0) const = 0;
-		virtual void unbind() const = 0;
+		virtual void bind(RenderContext* renderContext, uint32_t slot = 0) const = 0;
+		virtual void unbind(RenderContext* renderContext) const = 0;
 
 		virtual uint32_t getWidth() const = 0;
 		virtual uint32_t getHeight() const = 0;
@@ -39,8 +40,8 @@ namespace Axion {
 
 		virtual void release() = 0;
 
-		virtual void bind(uint32_t slot = 0) const = 0;
-		virtual void unbind() const = 0;
+		virtual void bind(RenderContext* renderContext, uint32_t slot = 0) const = 0;
+		virtual void unbind(RenderContext* renderContext) const = 0;
 
 		virtual uint32_t getFaceWidth() const = 0;
 		virtual uint32_t getFaceHeight() const = 0;

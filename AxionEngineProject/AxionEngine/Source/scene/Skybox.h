@@ -8,6 +8,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	class Skybox : public RefCounted {
 	public:
 
@@ -16,7 +18,7 @@ namespace Axion {
 		~Skybox() = default;
 
 		void release();
-		void onUpdate(Timestep ts);
+		void onUpdate(Timestep ts, RenderContext* renderContext = nullptr);
 
 		void setTexture(AssetHandle<TextureCube> textureHandle) { m_textureHandle = textureHandle; }
 		AssetHandle<TextureCube> getTextureHandle() const { return m_textureHandle; }

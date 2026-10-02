@@ -15,6 +15,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	enum class RendererAPI {
 		None = 0,
 		DirectX12 = 1,
@@ -58,8 +60,8 @@ namespace Axion {
 		uint32_t drawCalls = 0;
 		uint32_t quadCount2D = 0;
 		uint32_t lineCount2D = 0;
-		uint32_t meshCount3D = 0; // unique meshes drawn
-		uint32_t instanceCount3D = 0; // total 3d objects drawn
+		uint32_t meshCount3D = 0;
+		uint32_t instanceCount3D = 0;
 
 		uint32_t getTotalVertexCount2D() const { return quadCount2D * 4 + lineCount2D * 2; }
 		uint32_t getTotalIndexCount2D() const { return quadCount2D * 6; }
@@ -78,21 +80,21 @@ namespace Axion {
 		static void beginScene(const Mat4& projection, const Mat4& transform);
 		static void endScene();
 
-		static void setClearColor(const Vec4& color);
-		static void clear();
+		static void setClearColor(RenderContext* renderContext, const Vec4& color);
+		static void clear(RenderContext* renderContext);
 
-		static void setRenderTarget(FrameBuffer* target);
-		static void restoreRenderTarget();
+		static void setRenderTarget(RenderContext* renderContext, FrameBuffer* target);
+		static void restoreRenderTarget(RenderContext* renderContext);
+		static void renderToSwapChain(RenderContext* renderContext);
+		static FrameBuffer* getCurrentRenderTarget() { return s_currentRenderTarget; }
 
-		static void renderToSwapChain();
 		static const Ref<ConstantBuffer>& getSceneDataBuffer();
 		static uint32_t getSceneDataOffset();
 		static double getFrameTimeMs() { return s_lastFrameTimeMs; }
-		static void bindTextures(const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex = 2);
-
 		static Ref<Texture2D> getShadowMap();
 
-		static void submit(const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
+		static void bindTextures(RenderContext* renderContext, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex = 2);
+		static void submit(RenderContext* renderContext, const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
 		static RendererStats& getStats();
 		static void resetStats();
@@ -108,7 +110,7 @@ namespace Axion {
 		static FrameTimer s_frameTimer;
 		static double s_lastFrameTimeMs;
 		static std::function<void(Event&)> s_eventCallback;
-		static uint32_t s_sceneDataOffset;
+		static thread_local uint32_t s_sceneDataOffset;
 		static Ref<Texture2D> s_shadowMapTexture;
 		static FrameBuffer* s_currentRenderTarget;
 

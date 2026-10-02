@@ -2,6 +2,7 @@
 #include "TransformGizmo.h"
 
 #include "AxionEngine/Source/graphics/Renderer2D.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
 
 #include "AxionStudio/Source/core/WireframeRenderer.h"
 
@@ -201,7 +202,8 @@ namespace Axion {
 		Vec4 colorXZ = (m_hoveredAxis == GizmoAxis::XZ || m_activeAxis == GizmoAxis::XZ) ? Vec4(1, 1, 0, 0.5f) : Vec4(0, 1, 0, 0.5f);
 		Vec4 colorYZ = (m_hoveredAxis == GizmoAxis::YZ || m_activeAxis == GizmoAxis::YZ) ? Vec4(1, 1, 0, 0.5f) : Vec4(1, 0, 0, 0.5f);
 
-		Renderer2D::beginScene(camera);
+		RenderContext* renderContext = GraphicsContext::get()->getMainRenderContext();
+		Renderer2D::beginScene(renderContext, camera);
 
 		float thickness = gizmoSize * 0.05f;
 		float headSize = gizmoSize * 0.15f;
@@ -218,7 +220,7 @@ namespace Axion {
 			Renderer2D::drawQuad(Mat4::TRS(Vec3(-0.5f, 0, 0), Quat::fromEulerAngles(Vec3(0, -90.0f, 0)), Vec3(1, 1, 1)) * transform, cX);
 			Renderer2D::drawQuad(Mat4::TRS(Vec3(0, 0.5f, 0), Quat::fromEulerAngles(Vec3(-90.0f, 0, 0)), Vec3(1, 1, 1)) * transform, cY);
 			Renderer2D::drawQuad(Mat4::TRS(Vec3(0, -0.5f, 0), Quat::fromEulerAngles(Vec3(90.0f, 0, 0)), Vec3(1, 1, 1)) * transform, cY);
-			};
+		};
 
 		if (m_mode == GizmoMode::Translate || m_mode == GizmoMode::Scale) {
 
@@ -300,7 +302,7 @@ namespace Axion {
 			drawSolidBox(dotTransform, white);
 		}
 
-		Renderer2D::endScene();
+		Renderer2D::endScene(renderContext);
 	}
 
 	Vec3 TransformGizmo::intersectRayWithPlane(const Vec3& rayOrigin, const Vec3& rayDir, const Vec3& planeOrigin, const Vec3& planeNormal) {

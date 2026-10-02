@@ -5,6 +5,7 @@
 
 #include "AXionEngine/Platform/directx11/DX11Context.h"
 #include "AxionEngine/Platform/directx11/DX11DebugLayer.h"
+#include "AxionEngine/Source/graphics/RenderContext.h"
 
 namespace Axion {
 
@@ -31,13 +32,13 @@ namespace Axion {
 		m_vertexShaderBlob.Reset();
 	}
 
-	void DX11Shader::bind() const {
+	void DX11Shader::bind(RenderContext* renderContext) const {
 		auto* ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 		ctx->VSSetShader(m_vertexShader.Get(), nullptr, 0);
 		ctx->PSSetShader(m_pixelShader.Get(), nullptr, 0);
 	}
 
-	void DX11Shader::unbind() const {
+	void DX11Shader::unbind(RenderContext* renderContext) const {
 		auto* ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 		ctx->VSSetShader(nullptr, nullptr, 0);
 		ctx->PSSetShader(nullptr, nullptr, 0);

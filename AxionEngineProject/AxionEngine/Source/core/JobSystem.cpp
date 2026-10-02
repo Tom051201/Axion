@@ -43,7 +43,7 @@ namespace Axion {
 		AX_CORE_LOG_INFO("JobSystem Shutdown complete.");
 	}
 
-	void JobSystem::submit(const std::function<void()>& job) {
+	void JobSystem::submit(const std::function<void(uint32_t)>& job) {
 		{
 			std::lock_guard<std::mutex> lock(s_queueMutex);
 			s_jobQueue.push(job);
@@ -60,25 +60,40 @@ namespace Axion {
 		PlatformUtils::setThreadPriority(ThreadPriority::BelowNormal);
 
 		while (true) {
-			std::function<void()> currentJob;
+			std::function<void(uint32_t)> currentJob;
 
 			{
 				std::unique_lock<std::mutex> lock(s_queueMutex);
 				s_wakeCondition.wait(lock, [] {
 					return !s_jobQueue.empty() || s_isShuttingDown;
 				});
-
-				if (s_isShuttingDown && s_jobQueue.empty()) {
-					return;
-				}
+				if (s_isShuttingDown && s_jobQueue.empty()) return;
 
 				currentJob = s_jobQueue.front();
 				s_jobQueue.pop();
 			}
 
 			if (currentJob) {
-				currentJob();
+				currentJob(threadId + 1);
 			}
+		}
+	}
+
+	void JobSystem::executeAndWait(const std::vector<std::function<void(uint32_t)>>& jobs) {
+		if (jobs.empty()) return;
+
+		std::shared_ptr<std::atomic<uint32_t>> counter = std::make_shared<std::atomic<uint32_t>>(static_cast<uint32_t>(jobs.size()));
+
+		for (const auto& job : jobs) {
+			submit([job, counter](uint32_t threadId) {
+				job(threadId);
+				(*counter)--;
+			});
+		}
+
+		// -- Wait for all jobs to finish --
+		while (counter->load() > 0) {
+			std::this_thread::yield();
 		}
 	}
 

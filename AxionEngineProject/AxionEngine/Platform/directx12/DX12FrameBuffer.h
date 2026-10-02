@@ -9,6 +9,7 @@
 namespace Axion {
 
 	class DX12Context;
+	class RenderContext;
 
 
 	class DX12FrameBuffer : public FrameBuffer {
@@ -20,15 +21,15 @@ namespace Axion {
 		void release() override;
 		void resize(uint32_t width, uint32_t height) override;
 
-		void bind() const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext) const override;
+		void unbind(RenderContext* renderContext) const override;
 
-		void clear() override;
-		void clear(const Vec4& clearColor) override;
-		void clearDepth() override;
+		void clear(RenderContext* renderContext) override;
+		void clear(RenderContext* renderContext, const Vec4& clearColor) override;
+		void clearDepth(RenderContext* renderContext) override;
 
-		void clearAttachment(uint32_t attachmentIndex, int value) override;
-		int readPixel(uint32_t attachementIndex, int x, int y);
+		void clearAttachment(RenderContext* renderContext, uint32_t attachmentIndex, int value) override;
+		int readPixel(RenderContext* renderContext, uint32_t attachementIndex, int x, int y);
 
 		void* getColorAttachmentHandle() const override;
 		void* getColorAttachmentNativeResource() const override { return (void*)m_colorResource.Get(); }
@@ -58,6 +59,7 @@ namespace Axion {
 
 		uint32_t m_rtvHeapIndex = 0;
 		uint32_t m_srvHeapIndex = 0;
+		uint32_t m_gpuSrvHeapIndex = 0;
 		uint32_t m_dsvHeapIndex = 0;
 		
 		mutable D3D12_RESOURCE_STATES m_currentState;

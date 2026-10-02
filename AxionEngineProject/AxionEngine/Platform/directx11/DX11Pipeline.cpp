@@ -4,54 +4,55 @@
 #include "AxionEngine/Platform/directx11/DX11Context.h"
 #include "AxionEngine/Platform/directx11/DX11Shader.h"
 #include "AxionEngine/Platform/directx11/DX11DebugLayer.h"
+#include "AxionEngine/Source/graphics/RenderContext.h"
 
 namespace Axion {
 
 	namespace Utils {
 		static DXGI_FORMAT ShaderDataTypeToDXGIFormat(ShaderDataType type) {
 			switch (type) {
-			case ShaderDataType::Float:		return DXGI_FORMAT_R32_FLOAT;
-			case ShaderDataType::Float2:	return DXGI_FORMAT_R32G32_FLOAT;
-			case ShaderDataType::Float3:	return DXGI_FORMAT_R32G32B32_FLOAT;
-			case ShaderDataType::Float4:	return DXGI_FORMAT_R32G32B32A32_FLOAT;
-			case ShaderDataType::Int:		return DXGI_FORMAT_R32_SINT;
-			case ShaderDataType::Int2:		return DXGI_FORMAT_R32G32_SINT;
-			case ShaderDataType::Int3:		return DXGI_FORMAT_R32G32B32_SINT;
-			case ShaderDataType::Int4:		return DXGI_FORMAT_R32G32B32A32_SINT;
+				case ShaderDataType::Float:		return DXGI_FORMAT_R32_FLOAT;
+				case ShaderDataType::Float2:	return DXGI_FORMAT_R32G32_FLOAT;
+				case ShaderDataType::Float3:	return DXGI_FORMAT_R32G32B32_FLOAT;
+				case ShaderDataType::Float4:	return DXGI_FORMAT_R32G32B32A32_FLOAT;
+				case ShaderDataType::Int:		return DXGI_FORMAT_R32_SINT;
+				case ShaderDataType::Int2:		return DXGI_FORMAT_R32G32_SINT;
+				case ShaderDataType::Int3:		return DXGI_FORMAT_R32G32B32_SINT;
+				case ShaderDataType::Int4:		return DXGI_FORMAT_R32G32B32A32_SINT;
 			}
 			return DXGI_FORMAT_UNKNOWN;
 		}
 
 		static D3D11_CULL_MODE CullModeToDX11(CullMode mode) {
 			switch (mode) {
-			case CullMode::None: return D3D11_CULL_NONE;
-			case CullMode::Front: return D3D11_CULL_FRONT;
-			case CullMode::Back: return D3D11_CULL_BACK;
+				case CullMode::None: return D3D11_CULL_NONE;
+				case CullMode::Front: return D3D11_CULL_FRONT;
+				case CullMode::Back: return D3D11_CULL_BACK;
 			}
 			return D3D11_CULL_BACK;
 		}
 
 		static D3D11_COMPARISON_FUNC DepthCompareToDX11(DepthCompare func) {
 			switch (func) {
-			case DepthCompare::Never: return D3D11_COMPARISON_NEVER;
-			case DepthCompare::Less: return D3D11_COMPARISON_LESS;
-			case DepthCompare::Equal: return D3D11_COMPARISON_EQUAL;
-			case DepthCompare::LessEqual: return D3D11_COMPARISON_LESS_EQUAL;
-			case DepthCompare::Greater: return D3D11_COMPARISON_GREATER;
-			case DepthCompare::NotEqual: return D3D11_COMPARISON_NOT_EQUAL;
-			case DepthCompare::GreaterEqual: return D3D11_COMPARISON_GREATER_EQUAL;
-			case DepthCompare::Always: return D3D11_COMPARISON_ALWAYS;
+				case DepthCompare::Never: return D3D11_COMPARISON_NEVER;
+				case DepthCompare::Less: return D3D11_COMPARISON_LESS;
+				case DepthCompare::Equal: return D3D11_COMPARISON_EQUAL;
+				case DepthCompare::LessEqual: return D3D11_COMPARISON_LESS_EQUAL;
+				case DepthCompare::Greater: return D3D11_COMPARISON_GREATER;
+				case DepthCompare::NotEqual: return D3D11_COMPARISON_NOT_EQUAL;
+				case DepthCompare::GreaterEqual: return D3D11_COMPARISON_GREATER_EQUAL;
+				case DepthCompare::Always: return D3D11_COMPARISON_ALWAYS;
 			}
 			return D3D11_COMPARISON_LESS;
 		}
 
 		static D3D11_PRIMITIVE_TOPOLOGY TopologyToDX11(PrimitiveTopology topology) {
 			switch (topology) {
-			case PrimitiveTopology::PointList: return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
-			case PrimitiveTopology::LineList: return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
-			case PrimitiveTopology::LineStrip: return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
-			case PrimitiveTopology::TriangleList: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-			case PrimitiveTopology::TriangleStrip: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+				case PrimitiveTopology::PointList: return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+				case PrimitiveTopology::LineList: return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+				case PrimitiveTopology::LineStrip: return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
+				case PrimitiveTopology::TriangleList: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				case PrimitiveTopology::TriangleStrip: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 			}
 			return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		}
@@ -164,7 +165,7 @@ namespace Axion {
 		m_depthStencilState.Reset();
 	}
 
-	void DX11Pipeline::bind() {
+	void DX11Pipeline::bind(RenderContext* renderContext) {
 		auto* ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 
 		// -- Bind State Objects --
@@ -176,11 +177,11 @@ namespace Axion {
 
 		// -- Bind Shader --
 		if (m_specification.shader) {
-			m_specification.shader->bind();
+			m_specification.shader->bind(renderContext);
 		}
 	}
 
-	void DX11Pipeline::unbind() {
+	void DX11Pipeline::unbind(RenderContext* renderContext) {
 		auto* ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 
 		// -- Unbind State Objects --
@@ -191,7 +192,7 @@ namespace Axion {
 
 		// -- Unbind Shader --
 		if (m_specification.shader) {
-			m_specification.shader->unbind();
+			m_specification.shader->unbind(renderContext);
 		}
 	}
 

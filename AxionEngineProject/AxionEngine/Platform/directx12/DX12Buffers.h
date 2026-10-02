@@ -6,6 +6,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// DX12VertexBuffer /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +21,7 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0, uint32_t offset = 0) const override;
+		void bind(class RenderContext* renderContext, uint32_t slot = 0, uint32_t offset = 0) const override;
 		void unbind() const override;
 
 		void setLayout(const BufferLayout& layout) override { m_layout = layout; }
@@ -48,6 +50,7 @@ namespace Axion {
 		BufferLayout m_layout;
 
 		uint32_t m_currentOffset = 0;
+		uint32_t m_perFrameSize = 0;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +66,7 @@ namespace Axion {
 
 		void release() override;
 
-		void bind() const override;
+		void bind(class RenderContext* renderContext) const override;
 		void unbind() const override;
 
 		uint32_t getIndexCount() const override { return m_indexCount; }
@@ -81,6 +84,7 @@ namespace Axion {
 
 		uint8_t* m_mappedPtr;
 		uint32_t m_indexCount = 0;
+		uint32_t m_perFrameSize = 0;
 
 	};
 
@@ -96,8 +100,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot) const override;
-		void bind(uint32_t slot, size_t offset) const override;
+		void bind(class RenderContext* renderContext, uint32_t slot) const override;
+		void bind(class RenderContext* renderContext, uint32_t slot, size_t offset) const override;
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;
@@ -113,6 +117,7 @@ namespace Axion {
 		size_t m_bufferSize = 0;
 
 		uint32_t m_currentOffset = 0;
+		uint32_t m_perFrameSize = 0;
 
 	};
 
@@ -128,8 +133,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot) const override;
-		void bind(uint32_t slot, size_t offset) const override;
+		void bind(class RenderContext* renderContext, uint32_t slot) const override;
+		void bind(class RenderContext* renderContext, uint32_t slot, size_t offset) const override;
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;
@@ -150,8 +155,8 @@ namespace Axion {
 		uint32_t m_elementCount = 0;
 		uint32_t m_bufferSize = 0;
 		uint32_t m_currentOffset = 0;
+		uint32_t m_perFrameSize = 0;
 
 	};
-
 
 }

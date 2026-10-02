@@ -13,6 +13,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	class DX11Context : public GraphicsContext {
 	public:
 
@@ -29,8 +31,8 @@ namespace Axion {
 		void clear() override;
 
 		void bindSwapChainRenderTarget() override;
-		void bindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) override;
-		void unbindDepthOnlyRenderTarget(const Ref<Texture2D>& depthTexture) override;
+		void bindDepthOnlyRenderTarget(RenderContext* renderContext, const Ref<Texture2D>& depthTexture) override;
+		void unbindDepthOnlyRenderTarget(RenderContext* renderContext, const Ref<Texture2D>& depthTexture) override;
 		void bindSrvTable(uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count);
 
 		void resize(uint32_t width, uint32_t height) override;
@@ -38,9 +40,9 @@ namespace Axion {
 		void activateVsync() override { m_vsyncInterval = 1; }
 		void deactivateVsync() override { m_vsyncInterval = 0; }
 
-		void drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount = 1) override;
-		void drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount = 1, uint32_t startIndexLocation = 0, int32_t baseVertexLocation = 0) override;
-		void draw(uint32_t vertexCount) override;
+		void drawIndexed(RenderContext* renderContext, const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount = 1) override;
+		void drawIndexed(RenderContext* renderContext, const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount = 1, uint32_t startIndexLocation = 0, int32_t baseVertexLocation = 0) override;
+		void draw(RenderContext* renderContext, uint32_t vertexCount) override;
 
 		std::string getGpuName() const override;
 		std::string getGpuDriverVersion() const override;
@@ -49,6 +51,9 @@ namespace Axion {
 		// ----- DX11 Specific Getters -----
 		ID3D11Device* getDevice() const { return m_device.Get(); }
 		ID3D11DeviceContext* getDeviceContext() const { return m_deviceContext.Get(); }
+
+		RenderContext* getMainRenderContext() override { return nullptr; /*TODO*/ }
+		RenderContext* acquireThreadContext(uint32_t threadIndex) override { return 0; /*TODO*/ }
 
 	private:
 

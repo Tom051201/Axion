@@ -5,6 +5,7 @@
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/graphics/RenderCommand.h"
 #include "AxionEngine/Source/graphics/Renderer.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
 
 namespace Axion {
 
@@ -16,7 +17,7 @@ namespace Axion {
 
 	void Skybox::release() {}
 
-	void Skybox::onUpdate(Timestep ts) {
+	void Skybox::onUpdate(Timestep ts, RenderContext* rc) {
 		if (!m_textureHandle.isValid()) return;
 		Ref<TextureCube> texture = AssetManager::get<TextureCube>(m_textureHandle);
 		if (!texture) return;
@@ -29,17 +30,21 @@ namespace Axion {
 			pipeline = EngineAssets::getSkyboxPipeline();
 		}
 		if (!pipeline) return;
-		pipeline->bind();
 
-		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
-		texture->bind(1);
+		RenderContext* renderContext = rc;
+		if (!renderContext) renderContext = GraphicsContext::get()->getMainRenderContext();
+
+		pipeline->bind(renderContext);
+
+		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
+		texture->bind(renderContext, 1);
 
 		Ref<Mesh> mesh = EngineAssets::getCubeMesh();
-		mesh->getVertexBuffer()->bind();
-		mesh->getIndexBuffer()->bind();
-		RenderCommand::drawIndexed(mesh->getVertexBuffer(), mesh->getIndexBuffer());
+		mesh->getVertexBuffer()->bind(renderContext);
+		mesh->getIndexBuffer()->bind(renderContext);
+		RenderCommand::drawIndexed(renderContext, mesh->getVertexBuffer(), mesh->getIndexBuffer());
 
-		pipeline->unbind();
+		pipeline->unbind(renderContext);
 	}
 
 }

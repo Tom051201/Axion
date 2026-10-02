@@ -68,8 +68,6 @@ namespace Axion {
 		return handle;
 	}
 
-
-
 	////////////////////////////////////////////////////////////////////////////
 	///////////// SRV Heap /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
@@ -94,7 +92,6 @@ namespace Axion {
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create srv descriptor heap");
 
 		m_descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 
 		m_frameNextIndex.resize(m_frameCount, 0);
 
@@ -162,7 +159,6 @@ namespace Axion {
 		uint32_t dynamicCount = m_numDescriptors - m_reservedCount;
 		uint32_t chunkSize = dynamicCount / m_frameCount;
 
-		//std::fill(m_frameNextIndex.begin(), m_frameNextIndex.end(), m_reservedCount);
 		for (uint32_t i = 0; i < m_frameCount; i++) {
 			m_frameNextIndex[i] = m_reservedCount + (i * chunkSize);
 		}
@@ -188,8 +184,6 @@ namespace Axion {
 		handle.ptr += index * m_descriptorSize;
 		return handle;
 	}
-
-
 
 	////////////////////////////////////////////////////////////////////////////
 	///////////// DSV Heap /////////////////////////////////////////////////////

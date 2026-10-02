@@ -16,6 +16,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	class Material : public RefCounted {
 	public:
 
@@ -25,8 +27,8 @@ namespace Axion {
 
 		void release();
 
-		void bind();
-		void unbind();
+		void bind(RenderContext* renderContext);
+		void unbind(RenderContext* renderContext);
 
 		bool isValid() const;
 

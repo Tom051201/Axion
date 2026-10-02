@@ -2,10 +2,12 @@
 #include "Scene.h"
 
 #include "AxionEngine/Source/core/AssetManager.h"
+#include "AxionEngine/Source/core/JobSystem.h"
 #include "AxionEngine/Source/graphics/Renderer.h"
 #include "AxionEngine/Source/graphics/Renderer2D.h"
 #include "AxionEngine/Source/graphics/Renderer3D.h"
 #include "AxionEngine/Source/graphics/GraphicsContext.h"
+#include "AxionEngine/Source/graphics/RenderContext.h"
 #include "AxionEngine/Source/scene/Components.h"
 #include "AxionEngine/Source/scene/Entity.h"
 #include "AxionEngine/Source/scene/ScriptableEntity.h"
@@ -210,49 +212,32 @@ namespace Axion {
 		auto dirLightView = m_registry.view<DirectionalLightComponent, TransformComponent>();
 		for (auto [entity, dirLight, transform] : dirLightView.each()) {
 			if (lightData.directionalLights.size() >= MAX_DIR_LIGHTS) break;
-
 			Mat4 worldTransform = getWorldTransform({ entity, this });
 			Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-
-			lightData.directionalLights.push_back({
-				{ -forward.x, -forward.y, -forward.z },
-				dirLight.color
-			});
+			lightData.directionalLights.push_back({ { -forward.x, -forward.y, -forward.z }, dirLight.color });
 		}
 
 		// -- Point lights --
 		auto pointLightView = m_registry.view<PointLightComponent, TransformComponent>();
 		for (auto [entity, pointLight, transform] : pointLightView.each()) {
 			if (lightData.pointLights.size() >= MAX_POINT_LIGHTS) break;
-
 			Mat4 worldTransform = getWorldTransform({ entity, this });
-
-			lightData.pointLights.push_back({
-				worldTransform.getTranslation(),
-				pointLight.color * pointLight.intensity,
-				pointLight.radius,
-				pointLight.falloff
-			});
+			lightData.pointLights.push_back({ worldTransform.getTranslation(), pointLight.color * pointLight.intensity, pointLight.radius, pointLight.falloff });
 		}
 
 		// -- Spot lights --
 		auto spotLightView = m_registry.view<SpotLightComponent, TransformComponent>();
 		for (auto [entity, spotLight, transform] : spotLightView.each()) {
 			if (lightData.spotLights.size() >= MAX_SPOT_LIGHTS) break;
-
 			Mat4 worldTransform = getWorldTransform({ entity, this });
 			Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-
 			lightData.spotLights.push_back({
-				worldTransform.getTranslation(),
-				{ forward.x, forward.y, forward.z },
-				spotLight.color * spotLight.intensity,
-				spotLight.range,
+				worldTransform.getTranslation(), { forward.x, forward.y, forward.z },
+				spotLight.color * spotLight.intensity, spotLight.range,
 				std::cos(spotLight.innerConeAngle * 3.14159265f / 180.0f),
 				std::cos(spotLight.outerConeAngle * 3.14159265f / 180.0f)
 			});
 		}
-
 
 		// ----- Spatial Audio Listener -----
 		DirectX::XMFLOAT4X4 m;
@@ -260,7 +245,6 @@ namespace Axion {
 		Vec3 listenerPos(m._41, m._42, m._43);
 		Vec3 listenerForward(-m._31, -m._32, -m._33);
 		AudioManager::setListener(listenerPos, listenerForward);
-
 
 		// ----- Spatial Audio Source ------
 		auto view = m_registry.view<TransformComponent, AudioComponent>();
@@ -270,8 +254,6 @@ namespace Axion {
 				if (source) source->setPosition(transform.position);
 			}
 		});
-
-
 
 		// ----- Pre-Calculate Batches -----
 		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>>> renderBatches;
@@ -354,97 +336,128 @@ namespace Axion {
 			}
 		}
 
+		// ----- Multi-Threaded Render Dispatch
+		std::vector<std::function<void(uint32_t)>> renderJobs;
+
 		// -- Shadow Map Pass --
 		if (lightData.directionalLights.size() > 0) {
-			Vec3 lightDir = lightData.directionalLights[0].direction;
-			float lightDistance = 50.0f;
-			float orthoSize = 100.0f;
+			renderJobs.push_back([&](uint32_t threadId) {
+				RenderContext* renderContext = GraphicsContext::get()->acquireThreadContext(threadId);
 
-			Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
-			Vec3 lightPos = lightDir * lightDistance;
-			Mat4 lightView = Mat4::lookAt(lightPos, Vec3(0.0f, 0.0f, 0.0f), lightUp);
-			Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
+				Vec3 lightDir = lightData.directionalLights[0].direction;
+				float lightDistance = 50.0f;
+				float orthoSize = 100.0f;
 
-			Renderer3D::beginScene(lightProjection, lightView.inverse());
-			GraphicsContext::get()->bindDepthOnlyRenderTarget(Renderer::getShadowMap());
+				Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
+				Vec3 lightPos = lightDir * lightDistance;
+				Mat4 lightView = Mat4::lookAt(lightPos, Vec3(0.0f, 0.0f, 0.0f), lightUp);
+				Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
 
-			// -- Draw Shadows for Static Meshes --
+				Renderer3D::beginScene(lightProjection, lightView.inverse());
+
+				GraphicsContext::get()->bindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
+
+				// -- Draw Shadows for Static Meshes --
+				for (auto& [meshHandle, submeshMap] : renderBatches) {
+					Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
+					if (!mesh) continue;
+
+					for (auto& [submeshIndex, materialMap] : submeshMap) {
+						std::vector<ObjectBuffer> flatInstanceData;
+						for (auto& [matHandle, data] : materialMap) {
+							flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+						}
+						Renderer3D::drawMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+					}
+				}
+
+				// -- Draw Shadows for Skeletal Meshes --
+				for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
+					Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
+					if (!mesh) continue;
+
+					for (auto& [submeshIndex, materialMap] : submeshMap) {
+						std::vector<SkeletalObjectBuffer> flatInstanceData;
+						for (auto& [matHandle, data] : materialMap) {
+							flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+						}
+						Renderer3D::drawSkeletalMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+					}
+				}
+
+				GraphicsContext::get()->unbindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
+				Renderer3D::endScene();
+				renderContext->end();
+			});
+		}
+
+		// --- JOB 2: MAIN 3D PASS ---
+		renderJobs.push_back([&](uint32_t threadId) {
+			RenderContext* renderContext = GraphicsContext::get()->acquireThreadContext(threadId);
+
+			auto* target = Renderer::getCurrentRenderTarget();
+			if (target) {
+				target->bind(renderContext);
+				target->clear(renderContext);
+			}
+			else {
+				Renderer::restoreRenderTarget(renderContext);
+				Renderer::clear(renderContext);
+			}
+
+			Renderer3D::beginScene(cam, lightData);
+
+			// ----- Render Skybox -----
+			if (m_skyboxHandle.isValid()) {
+				Ref<Skybox> skybox = AssetManager::get<Skybox>(m_skyboxHandle);
+				if (skybox) skybox->onUpdate(ts, renderContext);
+			}
+
+			// -- Draw Static Meshes --
 			for (auto& [meshHandle, submeshMap] : renderBatches) {
 				Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 				if (!mesh) continue;
 
 				for (auto& [submeshIndex, materialMap] : submeshMap) {
-					std::vector<ObjectBuffer> flatInstanceData;
-					for (auto& [matHandle, data] : materialMap) {
-						flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+					for (auto& [materialHandle, instanceData] : materialMap) {
+						Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+						if (!mat) continue;
+						Renderer3D::drawMeshInstanced(renderContext, mesh, submeshIndex, mat, instanceData.data(), static_cast<uint32_t>(instanceData.size()));
 					}
-
-					Renderer3D::drawMeshInstancedShadow(mesh, submeshIndex, flatInstanceData);
 				}
 			}
 
-			// -- Draw Shadows for Skeletal Meshes --
+			// -- Draw Skeletal Meshes --
 			for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
 				Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
 				if (!mesh) continue;
 
 				for (auto& [submeshIndex, materialMap] : submeshMap) {
-					std::vector<SkeletalObjectBuffer> flatInstanceData;
-					for (auto& [matHandle, data] : materialMap) {
-						flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
+					for (auto& [materialHandle, instanceData] : materialMap) {
+						Ref<Material> mat = AssetManager::get<Material>(materialHandle);
+						if (!mat) continue;
+						Renderer3D::drawSkeletalMeshInstanced(renderContext, mesh, submeshIndex, mat, instanceData.data(), static_cast<uint32_t>(instanceData.size()));
 					}
-
-					Renderer3D::drawSkeletalMeshInstancedShadow(mesh, submeshIndex, flatInstanceData);
 				}
 			}
 
-			GraphicsContext::get()->unbindDepthOnlyRenderTarget(Renderer::getShadowMap());
 			Renderer3D::endScene();
-		}
 
-		Renderer::restoreRenderTarget();
-		Renderer3D::beginScene(cam, lightData);
-
-
-		// ----- Render Skybox -----
-		if (m_skyboxHandle.isValid()) {
-			Ref<Skybox> skybox = AssetManager::get<Skybox>(m_skyboxHandle);
-			if (skybox) skybox->onUpdate(ts);
-		}
-
-		// -- Draw Static Meshes --
-		for (auto& [meshHandle, submeshMap] : renderBatches) {
-			Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
-			if (!mesh) continue;
-
-			for (auto& [submeshIndex, materialMap] : submeshMap) {
-				for (auto& [materialHandle, instanceData] : materialMap) {
-					Ref<Material> mat = AssetManager::get<Material>(materialHandle);
-					if (!mat) continue;
-
-					Renderer3D::drawMeshInstanced(mesh, submeshIndex, mat, instanceData);
-				}
+			if (target) {
+				target->unbind(renderContext);
 			}
-		}
 
-		// -- Draw Skeletal Meshes --
-		for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
-			Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
-			if (!mesh) continue;
+			renderContext->end();
+		});
 
-			for (auto& [submeshIndex, materialMap] : submeshMap) {
-				for (auto& [materialHandle, instanceData] : materialMap) {
-					Ref<Material> mat = AssetManager::get<Material>(materialHandle);
-					if (!mat) continue;
+		JobSystem::executeAndWait(renderJobs);
+		RenderContext* mainContext = GraphicsContext::get()->getMainRenderContext();
 
-					Renderer3D::drawSkeletalMeshInstanced(mesh, submeshIndex, mat, instanceData);
-				}
-			}
-		}
+		auto* target = Renderer::getCurrentRenderTarget();
+		if (target) target->bind(mainContext);
+		else Renderer::restoreRenderTarget(mainContext);
 
-		Renderer3D::endScene();
-		Renderer2D::beginScene(cam);
-
+		Renderer2D::beginScene(mainContext, cam);
 		Mat4 viewMatrix = cam.getViewMatrix();
 
 		// ----- Update and Render Particles -----
@@ -492,26 +505,17 @@ namespace Axion {
 			float worldRotZ = worldTransform.getRotation().toEulerAngles().z;
 
 			if (sprite.texture.isValid()) {
-				Renderer2D::drawQuad(
-					worldPos,
-					{ worldScale.x, worldScale.y },
-					worldRotZ,
-					AssetManager::get<Texture2D>(sprite.texture),
-					sprite.tint
-				);
+				Renderer2D::drawQuad(worldPos, { worldScale.x, worldScale.y }, worldRotZ, AssetManager::get<Texture2D>(sprite.texture), sprite.tint);
 			}
 			else {
-				Renderer2D::drawQuad(
-					worldPos,
-					{ worldScale.x, worldScale.y },
-					worldRotZ,
-					sprite.tint
-				);
+				Renderer2D::drawQuad(worldPos, { worldScale.x, worldScale.y }, worldRotZ, sprite.tint);
 			}
 		}
 
-		Renderer2D::endScene();
-
+		Renderer2D::endScene(mainContext);
+		if (target) {
+			target->unbind(mainContext);
+		}
 	}
 
 	void Scene::onEvent(Event& e) {

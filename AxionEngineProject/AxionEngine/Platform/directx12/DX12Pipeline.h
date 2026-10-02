@@ -7,6 +7,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	class DX12Pipeline : public Pipeline {
 	public:
 
@@ -15,8 +17,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind() override;
-		void unbind() override;
+		void bind(RenderContext* renderContext) override;
+		void unbind(RenderContext* renderContext) override;
 
 		const PipelineSpecification& getSpecification() const override { return m_specification; }
 

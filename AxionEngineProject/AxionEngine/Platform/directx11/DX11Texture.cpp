@@ -144,13 +144,13 @@ namespace Axion {
 		m_srv.Reset();
 	}
 
-	void DX11Texture2D::bind(uint32_t slot) const {
+	void DX11Texture2D::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 		// Ignore DX12 'slot' and map directly to DX11 register t0
 		ctx->PSSetShaderResources(0, 1, m_srv.GetAddressOf());
 	}
 
-	void DX11Texture2D::unbind() const {}
+	void DX11Texture2D::unbind(RenderContext* renderContext) const {}
 
 	////////////////////////////////////////////////////////////////////////////////
 	///// DX11TextureCube //////////////////////////////////////////////////////////
@@ -241,13 +241,13 @@ namespace Axion {
 		m_srv.Reset();
 	}
 
-	void DX11TextureCube::bind(uint32_t slot) const {
+	void DX11TextureCube::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 		// Ignore DX12 'slot' and map directly to DX11 register t0
 		ctx->PSSetShaderResources(0, 1, m_srv.GetAddressOf());
 	}
 
-	void DX11TextureCube::unbind() const {}
+	void DX11TextureCube::unbind(RenderContext* renderContext) const {}
 
 	void DX11TextureCube::setupGpuResources(const std::array<uint8_t*, 6>&pixels) {
 		auto* device = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
@@ -336,12 +336,12 @@ namespace Axion {
 		m_dsv.Reset();
 	}
 
-	void DX11DepthTexture::bind(uint32_t slot) const {
+	void DX11DepthTexture::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 		// Ignore DX12 'slot' and map directly to DX11 register t0
 		ctx->PSSetShaderResources(0, 1, m_srv.GetAddressOf());
 	}
 
-	void DX11DepthTexture::unbind() const {}
+	void DX11DepthTexture::unbind(RenderContext* renderContext) const {}
 
 }

@@ -50,7 +50,7 @@ namespace Axion {
 		AssetManager::storage<Mesh>().assets[handle] = nullptr;
 		AssetManager::storage<Mesh>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- Background Thread --
 			std::ifstream stream(absolutePath);
@@ -108,7 +108,7 @@ namespace Axion {
 		AssetManager::storage<Texture2D>().assets[handle] = nullptr;
 		AssetManager::storage<Texture2D>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 			// -- Background Thread --
 			std::ifstream stream(absolutePath);
 			if (!stream.is_open()) {
@@ -167,7 +167,7 @@ namespace Axion {
 		AssetManager::storage<TextureCube>().assets[handle] = nullptr;
 		AssetManager::storage<TextureCube>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- Background Thread --
 			std::ifstream stream(absolutePath);
@@ -227,7 +227,7 @@ namespace Axion {
 		AssetManager::storage<Skybox>().assets[handle] = nullptr;
 		AssetManager::storage<Skybox>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML On Background Thread --
 			std::ifstream stream(absolutePath);
@@ -278,7 +278,7 @@ namespace Axion {
 		AssetManager::storage<Shader>().assets[handle] = nullptr;
 		AssetManager::storage<Shader>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And Compilation On Background Thread --
 			std::ifstream stream(absolutePath);
@@ -342,7 +342,7 @@ namespace Axion {
 		AssetManager::storage<Pipeline>().assets[handle] = nullptr;
 		AssetManager::storage<Pipeline>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And Parsing On Background Thread --
 			std::ifstream stream(absolutePath);
@@ -421,7 +421,7 @@ namespace Axion {
 		AssetManager::storage<Material>().assets[handle] = nullptr;
 		AssetManager::storage<Material>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And Parsing On Background Thread --
 			std::ifstream stream(absolutePath);
@@ -516,7 +516,7 @@ namespace Axion {
 		AssetManager::storage<AudioClip>().assets[handle] = nullptr;
 		AssetManager::storage<AudioClip>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And Parsing On Background Thread --
 			std::ifstream stream(absolutePath);
@@ -564,7 +564,7 @@ namespace Axion {
 		AssetManager::storage<PhysicsMaterial>().assets[handle] = nullptr;
 		AssetManager::storage<PhysicsMaterial>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And Parsing Background Thread --
 			std::ifstream stream(absolutePath);
@@ -610,7 +610,7 @@ namespace Axion {
 		AssetManager::storage<Prefab>().assets[handle] = nullptr;
 		AssetManager::storage<Prefab>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And Parsing On Background Thread --
 			std::ifstream stream(absolutePath);
@@ -648,7 +648,7 @@ namespace Axion {
 		AssetManager::storage<AnimationClip>().assets[handle] = nullptr;
 		AssetManager::storage<AnimationClip>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And GLTF Parsing Background Thread --
 			std::ifstream stream(absolutePath);
@@ -697,7 +697,7 @@ namespace Axion {
 		AssetManager::storage<SkeletalMesh>().assets[handle] = nullptr;
 		AssetManager::storage<SkeletalMesh>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And GLTF Parsing Background Thread --
 			std::ifstream stream(absolutePath);
@@ -746,7 +746,7 @@ namespace Axion {
 		AssetManager::storage<NavMesh>().assets[handle] = nullptr;
 		AssetManager::storage<NavMesh>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 			std::ifstream stream(absolutePath);
 			if (!stream.is_open()) return;
 
@@ -769,7 +769,7 @@ namespace Axion {
 		AssetManager::storage<PhysicsMesh>().assets[handle] = nullptr;
 		AssetManager::storage<PhysicsMesh>().handleToPath[handle] = absolutePath;
 
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 			std::ifstream stream(absolutePath);
 			if (!stream.is_open()) return;
 
@@ -792,7 +792,7 @@ namespace Axion {
 	}
 
 	void EditorAssetLoader::reloadMaterial(UUID handle, const std::filesystem::path& absolutePath) {
-		JobSystem::submit([handle, absolutePath]() {
+		JobSystem::submit([handle, absolutePath](uint32_t threadId) {
 
 			// -- YAML And Parsing On Background Thread --
 			std::ifstream stream(absolutePath);

@@ -53,6 +53,4 @@ namespace Axion {
 		return WindowsHelper::WStringToString(wdesc);
 	}
 
-	
-
 }

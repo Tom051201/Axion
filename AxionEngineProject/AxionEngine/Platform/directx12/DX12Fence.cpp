@@ -6,8 +6,6 @@
 
 #include "AxionEngine/Platform/directx12/DX12CommandQueue.h"
 
-// TODO: Maybe include DX12Context
-
 namespace Axion {
 
 	DX12Fence::~DX12Fence() {
@@ -17,7 +15,6 @@ namespace Axion {
 	void DX12Fence::initialize(ID3D12Device* device) {
 		AX_THROW_IF_FAILED_HR(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)), "Failed to create fence");
 		AX_CORE_LOG_TRACE("Successfully created fence");
-		m_fenceValue = 0;
 		m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		if (!m_fenceEvent) {
 			AX_CORE_LOG_ERROR("Failed CreateEvent (fence)");
@@ -36,24 +33,19 @@ namespace Axion {
 		m_fenceEvent = nullptr;
 	}
 
-	void DX12Fence::waitForGPU() {
-		if (m_fence->GetCompletedValue() < m_fenceValue) {
-			AX_THROW_IF_FAILED_HR(m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent), "Failed SetEventOnCompletion (fence)");
+	void DX12Fence::signal(ID3D12CommandQueue* queue, UINT64 fenceValue) {
+		AX_THROW_IF_FAILED_HR(queue->Signal(m_fence.Get(), fenceValue), "Failed to signal fence");
+	}
+
+	void DX12Fence::wait(UINT64 fenceValue) {
+		if (m_fence->GetCompletedValue() < fenceValue) {
+			AX_THROW_IF_FAILED_HR(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent), "Failed SetEventOnCompletion");
 			WaitForSingleObject(m_fenceEvent, INFINITE);
 		}
 	}
 
-	void DX12Fence::signalAndWait() {
-		// TODO: Maybe change to this: auto* queue = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandQueue();
-		auto* queue = static_cast<DX12CommandQueue*>(GraphicsContext::get()->getNativeContext())->getCommandQueue();
-		
-		AX_THROW_IF_FAILED_HR(queue->Signal(m_fence.Get(), m_fenceValue), "Failed to signal fence");
-		waitForGPU();
-		m_fenceValue++;
-	}
-
-	bool DX12Fence::hasCompleted() const {
-		return m_fence->GetCompletedValue() >= m_fenceValue;
+	bool DX12Fence::hasCompleted(UINT64 fenceValue) const {
+		return m_fence->GetCompletedValue() >= fenceValue;
 	}
 
 }

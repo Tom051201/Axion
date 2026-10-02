@@ -1,4 +1,4 @@
-Version: 4
+Version: 5
 UUID: 0c2ce19ea62a4dee103fd59e64b28d90
 Type: Scene
 Scene: Test Scene
@@ -13,143 +13,24 @@ NavMeshProfiles:
     AgentMaxSlope: 45
     CellSize: 0.300000012
     CellHeight: 0.200000003
+    DebugColor: [0, 1, 1, 1]
+    ShowDebug: false
 Entities:
-  - Entity: 2ef050af73529274af437db0a6cb9ad1
+  - Entity: 7e5ab821a49b7268ddc0ef9a4eb36923
     TagComponent:
-      Tag: Wall
+      Tag: Cube 1
     TransformComponent:
-      Translation: [4.21350288, 2.57129812, 3.37949324]
+      Translation: [-2.12679315, 3.14537835, -0.99950099]
       Rotation: [0, 0, 0, 1]
-      Scale: [24.4236088, 5.4842639, 1]
+      Scale: [1, 2.01485109, 1]
     MeshComponent:
       UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
     MaterialComponent:
       Materials:
         - 468a1e72b23718f4152fb7ab16cd4a84
     RigidBodyComponent:
-      BodyType: Static
-      Mass: 1
-      IsKinematic: false
-      LinearDamping: 0
-      AngularDamping: 0.0500000007
-      FixedRotationX: false
-      FixedRotationY: false
-      FixedRotationZ: false
-      EnableCCD: false
-    BoxColliderComponent:
-      HalfExtents: [0.5, 0.5, 0.5]
-      Offset: [0, 0, 0]
-      IsTrigger: false
-      Layer: 1
-      CollisionMask: 4294967295
-      Material: 0
-  - Entity: 020af6763b5e6123462427abc3dd149d
-    TagComponent:
-      Tag: Enemy
-    TransformComponent:
-      Translation: [7.68056488, 1.15968704, 11.0984154]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 2, 1]
-    MeshComponent:
-      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
-    MaterialComponent:
-      Materials:
-        - 468a1e72b23718f4152fb7ab16cd4a84
-    CharacterControllerComponent:
-      Radius: 0.5
-      Height: 2
-      StepOffset: 0.300000012
-      SlopeLimitDegrees: 45
-      PushPower: 50
-      Layer: 1
-      CollisionMask: 4294967295
-      Material: 0
-    ScriptComponent:
-      ClassName: EnemyAI
-    NavMeshAgentComponent:
-      ProfileName: Default
-      Speed: 3.5
-  - Entity: 77ef249aef85f49687cb5f61548cfdc3
-    TagComponent:
-      Tag: Light
-    TransformComponent:
-      Translation: [0, 0, -10.2763519]
-      Rotation: [0.156731576, -0.503221989, -0.029546503, 0.849311471]
-      Scale: [1, 1, 1]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-  - Entity: 5293e7395dedb7092c6424e73dfefd7f
-    TagComponent:
-      Tag: Player
-    TransformComponent:
-      Translation: [0, 2.34822464, -3.70974207]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Primary: true
-      FixedAspectRatio: false
-      ProjectionType: Perspective
-      PerspectiveFOV: 0.785398185
-      PerspectiveNear: 0.100000001
-      PerspectiveFar: 100
-      OrthographicSize: 10
-      OrthographicNear: -1
-      OrthographicFar: 1
-    CharacterControllerComponent:
-      Radius: 0.5
-      Height: 1
-      StepOffset: 0.300000012
-      SlopeLimitDegrees: 45
-      PushPower: 50
-      Layer: 1
-      CollisionMask: 4294967295
-      Material: 0
-    ScriptComponent:
-      ClassName: Player
-  - Entity: b946d76c95251e8657372979eefb28ce
-    TagComponent:
-      Tag: Floor
-    TransformComponent:
-      Translation: [0, -0.5, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [30.6496925, 1, 31.1484737]
-    MeshComponent:
-      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
-    MaterialComponent:
-      Materials:
-        - a64bf9a3953dc640c83d0b464aee42d5
-    RigidBodyComponent:
-      BodyType: Static
-      Mass: 1
-      IsKinematic: false
-      LinearDamping: 0
-      AngularDamping: 0.0500000007
-      FixedRotationX: false
-      FixedRotationY: false
-      FixedRotationZ: false
-      EnableCCD: false
-    BoxColliderComponent:
-      HalfExtents: [0.5, 0.5, 0.5]
-      Offset: [0, 0, 0]
-      IsTrigger: false
-      Layer: 1
-      CollisionMask: 4294967295
-      Material: 0
-  - Entity: 3f60784bb8dc45994e9adf4c46ca048e
-    TagComponent:
-      Tag: Wall
-    TransformComponent:
-      Translation: [0, 1, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [0.5, 2, 0.5]
-    MeshComponent:
-      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
-    MaterialComponent:
-      Materials:
-        - 468a1e72b23718f4152fb7ab16cd4a84
-    RigidBodyComponent:
-      BodyType: Static
-      Mass: 1
+      BodyType: Dynamic
+      Mass: 10
       IsKinematic: false
       LinearDamping: 0
       AngularDamping: 0.0500000007
@@ -205,21 +86,142 @@ Entities:
       EnableCollision: false
       IsBreakable: false
       BreakForce: 1000
-  - Entity: 7e5ab821a49b7268ddc0ef9a4eb36923
+  - Entity: 3f60784bb8dc45994e9adf4c46ca048e
     TagComponent:
-      Tag: Cube 1
+      Tag: Wall
     TransformComponent:
-      Translation: [-2.12679315, 3.14537835, -0.99950099]
+      Translation: [0, 1, 0]
       Rotation: [0, 0, 0, 1]
-      Scale: [1, 2.01485109, 1]
+      Scale: [0.5, 2, 0.5]
     MeshComponent:
       UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
     MaterialComponent:
       Materials:
         - 468a1e72b23718f4152fb7ab16cd4a84
     RigidBodyComponent:
-      BodyType: Dynamic
-      Mass: 10
+      BodyType: Static
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+  - Entity: b946d76c95251e8657372979eefb28ce
+    TagComponent:
+      Tag: Floor
+    TransformComponent:
+      Translation: [0, -0.5, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [30.6496925, 1, 31.1484737]
+    MeshComponent:
+      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
+    MaterialComponent:
+      Materials:
+        - a64bf9a3953dc640c83d0b464aee42d5
+    RigidBodyComponent:
+      BodyType: Static
+      Mass: 1
+      IsKinematic: false
+      LinearDamping: 0
+      AngularDamping: 0.0500000007
+      FixedRotationX: false
+      FixedRotationY: false
+      FixedRotationZ: false
+      EnableCCD: false
+    BoxColliderComponent:
+      HalfExtents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+      IsTrigger: false
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+  - Entity: 5293e7395dedb7092c6424e73dfefd7f
+    TagComponent:
+      Tag: Player
+    TransformComponent:
+      Translation: [0, 2.34822464, -3.70974207]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      ProjectionType: Perspective
+      PerspectiveFOV: 0.785398185
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 100
+      OrthographicSize: 10
+      OrthographicNear: -1
+      OrthographicFar: 1
+    CharacterControllerComponent:
+      Radius: 0.5
+      Height: 1
+      StepOffset: 0.300000012
+      SlopeLimitDegrees: 45
+      PushPower: 50
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+    ScriptComponent:
+      ClassName: Player
+  - Entity: 77ef249aef85f49687cb5f61548cfdc3
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [0, 0, -10.2763519]
+      Rotation: [0.156731576, -0.503221989, -0.029546503, 0.849311471]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+  - Entity: 020af6763b5e6123462427abc3dd149d
+    TagComponent:
+      Tag: Enemy
+    TransformComponent:
+      Translation: [7.68056488, 1.15968704, 11.0984154]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 2, 1]
+    MeshComponent:
+      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
+    MaterialComponent:
+      Materials:
+        - 468a1e72b23718f4152fb7ab16cd4a84
+    CharacterControllerComponent:
+      Radius: 0.5
+      Height: 2
+      StepOffset: 0.300000012
+      SlopeLimitDegrees: 45
+      PushPower: 50
+      Layer: 1
+      CollisionMask: 4294967295
+      Material: 0
+    ScriptComponent:
+      ClassName: EnemyAI
+    NavMeshAgentComponent:
+      ProfileName: Default
+      Speed: 3.5
+  - Entity: 2ef050af73529274af437db0a6cb9ad1
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Translation: [4.21350288, 2.57129812, 3.37949324]
+      Rotation: [0, 0, 0, 1]
+      Scale: [24.4236088, 5.4842639, 1]
+    MeshComponent:
+      UUID: 5ecc8cc642a9ed5c08eb1916d1e4840b
+    MaterialComponent:
+      Materials:
+        - 468a1e72b23718f4152fb7ab16cd4a84
+    RigidBodyComponent:
+      BodyType: Static
+      Mass: 1
       IsKinematic: false
       LinearDamping: 0
       AngularDamping: 0.0500000007

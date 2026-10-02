@@ -515,6 +515,8 @@ namespace Axion {
 			m_editorCamera.setHoveringSceneViewport(isHovering);
 		}
 
+		RenderContext* renderContext = GraphicsContext::get()->getMainRenderContext();
+
 		if (isViewportVisible && currentViewSize.x > 0.0f && currentViewSize.y > 0.0f) {
 
 			// -- Resizing --
@@ -535,17 +537,14 @@ namespace Axion {
 			bool isCameraActive = Input::isMouseButtonPressed(MouseButton::Right) || Input::isMouseButtonPressed(MouseButton::Middle);
 			if (m_viewportPanel && isHovering && activeState == EditorState::Edit && !isCameraActive) {
 				Silica::Vec2 localMouse = m_viewportPanel->getRelativeMousePos();
-				m_hoveredEntityID = m_frameBuffer->readPixel(1, (int)localMouse.x, (int)localMouse.y);
+				m_hoveredEntityID = m_frameBuffer->readPixel(renderContext, 1, (int)localMouse.x, (int)localMouse.y);
 			}
 			else {
 				m_hoveredEntityID = -1;
 			}
 
-
 			// -- Render Scene Into The Framebuffer --
-			Renderer::setRenderTarget(m_frameBuffer.get());
-			m_frameBuffer->bind();
-			m_frameBuffer->clear();
+			Renderer::setRenderTarget(renderContext, m_frameBuffer.get());
 
 			switch (activeState) {
 				case EditorState::Edit: {
@@ -554,12 +553,8 @@ namespace Axion {
 					break;
 				}
 				case EditorState::Play: {
-					if (processLogic) {
-						m_activeScene->onUpdate(ts);
-					}
-					else {
-						m_activeScene->onUpdate(Timestep(0.0f));
-					}
+					if (processLogic) m_activeScene->onUpdate(ts);
+					else m_activeScene->onUpdate(Timestep(0.0f));
 					break;
 				}
 				case EditorState::Simulate: {
@@ -581,7 +576,7 @@ namespace Axion {
 				Mat4 worldM;
 				if (m_selectedEntity.isValid()) {
 					worldM = m_activeScene->getWorldTransform(m_selectedEntity);
-
+		
 					// -- Update Gizmo Math --
 					bool isMouseDown = Input::isMouseButtonPressed(MouseButton::Left);
 					bool snap = Input::isKeyPressed(KeyCode::LeftControl);
@@ -589,20 +584,20 @@ namespace Axion {
 					Silica::Vec2 mousePos = m_viewportPanel->getRelativeMousePos();
 					bool isCameraActive = Input::isMouseButtonPressed(MouseButton::Right) || Input::isMouseButtonPressed(MouseButton::Middle);
 					bool canInteractWithGizmo = !isCameraActive;
-
+		
 					m_transformGizmo.setGizmoScale(EditorSettings::viewportPanelGizmoScale);
-
+		
 					if (isMouseDown && m_transformGizmo.isHovered() && !m_isDraggingGizmo && canInteractWithGizmo) {
 						m_isDraggingGizmo = true;
 						m_dragStartTransform = m_selectedEntity.getComponent<TransformComponent>();
 					}
-
+		
 					auto delta = m_transformGizmo.onUpdate(worldM, m_editorCamera, Vec2(mousePos.x, mousePos.y), Vec2(currentViewSize.x, currentViewSize.y), isMouseDown, snap, snapValue, canInteractWithGizmo);
-
+		
 					if (delta.has_value()) {
 						auto& tc = m_selectedEntity.getComponent<TransformComponent>();
 						Entity parent = m_selectedEntity.getParent();
-
+			
 						if (m_transformGizmo.getMode() == GizmoMode::Translate) {
 							if (parent) {
 								Mat4 parentWorldInv = m_activeScene->getWorldTransform(parent).inverse();
@@ -615,11 +610,11 @@ namespace Axion {
 						}
 						else if (m_transformGizmo.getMode() == GizmoMode::Rotate) {
 							float angleDegrees = delta.value().length();
-
+			
 							if (angleDegrees > 0.001f) {
 								Vec3 rotationAxis = delta.value().normalized();
 								Quat deltaQuat = Quat::fromAxisAngle(rotationAxis, Math::toRadians(angleDegrees));
-
+			
 								tc.rotation = deltaQuat * tc.rotation;
 								tc.rotation = tc.rotation.normalized();
 							}
@@ -628,43 +623,44 @@ namespace Axion {
 							tc.scale += delta.value();
 						}
 					}
-
+			
 					if (!isMouseDown && m_isDraggingGizmo) {
 						m_isDraggingGizmo = false;
 						auto endTransform = m_selectedEntity.getComponent<TransformComponent>();
-
+			
 						if (m_dragStartTransform.position != endTransform.position ||
 							m_dragStartTransform.rotation != endTransform.rotation ||
 							m_dragStartTransform.scale != endTransform.scale) {
-
+			
 							EditorCommandManager::push(MakeShared<TransformCommand>(m_selectedEntity, m_dragStartTransform, endTransform));
 						}
 					}
 				}
-
+			
 				// -- Draw Overlay --
-				m_frameBuffer->clearDepth();
+				m_frameBuffer->bind(renderContext);
+				m_frameBuffer->clearDepth(renderContext);
 				drawOverlay();
 
 				// -- Draw Gizmo --
 				if (m_selectedEntity.isValid()) {
 					m_transformGizmo.onRender(worldM, m_editorCamera);
 				}
+
+				m_frameBuffer->unbind(renderContext);
 			}
 
-			m_frameBuffer->unbind();
-		}
+			// ----- Draw Renderer Stats -----
+			if (m_viewportPanel && EditorSettings::viewportPanelShowRendererStats) {
+				auto& stats = Renderer::getStats();
+				char buffer[256];
+				snprintf(buffer, sizeof(buffer),
+					"FPS: %.0f\nFrame: %.2f ms\nDraw Calls: %d\nMeshes: %d\nInstances: %d",
+					1000.0 / Renderer::getFrameTimeMs(), Renderer::getFrameTimeMs(), stats.drawCalls, stats.meshCount3D, stats.instanceCount3D
+				);
 
-		// ----- Draw Renderer Stats -----
-		if (m_viewportPanel && EditorSettings::viewportPanelShowRendererStats) {
-			auto& stats = Renderer::getStats();
-			char buffer[256];
-			snprintf(buffer, sizeof(buffer),
-				"FPS: %.0f\nFrame: %.2f ms\nDraw Calls: %d\nMeshes: %d\nInstances: %d",
-				1000.0 / Renderer::getFrameTimeMs(), Renderer::getFrameTimeMs(), stats.drawCalls, stats.meshCount3D, stats.instanceCount3D
-			);
-
-			m_viewportPanel->setStatsText(buffer);
+				m_viewportPanel->setStatsText(buffer);
+			}
 		}
 
 		// -- Update Material Panel --
@@ -672,7 +668,7 @@ namespace Axion {
 			m_materialPanel->onUpdate(ts);
 		}
 
-		Renderer::renderToSwapChain();
+		Renderer::renderToSwapChain(renderContext);
 	}
 
 	void EditorLayer::onEvent(Event& e) {
@@ -717,7 +713,8 @@ namespace Axion {
 	}
 
 	void EditorLayer::drawOverlay() {
-		Renderer2D::beginScene(m_editorCamera);
+		RenderContext* renderContext = GraphicsContext::get()->getMainRenderContext();
+		Renderer2D::beginScene(renderContext, m_editorCamera);
 
 		// ----- Draw Collider Wireframes -----
 		if (m_selectedEntity) {
@@ -823,7 +820,6 @@ namespace Axion {
 
 		}
 
-
 		// ----- Draw Edit Mode Icons -----
 		Mat4 cameraViewMatrix = m_editorCamera.getViewMatrix();
 
@@ -868,7 +864,7 @@ namespace Axion {
 			}
 		}
 
-		Renderer2D::endScene();
+		Renderer2D::endScene(renderContext);
 	}
 
 	void EditorLayer::playScene() {

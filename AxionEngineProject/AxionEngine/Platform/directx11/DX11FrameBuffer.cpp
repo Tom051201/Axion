@@ -9,16 +9,16 @@ namespace Axion {
 	namespace Utils {
 		static DXGI_FORMAT ColorFormatToDXGI(ColorFormat format) {
 			switch (format) {
-			case ColorFormat::RGBA8: return DXGI_FORMAT_R8G8B8A8_UNORM;
-			case ColorFormat::RED_INTEGER: return DXGI_FORMAT_R32_SINT;
+				case ColorFormat::RGBA8: return DXGI_FORMAT_R8G8B8A8_UNORM;
+				case ColorFormat::RED_INTEGER: return DXGI_FORMAT_R32_SINT;
 			}
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
 		}
 
 		static DXGI_FORMAT DepthFormatToDXGI(DepthStencilFormat format) {
 			switch (format) {
-			case DepthStencilFormat::DEPTH32F: return DXGI_FORMAT_D32_FLOAT;
-			case DepthStencilFormat::DEPTH24_STENCIL8: return DXGI_FORMAT_D24_UNORM_S8_UINT;
+				case DepthStencilFormat::DEPTH32F: return DXGI_FORMAT_D32_FLOAT;
+				case DepthStencilFormat::DEPTH24_STENCIL8: return DXGI_FORMAT_D24_UNORM_S8_UINT;
 			}
 			return DXGI_FORMAT_D32_FLOAT;
 		}
@@ -147,7 +147,7 @@ namespace Axion {
 		#endif
 	}
 
-	void DX11FrameBuffer::bind() const {
+	void DX11FrameBuffer::bind(RenderContext* renderContext) const {
 		auto* ctx = m_context->getDeviceContext();
 
 		ID3D11RenderTargetView* rtvs[2] = { m_colorRTV.Get(), nullptr };
@@ -168,17 +168,17 @@ namespace Axion {
 		ctx->RSSetViewports(1, &vp);
 	}
 
-	void DX11FrameBuffer::unbind() const {
+	void DX11FrameBuffer::unbind(RenderContext* renderContext) const {
 		auto* ctx = m_context->getDeviceContext();
 		ID3D11RenderTargetView* nullRTVs[2] = { nullptr, nullptr };
 		ctx->OMSetRenderTargets(2, nullRTVs, nullptr);
 	}
 
-	void DX11FrameBuffer::clear() {
-		clear(m_specification.clearColor);
+	void DX11FrameBuffer::clear(RenderContext* renderContext) {
+		clear(renderContext, m_specification.clearColor);
 	}
 
-	void DX11FrameBuffer::clear(const Vec4& clearColor) {
+	void DX11FrameBuffer::clear(RenderContext* renderContext, const Vec4& clearColor) {
 		auto* ctx = m_context->getDeviceContext();
 
 		float color[4] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
@@ -191,12 +191,12 @@ namespace Axion {
 		}
 	}
 
-	void DX11FrameBuffer::clearDepth() {
+	void DX11FrameBuffer::clearDepth(RenderContext* renderContext) {
 		auto* ctx = m_context->getDeviceContext();
 		ctx->ClearDepthStencilView(m_depthDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
-	void DX11FrameBuffer::clearAttachment(uint32_t attachmentIndex, int value) {
+	void DX11FrameBuffer::clearAttachment(RenderContext* renderContext, uint32_t attachmentIndex, int value) {
 		if (attachmentIndex == 1 && m_specification.useEntityIDAttachment && m_entityIdRTV) {
 			auto* ctx = m_context->getDeviceContext();
 			UINT clearID[4] = { static_cast<UINT>(value), 0, 0, 0 };
@@ -204,7 +204,7 @@ namespace Axion {
 		}
 	}
 
-	int DX11FrameBuffer::readPixel(uint32_t attachmentIndex, int x, int y) {
+	int DX11FrameBuffer::readPixel(RenderContext* renderContext, uint32_t attachmentIndex, int x, int y) {
 		if (attachmentIndex != 1 || !m_specification.useEntityIDAttachment) return -1;
 		if (x < 0 || y < 0 || x >= (int)m_specification.width || y >= (int)m_specification.height) return -1;
 

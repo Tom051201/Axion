@@ -25,7 +25,7 @@ namespace Axion {
 		m_materialBuffer->release();
 	}
 
-	void Material::bind() {
+	void Material::bind(RenderContext* renderContext) {
 		Ref<Pipeline> pipeline;
 		if (m_pipelineHandle.isValid()) {
 			pipeline = AssetManager::get<Pipeline>(m_pipelineHandle);
@@ -35,7 +35,7 @@ namespace Axion {
 		}
 		if (!pipeline) return;
 
-		pipeline->bind();
+		pipeline->bind(renderContext);
 		Ref<Shader> shader = pipeline->getSpecification().shader;
 
 		if (!m_slotsCached) {
@@ -57,7 +57,7 @@ namespace Axion {
 				m_materialBuffer->update(&m_properties, sizeof(MaterialProperties));
 				m_dirty = false;
 			}
-			m_materialBuffer->bind(m_materialBufferSlot);
+			m_materialBuffer->bind(renderContext, m_materialBufferSlot);
 		}
 
 		// -- Textures --
@@ -76,10 +76,10 @@ namespace Axion {
 			}
 		}
 
-		Renderer::bindTextures(textureBatch, 16, m_textureTableSlot);
+		Renderer::bindTextures(renderContext, textureBatch, 16, m_textureTableSlot);
 	}
 
-	void Material::unbind() {}
+	void Material::unbind(RenderContext* renderContext) {}
 
 	bool Material::isValid() const {
 		if (m_pipelineHandle.isValid()) {

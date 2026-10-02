@@ -10,20 +10,20 @@ namespace Axion {
 		GraphicsContext::get()->setClearColor(color);
 	}
 
-	void RenderCommand::clear() {
+	void RenderCommand::clear(RenderContext* renderContext) {
 		GraphicsContext::get()->clear();
 	}
 
-	void RenderCommand::drawIndexed(const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
-		GraphicsContext::get()->drawIndexed(vb, ib, instanceCount);
+	void RenderCommand::drawIndexed(RenderContext* renderContext, const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
+		GraphicsContext::get()->drawIndexed(renderContext, vb, ib, instanceCount);
 	}
 
-	void RenderCommand::drawIndexed(const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseIndexLocation) {
-		GraphicsContext::get()->drawIndexed(ib, indexCount, instanceCount, startIndexLocation, baseIndexLocation);
+	void RenderCommand::drawIndexed(RenderContext* renderContext, const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseIndexLocation) {
+		GraphicsContext::get()->drawIndexed(renderContext, ib, indexCount, instanceCount, startIndexLocation, baseIndexLocation);
 	}
 
-	void RenderCommand::draw(uint32_t vertexCount) {
-		GraphicsContext::get()->draw(vertexCount);
+	void RenderCommand::draw(RenderContext* renderContext, uint32_t vertexCount) {
+		GraphicsContext::get()->draw(renderContext, vertexCount);
 	}
 
 }

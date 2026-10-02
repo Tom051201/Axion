@@ -4,6 +4,7 @@
 #include "AxionEngine/Platform/directx12/DX12Context.h"
 #include "AxionEngine/Platform/directx12/DX12Helpers.h"
 #include "AxionEngine/Platform/directx12/DX12Shader.h"
+#include "AxionEngine/Source/graphics/RenderContext.h"
 
 namespace Axion {
 
@@ -69,12 +70,8 @@ namespace Axion {
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.PrimitiveTopologyType = DX12Helpers::toDX12ToplogyType(m_specification.topology);
 		psoDesc.NumRenderTargets = m_specification.numRenderTargets;
-		if (m_specification.numRenderTargets > 0) {
-			psoDesc.RTVFormats[0] = DX12Helpers::toDX12ColorFormat(m_specification.colorFormat);
-		}
-		if (m_specification.numRenderTargets > 1) {
-			psoDesc.RTVFormats[1] = DXGI_FORMAT_R32_SINT;
-		}
+		if (m_specification.numRenderTargets > 0) psoDesc.RTVFormats[0] = DX12Helpers::toDX12ColorFormat(m_specification.colorFormat);
+		if (m_specification.numRenderTargets > 1) psoDesc.RTVFormats[1] = DXGI_FORMAT_R32_SINT;
 		psoDesc.SampleDesc.Count = m_specification.sampleCount;
 
 		HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
@@ -93,8 +90,8 @@ namespace Axion {
 		m_pipelineState.Reset();
 	}
 
-	void DX12Pipeline::bind() {
-		auto* cmdList = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getCommandList();
+	void DX12Pipeline::bind(RenderContext* renderContext) {
+		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
 
 		cmdList->SetGraphicsRootSignature(shader->getRootSignature());
@@ -102,6 +99,6 @@ namespace Axion {
 		cmdList->IASetPrimitiveTopology(DX12Helpers::toDX12Topology(m_specification.topology));
 	}
 
-	void DX12Pipeline::unbind() {}
+	void DX12Pipeline::unbind(RenderContext* renderContext) {}
 
 }

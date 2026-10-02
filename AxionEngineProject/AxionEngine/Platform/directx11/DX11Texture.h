@@ -10,6 +10,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	////////////////////////////////////////////////////////////////////////////////
 	///// DX11Texture2D ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -24,8 +26,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0) const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext, uint32_t slot = 0) const override;
+		void unbind(RenderContext* renderContext) const override;
 
 		uint32_t getWidth() const override { return m_width; }
 		uint32_t getHeight() const override { return m_height; }
@@ -59,8 +61,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0) const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext, uint32_t slot = 0) const override;
+		void unbind(RenderContext* renderContext) const override;
 
 		void* getHandle() const override { return (void*)m_srv.Get(); }
 		uint32_t getFaceWidth() const override { return m_faceWidth; }
@@ -91,8 +93,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0) const override;
-		void unbind() const override;
+		void bind(RenderContext* renderContext, uint32_t slot = 0) const override;
+		void unbind(RenderContext* renderContext) const override;
 
 		uint32_t getWidth() const override { return m_width; }
 		uint32_t getHeight() const override { return m_height; }

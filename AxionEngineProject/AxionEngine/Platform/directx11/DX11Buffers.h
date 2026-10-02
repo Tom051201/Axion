@@ -9,6 +9,12 @@
 
 namespace Axion {
 
+	class RenderContext;
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// DX11VertexBuffer /////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
 	class DX11VertexBuffer : public VertexBuffer {
 	public:
 
@@ -18,7 +24,7 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot = 0, uint32_t offset = 0) const override;
+		void bind(RenderContext* renderContext, uint32_t slot = 0, uint32_t offset = 0) const override;
 		void unbind() const override;
 
 		void setLayout(const BufferLayout& layout) override { m_layout = layout; }
@@ -49,9 +55,9 @@ namespace Axion {
 
 	};
 
-
-
-
+	////////////////////////////////////////////////////////////////////////////////
+	///// DX11IndexBuffer //////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
 	class DX11IndexBuffer : public IndexBuffer {
 	public:
@@ -62,7 +68,7 @@ namespace Axion {
 
 		void release() override;
 
-		void bind() const override;
+		void bind(RenderContext* renderContext) const override;
 		void unbind() const override;
 
 		uint32_t getIndexCount() const override { return m_indexCount; }
@@ -83,9 +89,9 @@ namespace Axion {
 
 	};
 
-
-
-
+	////////////////////////////////////////////////////////////////////////////////
+	///// DX11ConstantBuffer ///////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
 	class DX11ConstantBuffer : public ConstantBuffer {
 	public:
@@ -95,8 +101,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot) const override;
-		void bind(uint32_t slot, size_t offset) const override;
+		void bind(RenderContext* renderContext, uint32_t slot) const override;
+		void bind(RenderContext* renderContext, uint32_t slot, size_t offset) const override;
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;
@@ -117,9 +123,9 @@ namespace Axion {
 
 	};
 
-
-
-
+	////////////////////////////////////////////////////////////////////////////////
+	///// DX11StructuredBuffer /////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
 	class DX11StructuredBuffer : public StructuredBuffer {
 	public:
@@ -129,8 +135,8 @@ namespace Axion {
 
 		void release() override;
 
-		void bind(uint32_t slot) const override;
-		void bind(uint32_t slot, size_t offset) const override;
+		void bind(RenderContext* renderContext, uint32_t slot) const override;
+		void bind(RenderContext* renderContext, uint32_t slot, size_t offset) const override;
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;

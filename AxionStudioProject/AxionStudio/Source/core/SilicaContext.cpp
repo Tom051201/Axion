@@ -112,19 +112,9 @@ namespace Axion {
 
 			case RendererAPI::DirectX12: {
 				auto dx12Context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-				ID3D12GraphicsCommandList* cmdList = dx12Context->getCommandList();
-				ID3D12CommandAllocator* cmdAlloc = dx12Context->getCommandAllocator();
-				ID3D12CommandQueue* cmdQueue = dx12Context->getCommandQueue();
-
-				cmdAlloc->Reset();
-				cmdList->Reset(cmdAlloc, nullptr);
-
-				Silica::ImplDX12_uploadFontAtlas(cmdList, font.getPixels(), font.getWidth(), font.getHeight());
-
-				cmdList->Close();
-				ID3D12CommandList* ppCommandLists[] = { cmdList };
-				cmdQueue->ExecuteCommandLists(1, ppCommandLists);
-				dx12Context->waitForPreviousFrame();
+				dx12Context->executeImmediateCommand([&](ID3D12GraphicsCommandList* cmdList) {
+					Silica::ImplDX12_uploadFontAtlas(cmdList, font.getPixels(), font.getWidth(), font.getHeight());
+				});
 				break;
 			}
 			case RendererAPI::DirectX11: {

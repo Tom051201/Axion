@@ -29,20 +29,15 @@ namespace Axion {
 		m_vertexShaderBlob.Reset();
 	}
 
-
-
 	void DX12Shader::compileFromFile(const std::filesystem::path& filePath) {
 		std::string source = Shader::readShaderFile(filePath);
 
 		compileStage(source, "VSMain", SHADER_MODEL_VS, m_vertexShaderBlob);
 		compileStage(source, "PSMain", SHADER_MODEL_PS, m_pixelShaderBlob);
-
 		createRootSignature();
 
 		AX_CORE_LOG_TRACE("Shader '{}' compiled", m_specification.name);
 	}
-
-
 
 	void DX12Shader::recompile() {
 		if (m_shaderFileLocation.empty()) {
@@ -53,10 +48,7 @@ namespace Axion {
 		compileFromFile(m_shaderFileLocation);
 	}
 
-
-
 	void DX12Shader::loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) {
-
 		HRESULT hr = D3DCreateBlob(vsSize, &m_vertexShaderBlob);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create Vertex Shader Blob for bytecode");
 		memcpy(m_vertexShaderBlob->GetBufferPointer(), vsData, vsSize);
@@ -72,22 +64,16 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Shader '{}' loaded from bytecode", m_specification.name);
 	}
 
-
-
 	void DX12Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob) {
 
 		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
 
 		HRESULT hr = D3DCompile(
-			source.c_str(),
-			source.length(),
+			source.c_str(), source.length(),
 			nullptr, nullptr, nullptr,
-			entryPoint.c_str(),
-			target.c_str(),
-			D3DCOMPILE_ENABLE_STRICTNESS,
-			0,
-			&outblob,
-			&errorBlob
+			entryPoint.c_str(), target.c_str(),
+			D3DCOMPILE_ENABLE_STRICTNESS, 0,
+			&outblob, &errorBlob
 		);
 
 		if (FAILED(hr)) {
@@ -104,16 +90,9 @@ namespace Axion {
 
 	}
 
+	void DX12Shader::bind(RenderContext* renderContext) const {}
 
-
-	void DX12Shader::bind() const {}
-
-
-
-	// not required
-	void DX12Shader::unbind() const {}
-
-
+	void DX12Shader::unbind(RenderContext* renderContext) const {}
 
 	void DX12Shader::createRootSignature() {
 		auto* device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
@@ -204,7 +183,7 @@ namespace Axion {
 		UINT srvCount = std::max((UINT)m_specification.batchTextures, hasSrvs ? (maxSrvRegister + 1) : 0);
 		if (srvCount > 0) {
 			CD3DX12_DESCRIPTOR_RANGE1 srvRange;
-			srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, srvCount, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+			srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, srvCount, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE);
 
 			CD3DX12_ROOT_PARAMETER1 tableParam;
 			tableParam.InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -233,9 +212,7 @@ namespace Axion {
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 		rootSignatureDesc.Init_1_1(
 			static_cast<UINT>(rootParameters.size()),
-			rootParameters.data(),
-			1,
-			&sampler,
+			rootParameters.data(), 1, &sampler,
 			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
 		);
 
@@ -289,7 +266,7 @@ namespace Axion {
 			return result;
 		}
 
-		// --  Copy data into abstract vectors --
+		// -- Copy data into abstract vectors --
 		result.vertex.assign((uint8_t*)vsBlob->GetBufferPointer(), (uint8_t*)vsBlob->GetBufferPointer() + vsBlob->GetBufferSize());
 		result.pixel.assign((uint8_t*)psBlob->GetBufferPointer(), (uint8_t*)psBlob->GetBufferPointer() + psBlob->GetBufferSize());
 

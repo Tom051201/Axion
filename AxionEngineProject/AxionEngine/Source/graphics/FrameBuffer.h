@@ -9,6 +9,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	struct FrameBufferSpecification {
 		uint32_t width = 1280;
 		uint32_t height = 720;
@@ -27,15 +29,15 @@ namespace Axion {
 		virtual void release() = 0;
 		virtual void resize(uint32_t width, uint32_t height) = 0;
 
-		virtual void bind() const = 0;
-		virtual void unbind() const = 0;
+		virtual void bind(RenderContext* renderContext) const = 0;
+		virtual void unbind(RenderContext* renderContext) const = 0;
 
-		virtual void clear() = 0;
-		virtual void clear(const Vec4& clearColor) = 0;
-		virtual void clearDepth() = 0;
+		virtual void clear(RenderContext* renderContext) = 0;
+		virtual void clear(RenderContext* renderContext, const Vec4& clearColor) = 0;
+		virtual void clearDepth(RenderContext* renderContext) = 0;
 
-		virtual void clearAttachment(uint32_t attachmentIndex, int value) = 0;
-		virtual int readPixel(uint32_t attachmentIndex, int x, int y) = 0;
+		virtual void clearAttachment(RenderContext* renderContext, uint32_t attachmentIndex, int value) = 0;
+		virtual int readPixel(RenderContext* renderContext, uint32_t attachmentIndex, int x, int y) = 0;
 
 		virtual void* getColorAttachmentHandle() const = 0;
 		virtual void* getColorAttachmentNativeResource() const = 0;

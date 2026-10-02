@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Platform/directx11/DX11Context.h"
 #include "AxionEngine/Platform/directx11/DX11DebugLayer.h"
+#include "AxionEngine/Source/graphics/RenderContext.h"
 
 namespace Axion {
 
@@ -65,7 +66,7 @@ namespace Axion {
 		m_localData.clear();
 	}
 
-	void DX11VertexBuffer::bind(uint32_t slot, uint32_t offset) const {
+	void DX11VertexBuffer::bind(RenderContext* renderContext, uint32_t slot, uint32_t offset) const {
 		auto ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 
 		if (m_type == BufferType::Dynamic && m_isDirty && m_currentOffset > 0) {
@@ -164,7 +165,7 @@ namespace Axion {
 		m_localData.clear();
 	}
 
-	void DX11IndexBuffer::bind() const {
+	void DX11IndexBuffer::bind(RenderContext* renderContext) const {
 		auto ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 
 		if (m_type == BufferType::Dynamic && m_isDirty) {
@@ -226,11 +227,11 @@ namespace Axion {
 		m_localData.clear();
 	}
 
-	void DX11ConstantBuffer::bind(uint32_t slot) const {
-		bind(slot, 0);
+	void DX11ConstantBuffer::bind(RenderContext* renderContext, uint32_t slot) const {
+		bind(renderContext, slot, 0);
 	}
 
-	void DX11ConstantBuffer::bind(uint32_t slot, size_t offset) const {
+	void DX11ConstantBuffer::bind(RenderContext* renderContext, uint32_t slot, size_t offset) const {
 		auto ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 
 		if (m_isDirty && m_currentOffset > 0) {
@@ -316,11 +317,11 @@ namespace Axion {
 		m_localData.clear();
 	}
 
-	void DX11StructuredBuffer::bind(uint32_t slot) const {
-		bind(slot, 0);
+	void DX11StructuredBuffer::bind(RenderContext* renderContext, uint32_t slot) const {
+		bind(renderContext, slot, 0);
 	}
 
-	void DX11StructuredBuffer::bind(uint32_t slot, size_t offset) const {
+	void DX11StructuredBuffer::bind(RenderContext* renderContext, uint32_t slot, size_t offset) const {
 		auto device = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
 		auto ctx = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext())->getDeviceContext();
 

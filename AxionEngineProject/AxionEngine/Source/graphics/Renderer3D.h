@@ -14,6 +14,8 @@
 
 namespace Axion {
 
+	class RenderContext;
+
 	struct alignas(16) ObjectBuffer {
 		DirectX::XMFLOAT4 color; // TODO: remove this and remove from shaders
 		DirectX::XMMATRIX modelMatrix;
@@ -31,6 +33,7 @@ namespace Axion {
 
 	class Renderer3D {
 	public:
+
 		Renderer3D() = delete;
 		~Renderer3D() = delete;
 		Renderer3D(const Renderer3D&) = delete;
@@ -47,15 +50,16 @@ namespace Axion {
 		static void beginFrame();
 
 		static void setClearColor(const Vec4& color);
-		static void clear();
+		static void clear(RenderContext* renderContext);
 
-		static void drawMesh(const Mat4& transform, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer);
-		static void drawMeshInstanced(Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<ObjectBuffer>& instanceData);
+		static void drawMesh(RenderContext* renderContext, const Mat4& transform, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, Ref<ConstantBuffer>& uploadBuffer);
+		static void drawMeshInstanced(RenderContext* renderContext, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const ObjectBuffer* instanceData, uint32_t instanceCount);
 
-		static void drawSkeletalMeshInstanced(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const std::vector<SkeletalObjectBuffer>& instanceData);
+		static void drawSkeletalMeshInstanced(RenderContext* renderContext, Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const SkeletalObjectBuffer* instanceData, uint32_t instanceCount);
 
-		static void drawMeshInstancedShadow(Ref<Mesh>& mesh, uint32_t submeshIndex, const std::vector<ObjectBuffer>& instanceData);
-		static void drawSkeletalMeshInstancedShadow(Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const std::vector<SkeletalObjectBuffer>& instanceData);
+		static void drawMeshInstancedShadow(RenderContext* renderContext, Ref<Mesh>& mesh, uint32_t submeshIndex, const ObjectBuffer* instanceData, uint32_t instanceCount);
+		static void drawSkeletalMeshInstancedShadow(RenderContext* renderContext, Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const SkeletalObjectBuffer* instanceData, uint32_t instanceCount);
+
 	};
 
 }

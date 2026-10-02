@@ -27,6 +27,7 @@
 #include "AxionEngine/Source/core/PlatformUtils.h"
 #include "AxionEngine/Source/graphics/Renderer.h"
 #include "AxionEngine/Source/graphics/Renderer3D.h"
+#include "AxionEngine/Source/graphics/GraphicsContext.h"
 #include "AxionEngine/Source/scene/SceneManager.h"
 #include "AxionEngine/Source/scene/Skybox.h"
 #include "AxionEngine/Source/project/ProjectManager.h"
@@ -254,22 +255,24 @@ namespace {
 namespace Axion {
 
 	// ----- MATERIAL PANEL IMPLEMENTATION -----
-	MaterialPanel::MaterialPanel() {
-		FrameBufferSpecification spec;
-		spec.width = PREVIEW_RES;
-		spec.height = PREVIEW_RES;
-		spec.textureFormat = ColorFormat::RGBA8;
-		spec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
-		spec.clearColor = { 0.15f, 0.15f, 0.15f, 1.0f };
-		m_previewFramebuffer = FrameBuffer::create(spec);
-		m_viewportTextureID = SilicaContext::getFrameBufferTextureID(m_previewFramebuffer);
-
-		m_previewCamera.setPerspective(Math::toRadians(45.0f), 0.1f, 100.0f);
-		m_previewCamera.setViewportSize(PREVIEW_RES, PREVIEW_RES);
-		m_previewCamera.setViewMatrix(Mat4::lookAt(Vec3(0.0f, 0.0f, 3.0f), Vec3::zero(), Vec3(0.0f, 1.0f, 0.0f)));
-	}
+	MaterialPanel::MaterialPanel() {}
 
 	void MaterialPanel::setMaterial(const std::filesystem::path& materialPath) {
+		if (!m_previewFramebuffer) {
+			FrameBufferSpecification spec;
+			spec.width = PREVIEW_RES;
+			spec.height = PREVIEW_RES;
+			spec.textureFormat = ColorFormat::RGBA8;
+			spec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+			spec.clearColor = { 0.15f, 0.15f, 0.15f, 1.0f };
+			m_previewFramebuffer = FrameBuffer::create(spec);
+			m_viewportTextureID = SilicaContext::getFrameBufferTextureID(m_previewFramebuffer);
+
+			m_previewCamera.setPerspective(Math::toRadians(45.0f), 0.1f, 100.0f);
+			m_previewCamera.setViewportSize(PREVIEW_RES, PREVIEW_RES);
+			m_previewCamera.setViewMatrix(Mat4::lookAt(Vec3(0.0f, 0.0f, 3.0f), Vec3::zero(), Vec3(0.0f, 1.0f, 0.0f)));
+		}
+
 		m_currentMaterialPath = materialPath;
 		UUID matUUID = AssetManager::getAssetUUID(materialPath);
 		if (matUUID.isValid()) {
@@ -360,6 +363,22 @@ namespace Axion {
 
 	void MaterialPanel::rebuildUI() {
 		if (!m_uiRoot) return;
+
+		if (!m_previewFramebuffer) {
+			FrameBufferSpecification spec;
+			spec.width = PREVIEW_RES;
+			spec.height = PREVIEW_RES;
+			spec.textureFormat = ColorFormat::RGBA8;
+			spec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
+			spec.clearColor = { 0.15f, 0.15f, 0.15f, 1.0f };
+			m_previewFramebuffer = FrameBuffer::create(spec);
+
+			m_previewCamera.setPerspective(Math::toRadians(45.0f), 0.1f, 100.0f);
+			m_previewCamera.setViewportSize(PREVIEW_RES, PREVIEW_RES);
+			m_previewCamera.setViewMatrix(Mat4::lookAt(Vec3(0.0f, 0.0f, 3.0f), Vec3::zero(), Vec3(0.0f, 1.0f, 0.0f)));
+		}
+
+		m_viewportTextureID = SilicaContext::getFrameBufferTextureID(m_previewFramebuffer);
 
 		if (!ProjectManager::hasProject()) {
 			m_uiRoot->setChild(SilicaHelpers::MakeEmptyState("No Project Loaded.\n\nPlease load or create a project from the top menu bar to view material properties."));
@@ -641,7 +660,7 @@ namespace Axion {
 	}
 
 	void MaterialPanel::onUpdate(Timestep ts) {
-		if (!m_material) return;
+		if (!m_material || !m_previewFramebuffer) return;
 
 		float cy = std::cos(m_cameraYaw); float sy = std::sin(m_cameraYaw);
 		float cp = std::cos(m_cameraPitch); float sp = std::sin(m_cameraPitch);
@@ -651,13 +670,18 @@ namespace Axion {
 		lightData.directionalLights.push_back({ Vec3(-0.5f, -0.5f, -0.8f).normalized(), Vec4(3.0f, 3.0f, 3.0f, 1.0f) });
 		lightData.pointLights.push_back({ Vec3(0.0f, 0.5f, 2.0f), Vec4(10.0f, 10.0f, 10.0f, 1.0f), 15.0f, 1.0f });
 
-		m_previewFramebuffer->bind();
-		m_previewFramebuffer->clear();
+		RenderContext* renderContext = GraphicsContext::get()->getMainRenderContext();
+		Renderer::setRenderTarget(renderContext, m_previewFramebuffer.get());
+		m_previewFramebuffer->bind(renderContext);
+		m_previewFramebuffer->clear(renderContext);
+
 		Renderer3D::beginScene(m_previewCamera, lightData);
 
 		if (SceneManager::getScene() && SceneManager::getScene()->hasSkybox()) {
 			Ref<Skybox> skybox = AssetManager::get<Skybox>(SceneManager::getScene()->getSkyboxHandle());
-			if (skybox) skybox->onUpdate(ts);
+			if (skybox) {
+				skybox->onUpdate(ts, renderContext);
+			}
 		}
 
 		Ref<Mesh> mesh = nullptr;
@@ -670,13 +694,15 @@ namespace Axion {
 			objData.modelMatrix = Mat4::TRS(Vec3::zero(), Quat::fromEulerAngles(Vec3::zero()), Vec3::one()).transposed().toXM();
 			objData.color = m_material->getAlbedoColor().toFloat4();
 
-			std::vector<ObjectBuffer> instanceData = { objData };
 			uint32_t submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
-			for (uint32_t i = 0; i < submeshCount; i++) Renderer3D::drawMeshInstanced(mesh, i, m_material, instanceData);
+			for (uint32_t i = 0; i < submeshCount; i++) {
+				Renderer3D::drawMeshInstanced(renderContext, mesh, i, m_material, &objData, 1);
+			}
 		}
 
 		Renderer3D::endScene();
-		m_previewFramebuffer->unbind();
+		m_previewFramebuffer->unbind(renderContext);
+		Renderer::setRenderTarget(renderContext, nullptr);
 	}
 
 	void MaterialPanel::onEvent(Event& ev) {

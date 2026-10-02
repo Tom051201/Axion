@@ -1,6 +1,7 @@
 #include "axpch.h"
 #include "DX12FrameBuffer.h"
 
+#include "AxionEngine/Source/graphics/RenderContext.h"
 #include "AxionEngine/Platform/directx12/DX12Context.h"
 #include "AxionEngine/Platform/directx12/DX12Helpers.h"
 
@@ -28,6 +29,10 @@ namespace Axion {
 	void DX12FrameBuffer::release() {
 		if (!m_allocated) return;
 
+		if (m_context) {
+			m_context->waitForPreviousFrame();
+		}
+
 		if (m_colorResource) {
 			m_colorResource.Reset();
 			m_context->getRtvHeapWrapper().free(m_rtvHeapIndex);
@@ -47,16 +52,10 @@ namespace Axion {
 	}
 
 	void DX12FrameBuffer::resize(uint32_t width, uint32_t height) {
-
-		// secures that the width and height are at
-		// least 1px otherwise this failes
 		width = std::max(1u, width);
 		height = std::max(1u, height);
 
-
-		// ----- Destroy old framebuffer -----
 		release();
-
 
 		// ----- Reallocate descriptor heap indices -----
 		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
@@ -67,7 +66,6 @@ namespace Axion {
 
 		m_specification.width = width;
 		m_specification.height = height;
-
 
 		// ----- Texture -----
 		D3D12_RESOURCE_DESC texDesc = {};
@@ -92,15 +90,10 @@ namespace Axion {
 		// -- Create color resource --
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 		HRESULT hr = device->CreateCommittedResource(
-			&heapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&texDesc,
-			m_currentState,
-			&clearValue,
-			IID_PPV_ARGS(&m_colorResource)
+			&heapProps, D3D12_HEAP_FLAG_NONE, &texDesc,
+			m_currentState, &clearValue, IID_PPV_ARGS(&m_colorResource)
 		);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer color resource");
-
 
 		// ----- Optional Entity ID Attachment -----
 		if (m_specification.useEntityIDAttachment) {
@@ -139,19 +132,13 @@ namespace Axion {
 			);
 		}
 
-
 		// ----- Depth -----
 		DXGI_FORMAT depthFormat = DX12Helpers::toDX12DepthStencilFormat(m_specification.depthStencilFormat);
 		if (depthFormat == DXGI_FORMAT_UNKNOWN) {
 			AX_CORE_LOG_WARN("Attempting to create framebuffer with unknown depth format");
 		}
 
-		CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			depthFormat,
-			m_specification.width,
-			m_specification.height,
-			1, 1
-		);
+		CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(depthFormat, m_specification.width, m_specification.height, 1, 1);
 		depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 		// -- Set depth clear value --
@@ -163,32 +150,20 @@ namespace Axion {
 		// -- Create depth resource --
 		CD3DX12_HEAP_PROPERTIES depthHeapProps(D3D12_HEAP_TYPE_DEFAULT);
 		hr = device->CreateCommittedResource(
-			&depthHeapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&depthDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&depthClearValue,
-			IID_PPV_ARGS(&m_depthResource)
+			&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthDesc,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, IID_PPV_ARGS(&m_depthResource)
 		);
 		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer depth resource");
-
 
 		// ----- Depth Stencil View -----
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = depthFormat;
 		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-		device->CreateDepthStencilView(
-			m_depthResource.Get(),
-			&dsvDesc,
-			m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex)
-		);
-
+		device->CreateDepthStencilView(m_depthResource.Get(), &dsvDesc, m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex));
 
 		// ----- Render Target View (RTV) -----
 		device->CreateRenderTargetView(m_colorResource.Get(), nullptr, m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex));
-
 
 		// ----- Shader Resource View (SRV) -----
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -198,6 +173,10 @@ namespace Axion {
 		srvDesc.Texture2D.MipLevels = 1;
 		m_context->getDevice()->CreateShaderResourceView(m_colorResource.Get(), &srvDesc, m_context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex));
 
+		m_gpuSrvHeapIndex = m_context->getSrvHeapWrapper().allocateStatic();
+		auto destHandle = m_context->getSrvHeapWrapper().getCpuHandle(m_gpuSrvHeapIndex);
+		auto srcHandle = m_context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
+		m_context->getDevice()->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		#ifdef AX_DEBUG
 		m_colorResource->SetName(L"FrameBufferColor");
@@ -205,21 +184,18 @@ namespace Axion {
 		#endif
 	}
 
-	void DX12FrameBuffer::bind() const {
-		auto* cmdList = m_context->getCommandList();
+	void DX12FrameBuffer::bind(RenderContext* renderContext) const {
+		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 		
-
 		// ----- Transition barrier -----
 		if (m_currentState != D3D12_RESOURCE_STATE_RENDER_TARGET) {
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				m_colorResource.Get(),
-				m_currentState,
-				D3D12_RESOURCE_STATE_RENDER_TARGET
+				m_currentState, D3D12_RESOURCE_STATE_RENDER_TARGET
 			);
 			cmdList->ResourceBarrier(1, &barrier);
 			m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		}
-
 
 		// ----- Set Render Target -----
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
@@ -233,7 +209,6 @@ namespace Axion {
 
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 		cmdList->OMSetRenderTargets(numTargets, rtvHandles, FALSE, &dsvHandle);
-
 
 		// ----- Set viewport and scissor -----
 		D3D12_VIEWPORT vp{};
@@ -253,14 +228,13 @@ namespace Axion {
 		cmdList->RSSetScissorRects(1, &sc);
 	}
 
-	void DX12FrameBuffer::unbind() const {
-		auto* cmdList = m_context->getCommandList();
+	void DX12FrameBuffer::unbind(RenderContext* renderContext) const {
+		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 
 		// ----- Reverse barrier -----
 		if (m_currentState != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) {
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-				m_colorResource.Get(),
-				m_currentState,
+				m_colorResource.Get(), m_currentState,
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 			);
 			cmdList->ResourceBarrier(1, &barrier);
@@ -268,13 +242,8 @@ namespace Axion {
 		}
 	}
 
-	// NOTE:
-	// Using different values here than specified
-	// in the resource description causes warning!
-	// Setting a color here does not change the
-	// specification!
-	void DX12FrameBuffer::clear(const Vec4& clearColor) {
-		auto* cmdList = m_context->getCommandList();
+	void DX12FrameBuffer::clear(RenderContext* renderContext, const Vec4& clearColor) {
+		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 
@@ -298,33 +267,24 @@ namespace Axion {
 		}
 	}
 
-	void DX12FrameBuffer::clear() {
-		clear(m_specification.clearColor);
+	void DX12FrameBuffer::clear(RenderContext* renderContext) {
+		clear(renderContext, m_specification.clearColor);
 	}
 
-	void DX12FrameBuffer::clearDepth() {
-		auto* cmdList = m_context->getCommandList();
+	void DX12FrameBuffer::clearDepth(RenderContext* renderContext) {
+		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 
 		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	}
 
 	void* DX12FrameBuffer::getColorAttachmentHandle() const {
-		auto* device = m_context->getDevice();
-
-		uint32_t viewIndex = m_context->getSrvHeapWrapper().allocate();
-
-		auto destHandle = m_context->getSrvHeapWrapper().getCpuHandle(viewIndex);
-		auto srcHandle = m_context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
-
-		device->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		return reinterpret_cast<void*>(m_context->getSrvHeapWrapper().getGpuHandle(viewIndex).ptr);
+		return reinterpret_cast<void*>(m_context->getSrvHeapWrapper().getGpuHandle(m_gpuSrvHeapIndex).ptr);
 	}
 
-	void DX12FrameBuffer::clearAttachment(uint32_t attachmentIndex, int value) {
+	void DX12FrameBuffer::clearAttachment(RenderContext* renderContext, uint32_t attachmentIndex, int value) {
 		if (attachmentIndex == 1 && m_specification.useEntityIDAttachment) {
-			auto* cmdList = m_context->getCommandList();
+			auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 			auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
 
 			float clearVal = reinterpret_cast<float&>(value);
@@ -334,10 +294,10 @@ namespace Axion {
 		}
 	}
 
-	int DX12FrameBuffer::readPixel(uint32_t attachmentIndex, int x, int y) {
+	int DX12FrameBuffer::readPixel(RenderContext* renderContext, uint32_t attachmentIndex, int x, int y) {
 		if (attachmentIndex != 1 || !m_specification.useEntityIDAttachment) return -1;
 
-		// 1. Read the pixel data from the PREVIOUS frame (100% safe, no stalls required!)
+		// -- Read pixel data from previous frame --
 		int entityID = -1;
 		int* mappedData;
 		if (SUCCEEDED(m_readbackBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mappedData)))) {
@@ -345,11 +305,14 @@ namespace Axion {
 			m_readbackBuffer->Unmap(0, nullptr);
 		}
 
-		// 2. Queue a new copy command for THIS frame
+		// -- Queue a new copy command for this frame --
 		if (x >= 0 && y >= 0 && x < (int)m_specification.width && y < (int)m_specification.height) {
-			auto* cmdList = m_context->getCommandList();
+			auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 
-			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_entityIdResource.Get(), m_entityIdState, D3D12_RESOURCE_STATE_COPY_SOURCE);
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+				m_entityIdResource.Get(), m_entityIdState,
+				D3D12_RESOURCE_STATE_COPY_SOURCE
+			);
 			cmdList->ResourceBarrier(1, &barrier);
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint = {};
