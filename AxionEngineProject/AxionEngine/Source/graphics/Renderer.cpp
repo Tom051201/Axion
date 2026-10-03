@@ -19,6 +19,8 @@ namespace Axion {
 	thread_local uint32_t Renderer::s_sceneDataOffset = 0;
 	Ref<Texture2D> Renderer::s_shadowMapTexture = nullptr;
 	FrameBuffer* Renderer::s_currentRenderTarget = nullptr;
+	Mat4 Renderer::s_lightView;
+	Mat4 Renderer::s_lightProjection;
 
 	struct alignas(16) HLSLDirLight {
 		DirectX::XMFLOAT4 direction;
@@ -156,18 +158,26 @@ namespace Axion {
 				sceneData.directionalLights[0].direction.z
 			};
 
-			float lightDistance = 50.0f;
-			Vec3 lightPos = lightDir * lightDistance;
+			Mat4 camInv = camera.getViewMatrix().inverse();
+			Vec3 camPos = { camInv.data()[12], camInv.data()[13], camInv.data()[14] };
+
+			float lightDistance = 100.0f;
+			Vec3 lightPos = camPos + (lightDir * lightDistance);
 			Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
-			Mat4 lightView = Mat4::lookAt(lightPos, Vec3::zero(), lightUp);
 
-			float orthoSize = 20.0f;
-			Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
+			s_lightView = Mat4::lookAt(lightPos, camPos, lightUp);
 
-			Mat4 lightSpace = lightProjection * lightView;
+			float orthoSize = 60.0f;
+			float zNear = 1.0f;
+			float zFar = 250.0f;
+			s_lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, zNear, zFar);
+
+			Mat4 lightSpace = s_lightProjection * s_lightView;
 			sceneData.lightSpaceMatrix = lightSpace.transposed().toXM();
 		}
 		else {
+			s_lightView = Mat4::identity();
+			s_lightProjection = Mat4::identity();
 			sceneData.lightSpaceMatrix = Mat4::identity().toXM();
 		}
 

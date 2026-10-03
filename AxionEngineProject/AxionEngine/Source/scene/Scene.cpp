@@ -1,8 +1,10 @@
 #include "axpch.h"
 #include "Scene.h"
 
+#include "AxionEngine/Source/core/Application.h"
 #include "AxionEngine/Source/core/AssetManager.h"
 #include "AxionEngine/Source/core/JobSystem.h"
+#include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/graphics/Renderer.h"
 #include "AxionEngine/Source/graphics/Renderer2D.h"
 #include "AxionEngine/Source/graphics/Renderer3D.h"
@@ -340,58 +342,60 @@ namespace Axion {
 		// ----- Render Graph Dispatch -----
 		m_renderGraph.clear();
 
-		// -- Import the current FrameBuffer into the graph --
+		// -- Main Viewport Target --
 		RGResourceID mainTargetID = RG_INVALID_RESOURCE;
 		auto* target = Renderer::getCurrentRenderTarget();
+
+		uint32_t vpWidth = 1280;
+		uint32_t vpHeight = 720;
+
 		if (target) {
 			mainTargetID = m_renderGraph.importResource("MainTarget", target, RGResourceState::PixelShaderResource);
+			vpWidth = target->getSpecification().width;
+			vpHeight = target->getSpecification().height;
 		}
+		else {
+			vpWidth = Application::get().getWindow().getWidth();
+			vpHeight = Application::get().getWindow().getHeight();
+		}
+
+		// -- Transient HDR Target --
+		RGTextureDesc hdrDesc = {};
+		hdrDesc.width = vpWidth;
+		hdrDesc.height = vpHeight;
+		hdrDesc.format = ColorFormat::RGBA16F;
+		hdrDesc.depthFormat = DepthStencilFormat::DEPTH32F;
+		RGResourceID hdrTargetID = m_renderGraph.createResource("HDR_Target", hdrDesc);
 
 		// -- Shadow Map Pass --
 		if (lightData.directionalLights.size() > 0) {
 			m_renderGraph.addPass("DirectionalShadows",
 				[&](RGPassBuilder& builder) {},
 				[&](RenderContext* renderContext) {
-					Vec3 lightDir = lightData.directionalLights[0].direction;
-					float lightDistance = 50.0f;
-					float orthoSize = 100.0f;
+					Mat4 lightView = Renderer::getLightViewMatrix();
+					Mat4 lightProj = Renderer::getLightProjectionMatrix();
 
-					Vec3 lightUp = (std::abs(lightDir.y) > 0.99f) ? Vec3(0.0f, 0.0f, 1.0f) : Vec3(0.0f, 1.0f, 0.0f);
-					Vec3 lightPos = lightDir * lightDistance;
-					Mat4 lightView = Mat4::lookAt(lightPos, Vec3(0.0f, 0.0f, 0.0f), lightUp);
-					Mat4 lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, 100.0f);
-
-					Renderer3D::beginScene(lightProjection, lightView.inverse());
+					Renderer3D::beginScene(lightProj, lightView.inverse());
 					GraphicsContext::get()->bindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
 
-					// -- Draw Shadows for Static Meshes --
 					for (auto& [meshHandle, submeshMap] : renderBatches) {
 						Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 						if (!mesh) continue;
-
 						for (auto& [submeshIndex, materialMap] : submeshMap) {
 							std::vector<ObjectBuffer> flatInstanceData;
-							for (auto& [matHandle, data] : materialMap) {
-								flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
-							}
+							for (auto& [matHandle, data] : materialMap) { flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end()); }
 							Renderer3D::drawMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
 						}
 					}
-
-					// -- Draw Shadows for Skeletal Meshes --
 					for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
 						Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
 						if (!mesh) continue;
-
 						for (auto& [submeshIndex, materialMap] : submeshMap) {
 							std::vector<SkeletalObjectBuffer> flatInstanceData;
-							for (auto& [matHandle, data] : materialMap) {
-								flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end());
-							}
+							for (auto& [matHandle, data] : materialMap) { flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end()); }
 							Renderer3D::drawSkeletalMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
 						}
 					}
-
 					GraphicsContext::get()->unbindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
 					Renderer3D::endScene();
 				}
@@ -401,19 +405,12 @@ namespace Axion {
 		// -- Main 3D Pass --
 		m_renderGraph.addPass("Main3D",
 			[&](RGPassBuilder& builder) {
-				if (mainTargetID != RG_INVALID_RESOURCE) {
-					builder.writeColor(mainTargetID);
-				}
+				builder.writeColor(hdrTargetID);
 			},
 			[&](RenderContext* renderContext) {
-				if (target) {
-					target->bind(renderContext, false);
-					target->clear(renderContext);
-				}
-				else {
-					Renderer::restoreRenderTarget(renderContext);
-					Renderer::clear(renderContext);
-				}
+				FrameBuffer* hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
+				hdrFb->bind(renderContext, false);
+				hdrFb->clear(renderContext);
 
 				Renderer3D::beginScene(cam, lightData);
 
@@ -451,19 +448,59 @@ namespace Axion {
 				}
 
 				Renderer3D::endScene();
+				hdrFb->unbind(renderContext, false);
+			}
+		);
 
-				if (target) {
-					target->unbind(renderContext, false);
+		// -- 5. ToneMapping Pass (HDR -> SDR Viewport) --
+		if (mainTargetID != RG_INVALID_RESOURCE) {
+			m_renderGraph.addPass("ToneMapping",
+				[&](RGPassBuilder& builder) {
+					builder.read(hdrTargetID, RGResourceState::PixelShaderResource);
+					builder.writeColor(mainTargetID);
+				},
+				[&](RenderContext* renderContext) {
+					if (target) {
+						target->bind(renderContext, false);
+						target->clear(renderContext);
+					}
+					else {
+						Renderer::restoreRenderTarget(renderContext);
+						Renderer::clear(renderContext);
+					}
+
+					EngineAssets::getToneMappingPipeline()->bind(renderContext);
+
+					auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+					FrameBuffer* hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
+
+					D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+					gpuHandle.ptr = (UINT64)hdrFb->getColorAttachmentHandle();
+
+					cmdList->SetGraphicsRootDescriptorTable(0, gpuHandle);
+
+					cmdList->IASetVertexBuffers(0, 0, nullptr);
+					cmdList->IASetIndexBuffer(nullptr);
+					cmdList->DrawInstanced(3, 1, 0, 0);
+
+					if (target) {
+						target->unbind(renderContext, false);
+					}
 				}
-			});
+			);
+		}
 
-		// -- Transition Pass --
+		// 🚀 FIX: The Dummy Transition Pass! 
+		// This forces the Graph to cleanly revert the Viewport back to an SRV
+		// so the 2D Pass and ImGui can safely read/bind it afterwards.
 		if (mainTargetID != RG_INVALID_RESOURCE) {
 			m_renderGraph.addPass("TransitionToSRV",
 				[&](RGPassBuilder& builder) {
 					builder.read(mainTargetID, RGResourceState::PixelShaderResource);
 				},
-				[&](RenderContext* renderContext) {}
+				[&](RenderContext* renderContext) {
+					// Empty! The Graph just uses this to auto-inject the RTV -> SRV barrier.
+				}
 			);
 		}
 

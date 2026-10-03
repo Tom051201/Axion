@@ -93,6 +93,9 @@ namespace Axion {
 		static double getFrameTimeMs() { return s_lastFrameTimeMs; }
 		static Ref<Texture2D> getShadowMap();
 
+		static Mat4 getLightViewMatrix() { return s_lightView; }
+		static Mat4 getLightProjectionMatrix() { return s_lightProjection; }
+
 		static void bindTextures(RenderContext* renderContext, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex = 2);
 		static void submit(RenderContext* renderContext, const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
@@ -113,6 +116,9 @@ namespace Axion {
 		static thread_local uint32_t s_sceneDataOffset;
 		static Ref<Texture2D> s_shadowMapTexture;
 		static FrameBuffer* s_currentRenderTarget;
+
+		static Mat4 s_lightView;
+		static Mat4 s_lightProjection;
 
 	};
 

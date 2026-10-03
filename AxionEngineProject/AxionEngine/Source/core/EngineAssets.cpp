@@ -15,6 +15,8 @@
 #include "AxionEngine/Resources/shaders/SkeletalPBR_PS.h"
 #include "AxionEngine/Resources/shaders/SkeletalShadowMap_VS.h"
 #include "AxionEngine/Resources/shaders/SkeletalShadowMap_PS.h"
+#include "AxionEngine/Resources/shaders/ToneMapping_VS.h"
+#include "AxionEngine/Resources/shaders/ToneMapping_PS.h"
 
 namespace Axion {
 
@@ -27,11 +29,13 @@ namespace Axion {
 	Ref<Pipeline> EngineAssets::s_standardPBRPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_skeletalPBRPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_skeletalShadowPipeline = nullptr;
+	Ref<Pipeline> EngineAssets::s_toneMappingPipeline = nullptr;
 	Ref<Shader> EngineAssets::s_skyboxShader = nullptr;
 	Ref<Shader> EngineAssets::s_shadowShader = nullptr;
 	Ref<Shader> EngineAssets::s_standardPBRShader = nullptr;
 	Ref<Shader> EngineAssets::s_skeletalPBRShader = nullptr;
 	Ref<Shader> EngineAssets::s_skeletalShadowShader = nullptr;
+	Ref<Shader> EngineAssets::s_toneMappingShader = nullptr;
 
 	void EngineAssets::initialize() {
 		// -- White Texture --
@@ -179,7 +183,7 @@ namespace Axion {
 		PipelineSpecification skyboxPipeSpec;
 		skyboxPipeSpec.shader = s_skyboxShader;
 		skyboxPipeSpec.numRenderTargets = 2;
-		skyboxPipeSpec.colorFormat = ColorFormat::RGBA8;
+		skyboxPipeSpec.colorFormat = ColorFormat::RGBA16F;
 		skyboxPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		skyboxPipeSpec.depthTest = true;
 		skyboxPipeSpec.depthWrite = false;
@@ -207,7 +211,7 @@ namespace Axion {
 		PipelineSpecification standardPBRPipeSpec;
 		standardPBRPipeSpec.shader = s_standardPBRShader;
 		standardPBRPipeSpec.numRenderTargets = 2;
-		standardPBRPipeSpec.colorFormat = ColorFormat::RGBA8;
+		standardPBRPipeSpec.colorFormat = ColorFormat::RGBA16F;
 		standardPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		standardPBRPipeSpec.depthTest = true;
 		standardPBRPipeSpec.depthWrite = true;
@@ -244,7 +248,7 @@ namespace Axion {
 		PipelineSpecification skeletalPBRPipeSpec;
 		skeletalPBRPipeSpec.shader = s_skeletalPBRShader;
 		skeletalPBRPipeSpec.numRenderTargets = 2;
-		skeletalPBRPipeSpec.colorFormat = ColorFormat::RGBA8;
+		skeletalPBRPipeSpec.colorFormat = ColorFormat::RGBA16F;
 		skeletalPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		skeletalPBRPipeSpec.depthTest = true;
 		skeletalPBRPipeSpec.depthWrite = true;
@@ -296,6 +300,27 @@ namespace Axion {
 		};
 		s_skeletalShadowPipeline = Pipeline::create(skelShadowPipeSpec);
 
+		// -- Tone Mapping Shader --
+		ShaderSpecification toneMappingSpec;
+		toneMappingSpec.name = "ToneMapping";
+		s_toneMappingShader = Shader::create(toneMappingSpec);
+		s_toneMappingShader->loadFromBytecode(
+			g_ToneMapping_VS, sizeof(g_ToneMapping_VS),
+			g_ToneMapping_PS, sizeof(g_ToneMapping_PS)
+		);
+
+		// -- Tone Mapping Pipeline --
+		PipelineSpecification toneMappingPipeSpec;
+		toneMappingPipeSpec.shader = s_toneMappingShader;
+		toneMappingPipeSpec.numRenderTargets = 2;
+		toneMappingPipeSpec.colorFormat = ColorFormat::RGBA8;
+		toneMappingPipeSpec.depthStencilFormat = DepthStencilFormat::None;
+		toneMappingPipeSpec.depthTest = false;
+		toneMappingPipeSpec.depthWrite = false;
+		toneMappingPipeSpec.cullMode = CullMode::None;
+		toneMappingPipeSpec.topology = PrimitiveTopology::TriangleList;
+		s_toneMappingPipeline = Pipeline::create(toneMappingPipeSpec);
+
 		AX_CORE_LOG_INFO("Engine Assets initialized");
 	}
 
@@ -311,12 +336,14 @@ namespace Axion {
 		s_standardPBRShader->release();
 		s_skeletalPBRShader->release();
 		s_skeletalShadowShader->release();
+		s_toneMappingShader->release();
 
 		s_skyboxPipeline->release();
 		s_shadowPipeline->release();
 		s_standardPBRPipeline->release();
 		s_skeletalPBRPipeline->release();
 		s_skeletalShadowPipeline->release();
+		s_toneMappingPipeline->release();
 
 		AX_CORE_LOG_INFO("Engine Assets shutdown");
 	}

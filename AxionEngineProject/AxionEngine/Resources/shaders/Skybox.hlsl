@@ -39,11 +39,12 @@ PSInput VSMain(VSInput input) {
 }
 
 PixelOutput PSMain(PSInput input) {
-	//float3 color = normalize(input.dir) * 0.5f + 0.5f; // remap [-1,1] to [0,1]
-	//return float4(color, 1.0f);
-	//return u_skybox.Sample(u_sampler, normalize(input.dir));
 	PixelOutput output;
-	output.color = u_skybox.Sample(u_sampler, normalize(input.dir));
-	output.entityID = -1; // -1 means "nothing here"
+	float4 texColor = u_skybox.Sample(u_sampler, normalize(input.dir));
+	float3 linearColor = pow(max(texColor.rgb, 0.0), 2.2);
+	
+	output.color = float4(linearColor, texColor.a);
+	output.entityID = -1;
+	
 	return output;
 }

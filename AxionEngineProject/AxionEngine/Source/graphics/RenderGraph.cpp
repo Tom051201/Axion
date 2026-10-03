@@ -80,8 +80,8 @@ namespace Axion {
 		for (auto& res : m_resources) {
 			if (res.name == name && !res.isImported) {
 				res.desc = desc;
-				res.initialState = RGResourceState::Common;
-				res.currentState = RGResourceState::Common;
+				res.initialState = RGResourceState::PixelShaderResource;
+				res.currentState = RGResourceState::PixelShaderResource;
 				return res.id;
 			}
 		}
@@ -92,8 +92,8 @@ namespace Axion {
 		resource.name = name;
 		resource.isImported = false;
 		resource.desc = desc;
-		resource.initialState = RGResourceState::Common;
-		resource.currentState = RGResourceState::Common;
+		resource.initialState = RGResourceState::PixelShaderResource;
+		resource.currentState = RGResourceState::PixelShaderResource;
 
 		m_resources.push_back(resource);
 		return id;
@@ -160,7 +160,7 @@ namespace Axion {
 					spec.textureFormat = res.desc.format;
 					spec.depthStencilFormat = res.desc.depthFormat;
 					spec.clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-					spec.useEntityIDAttachment = false;
+					spec.useEntityIDAttachment = true;
 
 					res.transientFrameBuffer = FrameBuffer::create(spec);
 					AX_CORE_LOG_INFO("RenderGraph allocated transient resource: {0} ({1}x{2})", res.name, spec.width, spec.height);

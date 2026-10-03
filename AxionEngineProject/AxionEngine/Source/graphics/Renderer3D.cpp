@@ -104,6 +104,7 @@ namespace Axion {
 		}
 
 		material->bind(renderContext);
+		EngineAssets::getStandardPBRPipeline()->bind(renderContext); // TODO: maybe review this and maybe remove or improve this so that the passed pipeline does not get ignored
 		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
 
 		uint32_t dataSize = instanceCount * sizeof(ObjectBuffer);
@@ -140,6 +141,10 @@ namespace Axion {
 
 		material->setSkeletal(true);
 		material->bind(renderContext);
+
+		Ref<Pipeline> pbrPipeline = EngineAssets::getSkeletalPBRPipeline(); // TODO: maybe review as above
+		pbrPipeline->bind(renderContext); // TODO: maybe review as above
+
 		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
 
 		thread_local std::vector<GPUInstanceData> gpuInstances;

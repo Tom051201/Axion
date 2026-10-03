@@ -342,8 +342,8 @@ PixelOutput PSMain(PixelInput input) {
 	float3 color = ambient + Lo;
 
 	// -- HDR tone mapping and gamma correction --
-	color = color / (color + float3(1.0, 1.0, 1.0));
-	color = pow(max(color, 0.0), 1.0 / 2.2);
+//	color = color / (color + float3(1.0, 1.0, 1.0));
+//	color = pow(max(color, 0.0), 1.0 / 2.2);
 
 	PixelOutput output;
 	output.color = float4(color, 1.0);

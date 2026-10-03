@@ -20,7 +20,7 @@ namespace Axion {
 		const auto& layout = m_specification.vertexLayout.getElements();
 		std::unordered_map<std::string, uint32_t> semanticCounts;
 
-		AX_CORE_ASSERT(layout.size() > 0, "No buffer layout specified");
+		//AX_CORE_ASSERT(layout.size() > 0, "No buffer layout specified");
 
 		for (const auto& element : layout) {
 			D3D12_INPUT_ELEMENT_DESC desc = {};
@@ -36,7 +36,7 @@ namespace Axion {
 		}
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.InputLayout = { inputElements.data(), (UINT)inputElements.size() };
+		psoDesc.InputLayout = { inputElements.empty() ? nullptr : inputElements.data(), (UINT)inputElements.size() };
 		psoDesc.pRootSignature = shader->getRootSignature();
 		psoDesc.VS = CD3DX12_SHADER_BYTECODE(shader->getVertexBlob().Get());
 		psoDesc.PS = CD3DX12_SHADER_BYTECODE(shader->getPixelBlob().Get());
