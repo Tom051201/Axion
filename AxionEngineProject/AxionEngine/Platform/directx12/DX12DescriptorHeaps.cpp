@@ -108,6 +108,8 @@ namespace Axion {
 		m_frameNextIndex.clear();
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		std::queue<uint32_t>().swap(m_freeList);
+		std::lock_guard<std::mutex> lockStatic(m_staticFreeListMutex);
+		std::queue<uint32_t>().swap(m_staticFreeList);
 	}
 
 	uint32_t DX12srvHeap::allocate() {
@@ -143,6 +145,14 @@ namespace Axion {
 	}
 
 	uint32_t DX12srvHeap::allocateStatic() {
+		std::lock_guard<std::mutex> lock(m_staticFreeListMutex);
+
+		if (!m_staticFreeList.empty()) {
+			uint32_t index = m_staticFreeList.front();
+			m_staticFreeList.pop();
+			return index;
+		}
+
 		AX_CORE_ASSERT(m_staticIndex < m_reservedCount, "Out of static SRV descriptors");
 		return m_staticIndex++;
 	}
@@ -151,6 +161,12 @@ namespace Axion {
 		AX_CORE_ASSERT(index < m_numDescriptors, "Trying to free invalid SRV descriptor index");
 		std::lock_guard<std::mutex> lock(m_freeListMutex);
 		m_freeList.push(index);
+	}
+
+	void DX12srvHeap::freeStatic(uint32_t index) {
+		AX_CORE_ASSERT(index < m_reservedCount, "Trying to free invalid static SRV descriptor index");
+		std::lock_guard<std::mutex> lock(m_staticFreeListMutex);
+		m_staticFreeList.push(index);
 	}
 
 	void DX12srvHeap::reserve(uint32_t numDescriptors) {

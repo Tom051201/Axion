@@ -127,6 +127,7 @@ namespace Axion {
 
 		uint32_t m_srvHeapIndex;
 		uint32_t m_gpuSrvHeapIndex = 0;
+		uint32_t m_dsvHeapIndex = 0;
 
 		D3D12_CPU_DESCRIPTOR_HANDLE m_dsvHandle;
 

@@ -263,6 +263,11 @@ namespace Axion {
 	}
 
 	void DX12Texture2D::release() {
+		if (m_textureResource) {
+			auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+			context->getStagingSrvHeapWrapper().free(m_srvHeapIndex);
+			context->getSrvHeapWrapper().freeStatic(m_gpuSrvHeapIndex);
+		}
 		m_textureResource.Reset();
 		m_uploadHeap.Reset();
 	}
@@ -420,6 +425,11 @@ namespace Axion {
 	}
 
 	void DX12TextureCube::release() {
+		if (m_textureResource) {
+			auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+			context->getStagingSrvHeapWrapper().free(m_srvHeapIndex);
+			context->getSrvHeapWrapper().freeStatic(m_gpuSrvHeapIndex);
+		}
 		m_textureResource.Reset();
 		m_uploadHeap.Reset();
 	}
@@ -558,8 +568,8 @@ namespace Axion {
 		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		uint32_t dsvHeapIndex = context->getDsvHeapWrapper().allocate();
-		m_dsvHandle = context->getDsvHeapWrapper().getCpuHandle(dsvHeapIndex);
+		m_dsvHeapIndex = context->getDsvHeapWrapper().allocate();
+		m_dsvHandle = context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 		device->CreateDepthStencilView(m_textureResource.Get(), &dsvDesc, m_dsvHandle);
 
 		// ----- SRV -----
@@ -584,6 +594,12 @@ namespace Axion {
 	}
 
 	void DX12DepthTexture::release() {
+		if (m_textureResource) {
+			auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+			context->getStagingSrvHeapWrapper().free(m_srvHeapIndex);
+			context->getSrvHeapWrapper().freeStatic(m_gpuSrvHeapIndex);
+			context->getDsvHeapWrapper().free(m_dsvHeapIndex);
+		}
 		m_textureResource.Reset();
 	}
 

@@ -61,6 +61,7 @@ namespace Axion {
 		uint32_t allocateRange(uint32_t count);
 		uint32_t allocateStatic();
 		void free(uint32_t index);
+		void freeStatic(uint32_t index);
 
 		void reserve(uint32_t numDescriptors);
 		void nextFrame();
@@ -83,6 +84,8 @@ namespace Axion {
 		std::atomic<uint32_t> m_nextIndex = 0;
 		std::queue<uint32_t> m_freeList;
 		std::mutex m_freeListMutex;
+		std::queue<uint32_t> m_staticFreeList;
+		std::mutex m_staticFreeListMutex;
 
 		uint32_t m_reservedCount = 0;
 		uint32_t m_staticIndex = 0;

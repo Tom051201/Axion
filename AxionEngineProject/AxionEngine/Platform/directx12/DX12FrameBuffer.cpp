@@ -37,6 +37,7 @@ namespace Axion {
 			m_colorResource.Reset();
 			m_context->getRtvHeapWrapper().free(m_rtvHeapIndex);
 			m_context->getStagingSrvHeapWrapper().free(m_srvHeapIndex);
+			m_context->getSrvHeapWrapper().freeStatic(m_gpuSrvHeapIndex);
 		}
 
 		if (m_depthResource) {
