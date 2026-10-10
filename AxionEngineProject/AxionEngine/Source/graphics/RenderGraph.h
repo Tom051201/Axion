@@ -11,29 +11,18 @@
 
 namespace Axion {
 
-	enum class RGResourceState {
-		Common,
-		RenderTarget,
-		DepthWrite,
-		DepthRead,
-		PixelShaderResource,
-		CopyDest,
-		CopySource,
-		Present
-	};
-
 	using RGResourceID = uint32_t;
 	constexpr RGResourceID RG_INVALID_RESOURCE = 0xFFFFFFFF;
 
 	struct RGResourceAccess {
 		RGResourceID id;
-		RGResourceState state;
+		ResourceState state;
 	};
 
 	struct RGBarrier {
 		RGResourceID resourceId;
-		RGResourceState beforeState;
-		RGResourceState afterState;
+		ResourceState beforeState;
+		ResourceState afterState;
 	};
 
 	struct RGTextureDesc {
@@ -56,8 +45,8 @@ namespace Axion {
 
 		RGTextureDesc desc;
 
-		RGResourceState initialState = RGResourceState::Common;
-		RGResourceState currentState = RGResourceState::Common;
+		ResourceState initialState = ResourceState::Common;
+		ResourceState currentState = ResourceState::Common;
 	};
 
 	class RGPass;
@@ -71,10 +60,10 @@ namespace Axion {
 
 		RGPassBuilder(RGPass* pass) : m_pass(pass) {}
 
-		void read(RGResourceID id, RGResourceState state = RGResourceState::PixelShaderResource);
+		void read(RGResourceID id, ResourceState state = ResourceState::PixelShaderResource);
 		void writeColor(RGResourceID id);
 		void writeDepth(RGResourceID id);
-		void write(RGResourceID id, RGResourceState state);
+		void write(RGResourceID id, ResourceState state);
 
 	private:
 
@@ -117,7 +106,7 @@ namespace Axion {
 		RenderGraph() = default;
 		~RenderGraph();
 
-		RGResourceID importResource(const std::string& name, FrameBuffer* framebuffer, RGResourceState currentState = RGResourceState::PixelShaderResource);
+		RGResourceID importResource(const std::string& name, FrameBuffer* framebuffer, ResourceState currentState = ResourceState::PixelShaderResource);
 		RGResourceID createResource(const std::string& name, const RGTextureDesc& desc);
 
 		template<typename SetupFunc, typename ExecuteFunc>

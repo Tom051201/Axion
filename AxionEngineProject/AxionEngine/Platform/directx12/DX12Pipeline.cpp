@@ -91,7 +91,7 @@ namespace Axion {
 	}
 
 	void DX12Pipeline::bind(RenderContext* renderContext) {
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
 
 		cmdList->SetGraphicsRootSignature(shader->getRootSignature());

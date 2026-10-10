@@ -95,7 +95,7 @@ namespace Axion {
 	}
 
 	void DX12VertexBuffer::bind(RenderContext* renderContext, uint32_t slot, uint32_t offset) const {
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		D3D12_VERTEX_BUFFER_VIEW view = m_view;
 		view.BufferLocation += offset;
 		view.SizeInBytes -= offset;
@@ -214,7 +214,7 @@ namespace Axion {
 
 	void DX12IndexBuffer::bind(RenderContext* renderContext) const {
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		D3D12_INDEX_BUFFER_VIEW view = m_view;
 		if (m_type == BufferType::Dynamic) {
 			view.BufferLocation += context->getCurrentFrameIndex() * m_perFrameSize;
@@ -281,14 +281,14 @@ namespace Axion {
 
 	void DX12ConstantBuffer::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		uint32_t frameOffset = context->getCurrentFrameIndex() * m_perFrameSize;
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress() + frameOffset);
 	}
 
 	void DX12ConstantBuffer::bind(RenderContext* renderContext, uint32_t slot, size_t offset) const {
 		AX_CORE_ASSERT(offset + 256 <= m_bufferSize, "DirectX12 ConstantBuffer bounds check failed");
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress() + offset);
 	}
 
@@ -360,13 +360,13 @@ namespace Axion {
 
 	void DX12StructuredBuffer::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		uint32_t frameOffset = context->getCurrentFrameIndex() * m_perFrameSize;
 		cmdList->SetGraphicsRootShaderResourceView(slot, m_buffer->GetGPUVirtualAddress() + frameOffset);
 	}
 
 	void DX12StructuredBuffer::bind(RenderContext* renderContext, uint32_t slot, size_t offset) const {
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		cmdList->SetGraphicsRootShaderResourceView(slot, m_buffer->GetGPUVirtualAddress() + offset);
 	}
 

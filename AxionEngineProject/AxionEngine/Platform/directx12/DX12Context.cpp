@@ -115,7 +115,7 @@ namespace Axion {
 		executionLists.insert(executionLists.end(), workerLists.begin(), workerLists.end());
 
 		m_mainThreadContext->end();
-		executionLists.push_back(static_cast<ID3D12GraphicsCommandList*>(m_mainThreadContext->getNativeCommandList()));
+		executionLists.push_back(static_cast<DX12RenderContext*>(m_mainThreadContext)->getCmdList());
 		m_commandQueue.getCommandQueue()->ExecuteCommandLists(static_cast<UINT>(executionLists.size()), executionLists.data());
 
 		m_swapChain.present(m_vsyncInterval, 0);
@@ -152,7 +152,7 @@ namespace Axion {
 
 	void DX12Context::bindDepthOnlyRenderTarget(RenderContext* renderContext, const Ref<Texture2D>& depthTexture) {
 		auto* depthTex = static_cast<DX12DepthTexture*>(depthTexture.get());
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			depthTex->getResource(),
@@ -173,7 +173,7 @@ namespace Axion {
 
 	void DX12Context::unbindDepthOnlyRenderTarget(RenderContext* renderContext, const Ref<Texture2D>& depthTexture) {
 		auto* depthTex = static_cast<DX12DepthTexture*>(depthTexture.get());
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			depthTex->getResource(), D3D12_RESOURCE_STATE_DEPTH_WRITE,
@@ -202,7 +202,7 @@ namespace Axion {
 
 		auto gpuHandle = m_gpuSrvHeap.getGpuHandle(batchStartOffset);
 
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		cmdList->SetGraphicsRootDescriptorTable(rootIndex, gpuHandle);
 	}
 
@@ -219,17 +219,17 @@ namespace Axion {
 	}
 
 	void DX12Context::drawIndexed(RenderContext* renderContext, const Ref<VertexBuffer>& vb, const Ref<IndexBuffer>& ib, uint32_t instanceCount) {
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		cmdList->DrawIndexedInstanced(ib->getIndexCount(), instanceCount, 0, 0, 0);
 	}
 
 	void DX12Context::drawIndexed(RenderContext* renderContext, const Ref<IndexBuffer>& ib, uint32_t indexCount, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) {
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		cmdList->DrawIndexedInstanced(indexCount, instanceCount, startIndexLocation, baseVertexLocation, 0);
 	}
 
 	void DX12Context::draw(RenderContext* renderContext, uint32_t vertexCount) {
-		auto cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 		cmdList->DrawInstanced(vertexCount, 1, 0, 0);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -300,7 +300,7 @@ namespace Axion {
 		}
 		else {
 			context = m_commandManager.acquireContext(threadIndex);
-			auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(context->getNativeCommandList());
+			auto* cmdList = static_cast<DX12RenderContext*>(context)->getCmdList();
 			ID3D12DescriptorHeap* descriptorHeaps[] = { getSrvHeapWrapper().getHeap() };
 			cmdList->SetDescriptorHeaps(1, descriptorHeaps);
 		}

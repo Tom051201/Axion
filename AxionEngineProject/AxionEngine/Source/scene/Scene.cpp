@@ -350,7 +350,7 @@ namespace Axion {
 		uint32_t vpHeight = 720;
 
 		if (target) {
-			mainTargetID = m_renderGraph.importResource("MainTarget", target, RGResourceState::PixelShaderResource);
+			mainTargetID = m_renderGraph.importResource("MainTarget", target, ResourceState::PixelShaderResource);
 			vpWidth = target->getSpecification().width;
 			vpHeight = target->getSpecification().height;
 		}
@@ -456,7 +456,7 @@ namespace Axion {
 		if (mainTargetID != RG_INVALID_RESOURCE) {
 			m_renderGraph.addPass("ToneMapping",
 				[&](RGPassBuilder& builder) {
-					builder.read(hdrTargetID, RGResourceState::PixelShaderResource);
+					builder.read(hdrTargetID, ResourceState::PixelShaderResource);
 					builder.writeColor(mainTargetID);
 				},
 				[&](RenderContext* renderContext) {
@@ -470,18 +470,11 @@ namespace Axion {
 					}
 
 					EngineAssets::getToneMappingPipeline()->bind(renderContext);
-
-					auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
 					FrameBuffer* hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
 
-					D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-					gpuHandle.ptr = (UINT64)hdrFb->getColorAttachmentHandle();
-
-					cmdList->SetGraphicsRootDescriptorTable(0, gpuHandle);
-
-					cmdList->IASetVertexBuffers(0, 0, nullptr);
-					cmdList->IASetIndexBuffer(nullptr);
-					cmdList->DrawInstanced(3, 1, 0, 0);
+					renderContext->setTextureHandle(0, hdrFb->getColorAttachmentHandle());
+					renderContext->unbindBuffers();
+					renderContext->draw(3, 1, 0, 0);
 
 					if (target) {
 						target->unbind(renderContext, false);
@@ -490,17 +483,12 @@ namespace Axion {
 			);
 		}
 
-		// 🚀 FIX: The Dummy Transition Pass! 
-		// This forces the Graph to cleanly revert the Viewport back to an SRV
-		// so the 2D Pass and ImGui can safely read/bind it afterwards.
 		if (mainTargetID != RG_INVALID_RESOURCE) {
 			m_renderGraph.addPass("TransitionToSRV",
 				[&](RGPassBuilder& builder) {
-					builder.read(mainTargetID, RGResourceState::PixelShaderResource);
+					builder.read(mainTargetID, ResourceState::PixelShaderResource);
 				},
-				[&](RenderContext* renderContext) {
-					// Empty! The Graph just uses this to auto-inject the RTV -> SRV barrier.
-				}
+				[&](RenderContext* renderContext) {}
 			);
 		}
 

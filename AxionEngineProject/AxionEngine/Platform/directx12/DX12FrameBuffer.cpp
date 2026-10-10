@@ -186,7 +186,7 @@ namespace Axion {
 	}
 
 	void DX12FrameBuffer::bind(RenderContext* renderContext, bool transitionBarrier) const {
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		
 		// ----- Transition barrier -----
 		if (transitionBarrier && m_currentState != D3D12_RESOURCE_STATE_RENDER_TARGET) {
@@ -230,7 +230,7 @@ namespace Axion {
 	}
 
 	void DX12FrameBuffer::unbind(RenderContext* renderContext, bool transitionBarrier) const {
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 
 		// ----- Reverse barrier -----
 		if (transitionBarrier && m_currentState != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) {
@@ -244,7 +244,7 @@ namespace Axion {
 	}
 
 	void DX12FrameBuffer::clear(RenderContext* renderContext, const Vec4& clearColor) {
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 
@@ -273,7 +273,7 @@ namespace Axion {
 	}
 
 	void DX12FrameBuffer::clearDepth(RenderContext* renderContext) {
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
 
 		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -285,7 +285,7 @@ namespace Axion {
 
 	void DX12FrameBuffer::clearAttachment(RenderContext* renderContext, uint32_t attachmentIndex, int value) {
 		if (attachmentIndex == 1 && m_specification.useEntityIDAttachment) {
-			auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+			auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 			auto rtvHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
 
 			float clearVal = reinterpret_cast<float&>(value);
@@ -308,7 +308,7 @@ namespace Axion {
 
 		// -- Queue a new copy command for this frame --
 		if (x >= 0 && y >= 0 && x < (int)m_specification.width && y < (int)m_specification.height) {
-			auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+			auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				m_entityIdResource.Get(), m_entityIdState,

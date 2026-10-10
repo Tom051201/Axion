@@ -1,44 +1,28 @@
 #include "axpch.h"
 #include "RenderGraph.h"
 
-#include <d3dx12/d3dx12.h>
-
 #include "AxionEngine/Source/core/JobSystem.h"
 #include "AxionEngine/Platform/directx12/DX12Context.h"
 
 namespace Axion {
 
-	static D3D12_RESOURCE_STATES MapRGStateToDX12(RGResourceState state) {
-		switch (state) {
-			case RGResourceState::RenderTarget: return D3D12_RESOURCE_STATE_RENDER_TARGET;
-			case RGResourceState::DepthWrite: return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			case RGResourceState::DepthRead: return D3D12_RESOURCE_STATE_DEPTH_READ;
-			case RGResourceState::PixelShaderResource: return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-			case RGResourceState::CopyDest: return D3D12_RESOURCE_STATE_COPY_DEST;
-			case RGResourceState::CopySource: return D3D12_RESOURCE_STATE_COPY_SOURCE;
-			case RGResourceState::Present: return D3D12_RESOURCE_STATE_PRESENT;
-			case RGResourceState::Common:
-			default: return D3D12_RESOURCE_STATE_COMMON;
-		}
-	}
-
 	////////////////////////////////////////////////////////////////////////////////
 	///// RGPassBuilder ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	void RGPassBuilder::read(RGResourceID id, RGResourceState state) {
+	void RGPassBuilder::read(RGResourceID id, ResourceState state) {
 		m_pass->inputs.push_back({ id, state });
 	}
 
 	void RGPassBuilder::writeColor(RGResourceID id) {
-		m_pass->outputs.push_back({ id, RGResourceState::RenderTarget });
+		m_pass->outputs.push_back({ id, ResourceState::RenderTarget });
 	}
 
 	void RGPassBuilder::writeDepth(RGResourceID id) {
-		m_pass->outputs.push_back({ id, RGResourceState::DepthWrite });
+		m_pass->outputs.push_back({ id, ResourceState::DepthWrite });
 	}
 
-	void RGPassBuilder::write(RGResourceID id, RGResourceState state) {
+	void RGPassBuilder::write(RGResourceID id, ResourceState state) {
 		m_pass->outputs.push_back({ id, state });
 	}
 
@@ -53,7 +37,7 @@ namespace Axion {
 		m_passes.clear();
 	}
 
-	RGResourceID RenderGraph::importResource(const std::string& name, FrameBuffer* framebuffer, RGResourceState currentState) {
+	RGResourceID RenderGraph::importResource(const std::string& name, FrameBuffer* framebuffer, ResourceState currentState) {
 		for (auto& res : m_resources) {
 			if (res.name == name && res.isImported) {
 				res.importedFrameBuffer = framebuffer;
@@ -80,8 +64,8 @@ namespace Axion {
 		for (auto& res : m_resources) {
 			if (res.name == name && !res.isImported) {
 				res.desc = desc;
-				res.initialState = RGResourceState::PixelShaderResource;
-				res.currentState = RGResourceState::PixelShaderResource;
+				res.initialState = ResourceState::PixelShaderResource;
+				res.currentState = ResourceState::PixelShaderResource;
 				return res.id;
 			}
 		}
@@ -92,8 +76,8 @@ namespace Axion {
 		resource.name = name;
 		resource.isImported = false;
 		resource.desc = desc;
-		resource.initialState = RGResourceState::PixelShaderResource;
-		resource.currentState = RGResourceState::PixelShaderResource;
+		resource.initialState = ResourceState::PixelShaderResource;
+		resource.currentState = ResourceState::PixelShaderResource;
 
 		m_resources.push_back(resource);
 		return id;
@@ -173,17 +157,12 @@ namespace Axion {
 		std::vector<std::function<void(uint32_t)>> renderJobs;
 		uint32_t contextWorkerIndex = 1;
 
-		for (auto* pass : m_passes) {
+		for (auto pass : m_passes) {
 			if (pass->isCulled) continue;
 			RenderContext* context = GraphicsContext::get()->acquireThreadContext(contextWorkerIndex++);
 
 			renderJobs.push_back([this, pass, context](uint32_t threadId) {
-				auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(context->getNativeCommandList());
-
-				// -- Execute Automatically Generated Barriers --
 				if (!pass->prePassBarriers.empty()) {
-					std::vector<D3D12_RESOURCE_BARRIER> dx12Barriers;
-
 					for (const auto& barrier : pass->prePassBarriers) {
 						RGResource* res = getResource(barrier.resourceId);
 						if (!res) continue;
@@ -191,23 +170,9 @@ namespace Axion {
 						FrameBuffer* physicalFb = getPhysicalFramebuffer(barrier.resourceId);
 						if (!physicalFb) continue;
 
-						ID3D12Resource* nativeRes = nullptr;
+						bool isDepth = (barrier.afterState == ResourceState::DepthWrite || barrier.afterState == ResourceState::DepthRead);
 
-						if (barrier.afterState == RGResourceState::DepthWrite || barrier.afterState == RGResourceState::DepthRead) {
-							nativeRes = static_cast<ID3D12Resource*>(physicalFb->getNativeDepthResource());
-						}
-						else {
-							nativeRes = static_cast<ID3D12Resource*>(physicalFb->getNativeColorResource());
-						}
-
-						if (nativeRes) {
-							auto d3dBarrier = CD3DX12_RESOURCE_BARRIER::Transition(nativeRes, MapRGStateToDX12(barrier.beforeState), MapRGStateToDX12(barrier.afterState));
-							dx12Barriers.push_back(d3dBarrier);
-						}
-					}
-
-					if (!dx12Barriers.empty()) {
-						cmdList->ResourceBarrier(static_cast<UINT>(dx12Barriers.size()), dx12Barriers.data());
+						context->transitionResource(physicalFb, barrier.beforeState, barrier.afterState, isDepth);
 					}
 				}
 

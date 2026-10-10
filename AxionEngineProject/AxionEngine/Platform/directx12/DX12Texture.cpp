@@ -274,7 +274,7 @@ namespace Axion {
 
 	void DX12Texture2D::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		auto* device = context->getDevice();
 
 		auto& gpuHeap = context->getSrvHeapWrapper();
@@ -436,7 +436,7 @@ namespace Axion {
 
 	void DX12TextureCube::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		auto* device = context->getDevice();
 
 		auto& gpuHeap = context->getSrvHeapWrapper();
@@ -605,7 +605,7 @@ namespace Axion {
 
 	void DX12DepthTexture::bind(RenderContext* renderContext, uint32_t slot) const {
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-		auto* cmdList = static_cast<ID3D12GraphicsCommandList*>(renderContext->getNativeCommandList());
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		auto* device = context->getDevice();
 
 		auto& gpuHeap = context->getSrvHeapWrapper();
