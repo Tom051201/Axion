@@ -5,13 +5,14 @@
 #include <unordered_map>
 #include <d3d12.h>
 #include <wrl/client.h>
+#include <dxcapi.h>
 
 #include "AxionEngine/Source/graphics/Shader.h"
 
 namespace Axion {
 
-	constexpr const char* SHADER_MODEL_VS = "vs_5_0";
-	constexpr const char* SHADER_MODEL_PS = "ps_5_0";
+	constexpr const char* SHADER_MODEL_VS = "vs_6_5";
+	constexpr const char* SHADER_MODEL_PS = "ps_6_5";
 
 	class RenderContext;
 
@@ -36,28 +37,18 @@ namespace Axion {
 
 		static ShaderBytecode compileToBytecode(const std::filesystem::path& filePath);
 
-		int getBindPoint(const std::string& name) const override;
-		uint32_t getTextureTableBindSlot() const override { return m_textureTableSlot; }
-
-		const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
-		const Microsoft::WRL::ComPtr<ID3DBlob>& getPixelBlob() const { return m_pixelShaderBlob; }
-		ID3D12RootSignature* getRootSignature() const { return m_rootSignature.Get(); }
+		const Microsoft::WRL::ComPtr<IDxcBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
+		const Microsoft::WRL::ComPtr<IDxcBlob>& getPixelBlob() const { return m_pixelShaderBlob; }
 
 	private:
 
 		ShaderSpecification m_specification;
 		std::filesystem::path m_shaderFileLocation;
 
-		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
+		Microsoft::WRL::ComPtr<IDxcBlob> m_vertexShaderBlob;
+		Microsoft::WRL::ComPtr<IDxcBlob> m_pixelShaderBlob;
 
-		Microsoft::WRL::ComPtr<ID3DBlob> m_vertexShaderBlob;
-		Microsoft::WRL::ComPtr<ID3DBlob> m_pixelShaderBlob;
-
-		std::unordered_map<std::string, uint32_t> m_resourceMap;
-		uint32_t m_textureTableSlot = 0;
-
-		void compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob);
-		void createRootSignature();
+		void compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<IDxcBlob>& outblob);
 		
 	};
 

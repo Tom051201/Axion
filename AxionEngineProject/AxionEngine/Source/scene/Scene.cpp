@@ -281,7 +281,12 @@ namespace Axion {
 					Ref<Material> matInstance = AssetManager::get<Material>(matHandle);
 					if (!matInstance) continue;
 
-					objData.color = matInstance->getAlbedoColor().toFloat4();
+					objData.albedoIndex = matInstance->getTextureBindlessIndex(TextureSlot::Albedo);
+					objData.normalIndex = matInstance->getTextureBindlessIndex(TextureSlot::Normal);
+					objData.roughnessIndex = matInstance->getTextureBindlessIndex(TextureSlot::Roughness);
+					objData.metalnessIndex = matInstance->getTextureBindlessIndex(TextureSlot::Metalness);
+					objData.occlusionIndex = matInstance->getTextureBindlessIndex(TextureSlot::Occlusion);
+					objData.emissiveIndex = matInstance->getTextureBindlessIndex(TextureSlot::Emissive);
 
 					renderBatches[meshComp.handle][i][matHandle].push_back(objData);
 				}
@@ -332,7 +337,12 @@ namespace Axion {
 					Ref<Material> matInstance = AssetManager::get<Material>(matHandle);
 					if (!matInstance) continue;
 
-					objData.color = matInstance->getAlbedoColor().toFloat4();
+					objData.albedoIndex = matInstance->getTextureBindlessIndex(TextureSlot::Albedo);
+					objData.normalIndex = matInstance->getTextureBindlessIndex(TextureSlot::Normal);
+					objData.roughnessIndex = matInstance->getTextureBindlessIndex(TextureSlot::Roughness);
+					objData.metalnessIndex = matInstance->getTextureBindlessIndex(TextureSlot::Metalness);
+					objData.occlusionIndex = matInstance->getTextureBindlessIndex(TextureSlot::Occlusion);
+					objData.emissiveIndex = matInstance->getTextureBindlessIndex(TextureSlot::Emissive);
 
 					skeletalRenderBatches[skelComp.handle][i][matHandle].push_back(objData);
 				}
@@ -469,10 +479,12 @@ namespace Axion {
 						Renderer::clear(renderContext);
 					}
 
-					EngineAssets::getToneMappingPipeline()->bind(renderContext);
+					Ref<Pipeline> tmPipeline = EngineAssets::getToneMappingPipeline();
+					tmPipeline->bind(renderContext);
 					FrameBuffer* hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
 
-					renderContext->setTextureHandle(0, hdrFb->getColorAttachmentHandle());
+					renderContext->setTextureHandle((uint32_t)RootSlot::Textures, hdrFb->getColorAttachmentHandle());
+
 					renderContext->unbindBuffers();
 					renderContext->draw(3, 1, 0, 0);
 

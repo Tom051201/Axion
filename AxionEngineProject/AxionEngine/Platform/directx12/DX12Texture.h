@@ -36,6 +36,7 @@ namespace Axion {
 
 		void* getHandle() const override;
 		uint32_t getSrvHeapIndex() const override { return m_srvHeapIndex; }
+		uint32_t getBindlessIndex() const override { return m_gpuSrvHeapIndex; }
 		void* getNativeResource() const override { return (void*)m_textureResource.Get(); }
 
 		ID3D12Resource* getResource() const { return m_textureResource.Get(); }
@@ -77,6 +78,7 @@ namespace Axion {
 		uint32_t getFaceHeight() const override { return m_faceHeight; }
 
 		uint32_t getSrvHeapIndex() const { return m_srvHeapIndex; }
+		uint32_t getBindlessIndex() const override { return m_gpuSrvHeapIndex; }
 
 	private:
 
@@ -113,6 +115,7 @@ namespace Axion {
 
 		void* getHandle() const override;
 		uint32_t getSrvHeapIndex() const override { return m_srvHeapIndex; }
+		uint32_t getBindlessIndex() const override { return m_gpuSrvHeapIndex; }
 		void* getNativeResource() const override { return (void*)m_textureResource.Get(); }
 
 		ID3D12Resource* getResource() const { return m_textureResource.Get(); }

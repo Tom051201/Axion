@@ -56,6 +56,14 @@ namespace Axion {
 		std::vector<SpotLightData> spotLights;
 	};
 
+	enum class RootSlot : uint32_t {
+		Camera = 0,			// DX12: b0, space0
+		Material = 1,		// DX12: b1, space0
+		InstanceData = 2,	// DX12: t0, space1
+		BoneData = 3,		// DX12: t1, space1
+		Textures = 4		// DX12: t0, space0
+	};
+
 	struct RendererStats {
 		uint32_t drawCalls = 0;
 		uint32_t quadCount2D = 0;
@@ -96,7 +104,6 @@ namespace Axion {
 		static Mat4 getLightViewMatrix() { return s_lightView; }
 		static Mat4 getLightProjectionMatrix() { return s_lightProjection; }
 
-		static void bindTextures(RenderContext* renderContext, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex = 2);
 		static void submit(RenderContext* renderContext, const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
 		static RendererStats& getStats();

@@ -28,9 +28,6 @@ namespace Axion {
 		void recompile() override;
 		void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) override;
 
-		int getBindPoint(const std::string& name) const override;
-		uint32_t getTextureTableBindSlot() const override { return m_textureTableSlot; }
-
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 
 	private:

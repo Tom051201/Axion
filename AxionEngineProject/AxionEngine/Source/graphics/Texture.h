@@ -25,6 +25,7 @@ namespace Axion {
 
 		virtual void* getHandle() const = 0;
 		virtual uint32_t getSrvHeapIndex() const = 0;
+		virtual uint32_t getBindlessIndex() const = 0;
 		virtual void* getNativeResource() const = 0;
 
 		static Ref<Texture2D> create(const std::filesystem::path& path);
@@ -47,6 +48,7 @@ namespace Axion {
 		virtual uint32_t getFaceHeight() const = 0;
 
 		virtual void* getHandle() const = 0;
+		virtual uint32_t getBindlessIndex() const = 0;
 
 		static Ref<TextureCube> create(const std::filesystem::path& filePath);
 		static Ref<TextureCube> create(const std::array<std::filesystem::path, 6>& filePaths);

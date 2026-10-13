@@ -24,7 +24,6 @@ namespace Axion {
 	}
 
 	void DX12Shader::release() {
-		m_rootSignature.Reset();
 		m_pixelShaderBlob.Reset();
 		m_vertexShaderBlob.Reset();
 	}
@@ -34,7 +33,6 @@ namespace Axion {
 
 		compileStage(source, "VSMain", SHADER_MODEL_VS, m_vertexShaderBlob);
 		compileStage(source, "PSMain", SHADER_MODEL_PS, m_pixelShaderBlob);
-		createRootSignature();
 
 		AX_CORE_LOG_TRACE("Shader '{}' compiled", m_specification.name);
 	}
@@ -49,229 +47,136 @@ namespace Axion {
 	}
 
 	void DX12Shader::loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) {
-		HRESULT hr = D3DCreateBlob(vsSize, &m_vertexShaderBlob);
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create Vertex Shader Blob for bytecode");
-		memcpy(m_vertexShaderBlob->GetBufferPointer(), vsData, vsSize);
+		Microsoft::WRL::ComPtr<IDxcUtils> utils;
+		DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+
+		Microsoft::WRL::ComPtr<IDxcBlobEncoding> vsEncoding;
+		utils->CreateBlob(vsData, (uint32_t)vsSize, DXC_CP_ACP, &vsEncoding);
+		vsEncoding.As(&m_vertexShaderBlob);
 
 		if (psData != nullptr && psSize > 0) {
-			hr = D3DCreateBlob(psSize, &m_pixelShaderBlob);
-			AX_THROW_IF_FAILED_HR(hr, "Failed to create Pixel Shader Blob for bytecode");
-			memcpy(m_pixelShaderBlob->GetBufferPointer(), psData, psSize);
+			Microsoft::WRL::ComPtr<IDxcBlobEncoding> psEncoding;
+			utils->CreateBlob(psData, (uint32_t)psSize, DXC_CP_ACP, &psEncoding);
+			psEncoding.As(&m_pixelShaderBlob);
 		}
-
-		createRootSignature();
 
 		AX_CORE_LOG_TRACE("Shader '{}' loaded from bytecode", m_specification.name);
 	}
 
-	void DX12Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob) {
+	void DX12Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<IDxcBlob>& outblob) {
+		Microsoft::WRL::ComPtr<IDxcUtils> utils;
+		Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
+		DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+		DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
 
-		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+		Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
+		utils->CreateDefaultIncludeHandler(&includeHandler);
 
-		HRESULT hr = D3DCompile(
-			source.c_str(), source.length(),
-			nullptr, nullptr, nullptr,
-			entryPoint.c_str(), target.c_str(),
-			D3DCOMPILE_ENABLE_STRICTNESS, 0,
-			&outblob, &errorBlob
-		);
+		Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
+		utils->CreateBlob(source.c_str(), (uint32_t)source.length(), CP_UTF8, &sourceBlob);
 
+		std::wstring wEntryPoint(entryPoint.begin(), entryPoint.end());
+		std::wstring wTarget(target.begin(), target.end());
+
+		std::vector<LPCWSTR> arguments = {
+			L"-E", wEntryPoint.c_str(),
+			L"-T", wTarget.c_str(),
+			L"-HV", L"2021",			// HLSL 2021 standard
+			L"-Zpr",					// Row major matrices (matches standard DX12 workflow)
+			#if defined(AX_DEBUG)
+			L"-Zi",						// Debug info
+			L"-Qembed_debug",			// Embed PDB in shader container
+			L"-Od"						// Disable optimizations
+			#else
+			L"-O3"						// Max optimization
+			#endif
+		};
+
+		DxcBuffer sourceBuffer;
+		sourceBuffer.Ptr = sourceBlob->GetBufferPointer();
+		sourceBuffer.Size = sourceBlob->GetBufferSize();
+		sourceBuffer.Encoding = DXC_CP_UTF8;
+
+		Microsoft::WRL::ComPtr<IDxcResult> result;
+		HRESULT hr = compiler->Compile(&sourceBuffer, arguments.data(), (uint32_t)arguments.size(), includeHandler.Get(), IID_PPV_ARGS(&result));
+
+		Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
+		result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+		if (errors != nullptr && errors->GetStringLength() > 0) {
+			AX_CORE_LOG_ERROR("Shader Compilation Error: {0}", errors->GetStringPointer());
+		}
+
+		result->GetStatus(&hr);
 		if (FAILED(hr)) {
-			if (errorBlob) {
-				std::string errorMsg = (char*)errorBlob->GetBufferPointer();
-				AX_CORE_LOG_ERROR("Shader Compilation Error: {0}", errorMsg);
-			}
-			else {
-				AX_CORE_LOG_ERROR("Shader Compilation failed with no error message.");
-			}
 			std::string errorMsg = "Shader compilation failed: " + m_specification.name;
 			AX_THROW_IF_FAILED_HR(hr, errorMsg);
 		}
 
+		result->GetResult(&outblob);
 	}
 
 	void DX12Shader::bind(RenderContext* renderContext) const {}
-
 	void DX12Shader::unbind(RenderContext* renderContext) const {}
-
-	void DX12Shader::createRootSignature() {
-		auto* device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
-
-		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
-		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData)))) {
-			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-		}
-
-		struct CbvInfo {
-			std::string name;
-			D3D12_SHADER_VISIBILITY visibility;
-		};
-
-		struct SrvInfo {
-			std::string name;
-			D3D12_SHADER_VISIBILITY visibility;
-		};
-
-		std::map<UINT, CbvInfo> cbvRegisters;
-		std::map<UINT, SrvInfo> rootSrvRegisters;
-		UINT maxSrvRegister = 0;
-		bool hasSrvs = false;
-
-		// -- Reflect --
-		auto reflectStage = [&](Microsoft::WRL::ComPtr<ID3DBlob>& blob, D3D12_SHADER_VISIBILITY visibility) {
-			if (!blob) return;
-			Microsoft::WRL::ComPtr< ID3D12ShaderReflection> reflector;
-			HRESULT hr = D3DReflect(blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&reflector));
-			if (FAILED(hr)) return;
-
-			D3D12_SHADER_DESC desc;
-			reflector->GetDesc(&desc);
-
-			for (UINT i = 0; i < desc.BoundResources; i++) {
-				D3D12_SHADER_INPUT_BIND_DESC bindDesc;
-				reflector->GetResourceBindingDesc(i, &bindDesc);
-
-				if (bindDesc.Type == D3D_SIT_CBUFFER) {
-					if (cbvRegisters.find(bindDesc.BindPoint) != cbvRegisters.end()) {
-						cbvRegisters[bindDesc.BindPoint].visibility = D3D12_SHADER_VISIBILITY_ALL;
-					}
-					else {
-						cbvRegisters[bindDesc.BindPoint] = { bindDesc.Name, visibility };
-					}
-				}
-				else if (bindDesc.Type == D3D_SIT_TEXTURE) {
-					m_resourceMap[bindDesc.Name] = bindDesc.BindPoint;
-					maxSrvRegister = std::max(maxSrvRegister, bindDesc.BindPoint + bindDesc.BindCount - 1);
-					hasSrvs = true;
-				}
-				else if (bindDesc.Type == D3D_SIT_STRUCTURED) {
-					if (rootSrvRegisters.find(bindDesc.BindPoint) != rootSrvRegisters.end()) {
-						rootSrvRegisters[bindDesc.BindPoint].visibility = D3D12_SHADER_VISIBILITY_ALL;
-					}
-					else {
-						rootSrvRegisters[bindDesc.BindPoint] = { bindDesc.Name, visibility };
-					}
-				}
-			}
-		};
-
-		reflectStage(m_vertexShaderBlob, D3D12_SHADER_VISIBILITY_VERTEX);
-		reflectStage(m_pixelShaderBlob, D3D12_SHADER_VISIBILITY_PIXEL);
-
-		// -- Root params --
-		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-
-		for (auto const& [reg, info] : cbvRegisters) {
-			CD3DX12_ROOT_PARAMETER1 param;
-			param.InitAsConstantBufferView(reg, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, info.visibility);
-
-			uint32_t rootParamIndex = static_cast<uint32_t>(rootParameters.size());
-			m_resourceMap[info.name] = rootParamIndex;
-			rootParameters.push_back(param);
-		}
-
-		for (auto const& [reg, info] : rootSrvRegisters) {
-			CD3DX12_ROOT_PARAMETER1 param;
-			param.InitAsShaderResourceView(reg, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, info.visibility);
-
-			uint32_t rootParamIndex = static_cast<uint32_t>(rootParameters.size());
-			m_resourceMap[info.name] = rootParamIndex;
-			rootParameters.push_back(param);
-		}
-
-		UINT srvCount = std::max((UINT)m_specification.batchTextures, hasSrvs ? (maxSrvRegister + 1) : 0);
-		if (srvCount > 0) {
-			CD3DX12_DESCRIPTOR_RANGE1 srvRange;
-			srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, srvCount, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE);
-
-			CD3DX12_ROOT_PARAMETER1 tableParam;
-			tableParam.InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-
-			m_textureTableSlot = static_cast<uint32_t>(rootParameters.size());
-			rootParameters.push_back(tableParam);
-		}
-
-		// -- Static sampler --
-		D3D12_STATIC_SAMPLER_DESC sampler = {};
-		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.MipLODBias = 0;
-		sampler.MaxAnisotropy = 0;
-		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler.MinLOD = 0.0f;
-		sampler.MaxLOD = D3D12_FLOAT32_MAX;
-		sampler.ShaderRegister = 0;
-		sampler.RegisterSpace = 0;
-		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		// -- Serialize --
-		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init_1_1(
-			static_cast<UINT>(rootParameters.size()),
-			rootParameters.data(), 1, &sampler,
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
-		);
-
-		Microsoft::WRL::ComPtr<ID3DBlob> signature;
-		Microsoft::WRL::ComPtr<ID3DBlob> error;
-
-		HRESULT hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error);
-		if (error) { AX_CORE_LOG_ERROR("Root signature error: {0}", (char*)error->GetBufferPointer()); }
-		AX_THROW_IF_FAILED_HR(hr, "Failed to serialize root signature");
-
-		hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create root signature");
-
-		#ifdef AX_DEBUG
-		m_rootSignature->SetName(L"RootSignature");
-		#endif
-	}
-
-	int DX12Shader::getBindPoint(const std::string& name) const {
-		auto it = m_resourceMap.find(name);
-		if (it != m_resourceMap.end()) {
-			return static_cast<int>(it->second);
-		}
-		AX_CORE_LOG_WARN("Shader resource '{}' not found in reflection data!", name);
-		return -1;
-	}
 
 	ShaderBytecode DX12Shader::compileToBytecode(const std::filesystem::path& filepath) {
 		ShaderBytecode result;
+
+		Microsoft::WRL::ComPtr<IDxcUtils> utils;
+		Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
+		DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+		DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
+
+		Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
+		utils->CreateDefaultIncludeHandler(&includeHandler);
+
 		std::wstring wFilePath = filepath.wstring();
-
-		ID3DBlob* vsBlob = nullptr;
-		ID3DBlob* psBlob = nullptr;
-		ID3DBlob* errorBlob = nullptr;
-		UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
-
-		// -- Compile Vertex Shader --
-		HRESULT hr = D3DCompileFromFile(wFilePath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_0", flags, 0, &vsBlob, &errorBlob);
-		if (FAILED(hr)) {
-			if (errorBlob) AX_CORE_LOG_ERROR("VS Compile Error: {}", (char*)errorBlob->GetBufferPointer());
-			if (errorBlob) errorBlob->Release();
+		Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
+		if (FAILED(utils->LoadFile(wFilePath.c_str(), nullptr, &sourceBlob))) {
+			AX_CORE_LOG_ERROR("Failed to load shader file: {}", filepath.string());
 			return result;
 		}
 
-		// -- Compile Pixel Shader --
-		hr = D3DCompileFromFile(wFilePath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_0", flags, 0, &psBlob, &errorBlob);
-		if (FAILED(hr)) {
-			if (errorBlob) AX_CORE_LOG_ERROR("PS Compile Error: {}", (char*)errorBlob->GetBufferPointer());
-			if (errorBlob) errorBlob->Release();
-			vsBlob->Release();
-			return result;
+		auto compileInternal = [&](const wchar_t* entryPoint, const wchar_t* target) -> Microsoft::WRL::ComPtr<IDxcBlob> {
+			std::vector<LPCWSTR> args = {
+				wFilePath.c_str(),
+				L"-E", entryPoint,
+				L"-T", target,
+				L"-HV", L"2021",
+				L"-O3"
+			};
+
+			DxcBuffer sourceBuffer;
+			sourceBuffer.Ptr = sourceBlob->GetBufferPointer();
+			sourceBuffer.Size = sourceBlob->GetBufferSize();
+			sourceBuffer.Encoding = DXC_CP_ACP;
+
+			Microsoft::WRL::ComPtr<IDxcResult> compileResult;
+			compiler->Compile(&sourceBuffer, args.data(), (uint32_t)args.size(), includeHandler.Get(), IID_PPV_ARGS(&compileResult));
+
+			Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
+			compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+			if (errors != nullptr && errors->GetStringLength() > 0) {
+				AX_CORE_LOG_ERROR("Compile Error in {}: {}", filepath.string(), errors->GetStringPointer());
+			}
+
+			HRESULT hr;
+			compileResult->GetStatus(&hr);
+			if (FAILED(hr)) return nullptr;
+
+			Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob;
+			compileResult->GetResult(&shaderBlob);
+			return shaderBlob;
+		};
+
+		auto vsBlob = compileInternal(L"VSMain", L"vs_6_5");
+		auto psBlob = compileInternal(L"PSMain", L"ps_6_5");
+
+		if (vsBlob) {
+			result.vertex.assign((uint8_t*)vsBlob->GetBufferPointer(), (uint8_t*)vsBlob->GetBufferPointer() + vsBlob->GetBufferSize());
 		}
-
-		// -- Copy data into abstract vectors --
-		result.vertex.assign((uint8_t*)vsBlob->GetBufferPointer(), (uint8_t*)vsBlob->GetBufferPointer() + vsBlob->GetBufferSize());
-		result.pixel.assign((uint8_t*)psBlob->GetBufferPointer(), (uint8_t*)psBlob->GetBufferPointer() + psBlob->GetBufferSize());
-
-		vsBlob->Release();
-		psBlob->Release();
+		if (psBlob) {
+			result.pixel.assign((uint8_t*)psBlob->GetBufferPointer(), (uint8_t*)psBlob->GetBufferPointer() + psBlob->GetBufferSize());
+		}
 
 		return result;
 	}

@@ -17,18 +17,30 @@ namespace Axion {
 	class RenderContext;
 
 	struct alignas(16) ObjectBuffer {
-		DirectX::XMFLOAT4 color; // TODO: remove this and remove from shaders
 		DirectX::XMMATRIX modelMatrix;
 		int entityID = -1;
-		DirectX::XMFLOAT3 padding;
+
+		int albedoIndex = -1;
+		int normalIndex = -1;
+		int roughnessIndex = -1;
+		int metalnessIndex = -1;
+		int occlusionIndex = -1;
+		int emissiveIndex = -1;
+		int padding = 0;
 	};
 
 	struct alignas(16) SkeletalObjectBuffer {
 		DirectX::XMFLOAT4X4 modelMatrix;
-		DirectX::XMFLOAT4 color;
 		DirectX::XMFLOAT4X4 boneTransforms[100];
 		int entityID = -1;
-		DirectX::XMFLOAT3 padding;
+
+		int albedoIndex = -1;
+		int normalIndex = -1;
+		int roughnessIndex = -1;
+		int metalnessIndex = -1;
+		int occlusionIndex = -1;
+		int emissiveIndex = -1;
+		int padding = 0;
 	};
 
 	class Renderer3D {

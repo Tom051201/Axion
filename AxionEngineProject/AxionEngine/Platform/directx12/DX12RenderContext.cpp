@@ -4,6 +4,7 @@
 #include <d3dx12/d3dx12.h>
 
 #include "AxionEngine/Source/graphics/FrameBuffer.h"
+#include "AxionEngine/Platform/directx12/DX12Context.h"
 
 namespace Axion {
 
@@ -40,6 +41,12 @@ namespace Axion {
 			);
 			m_commandList->ResourceBarrier(1, &barrier);
 		}
+	}
+
+	void DX12RenderContext::bindGlobalTextureTable(uint32_t slot) {
+		auto* dx12Context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		D3D12_GPU_DESCRIPTOR_HANDLE globalHeapStart = dx12Context->getSrvHeapWrapper().getGpuHandle(0);
+		m_commandList->SetGraphicsRootDescriptorTable(slot, globalHeapStart);
 	}
 
 	void DX12RenderContext::setTextureHandle(uint32_t slot, void* handle) {

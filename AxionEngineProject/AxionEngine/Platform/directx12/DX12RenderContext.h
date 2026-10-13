@@ -19,7 +19,7 @@ namespace Axion {
 		}
 
 		void transitionResource(FrameBuffer* framebuffer, ResourceState beforeState, ResourceState afterState, bool isDepth) override;
-
+		void bindGlobalTextureTable(uint32_t slot) override;
 		void setTextureHandle(uint32_t slot, void* handle) override;
 		void unbindBuffers() override;
 		void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t startVertex = 0, uint32_t startInstance = 0) override;

@@ -692,7 +692,7 @@ namespace Axion {
 		if (mesh) {
 			ObjectBuffer objData;
 			objData.modelMatrix = Mat4::TRS(Vec3::zero(), Quat::fromEulerAngles(Vec3::zero()), Vec3::one()).transposed().toXM();
-			objData.color = m_material->getAlbedoColor().toFloat4();
+//			objData.color = m_material->getAlbedoColor().toFloat4();
 
 			uint32_t submeshCount = std::max((uint32_t)1, (uint32_t)mesh->getSubmeshes().size());
 			for (uint32_t i = 0; i < submeshCount; i++) {

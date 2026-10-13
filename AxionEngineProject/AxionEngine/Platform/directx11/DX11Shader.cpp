@@ -79,15 +79,6 @@ namespace Axion {
 		AX_CORE_LOG_TRACE("Shader '{}' loaded from bytecode for DX11", m_specification.name);
 	}
 
-	int DX11Shader::getBindPoint(const std::string& name) const {
-		auto it = m_resourceMap.find(name);
-		if (it != m_resourceMap.end()) {
-			return static_cast<int>(it->second);
-		}
-		AX_CORE_LOG_WARN("DX11 Shader resource '{}' not found in reflection data!", name);
-		return -1;
-	}
-
 	void DX11Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<ID3DBlob>& outblob) {
 		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
 

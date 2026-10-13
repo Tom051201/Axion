@@ -11,7 +11,8 @@ namespace Axion {
 	DX12Pipeline::DX12Pipeline(const PipelineSpecification& spec)
 		: m_specification(spec) {
 
-		auto* device = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext())->getDevice();
+		auto context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		auto device = context->getDevice();
 
 		AX_CORE_ASSERT(m_specification.shader, "PipelineSpecification must have a valid shader!");
 		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
@@ -37,9 +38,21 @@ namespace Axion {
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.InputLayout = { inputElements.empty() ? nullptr : inputElements.data(), (UINT)inputElements.size() };
-		psoDesc.pRootSignature = shader->getRootSignature();
-		psoDesc.VS = CD3DX12_SHADER_BYTECODE(shader->getVertexBlob().Get());
-		psoDesc.PS = CD3DX12_SHADER_BYTECODE(shader->getPixelBlob().Get());
+		psoDesc.pRootSignature = context->getGlobalRootSignature();
+
+		// --- DXC / IDxcBlob --
+		if (shader->getVertexBlob()) {
+			psoDesc.VS = CD3DX12_SHADER_BYTECODE(
+				shader->getVertexBlob()->GetBufferPointer(),
+				shader->getVertexBlob()->GetBufferSize()
+			);
+		}
+		if (shader->getPixelBlob()) {
+			psoDesc.PS = CD3DX12_SHADER_BYTECODE(
+				shader->getPixelBlob()->GetBufferPointer(),
+				shader->getPixelBlob()->GetBufferSize()
+			);
+		}
 
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.RasterizerState.CullMode = DX12Helpers::toDX12CullMode(m_specification.cullMode);
@@ -91,10 +104,11 @@ namespace Axion {
 	}
 
 	void DX12Pipeline::bind(RenderContext* renderContext) {
-		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
 
-		cmdList->SetGraphicsRootSignature(shader->getRootSignature());
+		cmdList->SetGraphicsRootSignature(context->getGlobalRootSignature());
 		cmdList->SetPipelineState(m_pipelineState.Get());
 		cmdList->IASetPrimitiveTopology(DX12Helpers::toDX12Topology(m_specification.topology));
 	}

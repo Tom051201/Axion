@@ -2,18 +2,22 @@ cbuffer CameraBuffer : register(b0) {
 	float4x4 u_view;
 	float4x4 u_projection;
 	float4x4 u_viewProjection;
-	float4x4 u_lightSpaceMatrix;
+	float4x4 u_lightSpaceMatrix; // seems to be unused
 }
 
 struct SkeletalInstanceData {
 	float4x4 modelMatrix;
 	float4 color;
 	uint boneOffset;
-	float3 padding;
+	int entityID;
+	int albedoIndex;
+	int normalIndex;
+	int roughnessIndex;
+	int padding;
 };
 
-StructuredBuffer<SkeletalInstanceData> u_instanceData : register(t7);
-StructuredBuffer<float4x4> u_boneData : register(t8);
+StructuredBuffer<SkeletalInstanceData> u_instanceData : register(t0, space1);
+StructuredBuffer<float4x4> u_boneData : register(t1, space1);
 
 struct VertexInput {
 	float3 position : POSITION;
@@ -34,9 +38,9 @@ PixelInput VSMain(VertexInput input) {
 
 	SkeletalInstanceData instance = u_instanceData[input.instanceID];
 	uint bOffset = instance.boneOffset;
-	uint4 bIDs = (uint4)input.boneIDs;
+	uint4 bIDs = (uint4) input.boneIDs;
 
-	float4x4 boneTransform = 
+	float4x4 boneTransform =
 		input.boneWeights.x * u_boneData[bOffset + bIDs.x] +
 		input.boneWeights.y * u_boneData[bOffset + bIDs.y] +
 		input.boneWeights.z * u_boneData[bOffset + bIDs.z] +
@@ -45,9 +49,7 @@ PixelInput VSMain(VertexInput input) {
 	float4 localPos = mul(float4(input.position, 1.0f), boneTransform);
 	float4 worldPosition = mul(localPos, instance.modelMatrix);
 	
-	output.position = mul(worldPosition, u_lightSpaceMatrix);
+	output.position = mul(worldPosition, u_viewProjection);
 
 	return output;
 }
-
-void PSMain(PixelInput input) {}

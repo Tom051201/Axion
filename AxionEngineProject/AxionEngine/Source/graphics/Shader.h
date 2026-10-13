@@ -46,9 +46,6 @@ namespace Axion {
 		virtual void recompile() = 0;
 		virtual void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) = 0;
 
-		virtual int getBindPoint(const std::string& name) const = 0;
-		virtual uint32_t getTextureTableBindSlot() const = 0;
-
 
 		static Ref<Shader> create(const ShaderSpecification& spec);
 		static Ref<Shader> create(const ShaderSpecification& spec, const std::filesystem::path& filePath);

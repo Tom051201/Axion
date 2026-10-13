@@ -41,18 +41,16 @@ namespace Axion {
 	};
 
 	struct alignas(16) SceneData {
-		DirectX::XMMATRIX view;
-		DirectX::XMMATRIX projection;
-
 		DirectX::XMMATRIX viewProjection;
+		DirectX::XMMATRIX skyboxViewProjection;
 		DirectX::XMMATRIX lightSpaceMatrix;
+		DirectX::XMFLOAT4 cameraPosition;
+		DirectX::XMFLOAT4 ambientColor;
 
 		int directionalLightsCount;
 		int pointLightsCount;
 		int spotLightCount;
-		int padding;
-
-		DirectX::XMFLOAT4 ambientColor;
+		int shadowMapIndex;
 
 		HLSLDirLight directionalLights[MAX_DIR_LIGHTS];
 		HLSLPointLight pointLights[MAX_POINT_LIGHTS];
@@ -132,13 +130,21 @@ namespace Axion {
 	}
 
 	void Renderer::beginScene(const Camera& camera, const LightingData& lightingData) {
-		SceneData sceneData;
-		// REVIEW: remove one option
-		// option 1: view and projection
-		sceneData.view = camera.getViewMatrix().transposed().toXM();
-		sceneData.projection = camera.getProjectionMatrix().transposed().toXM();
-		// option 2: viewProjection
+		SceneData sceneData{};
+
+		// -- Standard View-Projection --
 		sceneData.viewProjection = camera.getViewProjectionMatrix().transposed().toXM();
+
+		// -- Skybox View-Projection --
+		DirectX::XMMATRIX viewXM = camera.getViewMatrix().toXM();
+		viewXM.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+		Mat4 skyboxVP = Mat4::fromXM(viewXM) * camera.getProjectionMatrix();
+		sceneData.skyboxViewProjection = skyboxVP.transposed().toXM();
+
+		// -- Pre-calculated camera position --
+		Mat4 camInv = camera.getViewMatrix().inverse();
+		Vec3 camPos = { camInv.data()[12], camInv.data()[13], camInv.data()[14] };
+		sceneData.cameraPosition = { camPos.x, camPos.y, camPos.z, 1.0f };
 
 		// -- Ambient Color --
 		sceneData.ambientColor = lightingData.ambientColor.toFloat4();
@@ -198,11 +204,12 @@ namespace Axion {
 			sceneData.spotLights[i].params = { lightingData.spotLights[i].range, lightingData.spotLights[i].innerCutoff, lightingData.spotLights[i].outerCutoff, 0.0f };
 		}
 
+		sceneData.shadowMapIndex = s_shadowMapTexture ? s_shadowMapTexture->getBindlessIndex() : 0;
 		s_sceneDataOffset = s_sceneUploadBuffer->append(&sceneData, sizeof(SceneData));
 	}
 
 	void Renderer::beginScene(const Mat4& projection, const Mat4& transform) {
-		SceneData sceneData;
+		SceneData sceneData{};
 		Mat4 viewProj = projection * (transform.inverse());
 		sceneData.viewProjection = viewProj.transposed().toXM();
 		s_sceneDataOffset = s_sceneUploadBuffer->append(&sceneData, sizeof(SceneData));
@@ -244,24 +251,6 @@ namespace Axion {
 
 	uint32_t Renderer::getSceneDataOffset() {
 		return s_sceneDataOffset;
-	}
-
-	void Renderer::bindTextures(RenderContext* renderContext, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count, uint32_t rootIndex) {
-		std::array<Ref<Texture2D>, 16> finalTextures = textures;
-
-		if (s_shadowMapTexture) {
-			finalTextures[6] = s_shadowMapTexture;
-			if (count < 7) count = 7;
-		}
-
-		if (s_api == RendererAPI::DirectX12) { // TODO: abstract those checks away
-			auto* dx12Context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
-			dx12Context->bindSrvTable(renderContext, rootIndex, finalTextures, count);
-		}
-		else if (s_api == RendererAPI::DirectX11) {
-			auto* context = static_cast<DX11Context*>(GraphicsContext::get()->getNativeContext());
-			context->bindSrvTable(rootIndex, finalTextures, count);
-		}
 	}
 
 	Ref<Texture2D> Renderer::getShadowMap() {

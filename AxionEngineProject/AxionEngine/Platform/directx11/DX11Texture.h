@@ -34,6 +34,7 @@ namespace Axion {
 
 		void* getHandle() const override { return (void*)m_srv.Get(); }
 		uint32_t getSrvHeapIndex() const override { return 0; }
+		uint32_t getBindlessIndex() const override { return 0; /*TODO*/ }
 		void* getNativeResource() const override { return (void*)m_textureResource.Get(); }
 
 	private:
@@ -65,8 +66,11 @@ namespace Axion {
 		void unbind(RenderContext* renderContext) const override;
 
 		void* getHandle() const override { return (void*)m_srv.Get(); }
+
 		uint32_t getFaceWidth() const override { return m_faceWidth; }
 		uint32_t getFaceHeight() const override { return m_faceHeight; }
+
+		uint32_t getBindlessIndex() const override { return 0; /*TODO*/ }
 
 	private:
 
@@ -101,6 +105,7 @@ namespace Axion {
 
 		void* getHandle() const override { return (void*)m_srv.Get(); }
 		uint32_t getSrvHeapIndex() const override { return 0; }
+		uint32_t getBindlessIndex() const override { return 0; /*TODO*/ }
 		void* getNativeResource() const override { return (void*)m_textureResource.Get(); }
 
 		ID3D11DepthStencilView* getDsv() const { return m_dsv.Get(); }

@@ -6,7 +6,6 @@
 #include "AxionEngine/Source/graphics/Buffers.h"
 
 #include "AxionEngine/Resources/shaders/ShadowMap_VS.h"
-#include "AxionEngine/Resources/shaders/ShadowMap_PS.h"
 #include "AxionEngine/Resources/shaders/Skybox_VS.h"
 #include "AxionEngine/Resources/shaders/Skybox_PS.h"
 #include "AxionEngine/Resources/shaders/StandardPBR_VS.h"
@@ -14,7 +13,6 @@
 #include "AxionEngine/Resources/shaders/SkeletalPBR_VS.h"
 #include "AxionEngine/Resources/shaders/SkeletalPBR_PS.h"
 #include "AxionEngine/Resources/shaders/SkeletalShadowMap_VS.h"
-#include "AxionEngine/Resources/shaders/SkeletalShadowMap_PS.h"
 #include "AxionEngine/Resources/shaders/ToneMapping_VS.h"
 #include "AxionEngine/Resources/shaders/ToneMapping_PS.h"
 
@@ -140,7 +138,7 @@ namespace Axion {
 		s_shadowShader = Shader::create(shadowShaderSpec);
 		s_shadowShader->loadFromBytecode(
 			g_ShadowMap_VS, sizeof(g_ShadowMap_VS),
-			g_ShadowMap_PS, sizeof(g_ShadowMap_PS)
+			nullptr, 0
 		);
 
 		// -- Shadow Pipeline --
@@ -157,15 +155,17 @@ namespace Axion {
 		shadowPipeSpec.cullMode = CullMode::Front;
 		shadowPipeSpec.topology = PrimitiveTopology::TriangleList;
 		shadowPipeSpec.vertexLayout = {
-			{ "POSITION",	ShaderDataType::Float3 },
-			{ "NORMAL",		ShaderDataType::Float3 },
-			{ "TANGENT",	ShaderDataType::Float3 },
-			{ "TEXCOORD",	ShaderDataType::Float2 },
-			{ "COLOR",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true }
+			{ "POSITION",			ShaderDataType::Float3 },
+			{ "NORMAL",				ShaderDataType::Float3 },
+			{ "TANGENT",			ShaderDataType::Float3 },
+			{ "TEXCOORD",			ShaderDataType::Float2 },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ENTITY_ID",			ShaderDataType::Int,	false, true },
+			{ "TEX_INDICES",		ShaderDataType::Int3,	false, true },
+			{ "TEX_INDICES_EXT",	ShaderDataType::Int4,	false, true }
 		};
 		s_shadowPipeline = Pipeline::create(shadowPipeSpec);
 
@@ -221,16 +221,17 @@ namespace Axion {
 		standardPBRPipeSpec.cullMode = CullMode::Back;
 		standardPBRPipeSpec.topology = PrimitiveTopology::TriangleList;
 		standardPBRPipeSpec.vertexLayout = {
-			{ "POSITION",	ShaderDataType::Float3 },
-			{ "NORMAL",		ShaderDataType::Float3 },
-			{ "TANGENT",	ShaderDataType::Float3 },
-			{ "TEXCOORD",	ShaderDataType::Float2 },
-			{ "COLOR",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ROW",		ShaderDataType::Float4, false, true },
-			{ "ENTITY_ID",	ShaderDataType::Int,    false, true }
+			{ "POSITION",			ShaderDataType::Float3 },
+			{ "NORMAL",				ShaderDataType::Float3 },
+			{ "TANGENT",			ShaderDataType::Float3 },
+			{ "TEXCOORD",			ShaderDataType::Float2 },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ROW",				ShaderDataType::Float4,	false, true },
+			{ "ENTITY_ID",			ShaderDataType::Int,	false, true },
+			{ "TEX_INDICES",		ShaderDataType::Int3,	false, true },
+			{ "TEX_INDICES_EXT",	ShaderDataType::Int4,	false, true }
 		};
 		s_standardPBRPipeline = Pipeline::create(standardPBRPipeSpec);
 
@@ -274,7 +275,7 @@ namespace Axion {
 		s_skeletalShadowShader = Shader::create(skelShadowShaderSpec);
 		s_skeletalShadowShader->loadFromBytecode(
 			g_SkeletalShadowMap_VS, sizeof(g_SkeletalShadowMap_VS),
-			g_SkeletalShadowMap_PS, sizeof(g_SkeletalShadowMap_PS)
+			nullptr, 0
 		);
 
 		// -- Skeletal Shadow Pipeline --

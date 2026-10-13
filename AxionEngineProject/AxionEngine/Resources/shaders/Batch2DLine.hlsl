@@ -19,7 +19,6 @@ struct PixelOutput {
 
 PS_Input VSMain(VS_Input input) {
 	PS_Input output;
-
 	output.position = mul(float4(input.position, 1.0f), viewProjection);
 	output.color = input.color;
 
@@ -27,7 +26,6 @@ PS_Input VSMain(VS_Input input) {
 }
 
 PixelOutput PSMain(PS_Input input) {
-
 	PixelOutput output;
 	output.color = input.color;
 	output.entityID = -1;

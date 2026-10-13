@@ -50,6 +50,7 @@ namespace Axion {
 
 		void setProperties(const MaterialProperties& properties) { m_properties = properties; }
 		void clearTextures() { m_textures.clear(); m_dirty = true; }
+		uint32_t getTextureBindlessIndex(TextureSlot slot) const;
 
 		void setSkeletal(bool skeletal) { m_isSkeletal = skeletal; }
 
@@ -69,8 +70,6 @@ namespace Axion {
 
 		mutable bool m_dirty = true;
 		bool m_isSkeletal = false;
-		bool m_slotsCached = false;
-		int m_materialBufferSlot = -1;
 		uint32_t m_textureTableSlot = 0;
 		std::map<TextureSlot, int> m_textureIndices;
 

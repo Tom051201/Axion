@@ -5,15 +5,22 @@
 #include "AxionEngine/Source/core/EngineAssets.h"
 #include "AxionEngine/Source/graphics/Renderer.h"
 #include "AxionEngine/Source/graphics/RenderCommand.h"
+#include "AxionEngine/Source/graphics/RenderContext.h"
 
 namespace Axion {
 
 	struct GPUInstanceData {
 		DirectX::XMFLOAT4X4 modelMatrix;
-		DirectX::XMFLOAT4 color;
 		uint32_t boneOffset;
 		int entityID;
-		uint32_t padding[2];
+
+		int albedoIndex;
+		int normalIndex;
+		int roughnessIndex;
+		int metalnessIndex;
+		int occlusionIndex;
+		int emissiveIndex;
+		int padding;
 	};
 
 	// -- Static Mesh --
@@ -33,13 +40,13 @@ namespace Axion {
 	void Renderer3D::initialize() {
 		s_instanceVertexBuffer = VertexBuffer::createDynamic(MAX_INSTANCES * sizeof(ObjectBuffer), sizeof(ObjectBuffer));
 		s_instanceVertexBuffer->setLayout({
-			{ "COLOR", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ENTITY_ID", ShaderDataType::Int, false, true },
-			{ "PADDING", ShaderDataType::Float3, false, true }
+			{ "TEX_INDICES", ShaderDataType::Int3, false, true },		// Albedo, Normal, Roughness
+			{ "TEX_INDICES_EXT", ShaderDataType::Int4, false, true }	// Metalness, Occlusion, Emissive, Padding
 		});
 
 		s_skeletalInstanceBuffer = StructuredBuffer::create(sizeof(GPUInstanceData), MAX_SKELETAL_INSTANCES);
@@ -88,7 +95,6 @@ namespace Axion {
 		if (!material || !material->isValid()) return;
 
 		ObjectBuffer buffer;
-		buffer.color = material->getAlbedoColor().toFloat4();
 		buffer.modelMatrix = transform.transposed().toXM();
 		buffer.entityID = -1;
 
@@ -104,8 +110,10 @@ namespace Axion {
 		}
 
 		material->bind(renderContext);
-		EngineAssets::getStandardPBRPipeline()->bind(renderContext); // TODO: maybe review this and maybe remove or improve this so that the passed pipeline does not get ignored
-		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
+		Ref<Pipeline> pbrPipeline = EngineAssets::getStandardPBRPipeline(); // TODO: maybe review this and maybe remove or improve this so that the passed pipeline does not get ignored
+		pbrPipeline->bind(renderContext);
+		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::Textures);
+		Renderer::getSceneDataBuffer()->bind(renderContext, (uint32_t)RootSlot::Camera, Renderer::getSceneDataOffset());
 
 		uint32_t dataSize = instanceCount * sizeof(ObjectBuffer);
 		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData, dataSize);
@@ -144,8 +152,8 @@ namespace Axion {
 
 		Ref<Pipeline> pbrPipeline = EngineAssets::getSkeletalPBRPipeline(); // TODO: maybe review as above
 		pbrPipeline->bind(renderContext); // TODO: maybe review as above
-
-		Renderer::getSceneDataBuffer()->bind(0, Renderer::getSceneDataOffset());
+		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::Textures);
+		Renderer::getSceneDataBuffer()->bind(renderContext, (uint32_t)RootSlot::Camera, Renderer::getSceneDataOffset());
 
 		thread_local std::vector<GPUInstanceData> gpuInstances;
 		thread_local std::vector<DirectX::XMFLOAT4X4> flatBones;
@@ -156,11 +164,17 @@ namespace Axion {
 		flatBones.reserve(instanceCount * 100);
 
 		for (size_t i = 0; i < instanceCount; ++i) {
-			GPUInstanceData gpuInst;
+			GPUInstanceData gpuInst{};
 			gpuInst.modelMatrix = instanceData[i].modelMatrix;
-			gpuInst.color = instanceData[i].color;
 			gpuInst.boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
 			gpuInst.entityID = instanceData[i].entityID;
+			gpuInst.albedoIndex = instanceData[i].albedoIndex;
+			gpuInst.normalIndex = instanceData[i].normalIndex;
+			gpuInst.roughnessIndex = instanceData[i].roughnessIndex;
+			gpuInst.metalnessIndex = instanceData[i].metalnessIndex;
+			gpuInst.occlusionIndex = instanceData[i].occlusionIndex;
+			gpuInst.emissiveIndex = instanceData[i].emissiveIndex;
+			gpuInst.padding = instanceData[i].padding;
 			gpuInstances.push_back(gpuInst);
 
 			for (int b = 0; b < 100; ++b) {
@@ -181,8 +195,8 @@ namespace Axion {
 		if (!pipeline) { pipeline = EngineAssets::getSkeletalPBRPipeline(); }
 		Ref<Shader> shader = pipeline->getSpecification().shader;
 
-		uint32_t instanceSlot = shader->getBindPoint("u_instanceData");
-		uint32_t boneSlot = shader->getBindPoint("u_boneData");
+		uint32_t instanceSlot = (uint32_t)RootSlot::InstanceData;
+		uint32_t boneSlot = (uint32_t)RootSlot::BoneData;
 
 		s_skeletalInstanceBuffer->bind(renderContext, instanceSlot, instanceByteOffset);
 		s_boneBuffer->bind(renderContext, boneSlot, 0);
@@ -212,7 +226,7 @@ namespace Axion {
 		if (!shadowPipeline) return;
 
 		shadowPipeline->bind(renderContext);
-		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
+		Renderer::getSceneDataBuffer()->bind(renderContext, (uint32_t)RootSlot::Camera, Renderer::getSceneDataOffset());
 
 		uint32_t dataSize = instanceCount * sizeof(ObjectBuffer);
 		uint32_t bufferOffset = s_instanceVertexBuffer->append(instanceData, dataSize);
@@ -247,7 +261,7 @@ namespace Axion {
 		if (!shadowPipeline) return;
 
 		shadowPipeline->bind(renderContext);
-		Renderer::getSceneDataBuffer()->bind(renderContext, 0, Renderer::getSceneDataOffset());
+		Renderer::getSceneDataBuffer()->bind(renderContext, (uint32_t)RootSlot::Camera, Renderer::getSceneDataOffset());
 
 		thread_local std::vector<GPUInstanceData> gpuInstances;
 		thread_local std::vector<DirectX::XMFLOAT4X4> flatBones;
@@ -260,7 +274,6 @@ namespace Axion {
 		for (size_t i = 0; i < instanceCount; ++i) {
 			GPUInstanceData gpuInst;
 			gpuInst.modelMatrix = instanceData[i].modelMatrix;
-			gpuInst.color = instanceData[i].color;
 			gpuInst.boneOffset = s_currentBoneElementIndex + (static_cast<uint32_t>(i) * 100);
 			gpuInst.entityID = instanceData[i].entityID;
 			gpuInstances.push_back(gpuInst);
@@ -280,8 +293,8 @@ namespace Axion {
 		mesh->getIndexBuffer()->bind(renderContext);
 
 		Ref<Shader> shader = shadowPipeline->getSpecification().shader;
-		uint32_t instanceSlot = shader->getBindPoint("u_instanceData");
-		uint32_t boneSlot = shader->getBindPoint("u_boneData");
+		uint32_t instanceSlot = (uint32_t)RootSlot::InstanceData;
+		uint32_t boneSlot = (uint32_t)RootSlot::BoneData;
 
 		s_skeletalInstanceBuffer->bind(renderContext, instanceSlot, instanceByteOffset);
 		s_boneBuffer->bind(renderContext, boneSlot, 0);

@@ -71,6 +71,11 @@ project "AxionEngine"
 			"FMT_UNICODE",
 			"YAML_CPP_STATIC_DEFINE"
 		}
+		links {
+			"d3d12",
+			"dxgi",
+			"dxcompiler"
+		}
 
 	filter "configurations:Debug"
 		defines {

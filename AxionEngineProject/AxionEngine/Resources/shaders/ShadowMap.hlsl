@@ -10,15 +10,14 @@ struct VSInput {
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
 	float2 texCoord : TEXCOORD;
-	float4 instanceColor : COLOR;
+//  float4 instanceColor : COLOR;
 	float4x4 instanceTransform : ROW;
+	int entityID : ENTITY_ID;
+	int3 texIndices : TEX_INDICES;
+	int4 texIndicesExt : TEX_INDICES_EXT;
 };
 
 float4 VSMain(VSInput input) : SV_POSITION {
 	float4 worldPos = mul(float4(input.position, 1.0), input.instanceTransform);
-    return mul(worldPos, viewProjection);
-}
-
-void PSMain() {
-
+	return mul(worldPos, viewProjection);
 }

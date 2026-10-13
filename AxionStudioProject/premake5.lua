@@ -114,7 +114,9 @@ project "AxionStudio"
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Debug/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionStudioProject/AxionStudio/Vendor/Discord/lib/discord-rpc.dll %{cfg.buildtarget.directory}",
-			"{COPY} %{wks.location}/AxionSubsystems/AxionNetworkProject/AxionNetwork/Vendor/GNS/bin/*.dll %{cfg.buildtarget.directory}"
+			"{COPY} %{wks.location}/AxionSubsystems/AxionNetworkProject/AxionNetwork/Vendor/GNS/bin/*.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12/directxshadercompiler/dxcompiler.dll %{cfg.targetdir}",
+			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12/directxshadercompiler/dxil.dll %{cfg.targetdir}"
 		}
 
 	filter "configurations:Release or Distribution"
@@ -124,5 +126,7 @@ project "AxionStudio"
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.dll %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionScripting/AxionScriptCore/bin/Release/net10.0/AxionScriptCore.runtimeconfig.json %{cfg.targetdir}",
 			"{COPY} %{wks.location}/AxionStudioProject/AxionStudio/Vendor/Discord/lib/discord-rpc.dll %{cfg.buildtarget.directory}",
-			"{COPY} %{wks.location}/AxionSubsystems/AxionNetworkProject/AxionNetwork/Vendor/GNS/bin/*.dll %{cfg.buildtarget.directory}"
+			"{COPY} %{wks.location}/AxionSubsystems/AxionNetworkProject/AxionNetwork/Vendor/GNS/bin/*.dll %{cfg.buildtarget.directory}",
+			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12/directxshadercompiler/dxcompiler.dll %{cfg.targetdir}",
+			"{COPY} %{wks.location}/AxionEngineProject/AxionEngine/Vendor/d3d12/directxshadercompiler/dxil.dll %{cfg.targetdir}"
 		}

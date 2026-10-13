@@ -34,7 +34,7 @@ namespace Axion {
 		static const uint32_t MaxQuads = 20000;
 		static const uint32_t MaxVertices = MaxQuads * 4;
 		static const uint32_t MaxIndices = MaxQuads * 6;
-		static const uint32_t MaxTextureSlots = 16; // must match d12 bindSrvTable size, maybe add define
+		static const uint32_t MaxTextureSlots = 16;
 
 		Ref<VertexBuffer> quadVertexBuffer;
 		Ref<IndexBuffer> quadIndexBuffer;
@@ -55,9 +55,6 @@ namespace Axion {
 		uint32_t lineVertexCount = 0;
 		LineVertex* lineVertexBufferBase = nullptr;
 		LineVertex* lineVertexBufferPtr = nullptr;
-
-		std::array<Ref<Texture2D>, MaxTextureSlots> textureSlots;
-		uint32_t textureSlotIndex = 1; // 0 = white fallback
 
 		Vec4 quadVertexPositions[4];
 		Vec2 quadTexCoords[4];
@@ -82,9 +79,9 @@ namespace Axion {
 			{ "POSITION",	ShaderDataType::Float3, },
 			{ "COLOR",		ShaderDataType::Float4, },
 			{ "TEXCOORD",	ShaderDataType::Float2, },
-			{ "TEXINDEX",	ShaderDataType::Float,  },
-			{ "TILING",		ShaderDataType::Float,  },
-			{ "ENTITY_ID",	ShaderDataType::Int     }
+			{ "TEXINDEX",	ShaderDataType::Float, },
+			{ "TILING",		ShaderDataType::Float, },
+			{ "ENTITY_ID",	ShaderDataType::Int }
 		});
 
 		// -- Allocate CPU-side memory for vertices --
@@ -187,9 +184,6 @@ namespace Axion {
 		s_data.quadTexCoords[2] = { 1.0f, 0.0f };	// TR
 		s_data.quadTexCoords[3] = { 0.0f, 0.0f };	// TL
 
-		// -- Slot 0 = white fallback --
-		s_data.textureSlots[0] = EngineAssets::getWhiteTexture();
-
 		s_initialized = true;
 		AX_CORE_LOG_TRACE("Renderer2D initialized");
 	}
@@ -207,10 +201,6 @@ namespace Axion {
 		s_data.lineShader->release();
 
 		s_data.cameraConstantBuffer->release();
-
-		for (uint32_t i = 0; i < Renderer2DData::MaxTextureSlots; i++) {
-			s_data.textureSlots[i] = nullptr;
-		}
 
 		AX_CORE_LOG_TRACE("Renderer2D shutdown");
 	}
@@ -236,7 +226,6 @@ namespace Axion {
 	void Renderer2D::startBatch() {
 		s_data.quadIndexCount = 0;
 		s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
-		s_data.textureSlotIndex = 1;
 		s_data.lineVertexCount = 0;
 		s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
 	}
@@ -256,8 +245,8 @@ namespace Axion {
 			uint32_t bufferOffset = s_data.quadVertexBuffer->append(s_data.quadVertexBufferBase, dataSize);
 
 			pipeline->bind(renderContext);
-			s_data.cameraConstantBuffer->bind(renderContext, 0, s_data.cameraBufferOffset);
-			Renderer::bindTextures(renderContext, s_data.textureSlots, s_data.textureSlotIndex, 1);
+			s_data.cameraConstantBuffer->bind(renderContext, (uint32_t)RootSlot::Camera, s_data.cameraBufferOffset);
+			renderContext->bindGlobalTextureTable((uint32_t)RootSlot::Textures);
 
 			s_data.quadVertexBuffer->bind(renderContext, 0, bufferOffset);
 			s_data.quadIndexBuffer->bind(renderContext);
@@ -276,7 +265,7 @@ namespace Axion {
 			uint32_t bufferOffset = s_data.lineVertexBuffer->append(s_data.lineVertexBufferBase, dataSize);
 
 			pipeline->bind(renderContext);
-			s_data.cameraConstantBuffer->bind(renderContext, 0, s_data.cameraBufferOffset);
+			s_data.cameraConstantBuffer->bind(renderContext, (uint32_t)RootSlot::Camera, s_data.cameraBufferOffset);
 			s_data.lineVertexBuffer->bind(renderContext, 0, bufferOffset);
 
 			RenderCommand::draw(renderContext, s_data.lineVertexCount);
@@ -311,7 +300,7 @@ namespace Axion {
 			s_data.quadVertexBufferPtr->position = { vertices[i].x, vertices[i].y, vertices[i].z };
 			s_data.quadVertexBufferPtr->color = { color.x, color.y, color.z, color.w };
 			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
-			s_data.quadVertexBufferPtr->texIndex = 0.0f; // 0 = White Fallback
+			s_data.quadVertexBufferPtr->texIndex = static_cast<float>(EngineAssets::getWhiteTexture()->getBindlessIndex());
 			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
 			s_data.quadVertexBufferPtr++;
 		}
@@ -323,26 +312,12 @@ namespace Axion {
 	void Renderer2D::drawBillboard(const Vec3& position, const Vec2& size, const Mat4& cameraView, const Ref<Texture2D>& texture, const Vec4& tint) {
 		if (!s_initialized) return;
 
-		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
-
-		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices || s_data.textureSlotIndex >= Renderer2DData::MaxTextureSlots) {
+		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices) {
 			nextBatch();
 		}
 
-		float texIndex = -1.0f;
-
-		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
-			if (s_data.textureSlots[i]->getHandle() == validTexture->getHandle()) {
-				texIndex = static_cast<float>(i);
-				break;
-			}
-		}
-
-		if (texIndex == -1) {
-			texIndex = static_cast<float>(s_data.textureSlotIndex);
-			s_data.textureSlots[s_data.textureSlotIndex] = validTexture;
-			s_data.textureSlotIndex++;
-		}
+		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
+		float texIndex = static_cast<float>(validTexture->getBindlessIndex());
 
 		Vec3 camRight = { cameraView.data()[0], cameraView.data()[4], cameraView.data()[8] };
 		Vec3 camUp = { cameraView.data()[1], cameraView.data()[5], cameraView.data()[9] };
@@ -399,7 +374,7 @@ namespace Axion {
 				s_data.quadVertexBufferPtr->position = { pos.x, pos.y, pos.z };
 				s_data.quadVertexBufferPtr->color = { color.x, color.y, color.z, color.w };
 				s_data.quadVertexBufferPtr->texCoord = { 0.0f, 0.0f };
-				s_data.quadVertexBufferPtr->texIndex = 0.0f;
+				s_data.quadVertexBufferPtr->texIndex = static_cast<float>(EngineAssets::getWhiteTexture()->getBindlessIndex());
 				s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
 
 				s_data.quadVertexBufferPtr++;
@@ -417,26 +392,12 @@ namespace Axion {
 	void Renderer2D::drawQuad(const Vec3& position, const Vec2& size, float rotation, const Ref<Texture2D>& texture, const Vec4& tint) {
 		if (!s_initialized) return;
 
-		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
-
-		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices || s_data.textureSlotIndex >= Renderer2DData::MaxTextureSlots) {
+		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices) {
 			nextBatch();
 		}
 
-		float texIndex = -1.0f;
-
-		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
-			if (s_data.textureSlots[i]->getHandle() == validTexture->getHandle()) {
-				texIndex = static_cast<float>(i);
-				break;
-			}
-		}
-
-		if (texIndex == -1) {
-			texIndex = static_cast<float>(s_data.textureSlotIndex);
-			s_data.textureSlots[s_data.textureSlotIndex] = validTexture;
-			s_data.textureSlotIndex++;
-		}
+		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
+		float texIndex = static_cast<float>(validTexture->getBindlessIndex());
 
 		Mat4 transform = Mat4::TRS(position, { 0.0f, 0.0f, rotation }, { size.x, size.y, 1.0f });
 
@@ -449,7 +410,6 @@ namespace Axion {
 			s_data.quadVertexBufferPtr->texIndex = texIndex;
 			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
 			s_data.quadVertexBufferPtr->entityID = -1;
-
 			s_data.quadVertexBufferPtr++;
 		}
 
@@ -469,7 +429,7 @@ namespace Axion {
 			s_data.quadVertexBufferPtr->position = { pos.x, pos.y, pos.z };
 			s_data.quadVertexBufferPtr->color = { color.x, color.y, color.z, color.w };
 			s_data.quadVertexBufferPtr->texCoord = { s_data.quadTexCoords[i].x, s_data.quadTexCoords[i].y };
-			s_data.quadVertexBufferPtr->texIndex = 0.0f; // 0 = White Fallback
+			s_data.quadVertexBufferPtr->texIndex = static_cast<float>(EngineAssets::getWhiteTexture()->getBindlessIndex());
 			s_data.quadVertexBufferPtr->tilingFactor = 1.0f;
 			s_data.quadVertexBufferPtr++;
 		}
@@ -480,25 +440,13 @@ namespace Axion {
 
 	void Renderer2D::drawQuad(const Mat4& transform, const Ref<Texture2D>& texture, const Vec4& tint) {
 		if (!s_initialized) return;
-		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
 
-		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices || s_data.textureSlotIndex >= Renderer2DData::MaxTextureSlots) {
+		if (s_data.quadIndexCount >= Renderer2DData::MaxIndices) {
 			nextBatch();
 		}
 
-		float texIndex = -1.0f;
-		for (uint32_t i = 0; i < s_data.textureSlotIndex; i++) {
-			if (s_data.textureSlots[i]->getHandle() == validTexture->getHandle()) {
-				texIndex = static_cast<float>(i);
-				break;
-			}
-		}
-
-		if (texIndex == -1) {
-			texIndex = static_cast<float>(s_data.textureSlotIndex);
-			s_data.textureSlots[s_data.textureSlotIndex] = validTexture;
-			s_data.textureSlotIndex++;
-		}
+		Ref<Texture2D> validTexture = texture ? texture : EngineAssets::getWhiteTexture();
+		float texIndex = static_cast<float>(validTexture->getBindlessIndex());
 
 		for (size_t i = 0; i < 4; i++) {
 			Vec3 pos = (transform * s_data.quadVertexPositions[i]).xyz();

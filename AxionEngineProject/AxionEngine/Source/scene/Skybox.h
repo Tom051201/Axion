@@ -30,6 +30,7 @@ namespace Axion {
 
 		AssetHandle<TextureCube> m_textureHandle;
 		AssetHandle<Pipeline> m_pipelineHandle;
+		Ref<ConstantBuffer> m_skyboxBuffer;
 
 	};
 

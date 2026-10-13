@@ -52,6 +52,8 @@ namespace Axion {
 		m_currentFenceValue = 1;
 		m_currentFrameIndex = m_swapChain.getSwapChain()->GetCurrentBackBufferIndex();
 
+		createGlobalRootSignature();
+
 		AX_CORE_LOG_INFO("Using gpu adapter: {0}", m_device.getAdapterName());
 		AX_CORE_LOG_INFO("DirectX12 backend initialized successfully");
 	}
@@ -59,6 +61,7 @@ namespace Axion {
 	void DX12Context::shutdown() {
 		waitForPreviousFrame();
 
+		m_globalRootSignature.Reset();
 		m_dsvHeap.release();
 		m_stagingSrvHeap.release();
 		m_gpuSrvHeap.release();
@@ -98,6 +101,8 @@ namespace Axion {
 
 		ID3D12DescriptorHeap* heaps[] = { m_gpuSrvHeap.getHeap() };
 		cmd->SetDescriptorHeaps(1, heaps);
+
+		cmd->SetGraphicsRootSignature(m_globalRootSignature.Get());
 	}
 
 	void DX12Context::finishRendering() {
@@ -306,6 +311,52 @@ namespace Axion {
 		}
 
 		return context;
+	}
+
+	void DX12Context::createGlobalRootSignature() { // TODO: maybe move this creation to a separate file
+		auto* device = m_device.getDevice();
+
+		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(5);
+		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[2].InitAsShaderResourceView(0, 1, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[3].InitAsShaderResourceView(1, 1, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
+
+		CD3DX12_DESCRIPTOR_RANGE1 srvRange;
+		srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, (UINT)-1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+		rootParameters[4].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_ALL);
+
+		D3D12_STATIC_SAMPLER_DESC sampler = {};
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler.MaxLOD = D3D12_FLOAT32_MAX;
+		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData)))) {
+			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+		}
+
+		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+		rootSignatureDesc.Init_1_1(
+			static_cast<UINT>(rootParameters.size()), rootParameters.data(),
+			1, &sampler,
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+		);
+
+		Microsoft::WRL::ComPtr<ID3DBlob> signature;
+		Microsoft::WRL::ComPtr<ID3DBlob> error;
+		HRESULT hr = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error);
+		if (error) { AX_CORE_LOG_ERROR("Global Root signature error: {0}", (char*)error->GetBufferPointer()); }
+		AX_THROW_IF_FAILED_HR(hr, "Failed to serialize global root signature");
+
+		hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_globalRootSignature));
+		AX_THROW_IF_FAILED_HR(hr, "Failed to create global root signature");
 	}
 
 }

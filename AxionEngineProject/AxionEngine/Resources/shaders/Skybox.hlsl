@@ -1,11 +1,18 @@
+TextureCube g_CubeTextures[] : register(t0, space0);
+SamplerState u_sampler : register(s0);
+
 cbuffer SceneBuffer : register(b0) {
-	float4x4 u_view;
-	float4x4 u_projection;
-	float4x4 u_viewProjection;
+    float4x4 u_viewProjection;
+    float4x4 u_skyboxViewProjection;
+};
+
+cbuffer SkyboxBuffer : register(b1) {
+    int u_skyboxIndex;
+    float3 padding;
 };
 
 struct VSInput {
-	float3 pos : POSITION;
+    float3 pos : POSITION;
 };
 
 struct PSInput {
@@ -13,38 +20,28 @@ struct PSInput {
 	float3 dir : TEXCOORD;
 };
 
-TextureCube u_skybox : register(t0);
-SamplerState u_sampler : register(s0);
-
 struct PixelOutput {
 	float4 color : SV_TARGET0;
 	int entityID : SV_TARGET1;
 };
 
 PSInput VSMain(VSInput input) {
-	PSInput output;
+    PSInput output;
 
-	// Remove translation from view
-	float4x4 viewNoTranslation = u_view;
-	viewNoTranslation._41 = 0.0f;
-	viewNoTranslation._42 = 0.0f;
-	viewNoTranslation._43 = 0.0f;
+    output.pos = mul(float4(input.pos, 1.0f), u_skyboxViewProjection);
+    output.pos.z = output.pos.w;
+    output.dir = input.pos;
 
-	float4 pos = mul(float4(input.pos, 1.0f), viewNoTranslation);
-	output.pos = mul(pos, u_projection);
-
-	output.dir = input.pos;
-
-	return output;
+    return output;
 }
 
 PixelOutput PSMain(PSInput input) {
-	PixelOutput output;
-	float4 texColor = u_skybox.Sample(u_sampler, normalize(input.dir));
-	float3 linearColor = pow(max(texColor.rgb, 0.0), 2.2);
-	
-	output.color = float4(linearColor, texColor.a);
-	output.entityID = -1;
-	
-	return output;
+    float4 texColor = g_CubeTextures[NonUniformResourceIndex(u_skyboxIndex)].Sample(u_sampler, normalize(input.dir));
+    float3 linearColor = pow(max(texColor.rgb, 0.0), 2.2);
+
+    PixelOutput output;
+    output.color = float4(linearColor, texColor.a);
+    output.entityID = -1;
+    
+    return output;
 }

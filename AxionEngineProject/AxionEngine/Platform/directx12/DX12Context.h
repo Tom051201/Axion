@@ -77,7 +77,8 @@ namespace Axion {
 		ID3D12Fence* getFence() const { return m_fence.getFence(); }
 		uint32_t getCurrentFrameIndex() const { return m_currentFrameIndex; }
 
-
+		ID3D12RootSignature* getGlobalRootSignature() const { return m_globalRootSignature.Get(); }
+		uint32_t getBindlessTextureTableIndex() const { return 4; }
 
 		void bindSrvTable(RenderContext* renderContext, uint32_t rootIndex, const std::array<Ref<Texture2D>, 16>& textures, uint32_t count);
 		void executeImmediateCommand(const std::function<void(ID3D12GraphicsCommandList*)>& command);
@@ -99,12 +100,15 @@ namespace Axion {
 		DX12srvHeap m_gpuSrvHeap;
 		DX12srvHeap m_stagingSrvHeap;
 		DX12dsvHeap m_dsvHeap;
+		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_globalRootSignature;
 
 		std::vector<UINT64> m_frameFenceValues;
 		UINT64 m_currentFenceValue = 1;
 		uint32_t m_currentFrameIndex = 0;
 
 		DX12RenderContext* m_mainThreadContext = nullptr;
+
+		void createGlobalRootSignature();
 
 	};
 
