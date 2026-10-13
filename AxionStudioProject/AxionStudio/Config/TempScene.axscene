@@ -3,7 +3,7 @@ UUID: 0c2ce19ea62a4dee103fd59e64b28d90
 Type: Scene
 Scene: Test Scene
 Skybox: b4e88aba8952de74c020877e8840e45b
-AmbientColor: [0.0299999993, 0.0299999993, 0.0299999993, 1]
+AmbientColor: [0, 0, 0, 1]
 NavMeshProfiles:
   - Name: Default
     UUID: 7c74b309effa4ed2b596f98a944e5f9b

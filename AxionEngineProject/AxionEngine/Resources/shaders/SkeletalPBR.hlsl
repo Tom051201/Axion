@@ -260,7 +260,8 @@ PixelOutput PSMain(PixelInput input) {
 	if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0) {
 		float currentDepth = projCoords.z;
 		float3 L_dir = normalize(u_directionalLights[0].direction.xyz);
-		float bias = max(0.001 * (1.0 - dot(N, L_dir)), 0.0001);
+//		float bias = max(0.001 * (1.0 - dot(N, L_dir)), 0.0001);
+        float bias = max(0.0002 * (1.0 - dot(N, L_dir)), 0.00005);
 
 		float shadowSum = 0.0;
 		float2 texelSize = 1.0 / 2048.0;

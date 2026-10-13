@@ -1,8 +1,5 @@
 cbuffer CameraBuffer : register(b0) {
-	float4x4 u_view;
-	float4x4 u_projection;
 	float4x4 u_viewProjection;
-	float4x4 u_lightSpaceMatrix; // seems to be unused
 }
 
 struct SkeletalInstanceData {
@@ -50,6 +47,5 @@ PixelInput VSMain(VertexInput input) {
 	float4 worldPosition = mul(localPos, instance.modelMatrix);
 	
 	output.position = mul(worldPosition, u_viewProjection);
-
 	return output;
 }

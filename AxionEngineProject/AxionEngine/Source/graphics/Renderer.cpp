@@ -173,12 +173,12 @@ namespace Axion {
 
 			s_lightView = Mat4::lookAt(lightPos, camPos, lightUp);
 
-			float orthoSize = 60.0f;
+			float orthoSize = 25.0f;
 			float zNear = 1.0f;
-			float zFar = 250.0f;
+			float zFar = 150.0f;
 			s_lightProjection = Mat4::orthographicOffCenter(-orthoSize, orthoSize, -orthoSize, orthoSize, zNear, zFar);
 
-			Mat4 lightSpace = s_lightProjection * s_lightView;
+			Mat4 lightSpace = s_lightView * s_lightProjection;
 			sceneData.lightSpaceMatrix = lightSpace.transposed().toXM();
 		}
 		else {
@@ -210,7 +210,8 @@ namespace Axion {
 
 	void Renderer::beginScene(const Mat4& projection, const Mat4& transform) {
 		SceneData sceneData{};
-		Mat4 viewProj = projection * (transform.inverse());
+		Mat4 view = transform.inverse();
+		Mat4 viewProj = view * projection;
 		sceneData.viewProjection = viewProj.transposed().toXM();
 		s_sceneDataOffset = s_sceneUploadBuffer->append(&sceneData, sizeof(SceneData));
 	}

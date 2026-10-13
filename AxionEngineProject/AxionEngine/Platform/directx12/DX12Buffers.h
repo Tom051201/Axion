@@ -3,6 +3,7 @@
 
 #include <d3d12.h>
 #include <wrl/client.h>
+#include <mutex>
 
 namespace Axion {
 
@@ -51,6 +52,10 @@ namespace Axion {
 
 		uint32_t m_currentOffset = 0;
 		uint32_t m_perFrameSize = 0;
+		std::mutex m_appendMutex;
+
+		void resize(uint32_t newPerFrameSize);
+
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +123,9 @@ namespace Axion {
 
 		uint32_t m_currentOffset = 0;
 		uint32_t m_perFrameSize = 0;
+		std::mutex m_appendMutex;
+
+		void resize(uint32_t newPerFrameSize);
 
 	};
 
@@ -156,6 +164,9 @@ namespace Axion {
 		uint32_t m_bufferSize = 0;
 		uint32_t m_currentOffset = 0;
 		uint32_t m_perFrameSize = 0;
+		std::mutex m_appendMutex;
+
+		void resize(uint32_t newPerFrameSize);
 
 	};
 

@@ -25,7 +25,6 @@ namespace Axion {
 
 	// -- Static Mesh --
 	static Ref<VertexBuffer> s_instanceVertexBuffer;
-	constexpr uint32_t MAX_INSTANCES = 10000;
 
 	// -- Skeletal Mesh --
 	static Ref<StructuredBuffer> s_skeletalInstanceBuffer;
@@ -34,11 +33,8 @@ namespace Axion {
 	static uint32_t s_currentStaticInstanceCount = 0;
 	static uint32_t s_currentSkeletalInstanceCount = 0;
 
-	constexpr uint32_t MAX_SKELETAL_INSTANCES = 1000;
-	constexpr uint32_t MAX_BONES = MAX_SKELETAL_INSTANCES * 100;
-
 	void Renderer3D::initialize() {
-		s_instanceVertexBuffer = VertexBuffer::createDynamic(MAX_INSTANCES * sizeof(ObjectBuffer), sizeof(ObjectBuffer));
+		s_instanceVertexBuffer = VertexBuffer::createDynamic(1000 * sizeof(ObjectBuffer), sizeof(ObjectBuffer));
 		s_instanceVertexBuffer->setLayout({
 			{ "ROW", ShaderDataType::Float4, false, true },
 			{ "ROW", ShaderDataType::Float4, false, true },
@@ -49,8 +45,8 @@ namespace Axion {
 			{ "TEX_INDICES_EXT", ShaderDataType::Int4, false, true }	// Metalness, Occlusion, Emissive, Padding
 		});
 
-		s_skeletalInstanceBuffer = StructuredBuffer::create(sizeof(GPUInstanceData), MAX_SKELETAL_INSTANCES);
-		s_boneBuffer = StructuredBuffer::create(sizeof(DirectX::XMFLOAT4X4), MAX_BONES);
+		s_skeletalInstanceBuffer = StructuredBuffer::create(sizeof(GPUInstanceData), 100);
+		s_boneBuffer = StructuredBuffer::create(sizeof(DirectX::XMFLOAT4X4), 100 * 100);
 
 		AX_CORE_LOG_TRACE("Renderer3D initialized");
 	}
@@ -104,11 +100,6 @@ namespace Axion {
 	void Renderer3D::drawMeshInstanced(RenderContext* renderContext, Ref<Mesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const ObjectBuffer* instanceData, uint32_t instanceCount) {
 		if (instanceCount == 0 || !mesh || !material || !material->isValid()) return;
 
-		if (s_currentStaticInstanceCount + instanceCount > MAX_INSTANCES) {
-			AX_CORE_LOG_WARN("Renderer3D: Exceeded MAX_INSTANCES!");
-			return;
-		}
-
 		material->bind(renderContext);
 		Ref<Pipeline> pbrPipeline = EngineAssets::getStandardPBRPipeline(); // TODO: maybe review this and maybe remove or improve this so that the passed pipeline does not get ignored
 		pbrPipeline->bind(renderContext);
@@ -141,11 +132,6 @@ namespace Axion {
 
 	void Renderer3D::drawSkeletalMeshInstanced(RenderContext* renderContext, Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, Ref<Material>& material, const SkeletalObjectBuffer* instanceData, uint32_t instanceCount) {
 		if (instanceCount == 0 || !mesh || !material || !material->isValid()) return;
-
-		if (s_currentSkeletalInstanceCount + instanceCount > MAX_SKELETAL_INSTANCES || s_currentBoneElementIndex + (instanceCount * 100) > MAX_BONES) {
-			AX_CORE_LOG_WARN("Renderer3D: Exceeded MAX_SKELETAL_INSTANCES or MAX_BONES!");
-			return;
-		}
 
 		material->setSkeletal(true);
 		material->bind(renderContext);
@@ -220,8 +206,6 @@ namespace Axion {
 	void Renderer3D::drawMeshInstancedShadow(RenderContext* renderContext, Ref<Mesh>& mesh, uint32_t submeshIndex, const ObjectBuffer* instanceData, uint32_t instanceCount) {
 		if (instanceCount == 0 || !mesh) return;
 
-		if (s_currentStaticInstanceCount + instanceCount > MAX_INSTANCES) return;
-
 		Ref<Pipeline> shadowPipeline = EngineAssets::getShadowPipeline();
 		if (!shadowPipeline) return;
 
@@ -254,8 +238,6 @@ namespace Axion {
 
 	void Renderer3D::drawSkeletalMeshInstancedShadow(RenderContext* renderContext, Ref<SkeletalMesh>& mesh, uint32_t submeshIndex, const SkeletalObjectBuffer* instanceData, uint32_t instanceCount) {
 		if (instanceCount == 0 || !mesh) return;
-
-		if (s_currentSkeletalInstanceCount + instanceCount > MAX_SKELETAL_INSTANCES || s_currentBoneElementIndex + (instanceCount * 100) > MAX_BONES) return;
 
 		Ref<Pipeline> shadowPipeline = EngineAssets::getSkeletalShadowPipeline();
 		if (!shadowPipeline) return;

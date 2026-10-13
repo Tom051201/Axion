@@ -121,6 +121,22 @@ namespace Axion {
 	}
 
 	uint32_t DX12VertexBuffer::append(const void* data, size_t size) {
+		std::lock_guard<std::mutex> lock(m_appendMutex);
+
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		uint32_t currentFrame = context->getCurrentFrameIndex();
+		uint32_t frameStart = currentFrame * m_perFrameSize;
+		uint32_t currentFrameBytesWritten = m_currentOffset - frameStart;
+
+		if (currentFrameBytesWritten + size > m_perFrameSize) {
+			uint32_t newPerFrameSize = m_perFrameSize * 2;
+			if (newPerFrameSize < currentFrameBytesWritten + size) {
+				newPerFrameSize = currentFrameBytesWritten + (uint32_t)size;
+			}
+			resize(newPerFrameSize);
+			frameStart = currentFrame * m_perFrameSize;
+		}
+
 		uint32_t writeOffset = m_currentOffset;
 		memcpy(m_mappedPtr + writeOffset, data, size);
 		m_currentOffset += (uint32_t)size;
@@ -128,8 +144,50 @@ namespace Axion {
 	}
 
 	void DX12VertexBuffer::resetOffset() {
+		std::lock_guard<std::mutex> lock(m_appendMutex);
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		m_currentOffset = context->getCurrentFrameIndex() * m_perFrameSize;
+	}
+
+	void DX12VertexBuffer::resize(uint32_t newPerFrameSize) {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		context->waitForPreviousFrame();
+
+		uint32_t newTotalSize = newPerFrameSize * MAX_FRAMES_IN_FLIGHT;
+		Microsoft::WRL::ComPtr<ID3D12Resource> newBuffer;
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(newTotalSize);
+
+		HRESULT hr = context->getDevice()->CreateCommittedResource(
+			&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&newBuffer)
+		);
+		AX_CORE_ASSERT(SUCCEEDED(hr), "Failed to resize dynamic vertex buffer");
+
+		uint8_t* newMappedPtr = nullptr;
+		D3D12_RANGE readRange = { 0, 0 };
+		newBuffer->Map(0, &readRange, reinterpret_cast<void**>(&newMappedPtr));
+
+		uint32_t currentFrame = context->getCurrentFrameIndex();
+		uint32_t currentFrameBytesWritten = m_currentOffset - (currentFrame * m_perFrameSize);
+
+		if (currentFrameBytesWritten > 0 && m_mappedPtr) {
+			memcpy(newMappedPtr + (currentFrame * newPerFrameSize), m_mappedPtr + (currentFrame * m_perFrameSize), currentFrameBytesWritten);
+		}
+
+		if (m_buffer && m_mappedPtr) {
+			m_buffer->Unmap(0, nullptr);
+		}
+
+		m_buffer = newBuffer;
+		m_mappedPtr = newMappedPtr;
+		m_perFrameSize = newPerFrameSize;
+		m_size = newTotalSize;
+		m_currentOffset = (currentFrame * m_perFrameSize) + currentFrameBytesWritten;
+
+		m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
+		m_view.SizeInBytes = m_size;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -302,8 +360,24 @@ namespace Axion {
 	}
 
 	uint32_t DX12ConstantBuffer::append(const void* data, size_t size) {
+		std::lock_guard<std::mutex> lock(m_appendMutex);
+
 		uint32_t alignedSize = (size + 255) & ~255;
-		AX_CORE_ASSERT(m_currentOffset + alignedSize <= m_bufferSize, "ConstantBuffer overflow");
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		uint32_t currentFrame = context->getCurrentFrameIndex();
+		uint32_t frameStart = currentFrame * m_perFrameSize;
+		uint32_t currentFrameBytesWritten = m_currentOffset - frameStart;
+
+		if (currentFrameBytesWritten + alignedSize > m_perFrameSize) {
+			uint32_t newPerFrameSize = m_perFrameSize * 2;
+			if (newPerFrameSize < currentFrameBytesWritten + alignedSize) {
+				newPerFrameSize = currentFrameBytesWritten + alignedSize;
+			}
+			newPerFrameSize = (newPerFrameSize + 255) & ~255;
+			resize(newPerFrameSize);
+			frameStart = currentFrame * m_perFrameSize;
+		}
+
 		uint32_t writeOffset = m_currentOffset;
 		memcpy(m_mappedPtr + writeOffset, data, size);
 		m_currentOffset += alignedSize;
@@ -311,8 +385,47 @@ namespace Axion {
 	}
 
 	void DX12ConstantBuffer::resetOffset() {
+		std::lock_guard<std::mutex> lock(m_appendMutex);
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		m_currentOffset = context->getCurrentFrameIndex() * m_perFrameSize;
+	}
+
+	void DX12ConstantBuffer::resize(uint32_t newPerFrameSize) {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		context->waitForPreviousFrame();
+
+		uint32_t newTotalSize = newPerFrameSize * MAX_FRAMES_IN_FLIGHT;
+		Microsoft::WRL::ComPtr<ID3D12Resource> newBuffer;
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(newTotalSize);
+
+		HRESULT hr = context->getDevice()->CreateCommittedResource(
+			&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&newBuffer)
+		);
+		AX_CORE_ASSERT(SUCCEEDED(hr), "Failed to resize dynamic constant buffer");
+
+		uint8_t* newMappedPtr = nullptr;
+		D3D12_RANGE readRange = { 0, 0 };
+		newBuffer->Map(0, &readRange, reinterpret_cast<void**>(&newMappedPtr));
+
+		uint32_t currentFrame = context->getCurrentFrameIndex();
+		uint32_t currentFrameBytesWritten = m_currentOffset - (currentFrame * m_perFrameSize);
+
+		if (currentFrameBytesWritten > 0 && m_mappedPtr) {
+			memcpy(newMappedPtr + (currentFrame * newPerFrameSize), m_mappedPtr + (currentFrame * m_perFrameSize), currentFrameBytesWritten);
+		}
+
+		if (m_buffer && m_mappedPtr) {
+			m_buffer->Unmap(0, nullptr);
+		}
+
+		m_buffer = newBuffer;
+		m_mappedPtr = newMappedPtr;
+		m_perFrameSize = newPerFrameSize;
+		m_bufferSize = newTotalSize;
+		m_currentOffset = (currentFrame * m_perFrameSize) + currentFrameBytesWritten;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -387,7 +500,23 @@ namespace Axion {
 	}
 
 	uint32_t DX12StructuredBuffer::append(const void* data, size_t size) {
-		AX_CORE_ASSERT(m_currentOffset + size <= m_bufferSize, "StructuredBuffer overflow");
+		std::lock_guard<std::mutex> lock(m_appendMutex);
+
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		uint32_t currentFrame = context->getCurrentFrameIndex();
+		uint32_t frameStart = currentFrame * m_perFrameSize;
+		uint32_t currentFrameBytesWritten = m_currentOffset - frameStart;
+
+		if (currentFrameBytesWritten + size > m_perFrameSize) {
+			uint32_t newPerFrameSize = m_perFrameSize * 2;
+			if (newPerFrameSize < currentFrameBytesWritten + size) {
+				newPerFrameSize = currentFrameBytesWritten + (uint32_t)size;
+			}
+			newPerFrameSize = ((newPerFrameSize + m_elementSize - 1) / m_elementSize) * m_elementSize;
+			resize(newPerFrameSize);
+			frameStart = currentFrame * m_perFrameSize;
+		}
+
 		uint32_t writeOffset = m_currentOffset;
 		memcpy(m_mappedPtr + writeOffset, data, size);
 		m_currentOffset += (uint32_t)size;
@@ -395,8 +524,50 @@ namespace Axion {
 	}
 
 	void DX12StructuredBuffer::resetOffset() {
+		std::lock_guard<std::mutex> lock(m_appendMutex);
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		m_currentOffset = context->getCurrentFrameIndex() * m_perFrameSize;
 	}
 
+	void DX12StructuredBuffer::resize(uint32_t newPerFrameSize) {
+		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		context->waitForPreviousFrame();
+
+		uint32_t newTotalSize = newPerFrameSize * MAX_FRAMES_IN_FLIGHT;
+		Microsoft::WRL::ComPtr<ID3D12Resource> newBuffer;
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(newTotalSize);
+
+		HRESULT hr = context->getDevice()->CreateCommittedResource(
+			&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&newBuffer)
+		);
+		AX_CORE_ASSERT(SUCCEEDED(hr), "Failed to resize structured buffer");
+
+		uint8_t* newMappedPtr = nullptr;
+		D3D12_RANGE readRange = { 0, 0 };
+		newBuffer->Map(0, &readRange, reinterpret_cast<void**>(&newMappedPtr));
+
+		uint32_t currentFrame = context->getCurrentFrameIndex();
+		uint32_t currentFrameBytesWritten = m_currentOffset - (currentFrame * m_perFrameSize);
+
+		if (currentFrameBytesWritten > 0 && m_mappedPtr) {
+			memcpy(newMappedPtr + (currentFrame * newPerFrameSize), m_mappedPtr + (currentFrame * m_perFrameSize), currentFrameBytesWritten);
+		}
+
+		if (m_buffer && m_mappedPtr) {
+			m_buffer->Unmap(0, nullptr);
+		}
+
+		m_buffer = newBuffer;
+		m_mappedPtr = newMappedPtr;
+		m_perFrameSize = newPerFrameSize;
+		m_bufferSize = newTotalSize;
+		m_elementCount = m_perFrameSize / m_elementSize;
+		m_currentOffset = (currentFrame * m_perFrameSize) + currentFrameBytesWritten;
+	}
+
 }
+
+

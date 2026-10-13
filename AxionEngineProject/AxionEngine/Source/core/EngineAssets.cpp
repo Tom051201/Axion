@@ -152,7 +152,7 @@ namespace Axion {
 		shadowPipeSpec.depthFunction = DepthCompare::Less;
 		shadowPipeSpec.stencilEnabled = false;
 		shadowPipeSpec.sampleCount = 1;
-		shadowPipeSpec.cullMode = CullMode::Front;
+		shadowPipeSpec.cullMode = CullMode::Back; // CullMode::Front;
 		shadowPipeSpec.topology = PrimitiveTopology::TriangleList;
 		shadowPipeSpec.vertexLayout = {
 			{ "POSITION",			ShaderDataType::Float3 },
@@ -289,7 +289,7 @@ namespace Axion {
 		skelShadowPipeSpec.depthFunction = DepthCompare::Less;
 		skelShadowPipeSpec.stencilEnabled = false;
 		skelShadowPipeSpec.sampleCount = 1;
-		skelShadowPipeSpec.cullMode = CullMode::Front;
+		skelShadowPipeSpec.cullMode = CullMode::Back; // CullMode::Front;
 		skelShadowPipeSpec.topology = PrimitiveTopology::TriangleList;
 		skelShadowPipeSpec.vertexLayout = {
 			{ "POSITION",		ShaderDataType::Float3 },

@@ -1,8 +1,5 @@
-cbuffer SceneData : register(b0) {
-	matrix view;
-	matrix projection;
-	matrix viewProjection;
-	matrix lightSpaceMatrix;
+cbuffer CameraBuffer : register(b0) {
+	float4x4 u_viewProjection;
 };
 
 struct VSInput {
@@ -10,7 +7,6 @@ struct VSInput {
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
 	float2 texCoord : TEXCOORD;
-//  float4 instanceColor : COLOR;
 	float4x4 instanceTransform : ROW;
 	int entityID : ENTITY_ID;
 	int3 texIndices : TEX_INDICES;
@@ -19,5 +15,5 @@ struct VSInput {
 
 float4 VSMain(VSInput input) : SV_POSITION {
 	float4 worldPos = mul(float4(input.position, 1.0), input.instanceTransform);
-	return mul(worldPos, viewProjection);
+	return mul(worldPos, u_viewProjection);
 }
