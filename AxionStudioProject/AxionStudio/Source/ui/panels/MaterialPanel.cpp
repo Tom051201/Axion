@@ -666,8 +666,10 @@ namespace Axion {
 		float cp = std::cos(m_cameraPitch); float sp = std::sin(m_cameraPitch);
 		m_previewCamera.setViewMatrix(Mat4::lookAt({ sy * cp * m_cameraDistance, sp * m_cameraDistance, cy * cp * m_cameraDistance }, Vec3::zero(), Vec3(0.0f, 1.0f, 0.0f)));
 
-		LightingData lightData; lightData.ambientColor = { 0.1f, 0.1f, 0.1f, 1.0f };
-		lightData.directionalLights.push_back({ Vec3(-0.5f, -0.5f, -0.8f).normalized(), Vec4(3.0f, 3.0f, 3.0f, 1.0f) });
+		LightingData lightData;
+		lightData.ambientColor = { 0.1f, 0.1f, 0.1f, 1.0f };
+		lightData.hasDirectionalLight = true;
+		lightData.directionalLight = { Vec3(-0.5f, -0.5f, -0.8f).normalized(), Vec4(3.0f, 3.0f, 3.0f, 1.0f) };
 		lightData.pointLights.push_back({ Vec3(0.0f, 0.5f, 2.0f), Vec4(10.0f, 10.0f, 10.0f, 1.0f), 15.0f, 1.0f });
 
 		RenderContext* renderContext = GraphicsContext::get()->getMainRenderContext();

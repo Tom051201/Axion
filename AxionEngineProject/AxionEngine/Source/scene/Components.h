@@ -128,6 +128,7 @@ namespace Axion {
 
 	struct DirectionalLightComponent {
 		Vec4 color = Vec4::one();
+		bool isPrimary = true;
 
 		DirectionalLightComponent() = default;
 		DirectionalLightComponent(const DirectionalLightComponent&) = default;

@@ -23,7 +23,6 @@ namespace Axion {
 		DirectX11 = 2
 	};
 
-	constexpr uint32_t MAX_DIR_LIGHTS = 4;
 	constexpr uint32_t MAX_POINT_LIGHTS = 16;
 	constexpr uint32_t MAX_SPOT_LIGHTS = 16;
 
@@ -51,7 +50,8 @@ namespace Axion {
 	struct LightingData {
 		Vec4 ambientColor;
 
-		std::vector<DirectionalLightData> directionalLights;
+		DirectionalLightData directionalLight;
+		bool hasDirectionalLight = false;
 		std::vector<PointLightData> pointLights;
 		std::vector<SpotLightData> spotLights;
 	};

@@ -9,6 +9,8 @@ namespace Axion {
 		m_submeshes = meshData.submeshes;
 		m_skeleton = meshData.skeleton;
 
+		calculateBounds(meshData.vertices);
+
 		m_bindPoseMatrices.resize(m_skeleton.bones.size(), DirectX::XMMatrixIdentity());
 		for (size_t i = 0; i < m_skeleton.bones.size(); ++i) {
 			if (m_skeleton.bones[i].parentIndex == -1) {
@@ -40,6 +42,20 @@ namespace Axion {
 
 		for (int childIndex : bone->children) {
 			calculateBindPose(&m_skeleton.bones[childIndex], globalTransform);
+		}
+	}
+
+	void SkeletalMesh::calculateBounds(const std::vector<SkeletalVertex>& vertices) {
+		m_boundingBox = AABB();
+
+		for (const auto& vertex : vertices) {
+			m_boundingBox.min.x = std::min(m_boundingBox.min.x, vertex.position.x);
+			m_boundingBox.min.y = std::min(m_boundingBox.min.y, vertex.position.y);
+			m_boundingBox.min.z = std::min(m_boundingBox.min.z, vertex.position.z);
+
+			m_boundingBox.max.x = std::max(m_boundingBox.max.x, vertex.position.x);
+			m_boundingBox.max.y = std::max(m_boundingBox.max.y, vertex.position.y);
+			m_boundingBox.max.z = std::max(m_boundingBox.max.z, vertex.position.z);
 		}
 	}
 

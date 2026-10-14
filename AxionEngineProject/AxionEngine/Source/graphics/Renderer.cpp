@@ -47,12 +47,12 @@ namespace Axion {
 		DirectX::XMFLOAT4 cameraPosition;
 		DirectX::XMFLOAT4 ambientColor;
 
-		int directionalLightsCount;
+		int hasDirectionalLight;
 		int pointLightsCount;
 		int spotLightCount;
 		int shadowMapIndex;
 
-		HLSLDirLight directionalLights[MAX_DIR_LIGHTS];
+		HLSLDirLight directionalLight;
 		HLSLPointLight pointLights[MAX_POINT_LIGHTS];
 		HLSLSpotLight spotLights[MAX_SPOT_LIGHTS];
 	};
@@ -149,21 +149,13 @@ namespace Axion {
 		// -- Ambient Color --
 		sceneData.ambientColor = lightingData.ambientColor.toFloat4();
 
-		// -- Directional Lights --
-		sceneData.directionalLightsCount = std::min((uint32_t)lightingData.directionalLights.size(), MAX_DIR_LIGHTS);
-		for (int i = 0; i < sceneData.directionalLightsCount; i++) {
-			sceneData.directionalLights[i].direction = { lightingData.directionalLights[i].direction.x, lightingData.directionalLights[i].direction.y, lightingData.directionalLights[i].direction.z, 1.0f };
-			sceneData.directionalLights[i].color = lightingData.directionalLights[i].color.toFloat4();
-		}
+		// -- Primary Directional Light & Shadow Matrix --
+		if (lightingData.hasDirectionalLight) {
+			sceneData.hasDirectionalLight = 1;
+			sceneData.directionalLight.direction = { lightingData.directionalLight.direction.x, lightingData.directionalLight.direction.y, lightingData.directionalLight.direction.z, 1.0f };
+			sceneData.directionalLight.color = lightingData.directionalLight.color.toFloat4();
 
-		// -- Light Space Matrix for Shadows --
-		if (sceneData.directionalLightsCount > 0) {
-			Vec3 lightDir = {
-				sceneData.directionalLights[0].direction.x,
-				sceneData.directionalLights[0].direction.y,
-				sceneData.directionalLights[0].direction.z
-			};
-
+			Vec3 lightDir = lightingData.directionalLight.direction;
 			Mat4 camInv = camera.getViewMatrix().inverse();
 			Vec3 camPos = { camInv.data()[12], camInv.data()[13], camInv.data()[14] };
 
@@ -182,6 +174,8 @@ namespace Axion {
 			sceneData.lightSpaceMatrix = lightSpace.transposed().toXM();
 		}
 		else {
+			sceneData.hasDirectionalLight = 0;
+			sceneData.directionalLight = {};
 			s_lightView = Mat4::identity();
 			s_lightProjection = Mat4::identity();
 			sceneData.lightSpaceMatrix = Mat4::identity().toXM();

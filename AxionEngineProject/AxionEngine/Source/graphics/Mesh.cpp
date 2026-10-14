@@ -10,6 +10,8 @@ namespace Axion {
 		m_indexBuffer = IndexBuffer::create(indices);
 		m_meshData.vertices = vertices;
 		m_meshData.indices = indices;
+
+		calculateBounds();
 	}
 
 	Mesh::Mesh(const MeshData& meshData) {
@@ -17,6 +19,8 @@ namespace Axion {
 		m_indexBuffer = IndexBuffer::create(meshData.indices);
 		m_submeshes = meshData.submeshes;
 		m_meshData = meshData;
+
+		calculateBounds();
 	}
 
 	Mesh::~Mesh() {
@@ -37,9 +41,23 @@ namespace Axion {
 		return MakeRef<Mesh>(meshData);
 	}
 
+	void Mesh::calculateBounds() {
+		m_boundingBox = AABB();
+
+		for (const auto& vertex : m_meshData.vertices) {
+			m_boundingBox.min.x = std::min(m_boundingBox.min.x, vertex.position.x);
+			m_boundingBox.min.y = std::min(m_boundingBox.min.y, vertex.position.y);
+			m_boundingBox.min.z = std::min(m_boundingBox.min.z, vertex.position.z);
+
+			m_boundingBox.max.x = std::max(m_boundingBox.max.x, vertex.position.x);
+			m_boundingBox.max.y = std::max(m_boundingBox.max.y, vertex.position.y);
+			m_boundingBox.max.z = std::max(m_boundingBox.max.z, vertex.position.z);
+		}
+	}
+
 
 	// ----- Create Function for a 1x1 cube -----
-	Ref<Mesh> Mesh::createPBRCube() {
+	Ref<Mesh> Mesh::createPBRCube() { // TODO: maybe remove this function entirely
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 

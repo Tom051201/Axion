@@ -20,21 +20,21 @@ struct SpotLight {
 };
 
 cbuffer CameraBuffer : register(b0) {
-    float4x4 u_viewProjection;
-    float4x4 u_skyboxViewProjection;
-    float4x4 u_lightSpaceMatrix;
+	float4x4 u_viewProjection;
+	float4x4 u_skyboxViewProjection;
+	float4x4 u_lightSpaceMatrix;
 
-    float4 u_cameraPosition;
-    float4 u_ambientColor;
+	float4 u_cameraPosition;
+	float4 u_ambientColor;
 
-    int u_directionalLightsCount;
-    int u_pointLightsCount;
-    int u_spotLightsCount;
-    int u_shadowMapIndex;
+	int u_hasDirectionalLight;
+	int u_pointLightsCount;
+	int u_spotLightsCount;
+	int u_shadowMapIndex;
 
-    DirectionalLight u_directionalLights[4];
-    PointLight u_pointLights[16];
-    SpotLight u_spotLights[16];
+	DirectionalLight u_directionalLight;
+	PointLight u_pointLights[16];
+	SpotLight u_spotLights[16];
 }
 
 cbuffer MaterialBuffer : register(b1) {
@@ -245,7 +245,7 @@ PixelOutput PSMain(PixelInput input) {
 	}
 	
 	// -- Lighting setup --
-    float3 camPos = u_cameraPosition.xyz;
+	float3 camPos = u_cameraPosition.xyz;
 	float3 V = normalize(camPos - input.worldPos);
 	float3 Lo = float3(0.0, 0.0, 0.0);
 
@@ -259,9 +259,9 @@ PixelOutput PSMain(PixelInput input) {
 
 	if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0) {
 		float currentDepth = projCoords.z;
-		float3 L_dir = normalize(u_directionalLights[0].direction.xyz);
+        float3 L_dir = normalize(u_directionalLight.direction.xyz);
 //		float bias = max(0.001 * (1.0 - dot(N, L_dir)), 0.0001);
-        float bias = max(0.0002 * (1.0 - dot(N, L_dir)), 0.00005);
+		float bias = max(0.0002 * (1.0 - dot(N, L_dir)), 0.00005);
 
 		float shadowSum = 0.0;
 		float2 texelSize = 1.0 / 2048.0;
@@ -276,17 +276,36 @@ PixelOutput PSMain(PixelInput input) {
 	}
 
 	// -- Directional light --
-	for (int i = 0; i < u_directionalLightsCount; ++i) {
-		float3 L_dir = normalize(u_directionalLights[i].direction.xyz);
-		float3 radiance_dir = u_directionalLights[i].color.rgb * 2.0;
+	if (u_hasDirectionalLight > 0) {
+		float3 L_dir = normalize(u_directionalLight.direction.xyz);
+		float3 radiance_dir = u_directionalLight.color.rgb * 2.0;
 		float3 lightCalc = CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
 
-		if (i == 0) {
-			Lo += lightCalc * (1.0 - shadow);
-		} else {
-			Lo += lightCalc;
+		// -- Shadow Mapping calculation --
+		float shadow = 0.0f;
+		float4 fragPosLightSpace = mul(float4(input.worldPos, 1.0), u_lightSpaceMatrix);
+
+		float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+		projCoords.x = projCoords.x * 0.5 + 0.5;
+		projCoords.y = -projCoords.y * 0.5 + 0.5;
+
+		if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0) {
+			float currentDepth = projCoords.z;
+			float bias = max(0.0002 * (1.0 - dot(N, L_dir)), 0.00005);
+
+			float shadowSum = 0.0;
+			float2 texelSize = 1.0 / 2048.0;
+
+			for (int x = -1; x <= 1; ++x) {
+				for (int y = -1; y <= 1; ++y) {
+					float pcfDepth = g_Textures[NonUniformResourceIndex(u_shadowMapIndex)].SampleLevel(s_sampler, projCoords.xy + float2(x, y) * texelSize, 0).r;
+					shadowSum += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
+				}
+			}
+			shadow = shadowSum / 9.0;
 		}
 
+		Lo += lightCalc * (1.0 - shadow);
 	}
 
 	// -- Point light --

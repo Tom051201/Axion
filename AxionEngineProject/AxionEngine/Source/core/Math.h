@@ -3,6 +3,8 @@
 #include <cmath>
 #include <utility>
 #include <cstring>
+#include <algorithm>
+#include <cfloat>
 #include <DirectXMath.h>
 
 namespace Axion {
@@ -539,5 +541,94 @@ namespace Axion {
 	inline Mat4 Quat::toMat4() const {
 		return Mat4::fromXM(DirectX::XMMatrixRotationQuaternion(toXM()));
 	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	///// AABB & Frustum ///////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+
+	struct AABB {
+		Vec3 min = { FLT_MAX, FLT_MAX, FLT_MAX };
+		Vec3 max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+		AABB() = default;
+		AABB(const Vec3& min, const Vec3& max) : min(min), max(max) {}
+
+		AABB transform(const Mat4& transformMatrix) const {
+			Vec3 corners[8] = {
+				{ min.x, min.y, min.z }, { max.x, min.y, min.z },
+				{ min.x, max.y, min.z }, { max.x, max.y, min.z },
+				{ min.x, min.y, max.z }, { max.x, min.y, max.z },
+				{ min.x, max.y, max.z }, { max.x, max.y, max.z }
+			};
+
+			AABB transformed;
+			for (int i = 0; i < 8; i++) {
+				Vec3 p = (transformMatrix * Vec4(corners[i].x, corners[i].y, corners[i].z, 1.0f)).xyz();
+
+				transformed.min.x = std::min(transformed.min.x, p.x);
+				transformed.min.y = std::min(transformed.min.y, p.y);
+				transformed.min.z = std::min(transformed.min.z, p.z);
+
+				transformed.max.x = std::max(transformed.max.x, p.x);
+				transformed.max.y = std::max(transformed.max.y, p.y);
+				transformed.max.z = std::max(transformed.max.z, p.z);
+			}
+			return transformed;
+		}
+	};
+
+	struct Plane {
+		Vec3 normal;
+		float distance;
+
+		void normalize() {
+			float length = normal.length();
+			normal /= length;
+			distance /= length;
+		}
+
+		float getSignedDistance(const Vec3& point) const {
+			return normal.dot(point) + distance;
+		}
+	};
+
+	struct Frustum {
+		Plane planes[6];
+
+		Frustum(const Mat4& viewProjection) {
+			const float* m = viewProjection.data();
+
+			planes[0].normal = { m[3] + m[0], m[7] + m[4], m[11] + m[8] };
+			planes[0].distance = m[15] + m[12];
+			planes[1].normal = { m[3] - m[0], m[7] - m[4], m[11] - m[8] };
+			planes[1].distance = m[15] - m[12];
+			planes[2].normal = { m[3] + m[1], m[7] + m[5], m[11] + m[9] };
+			planes[2].distance = m[15] + m[13];
+			planes[3].normal = { m[3] - m[1], m[7] - m[5], m[11] - m[9] };
+			planes[3].distance = m[15] - m[13];
+			planes[4].normal = { m[2], m[6], m[10] };
+			planes[4].distance = m[14];
+			planes[5].normal = { m[3] - m[2], m[7] - m[6], m[11] - m[10] };
+			planes[5].distance = m[15] - m[14];
+
+			for (int i = 0; i < 6; i++) {
+				planes[i].normalize();
+			}
+		}
+
+		bool contains(const AABB& aabb) const {
+			for (int i = 0; i < 6; i++) {
+				Vec3 positiveVertex = aabb.min;
+				if (planes[i].normal.x >= 0) positiveVertex.x = aabb.max.x;
+				if (planes[i].normal.y >= 0) positiveVertex.y = aabb.max.y;
+				if (planes[i].normal.z >= 0) positiveVertex.z = aabb.max.z;
+
+				if (planes[i].getSignedDistance(positiveVertex) < 0) {
+					return false;
+				}
+			}
+			return true;
+		}
+	};
 
 }

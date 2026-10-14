@@ -5,6 +5,7 @@
 
 #include "AxionEngine/Source/core/Ref.h"
 #include "AxionEngine/Source/core/Core.h"
+#include "AxionEngine/Source/core/Math.h"
 #include "AxionEngine/Source/core/AssetHandle.h"
 #include "AxionEngine/Source/graphics/Buffers.h"
 
@@ -40,6 +41,7 @@ namespace Axion {
 		const std::vector<Vertex>& getVertices() const { return m_meshData.vertices; }
 		const std::vector<uint32_t>& getIndices() const { return m_meshData.indices; }
 
+		const AABB& getBoundingBox() const { return m_boundingBox; }
 
 		static Ref<Mesh> create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 		static Ref<Mesh> create(const MeshData& meshData);
@@ -52,6 +54,9 @@ namespace Axion {
 		Ref<IndexBuffer> m_indexBuffer;
 		std::vector<Submesh> m_submeshes;
 		MeshData m_meshData;
+		AABB m_boundingBox;
+
+		void calculateBounds();
 
 	};
 

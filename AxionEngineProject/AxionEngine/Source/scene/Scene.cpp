@@ -211,13 +211,17 @@ namespace Axion {
 		LightingData lightData;
 		lightData.ambientColor = m_sceneAmbientColor;
 
-		// -- Directional lights --
+		// -- Primary Directional light --
+		lightData.hasDirectionalLight = false;
 		auto dirLightView = m_registry.view<DirectionalLightComponent, TransformComponent>();
 		for (auto [entity, dirLight, transform] : dirLightView.each()) {
-			if (lightData.directionalLights.size() >= MAX_DIR_LIGHTS) break;
-			Mat4 worldTransform = getWorldTransform({ entity, this });
-			Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-			lightData.directionalLights.push_back({ { -forward.x, -forward.y, -forward.z }, dirLight.color });
+			if (dirLight.isPrimary) {
+				Mat4 worldTransform = getWorldTransform({ entity, this });
+				Vec4 forward = worldTransform * Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+				lightData.directionalLight = { { -forward.x, -forward.y, -forward.z }, dirLight.color };
+				lightData.hasDirectionalLight = true;
+				break;
+			}
 		}
 
 		// -- Point lights --
@@ -239,8 +243,13 @@ namespace Axion {
 				spotLight.color * spotLight.intensity, spotLight.range,
 				std::cos(spotLight.innerConeAngle * 3.14159265f / 180.0f),
 				std::cos(spotLight.outerConeAngle * 3.14159265f / 180.0f)
-				});
+			});
 		}
+
+		// ----- Create Camera Frustums for Culling -----
+		Frustum cameraFrustum(cam.getViewProjectionMatrix());
+		Frustum lightFrustum(Renderer::getLightViewMatrix() * Renderer::getLightProjectionMatrix());
+		bool hasDirLight = lightData.hasDirectionalLight;
 
 		// ----- Spatial Audio Listener -----
 		DirectX::XMFLOAT4X4 m;
@@ -256,10 +265,11 @@ namespace Axion {
 				Ref<AudioSource> source = audio.audio;
 				if (source) source->setPosition(transform.position);
 			}
-			});
+		});
 
 		// ----- Pre-Calculate Batches -----
-		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>>> renderBatches;
+		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>>> mainRenderBatches;
+		std::unordered_map<AssetHandle<Mesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<ObjectBuffer>>>> shadowRenderBatches;
 
 		auto meshRenderView = m_registry.view<MeshComponent, TransformComponent, MaterialComponent>();
 		for (auto [entity, meshComp, transform, materialComp] : meshRenderView.each()) {
@@ -268,6 +278,15 @@ namespace Axion {
 				if (!mesh) continue;
 
 				Mat4 worldTransform = getWorldTransform({ entity, this });
+				AABB worldAABB = mesh->getBoundingBox().transform(worldTransform);
+
+				bool inMain = cameraFrustum.contains(worldAABB);
+				bool inShadow = hasDirLight ? lightFrustum.contains(worldAABB) : false;
+
+				if (!inMain && !inShadow) {
+					continue;
+				}
+
 				ObjectBuffer objData;
 				objData.modelMatrix = worldTransform.transposed().toXM();
 				objData.entityID = (int)entity;
@@ -288,13 +307,15 @@ namespace Axion {
 					objData.occlusionIndex = matInstance->getTextureBindlessIndex(TextureSlot::Occlusion);
 					objData.emissiveIndex = matInstance->getTextureBindlessIndex(TextureSlot::Emissive);
 
-					renderBatches[meshComp.handle][i][matHandle].push_back(objData);
+					if (inMain) mainRenderBatches[meshComp.handle][i][matHandle].push_back(objData);
+					if (inShadow) shadowRenderBatches[meshComp.handle][i][matHandle].push_back(objData);
 				}
 			}
 		}
 
 		// ----- Pre-Calculate Skeletal Batches -----
-		std::unordered_map<AssetHandle<SkeletalMesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<SkeletalObjectBuffer>>>> skeletalRenderBatches;
+		std::unordered_map<AssetHandle<SkeletalMesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<SkeletalObjectBuffer>>>> mainSkeletalBatches;
+		std::unordered_map<AssetHandle<SkeletalMesh>, std::unordered_map<uint32_t, std::unordered_map<AssetHandle<Material>, std::vector<SkeletalObjectBuffer>>>> shadowSkeletalBatches;
 
 		auto skelRenderView = m_registry.view<SkeletalMeshComponent, TransformComponent, MaterialComponent>();
 		for (auto [entity, skelComp, transform, materialComp] : skelRenderView.each()) {
@@ -303,6 +324,17 @@ namespace Axion {
 				if (!mesh) continue;
 
 				Mat4 worldTransform = getWorldTransform({ entity, this });
+
+				Mat4 expandedTransform = worldTransform * Mat4::scale(Vec3(1.5f, 1.5f, 1.5f));
+				AABB worldAABB = mesh->getBoundingBox().transform(expandedTransform);
+
+				bool inMain = cameraFrustum.contains(worldAABB);
+				bool inShadow = hasDirLight ? lightFrustum.contains(worldAABB) : false;
+
+				if (!inMain && !inShadow) {
+					continue;
+				}
+
 				SkeletalObjectBuffer objData;
 				objData.modelMatrix = worldTransform.transposed().toFloat4x4();
 				objData.entityID = (int)entity;
@@ -322,7 +354,6 @@ namespace Axion {
 					for (size_t i = 0; i < boneCount; ++i) {
 						DirectX::XMStoreFloat4x4(&objData.boneTransforms[i], DirectX::XMMatrixTranspose(bindPose[i]));
 					}
-
 					for (size_t i = boneCount; i < 100; ++i) {
 						DirectX::XMStoreFloat4x4(&objData.boneTransforms[i], DirectX::XMMatrixIdentity());
 					}
@@ -344,7 +375,8 @@ namespace Axion {
 					objData.occlusionIndex = matInstance->getTextureBindlessIndex(TextureSlot::Occlusion);
 					objData.emissiveIndex = matInstance->getTextureBindlessIndex(TextureSlot::Emissive);
 
-					skeletalRenderBatches[skelComp.handle][i][matHandle].push_back(objData);
+					if (inMain) mainSkeletalBatches[skelComp.handle][i][matHandle].push_back(objData);
+					if (inShadow) shadowSkeletalBatches[skelComp.handle][i][matHandle].push_back(objData);
 				}
 			}
 		}
@@ -378,7 +410,7 @@ namespace Axion {
 		RGResourceID hdrTargetID = m_renderGraph.createResource("HDR_Target", hdrDesc);
 
 		// -- Shadow Map Pass --
-		if (lightData.directionalLights.size() > 0) {
+		if (lightData.hasDirectionalLight) {
 			m_renderGraph.addPass("DirectionalShadows",
 				[&](RGPassBuilder& builder) {},
 				[&](RenderContext* renderContext) {
@@ -388,7 +420,7 @@ namespace Axion {
 					Renderer3D::beginScene(lightProj, lightView.inverse());
 					GraphicsContext::get()->bindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
 
-					for (auto& [meshHandle, submeshMap] : renderBatches) {
+					for (auto& [meshHandle, submeshMap] : shadowRenderBatches) {
 						Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 						if (!mesh) continue;
 						for (auto& [submeshIndex, materialMap] : submeshMap) {
@@ -397,7 +429,7 @@ namespace Axion {
 							Renderer3D::drawMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
 						}
 					}
-					for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
+					for (auto& [meshHandle, submeshMap] : shadowSkeletalBatches) {
 						Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
 						if (!mesh) continue;
 						for (auto& [submeshIndex, materialMap] : submeshMap) {
@@ -430,7 +462,7 @@ namespace Axion {
 				}
 
 				// -- Draw Static Meshes --
-				for (auto& [meshHandle, submeshMap] : renderBatches) {
+				for (auto& [meshHandle, submeshMap] : mainRenderBatches) {
 					Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
 					if (!mesh) continue;
 
@@ -444,7 +476,7 @@ namespace Axion {
 				}
 
 				// -- Draw Skeletal Meshes --
-				for (auto& [meshHandle, submeshMap] : skeletalRenderBatches) {
+				for (auto& [meshHandle, submeshMap] : mainSkeletalBatches) {
 					Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
 					if (!mesh) continue;
 
@@ -552,7 +584,7 @@ namespace Axion {
 			}
 		}
 
-		// ----- Render 2D sprites --
+		// ----- Render 2D sprites -----
 		auto spriteView = m_registry.view<SpriteComponent, TransformComponent>();
 		for (auto [entity, sprite, transform] : spriteView.each()) {
 
