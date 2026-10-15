@@ -78,6 +78,24 @@ namespace Axion {
 		uint32_t getTotalIndexCount2D() const { return quadCount2D * 6; }
 	};
 
+	enum class GraphicsQuality {
+		Off = 0,
+		Low = 1,
+		Medium = 2,
+		High = 3,
+		Ultra = 4
+	};
+
+	struct RendererConfig {
+		GraphicsQuality shadowQuality = GraphicsQuality::High;
+		GraphicsQuality bloomQuality = GraphicsQuality::Medium;
+		GraphicsQuality antiAliasing = GraphicsQuality::High;
+
+		float bloomThreshold = 1.0f;
+		float bloomBlurRadius = 3.0f;
+		float bloomIntensity = 1.0f;
+	};
+
 	class Renderer {
 	public:
 
@@ -112,6 +130,9 @@ namespace Axion {
 		static RendererStats& getStats();
 		static void resetStats();
 
+		static RendererConfig& getConfig();
+		static void setConfig(const RendererConfig& config);
+
 		inline static void setAPI(RendererAPI api) { s_api = api; }
 		inline static RendererAPI getAPI() { return s_api; }
 
@@ -120,6 +141,7 @@ namespace Axion {
 		static RendererAPI s_api;
 
 		static RendererStats s_stats;
+		static RendererConfig s_config;
 		static FrameTimer s_frameTimer;
 		static double s_lastFrameTimeMs;
 		static std::function<void(Event&)> s_eventCallback;

@@ -28,7 +28,7 @@ namespace Axion {
 		float threshold;
 		Vec2 texelSize;
 		float blurRadius;
-		float padding;
+		float intensity;
 	};
 
 	Scene::Scene() {
@@ -227,6 +227,8 @@ namespace Axion {
 	}
 
 	void Scene::onUpdate(Timestep ts, const Camera& cam) {
+		RendererConfig& config = Renderer::getConfig();
+
 		// ----- Setup Scene Lighting -----
 		LightingData lightData;
 		lightData.ambientColor = m_sceneAmbientColor;
@@ -440,7 +442,7 @@ namespace Axion {
 		RGResourceID hdrTargetID = m_renderGraph.createResource("HDR_Target", hdrDesc);
 
 		// -- Shadow Map Pass --
-		if (lightData.hasDirectionalLight) {
+		if (lightData.hasDirectionalLight && config.shadowQuality != GraphicsQuality::Off) {
 			m_renderGraph.addPass("DirectionalShadows",
 				[&](RGPassBuilder& builder) {},
 				[&](RenderContext* renderContext) {
@@ -531,102 +533,111 @@ namespace Axion {
 		);
 
 		// ----- Compute Pass -----
-		const int BLOOM_CASCADES = 3;
-		RGResourceID bloomTexA[BLOOM_CASCADES];
-		RGResourceID bloomTexB[BLOOM_CASCADES];
-		uint32_t bWidth[BLOOM_CASCADES];
-		uint32_t bHeight[BLOOM_CASCADES];
+		if (config.bloomQuality != GraphicsQuality::Off) {
+			int activeCascades = 0;
+			switch (config.bloomQuality) {
+				case GraphicsQuality::Low:    activeCascades = 2; break; // Tight, cheap glow
+				case GraphicsQuality::Medium: activeCascades = 3; break; // Standard halo
+				case GraphicsQuality::High:   activeCascades = 4; break; // Wide, cinematic aura
+				case GraphicsQuality::Ultra:  activeCascades = 5; break; // Screen-filling bleed
+			}
 
-		uint32_t currentW = vpWidth;
-		uint32_t currentH = vpHeight;
+			const int MAX_CASCADES = 5;
+			RGResourceID bloomTexA[MAX_CASCADES];
+			RGResourceID bloomTexB[MAX_CASCADES];
+			uint32_t bWidth[MAX_CASCADES];
+			uint32_t bHeight[MAX_CASCADES];
 
-		for (int i = 0; i < BLOOM_CASCADES; i++) {
-			currentW = std::max(1u, currentW / 2);
-			currentH = std::max(1u, currentH / 2);
-			bWidth[i] = currentW;
-			bHeight[i] = currentH;
+			uint32_t currentW = vpWidth;
+			uint32_t currentH = vpHeight;
 
-			RGTextureDesc bloomDesc = {};
-			bloomDesc.width = currentW;
-			bloomDesc.height = currentH;
-			bloomDesc.format = ColorFormat::RGBA16F;
-			bloomDesc.depthFormat = DepthStencilFormat::None;
+			for (int i = 0; i < activeCascades; i++) {
+				currentW = std::max(1u, currentW / 2);
+				currentH = std::max(1u, currentH / 2);
+				bWidth[i] = currentW;
+				bHeight[i] = currentH;
 
-			bloomTexA[i] = m_renderGraph.createResource("BloomA_Mip" + std::to_string(i), bloomDesc);
-			bloomTexB[i] = m_renderGraph.createResource("BloomB_Mip" + std::to_string(i), bloomDesc);
-		}
+				RGTextureDesc bloomDesc = {};
+				bloomDesc.width = currentW;
+				bloomDesc.height = currentH;
+				bloomDesc.format = ColorFormat::RGBA16F;
+				bloomDesc.depthFormat = DepthStencilFormat::None;
 
-		m_renderGraph.addPass("BloomCompute",
-			[&](RGPassBuilder& builder) {
-				builder.read(hdrTargetID, ResourceState::PixelShaderResource);
-			},
-			[&](RenderContext* renderContext) {
-				auto hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
+				bloomTexA[i] = m_renderGraph.createResource("BloomA_Mip" + std::to_string(i), bloomDesc);
+				bloomTexB[i] = m_renderGraph.createResource("BloomB_Mip" + std::to_string(i), bloomDesc);
+			}
 
-				FrameBuffer* fbA[BLOOM_CASCADES];
-				FrameBuffer* fbB[BLOOM_CASCADES];
-				for (int i = 0; i < BLOOM_CASCADES; i++) {
-					fbA[i] = m_renderGraph.getPhysicalFramebuffer(bloomTexA[i]);
-					fbB[i] = m_renderGraph.getPhysicalFramebuffer(bloomTexB[i]);
-					fbA[i]->transitionToUAV(renderContext);
-					fbB[i]->transitionToUAV(renderContext);
-				}
+			m_renderGraph.addPass("BloomCompute",
+				[&](RGPassBuilder& builder) {
+					builder.read(hdrTargetID, ResourceState::PixelShaderResource);
+				},
+				[&](RenderContext* renderContext) {
+					auto hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
 
-				EngineAssets::getBloomPipeline()->bind(renderContext);
-				renderContext->bindComputeGlobalTextureTable((uint32_t)RootSlot::Textures);
-				renderContext->bindComputeGlobalTextureTable((uint32_t)RootSlot::UAVs);
-
-				BloomData bData;
-				bData.threshold = 1.0f;
-				bData.blurRadius = 3.0f;
-				uint32_t cbIndex = 0;
-
-				auto dispatch = [&](int mode, FrameBuffer* src, FrameBuffer* dst, uint32_t w, uint32_t h) {
-					bData.mode = mode;
-					bData.srcIndex = src->getGpuSrvHeapIndex();
-					bData.dstIndex = dst->getGpuUavHeapIndex();
-					bData.texelSize = { 1.0f / (float)w, 1.0f / (float)h };
-
-					m_bloomCBs[cbIndex]->update(&bData, sizeof(BloomData));
-					m_bloomCBs[cbIndex]->bindCompute(renderContext, 1);
-
-					cbIndex++;
-
-					uint32_t groupX = (w + 7) / 8;
-					uint32_t groupY = (h + 7) / 8;
-
-					renderContext->dispatchCompute(groupX, groupY, 1);
-					renderContext->insertUAVBarrier();
-				};
-
-				dispatch(0, hdrFb, fbA[0], bWidth[0], bHeight[0]);
-
-				for (int i = 0; i < BLOOM_CASCADES; i++) {
-					if (i > 0) {
-						bData.threshold = 0.0f;
-						fbA[i - 1]->transitionToSRV(renderContext);
-						dispatch(0, fbA[i - 1], fbA[i], bWidth[i], bHeight[i]);
+					FrameBuffer* fbA[MAX_CASCADES];
+					FrameBuffer* fbB[MAX_CASCADES];
+					for (int i = 0; i < activeCascades; i++) {
+						fbA[i] = m_renderGraph.getPhysicalFramebuffer(bloomTexA[i]);
+						fbB[i] = m_renderGraph.getPhysicalFramebuffer(bloomTexB[i]);
+						fbA[i]->transitionToUAV(renderContext);
+						fbB[i]->transitionToUAV(renderContext);
 					}
 
-					// -- Blur Horizontal --
-					fbA[i]->transitionToSRV(renderContext);
-					dispatch(1, fbA[i], fbB[i], bWidth[i], bHeight[i]);
+					EngineAssets::getBloomPipeline()->bind(renderContext);
+					renderContext->bindComputeGlobalTextureTable((uint32_t)RootSlot::Textures);
+					renderContext->bindComputeGlobalTextureTable((uint32_t)RootSlot::UAVs);
 
-					// -- Blur Vertical --
-					fbB[i]->transitionToSRV(renderContext);
-					fbA[i]->transitionToUAV(renderContext);
-					dispatch(2, fbB[i], fbA[i], bWidth[i], bHeight[i]);
+					BloomData bData;
+					bData.threshold = config.bloomThreshold;
+					bData.blurRadius = config.bloomBlurRadius;
+					bData.intensity = config.bloomIntensity / (float)activeCascades;
+
+					uint32_t cbIndex = 0;
+
+					auto dispatch = [&](int mode, FrameBuffer* src, FrameBuffer* dst, uint32_t w, uint32_t h) {
+						bData.mode = mode;
+						bData.srcIndex = src->getGpuSrvHeapIndex();
+						bData.dstIndex = dst->getGpuUavHeapIndex();
+						bData.texelSize = { 1.0f / (float)w, 1.0f / (float)h };
+
+						m_bloomCBs[cbIndex]->update(&bData, sizeof(BloomData));
+						m_bloomCBs[cbIndex]->bindCompute(renderContext, 1);
+						cbIndex++;
+
+						uint32_t groupX = (w + 7) / 8;
+						uint32_t groupY = (h + 7) / 8;
+
+						renderContext->dispatchCompute(groupX, groupY, 1);
+						renderContext->insertUAVBarrier();
+					};
+
+					dispatch(0, hdrFb, fbA[0], bWidth[0], bHeight[0]);
+
+					for (int i = 0; i < activeCascades; i++) {
+						if (i > 0) {
+							bData.threshold = 0.0f;
+							fbA[i - 1]->transitionToSRV(renderContext);
+							dispatch(0, fbA[i - 1], fbA[i], bWidth[i], bHeight[i]);
+						}
+
+						fbA[i]->transitionToSRV(renderContext);
+						dispatch(1, fbA[i], fbB[i], bWidth[i], bHeight[i]);
+
+						fbB[i]->transitionToSRV(renderContext);
+						fbA[i]->transitionToUAV(renderContext);
+						dispatch(2, fbB[i], fbA[i], bWidth[i], bHeight[i]);
+					}
+
+					hdrFb->transitionToUAV(renderContext);
+					for (int i = 0; i < activeCascades; i++) {
+						fbA[i]->transitionToSRV(renderContext);
+						dispatch(3, fbA[i], hdrFb, vpWidth, vpHeight);
+					}
+
+					hdrFb->transitionToSRV(renderContext);
 				}
-
-				hdrFb->transitionToUAV(renderContext);
-				for (int i = 0; i < BLOOM_CASCADES; i++) {
-					fbA[i]->transitionToSRV(renderContext);
-					dispatch(3, fbA[i], hdrFb, vpWidth, vpHeight);
-				}
-
-				hdrFb->transitionToSRV(renderContext);
-			}
-		);
+			);
+		}
 
 		// -- 5. ToneMapping Pass (HDR -> SDR Viewport) --
 		if (mainTargetID != RG_INVALID_RESOURCE) {

@@ -13,6 +13,7 @@
 namespace Axion {
 
 	RendererStats Renderer::s_stats;
+	RendererConfig Renderer::s_config;
 	FrameTimer Renderer::s_frameTimer;
 	double Renderer::s_lastFrameTimeMs = 0.0;
 	std::function<void(Event&)> Renderer::s_eventCallback;
@@ -268,5 +269,8 @@ namespace Axion {
 		mesh->getIndexBuffer()->bind(renderContext);
 		RenderCommand::drawIndexed(renderContext, mesh->getVertexBuffer(), mesh->getIndexBuffer());
 	}
+
+	RendererConfig& Renderer::getConfig() { return s_config; }
+	void Renderer::setConfig(const RendererConfig& config) { s_config = config; }
 
 }
