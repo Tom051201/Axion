@@ -638,7 +638,7 @@ namespace Axion {
 				}
 			
 				// -- Draw Overlay --
-				m_frameBuffer->bind(renderContext);
+				m_frameBuffer->bind(renderContext, true, false);
 				m_frameBuffer->clearDepth(renderContext);
 				drawOverlay();
 

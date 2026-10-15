@@ -316,15 +316,21 @@ namespace Axion {
 	void DX12Context::createGlobalRootSignature() { // TODO: maybe move this creation to a separate file
 		auto* device = m_device.getDevice();
 
-		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(5);
+		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(6);
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
 		rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
 		rootParameters[2].InitAsShaderResourceView(0, 1, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
 		rootParameters[3].InitAsShaderResourceView(1, 1, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
 
-		CD3DX12_DESCRIPTOR_RANGE1 srvRange;
-		srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, (UINT)-1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-		rootParameters[4].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_ALL);
+		// --- Bindless Texture2D ---
+		CD3DX12_DESCRIPTOR_RANGE1 range2D;
+		range2D.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, (UINT)-1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // register(t0, space0)
+		rootParameters[4].InitAsDescriptorTable(1, &range2D, D3D12_SHADER_VISIBILITY_ALL);
+
+		// --- Bindless TextureCube ---
+		CD3DX12_DESCRIPTOR_RANGE1 rangeCube;
+		rangeCube.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, (UINT)-1, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // register(t0, space2)
+		rootParameters[5].InitAsDescriptorTable(1, &rangeCube, D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
 		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;

@@ -29,7 +29,8 @@ namespace Axion {
 		virtual void release() = 0;
 		virtual void resize(uint32_t width, uint32_t height) = 0;
 
-		virtual void bind(RenderContext* renderContext, bool transitionBarrier = true) const = 0;
+		virtual void bind(RenderContext* renderContext, bool transitionBarrier = true, bool bindEntityID = true) const = 0;
+		virtual void bindWithTargetEntityID(RenderContext* renderContext, FrameBuffer* targetIdBuffer, bool transitionBarrier = true) const = 0;
 		virtual void unbind(RenderContext* renderContext, bool transitionBarrier = true) const = 0;
 
 		virtual void clear(RenderContext* renderContext) = 0;

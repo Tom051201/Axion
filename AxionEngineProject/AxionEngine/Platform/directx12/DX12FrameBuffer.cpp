@@ -185,7 +185,7 @@ namespace Axion {
 		#endif
 	}
 
-	void DX12FrameBuffer::bind(RenderContext* renderContext, bool transitionBarrier) const {
+	void DX12FrameBuffer::bind(RenderContext* renderContext, bool transitionBarrier, bool bindEntityID) const {
 		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
 		
 		// ----- Transition barrier -----
@@ -203,7 +203,7 @@ namespace Axion {
 		rtvHandles[0] = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
 		uint32_t numTargets = 1;
 
-		if (m_specification.useEntityIDAttachment) {
+		if (m_specification.useEntityIDAttachment && bindEntityID) {
 			rtvHandles[1] = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
 			numTargets = 2;
 		}
@@ -224,6 +224,53 @@ namespace Axion {
 		D3D12_RECT sc{};
 		sc.left = 0;
 		sc.top = 0;
+		sc.right = static_cast<LONG>(m_specification.width);
+		sc.bottom = static_cast<LONG>(m_specification.height);
+		cmdList->RSSetScissorRects(1, &sc);
+	}
+
+	void DX12FrameBuffer::bindWithTargetEntityID(RenderContext* renderContext, FrameBuffer* targetIdBuffer, bool transitionBarrier) const {
+		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
+		auto* targetDX12 = static_cast<DX12FrameBuffer*>(targetIdBuffer);
+
+		if (!targetDX12->getSpecification().useEntityIDAttachment) {
+			bind(renderContext, transitionBarrier);
+			return;
+		}
+
+		// -- Barrier for color buffer --
+		if (transitionBarrier && m_currentState != D3D12_RESOURCE_STATE_RENDER_TARGET) {
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+				m_colorResource.Get(), m_currentState, D3D12_RESOURCE_STATE_RENDER_TARGET
+			);
+			cmdList->ResourceBarrier(1, &barrier);
+			m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		}
+
+		// -- Barrier for target's entity ID buffer --
+		if (targetDX12->m_entityIdState != D3D12_RESOURCE_STATE_RENDER_TARGET) {
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+				targetDX12->m_entityIdResource.Get(), targetDX12->m_entityIdState, D3D12_RESOURCE_STATE_RENDER_TARGET
+			);
+			cmdList->ResourceBarrier(1, &barrier);
+			targetDX12->m_entityIdState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		}
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
+		rtvHandles[0] = m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex);
+		rtvHandles[1] = targetDX12->m_context->getRtvHeapWrapper().getCpuHandle(targetDX12->m_entityIdRtvHeapIndex);
+
+		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
+		cmdList->OMSetRenderTargets(2, rtvHandles, FALSE, &dsvHandle);
+
+		// -- Set viewport and scissor --
+		D3D12_VIEWPORT vp{};
+		vp.Width = static_cast<float>(m_specification.width);
+		vp.Height = static_cast<float>(m_specification.height);
+		vp.MaxDepth = 1.0f;
+		cmdList->RSSetViewports(1, &vp);
+
+		D3D12_RECT sc{};
 		sc.right = static_cast<LONG>(m_specification.width);
 		sc.bottom = static_cast<LONG>(m_specification.height);
 		cmdList->RSSetScissorRects(1, &sc);
@@ -260,12 +307,12 @@ namespace Axion {
 		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		// -- Clear Entity ID Attachment --
-		if (m_specification.useEntityIDAttachment) {
-			auto idHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
-			int clearID = -1;
-			float idClearColor[4] = { reinterpret_cast<float&>(clearID), 0.0f, 0.0f, 0.0f };
-			cmdList->ClearRenderTargetView(idHandle, idClearColor, 0, nullptr);
-		}
+//		if (m_specification.useEntityIDAttachment) {
+//			auto idHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
+//			int clearID = -1;
+//			float idClearColor[4] = { reinterpret_cast<float&>(clearID), 0.0f, 0.0f, 0.0f };
+//			cmdList->ClearRenderTargetView(idHandle, idClearColor, 0, nullptr);
+//		}
 	}
 
 	void DX12FrameBuffer::clear(RenderContext* renderContext) {

@@ -38,7 +38,7 @@ namespace Axion {
 
 		pipeline->bind(renderContext);
 
-		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::Textures);
+		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::TextureCubes);
 		Renderer::getSceneDataBuffer()->bind(renderContext, (uint32_t)RootSlot::Camera, Renderer::getSceneDataOffset());
 
 		int skyboxData[4] = { (int)texture->getBindlessIndex(), 0, 0, 0 };

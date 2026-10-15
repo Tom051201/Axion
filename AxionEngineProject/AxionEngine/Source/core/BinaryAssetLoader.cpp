@@ -244,7 +244,12 @@ namespace Axion {
 			in.read(reinterpret_cast<char*>(&header), sizeof(PipelineBinaryHeader));
 
 			auto spec = std::make_shared<PipelineSpecification>();
-			spec->colorFormat = static_cast<ColorFormat>(header.colorFormat);
+			spec->targetFormats.clear();
+			for (uint32_t i = 0; i < header.numRenderTargets; i++) {
+				uint32_t fmt;
+				in.read(reinterpret_cast<char*>(&fmt), sizeof(uint32_t));
+				spec->targetFormats.push_back(static_cast<ColorFormat>(fmt));
+			}
 			spec->depthStencilFormat = static_cast<DepthStencilFormat>(header.depthStencilFormat);
 			spec->depthTest = header.depthTest != 0;
 			spec->depthWrite = header.depthWrite != 0;
@@ -253,7 +258,6 @@ namespace Axion {
 			spec->sampleCount = header.sampleCount;
 			spec->cullMode = static_cast<CullMode>(header.cullMode);
 			spec->topology = static_cast<PrimitiveTopology>(header.topology);
-			spec->numRenderTargets = header.numRenderTargets;
 
 			std::vector<BufferElement> elements;
 			elements.reserve(header.bufferElementCount);

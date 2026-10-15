@@ -370,8 +370,18 @@ namespace Axion {
 			UUID shaderUUID = specData["Shader"].as<UUID>();
 
 			auto spec = std::make_shared<PipelineSpecification>();
-			spec->numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
-			spec->colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
+			YAML::Node formatsNode = specData["TargetFormats"];
+			if (formatsNode && formatsNode.IsSequence()) {
+				spec->targetFormats.clear();
+				for (const auto& formatNode : formatsNode) {
+					spec->targetFormats.push_back(EnumUtils::colorFormatFromString(formatNode.as<std::string>()));
+				}
+			}
+			else {
+				if (specData["ColorFormat"]) {
+					spec->targetFormats = { EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>()) };
+				}
+			}
 			spec->depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
 			spec->depthTest = specData["DepthTest"].as<bool>();
 			spec->depthWrite = specData["DepthWrite"].as<bool>();

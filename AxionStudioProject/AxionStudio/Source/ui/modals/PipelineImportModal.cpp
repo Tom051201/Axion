@@ -38,12 +38,12 @@ namespace Axion {
 	void PipelineImportModal::resetInputs() {
 		m_name.clear();
 		m_shaderPath.clear();
-
 		m_outputPath.clear();
 		std::filesystem::path pipDir = ProjectManager::getProject()->getAssetsPath() / "Pipelines";
 		if (std::filesystem::exists(pipDir)) m_outputPath = pipDir.generic_string();
 
-		m_colorFormatIndex = 1;
+		m_targetFormatIndices = { 1 };
+		m_renderTargetsCount = 1;
 		m_depthFormatIndex = 2;
 		m_depthTest = true;
 		m_depthWrite = true;
@@ -70,8 +70,25 @@ namespace Axion {
 		});
 
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Name", nameInput) });
-		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = {0.0f, EditorTheme::SPACING_SMALL} }) });
-		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Color Format", makeCombo(m_colorFormatIndex, m_colorFormatsNames)) });
+		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSpacer>({.size = { 0.0f, EditorTheme::SPACING_SMALL } }) });
+
+		auto rtInput = Silica::MakeWidget<Silica::SBox>({
+			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
+				.initialValue = m_renderTargetsCount,
+				.onValueChanged = [this](int val) {
+					m_renderTargetsCount = std::max(0, val);
+					m_targetFormatIndices.resize(m_renderTargetsCount, 1);
+					rebuildUI();
+				}
+			})
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Render Targets", rtInput) });
+
+		for (int i = 0; i < m_renderTargetsCount; i++) {
+			std::string label = "Color Format " + std::to_string(i);
+			contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow(label, makeCombo(m_targetFormatIndices[i], m_colorFormatsNames)) });
+		}
+
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Depth Stencil", makeCombo(m_depthFormatIndex, m_depthFormatsNames)) });
 
 		auto depthTestCheck = Silica::MakeWidget<Silica::SCheckBox>({ .initialCheck = m_depthTest, .onCheckChanged = [this](bool val) { m_depthTest = val; } });
@@ -93,14 +110,6 @@ namespace Axion {
 
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Cull Mode", makeCombo(m_cullModeIndex, m_cullModesNames)) });
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Topology", makeCombo(m_topologyIndex, m_topologiesNames)) });
-
-		auto rtInput = Silica::MakeWidget<Silica::SBox>({
-			.child = Silica::MakeWidget<Silica::SInputFieldInt>({
-				.initialValue = m_renderTargetsCount,
-				.onValueChanged = [this](int val) { m_renderTargetsCount = std::max(0, val); }
-			})
-		});
-		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Render Targets", rtInput) });
 
 		contentBox->addSlot({ {0,0}, Silica::MakeWidget<Silica::SSeparator>({.space = EditorTheme::SPACING_LARGE}) });
 
@@ -248,7 +257,10 @@ namespace Axion {
 		std::filesystem::path finalPath = std::filesystem::path(m_outputPath) / finalName;
 
 		PipelineSpecification spec = {};
-		spec.colorFormat = m_colorFormats[m_colorFormatIndex];
+		spec.targetFormats.clear();
+		for (int i = 0; i < m_renderTargetsCount; i++) {
+			spec.targetFormats.push_back(m_colorFormats[m_targetFormatIndices[i]]);
+		}
 		spec.depthStencilFormat = m_depthFormats[m_depthFormatIndex];
 		spec.depthTest = m_depthTest;
 		spec.depthWrite = m_depthWrite;
@@ -257,7 +269,6 @@ namespace Axion {
 		spec.sampleCount = m_sampleCount;
 		spec.cullMode = m_cullModes[m_cullModeIndex];
 		spec.topology = m_topologies[m_topologyIndex];
-		spec.numRenderTargets = m_renderTargetsCount;
 		spec.vertexLayout = BufferLayout(m_bufferElements);
 
 		UUID newAssetUUID = UUID::generate();

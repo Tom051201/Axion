@@ -21,7 +21,8 @@ namespace Axion {
 		void release() override;
 		void resize(uint32_t width, uint32_t height) override;
 
-		void bind(RenderContext* renderContext, bool transitionBarrier = true) const override;
+		void bind(RenderContext* renderContext, bool transitionBarrier = true, bool bindEntityID = true) const override;
+		void bindWithTargetEntityID(RenderContext* renderContext, FrameBuffer* targetIdBuffer, bool transitionBarrier = true) const override;
 		void unbind(RenderContext* renderContext, bool transitionBarrier = true) const override;
 
 		void clear(RenderContext* renderContext) override;

@@ -111,22 +111,17 @@ namespace Axion {
 		blendDesc.AlphaToCoverageEnable = FALSE;
 		blendDesc.IndependentBlendEnable = TRUE;
 
-		bool isIntegerFormat = (m_specification.colorFormat == ColorFormat::RED_INTEGER);
+		for (size_t i = 0; i < m_specification.targetFormats.size(); i++) {
+			bool isIntegerFormat = (m_specification.targetFormats[i] == ColorFormat::RED_INTEGER);
 
-		// -- Target 0 Color --
-		blendDesc.RenderTarget[0].BlendEnable = (m_specification.numRenderTargets > 0 && !isIntegerFormat) ? TRUE : FALSE;
-		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-		// -- Target 1 Entity ID --
-		if (m_specification.numRenderTargets > 1) {
-			blendDesc.RenderTarget[1].BlendEnable = FALSE;
-			blendDesc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+			blendDesc.RenderTarget[i].BlendEnable = (!isIntegerFormat) ? TRUE : FALSE;
+			blendDesc.RenderTarget[i].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+			blendDesc.RenderTarget[i].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+			blendDesc.RenderTarget[i].BlendOp = D3D11_BLEND_OP_ADD;
+			blendDesc.RenderTarget[i].SrcBlendAlpha = D3D11_BLEND_ONE;
+			blendDesc.RenderTarget[i].DestBlendAlpha = D3D11_BLEND_ZERO;
+			blendDesc.RenderTarget[i].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+			blendDesc.RenderTarget[i].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 		}
 
 		hr = device->CreateBlendState(&blendDesc, &m_blendState);

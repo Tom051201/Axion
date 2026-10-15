@@ -27,7 +27,7 @@ namespace Axion {
 		std::string m_shaderPath;
 		std::string m_outputPath;
 
-		int m_colorFormatIndex = 1;
+		std::vector<int> m_targetFormatIndices;
 		std::array<ColorFormat, 6> m_colorFormats = { ColorFormat::None, ColorFormat::RGBA8, ColorFormat::RED_INTEGER, ColorFormat::RGBA16F, ColorFormat::BGRA8, ColorFormat::RGB10A2 };
 		const std::vector<std::string> m_colorFormatsNames = { "None", "RGBA8", "RED_INTEGER", "RGBA16F", "BGRA8", "RGB10A2" };
 

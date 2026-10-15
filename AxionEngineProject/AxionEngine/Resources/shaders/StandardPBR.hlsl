@@ -1,4 +1,5 @@
 Texture2D g_Textures[] : register(t0, space0);
+TextureCube g_CubeTextures[] : register(t0, space2);
 SamplerState s_sampler : register(s0);
 
 struct DirectionalLight {
@@ -31,6 +32,9 @@ cbuffer CameraBuffer : register(b0) {
 	int u_pointLightsCount;
 	int u_spotLightsCount;
 	int u_shadowMapIndex;
+
+	int u_skyboxIndex;
+	int3 padding1;
 
 	DirectionalLight u_directionalLight;
 	PointLight u_pointLights[16];
@@ -118,6 +122,20 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness) {
 // Fresnel: Reflectivity at different viewing angles
 float3 FresnelSchlick(float cosTheta, float3 F0) {
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness) {
+	return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+// Epic Games' analytical approximation of the BRDF LUT (Karis 2014)
+float2 EnvBRDFApprox(float roughness, float NoV) {
+	const float4 c0 = float4(-1.0, -0.0275, -0.572, 0.022);
+	const float4 c1 = float4(1.0, 0.0425, 1.04, -0.04);
+	float4 r = roughness * c0 + c1;
+	float a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
+	float2 AB = float2(-1.04, 1.04) * a004 + r.zw;
+	return AB;
 }
 
 float3 CalculateLight(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float roughness, float metalness) {
@@ -234,7 +252,7 @@ PixelOutput PSMain(PixelInput input) {
 	if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0)
 	{
 		float currentDepth = projCoords.z;
-        float3 L_dir = normalize(u_directionalLight.direction.xyz);
+		float3 L_dir = normalize(u_directionalLight.direction.xyz);
 //		float bias = max(0.001 * (1.0 - dot(N, L_dir)), 0.0001);
 		float bias = max(0.0002 * (1.0 - dot(N, L_dir)), 0.00005);
 
@@ -340,8 +358,36 @@ PixelOutput PSMain(PixelInput input) {
 		}
 	}
 
-	// -- Ambient --
-	float3 ambient = u_ambientColor.rgb * albedo * ao;
+	// -- Image Based Lighting (IBL Ambient) --
+	float3 ambient = float3(0, 0, 0);
+
+	if (u_skyboxIndex >= 0) {
+		float3 irradiance = g_CubeTextures[NonUniformResourceIndex(u_skyboxIndex)].SampleLevel(s_sampler, N, 8.0).rgb;
+		float3 diffuseIBL = irradiance * albedo;
+
+		float3 R = reflect(-V, N);
+		float MAX_REFLECTION_LOD = 8.0;
+		float3 prefilteredColor = g_CubeTextures[NonUniformResourceIndex(u_skyboxIndex)].SampleLevel(s_sampler, R, roughness * MAX_REFLECTION_LOD).rgb;
+		
+		float2 envBRDF = EnvBRDFApprox(roughness, max(dot(N, V), 0.0));
+		
+		float3 F0 = float3(0.04, 0.04, 0.04);
+		F0 = lerp(F0, albedo, metalness);
+		float3 F_IBL = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+		
+		float3 specularIBL = prefilteredColor * (F_IBL * envBRDF.x + envBRDF.y);
+
+		float3 kS_IBL = F_IBL;
+		float3 kD_IBL = 1.0 - kS_IBL;
+		kD_IBL *= 1.0 - metalness;
+
+		float iblIntensity = u_ambientColor.a;
+		ambient = (kD_IBL * diffuseIBL + specularIBL) * ao * iblIntensity;
+	}
+	else {
+		ambient = u_ambientColor.rgb * albedo * ao;
+	}
+
 	float3 color = ambient + Lo + emissive;
 
 	PixelOutput output;

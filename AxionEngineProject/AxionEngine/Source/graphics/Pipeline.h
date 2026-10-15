@@ -33,24 +33,40 @@ namespace Axion {
 		TriangleStrip
 	};
 
+//	struct PipelineSpecification {
+//		Ref<Shader> shader;
+//		BufferLayout vertexLayout;
+//
+//		ColorFormat colorFormat = ColorFormat::RGBA8;
+//		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
+//
+//		bool depthTest = true;
+//		bool depthWrite = true;
+//		DepthCompare depthFunction = DepthCompare::Less;
+//
+//		bool stencilEnabled = false;
+//		uint32_t sampleCount = 1;
+//
+//		CullMode cullMode = CullMode::Back;
+//		PrimitiveTopology topology = PrimitiveTopology::TriangleList;
+//
+//		uint32_t numRenderTargets = 1;
+//	};
+
 	struct PipelineSpecification {
 		Ref<Shader> shader;
 		BufferLayout vertexLayout;
 
-		ColorFormat colorFormat = ColorFormat::RGBA8;
-		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
+		std::vector<ColorFormat> targetFormats = { ColorFormat::RGBA8 };
 
+		DepthStencilFormat depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		bool depthTest = true;
 		bool depthWrite = true;
 		DepthCompare depthFunction = DepthCompare::Less;
-
 		bool stencilEnabled = false;
 		uint32_t sampleCount = 1;
-
 		CullMode cullMode = CullMode::Back;
 		PrimitiveTopology topology = PrimitiveTopology::TriangleList;
-
-		uint32_t numRenderTargets = 1;
 	};
 
 	class Pipeline : public RefCounted {

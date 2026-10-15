@@ -52,6 +52,11 @@ namespace Axion {
 		int spotLightCount;
 		int shadowMapIndex;
 
+		int skyboxIndex;
+		int padding1;
+		int padding2;
+		int padding3;
+
 		HLSLDirLight directionalLight;
 		HLSLPointLight pointLights[MAX_POINT_LIGHTS];
 		HLSLSpotLight spotLights[MAX_SPOT_LIGHTS];
@@ -148,6 +153,7 @@ namespace Axion {
 
 		// -- Ambient Color --
 		sceneData.ambientColor = lightingData.ambientColor.toFloat4();
+		sceneData.skyboxIndex = lightingData.skyboxIndex;
 
 		// -- Primary Directional Light & Shadow Matrix --
 		if (lightingData.hasDirectionalLight) {

@@ -123,8 +123,9 @@ namespace Axion {
 		s_data.quadShader->loadFromBytecode(g_Batch2DQuad_VS, sizeof(g_Batch2DQuad_VS), g_Batch2DQuad_PS, sizeof(g_Batch2DQuad_PS));
 		PipelineSpecification qpSpec;
 		qpSpec.shader = s_data.quadShader;
-		qpSpec.numRenderTargets = 2;
-		qpSpec.colorFormat = ColorFormat::RGBA8;
+//		qpSpec.numRenderTargets = 2;
+//		qpSpec.colorFormat = ColorFormat::RGBA8;
+		qpSpec.targetFormats = { ColorFormat::RGBA8, ColorFormat::RED_INTEGER };
 		qpSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		qpSpec.depthTest = true;
 		qpSpec.depthWrite = false;
@@ -151,8 +152,9 @@ namespace Axion {
 		s_data.lineShader->loadFromBytecode(g_Batch2DLine_VS, sizeof(g_Batch2DLine_VS), g_Batch2DLine_PS, sizeof(g_Batch2DLine_PS));
 		PipelineSpecification lpSpec;
 		lpSpec.shader = s_data.lineShader;
-		lpSpec.numRenderTargets = 2;
-		lpSpec.colorFormat = ColorFormat::RGBA8;
+//		lpSpec.numRenderTargets = 2;
+//		lpSpec.colorFormat = ColorFormat::RGBA8;
+		lpSpec.targetFormats = { ColorFormat::RGBA8, ColorFormat::RED_INTEGER };
 		lpSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		lpSpec.depthTest = true;
 		lpSpec.depthWrite = false;

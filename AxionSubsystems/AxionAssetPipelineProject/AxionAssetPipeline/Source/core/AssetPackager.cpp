@@ -149,8 +149,17 @@ namespace Axion::AAP {
 					pipeData.shaderFilePath = registry->get(shaderUUID).filePath.string();
 				}
 
-				pipeData.spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
-				pipeData.spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
+//				pipeData.spec.numRenderTargets = specData["NumRenderTargets"].as<uint32_t>();
+//				pipeData.spec.colorFormat = EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>());
+				YAML::Node formatsNode = specData["TargetFormats"];
+				if (formatsNode && formatsNode.IsSequence()) {
+					for (const auto& formatNode : formatsNode) {
+						pipeData.spec.targetFormats.push_back(EnumUtils::colorFormatFromString(formatNode.as<std::string>()));
+					}
+				}
+				else if (specData["ColorFormat"]) {
+					pipeData.spec.targetFormats = { EnumUtils::colorFormatFromString(specData["ColorFormat"].as<std::string>()) };
+				}
 				pipeData.spec.depthStencilFormat = EnumUtils::depthStencilFormatFromString(specData["DepthStencilFormat"].as<std::string>());
 				pipeData.spec.depthTest = specData["DepthTest"].as<bool>();
 				pipeData.spec.depthWrite = specData["DepthWrite"].as<bool>();

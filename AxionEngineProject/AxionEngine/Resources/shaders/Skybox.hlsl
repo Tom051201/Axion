@@ -1,4 +1,4 @@
-TextureCube g_CubeTextures[] : register(t0, space0);
+TextureCube g_CubeTextures[] : register(t0, space2);
 SamplerState u_sampler : register(s0);
 
 cbuffer SceneBuffer : register(b0) {

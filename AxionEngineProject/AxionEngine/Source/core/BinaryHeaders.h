@@ -23,7 +23,6 @@ namespace Axion {
 		BinaryAssetHeader assetHeader;
 		UUID shaderUUID;
 
-		uint32_t colorFormat;
 		uint32_t depthStencilFormat;
 		uint8_t depthTest;
 		uint8_t depthWrite;

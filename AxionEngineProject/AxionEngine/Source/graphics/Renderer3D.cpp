@@ -104,6 +104,7 @@ namespace Axion {
 		Ref<Pipeline> pbrPipeline = EngineAssets::getStandardPBRPipeline(); // TODO: maybe review this and maybe remove or improve this so that the passed pipeline does not get ignored
 		pbrPipeline->bind(renderContext);
 		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::Textures);
+		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::TextureCubes);
 		Renderer::getSceneDataBuffer()->bind(renderContext, (uint32_t)RootSlot::Camera, Renderer::getSceneDataOffset());
 
 		uint32_t dataSize = instanceCount * sizeof(ObjectBuffer);
@@ -139,6 +140,7 @@ namespace Axion {
 		Ref<Pipeline> pbrPipeline = EngineAssets::getSkeletalPBRPipeline(); // TODO: maybe review as above
 		pbrPipeline->bind(renderContext); // TODO: maybe review as above
 		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::Textures);
+		renderContext->bindGlobalTextureTable((uint32_t)RootSlot::TextureCubes);
 		Renderer::getSceneDataBuffer()->bind(renderContext, (uint32_t)RootSlot::Camera, Renderer::getSceneDataOffset());
 
 		thread_local std::vector<GPUInstanceData> gpuInstances;

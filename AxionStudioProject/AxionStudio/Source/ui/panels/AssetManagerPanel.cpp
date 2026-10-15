@@ -230,12 +230,20 @@ namespace Axion {
 		}) });
 
 		// -- Pipeline Assets --
-		contentBox->addSlot({ {0,0}, buildAssetInfoWidget<Pipeline>("Pipeline", this, [&](Ref<Pipeline> pipeline) {
-			auto box = Silica::MakeWidget<Silica::SVerticalBox>({.spacing = EditorTheme::SPACING_SMALL });
+		contentBox->addSlot({ { 0,0 }, buildAssetInfoWidget<Pipeline>("Pipeline", this, [&](Ref<Pipeline> pipeline) {
+			auto box = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = EditorTheme::SPACING_SMALL });
 			const auto& spec = pipeline->getSpecification();
-			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Color Format", EnumUtils::toString(spec.colorFormat)) });
-			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Depth Test", spec.depthTest ? "Enabled" : "Disabled") });
-			box->addSlot({ {0,0}, SilicaHelpers::MakeDetailRow("Topology", EnumUtils::toString(spec.topology)) });
+
+			std::string formatsStr = "";
+			for (size_t i = 0; i < spec.targetFormats.size(); ++i) {
+				formatsStr += EnumUtils::toString(spec.targetFormats[i]);
+				if (i < spec.targetFormats.size() - 1) formatsStr += ", ";
+			}
+			if (formatsStr.empty()) formatsStr = "None";
+
+			box->addSlot({ { 0,0 }, SilicaHelpers::MakeDetailRow("Target Formats", formatsStr) });
+			box->addSlot({ { 0,0 }, SilicaHelpers::MakeDetailRow("Depth Test", spec.depthTest ? "Enabled" : "Disabled") });
+			box->addSlot({ { 0,0 }, SilicaHelpers::MakeDetailRow("Topology", EnumUtils::toString(spec.topology)) });
 			return box;
 		}) });
 

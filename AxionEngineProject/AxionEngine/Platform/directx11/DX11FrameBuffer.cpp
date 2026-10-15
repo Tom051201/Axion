@@ -147,7 +147,7 @@ namespace Axion {
 		#endif
 	}
 
-	void DX11FrameBuffer::bind(RenderContext* renderContext, bool transitionBarrier) const {
+	void DX11FrameBuffer::bind(RenderContext* renderContext, bool transitionBarrier, bool bindEntityID) const {
 		auto* ctx = m_context->getDeviceContext();
 
 		ID3D11RenderTargetView* rtvs[2] = { m_colorRTV.Get(), nullptr };

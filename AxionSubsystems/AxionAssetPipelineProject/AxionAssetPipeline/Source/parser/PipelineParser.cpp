@@ -16,8 +16,11 @@ namespace Axion::AAP {
 		out << YAML::Key << "Specification" << YAML::BeginMap;
 		UUID shaderUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.shaderFilePath));
 		out << YAML::Key << "Shader" << YAML::Value << shaderUUID.toString();
-		out << YAML::Key << "NumRenderTargets" << YAML::Value << data.spec.numRenderTargets;
-		out << YAML::Key << "ColorFormat" << YAML::Value << EnumUtils::toString(data.spec.colorFormat);
+		out << YAML::Key << "TargetFormats" << YAML::Value << YAML::BeginSeq;
+		for (const auto& format : data.spec.targetFormats) {
+			out << YAML::Value << EnumUtils::toString(format);
+		}
+		out << YAML::EndSeq;
 		out << YAML::Key << "DepthStencilFormat" << YAML::Value << EnumUtils::toString(data.spec.depthStencilFormat);
 		out << YAML::Key << "DepthTest" << YAML::Value << data.spec.depthTest;
 		out << YAML::Key << "DepthWrite" << YAML::Value << data.spec.depthWrite;
@@ -62,7 +65,6 @@ namespace Axion::AAP {
 		header.assetHeader.uuid = data.uuid;
 		header.assetHeader.version = ASSET_VERSION_PIPELINE;
 		header.shaderUUID = AssetManager::getAssetUUID(AssetManager::getAbsolute(data.shaderFilePath));
-		header.colorFormat = static_cast<uint32_t>(data.spec.colorFormat);
 		header.depthStencilFormat = static_cast<uint32_t>(data.spec.depthStencilFormat);
 		header.depthTest = data.spec.depthTest ? 1 : 0;
 		header.depthWrite = data.spec.depthWrite ? 1 : 0;
@@ -71,10 +73,16 @@ namespace Axion::AAP {
 		header.sampleCount = data.spec.sampleCount;
 		header.cullMode = static_cast<uint32_t>(data.spec.cullMode);
 		header.topology = static_cast<uint32_t>(data.spec.topology);
-		header.numRenderTargets = data.spec.numRenderTargets;
+		header.numRenderTargets = static_cast<uint32_t>(data.spec.targetFormats.size());
+
 		const auto& elements = data.spec.vertexLayout.getElements();
 		header.bufferElementCount = static_cast<uint32_t>(elements.size());
 		out.write(reinterpret_cast<const char*>(&header), sizeof(PipelineBinaryHeader));
+
+		for (const auto& format : data.spec.targetFormats) {
+			uint32_t fmt = static_cast<uint32_t>(format);
+			out.write(reinterpret_cast<const char*>(&fmt), sizeof(uint32_t));
+		}
 
 		// -- Write Buffer Layout Elements --
 		for (const auto& elem : elements) {

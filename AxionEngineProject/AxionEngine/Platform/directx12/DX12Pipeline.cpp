@@ -57,22 +57,31 @@ namespace Axion {
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.RasterizerState.CullMode = DX12Helpers::toDX12CullMode(m_specification.cullMode);
 
-		D3D12_RENDER_TARGET_BLEND_DESC blendDesc = {};
-		bool isIntegerFormat = (m_specification.colorFormat == ColorFormat::RED_INTEGER);
-		blendDesc.BlendEnable = (m_specification.numRenderTargets > 0 && !isIntegerFormat) ? TRUE : FALSE;
-		blendDesc.LogicOpEnable = FALSE;
-		blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-		blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-		blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-		blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-		blendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-		blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
+		// --- Setup Blend State & Render Targets ---
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		psoDesc.BlendState.IndependentBlendEnable = TRUE;
-		psoDesc.BlendState.RenderTarget[0] = blendDesc;
+		psoDesc.NumRenderTargets = static_cast<UINT>(m_specification.targetFormats.size());
 
+		for (UINT i = 0; i < psoDesc.NumRenderTargets; i++) {
+			psoDesc.RTVFormats[i] = DX12Helpers::toDX12ColorFormat(m_specification.targetFormats[i]);
+
+			D3D12_RENDER_TARGET_BLEND_DESC blendDesc = {};
+			bool isIntegerFormat = (m_specification.targetFormats[i] == ColorFormat::RED_INTEGER);
+
+			blendDesc.BlendEnable = (!isIntegerFormat) ? TRUE : FALSE;
+			blendDesc.LogicOpEnable = FALSE;
+			blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+			blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+			blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+			blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+			blendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+			blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+			blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+			psoDesc.BlendState.RenderTarget[i] = blendDesc;
+		}
+
+		// --- Setup Depth Stencil ---
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 		psoDesc.DepthStencilState.DepthEnable = m_specification.depthTest ? TRUE : FALSE;
 		psoDesc.DepthStencilState.DepthWriteMask = m_specification.depthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -82,9 +91,6 @@ namespace Axion {
 
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.PrimitiveTopologyType = DX12Helpers::toDX12ToplogyType(m_specification.topology);
-		psoDesc.NumRenderTargets = m_specification.numRenderTargets;
-		if (m_specification.numRenderTargets > 0) psoDesc.RTVFormats[0] = DX12Helpers::toDX12ColorFormat(m_specification.colorFormat);
-		if (m_specification.numRenderTargets > 1) psoDesc.RTVFormats[1] = DXGI_FORMAT_R32_SINT;
 		psoDesc.SampleDesc.Count = m_specification.sampleCount;
 
 		HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));

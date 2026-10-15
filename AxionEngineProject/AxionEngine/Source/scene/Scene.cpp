@@ -210,6 +210,16 @@ namespace Axion {
 		// ----- Setup Scene Lighting -----
 		LightingData lightData;
 		lightData.ambientColor = m_sceneAmbientColor;
+		lightData.skyboxIndex = -1;
+
+		if (m_skyboxHandle.isValid()) {
+			Ref<Skybox> skybox = AssetManager::get<Skybox>(m_skyboxHandle);
+			if (skybox && skybox->getTextureHandle().isValid()) {
+				auto skyboxIndex = skybox->getTextureHandle();
+				Ref<TextureCube> cube = AssetManager::get<TextureCube>(skybox->getTextureHandle());
+				lightData.skyboxIndex = cube->getBindlessIndex();
+			}
+		}
 
 		// -- Primary Directional light --
 		lightData.hasDirectionalLight = false;
@@ -451,7 +461,13 @@ namespace Axion {
 			},
 			[&](RenderContext* renderContext) {
 				FrameBuffer* hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
-				hdrFb->bind(renderContext, false);
+				if (target) {
+					hdrFb->bindWithTargetEntityID(renderContext, target, false);
+					target->clearAttachment(renderContext, 1, -1);
+				}
+				else {
+					hdrFb->bind(renderContext, false);
+				}
 				hdrFb->clear(renderContext);
 
 				Renderer3D::beginScene(cam, lightData);
@@ -503,7 +519,7 @@ namespace Axion {
 				},
 				[&](RenderContext* renderContext) {
 					if (target) {
-						target->bind(renderContext, false);
+						target->bind(renderContext, false, false);
 						target->clear(renderContext);
 					}
 					else {

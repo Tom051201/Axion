@@ -118,7 +118,7 @@ namespace Axion {
 		float m_physicsAccumulator = 0.0f;
 		const float m_physicsTimeStep = 1.0f / 60.0f; // 60 FPS Physics
 		Vec3 m_gravity = Vec3(0.0f, -9.81f, 0.0f);
-		Vec4 m_sceneAmbientColor = { 0.03f, 0.03f, 0.03f, 1.0f };
+		Vec4 m_sceneAmbientColor = { 0.03f, 0.03f, 0.03f, 0.1f };
 
 		struct QueuedCollision {
 			entt::entity target;
