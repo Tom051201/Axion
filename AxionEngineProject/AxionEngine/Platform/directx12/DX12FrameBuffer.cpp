@@ -38,6 +38,8 @@ namespace Axion {
 			m_context->getRtvHeapWrapper().free(m_rtvHeapIndex);
 			m_context->getStagingSrvHeapWrapper().free(m_srvHeapIndex);
 			m_context->getSrvHeapWrapper().freeStatic(m_gpuSrvHeapIndex);
+			m_context->getStagingSrvHeapWrapper().free(m_uavHeapIndex);
+			m_context->getSrvHeapWrapper().freeStatic(m_gpuUavHeapIndex);
 		}
 
 		if (m_depthResource) {
@@ -61,7 +63,6 @@ namespace Axion {
 		// ----- Reallocate descriptor heap indices -----
 		m_rtvHeapIndex = m_context->getRtvHeapWrapper().allocate();
 		m_srvHeapIndex = m_context->getStagingSrvHeapWrapper().allocate();
-		m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
 
 		auto* device = m_context->getDevice();
 
@@ -78,7 +79,7 @@ namespace Axion {
 		texDesc.Format = DX12Helpers::toDX12ColorFormat(m_specification.textureFormat);
 		texDesc.SampleDesc.Count = 1;
 		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 		// -- Set color clear value --
 		D3D12_CLEAR_VALUE clearValue = {};
@@ -134,34 +135,37 @@ namespace Axion {
 		}
 
 		// ----- Depth -----
-		DXGI_FORMAT depthFormat = DX12Helpers::toDX12DepthStencilFormat(m_specification.depthStencilFormat);
-		if (depthFormat == DXGI_FORMAT_UNKNOWN) {
-			AX_CORE_LOG_WARN("Attempting to create framebuffer with unknown depth format");
+		if (m_specification.depthStencilFormat != DepthStencilFormat::None) {
+			m_dsvHeapIndex = m_context->getDsvHeapWrapper().allocate();
+			DXGI_FORMAT depthFormat = DX12Helpers::toDX12DepthStencilFormat(m_specification.depthStencilFormat);
+			if (depthFormat == DXGI_FORMAT_UNKNOWN) {
+				AX_CORE_LOG_WARN("Attempting to create framebuffer with unknown depth format");
+			}
+
+			CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(depthFormat, m_specification.width, m_specification.height, 1, 1);
+			depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+			// -- Set depth clear value --
+			D3D12_CLEAR_VALUE depthClearValue = {};
+			depthClearValue.Format = depthFormat;
+			depthClearValue.DepthStencil.Depth = 1.0f;
+			depthClearValue.DepthStencil.Stencil = 0;
+
+			// -- Create depth resource --
+			CD3DX12_HEAP_PROPERTIES depthHeapProps(D3D12_HEAP_TYPE_DEFAULT);
+			hr = device->CreateCommittedResource(
+				&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthDesc,
+				D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, IID_PPV_ARGS(&m_depthResource)
+			);
+			AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer depth resource");
+
+			// ----- Depth Stencil View -----
+			D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+			dsvDesc.Format = depthFormat;
+			dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+			dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+			device->CreateDepthStencilView(m_depthResource.Get(), &dsvDesc, m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex));
 		}
-
-		CD3DX12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(depthFormat, m_specification.width, m_specification.height, 1, 1);
-		depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-		// -- Set depth clear value --
-		D3D12_CLEAR_VALUE depthClearValue = {};
-		depthClearValue.Format = depthFormat;
-		depthClearValue.DepthStencil.Depth = 1.0f;
-		depthClearValue.DepthStencil.Stencil = 0;
-
-		// -- Create depth resource --
-		CD3DX12_HEAP_PROPERTIES depthHeapProps(D3D12_HEAP_TYPE_DEFAULT);
-		hr = device->CreateCommittedResource(
-			&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, IID_PPV_ARGS(&m_depthResource)
-		);
-		AX_THROW_IF_FAILED_HR(hr, "Failed to create frame buffer depth resource");
-
-		// ----- Depth Stencil View -----
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-		dsvDesc.Format = depthFormat;
-		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-		device->CreateDepthStencilView(m_depthResource.Get(), &dsvDesc, m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex));
 
 		// ----- Render Target View (RTV) -----
 		device->CreateRenderTargetView(m_colorResource.Get(), nullptr, m_context->getRtvHeapWrapper().getCpuHandle(m_rtvHeapIndex));
@@ -179,9 +183,21 @@ namespace Axion {
 		auto srcHandle = m_context->getStagingSrvHeapWrapper().getCpuHandle(m_srvHeapIndex);
 		m_context->getDevice()->CopyDescriptorsSimple(1, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+		// --- Create Bindless UAV ---
+		m_uavHeapIndex = m_context->getStagingSrvHeapWrapper().allocate();
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+		uavDesc.Format = texDesc.Format;
+		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		m_context->getDevice()->CreateUnorderedAccessView(m_colorResource.Get(), nullptr, &uavDesc, m_context->getStagingSrvHeapWrapper().getCpuHandle(m_uavHeapIndex));
+
+		m_gpuUavHeapIndex = m_context->getSrvHeapWrapper().allocateStatic();
+		auto uavDest = m_context->getSrvHeapWrapper().getCpuHandle(m_gpuUavHeapIndex);
+		auto uavSrc = m_context->getStagingSrvHeapWrapper().getCpuHandle(m_uavHeapIndex);
+		m_context->getDevice()->CopyDescriptorsSimple(1, uavDest, uavSrc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 		#ifdef AX_DEBUG
-		m_colorResource->SetName(L"FrameBufferColor");
-		m_depthResource->SetName(L"FrameBufferDepth");
+		if (m_colorResource) m_colorResource->SetName(L"FrameBufferColor");
+		if (m_depthResource) m_depthResource->SetName(L"FrameBufferDepth");
 		#endif
 	}
 
@@ -208,8 +224,9 @@ namespace Axion {
 			numTargets = 2;
 		}
 
-		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
-		cmdList->OMSetRenderTargets(numTargets, rtvHandles, FALSE, &dsvHandle);
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle;
+		if (m_depthResource) dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
+		cmdList->OMSetRenderTargets(numTargets, rtvHandles, FALSE, m_depthResource ? &dsvHandle : nullptr);
 
 		// ----- Set viewport and scissor -----
 		D3D12_VIEWPORT vp{};
@@ -304,15 +321,12 @@ namespace Axion {
 		// -- Clear Color Attachment --
 		float color[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
 		cmdList->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
-		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		// -- Clear Entity ID Attachment --
-//		if (m_specification.useEntityIDAttachment) {
-//			auto idHandle = m_context->getRtvHeapWrapper().getCpuHandle(m_entityIdRtvHeapIndex);
-//			int clearID = -1;
-//			float idClearColor[4] = { reinterpret_cast<float&>(clearID), 0.0f, 0.0f, 0.0f };
-//			cmdList->ClearRenderTargetView(idHandle, idClearColor, 0, nullptr);
-//		}
+		// -- Clear Depth Attachment --
+		if (m_depthResource) {
+			auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
+			cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		}
 	}
 
 	void DX12FrameBuffer::clear(RenderContext* renderContext) {
@@ -320,10 +334,11 @@ namespace Axion {
 	}
 
 	void DX12FrameBuffer::clearDepth(RenderContext* renderContext) {
-		auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
-		auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
-
-		cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		if (m_depthResource) {
+			auto* cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
+			auto dsvHandle = m_context->getDsvHeapWrapper().getCpuHandle(m_dsvHeapIndex);
+			cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		}
 	}
 
 	void* DX12FrameBuffer::getColorAttachmentHandle() const {
@@ -382,6 +397,22 @@ namespace Axion {
 		}
 
 		return entityID;
+	}
+
+	void DX12FrameBuffer::transitionToUAV(RenderContext* renderContext) const {
+		if (m_currentState != D3D12_RESOURCE_STATE_UNORDERED_ACCESS) {
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_colorResource.Get(), m_currentState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			static_cast<DX12RenderContext*>(renderContext)->getCmdList()->ResourceBarrier(1, &barrier);
+			m_currentState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+		}
+	}
+
+	void DX12FrameBuffer::transitionToSRV(RenderContext* renderContext) const {
+		if (m_currentState != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) {
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_colorResource.Get(), m_currentState, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			static_cast<DX12RenderContext*>(renderContext)->getCmdList()->ResourceBarrier(1, &barrier);
+			m_currentState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		}
 	}
 
 }

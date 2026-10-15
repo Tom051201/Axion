@@ -25,9 +25,13 @@ namespace Axion {
 
 		virtual void transitionResource(FrameBuffer* framebuffer, ResourceState beforeState, ResourceState afterState, bool isDepth) = 0;
 		virtual void bindGlobalTextureTable(uint32_t slot) = 0;
+		virtual void bindComputeGlobalTextureTable(uint32_t slot) = 0;
 		virtual void setTextureHandle(uint32_t slot, void* handle) = 0;
 		virtual void unbindBuffers() = 0;
 		virtual void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t startVertex = 0, uint32_t startInstance = 0) = 0;
+		virtual void dispatchCompute(uint32_t groupX, uint32_t groupY, uint32_t groupZ) = 0;
+		virtual void insertUAVBarrier() = 0;
+
 	};
 
 }

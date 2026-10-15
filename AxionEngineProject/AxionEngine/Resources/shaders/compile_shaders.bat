@@ -15,3 +15,6 @@ dxc.exe -T ps_6_5 -E PSMain -Fh StandardPBR_PS.h -Vn g_StandardPBR_PS StandardPB
 dxc.exe -T ps_6_5 -E PSMain -Fh SkeletalPBR_PS.h -Vn g_SkeletalPBR_PS SkeletalPBR.hlsl
 dxc.exe -T ps_6_5 -E PSMain -Fh Skybox_PS.h -Vn g_Skybox_PS Skybox.hlsl
 dxc.exe -T ps_6_5 -E PSMain -Fh ToneMapping_PS.h -Vn g_ToneMapping_PS ToneMapping.hlsl
+
+:: Compile Compute Shaders
+dxc.exe -T cs_6_5 -E CSMain -Fh Bloom_CS.h -Vn g_Bloom_CS Bloom.hlsl

@@ -64,6 +64,7 @@ namespace Axion {
 		BoneData = 3,		// DX12: t1, space1
 		Textures = 4,		// DX12: t0, space0
 		TextureCubes = 5,	// DX12: t0, space2
+		UAVs = 6,			// DX12: u0, space0
 	};
 
 	struct RendererStats {

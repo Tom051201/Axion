@@ -15,15 +15,16 @@ namespace Axion {
 
 	struct ShaderSpecification {
 		std::string name = "Unset";
-
 		uint32_t batchTextures = 1;
+		bool isCompute = false;
 	};
 
 	struct ShaderBytecode {
 		std::vector<uint8_t> vertex;
 		std::vector<uint8_t> pixel;
+		std::vector<uint8_t> compute;
 
-		bool isValid() const { return !vertex.empty() && !pixel.empty(); }
+		bool isValid() const { return !vertex.empty() && !pixel.empty() && !compute.empty(); }
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +46,7 @@ namespace Axion {
 		virtual void compileFromFile(const std::filesystem::path& filePath) = 0;
 		virtual void recompile() = 0;
 		virtual void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) = 0;
+		virtual void loadComputeFromBytecode(const uint8_t* csData, size_t csSize) = 0;
 
 
 		static Ref<Shader> create(const ShaderSpecification& spec);

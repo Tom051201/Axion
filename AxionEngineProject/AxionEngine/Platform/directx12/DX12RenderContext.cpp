@@ -49,6 +49,11 @@ namespace Axion {
 		m_commandList->SetGraphicsRootDescriptorTable(slot, globalHeapStart);
 	}
 
+	void DX12RenderContext::bindComputeGlobalTextureTable(uint32_t slot) {
+		auto dx12Context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
+		m_commandList->SetComputeRootDescriptorTable(slot, dx12Context->getSrvHeapWrapper().getGpuHandle(0));
+	}
+
 	void DX12RenderContext::setTextureHandle(uint32_t slot, void* handle) {
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		gpuHandle.ptr = reinterpret_cast<UINT64>(handle);
@@ -62,6 +67,15 @@ namespace Axion {
 
 	void DX12RenderContext::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t startVertex, uint32_t startInstance) {
 		m_commandList->DrawInstanced(vertexCount, instanceCount, startVertex, startInstance);
+	}
+
+	void DX12RenderContext::dispatchCompute(uint32_t groupX, uint32_t groupY, uint32_t groupZ) {
+		m_commandList->Dispatch(groupX, groupY, groupZ);
+	}
+
+	void DX12RenderContext::insertUAVBarrier() {
+		auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(nullptr);
+		m_commandList->ResourceBarrier(1, &uavBarrier);
 	}
 
 }

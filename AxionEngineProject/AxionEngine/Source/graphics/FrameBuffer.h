@@ -47,6 +47,12 @@ namespace Axion {
 		virtual void* getNativeColorResource() const = 0;
 		virtual void* getNativeDepthResource() const = 0;
 
+		virtual uint32_t getGpuSrvHeapIndex() const = 0;
+		virtual uint32_t getGpuUavHeapIndex() const = 0;
+
+		virtual void transitionToUAV(RenderContext* renderContext) const = 0;
+		virtual void transitionToSRV(RenderContext* renderContext) const = 0;
+
 
 		static Ref<FrameBuffer> create(const FrameBufferSpecification& spec);
 

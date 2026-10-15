@@ -38,6 +38,12 @@ namespace Axion {
 		void* getNativeColorResource() const override { return nullptr; /*TODO*/ }
 		void* getNativeDepthResource() const override { return nullptr; /*TODO*/ }
 
+		uint32_t getGpuSrvHeapIndex() const override { return 0; /*TODO*/ }
+		uint32_t getGpuUavHeapIndex() const override { return 0; /*TODO*/ }
+
+		void transitionToUAV(RenderContext* renderContext) const override { /*TODO*/ }
+		void transitionToSRV(RenderContext* renderContext) const override { /*TODO*/ }
+
 	private:
 
 		DX11Context* m_context = nullptr;

@@ -144,10 +144,10 @@ namespace Axion {
 					spec.textureFormat = res.desc.format;
 					spec.depthStencilFormat = res.desc.depthFormat;
 					spec.clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-					spec.useEntityIDAttachment = true;
+					spec.useEntityIDAttachment = false;
 
 					res.transientFrameBuffer = FrameBuffer::create(spec);
-					AX_CORE_LOG_INFO("RenderGraph allocated transient resource: {0} ({1}x{2})", res.name, spec.width, spec.height);
+					AX_CORE_LOG_TRACE("RenderGraph allocated transient resource: {0} ({1}x{2})", res.name, spec.width, spec.height);
 				}
 			}
 		}

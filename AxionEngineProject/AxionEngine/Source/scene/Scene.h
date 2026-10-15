@@ -142,6 +142,8 @@ namespace Axion {
 
 		std::vector<SceneNavMeshProfile> m_navMeshProfiles;
 
+		std::array<Ref<ConstantBuffer>, 16> m_bloomCBs;
+
 		EventReply onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();
 		void processPhysicsCallbacks();

@@ -17,11 +17,31 @@ namespace Axion {
 		AX_CORE_ASSERT(m_specification.shader, "PipelineSpecification must have a valid shader!");
 		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
 
+		// ----- Compute Pipeline -----
+		if (m_specification.isCompute) {
+			D3D12_COMPUTE_PIPELINE_STATE_DESC computeDesc = {};
+			computeDesc.pRootSignature = context->getGlobalRootSignature();
+
+			if (shader->getComputeBlob()) {
+				computeDesc.CS = CD3DX12_SHADER_BYTECODE(
+					shader->getComputeBlob()->GetBufferPointer(),
+					shader->getComputeBlob()->GetBufferSize()
+				);
+			}
+
+			HRESULT hr = device->CreateComputePipelineState(&computeDesc, IID_PPV_ARGS(&m_pipelineState));
+			AX_THROW_IF_FAILED_HR(hr, "Failed to create compute pipeline state");
+
+			#ifdef AX_DEBUG
+			m_pipelineState->SetName(L"ComputePipelineState");
+			#endif
+			return;
+		}
+
+		// ----- Graphics Pipeline -----
 		std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
 		const auto& layout = m_specification.vertexLayout.getElements();
 		std::unordered_map<std::string, uint32_t> semanticCounts;
-
-		//AX_CORE_ASSERT(layout.size() > 0, "No buffer layout specified");
 
 		for (const auto& element : layout) {
 			D3D12_INPUT_ELEMENT_DESC desc = {};
@@ -114,6 +134,13 @@ namespace Axion {
 		auto* context = static_cast<DX12Context*>(GraphicsContext::get()->getNativeContext());
 		Ref<DX12Shader> shader = m_specification.shader.staticAs<DX12Shader>();
 
+		// -- Compute --
+		if (m_specification.isCompute) {
+			cmdList->SetPipelineState(m_pipelineState.Get());
+			cmdList->SetComputeRootSignature(context->getGlobalRootSignature());
+		}
+
+		// -- Graphics --
 		cmdList->SetGraphicsRootSignature(context->getGlobalRootSignature());
 		cmdList->SetPipelineState(m_pipelineState.Get());
 		cmdList->IASetPrimitiveTopology(DX12Helpers::toDX12Topology(m_specification.topology));

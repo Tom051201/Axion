@@ -257,42 +257,21 @@ PixelOutput PSMain(PixelInput input) {
 		ao = g_Textures[NonUniformResourceIndex(input.texIndicesExt.x)].Sample(s_sampler, uv).r;
 	}
 	
-	float3 emissive = float3(0, 0, 0);
-	if (u_useEmissiveMap > 0.5)
-	{
-		emissive = g_Textures[NonUniformResourceIndex(input.texIndicesExt.y)].Sample(s_sampler, uv).rgb * u_emissionStrength;
-	}
+	// -- Emissive --
+    float3 emissive = float3(0, 0, 0);
+    if (u_useEmissiveMap > 0.5)
+    {
+        emissive = g_Textures[NonUniformResourceIndex(input.texIndicesExt.z)].Sample(s_sampler, uv).rgb * u_emissionStrength;
+    }
+    else
+    {
+        emissive = albedo * u_emissionStrength;
+    }
 	
 	// -- Lighting setup --
 	float3 camPos = u_cameraPosition.xyz;
 	float3 V = normalize(camPos - input.worldPos);
 	float3 Lo = float3(0.0, 0.0, 0.0);
-
-	// -- Shadow Mapping calculation --
-	float shadow = 0.0f;
-	float4 fragPosLightSpace = mul(float4(input.worldPos, 1.0), u_lightSpaceMatrix);
-
-	float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-	projCoords.x = projCoords.x * 0.5 + 0.5;
-	projCoords.y = -projCoords.y * 0.5 + 0.5;
-
-	if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0) {
-		float currentDepth = projCoords.z;
-		float3 L_dir = normalize(u_directionalLight.direction.xyz);
-//		float bias = max(0.001 * (1.0 - dot(N, L_dir)), 0.0001);
-		float bias = max(0.0002 * (1.0 - dot(N, L_dir)), 0.00005);
-
-		float shadowSum = 0.0;
-		float2 texelSize = 1.0 / 2048.0;
-
-		for (int x = -1; x <= 1; ++x) {
-			for (int y = -1; y <= 1; ++y) {
-				float pcfDepth = g_Textures[NonUniformResourceIndex(u_shadowMapIndex)].SampleLevel(s_sampler, projCoords.xy + float2(x, y) * texelSize, 0).r;
-				shadowSum += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
-			}
-		}
-		shadow = shadowSum / 9.0;
-	}
 
 	// -- Directional light --
 	if (u_hasDirectionalLight > 0) {

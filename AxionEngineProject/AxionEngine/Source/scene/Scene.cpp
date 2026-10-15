@@ -21,8 +21,21 @@
 
 namespace Axion {
 
+	struct BloomData {
+		int srcIndex;
+		int dstIndex;
+		int mode;
+		float threshold;
+		Vec2 texelSize;
+		float blurRadius;
+		float padding;
+	};
+
 	Scene::Scene() {
 		m_sceneID = UUID::generate();
+		for (int i = 0; i < 16; i++) { // TODO: make a constexpr var for this 16 and the one in the header in the array
+			m_bloomCBs[i] = ConstantBuffer::create(sizeof(BloomData));
+		}
 	}
 
 	Scene::~Scene() {
@@ -30,6 +43,13 @@ namespace Axion {
 	}
 
 	void Scene::release() {
+		// -- Release Bloom Constant Buffers --
+		for (int i = 0; i < 16; i++) { // TODO: make a constexpr var for this 16 and the one in the header in the array
+			if (m_bloomCBs[i]) {
+				m_bloomCBs[i]->release();
+				m_bloomCBs[i] = nullptr;
+			}
+		}
 
 		// -- Release Audio Components --
 		auto acView = m_registry.view<AudioComponent>();
@@ -507,6 +527,104 @@ namespace Axion {
 
 				Renderer3D::endScene();
 				hdrFb->unbind(renderContext, false);
+			}
+		);
+
+		// ----- Compute Pass -----
+		const int BLOOM_CASCADES = 3;
+		RGResourceID bloomTexA[BLOOM_CASCADES];
+		RGResourceID bloomTexB[BLOOM_CASCADES];
+		uint32_t bWidth[BLOOM_CASCADES];
+		uint32_t bHeight[BLOOM_CASCADES];
+
+		uint32_t currentW = vpWidth;
+		uint32_t currentH = vpHeight;
+
+		for (int i = 0; i < BLOOM_CASCADES; i++) {
+			currentW = std::max(1u, currentW / 2);
+			currentH = std::max(1u, currentH / 2);
+			bWidth[i] = currentW;
+			bHeight[i] = currentH;
+
+			RGTextureDesc bloomDesc = {};
+			bloomDesc.width = currentW;
+			bloomDesc.height = currentH;
+			bloomDesc.format = ColorFormat::RGBA16F;
+			bloomDesc.depthFormat = DepthStencilFormat::None;
+
+			bloomTexA[i] = m_renderGraph.createResource("BloomA_Mip" + std::to_string(i), bloomDesc);
+			bloomTexB[i] = m_renderGraph.createResource("BloomB_Mip" + std::to_string(i), bloomDesc);
+		}
+
+		m_renderGraph.addPass("BloomCompute",
+			[&](RGPassBuilder& builder) {
+				builder.read(hdrTargetID, ResourceState::PixelShaderResource);
+			},
+			[&](RenderContext* renderContext) {
+				auto hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
+
+				FrameBuffer* fbA[BLOOM_CASCADES];
+				FrameBuffer* fbB[BLOOM_CASCADES];
+				for (int i = 0; i < BLOOM_CASCADES; i++) {
+					fbA[i] = m_renderGraph.getPhysicalFramebuffer(bloomTexA[i]);
+					fbB[i] = m_renderGraph.getPhysicalFramebuffer(bloomTexB[i]);
+					fbA[i]->transitionToUAV(renderContext);
+					fbB[i]->transitionToUAV(renderContext);
+				}
+
+				EngineAssets::getBloomPipeline()->bind(renderContext);
+				renderContext->bindComputeGlobalTextureTable((uint32_t)RootSlot::Textures);
+				renderContext->bindComputeGlobalTextureTable((uint32_t)RootSlot::UAVs);
+
+				BloomData bData;
+				bData.threshold = 1.0f;
+				bData.blurRadius = 3.0f;
+				uint32_t cbIndex = 0;
+
+				auto dispatch = [&](int mode, FrameBuffer* src, FrameBuffer* dst, uint32_t w, uint32_t h) {
+					bData.mode = mode;
+					bData.srcIndex = src->getGpuSrvHeapIndex();
+					bData.dstIndex = dst->getGpuUavHeapIndex();
+					bData.texelSize = { 1.0f / (float)w, 1.0f / (float)h };
+
+					m_bloomCBs[cbIndex]->update(&bData, sizeof(BloomData));
+					m_bloomCBs[cbIndex]->bindCompute(renderContext, 1);
+
+					cbIndex++;
+
+					uint32_t groupX = (w + 7) / 8;
+					uint32_t groupY = (h + 7) / 8;
+
+					renderContext->dispatchCompute(groupX, groupY, 1);
+					renderContext->insertUAVBarrier();
+				};
+
+				dispatch(0, hdrFb, fbA[0], bWidth[0], bHeight[0]);
+
+				for (int i = 0; i < BLOOM_CASCADES; i++) {
+					if (i > 0) {
+						bData.threshold = 0.0f;
+						fbA[i - 1]->transitionToSRV(renderContext);
+						dispatch(0, fbA[i - 1], fbA[i], bWidth[i], bHeight[i]);
+					}
+
+					// -- Blur Horizontal --
+					fbA[i]->transitionToSRV(renderContext);
+					dispatch(1, fbA[i], fbB[i], bWidth[i], bHeight[i]);
+
+					// -- Blur Vertical --
+					fbB[i]->transitionToSRV(renderContext);
+					fbA[i]->transitionToUAV(renderContext);
+					dispatch(2, fbB[i], fbA[i], bWidth[i], bHeight[i]);
+				}
+
+				hdrFb->transitionToUAV(renderContext);
+				for (int i = 0; i < BLOOM_CASCADES; i++) {
+					fbA[i]->transitionToSRV(renderContext);
+					dispatch(3, fbA[i], hdrFb, vpWidth, vpHeight);
+				}
+
+				hdrFb->transitionToSRV(renderContext);
 			}
 		);
 

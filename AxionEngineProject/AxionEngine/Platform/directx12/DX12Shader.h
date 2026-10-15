@@ -34,11 +34,13 @@ namespace Axion {
 		void compileFromFile(const std::filesystem::path& filePath) override;
 		void recompile() override;
 		void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) override;
+		void loadComputeFromBytecode(const uint8_t* csData, size_t csSize) override;
 
 		static ShaderBytecode compileToBytecode(const std::filesystem::path& filePath);
 
 		const Microsoft::WRL::ComPtr<IDxcBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 		const Microsoft::WRL::ComPtr<IDxcBlob>& getPixelBlob() const { return m_pixelShaderBlob; }
+		const Microsoft::WRL::ComPtr<IDxcBlob>& getComputeBlob() const { return m_computeShaderBlob; }
 
 	private:
 
@@ -47,6 +49,7 @@ namespace Axion {
 
 		Microsoft::WRL::ComPtr<IDxcBlob> m_vertexShaderBlob;
 		Microsoft::WRL::ComPtr<IDxcBlob> m_pixelShaderBlob;
+		Microsoft::WRL::ComPtr<IDxcBlob> m_computeShaderBlob;
 
 		void compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<IDxcBlob>& outblob);
 		

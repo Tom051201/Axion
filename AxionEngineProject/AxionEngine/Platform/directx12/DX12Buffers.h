@@ -107,6 +107,7 @@ namespace Axion {
 
 		void bind(class RenderContext* renderContext, uint32_t slot) const override;
 		void bind(class RenderContext* renderContext, uint32_t slot, size_t offset) const override;
+		void bindCompute(RenderContext* renderContext, uint32_t slot) const override;
 		void unbind() const override;
 
 		void update(const void* data, size_t size) override;

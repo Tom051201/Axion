@@ -159,6 +159,7 @@ namespace Axion {
 
 		virtual void bind(RenderContext* renderContext, uint32_t slot) const = 0;
 		virtual void bind(RenderContext* renderContext, uint32_t slot, size_t offset) const = 0;
+		virtual void bindCompute(RenderContext* renderContext, uint32_t slot) const = 0;
 		virtual void unbind() const = 0;
 
 		virtual void update(const void* data, size_t size) = 0;

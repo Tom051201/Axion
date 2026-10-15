@@ -45,6 +45,11 @@ namespace Axion {
 		ID3D12Resource* getColorResource() const { return m_colorResource.Get(); }
 		ID3D12Resource* getDepthResource() const { return m_depthResource.Get(); }
 
+		uint32_t getGpuSrvHeapIndex() const override { return m_gpuSrvHeapIndex; }
+		uint32_t getGpuUavHeapIndex() const override { return m_gpuUavHeapIndex; }
+		void transitionToUAV(RenderContext* renderContext) const override;
+		void transitionToSRV(RenderContext* renderContext) const override;
+
 	private:
 
 		DX12Context* m_context = nullptr;
@@ -65,7 +70,9 @@ namespace Axion {
 		uint32_t m_srvHeapIndex = 0;
 		uint32_t m_gpuSrvHeapIndex = 0;
 		uint32_t m_dsvHeapIndex = 0;
-		
+		uint32_t m_uavHeapIndex = 0;
+		uint32_t m_gpuUavHeapIndex = 0;
+
 		mutable D3D12_RESOURCE_STATES m_currentState;
 
 	};

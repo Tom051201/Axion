@@ -27,6 +27,7 @@ namespace Axion {
 		void compileFromFile(const std::filesystem::path& filePath) override;
 		void recompile() override;
 		void loadFromBytecode(const uint8_t* vsData, size_t vsSize, const uint8_t* psData, size_t psSize) override;
+		void loadComputeFromBytecode(const uint8_t* csData, size_t csSize) override { /*TODO*/ }
 
 		const Microsoft::WRL::ComPtr<ID3DBlob>& getVertexBlob() const { return m_vertexShaderBlob; }
 

@@ -15,6 +15,7 @@
 #include "AxionEngine/Resources/shaders/SkeletalShadowMap_VS.h"
 #include "AxionEngine/Resources/shaders/ToneMapping_VS.h"
 #include "AxionEngine/Resources/shaders/ToneMapping_PS.h"
+#include "AxionEngine/Resources/shaders/Bloom_CS.h"
 
 namespace Axion {
 
@@ -28,12 +29,14 @@ namespace Axion {
 	Ref<Pipeline> EngineAssets::s_skeletalPBRPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_skeletalShadowPipeline = nullptr;
 	Ref<Pipeline> EngineAssets::s_toneMappingPipeline = nullptr;
+	Ref<Pipeline> EngineAssets::s_bloomPipeline = nullptr;
 	Ref<Shader> EngineAssets::s_skyboxShader = nullptr;
 	Ref<Shader> EngineAssets::s_shadowShader = nullptr;
 	Ref<Shader> EngineAssets::s_standardPBRShader = nullptr;
 	Ref<Shader> EngineAssets::s_skeletalPBRShader = nullptr;
 	Ref<Shader> EngineAssets::s_skeletalShadowShader = nullptr;
 	Ref<Shader> EngineAssets::s_toneMappingShader = nullptr;
+	Ref<Shader> EngineAssets::s_bloomShader = nullptr;
 
 	void EngineAssets::initialize() {
 		// -- White Texture --
@@ -144,8 +147,6 @@ namespace Axion {
 		// -- Shadow Pipeline --
 		PipelineSpecification shadowPipeSpec;
 		shadowPipeSpec.shader = s_shadowShader;
-//		shadowPipeSpec.numRenderTargets = 0;
-//		shadowPipeSpec.colorFormat = ColorFormat::RED_INTEGER;
 		shadowPipeSpec.targetFormats = {};
 		shadowPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		shadowPipeSpec.depthTest = true;
@@ -183,8 +184,6 @@ namespace Axion {
 		// -- Skybox Pipeline --
 		PipelineSpecification skyboxPipeSpec;
 		skyboxPipeSpec.shader = s_skyboxShader;
-//		skyboxPipeSpec.numRenderTargets = 2;
-//		skyboxPipeSpec.colorFormat = ColorFormat::RGBA16F;
 		skyboxPipeSpec.targetFormats = { ColorFormat::RGBA16F, ColorFormat::RED_INTEGER };
 		skyboxPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		skyboxPipeSpec.depthTest = true;
@@ -212,8 +211,6 @@ namespace Axion {
 		// -- Standard PBR Pipeline --
 		PipelineSpecification standardPBRPipeSpec;
 		standardPBRPipeSpec.shader = s_standardPBRShader;
-//		standardPBRPipeSpec.numRenderTargets = 2;
-//		standardPBRPipeSpec.colorFormat = ColorFormat::RGBA16F;
 		standardPBRPipeSpec.targetFormats = { ColorFormat::RGBA16F, ColorFormat::RED_INTEGER };
 		standardPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		standardPBRPipeSpec.depthTest = true;
@@ -251,8 +248,6 @@ namespace Axion {
 		// -- Skeletal PBR Pipeline --
 		PipelineSpecification skeletalPBRPipeSpec;
 		skeletalPBRPipeSpec.shader = s_skeletalPBRShader;
-//		skeletalPBRPipeSpec.numRenderTargets = 2;
-//		skeletalPBRPipeSpec.colorFormat = ColorFormat::RGBA16F;
 		skeletalPBRPipeSpec.targetFormats = { ColorFormat::RGBA16F, ColorFormat::RED_INTEGER };
 		skeletalPBRPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		skeletalPBRPipeSpec.depthTest = true;
@@ -285,8 +280,6 @@ namespace Axion {
 		// -- Skeletal Shadow Pipeline --
 		PipelineSpecification skelShadowPipeSpec;
 		skelShadowPipeSpec.shader = s_skeletalShadowShader;
-//		skelShadowPipeSpec.numRenderTargets = 0;
-//		skelShadowPipeSpec.colorFormat = ColorFormat::RED_INTEGER;
 		skelShadowPipeSpec.targetFormats = {};
 		skelShadowPipeSpec.depthStencilFormat = DepthStencilFormat::DEPTH32F;
 		skelShadowPipeSpec.depthTest = true;
@@ -318,8 +311,6 @@ namespace Axion {
 		// -- Tone Mapping Pipeline --
 		PipelineSpecification toneMappingPipeSpec;
 		toneMappingPipeSpec.shader = s_toneMappingShader;
-//		toneMappingPipeSpec.numRenderTargets = 2;
-//		toneMappingPipeSpec.colorFormat = ColorFormat::RGBA8;
 		toneMappingPipeSpec.targetFormats = { ColorFormat::RGBA8 };
 		toneMappingPipeSpec.depthStencilFormat = DepthStencilFormat::None;
 		toneMappingPipeSpec.depthTest = false;
@@ -327,6 +318,18 @@ namespace Axion {
 		toneMappingPipeSpec.cullMode = CullMode::None;
 		toneMappingPipeSpec.topology = PrimitiveTopology::TriangleList;
 		s_toneMappingPipeline = Pipeline::create(toneMappingPipeSpec);
+
+		// -- Bloom Compute Shader --
+		ShaderSpecification bloomShaderSpec;
+		bloomShaderSpec.name = "BloomShader";
+		bloomShaderSpec.isCompute = true;
+		s_bloomShader = Shader::create(bloomShaderSpec);
+		s_bloomShader->loadComputeFromBytecode(g_Bloom_CS, sizeof(g_Bloom_CS));
+
+		PipelineSpecification bloomPipeSpec;
+		bloomPipeSpec.shader = s_bloomShader;
+		bloomPipeSpec.isCompute = true;
+		s_bloomPipeline = Pipeline::create(bloomPipeSpec);
 
 		AX_CORE_LOG_INFO("Engine Assets initialized");
 	}
@@ -344,6 +347,7 @@ namespace Axion {
 		s_skeletalPBRShader->release();
 		s_skeletalShadowShader->release();
 		s_toneMappingShader->release();
+		s_bloomShader->release();
 
 		s_skyboxPipeline->release();
 		s_shadowPipeline->release();
@@ -351,6 +355,7 @@ namespace Axion {
 		s_skeletalPBRPipeline->release();
 		s_skeletalShadowPipeline->release();
 		s_toneMappingPipeline->release();
+		s_bloomPipeline->release();
 
 		AX_CORE_LOG_INFO("Engine Assets shutdown");
 	}

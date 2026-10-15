@@ -350,6 +350,11 @@ namespace Axion {
 		cmdList->SetGraphicsRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress() + offset);
 	}
 
+	void DX12ConstantBuffer::bindCompute(RenderContext* renderContext, uint32_t slot) const {
+		auto cmdList = static_cast<DX12RenderContext*>(renderContext)->getCmdList();
+		cmdList->SetComputeRootConstantBufferView(slot, m_buffer->GetGPUVirtualAddress());
+	}
+
 	void DX12ConstantBuffer::unbind() const {}
 
 	void DX12ConstantBuffer::update(const void* data, size_t size) {

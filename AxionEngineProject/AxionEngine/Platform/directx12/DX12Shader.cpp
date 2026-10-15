@@ -26,13 +26,19 @@ namespace Axion {
 	void DX12Shader::release() {
 		m_pixelShaderBlob.Reset();
 		m_vertexShaderBlob.Reset();
+		m_computeShaderBlob.Reset();
 	}
 
 	void DX12Shader::compileFromFile(const std::filesystem::path& filePath) {
 		std::string source = Shader::readShaderFile(filePath);
 
-		compileStage(source, "VSMain", SHADER_MODEL_VS, m_vertexShaderBlob);
-		compileStage(source, "PSMain", SHADER_MODEL_PS, m_pixelShaderBlob);
+		if (m_specification.isCompute) {
+			compileStage(source, "CSMain", "cs_6_5", m_computeShaderBlob);
+		}
+		else {
+			compileStage(source, "VSMain", "vs_6_5", m_vertexShaderBlob);
+			compileStage(source, "PSMain", "ps_6_5", m_pixelShaderBlob);
+		}
 
 		AX_CORE_LOG_TRACE("Shader '{}' compiled", m_specification.name);
 	}
@@ -61,6 +67,19 @@ namespace Axion {
 		}
 
 		AX_CORE_LOG_TRACE("Shader '{}' loaded from bytecode", m_specification.name);
+	}
+
+	void DX12Shader::loadComputeFromBytecode(const uint8_t* csData, size_t csSize) {
+		Microsoft::WRL::ComPtr<IDxcUtils> utils;
+		DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+
+		if (csData != nullptr && csSize > 0) {
+			Microsoft::WRL::ComPtr<IDxcBlobEncoding> csEncoding;
+			utils->CreateBlob(csData, (uint32_t)csSize, DXC_CP_ACP, &csEncoding);
+			csEncoding.As(&m_computeShaderBlob);
+		}
+
+		AX_CORE_LOG_TRACE("Compute Shader '{}' loaded from bytecode", m_specification.name);
 	}
 
 	void DX12Shader::compileStage(const std::string& source, const std::string& entryPoint, const std::string& target, Microsoft::WRL::ComPtr<IDxcBlob>& outblob) {
@@ -168,6 +187,14 @@ namespace Axion {
 			return shaderBlob;
 		};
 
+		// --- Check if we are baking a compute shader ---
+		auto csBlob = compileInternal(L"CSMain", L"cs_6_5");
+		if (csBlob) {
+			result.compute.assign((uint8_t*)csBlob->GetBufferPointer(), (uint8_t*)csBlob->GetBufferPointer() + csBlob->GetBufferSize());
+			return result;
+		}
+
+		// -- Compile graphics shader --
 		auto vsBlob = compileInternal(L"VSMain", L"vs_6_5");
 		auto psBlob = compileInternal(L"PSMain", L"ps_6_5");
 
