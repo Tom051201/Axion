@@ -22,24 +22,30 @@ struct SpotLight {
 
 cbuffer CameraBuffer : register(b0)
 {
-	float4x4 u_viewProjection;
-	float4x4 u_skyboxViewProjection;
-	float4x4 u_lightSpaceMatrix;
+    float4x4 u_viewProjection;
+    float4x4 u_skyboxViewProjection;
+    float4x4 u_lightSpaceMatrix;
 
-	float4 u_cameraPosition;
-	float4 u_ambientColor;
+    float4 u_cameraPosition;
+    float4 u_ambientColor;
 
-	int u_hasDirectionalLight;
-	int u_pointLightsCount;
-	int u_spotLightsCount;
-	int u_shadowMapIndex;
+    int u_hasDirectionalLight;
+    int u_pointLightsCount;
+    int u_spotLightsCount;
+    int u_shadowMapIndex;
 
-	int u_skyboxIndex;
-	int3 padding1;
+    int u_skyboxIndex;
+    int3 padding1;
 
-	DirectionalLight u_directionalLight;
-	PointLight u_pointLights[16];
-	SpotLight u_spotLights[16];
+    DirectionalLight u_directionalLight;
+    PointLight u_pointLights[16];
+    SpotLight u_spotLights[16];
+
+    float4x4 u_lightSpaceMatrices[4];
+    float4 u_cascadeSplits;
+    float4 u_cascadeRadii;
+    int4 u_shadowMapIndices;
+    int4 u_shadowParams; // x = shadowQuality (0=Off, 1=Low, 2=Med, 3=High, 4=Ultra), y = activeCascades
 }
 
 cbuffer MaterialBuffer : register(b1) {
@@ -274,37 +280,136 @@ PixelOutput PSMain(PixelInput input) {
 	float3 Lo = float3(0.0, 0.0, 0.0);
 
 	// -- Directional light --
-	if (u_hasDirectionalLight > 0) {
-		float3 L_dir = normalize(u_directionalLight.direction.xyz);
-		float3 radiance_dir = u_directionalLight.color.rgb * 2.0;
-		float3 lightCalc = CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
+    if (u_hasDirectionalLight > 0)
+    {
+        float3 L_dir = normalize(u_directionalLight.direction.xyz);
+        float3 radiance_dir = u_directionalLight.color.rgb * 2.0;
+        float3 lightCalc = CalculateLight(N, V, L_dir, radiance_dir, albedo, roughness, metalness);
 
-		// -- Shadow Mapping calculation --
-		float shadow = 0.0f;
-		float4 fragPosLightSpace = mul(float4(input.worldPos, 1.0), u_lightSpaceMatrix);
+        float shadow = 0.0f;
+        int shadowQuality = u_shadowParams.x;
+        float viewDepth = length(u_cameraPosition.xyz - input.worldPos);
 
-		float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-		projCoords.x = projCoords.x * 0.5 + 0.5;
-		projCoords.y = -projCoords.y * 0.5 + 0.5;
+		// Only sample shadows if enabled and within the maximum shadow distance
+        if (shadowQuality > 0 && viewDepth <= u_cascadeSplits.w)
+        {
+            uint cascadeIndex = 0;
+            if (viewDepth > u_cascadeSplits.x)
+                cascadeIndex = 1;
+            if (viewDepth > u_cascadeSplits.y)
+                cascadeIndex = 2;
+            if (viewDepth > u_cascadeSplits.z)
+                cascadeIndex = 3;
 
-		if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0) {
-			float currentDepth = projCoords.z;
-			float bias = max(0.0002 * (1.0 - dot(N, L_dir)), 0.00005);
+            float cascadeRadius = u_cascadeRadii.x;
+            int shadowMapIdx = u_shadowMapIndices.x;
+            if (cascadeIndex == 1)
+            {
+                cascadeRadius = u_cascadeRadii.y;
+                shadowMapIdx = u_shadowMapIndices.y;
+            }
+            else if (cascadeIndex == 2)
+            {
+                cascadeRadius = u_cascadeRadii.z;
+                shadowMapIdx = u_shadowMapIndices.z;
+            }
+            else if (cascadeIndex == 3)
+            {
+                cascadeRadius = u_cascadeRadii.w;
+                shadowMapIdx = u_shadowMapIndices.w;
+            }
 
-			float shadowSum = 0.0;
-			float2 texelSize = 1.0 / 2048.0;
+            float texelWorldSize = (cascadeRadius * 2.0) / 2048.0;
+            float NdotL = saturate(dot(N, L_dir));
 
-			for (int x = -1; x <= 1; ++x) {
-				for (int y = -1; y <= 1; ++y) {
-					float pcfDepth = g_Textures[NonUniformResourceIndex(u_shadowMapIndex)].SampleLevel(s_sampler, projCoords.xy + float2(x, y) * texelSize, 0).r;
-					shadowSum += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
-				}
-			}
-			shadow = shadowSum / 9.0;
-		}
+			// Normal Offset Bias
+            float3 shadowWorldPos = input.worldPos + N * (texelWorldSize * 2.5);
+            float4 fragPosLightSpace = mul(float4(shadowWorldPos, 1.0), u_lightSpaceMatrices[cascadeIndex]);
 
-		Lo += lightCalc * (1.0 - shadow);
-	}
+            float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+            projCoords.x = projCoords.x * 0.5 + 0.5;
+            projCoords.y = -projCoords.y * 0.5 + 0.5;
+
+            if (projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0)
+            {
+                float currentDepth = projCoords.z;
+                float slope = sqrt(max(1.0 - NdotL * NdotL, 0.0)) / max(NdotL, 0.15);
+                float texelDepth = texelWorldSize / 200.0;
+                float bias = texelDepth * (2.0 + 3.0 * slope);
+
+                float2 texelPos = projCoords.xy * 2048.0 - 0.5;
+                float2 f = frac(texelPos);
+                int2 baseTexel = int2(floor(texelPos));
+
+                if (shadowQuality == 1)
+                {
+					// LOW: 1-Tap Fast Hard Shadow
+                    int2 sampleCoord = clamp(int2(projCoords.xy * 2048.0), int2(0, 0), int2(2047, 2047));
+                    float pcfDepth = g_Textures[NonUniformResourceIndex(shadowMapIdx)].Load(int3(sampleCoord, 0)).r;
+                    shadow = (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
+                }
+                else if (shadowQuality == 2)
+                {
+					// MEDIUM: 2x2 Bilinear PCF (4 Taps)
+                    float wx[2] = { 1.0 - f.x, f.x };
+                    float wy[2] = { 1.0 - f.y, f.y };
+                    float shadowSum = 0.0;
+					[unroll]
+                    for (int x = 0; x <= 1; ++x)
+                    {
+						[unroll]
+                        for (int y = 0; y <= 1; ++y)
+                        {
+                            int2 sampleCoord = clamp(baseTexel + int2(x, y), int2(0, 0), int2(2047, 2047));
+                            float pcfDepth = g_Textures[NonUniformResourceIndex(shadowMapIdx)].Load(int3(sampleCoord, 0)).r;
+                            shadowSum += ((currentDepth - bias > pcfDepth) ? 1.0 : 0.0) * wx[x] * wy[y];
+                        }
+                    }
+                    shadow = shadowSum;
+                }
+                else if (shadowQuality == 3)
+                {
+					// HIGH: 3x3 Bilinear Tent PCF (9 Taps)
+                    float wx[3] = { 1.0 - f.x, 1.0, f.x };
+                    float wy[3] = { 1.0 - f.y, 1.0, f.y };
+                    float shadowSum = 0.0;
+					[unroll]
+                    for (int x = -1; x <= 1; ++x)
+                    {
+						[unroll]
+                        for (int y = -1; y <= 1; ++y)
+                        {
+                            int2 sampleCoord = clamp(baseTexel + int2(x, y), int2(0, 0), int2(2047, 2047));
+                            float pcfDepth = g_Textures[NonUniformResourceIndex(shadowMapIdx)].Load(int3(sampleCoord, 0)).r;
+                            shadowSum += ((currentDepth - bias > pcfDepth) ? 1.0 : 0.0) * wx[x + 1] * wy[y + 1];
+                        }
+                    }
+                    shadow = shadowSum / 4.0;
+                }
+                else
+                {
+					// ULTRA: 5x5 Binomial-Gaussian Tent PCF (25 Taps)
+                    float wx[5] = { 1.0 - f.x, 3.0 - 2.0 * f.x, 3.0, 1.0 + 2.0 * f.x, f.x };
+                    float wy[5] = { 1.0 - f.y, 3.0 - 2.0 * f.y, 3.0, 1.0 + 2.0 * f.y, f.y };
+                    float shadowSum = 0.0;
+					[unroll]
+                    for (int x = -2; x <= 2; ++x)
+                    {
+						[unroll]
+                        for (int y = -2; y <= 2; ++y)
+                        {
+                            int2 sampleCoord = clamp(baseTexel + int2(x, y), int2(0, 0), int2(2047, 2047));
+                            float pcfDepth = g_Textures[NonUniformResourceIndex(shadowMapIdx)].Load(int3(sampleCoord, 0)).r;
+                            shadowSum += ((currentDepth - bias > pcfDepth) ? 1.0 : 0.0) * wx[x + 2] * wy[y + 2];
+                        }
+                    }
+                    shadow = shadowSum / 64.0;
+                }
+            }
+        }
+
+        Lo += lightCalc * (1.0 - shadow);
+    }
 
 	// -- Point light --
 	for (int j = 0; j < u_pointLightsCount; ++j) {

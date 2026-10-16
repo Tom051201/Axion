@@ -280,7 +280,6 @@ namespace Axion {
 
 		// ----- Create Camera Frustums for Culling -----
 		Frustum cameraFrustum(cam.getViewProjectionMatrix());
-		Frustum lightFrustum(Renderer::getLightViewMatrix() * Renderer::getLightProjectionMatrix());
 		bool hasDirLight = lightData.hasDirectionalLight;
 
 		// ----- Spatial Audio Listener -----
@@ -313,9 +312,8 @@ namespace Axion {
 				AABB worldAABB = mesh->getBoundingBox().transform(worldTransform);
 
 				bool inMain = cameraFrustum.contains(worldAABB);
-				bool inShadow = hasDirLight ? lightFrustum.contains(worldAABB) : false;
 
-				if (!inMain && !inShadow) {
+				if (!inMain && !hasDirLight) {
 					continue;
 				}
 
@@ -340,7 +338,7 @@ namespace Axion {
 					objData.emissiveIndex = matInstance->getTextureBindlessIndex(TextureSlot::Emissive);
 
 					if (inMain) mainRenderBatches[meshComp.handle][i][matHandle].push_back(objData);
-					if (inShadow) shadowRenderBatches[meshComp.handle][i][matHandle].push_back(objData);
+					if (hasDirLight) shadowRenderBatches[meshComp.handle][i][matHandle].push_back(objData);
 				}
 			}
 		}
@@ -361,9 +359,8 @@ namespace Axion {
 				AABB worldAABB = mesh->getBoundingBox().transform(expandedTransform);
 
 				bool inMain = cameraFrustum.contains(worldAABB);
-				bool inShadow = hasDirLight ? lightFrustum.contains(worldAABB) : false;
 
-				if (!inMain && !inShadow) {
+				if (!inMain && !hasDirLight) {
 					continue;
 				}
 
@@ -408,7 +405,7 @@ namespace Axion {
 					objData.emissiveIndex = matInstance->getTextureBindlessIndex(TextureSlot::Emissive);
 
 					if (inMain) mainSkeletalBatches[skelComp.handle][i][matHandle].push_back(objData);
-					if (inShadow) shadowSkeletalBatches[skelComp.handle][i][matHandle].push_back(objData);
+					if (hasDirLight) shadowSkeletalBatches[skelComp.handle][i][matHandle].push_back(objData);
 				}
 			}
 		}
@@ -442,36 +439,41 @@ namespace Axion {
 		RGResourceID hdrTargetID = m_renderGraph.createResource("HDR_Target", hdrDesc);
 
 		// -- Shadow Map Pass --
-		if (lightData.hasDirectionalLight && config.shadowQuality != GraphicsQuality::Off) {
+		uint32_t activeShadowCascades = Renderer::getActiveShadowCascades();
+		if (lightData.hasDirectionalLight && activeShadowCascades > 0) {
+			Renderer::calculateLightMatrices(cam, lightData);
+
 			m_renderGraph.addPass("DirectionalShadows",
 				[&](RGPassBuilder& builder) {},
 				[&](RenderContext* renderContext) {
-					Mat4 lightView = Renderer::getLightViewMatrix();
-					Mat4 lightProj = Renderer::getLightProjectionMatrix();
 
-					Renderer3D::beginScene(lightProj, lightView.inverse());
-					GraphicsContext::get()->bindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
+					for (uint32_t i = 0; i < activeShadowCascades; i++) {
+						Mat4 lightViewProj = Renderer::getLightSpaceMatrices()[i];
 
-					for (auto& [meshHandle, submeshMap] : shadowRenderBatches) {
-						Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
-						if (!mesh) continue;
-						for (auto& [submeshIndex, materialMap] : submeshMap) {
-							std::vector<ObjectBuffer> flatInstanceData;
-							for (auto& [matHandle, data] : materialMap) { flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end()); }
-							Renderer3D::drawMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+						Renderer3D::beginScene(lightViewProj, Mat4::identity());
+						GraphicsContext::get()->bindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap(i));
+
+						for (auto& [meshHandle, submeshMap] : shadowRenderBatches) {
+							Ref<Mesh> mesh = AssetManager::get<Mesh>(meshHandle);
+							if (!mesh) continue;
+							for (auto& [submeshIndex, materialMap] : submeshMap) {
+								std::vector<ObjectBuffer> flatInstanceData;
+								for (auto& [matHandle, data] : materialMap) { flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end()); }
+								Renderer3D::drawMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+							}
 						}
-					}
-					for (auto& [meshHandle, submeshMap] : shadowSkeletalBatches) {
-						Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
-						if (!mesh) continue;
-						for (auto& [submeshIndex, materialMap] : submeshMap) {
-							std::vector<SkeletalObjectBuffer> flatInstanceData;
-							for (auto& [matHandle, data] : materialMap) { flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end()); }
-							Renderer3D::drawSkeletalMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+						for (auto& [meshHandle, submeshMap] : shadowSkeletalBatches) {
+							Ref<SkeletalMesh> mesh = AssetManager::get<SkeletalMesh>(meshHandle);
+							if (!mesh) continue;
+							for (auto& [submeshIndex, materialMap] : submeshMap) {
+								std::vector<SkeletalObjectBuffer> flatInstanceData;
+								for (auto& [matHandle, data] : materialMap) { flatInstanceData.insert(flatInstanceData.end(), data.begin(), data.end()); }
+								Renderer3D::drawSkeletalMeshInstancedShadow(renderContext, mesh, submeshIndex, flatInstanceData.data(), static_cast<uint32_t>(flatInstanceData.size()));
+							}
 						}
+						GraphicsContext::get()->unbindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap(i));
+						Renderer3D::endScene();
 					}
-					GraphicsContext::get()->unbindDepthOnlyRenderTarget(renderContext, Renderer::getShadowMap());
-					Renderer3D::endScene();
 				}
 			);
 		}

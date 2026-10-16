@@ -120,10 +120,11 @@ namespace Axion {
 		static const Ref<ConstantBuffer>& getSceneDataBuffer();
 		static uint32_t getSceneDataOffset();
 		static double getFrameTimeMs() { return s_lastFrameTimeMs; }
-		static Ref<Texture2D> getShadowMap();
+		static Ref<Texture2D> getShadowMap(uint32_t cascadeIndex);
+		static uint32_t getActiveShadowCascades();
 
-		static Mat4 getLightViewMatrix() { return s_lightView; }
-		static Mat4 getLightProjectionMatrix() { return s_lightProjection; }
+		static const std::array<Mat4, 4>& getLightSpaceMatrices();
+		static void calculateLightMatrices(const Camera& camera, const LightingData& lightingData);
 
 		static void submit(RenderContext* renderContext, const Ref<Mesh>& mesh, const Ref<ConstantBuffer>& transform, const Ref<Shader>& shader, const Ref<ConstantBuffer>& uploadBuffer);
 
@@ -146,11 +147,9 @@ namespace Axion {
 		static double s_lastFrameTimeMs;
 		static std::function<void(Event&)> s_eventCallback;
 		static thread_local uint32_t s_sceneDataOffset;
-		static Ref<Texture2D> s_shadowMapTexture;
 		static FrameBuffer* s_currentRenderTarget;
-
-		static Mat4 s_lightView;
-		static Mat4 s_lightProjection;
+		static std::array<Ref<Texture2D>, 4> s_shadowMapTextures;
+		static std::array<Mat4, 4> s_lightSpaceMatrices; // TODO change all 4s related to this to a constexpr or so
 
 	};
 

@@ -177,7 +177,7 @@ Entities:
       Tag: Light
     TransformComponent:
       Translation: [0, 0, -10.2763519]
-      Rotation: [0.156731576, -0.503221989, -0.029546503, 0.849311471]
+      Rotation: [-0.159469157, 0.582791686, 0.0415467508, -0.795736969]
       Scale: [1, 1, 1]
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]

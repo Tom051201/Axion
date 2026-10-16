@@ -37,7 +37,7 @@ Viewport:
   DragSpeedCam2D: 0.0700057
   FOVCam3D: 80
   ZoomCam2D: 10
-  GizmoMode: Translate
+  GizmoMode: Rotate
   GizmoSpace: Global
   GizmoScale: 0.800000012
   RenderNavMeshes: true
