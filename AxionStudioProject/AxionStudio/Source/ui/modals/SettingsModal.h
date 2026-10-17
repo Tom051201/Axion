@@ -6,6 +6,7 @@
 
 #include <Silica/include/SWidget.h>
 
+#include "AxionEngine/Source/graphics/Renderer.h"
 #include "AxionEngine/Source/events/Event.h"
 
 #include "AxionStudio/Source/core/EditorEvents.h"
@@ -42,6 +43,9 @@ namespace Axion {
 			bool viewportPanelInvertCameraY = false;
 			float viewportPanelGizmoScale = 1.0f;
 			bool viewportPanelRenderNavMeshes = true;
+
+			RendererConfig rendererRendererConfig;
+
 		};
 
 		void rebuildUI();

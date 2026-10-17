@@ -39,7 +39,7 @@ namespace Axion {
 		D3D12_CPU_DESCRIPTOR_HANDLE getDepthBufferDsv(uint32_t index) const;
 
 		uint32_t getRtvHeapIndex(uint32_t framecount) const { return m_rtvHeapIndices[framecount]; }
-		uint32_t getDsvHeapIndex(uint32_t framecount) const { return m_rtvHeapIndices[framecount]; }
+		uint32_t getDsvHeapIndex(uint32_t framecount) const { return m_dsvHeapIndices[framecount]; }
 	
 	private:
 
@@ -48,6 +48,7 @@ namespace Axion {
 		SwapChainSpecification m_specification;
 
 		UINT m_frameIndex = 0;
+		bool m_tearingSupported = false;
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[Config::MaxSwapchainBuffers];
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthBuffers[Config::MaxSwapchainBuffers];

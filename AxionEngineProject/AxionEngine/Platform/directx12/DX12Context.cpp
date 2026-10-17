@@ -62,12 +62,12 @@ namespace Axion {
 		waitForPreviousFrame();
 
 		m_globalRootSignature.Reset();
+		m_swapChain.release();
 		m_dsvHeap.release();
 		m_stagingSrvHeap.release();
 		m_gpuSrvHeap.release();
 		m_fence.release();
 		m_commandManager.release();
-		m_swapChain.release();
 		m_rtvHeap.release();
 		m_commandQueue.release();
 		m_device.release();
@@ -123,7 +123,9 @@ namespace Axion {
 		executionLists.push_back(static_cast<DX12RenderContext*>(m_mainThreadContext)->getCmdList());
 		m_commandQueue.getCommandQueue()->ExecuteCommandLists(static_cast<UINT>(executionLists.size()), executionLists.data());
 
-		m_swapChain.present(m_vsyncInterval, 0);
+//		m_swapChain.present(m_vsyncInterval, 0); // TODO: remove old m_vsyncInterval and old vsync impl from application or so and rely on renderer
+		uint32_t syncInterval = Renderer::getConfig().vsync ? 1 : 0;
+		m_swapChain.present(syncInterval, 0);
 
 		m_frameFenceValues[m_currentFrameIndex] = m_currentFenceValue;
 		m_fence.signal(m_commandQueue.getCommandQueue(), m_currentFenceValue);
@@ -337,15 +339,34 @@ namespace Axion {
 		rangeUAV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, (UINT)-1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 		rootParameters[6].InitAsDescriptorTable(1, &rangeUAV, D3D12_SHADER_VISIBILITY_ALL);
 
-		D3D12_STATIC_SAMPLER_DESC sampler = {};
-		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		sampler.MaxLOD = D3D12_FLOAT32_MAX;
-		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		uint32_t maxAnisotropy = std::clamp(Renderer::getConfig().anisotropicFiltering, 1u, 16u);
+
+		D3D12_STATIC_SAMPLER_DESC samplers[2] = {};
+		// Sampler 0 (register s0)
+		samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		samplers[0].MaxAnisotropy = 1;
+		samplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		samplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		samplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		samplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		samplers[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		samplers[0].MaxLOD = D3D12_FLOAT32_MAX;
+		samplers[0].ShaderRegister = 0; // s0
+		samplers[0].RegisterSpace = 0;
+		samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		// Sampler 1 (register s1)
+		samplers[1].Filter = (maxAnisotropy > 1) ? D3D12_FILTER_ANISOTROPIC : D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		samplers[1].MaxAnisotropy = maxAnisotropy;
+		samplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		samplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		samplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		samplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		samplers[1].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		samplers[1].MaxLOD = D3D12_FLOAT32_MAX;
+		samplers[1].ShaderRegister = 1; // s1
+		samplers[1].RegisterSpace = 0;
+		samplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -356,7 +377,7 @@ namespace Axion {
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 		rootSignatureDesc.Init_1_1(
 			static_cast<UINT>(rootParameters.size()), rootParameters.data(),
-			1, &sampler,
+			2, samplers,
 			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
 		);
 

@@ -15,6 +15,7 @@
 #include <Silica/include/SScrollBox.h>
 #include <Silica/include/SCheckbox.h>
 #include <Silica/include/SInputFieldInt.h>
+#include <Silica/include/SInputFieldFloat.h>
 #include <Silica/include/SOverlay.h>
 #include <Silica/include/SWrappedTextBlock.h>
 #include <Silica/include/SComboBox.h>
@@ -59,6 +60,7 @@ namespace Axion {
 		m_workingState.viewportPanelInvertCameraY = EditorSettings::viewportPanelInvertCameraY;
 		m_workingState.viewportPanelGizmoScale = EditorSettings::viewportPanelGizmoScale;
 		m_workingState.viewportPanelRenderNavMeshes = EditorSettings::viewportPanelRenderNavMeshes;
+		m_workingState.rendererRendererConfig = Renderer::getConfig();
 
 		if (!m_uiRoot) {
 			m_uiRoot = Silica::MakeWidget<Silica::SBox>({
@@ -112,9 +114,9 @@ namespace Axion {
 
 	Silica::WidgetPtr SettingsModal::buildGraphicsTab() {
 		auto contentBox = Silica::MakeWidget<Silica::SVerticalBox>({ .spacing = SPACING_LARGE });
-		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Graphics") });
 
 		// -- Graphics API --
+		contentBox->addSlot({ {0,0}, SilicaHelpers::MakeHeader("Graphics API") });
 		std::vector<std::string> apiOptions = { "DirectX 11", "DirectX 12" };
 		std::string currentApi = "DirectX 12";
 		if (Renderer::getAPI() == RendererAPI::DirectX11) { currentApi = "DirectX 11"; }
@@ -126,6 +128,203 @@ namespace Axion {
 			}
 		});
 		contentBox->addSlot({ {0,0}, SilicaHelpers::MakePropertyRow("Graphics API:", graphicsAPIInput, LABEL_WIDTH) });
+
+		std::vector<std::string> qualityNames = { "Off", "Low", "Medium", "High", "Ultra" };
+
+		// -- Display --
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakeHeader("Display") });
+		auto vsyncCheck = Silica::MakeWidget<Silica::SCheckBox>({
+			.initialCheck = m_workingState.rendererRendererConfig.vsync,
+			.onCheckChanged = [this](bool val) {
+				m_workingState.rendererRendererConfig.vsync = val;
+				m_pendingChanges |= EditorSettingType::Renderer;
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Use Vsync:", vsyncCheck, LABEL_WIDTH) });
+
+		auto renderScaleSlider = Silica::MakeWidget<Silica::SSliderFloat>({
+			.initialValue = m_workingState.rendererRendererConfig.renderScale,
+			.minValue = 0.25f,
+			.maxValue = 1.0f,
+			.snapStep = 0.05f,
+			.onValueChanged = [this](float val) {
+				m_workingState.rendererRendererConfig.renderScale = val;
+				m_pendingChanges |= EditorSettingType::Renderer;
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Render Scale:", renderScaleSlider, LABEL_WIDTH) });
+
+		// -- Quality --
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakeHeader("Quality") });
+		int shadowQualityIndex = (int)((uint32_t)m_workingState.rendererRendererConfig.shadowQuality);
+		auto shadowQualityCombo = Silica::MakeWidget<Silica::SComboBox>({
+			.options = qualityNames,
+			.initialValue = qualityNames[shadowQualityIndex],
+			.onValueChanged = [this, qualityNames, &shadowQualityIndex](const std::string& selectedVal) {
+				auto it = std::find(qualityNames.begin(), qualityNames.end(), selectedVal);
+				if (it != qualityNames.end()) {
+					shadowQualityIndex = static_cast<uint32_t>(std::distance(qualityNames.begin(), it));
+					m_workingState.rendererRendererConfig.shadowQuality = (GraphicsQuality)shadowQualityIndex;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Shadow Quality:", shadowQualityCombo, LABEL_WIDTH) });
+
+		int bloomQualityIndex = (int)((uint32_t)m_workingState.rendererRendererConfig.bloomQuality);
+		auto bloomQualityCombo = Silica::MakeWidget<Silica::SComboBox>({
+			.options = qualityNames,
+			.initialValue = qualityNames[bloomQualityIndex],
+			.onValueChanged = [this, qualityNames, &bloomQualityIndex](const std::string& selectedVal) {
+				auto it = std::find(qualityNames.begin(), qualityNames.end(), selectedVal);
+				if (it != qualityNames.end()) {
+					bloomQualityIndex = static_cast<uint32_t>(std::distance(qualityNames.begin(), it));
+					m_workingState.rendererRendererConfig.bloomQuality = (GraphicsQuality)bloomQualityIndex;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Bloom Quality:", bloomQualityCombo, LABEL_WIDTH) });
+
+		int antiAliasingIndex = (int)((uint32_t)m_workingState.rendererRendererConfig.antiAliasing);
+		auto antiAliasingCombo = Silica::MakeWidget<Silica::SComboBox>({
+			.options = qualityNames,
+			.initialValue = qualityNames[antiAliasingIndex],
+			.onValueChanged = [this, qualityNames, &antiAliasingIndex](const std::string& selectedVal) {
+				auto it = std::find(qualityNames.begin(), qualityNames.end(), selectedVal);
+				if (it != qualityNames.end()) {
+					antiAliasingIndex = static_cast<uint32_t>(std::distance(qualityNames.begin(), it));
+					m_workingState.rendererRendererConfig.antiAliasing = (GraphicsQuality)antiAliasingIndex;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Anti Aliasing:", antiAliasingCombo, LABEL_WIDTH) });
+
+		int ambientOcclusionIndex = (int)((uint32_t)m_workingState.rendererRendererConfig.ambientOcclusion);
+		auto ambientOcclusionCombo = Silica::MakeWidget<Silica::SComboBox>({
+			.options = qualityNames,
+			.initialValue = qualityNames[ambientOcclusionIndex],
+			.onValueChanged = [this, qualityNames, &ambientOcclusionIndex](const std::string& selectedVal) {
+				auto it = std::find(qualityNames.begin(), qualityNames.end(), selectedVal);
+				if (it != qualityNames.end()) {
+					ambientOcclusionIndex = static_cast<uint32_t>(std::distance(qualityNames.begin(), it));
+					m_workingState.rendererRendererConfig.ambientOcclusion = (GraphicsQuality)ambientOcclusionIndex;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Ambient Occlusion:", ambientOcclusionCombo, LABEL_WIDTH) });
+
+		std::vector<std::string> anisotropicFilteringOptions = { "1", "2", "4", "8", "16" };
+		int anisotropicFilteringIndex = 0;
+		if (m_workingState.rendererRendererConfig.anisotropicFiltering == 2) anisotropicFilteringIndex = 1;
+		else if (m_workingState.rendererRendererConfig.anisotropicFiltering == 4) anisotropicFilteringIndex = 2;
+		else if (m_workingState.rendererRendererConfig.anisotropicFiltering == 8) anisotropicFilteringIndex = 3;
+		else if (m_workingState.rendererRendererConfig.anisotropicFiltering == 16) anisotropicFilteringIndex = 4;
+		auto anisotropicFilteringCombo = Silica::MakeWidget<Silica::SComboBox>({
+			.options = anisotropicFilteringOptions,
+			.initialValue = anisotropicFilteringOptions[anisotropicFilteringIndex],
+			.onValueChanged = [this, anisotropicFilteringOptions, &anisotropicFilteringIndex](const std::string& selectedVal) {
+				auto it = std::find(anisotropicFilteringOptions.begin(), anisotropicFilteringOptions.end(), selectedVal);
+				if (it != anisotropicFilteringOptions.end()) {
+					anisotropicFilteringIndex = static_cast<int>(std::distance(anisotropicFilteringOptions.begin(), it));
+					m_workingState.rendererRendererConfig.anisotropicFiltering = (uint32_t)anisotropicFilteringIndex;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Anisotropic Filtering:", anisotropicFilteringCombo, LABEL_WIDTH) });
+
+		// -- Bloom --
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakeHeader("Bloom") });
+		auto bloomThresholdInput = Silica::MakeWidget<Silica::SBox>({ // TODO limit this so input cant be more than 5.0f
+			.child = Silica::MakeWidget<Silica::SInputFieldFloat>({
+				.initialValue = m_workingState.rendererRendererConfig.bloomThreshold,
+				.onValueChanged = [this](float val) {
+					m_workingState.rendererRendererConfig.bloomThreshold = val;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			})
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Bloom Threshold:", bloomThresholdInput, LABEL_WIDTH) });
+
+		auto bloomBlurRadiusInput = Silica::MakeWidget<Silica::SBox>({
+			.child = Silica::MakeWidget<Silica::SInputFieldFloat>({ // TODO make slider from 0.5 to 8.0
+				.initialValue = m_workingState.rendererRendererConfig.bloomBlurRadius,
+				.onValueChanged = [this](float val) {
+					m_workingState.rendererRendererConfig.bloomBlurRadius = val;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			})
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Bloom Blur Radius:", bloomBlurRadiusInput, LABEL_WIDTH) });
+
+		auto bloomIntensityInput = Silica::MakeWidget<Silica::SBox>({
+			.child = Silica::MakeWidget<Silica::SInputFieldFloat>({  // TODO make slider from 0.0 to 2.0
+				.initialValue = m_workingState.rendererRendererConfig.bloomIntensity,
+				.onValueChanged = [this](float val) {
+					m_workingState.rendererRendererConfig.bloomIntensity = val;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			})
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Bloom Intensity:", bloomIntensityInput, LABEL_WIDTH) });
+
+		// -- Color Grading --
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakeHeader("Color Grading") });
+
+		std::vector<std::string> toneMappingOptions = { "None", "Reinhard", "ACESFilmic", "Uncharted2" };
+		int toneMappingModeIndex = (int)((uint32_t)m_workingState.rendererRendererConfig.toneMappingMode);
+		auto toneMappingModeCombo = Silica::MakeWidget<Silica::SComboBox>({
+			.options = toneMappingOptions,
+			.initialValue = toneMappingOptions[toneMappingModeIndex],
+			.onValueChanged = [this, toneMappingOptions, &toneMappingModeIndex](const std::string& selectedVal) {
+				auto it = std::find(toneMappingOptions.begin(), toneMappingOptions.end(), selectedVal);
+				if (it != toneMappingOptions.end()) {
+					toneMappingModeIndex = static_cast<uint32_t>(std::distance(toneMappingOptions.begin(), it));
+					m_workingState.rendererRendererConfig.toneMappingMode = (ToneMappingMode)toneMappingModeIndex;
+					m_pendingChanges |= EditorSettingType::Renderer;
+				}
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Ambient Occlusion:", ambientOcclusionCombo, LABEL_WIDTH) });
+
+		auto exposureSlider = Silica::MakeWidget<Silica::SSliderFloat>({
+			.initialValue = m_workingState.rendererRendererConfig.exposure,
+			.minValue = 0.1f,
+			.maxValue = 5.0f,
+			.snapStep = 0.5f,
+			.onValueChanged = [this](float val) {
+				m_workingState.rendererRendererConfig.exposure = val;
+				m_pendingChanges |= EditorSettingType::Renderer;
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Exposure:", exposureSlider, LABEL_WIDTH) });
+
+		auto gammaSlider = Silica::MakeWidget<Silica::SSliderFloat>({
+			.initialValue = m_workingState.rendererRendererConfig.gamma,
+			.minValue = 1.5f,
+			.maxValue = 3.0f,
+			.snapStep = 0.1f,
+			.onValueChanged = [this](float val) {
+				m_workingState.rendererRendererConfig.gamma = val;
+				m_pendingChanges |= EditorSettingType::Renderer;
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Gamma:", gammaSlider, LABEL_WIDTH) });
+
+		auto vignetteIntensitySlider = Silica::MakeWidget<Silica::SSliderFloat>({
+			.initialValue = m_workingState.rendererRendererConfig.vignetteIntensity,
+			.minValue = 0.0f,
+			.maxValue = 1.0f,
+			.snapStep = 0.05f,
+			.onValueChanged = [this](float val) {
+				m_workingState.rendererRendererConfig.vignetteIntensity = val;
+				m_pendingChanges |= EditorSettingType::Renderer;
+			}
+		});
+		contentBox->addSlot({ { 0,0 }, SilicaHelpers::MakePropertyRow("Vignette Intensity:", vignetteIntensitySlider, LABEL_WIDTH) });
 
 		return contentBox;
 	}
@@ -345,7 +544,7 @@ namespace Axion {
 		auto contentArea = Silica::MakeWidget<Silica::SBox>({
 			.padding = { PADDING_LARGE, PADDING_LARGE },
 			.backgroundColor = Silica::Color::transparent(),
-			.child = activeContent
+			.child = Silica::MakeWidget<Silica::SScrollBox>({.child = activeContent })
 		});
 
 		// -- Split Layout --
@@ -376,6 +575,7 @@ namespace Axion {
 			EditorSettings::viewportPanelInvertCameraY = m_workingState.viewportPanelInvertCameraY;
 			EditorSettings::viewportPanelGizmoScale = m_workingState.viewportPanelGizmoScale;
 			EditorSettings::viewportPanelRenderNavMeshes = m_workingState.viewportPanelRenderNavMeshes;
+			Renderer::setConfig(m_workingState.rendererRendererConfig);
 
 			// -- Dispatch events --
 			if (m_pendingChanges != EditorSettingType::None && m_eventCallback) {

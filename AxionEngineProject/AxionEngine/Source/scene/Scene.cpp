@@ -31,11 +31,25 @@ namespace Axion {
 		float intensity;
 	};
 
+	struct alignas(16) ToneMapData {
+		int toneMappingMode;
+		float exposure;
+		float gamma;
+		float vignetteIntensity;
+		Vec2 invRenderSize;
+		int antiAliasingQuality;	// 0 = Off, 1 = Low, 2 = Medium, 3 = High, 4 = Ultra
+		float padding = 0.0f;
+	};
+
 	Scene::Scene() {
 		m_sceneID = UUID::generate();
-		for (int i = 0; i < 16; i++) { // TODO: make a constexpr var for this 16 and the one in the header in the array
+
+		for (uint32_t i = 0; i < MAX_BLOOM_CBS; i++) {
 			m_bloomCBs[i] = ConstantBuffer::create(sizeof(BloomData));
 		}
+
+		m_toneMapCB = ConstantBuffer::create(sizeof(ToneMapData));
+
 	}
 
 	Scene::~Scene() {
@@ -44,11 +58,17 @@ namespace Axion {
 
 	void Scene::release() {
 		// -- Release Bloom Constant Buffers --
-		for (int i = 0; i < 16; i++) { // TODO: make a constexpr var for this 16 and the one in the header in the array
+		for (uint32_t i = 0; i < MAX_BLOOM_CBS; i++) {
 			if (m_bloomCBs[i]) {
 				m_bloomCBs[i]->release();
 				m_bloomCBs[i] = nullptr;
 			}
+		}
+
+		// -- Release Tone Map Constant Buffer
+		if (m_toneMapCB) {
+			m_toneMapCB->release();
+			m_toneMapCB = nullptr;
 		}
 
 		// -- Release Audio Components --
@@ -430,10 +450,16 @@ namespace Axion {
 			vpHeight = Application::get().getWindow().getHeight();
 		}
 
+		// -- Calculate scaled 3D Render Resolution --
+		float maxScale = target ? 1.0f : 2.0f;
+		float scale = std::clamp(config.renderScale, 0.25f, maxScale);
+		uint32_t renderWidth = std::max(1u, static_cast<uint32_t>(vpWidth * scale));
+		uint32_t renderHeight = std::max(1u, static_cast<uint32_t>(vpHeight * scale));
+
 		// -- Transient HDR Target --
 		RGTextureDesc hdrDesc = {};
-		hdrDesc.width = vpWidth;
-		hdrDesc.height = vpHeight;
+		hdrDesc.width = renderWidth;
+		hdrDesc.height = renderHeight;
 		hdrDesc.format = ColorFormat::RGBA16F;
 		hdrDesc.depthFormat = DepthStencilFormat::DEPTH32F;
 		RGResourceID hdrTargetID = m_renderGraph.createResource("HDR_Target", hdrDesc);
@@ -550,8 +576,8 @@ namespace Axion {
 			uint32_t bWidth[MAX_CASCADES];
 			uint32_t bHeight[MAX_CASCADES];
 
-			uint32_t currentW = vpWidth;
-			uint32_t currentH = vpHeight;
+			uint32_t currentW = renderWidth;
+			uint32_t currentH = renderHeight;
 
 			for (int i = 0; i < activeCascades; i++) {
 				currentW = std::max(1u, currentW / 2);
@@ -633,7 +659,7 @@ namespace Axion {
 					hdrFb->transitionToUAV(renderContext);
 					for (int i = 0; i < activeCascades; i++) {
 						fbA[i]->transitionToSRV(renderContext);
-						dispatch(3, fbA[i], hdrFb, vpWidth, vpHeight);
+						dispatch(3, fbA[i], hdrFb, renderWidth, renderHeight);
 					}
 
 					hdrFb->transitionToSRV(renderContext);
@@ -661,6 +687,18 @@ namespace Axion {
 					Ref<Pipeline> tmPipeline = EngineAssets::getToneMappingPipeline();
 					tmPipeline->bind(renderContext);
 					FrameBuffer* hdrFb = m_renderGraph.getPhysicalFramebuffer(hdrTargetID);
+
+					ToneMapData tmData;
+					tmData.toneMappingMode = static_cast<int>(config.toneMappingMode);
+					tmData.exposure = config.exposure;
+					tmData.gamma = config.gamma;
+					tmData.vignetteIntensity = config.vignetteIntensity;
+					tmData.invRenderSize = { 1.0f / static_cast<float>(renderWidth), 1.0f / static_cast<float>(renderHeight) };
+					tmData.antiAliasingQuality = static_cast<int>(config.antiAliasing);
+					tmData.padding = 0.0f;
+
+					m_toneMapCB->update(&tmData, sizeof(ToneMapData));
+					m_toneMapCB->bind(renderContext, (uint32_t)RootSlot::Material);
 
 					renderContext->setTextureHandle((uint32_t)RootSlot::Textures, hdrFb->getColorAttachmentHandle());
 

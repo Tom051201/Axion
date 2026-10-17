@@ -21,6 +21,12 @@ namespace Axion {
 		auto& rtvHeap = m_context->getRtvHeapWrapper();
 		auto& dsvHeap = m_context->getDsvHeapWrapper();
 
+		// ----- Check for Tearing Support -----
+		BOOL allowTearing = FALSE;
+		if (SUCCEEDED(factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing)))) {
+			m_tearingSupported = (allowTearing == TRUE);
+		}
+
 		// ----- Create swap chain -----
 		DXGI_SWAP_CHAIN_DESC1 swapDesc = {};
 		swapDesc.BufferCount = spec.bufferCount;
@@ -30,9 +36,15 @@ namespace Axion {
 		swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapDesc.SampleDesc.Count = 1;
+		swapDesc.Flags = m_tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 		Microsoft::WRL::ComPtr<IDXGISwapChain1> tempSwapChain;
 		AX_THROW_IF_FAILED_HR(factory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapDesc, nullptr, nullptr, &tempSwapChain), "Failed to create temp swap chain");
+
+		if (m_tearingSupported) {
+			factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
+		}
+
 		AX_THROW_IF_FAILED_HR(tempSwapChain.As(&m_swapChain), "Failed to transfer swap chain");
 		
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -94,6 +106,8 @@ namespace Axion {
 	}
 
 	void DX12SwapChain::release() {
+		if (!m_swapChain) return;
+
 		for (auto& buffer : m_backBuffers) { buffer.Reset(); }
 		for (auto& buffer : m_depthBuffers) { buffer.Reset(); }
 
@@ -174,7 +188,11 @@ namespace Axion {
 	}
 
 	void DX12SwapChain::present(UINT syncInterval, UINT flags) {
-		AX_THROW_IF_FAILED_HR(m_swapChain->Present(syncInterval, flags), "Failed to present swap chain");
+		UINT presentFlags = flags;
+		if (syncInterval == 0 && m_tearingSupported) {
+			presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+		}
+		AX_THROW_IF_FAILED_HR(m_swapChain->Present(syncInterval, presentFlags), "Failed to present swap chain");
 	}
 
 	void DX12SwapChain::advanceFrame() {

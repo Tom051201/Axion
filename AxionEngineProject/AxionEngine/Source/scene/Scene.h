@@ -104,6 +104,8 @@ namespace Axion {
 
 	private:
 
+		static constexpr uint32_t MAX_BLOOM_CBS = 24;
+
 		UUID m_sceneID;
 		std::string m_title = "Untitled";
 		entt::registry m_registry;
@@ -142,7 +144,8 @@ namespace Axion {
 
 		std::vector<SceneNavMeshProfile> m_navMeshProfiles;
 
-		std::array<Ref<ConstantBuffer>, 16> m_bloomCBs;
+		std::array<Ref<ConstantBuffer>, MAX_BLOOM_CBS> m_bloomCBs;
+		Ref<ConstantBuffer> m_toneMapCB;
 
 		EventReply onRenderingFinished(RenderingFinishedEvent& e);
 		void flushDestroyedEntities();

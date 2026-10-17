@@ -1,6 +1,6 @@
 Texture2D g_Textures[] : register(t0, space0);
 TextureCube g_CubeTextures[] : register(t0, space2);
-SamplerState s_sampler : register(s0);
+SamplerState s_sampler : register(s1);
 
 struct DirectionalLight {
 	float4 direction;

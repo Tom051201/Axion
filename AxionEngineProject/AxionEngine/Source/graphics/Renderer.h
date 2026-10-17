@@ -86,14 +86,35 @@ namespace Axion {
 		Ultra = 4
 	};
 
+	enum class ToneMappingMode {
+		None = 0,
+		Reinhard = 1,
+		ACESFilmic = 2,
+		Uncharted2 = 3
+	};
+
 	struct RendererConfig {
+		// -- Display --
+		bool vsync = true;
+		float renderScale = 1.0f;
+
+		// -- Core Quality Tiers --
 		GraphicsQuality shadowQuality = GraphicsQuality::High;
 		GraphicsQuality bloomQuality = GraphicsQuality::Medium;
 		GraphicsQuality antiAliasing = GraphicsQuality::High;
+		GraphicsQuality ambientOcclusion = GraphicsQuality::High;
+		uint32_t anisotropicFiltering = 16; // 1, 2, 4, 8, or 16
 
+		// -- Bloom Tuning --
 		float bloomThreshold = 1.0f;
 		float bloomBlurRadius = 3.0f;
 		float bloomIntensity = 1.0f;
+
+		// -- Color Grading and Tone Mapping --
+		ToneMappingMode toneMappingMode = ToneMappingMode::ACESFilmic;
+		float exposure = 1.0f;
+		float gamma = 2.2f;
+		float vignetteIntensity = 0.15f;
 	};
 
 	class Renderer {

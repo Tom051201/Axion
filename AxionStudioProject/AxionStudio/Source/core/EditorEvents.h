@@ -172,6 +172,7 @@ namespace Axion {
 		ContentBrowserLayout = BIT(3),
 		MaterialEditorCamera = BIT(4),
 		Viewport = BIT(5),
+		Renderer = BIT(6),
 		All = 0xFFFFFFFF
 	};
 
